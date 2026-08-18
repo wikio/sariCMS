@@ -1,0 +1,54 @@
+[
+  {
+    "id": 999,
+    "title": "Equipment Sales",
+    "icon": "shopping-cart",
+    "shortDesc": "Wide range of new and refurbished medical equipment",
+    "fullDesc": "<p>We offer a rigorous selection of medical equipment from the world's leading manufacturers.</p>",
+    "features": [
+      "Needs assessment",
+      "Brand comparison",
+      "Price negotiation",
+      "Extended manufacturer warranty"
+    ]
+  },
+  {
+    "id": 998,
+    "title": "Installation & Training",
+    "icon": "users",
+    "shortDesc": "On-site installation and staff training",
+    "fullDesc": "<p>Purchasing equipment doesn't stop at delivery. Our biomedical engineers ensure turn-key installation.</p>",
+    "features": [
+      "Turn-key installation",
+      "Calibration and safety testing",
+      "Theoretical and practical training",
+      "Comprehensive documentary support"
+    ]
+  },
+  {
+    "id": 997,
+    "title": "Maintenance & After-Sales Service",
+    "icon": "wrench",
+    "shortDesc": "Maintenance contracts and after-sales service",
+    "fullDesc": "<p>The availability of your equipment is critical. We offer preventive and corrective maintenance contracts.</p>",
+    "features": [
+      "Scheduled preventive maintenance",
+      "24/7 emergency response",
+      "Original spare parts",
+      "Detailed service reports"
+    ]
+  },
+  {
+    "id": 996,
+    "title": "Supply of Consumables",
+    "icon": "package",
+    "shortDesc": "Regular supply of consumables for hospitals and clinics",
+    "fullDesc": "<p>Never run out of stock again. We set up automatic restocking.</p>",
+    "features": [
+      "Catalog of over 5,000 items",
+      "24/48h delivery",
+      "Volume discounts",
+      "Custom stock management"
+    ]
+  }
+]

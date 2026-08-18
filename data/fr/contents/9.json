@@ -1,0 +1,35 @@
+{
+  "content": "<p>Notre sélection des équipements les plus performants du marché. Chaque produit a été rigoureusement testé et approuvé par notre comité d'experts.</p>",
+  "media": [
+    {
+      "src": "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=1200",
+      "caption": "Échographe portable Mindray DC-70",
+      "type": "image"
+    },
+    {
+      "src": "https://images.unsplash.com/photo-1559757175-5700dde675bc?w=1200",
+      "caption": "Moniteur cardiaque Philips IntelliVue",
+      "type": "image"
+    },
+    {
+      "src": "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=1200",
+      "caption": "Scanner CT Siemens SOMATOM",
+      "type": "image"
+    },
+    {
+      "src": "https://images.unsplash.com/photo-1551076805-e1869033e561?w=1200",
+      "caption": "Table opératoire Maquet Magnus",
+      "type": "image"
+    },
+    {
+      "src": "https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=1200",
+      "caption": "Défibrillateur Zoll X Series",
+      "type": "image"
+    },
+    {
+      "src": "https://images.unsplash.com/photo-1584982751601-97dcc096659c?w=1200",
+      "caption": "IRM GE Signa 3T",
+      "type": "image"
+    }
+  ]
+}

@@ -1,0 +1,327 @@
+{
+  "notFound": "الفئة غير موجودة",
+  "notFoundDesc": "هذه الفئة غير موجودة أو تم حذفها.",
+  "backToSolutions": "العودة إلى الحلول",
+  "breadcrumb": {
+    "home": "الرئيسية",
+    "solutions": "الحلول"
+  },
+  "products": {
+    "subtitle": "اختيارنا",
+    "title": "معداتنا",
+    "viewAll": "عرض الكل"
+  },
+  "features": {
+    "subtitle": "مزايانا",
+    "title": "لماذا تختار حلولنا؟"
+  },
+  "faq": {
+    "title": "الأسئلة الشائعة"
+  },
+  "cta": {
+    "title": "هل أنت مستعد لتجهيز مؤسستك؟",
+    "description": "اتصل بنا لدراسة مخصصة وعرض سعر مجاني",
+    "primary": "طلب عرض سعر",
+    "secondary": "عرض المنتجات"
+  },
+  "related": {
+    "title": "فئات أخرى"
+  },
+  "categories": {
+    "diagnostic": {
+      "title": "التشخيص والتصوير",
+      "desc": "أجهزة الموجات فوق الصوتية وأجهزة قياس الضغط والسماعات",
+      "icon": "stethoscope",
+      "image": "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=1920",
+      "productIds": [
+        1,
+        4,
+        5
+      ],
+      "features": [
+        {
+          "icon": "scan",
+          "text": "تصوير عالي الدقة 4D"
+        },
+        {
+          "icon": "wifi",
+          "text": "اتصال WiFi و Bluetooth"
+        },
+        {
+          "icon": "battery",
+          "text": "عمر بطارية طويل"
+        },
+        {
+          "icon": "shield-check",
+          "text": "شهادة CE و ISO 13485"
+        }
+      ],
+      "faq": [
+        {
+          "q": "ما أنواع أجهزة الموجات فوق الصوتية؟",
+          "a": "نقدم أجهزة محمولة وثابتة بتكوينات مختلفة. جميع أجهزتنا حاصلة على شهادة CE."
+        }
+      ]
+    },
+    "cardiology": {
+      "title": "أمراض القلب",
+      "desc": "تخطيط القلب وأجهزة إزالة الرجفان وشاشات القلب",
+      "icon": "heart-pulse",
+      "image": "https://images.unsplash.com/photo-1559757175-5700dde675bc?w=1920",
+      "productIds": [
+        7
+      ],
+      "features": [
+        {
+          "icon": "activity",
+          "text": "تخطيط القلب 3/5/12 قطب"
+        },
+        {
+          "icon": "zap",
+          "text": "أجهزة إزالة الرجفان"
+        },
+        {
+          "icon": "monitor",
+          "text": "شاشات القلب في الوقت الفعلي"
+        },
+        {
+          "icon": "clock",
+          "text": "هولتر 24/48/72 ساعة"
+        }
+      ],
+      "faq": [
+        {
+          "q": "هل أجهزة تخطيط القلب 12 قطب؟",
+          "a": "نعم، نقدم 3 و 6 و 12 قطب مع شاشة تعمل باللمس."
+        }
+      ]
+    },
+    "imagerie": {
+      "title": "التصوير الطبي",
+      "desc": "أجهزة التصوير المقطعي والرنين المغناطيسي",
+      "icon": "scan",
+      "image": "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=1920",
+      "productIds": [],
+      "features": [
+        {
+          "icon": "scan",
+          "text": "التصوير المقطعي 16-128 شريحة"
+        },
+        {
+          "icon": "magnet",
+          "text": "الرنين المغناطيسي 1.5T و 3T"
+        },
+        {
+          "icon": "image",
+          "text": "الأشعة الرقمية"
+        },
+        {
+          "icon": "monitor",
+          "text": "حلول PACS/RIS"
+        }
+      ],
+      "faq": [
+        {
+          "q": "هل تقدمون أجهزة التصوير المقطعي؟",
+          "a": "نعم، من 16 إلى 128 شريحة مع التركيب والتدريب."
+        }
+      ]
+    },
+    "chirurgie": {
+      "title": "الجراحة",
+      "desc": "أدوات جراحية وأجهزة تعقيم ومصابيح LED",
+      "icon": "syringe",
+      "image": "https://images.unsplash.com/photo-1551076805-e1869033e561?w=1920",
+      "productIds": [
+        3,
+        9
+      ],
+      "features": [
+        {
+          "icon": "scissors",
+          "text": "أدوات جراحية من الفولاذ"
+        },
+        {
+          "icon": "flame",
+          "text": "أجهزة تعقيم الفئة B"
+        },
+        {
+          "icon": "lightbulb",
+          "text": "مصابيح جراحية LED"
+        },
+        {
+          "icon": "bed",
+          "text": "طاولات تشغيل كهربائية"
+        }
+      ],
+      "faq": [
+        {
+          "q": "هل أجهزة التعقيم من الفئة B؟",
+          "a": "نعم، متوافقة مع المعايير الأوروبية EN 13060."
+        }
+      ]
+    },
+    "pediatrie": {
+      "title": "طب الأطفال",
+      "desc": "حاضنات ومعدات طب الأطفال",
+      "icon": "baby",
+      "image": "https://images.unsplash.com/photo-1583947215259-38e31be8751f?w=1920",
+      "productIds": [
+        12
+      ],
+      "features": [
+        {
+          "icon": "baby",
+          "text": "حاضنات لحديثي الولادة"
+        },
+        {
+          "icon": "scale",
+          "text": "موازين 5 جرام"
+        },
+        {
+          "icon": "sun",
+          "text": "مصابيح العلاج الضوئي"
+        },
+        {
+          "icon": "heart-pulse",
+          "text": "شاشات حديثي الولادة"
+        }
+      ],
+      "faq": [
+        {
+          "q": "هل الحاضنات مناسبة للخدج؟",
+          "a": "نعم، من 28 أسبوعاً مع تحكم دقيق."
+        }
+      ]
+    },
+    "urgence": {
+      "title": "الطوارئ والإنعاش",
+      "desc": "أجهزة إزالة الرجفان وعربات الطوارئ",
+      "icon": "activity",
+      "image": "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=1920",
+      "productIds": [
+        7,
+        15
+      ],
+      "features": [
+        {
+          "icon": "zap",
+          "text": "أجهزة إزالة الرجفان"
+        },
+        {
+          "icon": "siren",
+          "text": "عربات طوارئ كاملة"
+        },
+        {
+          "icon": "monitor",
+          "text": "شاشات متعددة المعلمات"
+        },
+        {
+          "icon": "clock",
+          "text": "دعم 24/7 مضمون"
+        }
+      ],
+      "faq": [
+        {
+          "q": "هل أجهزة إزالة الرجفان تلقائية؟",
+          "a": "نعم، مع إرشادات صوتية وتحليل في أقل من 10 ثوانٍ."
+        }
+      ]
+    },
+    "informatique": {
+      "title": "المعلوماتية الطبية",
+      "desc": "السجل الطبي والطب عن بعد وPACS",
+      "icon": "monitor",
+      "image": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1920",
+      "productIds": [],
+      "features": [
+        {
+          "icon": "file-text",
+          "text": "السجل الطبي المشترك"
+        },
+        {
+          "icon": "video",
+          "text": "الطب عن بعد"
+        },
+        {
+          "icon": "image",
+          "text": "حلول PACS/RIS"
+        },
+        {
+          "icon": "lock",
+          "text": "أمن سيبراني HDS"
+        }
+      ],
+      "faq": [
+        {
+          "q": "هل الحلول متوافقة مع HDS؟",
+          "a": "نعم، جميعها معتمدة HDS ومتوافقة مع GDPR."
+        }
+      ]
+    },
+    "laboratoire": {
+      "title": "المختبر",
+      "desc": "أجهزة التحليل والمجاهر وأجهزة الطرد المركزي",
+      "icon": "flask-conical",
+      "image": "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=1920",
+      "productIds": [],
+      "features": [
+        {
+          "icon": "flask-conical",
+          "text": "أجهزة تحليل الدم"
+        },
+        {
+          "icon": "test-tube",
+          "text": "أجهزة الكيمياء الحيوية"
+        },
+        {
+          "icon": "microscope",
+          "text": "مجاهر المختبر"
+        },
+        {
+          "icon": "rotate-3d",
+          "text": "أجهزة الطرد المركزي"
+        }
+      ],
+      "faq": [
+        {
+          "q": "ما أنواع أجهزة التحليل؟",
+          "a": "أجهزة تحليل الدم والكيمياء الحيوية والمناعة والتخثر."
+        }
+      ]
+    },
+    "reeducation": {
+      "title": "إعادة التأهيل",
+      "desc": "طاولات العلاج الطبيعي والعلاج الكهربائي",
+      "icon": "accessibility",
+      "image": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1920",
+      "productIds": [
+        14
+      ],
+      "features": [
+        {
+          "icon": "accessibility",
+          "text": "طاولات العلاج الطبيعي"
+        },
+        {
+          "icon": "zap",
+          "text": "أجهزة العلاج الكهربائي"
+        },
+        {
+          "icon": "waves",
+          "text": "الموجات فوق الصوتية"
+        },
+        {
+          "icon": "dumbbell",
+          "text": "معدات التمارين"
+        }
+      ],
+      "faq": [
+        {
+          "q": "هل تقدمون معدات إعادة التأهيل العصبي؟",
+          "a": "نعم، بما في ذلك أنظمة الواقع الافتراضي."
+        }
+      ]
+    }
+  }
+}

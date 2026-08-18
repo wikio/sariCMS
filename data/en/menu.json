@@ -1,0 +1,130 @@
+{
+  "mainMenu": [
+    {
+      "id": "home",
+      "label": "Home",
+      "href": "/"
+    },
+    {
+      "id": "about",
+      "label": "About",
+      "href": "/about"
+    },
+    {
+      "id": "solutions",
+      "label": "Solutions",
+      "href": "/solutions",
+      "submenu": [
+        {
+          "id": "diagnostic",
+          "label": "Diagnostic",
+          "href": "/solutions/diagnostic",
+          "desc": "Ultrasound, blood pressure monitors, microscopes"
+        },
+        {
+          "id": "cardiology",
+          "label": "Cardiology",
+          "href": "/solutions/cardiology",
+          "desc": "ECG, defibrillators, monitors"
+        },
+        {
+          "id": "imaging",
+          "label": "Imaging",
+          "href": "/solutions/imaging",
+          "desc": "CT scanners, MRI, radiology"
+        },
+        {
+          "id": "surgery",
+          "label": "Surgery",
+          "href": "/solutions/surgery",
+          "desc": "Instruments, autoclaves, surgical tables"
+        },
+        {
+          "id": "pediatrics",
+          "label": "Pediatrics",
+          "href": "/solutions/pediatrics",
+          "desc": "Incubators, scales, phototherapy lamps"
+        },
+        {
+          "id": "emergency",
+          "label": "Emergency",
+          "href": "/solutions/emergency",
+          "desc": "Defibrillators, emergency carts"
+        },
+        {
+          "id": "informatics",
+          "label": "Informatics",
+          "href": "/solutions/informatics",
+          "desc": "EHR, telemedicine, PACS/RIS"
+        },
+        {
+          "id": "laboratory",
+          "label": "Laboratory",
+          "href": "/solutions/laboratory",
+          "desc": "Analyzers, microscopes, centrifuges"
+        },
+        {
+          "id": "rehabilitation",
+          "label": "Rehabilitation",
+          "href": "/solutions/rehabilitation",
+          "desc": "Physiotherapy tables, electrotherapy"
+        }
+      ]
+    },
+    {
+      "id": "services",
+      "label": "Services",
+      "href": "/services"
+    },
+    {
+      "id": "products",
+      "label": "Products",
+      "href": "/products"
+    },
+    {
+      "id": "events",
+      "label": "Events",
+      "href": "/events"
+    },
+    {
+      "id": "news",
+      "label": "News",
+      "href": "/news"
+    },
+    {
+      "id": "careers",
+      "label": "Careers",
+      "href": "/careers"
+    },
+    {
+      "id": "contact",
+      "label": "Contact",
+      "href": "/contact"
+    }
+  ],
+  "footerMenu": {
+    "navigation": [
+      { "id": "home", "label": "Home", "href": "/" },
+      { "id": "about", "label": "About", "href": "/about" },
+      { "id": "solutions", "label": "Solutions", "href": "/solutions" },
+      { "id": "services", "label": "Services", "href": "/services" },
+      { "id": "products", "label": "Products", "href": "/products" },
+      { "id": "events", "label": "Events", "href": "/events" },
+      { "id": "news", "label": "News", "href": "/news" },
+      { "id": "careers", "label": "Careers", "href": "/careers" },
+      { "id": "contact", "label": "Contact", "href": "/contact" }
+    ],
+    "legal": [
+      { "id": "mentions", "label": "Legal Notice", "href": "/legal/legal-notice" },
+      { "id": "privacy", "label": "Privacy Policy", "href": "/legal/privacy" },
+      { "id": "conditions", "label": "Terms & Conditions", "href": "/legal/conditions" },
+      { "id": "verification", "label": "Verification", "href": "/verification" }
+    ]
+  },
+  "socialLinks": {
+    "facebook": "https://facebook.com/sarisysteme",
+    "linkedin": "https://linkedin.com/company/sari-systeme",
+    "twitter": "https://twitter.com/sarisysteme",
+    "youtube": "https://youtube.com/sarisysteme"
+  }
+}

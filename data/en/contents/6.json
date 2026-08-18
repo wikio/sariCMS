@@ -1,0 +1,55 @@
+{
+  "sections": [
+    {
+      "title": "Medical Excellence",
+      "subtitle": "For over 20 years",
+      "content": "SARI Système is the trusted partner of over 500 healthcare facilities in Algeria. Our expertise covers all medical specialties.",
+      "image": "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=1920",
+      "features": [
+        "Recognized expertise",
+        "500+ customers",
+        "48 provinces covered"
+      ],
+      "cta": {
+        "label": "Learn more",
+        "link": "#about"
+      }
+    },
+    {
+      "title": "Our Story in Video",
+      "subtitle": "A journey of excellence",
+      "content": "Looking back on 20 years of innovation in the service of health. From our modest beginnings to our current position as a leader.",
+      "media": "https://www.youtube.com/embed/dQw4w9WgXcQ",
+      "mediaType": "youtube",
+      "cta": {
+        "label": "Join us",
+        "link": "#carrieres"
+      }
+    },
+    {
+      "title": "Our Solutions",
+      "subtitle": "Cutting-edge equipment",
+      "content": "A complete range to equip your facility: diagnostic, imaging, surgery, emergency, pediatrics, cardiology, medical informatics, laboratory and rehabilitation.",
+      "image": "https://images.unsplash.com/photo-1551076805-e1869033e561?w=1920",
+      "features": [
+        "9 categories",
+        "500+ products",
+        "Installation included"
+      ],
+      "cta": {
+        "label": "Discover",
+        "link": "#solutions"
+      }
+    },
+    {
+      "title": "Join Us",
+      "subtitle": "Let's build the future together",
+      "content": "Whether you are a healthcare professional, partner or candidate, we have a place for you. Contact us to discuss your projects.",
+      "image": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1920",
+      "cta": {
+        "label": "Contact us",
+        "link": "#contact"
+      }
+    }
+  ]
+}

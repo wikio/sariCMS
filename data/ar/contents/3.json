@@ -1,0 +1,35 @@
+{
+  "content": "<p>اكتشف بعض إنجازاتنا عبر الجزائر. كل تركيب يمثل شراكة ثقة مع مؤسسة صحية.</p>",
+  "media": [
+    {
+      "src": "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=1200",
+      "caption": "تركيب كامل في مستشفى الجزائر الجامعي - 2023",
+      "type": "image"
+    },
+    {
+      "src": "https://images.unsplash.com/photo-1551076805-e1869033e561?w=1200",
+      "caption": "غرفة عمليات حديثة - عيادة العافية، وهران",
+      "type": "image"
+    },
+    {
+      "src": "https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=1200",
+      "caption": "قسم أمراض القلب - المستشفى المركزي، قسنطينة",
+      "type": "image"
+    },
+    {
+      "src": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1200",
+      "caption": "مختبر التحاليل - العيادة الحديثة، عنابة",
+      "type": "image"
+    },
+    {
+      "src": "https://images.unsplash.com/photo-1519494026892-88bb237b200d?w=1200",
+      "caption": "قسم طب الأطفال - المستشفى الإقليمي، البليدة",
+      "type": "image"
+    },
+    {
+      "src": "https://images.unsplash.com/photo-1584982751601-97dcc096659c?w=1200",
+      "caption": "التصوير الطبي - مركز الصحة، تيزي وزو",
+      "type": "image"
+    }
+  ]
+}

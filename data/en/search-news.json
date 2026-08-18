@@ -1,0 +1,46 @@
+[
+  {
+    "id": 999,
+    "title": "New range of latest-generation portable ultrasound machines",
+    "date": "January 15, 2024",
+    "author": "Dr. Marie Laurent",
+    "category": "Products",
+    "classification": "Innovation",
+    "image": "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=800",
+    "shortDesc": "Discover our new collection of ultrasound machines with integrated AI",
+    "fullContent": "<p>The Portable Ultrasound Pro X1 is a cutting-edge device designed to meet the needs of healthcare professionals.</p>"
+  },
+  {
+    "id": 998,
+    "title": "Strategic partnership with a global imaging leader",
+    "date": "January 10, 2024",
+    "author": "Jean Dupont",
+    "category": "Company",
+    "classification": "Partnership",
+    "image": "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=800",
+    "shortDesc": "SARI Système signs an exclusive distribution agreement with MediTech",
+    "fullContent": "<p>We are delighted to announce our new partnership with MediTech International.</p>"
+  },
+  {
+    "id": 997,
+    "title": "2024 Continuing Education: Calendar available",
+    "date": "January 5, 2024",
+    "author": "Training Department",
+    "category": "Training",
+    "classification": "Event",
+    "image": "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800",
+    "shortDesc": "Discover the complete calendar of our training sessions for 2024",
+    "fullContent": "<p>The SARI Système training calendar for 2024 is now available.</p>"
+  },
+  {
+    "id": 996,
+    "title": "SARI Système obtains ISO 13485 certification",
+    "date": "December 20, 2023",
+    "author": "Quality Management",
+    "category": "Company",
+    "classification": "Quality",
+    "image": "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800",
+    "shortDesc": "Recognition of our quality commitment in medical devices",
+    "fullContent": "<p>We are pleased to announce the achievement of ISO 13485 certification.</p>"
+  }
+]

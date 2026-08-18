@@ -1,0 +1,659 @@
+[
+  {
+    "id": 1,
+    "name": "Échographe Portable Pro X1",
+    "category": "Diagnostic",
+    "price": "Sur devis",
+    "image": "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=800",
+    "shortDesc": "Échographe haute résolution pour imagerie médicale portable",
+    "fullDesc": "<p>L'Échographe Portable Pro X1 représente l'excellence en matière d'imagerie médicale mobile. Doté d'un écran tactile HD de 15 pouces et de sondes multifréquences interchangeables, cet appareil offre une qualité d'image exceptionnelle comparable aux échographes fixes.</p><h3>Caractéristiques principales</h3><ul><li>Écran tactile de 15 pouces avec résolution 1920x1080</li><li>Portabilité optimisée (poids : 3,2 kg)</li><li>Autonomie de 6 heures avec batterie intégrée</li><li>Connectivité Wi-Fi et Bluetooth pour transfert de données</li><li>Compatible DICOM pour intégration PACS</li></ul><h3>Applications cliniques</h3><p>Idéal pour les consultations à domicile, les interventions en milieu rural, les services d'urgence et les cabinets médicaux mobiles.</p>",
+    "gallery": [
+      "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=800",
+      "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=800",
+      "https://images.unsplash.com/photo-1551076805-e1869033e561?w=800",
+      "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800"
+    ],
+    "options": [
+      {
+        "name": "Configuration",
+        "choices": [
+          "Standard",
+          "Pro (Sondes supplémentaires)"
+        ]
+      },
+      {
+        "name": "Garantie",
+        "choices": [
+          "2 ans",
+          "3 ans",
+          "5 ans"
+        ]
+      }
+    ],
+    "catalogPdf": "#",
+    "inStock": true,
+    "deliveryTime": "2-3 semaines",
+    "features": [
+      "Imagerie 4D en temps réel",
+      "Mode Doppler couleur et pulsé",
+      "Mesures automatiques avancées",
+      "Export DICOM compatible",
+      "Interface multilingue"
+    ],
+    "specs": {
+      "Écran": "15 pouces tactile HD",
+      "Poids": "3.2 kg",
+      "Autonomie": "6 heures",
+      "Sondes": "4 sondes incluses",
+      "Connectivité": "WiFi, Bluetooth, USB-C",
+      "Résolution": "Full HD 1920x1080"
+    }
+  },
+  {
+    "id": 2,
+    "name": "Lit d'Examen Électrique Premium",
+    "category": "Équipements",
+    "price": "2 450 € HT",
+    "image": "https://images.unsplash.com/photo-1519494026892-88bb237b200d?w=800",
+    "shortDesc": "Lit médicalisé électrique réglable en hauteur",
+    "fullDesc": "<p>Le Lit d'Examen Électrique Premium offre un confort optimal pour vos patients et une ergonomie parfaite pour les praticiens. Ses moteurs silencieux permettent un réglage fluide de la hauteur et de l'inclinaison du dossier.</p><h3>Confort et sécurité</h3><ul><li>Revêtement en simili-cuir antibactérien</li><li>Roues de transport verrouillables</li><li>Système anti-pincement intégré</li><li>Charge maximale : 250 kg</li></ul>",
+    "gallery": [
+      "https://images.unsplash.com/photo-1519494026892-88bb237b200d?w=800",
+      "https://images.unsplash.com/photo-1584982751601-97dcc096659c?w=800",
+      "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800"
+    ],
+    "options": [
+      {
+        "name": "Revêtement",
+        "choices": [
+          "Simili-cuir Bleu",
+          "Simili-cuir Gris",
+          "Simili-cuir Noir"
+        ]
+      },
+      {
+        "name": "Accessoires",
+        "choices": [
+          "Standard",
+          "Avec coussin cervical",
+          "Pack complet"
+        ]
+      }
+    ],
+    "catalogPdf": "#",
+    "inStock": true,
+    "deliveryTime": "1-2 semaines",
+    "features": [
+      "Télécommande filaire ergonomique",
+      "Système anti-pincement",
+      "Roues de transport verrouillables",
+      "Certification médicale CE",
+      "Réglage mémoire de position"
+    ],
+    "specs": {
+      "Charge maximale": "250 kg",
+      "Hauteur": "45-95 cm",
+      "Dimensions": "190 x 70 cm",
+      "Moteurs": "2 moteurs électriques silencieux",
+      "Poids": "85 kg",
+      "Certification": "CE médical"
+    }
+  },
+  {
+    "id": 3,
+    "name": "Stérilisateur Autoclave Classe B",
+    "category": "Chirurgie",
+    "price": "3 890 € HT",
+    "image": "https://images.unsplash.com/photo-1583947215259-38e31be8751f?w=800",
+    "shortDesc": "Autoclave 23L pour stérilisation instruments médicaux",
+    "fullDesc": "<p>Autoclave de classe B conforme aux normes européennes pour la stérilisation de tous types d'instruments médicaux, y compris les instruments creux et poreux. Cycle automatique complet avec séchage sous vide.</p><h3>Technologie de pointe</h3><ul><li>Imprimante thermique intégrée pour la traçabilité</li><li>Écran LCD tactile intuitif</li><li>12 programmes prédéfinis</li><li>Tests automatiques Bowie-Dick</li></ul>",
+    "gallery": [
+      "https://images.unsplash.com/photo-1583947215259-38e31be8751f?w=800",
+      "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800"
+    ],
+    "options": [
+      {
+        "name": "Capacité",
+        "choices": [
+          "18L",
+          "23L",
+          "30L"
+        ]
+      },
+      {
+        "name": "Imprimante",
+        "choices": [
+          "Avec imprimante",
+          "Sans imprimante"
+        ]
+      }
+    ],
+    "catalogPdf": "#",
+    "inStock": false,
+    "deliveryTime": "4-6 semaines",
+    "features": [
+      "Cycle de séchage sous vide",
+      "Imprimante thermique intégrée",
+      "Tests automatiques Bowie-Dick",
+      "Écran LCD tactile",
+      "Traçabilité complète"
+    ],
+    "specs": {
+      "Capacité": "23 litres",
+      "Pression": "2.3 bars",
+      "Température": "134°C",
+      "Cycle": "15-25 minutes",
+      "Dimensions": "45 x 55 x 45 cm",
+      "Poids": "65 kg"
+    }
+  },
+  {
+    "id": 4,
+    "name": "Tensiomètre Digital Pro",
+    "category": "Diagnostic",
+    "price": "189 € HT",
+    "image": "https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=800",
+    "shortDesc": "Tensiomètre professionnel avec mémoire 120 mesures",
+    "fullDesc": "<p>Tensiomètre digital professionnel de haute précision avec brassard universel adapté à tous les bras. Mémoire de 120 mesures avec horodatage pour un suivi optimal.</p><h3>Fonctionnalités avancées</h3><ul><li>Détection des battements irréguliers</li><li>Indicateur de positionnement du brassard</li><li>Connectivité Bluetooth pour transfert des données</li><li>Application mobile dédiée</li></ul>",
+    "gallery": [
+      "https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=800",
+      "https://images.unsplash.com/photo-1584982751601-97dcc096659c?w=800"
+    ],
+    "options": [
+      {
+        "name": "Brassard",
+        "choices": [
+          "Standard (22-32cm)",
+          "Large (32-42cm)"
+        ]
+      }
+    ],
+    "catalogPdf": "#",
+    "inStock": true,
+    "deliveryTime": "3-5 jours",
+    "features": [
+      "Détection arythmie",
+      "Indicateur OMS coloré",
+      "Moyenne automatique",
+      "Application mobile dédiée",
+      "Brassard universel inclus"
+    ],
+    "specs": {
+      "Précision": "±3 mmHg",
+      "Mémoire": "120 mesures",
+      "Brassard": "22-42 cm",
+      "Alimentation": "4 piles AA ou secteur",
+      "Connectivité": "Bluetooth 5.0",
+      "Poids": "380 g"
+    }
+  },
+  {
+    "id": 5,
+    "name": "Microscope Binoculaire LED",
+    "category": "Diagnostic",
+    "price": "1 290 € HT",
+    "image": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800",
+    "shortDesc": "Microscope binoculaire avec éclairage LED 40x-2000x",
+    "fullDesc": "<p>Microscope binoculaire professionnel avec éclairage LED longue durée et système optique achromatique. Grossissement de 40x à 2000x avec 4 objectifs interchangeables.</p><h3>Optique de qualité</h3><ul><li>Système optique achromatique corrigé</li><li>Tête binoculaire inclinable 30°</li><li>Mise au point coaxiale précise</li><li>Platine mécanique avec butées de sécurité</li></ul>",
+    "gallery": [
+      "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800",
+      "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=800"
+    ],
+    "options": [
+      {
+        "name": "Objectifs",
+        "choices": [
+          "4 objectifs (4x,10x,40x,100x)",
+          "5 objectifs (+20x)"
+        ]
+      }
+    ],
+    "catalogPdf": "#",
+    "inStock": true,
+    "deliveryTime": "1 semaine",
+    "features": [
+      "Éclairage LED 50 000h",
+      "Système optique achromatique",
+      "Platine mécanique précise",
+      "Tête binoculaire inclinable 30°",
+      "Valise de transport incluse"
+    ],
+    "specs": {
+      "Grossissement": "40x - 2000x",
+      "Objectifs": "4x, 10x, 40x, 100x",
+      "Oculaires": "WF10x/18mm",
+      "Éclairage": "LED 3W",
+      "Poids": "6.5 kg"
+    }
+  },
+  {
+    "id": 6,
+    "name": "Pack Consommables Starter",
+    "category": "Consommables",
+    "price": "299 € HT",
+    "image": "https://images.unsplash.com/photo-1584982751601-97dcc096659c?w=800",
+    "shortDesc": "Pack de démarrage avec gants, masques et désinfectants",
+    "fullDesc": "<p>Pack complet de consommables médicaux pour démarrer ou réapprovisionner votre cabinet. Contient 10 boîtes de gants nitrile, masques chirurgicaux type IIR, gel hydroalcoolique et compresses stériles.</p><h3>Contenu détaillé</h3><ul><li>1000 gants nitrile sans latex ni poudre</li><li>50 masques chirurgicaux 3 plis haute filtration</li><li>5L de gel hydroalcoolique</li><li>500 compresses stériles non tissées</li></ul>",
+    "gallery": [
+      "https://images.unsplash.com/photo-1584982751601-97dcc096659c?w=800",
+      "https://images.unsplash.com/photo-1584483766114-2cea6fac255f?w=800"
+    ],
+    "options": [
+      {
+        "name": "Taille Gants",
+        "choices": [
+          "S",
+          "M",
+          "L",
+          "XL",
+          "Mixte"
+        ]
+      }
+    ],
+    "catalogPdf": "#",
+    "inStock": true,
+    "deliveryTime": "24-48h",
+    "features": [
+      "Gants sans latex ni poudre",
+      "Masques 3 plis haute filtration",
+      "Gel avec agents hydratants",
+      "Compresses non tissées",
+      "Livraison rapide"
+    ],
+    "specs": {
+      "Gants": "1000 unités nitrile",
+      "Masques": "50 type IIR",
+      "Gel": "5L hydroalcoolique",
+      "Compresses": "500 stériles",
+      "Validité": "24 mois"
+    }
+  },
+  {
+    "id": 7,
+    "name": "Défibrillateur Semi-Automatique",
+    "category": "Urgence",
+    "price": "1 850 € HT",
+    "image": "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=800",
+    "shortDesc": "DSA avec guide vocal et analyse rapide du rythme",
+    "fullDesc": "<p>Défibrillateur Semi-Automatique (DSA) de dernière génération avec guide vocal clair et analyse rapide du rythme cardiaque. Conçu pour une utilisation par les professionnels de santé et les secouristes formés.</p><h3>Simplicité d'utilisation</h3><ul><li>Guide vocal pas à pas en français</li><li>Analyse du rythme en moins de 10 secondes</li><li>Électrodes pré-gélifiées à usage unique</li><li>Autotest quotidien automatique</li></ul>",
+    "gallery": [
+      "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=800",
+      "https://images.unsplash.com/photo-1551076805-e1869033e561?w=800"
+    ],
+    "options": [
+      {
+        "name": "Pack",
+        "choices": [
+          "Appareil seul",
+          "Pack complet avec armoire",
+          "Pack formation inclus"
+        ]
+      }
+    ],
+    "catalogPdf": "#",
+    "inStock": true,
+    "deliveryTime": "1 semaine",
+    "features": [
+      "Guide vocal en français",
+      "Analyse rapide du rythme",
+      "Autotest quotidien",
+      "Électrodes pédiatriques disponibles",
+      "Garantie 8 ans"
+    ],
+    "specs": {
+      "Poids": "2.1 kg",
+      "Batterie": "Lithium, 4 ans",
+      "Énergie": "150-200J",
+      "Analyse": "Moins de 10 secondes",
+      "Étanchéité": "IP55"
+    }
+  },
+  {
+    "id": 8,
+    "name": "Concentrateur d'Oxygène 5L",
+    "category": "Respiratoire",
+    "price": "890 € HT",
+    "image": "https://images.unsplash.com/photo-1584483766114-2cea6fac255f?w=800",
+    "shortDesc": "Concentrateur d'oxygène médical silencieux 5L/min",
+    "fullDesc": "<p>Concentrateur d'oxygène médical de haute qualité délivrant jusqu'à 5 litres par minute d'oxygène à 93% de pureté. Fonctionnement silencieux idéal pour une utilisation à domicile ou en cabinet.</p><h3>Performance</h3><ul><li>Débit réglable de 0.5 à 5 L/min</li><li>Pureté d'oxygène : 93% ±3%</li><li>Niveau sonore : moins de 40 dB</li><li>Alarme de pression et de pureté</li></ul>",
+    "gallery": [
+      "https://images.unsplash.com/photo-1584483766114-2cea6fac255f?w=800",
+      "https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=800"
+    ],
+    "options": [
+      {
+        "name": "Accessoires",
+        "choices": [
+          "Pack standard",
+          "Pack avec chariot",
+          "Pack complet avec masque"
+        ]
+      }
+    ],
+    "catalogPdf": "#",
+    "inStock": true,
+    "deliveryTime": "3-5 jours",
+    "features": [
+      "Fonctionnement silencieux",
+      "Alarme de sécurité",
+      "Humidificateur inclus",
+      "Filtre facile à remplacer",
+      "Roulettes de transport"
+    ],
+    "specs": {
+      "Débit": "0.5-5 L/min",
+      "Pureté": "93% ±3%",
+      "Bruit": "<40 dB",
+      "Puissance": "350W",
+      "Poids": "15 kg"
+    }
+  },
+  {
+    "id": 9,
+    "name": "Lampe Scialytique Mobile LED",
+    "category": "Chirurgie",
+    "price": "3 200 € HT",
+    "image": "https://images.unsplash.com/photo-1551076805-e1869033e561?w=800",
+    "shortDesc": "Éclairage chirurgical mobile haute intensité sans ombre",
+    "fullDesc": "<p>Lampe scialytique mobile LED de haute performance offrant un éclairage chirurgical intense et sans ombre. Technologie LED dernière génération avec durée de vie de 50 000 heures.</p><h3>Éclairage professionnel</h3><ul><li>Intensité lumineuse : 100 000 à 150 000 Lux</li><li>Température de couleur : 4500K (lumière du jour)</li><li>IRC > 95 (restitution des couleurs)</li><li>Système anti-ombre multi-LED</li></ul>",
+    "gallery": [
+      "https://images.unsplash.com/photo-1551076805-e1869033e561?w=800",
+      "https://images.unsplash.com/photo-1519494026892-88bb237b200d?w=800"
+    ],
+    "options": [
+      {
+        "name": "Puissance",
+        "choices": [
+          "100 000 Lux",
+          "150 000 Lux"
+        ]
+      },
+      {
+        "name": "Installation",
+        "choices": [
+          "Mobile sur pied",
+          "Plafonnier fixe"
+        ]
+      }
+    ],
+    "catalogPdf": "#",
+    "inStock": true,
+    "deliveryTime": "2 semaines",
+    "features": [
+      "Technologie LED 50 000h",
+      "Éclairage sans ombre",
+      "Température de couleur réglable",
+      "Stérilisable",
+      "Pied mobile avec roulettes"
+    ],
+    "specs": {
+      "Intensité": "100 000-150 000 Lux",
+      "Température couleur": "4500K",
+      "IRC": ">95",
+      "Durée de vie LED": "50 000h",
+      "Poids": "12 kg"
+    }
+  },
+  {
+    "id": 10,
+    "name": "Pousse-Seringue Électrique Double",
+    "category": "Soins Intensifs",
+    "price": "1 450 € HT",
+    "image": "https://images.unsplash.com/photo-1519494026892-88bb237b200d?w=800",
+    "shortDesc": "Infusion de précision avec alarmes de sécurité",
+    "fullDesc": "<p>Pousse-seringue électrique double canal pour administration précise de médicaments en soins intensifs et réanimation. Système de sécurité avancé avec multiples alarmes.</p><h3>Précision et sécurité</h3><ul><li>Débit : 0.1 à 1200 mL/h</li><li>Précision : ±2%</li><li>Alarmes : occlusion, fin de perfusion, batterie faible</li><li>Compatible avec seringues de 10 à 60 mL</li></ul>",
+    "gallery": [
+      "https://images.unsplash.com/photo-1519494026892-88bb237b200d?w=800",
+      "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=800"
+    ],
+    "options": [
+      {
+        "name": "Configuration",
+        "choices": [
+          "Simple canal",
+          "Double canal",
+          "Triple canal"
+        ]
+      }
+    ],
+    "catalogPdf": "#",
+    "inStock": true,
+    "deliveryTime": "1-2 semaines",
+    "features": [
+      "Double canal indépendant",
+      "Alarmes multiples",
+      "Interface tactile",
+      "Historique des perfusions",
+      "Batterie de secours 4h"
+    ],
+    "specs": {
+      "Débit": "0.1-1200 mL/h",
+      "Précision": "±2%",
+      "Seringues": "10-60 mL",
+      "Alarmes": "Occlusion, fin, batterie",
+      "Batterie": "4h autonomie",
+      "Poids": "3.5 kg"
+    }
+  },
+  {
+    "id": 11,
+    "name": "Aspirateur de Secrétions Portable",
+    "category": "Soins",
+    "price": "350 € HT",
+    "image": "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=800",
+    "shortDesc": "Aspirateur médical léger avec batterie intégrée",
+    "fullDesc": "<p>Aspirateur de secrétions portable avec batterie intégrée pour une utilisation mobile. Idéal pour les soins à domicile, les transports sanitaires et les interventions d'urgence.</p><h3>Mobilité</h3><ul><li>Batterie lithium : 2h d'autonomie</li><li>Poids : seulement 2.5 kg</li><li>Dépression réglable : 0 à -600 mmHg</li><li>Réservoir : 1L autoclavable</li></ul>",
+    "gallery": [
+      "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=800",
+      "https://images.unsplash.com/photo-1583947215259-38e31be8751f?w=800"
+    ],
+    "options": [
+      {
+        "name": "Pack",
+        "choices": [
+          "Appareil seul",
+          "Pack avec sondes",
+          "Pack complet transport"
+        ]
+      }
+    ],
+    "catalogPdf": "#",
+    "inStock": true,
+    "deliveryTime": "3-5 jours",
+    "features": [
+      "Batterie intégrée 2h",
+      "Ultra-léger 2.5 kg",
+      "Dépression réglable",
+      "Réservoir autoclavable",
+      "Kit de sondes inclus"
+    ],
+    "specs": {
+      "Dépression": "0 à -600 mmHg",
+      "Débit": "20 L/min",
+      "Réservoir": "1L",
+      "Batterie": "Lithium 2h",
+      "Poids": "2.5 kg",
+      "Niveau sonore": "<60 dB"
+    }
+  },
+  {
+    "id": 12,
+    "name": "Balance Bébé Numérique",
+    "category": "Pédiatrie",
+    "price": "220 € HT",
+    "image": "https://images.unsplash.com/photo-1583947215259-38e31be8751f?w=800",
+    "shortDesc": "Balance de précision avec fonction tare et maintien",
+    "fullDesc": "<p>Balance bébé numérique de haute précision spécialement conçue pour la pesée des nourrissons et des jeunes enfants. Fonction maintien pour les bébés agités.</p><h3>Précision pédiatrique</h3><ul><li>Capacité : 20 kg</li><li>Précision : 5g</li><li>Fonction tare pour soustraire le poids des couches</li><li>Fonction maintien (Hold) pour bébés agités</li></ul>",
+    "gallery": [
+      "https://images.unsplash.com/photo-1583947215259-38e31be8751f?w=800",
+      "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800"
+    ],
+    "options": [
+      {
+        "name": "Accessoires",
+        "choices": [
+          "Balance seule",
+          "Avec toise murale",
+          "Pack complet pédiatrie"
+        ]
+      }
+    ],
+    "catalogPdf": "#",
+    "inStock": true,
+    "deliveryTime": "1 semaine",
+    "features": [
+      "Précision 5g",
+      "Fonction maintien",
+      "Fonction tare",
+      "Plateau antidérapant",
+      "Affichage LCD rétroéclairé"
+    ],
+    "specs": {
+      "Capacité": "20 kg",
+      "Précision": "5g",
+      "Plateau": "55 x 35 cm",
+      "Affichage": "LCD rétroéclairé",
+      "Alimentation": "Secteur ou piles",
+      "Poids": "4 kg"
+    }
+  },
+  {
+    "id": 13,
+    "name": "Nébuliseur à Compression",
+    "category": "Respiratoire",
+    "price": "85 € HT",
+    "image": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800",
+    "shortDesc": "Nébuliseur domestique et professionnel silencieux",
+    "fullDesc": "<p>Nébuliseur à compression pour l'administration de traitements respiratoires. Fonctionnement silencieux idéal pour une utilisation à domicile ou en cabinet médical.</p><h3>Performance</h3><ul><li>Taille des particules : 1-5 μm</li><li>Débit : 0.2 mL/min</li><li>Réservoir médicamenteux : 6 mL</li><li>Niveau sonore : <50 dB</li></ul>",
+    "gallery": [
+      "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800",
+      "https://images.unsplash.com/photo-1584483766114-2cea6fac255f?w=800"
+    ],
+    "options": [
+      {
+        "name": "Pack",
+        "choices": [
+          "Nébuliseur seul",
+          "Pack avec masques",
+          "Pack famille complet"
+        ]
+      }
+    ],
+    "catalogPdf": "#",
+    "inStock": true,
+    "deliveryTime": "24-48h",
+    "features": [
+      "Fonctionnement silencieux",
+      "Particules fines 1-5μm",
+      "Masques adulte et enfant",
+      "Embout buccal inclus",
+      "Facile à nettoyer"
+    ],
+    "specs": {
+      "Particules": "1-5 μm",
+      "Débit": "0.2 mL/min",
+      "Réservoir": "6 mL",
+      "Bruit": "<50 dB",
+      "Puissance": "130W",
+      "Poids": "1.2 kg"
+    }
+  },
+  {
+    "id": 14,
+    "name": "Fauteuil Roulant Léger Aluminium",
+    "category": "Mobilité",
+    "price": "450 € HT",
+    "image": "https://images.unsplash.com/photo-1584982751601-97dcc096659c?w=800",
+    "shortDesc": "Fauteuil pliable, ultra-léger et ergonomique",
+    "fullDesc": "<p>Fauteuil roulant en aluminium ultra-léger avec structure pliable pour un transport facile. Conçu pour une utilisation quotidienne avec confort et sécurité.</p><h3>Légèreté et confort</h3><ul><li>Poids : seulement 12 kg</li><li>Structure en aluminium anodisé</li><li>Assise et dossier rembourrés</li><li>Repose-pieds relevables et amovibles</li></ul>",
+    "gallery": [
+      "https://images.unsplash.com/photo-1584982751601-97dcc096659c?w=800",
+      "https://images.unsplash.com/photo-1519494026892-88bb237b200d?w=800"
+    ],
+    "options": [
+      {
+        "name": "Largeur d'assise",
+        "choices": [
+          "40 cm",
+          "45 cm",
+          "50 cm"
+        ]
+      },
+      {
+        "name": "Accessoires",
+        "choices": [
+          "Standard",
+          "Avec tablette",
+          "Pack complet"
+        ]
+      }
+    ],
+    "catalogPdf": "#",
+    "inStock": true,
+    "deliveryTime": "1 semaine",
+    "features": [
+      "Ultra-léger 12 kg",
+      "Structure pliable",
+      "Assise rembourrée",
+      "Repose-pieds amovibles",
+      "Freins à main"
+    ],
+    "specs": {
+      "Poids": "12 kg",
+      "Largeur assise": "40-50 cm",
+      "Roues arrière": "24 pouces",
+      "Charge max": "120 kg",
+      "Pliage": "Compact",
+      "Matériau": "Aluminium anodisé"
+    }
+  },
+  {
+    "id": 15,
+    "name": "Moniteur de Signes Vitaux Multiparamètres",
+    "category": "Urgence",
+    "price": "2 800 € HT",
+    "image": "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=800",
+    "shortDesc": "Surveillance ECG, SpO2, NIBP et Température",
+    "fullDesc": "<p>Moniteur patient multiparamètres de haute performance pour la surveillance continue des signes vitaux en temps réel. Écran tactile couleur haute résolution.</p><h3>Paramètres surveillés</h3><ul><li>ECG 3/5 dérivations avec analyse des arythmies</li><li>SpO2 (saturation en oxygène)</li><li>NIBP (pression artérielle non invasive)</li><li>Température (2 voies)</li><li>Fréquence respiratoire</li></ul>",
+    "gallery": [
+      "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=800",
+      "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=800",
+      "https://images.unsplash.com/photo-1551076805-e1869033e561?w=800"
+    ],
+    "options": [
+      {
+        "name": "Écran",
+        "choices": [
+          "12 pouces",
+          "15 pouces"
+        ]
+      },
+      {
+        "name": "Modules",
+        "choices": [
+          "Standard (ECG+SpO2+NIBP)",
+          "Complet (+Temp+Resp)"
+        ]
+      }
+    ],
+    "catalogPdf": "#",
+    "inStock": true,
+    "deliveryTime": "2-3 semaines",
+    "features": [
+      "Écran tactile couleur",
+      "ECG 3/5 dérivations",
+      "Alarmes configurables",
+      "Interface réseau",
+      "Batterie 4h",
+      "Historique des événements"
+    ],
+    "specs": {
+      "Écran": "12-15 pouces tactile",
+      "ECG": "3/5 dérivations",
+      "SpO2": "Pléthysmographie",
+      "NIBP": "Oscillométrique",
+      "Température": "2 voies",
+      "Batterie": "4h autonomie"
+    }
+  }
+]

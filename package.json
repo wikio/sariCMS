@@ -1,0 +1,31 @@
+{
+  "name": "sari-nextjs",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "merge:translations": "node scripts/merge-translations.mjs",
+    "dev": "npm run merge:translations && next dev -p 5000",
+    "build": "npm run merge:translations && next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "date-fns": "^4.4.0",
+    "lucide-react": "^1.28.0",
+    "next": "16.2.12",
+    "next-intl": "^4.13.4",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.43",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "autoprefixer": "^10.5.4",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.12",
+    "postcss": "^8.5.25",
+    "tailwindcss": "^3.4.19",
+    "typescript": "^5"
+  }
+}

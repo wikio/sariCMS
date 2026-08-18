@@ -1,0 +1,130 @@
+{
+  "mainMenu": [
+    {
+      "id": "home",
+      "label": "الرئيسية",
+      "href": "/"
+    },
+    {
+      "id": "about",
+      "label": "من نحن",
+      "href": "/about"
+    },
+    {
+      "id": "solutions",
+      "label": "الحلول",
+      "href": "/solutions",
+      "submenu": [
+        {
+          "id": "diagnostic",
+          "label": "التشخيص",
+          "href": "/solutions/diagnostic",
+          "desc": "أجهزة الموجات فوق الصوتية، مقاييس الضغط، المجاهر"
+        },
+        {
+          "id": "cardiology",
+          "label": "أمراض القلب",
+          "href": "/solutions/cardiology",
+          "desc": "تخطيط القلب، أجهزة الصدمات الكهربائية، الشاشات"
+        },
+        {
+          "id": "imaging",
+          "label": "التصوير",
+          "href": "/solutions/imaging",
+          "desc": "الماسحات الضوئية، التصوير بالرنين المغناطيسي، الأشعة"
+        },
+        {
+          "id": "surgery",
+          "label": "الجراحة",
+          "href": "/solutions/surgery",
+          "desc": "الأدوات، أجهزة التعقيم، طاولات العمليات"
+        },
+        {
+          "id": "pediatrics",
+          "label": "طب الأطفال",
+          "href": "/solutions/pediatrics",
+          "desc": "الحاضنات، الموازين، مصابيح العلاج الضوئي"
+        },
+        {
+          "id": "emergency",
+          "label": "الطوارئ",
+          "href": "/solutions/emergency",
+          "desc": "أجهزة الصدمات، عربات الطوارئ"
+        },
+        {
+          "id": "informatics",
+          "label": "المعلوماتية",
+          "href": "/solutions/informatics",
+          "desc": "السجلات الطبية الإلكترونية، الطب عن بعد"
+        },
+        {
+          "id": "laboratory",
+          "label": "المختبر",
+          "href": "/solutions/laboratory",
+          "desc": "أجهزة التحليل، المجاهر، أجهزة الطرد المركزي"
+        },
+        {
+          "id": "rehabilitation",
+          "label": "إعادة التأهيل",
+          "href": "/solutions/rehabilitation",
+          "desc": "طاولات العلاج الطبيعي، العلاج الكهربائي"
+        }
+      ]
+    },
+    {
+      "id": "services",
+      "label": "الخدمات",
+      "href": "/services"
+    },
+    {
+      "id": "products",
+      "label": "المنتجات",
+      "href": "/products"
+    },
+    {
+      "id": "events",
+      "label": "الفعاليات",
+      "href": "/events"
+    },
+    {
+      "id": "news",
+      "label": "الأخبار",
+      "href": "/news"
+    },
+    {
+      "id": "careers",
+      "label": "الوظائف",
+      "href": "/careers"
+    },
+    {
+      "id": "contact",
+      "label": "اتصل بنا",
+      "href": "/contact"
+    }
+  ],
+  "footerMenu": {
+    "navigation": [
+      { "id": "home", "label": "الرئيسية", "href": "/" },
+      { "id": "about", "label": "من نحن", "href": "/about" },
+      { "id": "solutions", "label": "الحلول", "href": "/solutions" },
+      { "id": "services", "label": "الخدمات", "href": "/services" },
+      { "id": "products", "label": "المنتجات", "href": "/products" },
+      { "id": "events", "label": "الفعاليات", "href": "/events" },
+      { "id": "news", "label": "الأخبار", "href": "/news" },
+      { "id": "careers", "label": "الوظائف", "href": "/careers" },
+      { "id": "contact", "label": "اتصل بنا", "href": "/contact" }
+    ],
+    "legal": [
+      { "id": "mentions", "label": "الإشعار القانوني", "href": "/legal/legalNotice" },
+      { "id": "privacy", "label": "سياسة الخصوصية", "href": "/legal/privacy" },
+      { "id": "conditions", "label": "الشروط والأحكام", "href": "/legal/conditions" },
+      { "id": "verification", "label": "التحقق", "href": "/verification" }
+    ]
+  },
+  "socialLinks": {
+    "facebook": "https://facebook.com/sarisysteme",
+    "linkedin": "https://linkedin.com/company/sari-systeme",
+    "twitter": "https://twitter.com/sarisysteme",
+    "youtube": "https://youtube.com/sarisysteme"
+  }
+}

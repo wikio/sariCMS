@@ -1,0 +1,16 @@
+{
+  "notFound": "Category not found",
+  "notFoundDesc": "This category does not exist or has been removed.",
+  "backToSolutions": "Back to solutions",
+  "home": "Home",
+  "solutions": "Solutions",
+  "aboutTitle": "About this category",
+  "productsTitle": "Equipment in this category",
+  "viewAllProducts": "View all products",
+  "commitmentsTitle": "Our commitments",
+  "faqTitle": "Frequently asked questions",
+  "needSolution": "Need this solution?",
+  "needSolutionDesc": "Contact our experts for a personalized study and free quote.",
+  "requestQuote": "Request a quote",
+  "otherCategories": "Other categories"
+}

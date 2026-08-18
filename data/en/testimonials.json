@@ -1,0 +1,38 @@
+[
+  {
+    "id": 1,
+    "name": "Dr. Marie Laurent",
+    "role": "Medical Director",
+    "clinic": "Saint-Louis Clinic",
+    "text": "SARI Système has supported us for 10 years. Their responsiveness and equipment quality are exceptional. The after-sales service is always available whenever we need it.",
+    "rating": 5,
+    "image": "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400"
+  },
+  {
+    "id": 2,
+    "name": "Dr. Philippe Martin",
+    "role": "Head of Radiology Department",
+    "clinic": "Lyon University Hospital",
+    "text": "Flawless after-sales service. The technicians are competent and always available. The supplied equipment is top quality.",
+    "rating": 5,
+    "image": "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=400"
+  },
+  {
+    "id": 3,
+    "name": "Sarah Benali",
+    "role": "Procurement Manager",
+    "clinic": "Nord Hospital Group",
+    "text": "Competitive prices and a very comprehensive product range. I highly recommend SARI Système for their professionalism and attentiveness.",
+    "rating": 5,
+    "image": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400"
+  },
+  {
+    "id": 4,
+    "name": "Dr. Thomas Bernard",
+    "role": "General Practitioner",
+    "clinic": "Parc Medical Center",
+    "text": "The portable ultrasound system I purchased from SARI is perfect for my home visits. Excellent training and flawless follow-up.",
+    "rating": 5,
+    "image": "https://images.unsplash.com/photo-1537368910025-700350fe46c7?w=400"
+  }
+]

@@ -1,0 +1,60 @@
+[
+  {
+    "label": "الرئيسية",
+    "href": "/"
+  },
+  {
+    "label": "من نحن",
+    "href": "/about"
+  },
+  {
+    "label": "الحلول",
+    "href": "/solutions",
+    "submenu": [
+      {
+        "label": "المعدات الثقيلة",
+        "href": "/solutions",
+        "desc": "التصوير وغرف العمليات"
+      },
+      {
+        "label": "المستهلكات",
+        "href": "/solutions",
+        "desc": "المستلزمات الطبية اليومية"
+      },
+      {
+        "label": "التشخيص",
+        "href": "/solutions",
+        "desc": "أدوات التشخيص المتقدمة"
+      },
+      {
+        "label": "الجراحة",
+        "href": "/solutions",
+        "desc": "المعدات الجراحية"
+      }
+    ]
+  },
+  {
+    "label": "الخدمات",
+    "href": "/services"
+  },
+  {
+    "label": "المنتجات",
+    "href": "/products"
+  },
+  {
+    "label": "الفعاليات",
+    "href": "/events"
+  },
+  {
+    "label": "الأخبار",
+    "href": "/news"
+  },
+  {
+    "label": "الوظائف",
+    "href": "/careers"
+  },
+  {
+    "label": "اتصل بنا",
+    "href": "/contact"
+  }
+]

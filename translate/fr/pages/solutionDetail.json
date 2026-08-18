@@ -1,0 +1,16 @@
+{
+  "notFound": "Catégorie introuvable",
+  "notFoundDesc": "Cette catégorie n'existe pas ou a été supprimée.",
+  "backToSolutions": "Retour aux solutions",
+  "home": "Accueil",
+  "solutions": "Solutions",
+  "aboutTitle": "À propos de cette catégorie",
+  "productsTitle": "Équipements de cette catégorie",
+  "viewAllProducts": "Voir tous les produits",
+  "commitmentsTitle": "Nos engagements",
+  "faqTitle": "Questions fréquentes",
+  "needSolution": "Besoin de cette solution ?",
+  "needSolutionDesc": "Contactez nos experts pour une étude personnalisée et un devis gratuit.",
+  "requestQuote": "Demander un devis",
+  "otherCategories": "Autres catégories"
+}

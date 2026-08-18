@@ -1,0 +1,299 @@
+{
+  "hero": {
+    "subtitle": "Nos Solutions",
+    "title": "Des équipements adaptés à chaque besoin",
+    "description": "Découvrez nos 9 catégories de solutions médicales, de l'équipement de diagnostic à l'informatique médicale"
+  },
+  "breadcrumb": {
+    "home": "Accueil",
+    "solutions": "Solutions"
+  },
+  "intro": {
+    "subtitle": "Notre Expertise",
+    "title": "Un accompagnement complet pour les professionnels de santé",
+    "description": "Depuis plus de 20 ans, nous accompagnons les établissements de santé dans le choix et l'installation de leurs équipements médicaux.",
+    "stats": {
+      "categories": "9",
+      "categoriesLabel": "Catégories de solutions",
+      "products": "500+",
+      "productsLabel": "Produits référencés",
+      "clients": "500+",
+      "clientsLabel": "Établissements équipés",
+      "support": "24/7",
+      "supportLabel": "Support technique"
+    }
+  },
+  "categories": {
+    "subtitle": "Nos Catégories",
+    "title": "Explorez nos solutions par domaine",
+    "description": "Chaque catégorie regroupe les meilleurs équipements pour répondre aux besoins spécifiques de votre pratique",
+    "items": {
+      "diagnostic": {
+        "icon": "stethoscope",
+        "color": "sari-blue",
+        "title": "Diagnostic",
+        "desc": "Échographes, tensiomètres, microscopes et outils d'auscultation",
+        "cta": "Découvrir",
+        "link": "#solutions/diagnostic",
+        "features": [
+          "Échographes portables",
+          "Tensiomètres digitaux",
+          "Microscopes binoculaires",
+          "Stéthoscopes"
+        ]
+      },
+      "cardiology": {
+        "icon": "heart-pulse",
+        "color": "red-500",
+        "title": "Cardiologie",
+        "desc": "ECG, défibrillateurs, moniteurs cardiaques et holters",
+        "cta": "Découvrir",
+        "link": "#solutions/cardiology",
+        "features": [
+          "ECG 12 dérivations",
+          "Défibrillateurs DSA",
+          "Moniteurs cardiaques",
+          "Holters ECG"
+        ]
+      },
+      "imaging": {
+        "icon": "scan",
+        "color": "purple-500",
+        "title": "Imagerie",
+        "desc": "Scanners, IRM, radiologie numérique et échographie",
+        "cta": "Découvrir",
+        "link": "#solutions/imagerie",
+        "features": [
+          "Scanners CT",
+          "IRM haute résolution",
+          "Radiologie numérique",
+          "Échographes fixes"
+        ]
+      },
+      "surgery": {
+        "icon": "syringe",
+        "color": "green-500",
+        "title": "Chirurgie",
+        "desc": "Instruments, stérilisateurs, lampes scialytiques et tables",
+        "cta": "Découvrir",
+        "link": "#solutions/chirurgie",
+        "features": [
+          "Instruments chirurgicaux",
+          "Autoclaves classe B",
+          "Lampes scialytiques LED",
+          "Tables opératoires"
+        ]
+      },
+      "pediatrics": {
+        "icon": "baby",
+        "color": "pink-500",
+        "title": "Pédiatrie",
+        "desc": "Couveuses, balances, photothérapie et matériel adapté",
+        "cta": "Découvrir",
+        "link": "#solutions/pediatrie",
+        "features": [
+          "Couveuses néonatales",
+          "Balances pédiatriques",
+          "Lampes de photothérapie",
+          "Matériel adapté"
+        ]
+      },
+      "emergency": {
+        "icon": "activity",
+        "color": "orange-500",
+        "title": "Urgence",
+        "desc": "Défibrillateurs, chariots d'urgence, moniteurs et aspirateurs",
+        "cta": "Découvrir",
+        "link": "#solutions/urgence",
+        "features": [
+          "Défibrillateurs DSA",
+          "Chariots d'urgence",
+          "Moniteurs multiparamètres",
+          "Aspirateurs portables"
+        ]
+      },
+      "informatics": {
+        "icon": "monitor",
+        "color": "indigo-500",
+        "title": "Informatique Médicale",
+        "desc": "DMP, logiciels métier, télémédecine, PACS et cybersécurité",
+        "cta": "Découvrir",
+        "link": "#solutions/informatique",
+        "features": [
+          "Dossier Médical Partagé",
+          "Logiciels métier",
+          "Télémédecine",
+          "Solutions PACS"
+        ]
+      },
+      "laboratory": {
+        "icon": "flask-conical",
+        "color": "teal-500",
+        "title": "Laboratoire",
+        "desc": "Analyseurs, centrifugeuses, réactifs et équipements de diagnostic",
+        "cta": "Découvrir",
+        "link": "#solutions/laboratoire",
+        "features": [
+          "Analyseurs automatiques",
+          "Centrifugeuses",
+          "Réactifs de diagnostic",
+          "Microscopes de laboratoire"
+        ]
+      },
+      "rehabilitation": {
+        "icon": "accessibility",
+        "color": "cyan-500",
+        "title": "Rééducation",
+        "desc": "Kinésithérapie, électrothérapie, équipements adaptés et mobilité",
+        "cta": "Découvrir",
+        "link": "#solutions/reeducation",
+        "features": [
+          "Tables de kinésithérapie",
+          "Électrothérapie",
+          "Fauteuils roulants",
+          "Aides à la mobilité"
+        ]
+      }
+    }
+  },
+  "process": {
+    "subtitle": "Notre Méthode",
+    "title": "Un accompagnement en 5 étapes",
+    "description": "De l'analyse de vos besoins à la maintenance de vos équipements, nous vous accompagnons à chaque étape",
+    "steps": [
+      {
+        "number": "01",
+        "icon": "search",
+        "title": "Analyse des besoins",
+        "desc": "Étude personnalisée de votre établissement et de vos contraintes techniques"
+      },
+      {
+        "number": "02",
+        "icon": "clipboard-list",
+        "title": "Proposition sur mesure",
+        "desc": "Sélection des équipements adaptés avec devis détaillé et planning d'installation"
+      },
+      {
+        "number": "03",
+        "icon": "truck",
+        "title": "Livraison & Installation",
+        "desc": "Livraison sécurisée et installation par nos techniciens certifiés"
+      },
+      {
+        "number": "04",
+        "icon": "graduation-cap",
+        "title": "Formation des équipes",
+        "desc": "Formation complète de vos équipes à l'utilisation des nouveaux équipements"
+      },
+      {
+        "number": "05",
+        "icon": "wrench",
+        "title": "Maintenance & Support",
+        "desc": "Maintenance préventive et support technique 24/7 pour une disponibilité optimale"
+      }
+    ]
+  },
+  "featured": {
+    "subtitle": "Nos Solutions Phares",
+    "title": "Les équipements qui font la différence",
+    "description": "Découvrez notre sélection des équipements les plus performants du marché",
+    "items": [
+      {
+        "key": "diagnostic",
+        "image": "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=1200"
+      },
+      {
+        "key": "cardiology",
+        "image": "https://images.unsplash.com/photo-1559757175-5700dde675bc?w=1200"
+      },
+      {
+        "key": "imaging",
+        "image": "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=1200"
+      },
+      {
+        "key": "informatics",
+        "image": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1200"
+      }
+    ]
+  },
+  "alternating": {
+    "diagnostic": {
+      "subtitle": "Diagnostic",
+      "title": "La précision au service du diagnostic",
+      "desc": "Nos équipements de diagnostic permettent une détection précoce et précise des pathologies. Échographes portables, tensiomètres digitaux et microscopes de haute qualité pour un diagnostic fiable.",
+      "features": [
+        "Imagerie haute résolution",
+        "Portabilité optimisée",
+        "Connectivité Bluetooth/WiFi",
+        "Conformité CE et ISO"
+      ],
+      "cta": "Explorer le diagnostic",
+      "link": "#solutions/diagnostic",
+      "image": "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=1200"
+    },
+    "informatics": {
+      "subtitle": "Informatique Médicale",
+      "title": "La digitalisation au service de la santé",
+      "desc": "Modernisez votre pratique avec nos solutions d'informatique médicale : Dossier Médical Partagé, télémédecine, PACS et cybersécurité conforme aux normes HDS.",
+      "features": [
+        "DMP conforme HDS",
+        "Télémédecine sécurisée",
+        "Solutions PACS",
+        "Cybersécurité avancée"
+      ],
+      "cta": "Explorer l'informatique médicale",
+      "link": "#solutions/informatique",
+      "image": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1200"
+    },
+    "emergency": {
+      "subtitle": "Urgence",
+      "title": "Des équipements qui sauvent des vies",
+      "desc": "En situation d'urgence, chaque seconde compte. Nos défibrillateurs, chariots d'urgence et moniteurs multiparamètres garantissent une intervention rapide et efficace.",
+      "features": [
+        "Défibrillateurs DSA",
+        "Chariots d'urgence complets",
+        "Moniteurs temps réel",
+        "Support 24/7"
+      ],
+      "cta": "Explorer les urgences",
+      "link": "#solutions/urgence",
+      "image": "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=1200"
+    }
+  },
+  "testimonials": {
+    "subtitle": "Témoignages",
+    "title": "Ils nous font confiance",
+    "description": "Découvrez les retours d'expérience de nos clients"
+  },
+  "cta": {
+    "title": "Besoin d'une solution personnalisée ?",
+    "description": "Notre équipe d'experts est à votre disposition pour analyser vos besoins et vous proposer la solution la plus adaptée.",
+    "primary": "Demander un devis",
+    "secondary": "Nous contacter"
+  },
+  "faq": {
+    "title": "Questions Fréquentes",
+    "items": [
+      {
+        "q": "Quels sont les délais de livraison ?",
+        "a": "Les délais varient selon le type d'équipement : 24-48h pour les consommables, 1-2 semaines pour les équipements standards, 4-8 semaines pour les équipements lourds (IRM, scanners)."
+      },
+      {
+        "q": "Proposez-vous des solutions de financement ?",
+        "a": "Oui, nous proposons plusieurs options : location, leasing, paiement en plusieurs fois, et accompagnement pour les demandes de subventions régionales."
+      },
+      {
+        "q": "La formation est-elle incluse ?",
+        "a": "Oui, une session de formation de base est incluse pour tout achat d'équipement. Des formations avancées sont disponibles en option."
+      },
+      {
+        "q": "Quelles certifications ont vos équipements ?",
+        "a": "Tous nos équipements sont certifiés CE et conformes aux normes ISO 13485. Certains disposent également de certifications FDA ou HDS."
+      },
+      {
+        "q": "Proposez-vous un service de maintenance ?",
+        "a": "Oui, nous proposons des contrats de maintenance préventive et corrective avec intervention garantie sous 24h sur tout le territoire."
+      }
+    ]
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "slides": [
+    {
+      "title": "Dr. Ahmed Benali",
+      "subtitle": "Dental Surgeon - El Afia Clinic, Oran",
+      "content": "\"Exceptional service and very high quality equipment. The SARI team supported us from A to Z, from selection to installation. I highly recommend!\"",
+      "image": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1920"
+    },
+    {
+      "title": "Dr. Fatima Zahra",
+      "subtitle": "Cardiologist - Central Hospital, Algiers",
+      "content": "\"The quality of the cardiology equipment is remarkable. The 24/7 technical support is a real plus for our emergency department.\"",
+      "image": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=1920"
+    },
+    {
+      "title": "Dr. Mohamed Kaci",
+      "subtitle": "Director - Modern Clinic, Constantine",
+      "content": "\"The medical informatics offered by SARI has transformed our management. The EMR complies with all standards and the interface is intuitive.\"",
+      "image": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=1920"
+    },
+    {
+      "title": "Dr. Sarah Boumediene",
+      "subtitle": "Pediatrician - Regional Hospital, Blida",
+      "content": "\"The pediatric equipment is perfectly adapted to the needs of children. The SARI team listened to our specificities.\"",
+      "image": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=1920"
+    }
+  ]
+}

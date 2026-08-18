@@ -1,0 +1,201 @@
+[
+  {
+    "id": "diagnostic",
+    "title": "Diagnostic & Imaging",
+    "shortDesc": "Ultrasound machines, blood pressure monitors, stethoscopes and high-precision diagnostic equipment.",
+    "fullDesc": "<p>Our range of diagnostic and imaging solutions is designed to provide unparalleled precision to healthcare professionals. We offer CE-certified equipment compliant with ISO 13485 standards.</p><p>Whether you are a private practice or a large hospital, we have the solution tailored to your specific needs.</p>",
+    "icon": "stethoscope",
+    "color": "sari-blue",
+    "image": "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=1920",
+    "productIds": [1, 4, 5],
+    "features": [
+      "4D high-resolution imaging",
+      "WiFi and Bluetooth connectivity",
+      "Long battery life",
+      "CE and ISO 13485 certification",
+      "HD touch screens",
+      "Delivery and installation included"
+    ],
+    "faq": [
+      { "q": "What types of ultrasound machines do you offer?", "a": "We offer portable and fixed ultrasound machines, with different probe configurations (convex, linear, endocavitary). All our devices are CE certified and ISO 13485 compliant." },
+      { "q": "Are blood pressure monitors medically certified?", "a": "Yes, all our blood pressure monitors are Class IIa medical devices, CE certified with clinical validation according to the ESH protocol." },
+      { "q": "Do you offer training on how to use them?", "a": "Yes, a basic training session is included with every purchase. Advanced training is available as an option." }
+    ]
+  },
+  {
+    "id": "cardiology",
+    "title": "Cardiology",
+    "shortDesc": "ECG, defibrillators, cardiac monitors and holters for optimal surveillance.",
+    "fullDesc": "<p>Cardiology requires absolute reliability. Our cardiac monitoring and defibrillation equipment is designed for both emergency situations and daily follow-up.</p>",
+    "icon": "heart-pulse",
+    "color": "red-500",
+    "image": "https://images.unsplash.com/photo-1559757175-5700dde675bc?w=1920",
+    "productIds": [7],
+    "features": [
+      "3/5/12 lead ECG",
+      "AED and manual defibrillators",
+      "Real-time cardiac monitors",
+      "24/48/72h ECG Holters",
+      "Medical CE compliance",
+      "24/7 technical support"
+    ],
+    "faq": [
+      { "q": "Are your ECGs 12-lead?", "a": "Yes, we offer 3, 6, and 12-lead ECGs according to your needs. All our ECGs feature a touch screen and an integrated thermal printer." },
+      { "q": "Are defibrillators easy to use?", "a": "Yes, all our AEDs are designed for simple use with step-by-step voice guidance and automatic rhythm analysis in under 10 seconds." }
+    ]
+  },
+  {
+    "id": "imagerie",
+    "title": "Medical Imaging",
+    "shortDesc": "CT scanners, MRI, digital radiology and PACS/RIS solutions.",
+    "fullDesc": "<p>Our medical imaging solutions cover all diagnostic needs of healthcare facilities. From 16-slice CT scanners to 3T MRI, we offer state-of-the-art equipment.</p>",
+    "icon": "scan",
+    "color": "purple-500",
+    "image": "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=1920",
+    "productIds": [],
+    "features": [
+      "16 to 128 slice CT scanners",
+      "1.5T and 3T MRI",
+      "DR/CR digital radiology",
+      "PACS/RIS solutions",
+      "HDS compliance",
+      "Preventive maintenance"
+    ],
+    "faq": [
+      { "q": "Do you offer CT scanners?", "a": "Yes, we offer a complete range of CT scanners, from 16 to 128 slices, with installation and training included." },
+      { "q": "Are MRIs compatible with all patients?", "a": "Yes, our MRIs are adapted to all patient profiles, including children and claustrophobic individuals." }
+    ]
+  },
+  {
+    "id": "surgery",
+    "title": "Surgery",
+    "shortDesc": "Surgical instruments, autoclaves, surgical lights and operating tables.",
+    "fullDesc": "<p>Our surgery department offers all the equipment needed for modern operating rooms, from sterilization to lighting, including precision instruments.</p>",
+    "icon": "syringe",
+    "color": "green-500",
+    "image": "https://images.unsplash.com/photo-1551076805-e1869033e561?w=1920",
+    "productIds": [3, 9],
+    "features": [
+      "Stainless steel surgical instruments",
+      "Class B autoclaves",
+      "LED surgical lights",
+      "Electric operating tables",
+      "Certified sterilization",
+      "Maintenance and after-sales service"
+    ],
+    "faq": [
+      { "q": "Are your autoclaves Class B?", "a": "Yes, all our autoclaves are Class B, compliant with European standards EN 13060, with a vacuum drying cycle and complete traceability." },
+      { "q": "Are surgical lights LED?", "a": "Yes, all our surgical lights are LED with a lifespan of 50,000 hours, a CRI > 95, and an intensity of up to 150,000 Lux." }
+    ]
+  },
+  {
+    "id": "pediatrics",
+    "title": "Pediatrics",
+    "shortDesc": "Neonatal incubators, pediatric scales, phototherapy and adapted equipment.",
+    "fullDesc": "<p>Our pediatric range is specially designed for the care of newborns and children, with adapted, secure and gentle equipment.</p>",
+    "icon": "baby",
+    "color": "pink-500",
+    "image": "https://images.unsplash.com/photo-1583947215259-38e31be8751f?w=1920",
+    "productIds": [12],
+    "features": [
+      "Neonatal incubators",
+      "5g pediatric scales",
+      "Phototherapy lamps",
+      "Infrared thermometers",
+      "Neonatal monitors",
+      "Child-adapted equipment"
+    ],
+    "faq": [
+      { "q": "Are incubators suitable for premature babies?", "a": "Yes, our incubators are suitable for premature babies from 28 weeks of gestation, with precise control of temperature, humidity, and oxygen." },
+      { "q": "Are the scales accurate?", "a": "Yes, our pediatric scales have an accuracy of 5g with a Hold function for restless babies and a Tare function for diapers." }
+    ]
+  },
+  {
+    "id": "emergency",
+    "title": "Emergency & Resuscitation",
+    "shortDesc": "Defibrillators, emergency carts, multiparameter monitors and suction pumps.",
+    "fullDesc": "<p>The emergency department requires reliable and 24/7 available equipment. Our solutions are designed for speed, robustness and efficiency in critical situations.</p>",
+    "icon": "activity",
+    "color": "orange-500",
+    "image": "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=1920",
+    "productIds": [7, 15],
+    "features": [
+      "AED/Manual defibrillators",
+      "Complete emergency carts",
+      "Multiparameter monitors",
+      "Suction pumps",
+      "Syringe pumps",
+      "Guaranteed 24/7 support"
+    ],
+    "faq": [
+      { "q": "Are defibrillators automatic?", "a": "Yes, we offer AEDs (semi-automatic) and fully automatic defibrillators with voice guidance and rhythm analysis in under 10 seconds." },
+      { "q": "Are emergency carts complete?", "a": "Yes, our carts are delivered with all necessary equipment: defibrillator, monitor, suction pump, oxygen, and emergency medications." }
+    ]
+  },
+  {
+    "id": "informatics",
+    "title": "Medical Informatics",
+    "shortDesc": "EHR, telemedicine, PACS/RIS and HDS cybersecurity.",
+    "fullDesc": "<p>Our medical informatics department offers comprehensive and secure solutions for the digitalization and management of healthcare facility data.</p>",
+    "icon": "monitor",
+    "color": "indigo-500",
+    "image": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1920",
+    "productIds": [],
+    "features": [
+      "Shared Medical Record (EHR)",
+      "Telemedicine and teleconsultation",
+      "PACS/RIS solutions",
+      "HDS cybersecurity",
+      "Health data hosting",
+      "Mobile applications"
+    ],
+    "faq": [
+      { "q": "Are your EHR solutions HDS compliant?", "a": "Yes, all our EHR solutions are HDS certified (Health Data Host) and compliant with GDPR and Algerian regulations." },
+      { "q": "Do you offer telemedicine solutions?", "a": "Yes, we offer complete teleconsultation, tele-expertise, and remote monitoring solutions with secure HD video conferencing." }
+    ]
+  },
+  {
+    "id": "laboratory",
+    "title": "Laboratory",
+    "shortDesc": "Hematology analyzers, biochemistry, microscopes and centrifuges.",
+    "fullDesc": "<p>Our laboratory range covers all the needs of medical analysis laboratories, from entry-level to high-throughput, with guaranteed analytical precision.</p>",
+    "icon": "flask-conical",
+    "color": "teal-500",
+    "image": "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=1920",
+    "productIds": [],
+    "features": [
+      "Hematology analyzers",
+      "Biochemistry analyzers",
+      "Laboratory microscopes",
+      "Centrifuges",
+      "Ovens and incubators",
+      "Reagents and consumables"
+    ],
+    "faq": [
+      { "q": "What types of analyzers do you offer?", "a": "We offer hematology, biochemistry, immunology, and coagulation analyzers, from entry-level to high-throughput." },
+      { "q": "Are reagents included?", "a": "Starter reagents are included with each analyzer. We then offer reagent supply contracts at preferential rates." }
+    ]
+  },
+  {
+    "id": "rehabilitation",
+    "title": "Rehabilitation",
+    "shortDesc": "Physiotherapy tables, electrotherapy, therapeutic ultrasound.",
+    "fullDesc": "<p>Our rehabilitation department offers professional and ergonomic equipment for physiotherapy and functional rehabilitation centers.</p>",
+    "icon": "accessibility",
+    "color": "cyan-500",
+    "image": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1920",
+    "productIds": [14],
+    "features": [
+      "Physiotherapy tables",
+      "Electrotherapy devices",
+      "Therapeutic ultrasound",
+      "Muscle building equipment",
+      "Walking platforms",
+      "CE certified equipment"
+    ],
+    "faq": [
+      { "q": "Do you offer neurological rehabilitation equipment?", "a": "Yes, we offer neurological rehabilitation platforms, exoskeletons, and virtual reality systems." },
+      { "q": "Are electrotherapy devices multifunctional?", "a": "Yes, our devices combine TENS, EMS, ultrasound, and therapeutic laser in a single compact device." }
+    ]
+  }
+]

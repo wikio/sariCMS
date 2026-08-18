@@ -1,0 +1,10 @@
+{
+  "content": "<h2>قصتنا</h2><p>تأسست ساري سيستم في عام 2003 في الجزائر، ولدت من رؤية توفير معدات طبية متطورة وموثوقة وبأسعار معقولة للمهنيين الصحيين الجزائريين.</p><h3>قيمنا</h3><div class='grid grid-cols-2 gap-4 my-6'><div class='p-4 bg-sari-blue/5 border-l-4 border-sari-blue'><h4 class='font-bold mb-2'>🎯 التميز</h4><p class='text-sm'>نسعى للتميز في كل تفاعل مع العملاء.</p></div><div class='p-4 bg-sari-lime/10 border-l-4 border-sari-lime'><h4 class='font-bold mb-2'>🤝 القرب</h4><p class='text-sm'>علاقة ثقة مع عملائنا وشركائنا.</p></div><div class='p-4 bg-purple-50 dark:bg-purple-900/20 border-l-4 border-purple-500'><h4 class='font-bold mb-2'>💡 الابتكار</h4><p class='text-sm'>دائمًا في طليعة التقنيات الطبية.</p></div><div class='p-4 bg-orange-50 dark:bg-orange-900/20 border-l-4 border-orange-500'><h4 class='font-bold mb-2'>🛡️ الموثوقية</h4><p class='text-sm'>معدات يمكن الاعتماد عليها.</p></div></div><h3>أرقامنا الرئيسية</h3><p>بعد 20 عامًا من النشاط، نفخر بإنجازاتنا:</p><ul><li><strong>+500</strong> مؤسسة مجهزة</li><li><strong>9</strong> فئات من الحلول الطبية</li><li><strong>24/7</strong> دعم تقني متاح</li><li><strong>48</strong> ولاية مغطاة</li></ul>",
+  "features": [
+    "فريق من أكثر من 50 فنيًا معتمدًا",
+    "شراكات مع أكثر من 30 علامة تجارية دولية",
+    "مركز تدريب معتمد",
+    "مختبر اختبارات داخلي",
+    "خدمة ما بعد البيع سريعة الاستجابة"
+  ]
+}

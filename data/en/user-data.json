@@ -1,0 +1,263 @@
+{
+  "demoAccounts": [
+    {
+      "email": "client@sari.dz",
+      "password": "client123",
+      "type": "client",
+      "profile": {
+        "firstName": "Mohamed",
+        "lastName": "Benali",
+        "phone": "0555123456",
+        "country": "Algeria",
+        "wilaya": "16 - Algiers",
+        "address": "12 Didouche Mourad Street, Algiers",
+        "description": "Loyal client since 2020, specialized in diagnostic equipment.",
+        "photo": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200",
+        "joinDate": "2020-03-15"
+      },
+      "stats": {
+        "totalOrders": 24,
+        "totalInvoices": 18,
+        "pendingQuotes": 3,
+        "totalSpent": "2 450 000 DZD"
+      },
+      "orders": [
+        {
+          "id": "CMD-2024-001",
+          "date": "2024-01-15",
+          "status": "Delivered",
+          "total": "125 000 DZD",
+          "items": 3
+        },
+        {
+          "id": "CMD-2024-002",
+          "date": "2024-02-20",
+          "status": "In progress",
+          "total": "89 000 DZD",
+          "items": 2
+        },
+        {
+          "id": "CMD-2024-003",
+          "date": "2024-03-10",
+          "status": "Confirmed",
+          "total": "245 000 DZD",
+          "items": 5
+        }
+      ],
+      "invoices": [
+        {
+          "id": "FAC-2024-001",
+          "date": "2024-01-20",
+          "amount": "125 000 DZD",
+          "status": "Paid"
+        },
+        {
+          "id": "FAC-2024-002",
+          "date": "2024-02-25",
+          "amount": "89 000 DZD",
+          "status": "Pending"
+        }
+      ],
+      "quotes": [
+        {
+          "id": "DEV-2024-001",
+          "date": "2024-03-01",
+          "amount": "350 000 DZD",
+          "status": "Pending",
+          "validUntil": "2024-04-01"
+        },
+        {
+          "id": "DEV-2024-002",
+          "date": "2024-03-15",
+          "amount": "180 000 DZD",
+          "status": "Accepted",
+          "validUntil": "2024-04-15"
+        }
+      ],
+      "messages": [
+        {
+          "id": 1,
+          "from": "SARI Support",
+          "subject": "Delivery confirmation",
+          "date": "2024-03-10",
+          "read": false
+        },
+        {
+          "id": 2,
+          "from": "Sales Department",
+          "subject": "New special offer",
+          "date": "2024-03-08",
+          "read": true
+        }
+      ]
+    },
+    {
+      "email": "partenaire@sari.dz",
+      "password": "partenaire123",
+      "type": "partner",
+      "profile": {
+        "firstName": "Ahmed",
+        "lastName": "Boumediene",
+        "phone": "021456789",
+        "country": "Algeria",
+        "wilaya": "31 - Oran",
+        "address": "Industrial Zone, Oran",
+        "companyName": "SARL MEDTECH",
+        "description": "Regional distributor partner for western Algeria.",
+        "photo": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200",
+        "joinDate": "2019-06-20"
+      },
+      "stats": {
+        "totalOrders": 156,
+        "totalInvoices": 142,
+        "pendingQuotes": 8,
+        "totalRevenue": "15 800 000 DZD",
+        "activePartnerships": 3
+      },
+      "orders": [
+        {
+          "id": "CMD-2024-101",
+          "date": "2024-03-01",
+          "status": "Delivered",
+          "total": "890 000 DZD",
+          "items": 12
+        },
+        {
+          "id": "CMD-2024-102",
+          "date": "2024-03-15",
+          "status": "In production",
+          "total": "1 250 000 DZD",
+          "items": 8
+        }
+      ],
+      "invoices": [
+        {
+          "id": "FAC-2024-050",
+          "date": "2024-02-28",
+          "amount": "890 000 DZD",
+          "status": "Paid"
+        },
+        {
+          "id": "FAC-2024-051",
+          "date": "2024-03-15",
+          "amount": "1 250 000 DZD",
+          "status": "Pending"
+        }
+      ],
+      "quotes": [
+        {
+          "id": "DEV-2024-020",
+          "date": "2024-03-10",
+          "amount": "2 500 000 DZD",
+          "status": "In negotiation",
+          "validUntil": "2024-04-10"
+        }
+      ],
+      "partnerships": [
+        {
+          "id": 1,
+          "name": "Oran Regional Hospital",
+          "type": "Distribution",
+          "status": "Active",
+          "since": "2020-01-15"
+        },
+        {
+          "id": 2,
+          "name": "El Afia Clinic",
+          "type": "Supply",
+          "status": "Active",
+          "since": "2021-06-20"
+        }
+      ],
+      "messages": [
+        {
+          "id": 1,
+          "from": "Sales Management",
+          "subject": "New partner pricing 2024",
+          "date": "2024-03-12",
+          "read": false
+        }
+      ]
+    },
+    {
+      "email": "candidat@sari.dz",
+      "password": "candidat123",
+      "type": "applicant",
+      "profile": {
+        "firstName": "Amina",
+        "lastName": "Khelifi",
+        "phone": "0555987654",
+        "country": "Algeria",
+        "wilaya": "25 - Constantine",
+        "address": "1000 Housing District, Constantine",
+        "position": "Biomedical Technician",
+        "experience": "3 years",
+        "education": "Master's Degree in Biomedical Engineering",
+        "description": "Passionate about medical equipment, seeking to join a dynamic team.",
+        "photo": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200",
+        "joinDate": "2024-02-01"
+      },
+      "stats": {
+        "applicationsSent": 5,
+        "interviewsScheduled": 2,
+        "profileViews": 12,
+        "cvDownloads": 3
+      },
+      "applications": [
+        {
+          "id": 1,
+          "job": "Biomedical Technician - Algiers",
+          "date": "2024-03-01",
+          "status": "In progress",
+          "stage": "Phone interview"
+        },
+        {
+          "id": 2,
+          "job": "Maintenance Engineer - Oran",
+          "date": "2024-03-10",
+          "status": "Interview",
+          "stage": "Technical interview scheduled"
+        },
+        {
+          "id": 3,
+          "job": "Medical Equipment Sales Representative",
+          "date": "2024-03-15",
+          "status": "Application sent",
+          "stage": "Pending"
+        }
+      ],
+      "documents": [
+        {
+          "id": 1,
+          "name": "CV_Amina_Khelifi_2024.pdf",
+          "type": "CV",
+          "uploadDate": "2024-02-01",
+          "size": "245 KB"
+        },
+        {
+          "id": 2,
+          "name": "Cover_Letter.pdf",
+          "type": "Cover letter",
+          "uploadDate": "2024-02-01",
+          "size": "128 KB"
+        },
+        {
+          "id": 3,
+          "name": "Master_Degree.pdf",
+          "type": "Diploma",
+          "uploadDate": "2024-02-05",
+          "size": "1.2 MB"
+        }
+      ],
+      "messages": [
+        {
+          "id": 1,
+          "from": "HR SARI Système",
+          "subject": "Interview confirmation - March 20",
+          "date": "2024-03-18",
+          "read": false
+        }
+      ]
+    }
+  ]
+}

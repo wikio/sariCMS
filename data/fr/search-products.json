@@ -1,0 +1,47 @@
+[
+  {
+    "id": 999,
+    "name": "Échographe Portable Pro X1",
+    "category": "Diagnostic",
+    "price": "Sur devis",
+    "image": "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=800",
+    "shortDesc": "Échographe haute résolution pour imagerie médicale portable avec écran tactile HD",
+    "fullDesc": "<p>L'Échographe Portable Pro X1 représente l'excellence en matière d'imagerie médicale mobile.</p>"
+  },
+  {
+    "id": 998,
+    "name": "Lit d'Examen Électrique Premium",
+    "category": "Équipements",
+    "price": "2 450 € HT",
+    "image": "https://images.unsplash.com/photo-1519494026892-88bb237b200d?w=800",
+    "shortDesc": "Lit médicalisé électrique réglable en hauteur avec moteurs silencieux",
+    "fullDesc": "<p>Le Lit d'Examen Électrique Premium offre un confort optimal pour vos patients.</p>"
+  },
+  {
+    "id": 997,
+    "name": "Stérilisateur Autoclave Classe B",
+    "category": "Chirurgie",
+    "price": "3 890 € HT",
+    "image": "https://images.unsplash.com/photo-1583947215259-38e31be8751f?w=800",
+    "shortDesc": "Autoclave 23L pour stérilisation instruments médicaux avec imprimante",
+    "fullDesc": "<p>Autoclave de classe B conforme aux normes européennes.</p>"
+  },
+  {
+    "id": 996,
+    "name": "Tensiomètre Digital Pro",
+    "category": "Diagnostic",
+    "price": "189 € HT",
+    "image": "https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=800",
+    "shortDesc": "Tensiomètre professionnel avec mémoire 120 mesures et Bluetooth",
+    "fullDesc": "<p>Tensiomètre digital professionnel de haute précision.</p>"
+  },
+  {
+    "id": 995,
+    "name": "Microscope Binoculaire LED",
+    "category": "Diagnostic",
+    "price": "1 290 € HT",
+    "image": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800",
+    "shortDesc": "Microscope binoculaire avec éclairage LED grossissement 40x-2000x",
+    "fullDesc": "<p>Microscope binoculaire professionnel avec éclairage LED longue durée.</p>"
+  }
+]

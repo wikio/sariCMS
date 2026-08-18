@@ -1,0 +1,205 @@
+[
+  {
+    "id": 1,
+    "type": "simple",
+    "title": "Notre Engagement pour la Qualité",
+    "subtitle": "Excellence et rigueur depuis 2003",
+    "category": "Entreprise",
+    "media": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1920",
+    "content": "<h2>Notre Engagement Qualité</h2><p>Chez SARI Système, la qualité n'est pas une option, c'est notre ADN. Depuis plus de 20 ans, nous nous engageons à fournir des équipements médicaux répondant aux normes internationales les plus strictes.</p><h3>Nos Certifications</h3><ul><li><strong>ISO 13485</strong> : Système de management de la qualité pour dispositifs médicaux</li><li><strong>CE Medical</strong> : Conformité européenne pour tous nos équipements</li><li><strong>FDA Approved</strong> : Certification américaine pour les produits premium</li><li><strong>HDS</strong> : Hébergeur de Données de Santé certifié</li></ul><h3>Notre Processus Qualité</h3><p>Chaque équipement passe par un contrôle rigoureux en 5 étapes :</p><ol><li>Sélection des fournisseurs certifiés</li><li>Tests en laboratoire agréé</li><li>Contrôle qualité à la réception</li><li>Installation par techniciens certifiés</li><li>Suivi post-installation pendant 24 mois</li></ol><blockquote>« La qualité est le pont entre la promesse et la satisfaction client. » — Direction SARI Système</blockquote>"
+  },
+  {
+    "id": 2,
+    "type": "about",
+    "title": "À Propos de SARI Système",
+    "subtitle": "Leader en équipements médicaux en Algérie",
+    "category": "Présentation",
+    "media": "https://images.unsplash.com/photo-1519494026892-88bb237b200d?w=1920",
+    "content": "<h2>Notre Histoire</h2><p>Fondée en 2003 à Alger, SARI Système est née de la vision de fournir aux professionnels de santé algériens des équipements médicaux de pointe, accessibles et fiables.</p><h3>Nos Valeurs</h3><p>Excellence, Proximité, Innovation et Fiabilité sont les piliers de notre entreprise. Nous croyons que la technologie doit être au service de l'humain.</p>",
+    "features": [
+      "Équipe de 50+ techniciens certifiés",
+      "Partenariats avec 30+ marques internationales",
+      "Centre de formation agréé",
+      "Laboratoire de tests interne",
+      "Service après-vente réactif 24/7"
+    ]
+  },
+  {
+    "id": 3,
+    "type": "gallery",
+    "title": "Nos Réalisations en Images",
+    "subtitle": "Plus de 500 établissements équipés",
+    "category": "Galerie",
+    "media": [
+      "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=1200",
+      "https://images.unsplash.com/photo-1551076805-e1869033e561?w=1200",
+      "https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=1200",
+      "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1200",
+      "https://images.unsplash.com/photo-1519494026892-88bb237b200d?w=1200",
+      "https://images.unsplash.com/photo-1584982751601-97dcc096659c?w=1200"
+    ],
+    "content": "<p>Découvrez quelques-unes de nos réalisations à travers l'Algérie. Chaque installation représente un partenariat de confiance avec un établissement de santé, de la petite clinique au grand centre hospitalier.</p>"
+  },
+  {
+    "id": 4,
+    "type": "flyer",
+    "title": "Promotion Été 2024",
+    "subtitle": "Jusqu'à -30% sur tous les équipements",
+    "category": "Promotion",
+    "media": "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1920",
+    "content": "<h2>🔥 Offre Spéciale Été 2024</h2><p class='text-2xl font-bold text-sari-blue'>Jusqu'à -30% sur tous les équipements</p><p>Profitez de notre offre exceptionnelle valable du <strong>1er juin au 31 août 2024</strong>. Équipements médicaux de qualité professionnelle à prix réduit.</p><h3>Catégories concernées :</h3><ul><li>✅ Échographes portables</li><li>✅ Tensiomètres digitaux</li><li>✅ Défibrillateurs</li><li>✅ Stérilisateurs</li><li>✅ Lampes scialytiques LED</li></ul><h3>Avantages exclusifs :</h3><ul><li>🎁 Livraison gratuite sur tout le territoire</li><li>🔧 Installation offerte par nos techniciens</li><li>📚 Formation incluse pour vos équipes</li><li>🛡️ Garantie étendue à 36 mois</li><li>💳 Facilités de paiement en 12 fois</li></ul><blockquote class='bg-sari-lime/10 border-l-4 border-sari-lime p-4'>« Cette offre est limitée dans le temps. Contactez-nous dès maintenant pour bénéficier de nos tarifs préférentiels. »</blockquote>",
+    "pdf": "data/promotions/ete-2024.pdf"
+  },
+  {
+    "id": 5,
+    "type": "slide",
+    "title": "SARI Système en Mouvement",
+    "subtitle": "Une présentation interactive",
+    "category": "Présentation",
+    "slides": [
+      {
+        "media": "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=1920",
+        "mediaType": "image",
+        "title": "Innovation",
+        "subtitle": "Des équipements de dernière génération",
+        "description": "Nous distribuons les meilleures marques internationales : GE Healthcare, Philips, Siemens, Mindray et bien d'autres. Chaque équipement est sélectionné pour sa fiabilité et ses performances.",
+        "cta": "Découvrir nos solutions",
+        "ctaLink": "#solutions"
+      },
+      {
+        "media": "https://www.youtube.com/embed/dQw4w9WgXcQ",
+        "mediaType": "youtube",
+        "title": "Notre Vidéo de Présentation",
+        "subtitle": "Découvrez notre univers",
+        "description": "Une immersion dans nos locaux et nos équipes. Découvrez comment nous travaillons au quotidien pour servir les professionnels de santé.",
+        "cta": "Nous contacter",
+        "ctaLink": "#contact"
+      },
+      {
+        "media": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1920",
+        "mediaType": "image",
+        "title": "Service Après-Vente",
+        "subtitle": "Toujours à vos côtés",
+        "description": "Notre équipe de 50+ techniciens certifiés intervient sous 24h sur tout le territoire algérien. Maintenance préventive, corrective et formation continue.",
+        "cta": "Nos services",
+        "ctaLink": "#services"
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "type": "scroll",
+    "title": "Découvrez SARI Système",
+    "subtitle": "Un voyage à travers notre histoire",
+    "category": "Présentation",
+    "sections": [
+      {
+        "media": "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=1920",
+        "mediaType": "image",
+        "title": "L'Excellence Médicale",
+        "subtitle": "Depuis plus de 20 ans",
+        "description": "SARI Système est le partenaire de confiance de plus de 500 établissements de santé en Algérie. Notre expertise couvre l'ensemble des spécialités médicales.",
+        "cta": "En savoir plus",
+        "ctaLink": "#about"
+      },
+      {
+        "media": "https://www.youtube.com/embed/dQw4w9WgXcQ",
+        "mediaType": "youtube",
+        "title": "Notre Histoire en Vidéo",
+        "subtitle": "Un parcours d'excellence",
+        "description": "Retour sur 20 ans d'innovation au service de la santé. De nos débuts modestes à notre position de leader actuel.",
+        "cta": "Nous rejoindre",
+        "ctaLink": "#carrieres"
+      },
+      {
+        "media": "https://images.unsplash.com/photo-1551076805-e1869033e561?w=1920",
+        "mediaType": "image",
+        "title": "Nos Solutions",
+        "subtitle": "Équipements de pointe",
+        "description": "Une gamme complète pour équiper votre établissement : diagnostic, imagerie, chirurgie, urgence, pédiatrie, cardiologie, informatique médicale, laboratoire et rééducation.",
+        "cta": "Découvrir",
+        "ctaLink": "#solutions"
+      },
+      {
+        "media": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1920",
+        "mediaType": "image",
+        "title": "Rejoignez-nous",
+        "subtitle": "Construisons l'avenir ensemble",
+        "description": "Que vous soyez professionnel de santé, partenaire ou candidat, nous avons une place pour vous. Contactez-nous pour discuter de vos projets.",
+        "cta": "Nous contacter",
+        "ctaLink": "#contact"
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "type": "full",
+    "title": "Guide Complet : Choisir son Échographe",
+    "subtitle": "Le guide ultime pour les professionnels de santé",
+    "category": "Guide",
+    "media": "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=1920",
+    "content": "<div class='max-w-4xl mx-auto'><div class='prose dark:prose-invert max-w-none'><p class='lead text-xl text-gray-600 dark:text-gray-400 mb-8'>L'échographie est devenue un outil indispensable du diagnostic médical moderne. Ce guide complet vous aidera à faire le bon choix pour votre pratique.</p><h2>🎯 Critères de Sélection d'un Échographe</h2><h3>1. Le Type de Sonde</h3><p>Le choix de la sonde dépend directement de l'application clinique :</p><ul><li><strong>Sonde convexe (3-5 MHz)</strong> : Idéale pour l'abdomen et l'obstétrique</li><li><strong>Sonde linéaire (7-12 MHz)</strong> : Parfaite pour les structures superficielles</li><li><strong>Sonde sectorielle (2-4 MHz)</strong> : Optimale pour la cardiologie</li><li><strong>Sonde endocavitaire</strong> : Pour les examens spécialisés</li></ul><h3>2. La Résolution d'Image</h3><p>La qualité d'image est déterminée par plusieurs facteurs :</p><ol><li><strong>Résolution spatiale</strong> : Capacité à distinguer deux structures proches</li><li><strong>Résolution temporelle</strong> : Fluidité de l'image en temps réel</li><li><strong>Résolution de contraste</strong> : Différenciation des tissus</li></ol><h3>3. Les Fonctionnalités Avancées</h3><div class='grid grid-cols-1 md:grid-cols-2 gap-4 my-6'><div class='p-4 bg-sari-blue/5 border-l-4 border-sari-blue rounded'><h4 class='font-bold mb-2'>🎨 Doppler Couleur</h4><p class='text-sm'>Visualisation des flux sanguins en temps réel</p></div><div class='p-4 bg-sari-lime/10 border-l-4 border-sari-lime rounded'><h4 class='font-bold mb-2'>📊 3D/4D</h4><p class='text-sm'>Reconstruction volumétrique pour l'obstétrique</p></div><div class='p-4 bg-purple-50 dark:bg-purple-900/20 border-l-4 border-purple-500 rounded'><h4 class='font-bold mb-2'>🔬 Élastographie</h4><p class='text-sm'>Évaluation de la dureté des tissus</p></div><div class='p-4 bg-orange-50 dark:bg-orange-900/20 border-l-4 border-orange-500 rounded'><h4 class='font-bold mb-2'>🤖 IA Assistée</h4><p class='text-sm'>Mesures automatiques et détection de pathologies</p></div></div><h2>💰 Budget et Rentabilité</h2><p>L'investissement dans un échographe doit être pensé sur le long terme. Voici les éléments à considérer :</p><ul><li><strong>Coût d'acquisition</strong> : De 5 000€ à 150 000€ selon la gamme</li><li><strong>Maintenance</strong> : 5-10% du prix d'achat par an</li><li><strong>Formation</strong> : Indispensable pour optimiser l'utilisation</li><li><strong>Évolution</strong> : Possibilité d'ajouter des sondes et logiciels</li></ul><blockquote class='bg-sari-lime/10 border-l-4 border-sari-lime p-6 my-6'><p class='text-lg italic'>« Le meilleur échographe n'est pas le plus cher, c'est celui qui correspond exactement à vos besoins cliniques. Nos experts sont là pour vous guider dans ce choix stratégique. »</p><footer class='text-sm text-gray-600 mt-2'>— Dr. Ahmed Benali, Directeur Médical SARI Système</footer></blockquote><h2>📞 Contactez-nous</h2><p>Notre équipe d'experts est à votre disposition pour une démonstration personnalisée et un devis adapté à vos besoins.</p><div class='flex gap-4 mt-6'><a href='#contact' class='btn-primary text-white px-6 py-3 font-semibold inline-flex items-center gap-2'>Demander un devis <i data-lucide='arrow-right'></i></a><a href='#produits' class='border-2 border-sari-blue text-sari-blue px-6 py-3 font-semibold inline-flex items-center gap-2 hover:bg-sari-blue hover:text-white transition-colors'>Voir nos échographes</a></div></div></div>"
+  },
+  {
+    "id": 8,
+    "type": "full",
+    "title": "L'Intelligence Artificielle en Médecine",
+    "subtitle": "Comment l'IA révolutionne le diagnostic médical",
+    "category": "Innovation",
+    "media": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1920",
+    "content": "<div class='max-w-4xl mx-auto'><div class='prose dark:prose-invert max-w-none'><p class='lead text-xl text-gray-600 dark:text-gray-400 mb-8'>L'intelligence artificielle transforme radicalement la médecine moderne. De l'aide au diagnostic à la recherche de nouveaux traitements, l'IA ouvre des perspectives inédites.</p><h2>🤖 L'IA dans le Diagnostic Médical</h2><p>Les algorithmes d'apprentissage profond (deep learning) atteignent désormais des performances comparables, voire supérieures, à celles des experts humains dans certains domaines :</p><ul><li><strong>Radiologie</strong> : Détection de tumeurs avec 95% de précision</li><li><strong>Ophtalmologie</strong> : Diagnostic de rétinopathie diabétique</li><li><strong>Dermatologie</strong> : Identification de lésions cutanées</li><li><strong>Pathologie</strong> : Analyse de biopsies automatisée</li></ul><h2>💊 L'IA et la Découverte de Médicaments</h2><p>Traditionnellement, la découverte d'un nouveau médicament prend 10-15 ans et coûte plus de 2 milliards de dollars. L'IA réduit considérablement ces délais :</p><ol><li><strong>Analyse de données</strong> : Identification de cibles thérapeutiques</li><li><strong>Conception moléculaire</strong> : Génération de candidats-médicaments</li><li><strong>Essais cliniques</strong> : Optimisation des protocoles</li><li><strong>Pharmacovigilance</strong> : Détection d'effets secondaires</li></ol><h2>🏥 Applications Cliniques Concrètes</h2><div class='grid grid-cols-1 md:grid-cols-3 gap-4 my-6'><div class='p-4 bg-sari-blue/5 border-t-4 border-sari-blue rounded text-center'><div class='text-4xl mb-2'>🫀</div><h4 class='font-bold mb-2'>Cardiologie</h4><p class='text-sm'>Prédiction des risques cardiovasculaires</p></div><div class='p-4 bg-sari-lime/10 border-t-4 border-sari-lime rounded text-center'><div class='text-4xl mb-2'>🧠</div><h4 class='font-bold mb-2'>Neurologie</h4><p class='text-sm'>Détection précoce d'Alzheimer</p></div><div class='p-4 bg-purple-50 dark:bg-purple-900/20 border-t-4 border-purple-500 rounded text-center'><div class='text-4xl mb-2'>🦴</div><h4 class='font-bold mb-2'>Orthopédie</h4><p class='text-sm'>Planification chirurgicale 3D</p></div></div><h2>⚖️ Enjeux Éthiques et Réglementaires</h2><p>L'intégration de l'IA en médecine soulève des questions cruciales :</p><ul><li><strong>Responsabilité</strong> : Qui est responsable en cas d'erreur ?</li><li><strong>Transparence</strong> : Comment expliquer les décisions de l'IA ?</li><li><strong>Confidentialité</strong> : Protection des données de santé</li><li><strong>Biais</strong> : Représentativité des données d'entraînement</li></ul><h2>🔮 L'Avenir de l'IA Médicale</h2><blockquote class='bg-sari-lime/10 border-l-4 border-sari-lime p-6 my-6'><p class='text-lg italic'>« L'IA ne remplacera pas les médecins, mais les médecins qui utiliseront l'IA remplaceront ceux qui ne l'utiliseront pas. »</p></blockquote><p>Les tendances à surveiller :</p><ul><li>🤖 <strong>Médecins virtuels</strong> : Assistants IA pour les consultations</li><li>📱 <strong>Télémédecine augmentée</strong> : Diagnostic à distance</li><li>🧬 <strong>Médecine personnalisée</strong> : Traitements sur mesure</li><li>🔬 <strong>Recherche accélérée</strong> : Découvertes plus rapides</li></ul><h2>🎓 Formation et Accompagnement</h2><p>SARI Système propose des formations complètes sur l'intégration de l'IA dans votre pratique médicale. Nos experts vous accompagnent de A à Z.</p><div class='flex gap-4 mt-6'><a href='#contact' class='btn-primary text-white px-6 py-3 font-semibold inline-flex items-center gap-2'>En savoir plus <i data-lucide='arrow-right'></i></a></div></div></div>"
+  },
+  {
+    "id": 9,
+    "type": "gallery",
+    "title": "Nos Équipements Phares",
+    "subtitle": "La crème des technologies médicales",
+    "category": "Produits",
+    "media": [
+      "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=1200",
+      "https://images.unsplash.com/photo-1559757175-5700dde675bc?w=1200",
+      "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=1200",
+      "https://images.unsplash.com/photo-1551076805-e1869033e561?w=1200",
+      "https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=1200",
+      "https://images.unsplash.com/photo-1584982751601-97dcc096659c?w=1200"
+    ],
+    "content": "<p>Notre sélection des équipements les plus performants du marché. Chaque produit a été rigoureusement testé et approuvé par notre comité d'experts pour garantir une fiabilité absolue.</p>"
+  },
+  {
+    "id": 10,
+    "type": "slide",
+    "title": "Témoignages de nos Clients",
+    "subtitle": "Ils nous font confiance",
+    "category": "Témoignages",
+    "slides": [
+      {
+        "media": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1920",
+        "mediaType": "image",
+        "title": "Dr. Ahmed Benali",
+        "subtitle": "Chirurgien Dentiste - Clinique El Afia, Oran",
+        "description": "« Un service exceptionnel et des équipements de très haute qualité. L'équipe SARI nous a accompagnés de A à Z, de la sélection à l'installation. Je recommande vivement ! »"
+      },
+      {
+        "media": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=1920",
+        "mediaType": "image",
+        "title": "Dr. Fatima Zahra",
+        "subtitle": "Cardiologue - Hôpital Central, Alger",
+        "description": "« La qualité des équipements de cardiologie est remarquable. Le support technique 24/7 est un vrai plus pour notre service d'urgence. »"
+      },
+      {
+        "media": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=1920",
+        "mediaType": "image",
+        "title": "Dr. Mohamed Kaci",
+        "subtitle": "Directeur - Clinique Moderne, Constantine",
+        "description": "« L'informatique médicale proposée par SARI a transformé notre gestion. Le DMP est conforme à toutes les normes et l'interface est intuitive. »"
+      },
+      {
+        "media": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=1920",
+        "mediaType": "image",
+        "title": "Dr. Sarah Boumediene",
+        "subtitle": "Pédiatre - Hôpital Régional, Blida",
+        "description": "« Les équipements de pédiatrie sont parfaitement adaptés aux besoins des enfants. L'équipe SARI a été à l'écoute de nos spécificités. »"
+      }
+    ]
+  }
+]

@@ -1,0 +1,659 @@
+[
+  {
+    "id": 1,
+    "name": "Portable Ultrasound Pro X1",
+    "category": "Diagnostic",
+    "price": "On Quote",
+    "image": "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=800",
+    "shortDesc": "High-resolution ultrasound for portable medical imaging",
+    "fullDesc": "<p>The Portable Ultrasound Pro X1 represents excellence in mobile medical imaging. Equipped with a 15-inch HD touchscreen and interchangeable multi-frequency probes, this device offers exceptional image quality comparable to fixed ultrasound systems.</p><h3>Main Features</h3><ul><li>15-inch touchscreen with 1920x1080 resolution</li><li>Optimized portability (weight: 3.2 kg)</li><li>6-hour battery life with built-in battery</li><li>Wi-Fi and Bluetooth connectivity for data transfer</li><li>DICOM compatible for PACS integration</li></ul><h3>Clinical Applications</h3><p>Ideal for home consultations, rural interventions, emergency services, and mobile medical practices.</p>",
+    "gallery": [
+      "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=800",
+      "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=800",
+      "https://images.unsplash.com/photo-1551076805-e1869033e561?w=800",
+      "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800"
+    ],
+    "options": [
+      {
+        "name": "Configuration",
+        "choices": [
+          "Standard",
+          "Pro (Additional Probes)"
+        ]
+      },
+      {
+        "name": "Warranty",
+        "choices": [
+          "2 years",
+          "3 years",
+          "5 years"
+        ]
+      }
+    ],
+    "catalogPdf": "#",
+    "inStock": true,
+    "deliveryTime": "2-3 weeks",
+    "features": [
+      "Real-time 4D imaging",
+      "Color and pulsed Doppler mode",
+      "Advanced automatic measurements",
+      "DICOM compatible export",
+      "Multilingual interface"
+    ],
+    "specs": {
+      "Screen": "15-inch HD touchscreen",
+      "Weight": "3.2 kg",
+      "Battery Life": "6 hours",
+      "Probes": "4 probes included",
+      "Connectivity": "WiFi, Bluetooth, USB-C",
+      "Resolution": "Full HD 1920x1080"
+    }
+  },
+  {
+    "id": 2,
+    "name": "Premium Electric Examination Table",
+    "category": "Equipment",
+    "price": "€2,450 excl. VAT",
+    "image": "https://images.unsplash.com/photo-1519494026892-88bb237b200d?w=800",
+    "shortDesc": "Height-adjustable electric medical table",
+    "fullDesc": "<p>The Premium Electric Examination Table offers optimal comfort for your patients and perfect ergonomics for practitioners. Its silent motors allow smooth height and backrest inclination adjustments.</p><h3>Comfort and Safety</h3><ul><li>Antibacterial faux leather upholstery</li><li>Lockable transport wheels</li><li>Built-in anti-pinch system</li><li>Maximum load: 250 kg</li></ul>",
+    "gallery": [
+      "https://images.unsplash.com/photo-1519494026892-88bb237b200d?w=800",
+      "https://images.unsplash.com/photo-1584982751601-97dcc096659c?w=800",
+      "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800"
+    ],
+    "options": [
+      {
+        "name": "Upholstery",
+        "choices": [
+          "Blue Faux Leather",
+          "Gray Faux Leather",
+          "Black Faux Leather"
+        ]
+      },
+      {
+        "name": "Accessories",
+        "choices": [
+          "Standard",
+          "With Cervical Cushion",
+          "Complete Pack"
+        ]
+      }
+    ],
+    "catalogPdf": "#",
+    "inStock": true,
+    "deliveryTime": "1-2 weeks",
+    "features": [
+      "Ergonomic wired remote control",
+      "Anti-pinch system",
+      "Lockable transport wheels",
+      "CE medical certification",
+      "Position memory adjustment"
+    ],
+    "specs": {
+      "Maximum Load": "250 kg",
+      "Height": "45-95 cm",
+      "Dimensions": "190 x 70 cm",
+      "Motors": "2 silent electric motors",
+      "Weight": "85 kg",
+      "Certification": "CE Medical"
+    }
+  },
+  {
+    "id": 3,
+    "name": "Class B Autoclave Sterilizer",
+    "category": "Surgery",
+    "price": "€3,890 excl. VAT",
+    "image": "https://images.unsplash.com/photo-1583947215259-38e31be8751f?w=800",
+    "shortDesc": "23L autoclave for medical instrument sterilization",
+    "fullDesc": "<p>Class B autoclave compliant with European standards for sterilizing all types of medical instruments, including hollow and porous instruments. Complete automatic cycle with vacuum drying.</p><h3>Cutting-Edge Technology</h3><ul><li>Built-in thermal printer for traceability</li><li>Intuitive LCD touchscreen</li><li>12 predefined programs</li><li>Automatic Bowie-Dick tests</li></ul>",
+    "gallery": [
+      "https://images.unsplash.com/photo-1583947215259-38e31be8751f?w=800",
+      "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800"
+    ],
+    "options": [
+      {
+        "name": "Capacity",
+        "choices": [
+          "18L",
+          "23L",
+          "30L"
+        ]
+      },
+      {
+        "name": "Printer",
+        "choices": [
+          "With printer",
+          "Without printer"
+        ]
+      }
+    ],
+    "catalogPdf": "#",
+    "inStock": false,
+    "deliveryTime": "4-6 weeks",
+    "features": [
+      "Vacuum drying cycle",
+      "Built-in thermal printer",
+      "Automatic Bowie-Dick tests",
+      "LCD touchscreen",
+      "Complete traceability"
+    ],
+    "specs": {
+      "Capacity": "23 liters",
+      "Pressure": "2.3 bars",
+      "Temperature": "134°C",
+      "Cycle": "15-25 minutes",
+      "Dimensions": "45 x 55 x 45 cm",
+      "Weight": "65 kg"
+    }
+  },
+  {
+    "id": 4,
+    "name": "Digital Pro Blood Pressure Monitor",
+    "category": "Diagnostic",
+    "price": "€189 excl. VAT",
+    "image": "https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=800",
+    "shortDesc": "Professional blood pressure monitor with 120-measurement memory",
+    "fullDesc": "<p>High-precision professional digital blood pressure monitor with universal cuff suitable for all arms. 120-measurement memory with timestamp for optimal monitoring.</p><h3>Advanced Features</h3><ul><li>Irregular heartbeat detection</li><li>Cuff positioning indicator</li><li>Bluetooth connectivity for data transfer</li><li>Dedicated mobile application</li></ul>",
+    "gallery": [
+      "https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=800",
+      "https://images.unsplash.com/photo-1584982751601-97dcc096659c?w=800"
+    ],
+    "options": [
+      {
+        "name": "Cuff",
+        "choices": [
+          "Standard (22-32cm)",
+          "Large (32-42cm)"
+        ]
+      }
+    ],
+    "catalogPdf": "#",
+    "inStock": true,
+    "deliveryTime": "3-5 days",
+    "features": [
+      "Arrhythmia detection",
+      "Color-coded WHO indicator",
+      "Automatic average",
+      "Dedicated mobile app",
+      "Universal cuff included"
+    ],
+    "specs": {
+      "Accuracy": "±3 mmHg",
+      "Memory": "120 measurements",
+      "Cuff": "22-42 cm",
+      "Power": "4 AA batteries or mains",
+      "Connectivity": "Bluetooth 5.0",
+      "Weight": "380 g"
+    }
+  },
+  {
+    "id": 5,
+    "name": "LED Binocular Microscope",
+    "category": "Diagnostic",
+    "price": "€1,290 excl. VAT",
+    "image": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800",
+    "shortDesc": "Binocular microscope with LED lighting 40x-2000x",
+    "fullDesc": "<p>Professional binocular microscope with long-lasting LED lighting and achromatic optical system. Magnification from 40x to 2000x with 4 interchangeable objectives.</p><h3>Quality Optics</h3><ul><li>Corrected achromatic optical system</li><li>30° inclined binocular head</li><li>Precise coaxial focusing</li><li>Mechanical stage with safety stops</li></ul>",
+    "gallery": [
+      "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800",
+      "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=800"
+    ],
+    "options": [
+      {
+        "name": "Objectives",
+        "choices": [
+          "4 objectives (4x,10x,40x,100x)",
+          "5 objectives (+20x)"
+        ]
+      }
+    ],
+    "catalogPdf": "#",
+    "inStock": true,
+    "deliveryTime": "1 week",
+    "features": [
+      "50,000h LED lighting",
+      "Achromatic optical system",
+      "Precise mechanical stage",
+      "30° inclined binocular head",
+      "Transport case included"
+    ],
+    "specs": {
+      "Magnification": "40x - 2000x",
+      "Objectives": "4x, 10x, 40x, 100x",
+      "Eyepieces": "WF10x/18mm",
+      "Lighting": "LED 3W",
+      "Weight": "6.5 kg"
+    }
+  },
+  {
+    "id": 6,
+    "name": "Starter Consumables Pack",
+    "category": "Consumables",
+    "price": "€299 excl. VAT",
+    "image": "https://images.unsplash.com/photo-1584982751601-97dcc096659c?w=800",
+    "shortDesc": "Starter pack with gloves, masks, and disinfectants",
+    "fullDesc": "<p>Complete pack of medical consumables to start or restock your practice. Contains 10 boxes of nitrile gloves, type IIR surgical masks, hydroalcoholic gel, and sterile compresses.</p><h3>Detailed Contents</h3><ul><li>1000 latex-free and powder-free nitrile gloves</li><li>50 three-ply high-filtration surgical masks</li><li>5L hydroalcoholic gel</li><li>500 non-woven sterile compresses</li></ul>",
+    "gallery": [
+      "https://images.unsplash.com/photo-1584982751601-97dcc096659c?w=800",
+      "https://images.unsplash.com/photo-1584483766114-2cea6fac255f?w=800"
+    ],
+    "options": [
+      {
+        "name": "Glove Size",
+        "choices": [
+          "S",
+          "M",
+          "L",
+          "XL",
+          "Mixed"
+        ]
+      }
+    ],
+    "catalogPdf": "#",
+    "inStock": true,
+    "deliveryTime": "24-48h",
+    "features": [
+      "Latex-free and powder-free gloves",
+      "Three-ply high-filtration masks",
+      "Gel with moisturizing agents",
+      "Non-woven compresses",
+      "Fast delivery"
+    ],
+    "specs": {
+      "Gloves": "1000 nitrile units",
+      "Masks": "50 type IIR",
+      "Gel": "5L hydroalcoholic",
+      "Compresses": "500 sterile",
+      "Validity": "24 months"
+    }
+  },
+  {
+    "id": 7,
+    "name": "Semi-Automatic Defibrillator",
+    "category": "Emergency",
+    "price": "€1,850 excl. VAT",
+    "image": "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=800",
+    "shortDesc": "AED with voice guide and rapid rhythm analysis",
+    "fullDesc": "<p>Latest generation Semi-Automatic Defibrillator (AED) with clear voice guide and rapid cardiac rhythm analysis. Designed for use by healthcare professionals and trained first responders.</p><h3>Simplicity of Use</h3><ul><li>Step-by-step voice guide in French</li><li>Rhythm analysis in less than 10 seconds</li><li>Single-use pre-gelled electrodes</li><li>Automatic daily self-test</li></ul>",
+    "gallery": [
+      "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=800",
+      "https://images.unsplash.com/photo-1551076805-e1869033e561?w=800"
+    ],
+    "options": [
+      {
+        "name": "Pack",
+        "choices": [
+          "Device only",
+          "Complete pack with cabinet",
+          "Pack with training included"
+        ]
+      }
+    ],
+    "catalogPdf": "#",
+    "inStock": true,
+    "deliveryTime": "1 week",
+    "features": [
+      "French voice guide",
+      "Rapid rhythm analysis",
+      "Daily self-test",
+      "Pediatric electrodes available",
+      "8-year warranty"
+    ],
+    "specs": {
+      "Weight": "2.1 kg",
+      "Battery": "Lithium, 4 years",
+      "Energy": "150-200J",
+      "Analysis": "Less than 10 seconds",
+      "Waterproof": "IP55"
+    }
+  },
+  {
+    "id": 8,
+    "name": "5L Oxygen Concentrator",
+    "category": "Respiratory",
+    "price": "€890 excl. VAT",
+    "image": "https://images.unsplash.com/photo-1584483766114-2cea6fac255f?w=800",
+    "shortDesc": "Silent medical oxygen concentrator 5L/min",
+    "fullDesc": "<p>High-quality medical oxygen concentrator delivering up to 5 liters per minute of 93% pure oxygen. Silent operation ideal for home or office use.</p><h3>Performance</h3><ul><li>Adjustable flow from 0.5 to 5 L/min</li><li>Oxygen purity: 93% ±3%</li><li>Noise level: less than 40 dB</li><li>Pressure and purity alarm</li></ul>",
+    "gallery": [
+      "https://images.unsplash.com/photo-1584483766114-2cea6fac255f?w=800",
+      "https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=800"
+    ],
+    "options": [
+      {
+        "name": "Accessories",
+        "choices": [
+          "Standard pack",
+          "Pack with trolley",
+          "Complete pack with mask"
+        ]
+      }
+    ],
+    "catalogPdf": "#",
+    "inStock": true,
+    "deliveryTime": "3-5 days",
+    "features": [
+      "Silent operation",
+      "Safety alarm",
+      "Humidifier included",
+      "Easy-to-replace filter",
+      "Transport wheels"
+    ],
+    "specs": {
+      "Flow": "0.5-5 L/min",
+      "Purity": "93% ±3%",
+      "Noise": "<40 dB",
+      "Power": "350W",
+      "Weight": "15 kg"
+    }
+  },
+  {
+    "id": 9,
+    "name": "Mobile LED Surgical Light",
+    "category": "Surgery",
+    "price": "€3,200 excl. VAT",
+    "image": "https://images.unsplash.com/photo-1551076805-e1869033e561?w=800",
+    "shortDesc": "High-intensity mobile surgical lighting, shadow-free",
+    "fullDesc": "<p>High-performance mobile LED surgical light offering intense, shadow-free surgical lighting. Latest generation LED technology with 50,000-hour lifespan.</p><h3>Professional Lighting</h3><ul><li>Light intensity: 100,000 to 150,000 Lux</li><li>Color temperature: 4500K (daylight)</li><li>CRI > 95 (color rendering)</li><li>Multi-LED anti-shadow system</li></ul>",
+    "gallery": [
+      "https://images.unsplash.com/photo-1551076805-e1869033e561?w=800",
+      "https://images.unsplash.com/photo-1519494026892-88bb237b200d?w=800"
+    ],
+    "options": [
+      {
+        "name": "Power",
+        "choices": [
+          "100,000 Lux",
+          "150,000 Lux"
+        ]
+      },
+      {
+        "name": "Installation",
+        "choices": [
+          "Mobile on stand",
+          "Fixed ceiling mount"
+        ]
+      }
+    ],
+    "catalogPdf": "#",
+    "inStock": true,
+    "deliveryTime": "2 weeks",
+    "features": [
+      "50,000h LED technology",
+      "Shadow-free lighting",
+      "Adjustable color temperature",
+      "Sterilizable",
+      "Mobile stand with wheels"
+    ],
+    "specs": {
+      "Intensity": "100,000-150,000 Lux",
+      "Color Temperature": "4500K",
+      "CRI": ">95",
+      "LED Lifespan": "50,000h",
+      "Weight": "12 kg"
+    }
+  },
+  {
+    "id": 10,
+    "name": "Double Electric Syringe Driver",
+    "category": "Intensive Care",
+    "price": "€1,450 excl. VAT",
+    "image": "https://images.unsplash.com/photo-1519494026892-88bb237b200d?w=800",
+    "shortDesc": "Precision infusion with safety alarms",
+    "fullDesc": "<p>Double-channel electric syringe driver for precise medication administration in intensive care and resuscitation. Advanced safety system with multiple alarms.</p><h3>Precision and Safety</h3><ul><li>Flow rate: 0.1 to 1200 mL/h</li><li>Accuracy: ±2%</li><li>Alarms: occlusion, end of infusion, low battery</li><li>Compatible with 10 to 60 mL syringes</li></ul>",
+    "gallery": [
+      "https://images.unsplash.com/photo-1519494026892-88bb237b200d?w=800",
+      "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=800"
+    ],
+    "options": [
+      {
+        "name": "Configuration",
+        "choices": [
+          "Single channel",
+          "Double channel",
+          "Triple channel"
+        ]
+      }
+    ],
+    "catalogPdf": "#",
+    "inStock": true,
+    "deliveryTime": "1-2 weeks",
+    "features": [
+      "Independent double channel",
+      "Multiple alarms",
+      "Touch interface",
+      "Infusion history",
+      "4-hour backup battery"
+    ],
+    "specs": {
+      "Flow Rate": "0.1-1200 mL/h",
+      "Accuracy": "±2%",
+      "Syringes": "10-60 mL",
+      "Alarms": "Occlusion, end, battery",
+      "Battery": "4h autonomy",
+      "Weight": "3.5 kg"
+    }
+  },
+  {
+    "id": 11,
+    "name": "Portable Suction Unit",
+    "category": "Care",
+    "price": "€350 excl. VAT",
+    "image": "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=800",
+    "shortDesc": "Lightweight medical suction unit with built-in battery",
+    "fullDesc": "<p>Portable suction unit with built-in battery for mobile use. Ideal for home care, medical transport, and emergency interventions.</p><h3>Mobility</h3><ul><li>Lithium battery: 2h autonomy</li><li>Weight: only 2.5 kg</li><li>Adjustable vacuum: 0 to -600 mmHg</li><li>1L autoclavable reservoir</li></ul>",
+    "gallery": [
+      "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=800",
+      "https://images.unsplash.com/photo-1583947215259-38e31be8751f?w=800"
+    ],
+    "options": [
+      {
+        "name": "Pack",
+        "choices": [
+          "Device only",
+          "Pack with probes",
+          "Complete transport pack"
+        ]
+      }
+    ],
+    "catalogPdf": "#",
+    "inStock": true,
+    "deliveryTime": "3-5 days",
+    "features": [
+      "2h built-in battery",
+      "Ultra-light 2.5 kg",
+      "Adjustable vacuum",
+      "Autoclavable reservoir",
+      "Probe kit included"
+    ],
+    "specs": {
+      "Vacuum": "0 to -600 mmHg",
+      "Flow": "20 L/min",
+      "Reservoir": "1L",
+      "Battery": "Lithium 2h",
+      "Weight": "2.5 kg",
+      "Noise Level": "<60 dB"
+    }
+  },
+  {
+    "id": 12,
+    "name": "Digital Baby Scale",
+    "category": "Pediatrics",
+    "price": "€220 excl. VAT",
+    "image": "https://images.unsplash.com/photo-1583947215259-38e31be8751f?w=800",
+    "shortDesc": "Precision scale with tare and hold function",
+    "fullDesc": "<p>High-precision digital baby scale specially designed for weighing infants and young children. Hold function for restless babies.</p><h3>Pediatric Precision</h3><ul><li>Capacity: 20 kg</li><li>Accuracy: 5g</li><li>Tare function to subtract diaper weight</li><li>Hold function for restless babies</li></ul>",
+    "gallery": [
+      "https://images.unsplash.com/photo-1583947215259-38e31be8751f?w=800",
+      "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800"
+    ],
+    "options": [
+      {
+        "name": "Accessories",
+        "choices": [
+          "Scale only",
+          "With wall stadiometer",
+          "Complete pediatric pack"
+        ]
+      }
+    ],
+    "catalogPdf": "#",
+    "inStock": true,
+    "deliveryTime": "1 week",
+    "features": [
+      "5g accuracy",
+      "Hold function",
+      "Tare function",
+      "Non-slip tray",
+      "Backlit LCD display"
+    ],
+    "specs": {
+      "Capacity": "20 kg",
+      "Accuracy": "5g",
+      "Tray": "55 x 35 cm",
+      "Display": "Backlit LCD",
+      "Power": "Mains or batteries",
+      "Weight": "4 kg"
+    }
+  },
+  {
+    "id": 13,
+    "name": "Compression Nebulizer",
+    "category": "Respiratory",
+    "price": "€85 excl. VAT",
+    "image": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800",
+    "shortDesc": "Silent home and professional nebulizer",
+    "fullDesc": "<p>Compression nebulizer for respiratory treatment administration. Silent operation ideal for home or medical office use.</p><h3>Performance</h3><ul><li>Particle size: 1-5 μm</li><li>Flow rate: 0.2 mL/min</li><li>Medication reservoir: 6 mL</li><li>Noise level: <50 dB</li></ul>",
+    "gallery": [
+      "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800",
+      "https://images.unsplash.com/photo-1584483766114-2cea6fac255f?w=800"
+    ],
+    "options": [
+      {
+        "name": "Pack",
+        "choices": [
+          "Nebulizer only",
+          "Pack with masks",
+          "Complete family pack"
+        ]
+      }
+    ],
+    "catalogPdf": "#",
+    "inStock": true,
+    "deliveryTime": "24-48h",
+    "features": [
+      "Silent operation",
+      "Fine particles 1-5μm",
+      "Adult and child masks",
+      "Mouthpiece included",
+      "Easy to clean"
+    ],
+    "specs": {
+      "Particles": "1-5 μm",
+      "Flow": "0.2 mL/min",
+      "Reservoir": "6 mL",
+      "Noise": "<50 dB",
+      "Power": "130W",
+      "Weight": "1.2 kg"
+    }
+  },
+  {
+    "id": 14,
+    "name": "Lightweight Aluminum Wheelchair",
+    "category": "Mobility",
+    "price": "€450 excl. VAT",
+    "image": "https://images.unsplash.com/photo-1584982751601-97dcc096659c?w=800",
+    "shortDesc": "Foldable, ultra-light and ergonomic wheelchair",
+    "fullDesc": "<p>Ultra-light aluminum wheelchair with foldable frame for easy transport. Designed for daily use with comfort and safety.</p><h3>Lightness and Comfort</h3><ul><li>Weight: only 12 kg</li><li>Anodized aluminum frame</li><li>Padded seat and backrest</li><li>Lift-up and removable footrests</li></ul>",
+    "gallery": [
+      "https://images.unsplash.com/photo-1584982751601-97dcc096659c?w=800",
+      "https://images.unsplash.com/photo-1519494026892-88bb237b200d?w=800"
+    ],
+    "options": [
+      {
+        "name": "Seat Width",
+        "choices": [
+          "40 cm",
+          "45 cm",
+          "50 cm"
+        ]
+      },
+      {
+        "name": "Accessories",
+        "choices": [
+          "Standard",
+          "With tray",
+          "Complete pack"
+        ]
+      }
+    ],
+    "catalogPdf": "#",
+    "inStock": true,
+    "deliveryTime": "1 week",
+    "features": [
+      "Ultra-light 12 kg",
+      "Foldable frame",
+      "Padded seat",
+      "Removable footrests",
+      "Hand brakes"
+    ],
+    "specs": {
+      "Weight": "12 kg",
+      "Seat Width": "40-50 cm",
+      "Rear Wheels": "24 inches",
+      "Max Load": "120 kg",
+      "Folding": "Compact",
+      "Material": "Anodized aluminum"
+    }
+  },
+  {
+    "id": 15,
+    "name": "Multiparameter Vital Signs Monitor",
+    "category": "Emergency",
+    "price": "€2,800 excl. VAT",
+    "image": "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=800",
+    "shortDesc": "ECG, SpO2, NIBP and Temperature monitoring",
+    "fullDesc": "<p>High-performance multiparameter patient monitor for continuous real-time vital signs monitoring. High-resolution color touchscreen.</p><h3>Monitored Parameters</h3><ul><li>3/5-lead ECG with arrhythmia analysis</li><li>SpO2 (oxygen saturation)</li><li>NIBP (non-invasive blood pressure)</li><li>Temperature (2 channels)</li><li>Respiratory rate</li></ul>",
+    "gallery": [
+      "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=800",
+      "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=800",
+      "https://images.unsplash.com/photo-1551076805-e1869033e561?w=800"
+    ],
+    "options": [
+      {
+        "name": "Screen",
+        "choices": [
+          "12 inches",
+          "15 inches"
+        ]
+      },
+      {
+        "name": "Modules",
+        "choices": [
+          "Standard (ECG+SpO2+NIBP)",
+          "Complete (+Temp+Resp)"
+        ]
+      }
+    ],
+    "catalogPdf": "#",
+    "inStock": true,
+    "deliveryTime": "2-3 weeks",
+    "features": [
+      "Color touchscreen",
+      "3/5-lead ECG",
+      "Configurable alarms",
+      "Network interface",
+      "4h battery",
+      "Event history"
+    ],
+    "specs": {
+      "Screen": "12-15 inch touchscreen",
+      "ECG": "3/5 leads",
+      "SpO2": "Plethysmography",
+      "NIBP": "Oscillometric",
+      "Temperature": "2 channels",
+      "Battery": "4h autonomy"
+    }
+  }
+]

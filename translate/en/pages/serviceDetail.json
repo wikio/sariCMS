@@ -1,0 +1,13 @@
+{
+  "notFound": "Service Not Found",
+  "notFoundDesc": "This service does not exist or has been deleted.",
+  "backToServices": "Back to services",
+  "home": "Home",
+  "services": "Services",
+  "aboutTitle": "About this service",
+  "commitmentsTitle": "Our commitments",
+  "faqTitle": "Frequently asked questions",
+  "needService": "Need this service?",
+  "needServiceDesc": "Contact our experts for a personalized study.",
+  "requestQuote": "Request a quote"
+}

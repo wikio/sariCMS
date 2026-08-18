@@ -1,0 +1,30 @@
+{
+  "loading": "Services en cours de chargement",
+  "loadingDesc": "Veuillez réessayer dans quelques instants.",
+  "backHome": "Retour à l'accueil",
+  "title": "Nos Services",
+  "subtitle": "Un accompagnement complet, de l'achat à la maintenance",
+  "home": "Accueil",
+  "services": "Services",
+  "expertiseSubtitle": "Nos Expertises",
+  "expertiseTitle": "Ce que nous proposons",
+  "faqTitle": "Questions Fréquentes",
+  "faq": [
+    {
+      "q": "Quels sont les délais de livraison ?",
+      "a": "Les délais varient selon le type de produit : 24-48h pour les consommables, 1-2 semaines pour les équipements standards."
+    },
+    {
+      "q": "Proposez-vous du matériel reconditionné ?",
+      "a": "Oui, nous proposons une gamme certifiée de matériel reconditionné avec une garantie de 12 mois."
+    },
+    {
+      "q": "Comment obtenir un devis personnalisé ?",
+      "a": "Vous pouvez demander un devis via notre formulaire de contact ou directement depuis la fiche produit."
+    },
+    {
+      "q": "Formez-vous le personnel à l'utilisation ?",
+      "a": "Oui, une session de formation de base est incluse pour tout achat d'équipement lourd."
+    }
+  ]
+}

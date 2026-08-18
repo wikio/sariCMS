@@ -1,0 +1,81 @@
+{
+  "products": [
+    {
+      "id": 101,
+      "name": "Portable Ultrasound Pro X1",
+      "category": "Diagnostic",
+      "price": "On Quote",
+      "image": "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=400",
+      "shortDesc": "High-resolution ultrasound for portable medical imaging with HD touchscreen",
+      "fullDesc": "<p>The Portable Ultrasound Pro X1 represents excellence in mobile medical imaging. Equipped with a 15-inch HD touchscreen and interchangeable multi-frequency probes, this device offers exceptional image quality.</p><h3>Main Features</h3><ul><li>15-inch touchscreen with 1920x1080 resolution</li><li>Optimized portability (weight: 3.2 kg)</li><li>6-hour battery life with built-in battery</li><li>Wi-Fi and Bluetooth connectivity for data transfer</li></ul>",
+      "specs": {
+        "Screen": "15-inch HD touchscreen",
+        "Weight": "3.2 kg",
+        "Battery Life": "6 hours",
+        "Probes": "4 probes included"
+      }
+    },
+    {
+      "id": 102,
+      "name": "Premium Electric Examination Table",
+      "category": "Equipment",
+      "price": "€2,450 excl. VAT",
+      "image": "https://images.unsplash.com/photo-1519494026892-88bb237b200d?w=400",
+      "shortDesc": "Height-adjustable electric medical table with silent motors",
+      "fullDesc": "<p>The Premium Electric Examination Table offers optimal comfort for your patients and perfect ergonomics for practitioners.</p>",
+      "specs": {
+        "Maximum Load": "250 kg",
+        "Height": "45-95 cm",
+        "Dimensions": "190 x 70 cm"
+      }
+    },
+    {
+      "id": 103,
+      "name": "Class B Autoclave Sterilizer",
+      "category": "Surgery",
+      "price": "€3,890 excl. VAT",
+      "image": "https://images.unsplash.com/photo-1583947215259-38e31be8751f?w=400",
+      "shortDesc": "23L autoclave for medical instrument sterilization with printer",
+      "fullDesc": "<p>Class B autoclave compliant with European standards for sterilizing all types of medical instruments.</p>",
+      "specs": {
+        "Capacity": "23 liters",
+        "Pressure": "2.3 bars",
+        "Temperature": "134°C"
+      }
+    }
+  ],
+  "events": [
+    {
+      "id": 301,
+      "title": "International Medical Exhibition 2024",
+      "date": "March 15-18, 2024",
+      "location": "Paris Expo Porte de Versailles",
+      "type": "Exhibition",
+      "image": "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400",
+      "shortDesc": "Come discover our latest innovations at the SARI booth",
+      "fullContent": "<p>The largest gathering of healthcare professionals in France. Come meet our experts and discover our latest innovations.</p>"
+    },
+    {
+      "id": 302,
+      "title": "Webinar: New Imaging Technologies",
+      "date": "February 22, 2024 - 2:00 PM",
+      "location": "Online (Zoom)",
+      "type": "Training",
+      "image": "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=400",
+      "shortDesc": "Free training on the latest advances in medical imaging",
+      "fullContent": "<p>Free 90-minute webinar on new medical imaging technologies.</p>"
+    }
+  ],
+  "news": [
+    {
+      "id": 201,
+      "title": "New range of latest-generation portable ultrasound machines",
+      "date": "January 15, 2024",
+      "author": "Dr. Marie Laurent",
+      "category": "Products",
+      "image": "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=400",
+      "shortDesc": "Discover our new collection of ultrasound machines with integrated AI",
+      "fullContent": "<p>The Portable Ultrasound Pro X1 is a cutting-edge device designed to meet the needs of healthcare professionals.</p>"
+    }
+  ]
+}

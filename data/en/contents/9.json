@@ -1,0 +1,35 @@
+{
+  "content": "<p>Our selection of the most efficient equipment on the market. Each product has been rigorously tested and approved by our committee of experts.</p>",
+  "media": [
+    {
+      "src": "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=1200",
+      "caption": "Portable ultrasound Mindray DC-70",
+      "type": "image"
+    },
+    {
+      "src": "https://images.unsplash.com/photo-1559757175-5700dde675bc?w=1200",
+      "caption": "Cardiac monitor Philips IntelliVue",
+      "type": "image"
+    },
+    {
+      "src": "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=1200",
+      "caption": "CT scanner Siemens SOMATOM",
+      "type": "image"
+    },
+    {
+      "src": "https://images.unsplash.com/photo-1551076805-e1869033e561?w=1200",
+      "caption": "Operating table Maquet Magnus",
+      "type": "image"
+    },
+    {
+      "src": "https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=1200",
+      "caption": "Defibrillator Zoll X Series",
+      "type": "image"
+    },
+    {
+      "src": "https://images.unsplash.com/photo-1584982751601-97dcc096659c?w=1200",
+      "caption": "MRI GE Signa 3T",
+      "type": "image"
+    }
+  ]
+}

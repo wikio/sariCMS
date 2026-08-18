@@ -1,0 +1,11 @@
+{
+  "title": "Que recherchez-vous ?",
+  "subtitle": "Produits, actualités, événements...",
+  "placeholder": "Rechercher un produit, un article, un événement...",
+  "searchButton": "Rechercher",
+  "pressEscape": "pour fermer",
+  "tipsTitle": "💡 Astuces de recherche :",
+  "tipOr": "= OU",
+  "tipAnd": "= ET",
+  "tipExample": "Ex: échographe, tensiomètre"
+}

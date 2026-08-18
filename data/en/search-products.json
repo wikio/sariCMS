@@ -1,0 +1,47 @@
+[
+  {
+    "id": 999,
+    "name": "Portable Ultrasound Pro X1",
+    "category": "Diagnostic",
+    "price": "On Quote",
+    "image": "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=800",
+    "shortDesc": "High-resolution ultrasound for portable medical imaging with HD touchscreen",
+    "fullDesc": "<p>The Portable Ultrasound Pro X1 represents excellence in mobile medical imaging.</p>"
+  },
+  {
+    "id": 998,
+    "name": "Premium Electric Examination Table",
+    "category": "Equipment",
+    "price": "€2,450 excl. VAT",
+    "image": "https://images.unsplash.com/photo-1519494026892-88bb237b200d?w=800",
+    "shortDesc": "Height-adjustable electric medical table with silent motors",
+    "fullDesc": "<p>The Premium Electric Examination Table offers optimal comfort for your patients.</p>"
+  },
+  {
+    "id": 997,
+    "name": "Class B Autoclave Sterilizer",
+    "category": "Surgery",
+    "price": "€3,890 excl. VAT",
+    "image": "https://images.unsplash.com/photo-1583947215259-38e31be8751f?w=800",
+    "shortDesc": "23L autoclave for medical instrument sterilization with printer",
+    "fullDesc": "<p>Class B autoclave compliant with European standards.</p>"
+  },
+  {
+    "id": 996,
+    "name": "Digital Pro Blood Pressure Monitor",
+    "category": "Diagnostic",
+    "price": "€189 excl. VAT",
+    "image": "https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=800",
+    "shortDesc": "Professional blood pressure monitor with 120-measurement memory and Bluetooth",
+    "fullDesc": "<p>High-precision professional digital blood pressure monitor.</p>"
+  },
+  {
+    "id": 995,
+    "name": "LED Binocular Microscope",
+    "category": "Diagnostic",
+    "price": "€1,290 excl. VAT",
+    "image": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800",
+    "shortDesc": "Binocular microscope with LED lighting magnification 40x-2000x",
+    "fullDesc": "<p>Professional binocular microscope with long-lasting LED lighting.</p>"
+  }
+]

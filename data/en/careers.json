@@ -1,0 +1,403 @@
+[
+  {
+    "id": 1,
+    "title": "Biomedical Technician M/F",
+    "type": "CDI",
+    "location": "Lyon (69)",
+    "salary": "32-38K€",
+    "image": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800",
+    "shortDesc": "Maintenance and installation",
+    "mission": "Ensure equipment maintenance.",
+    "objectifs": [
+      "Guarantee 99% availability",
+      "Train users"
+    ],
+    "prerequis": [
+      "BTS Biomedical",
+      "Driver's License"
+    ],
+    "experience": "2 years minimum",
+    "typeTravail": "Full-time - Field",
+    "workflow": [
+      "1. Application",
+      "2. HR Interview",
+      "3. Technical Interview",
+      "4. Onboarding"
+    ],
+    "contact": "rh@sarisysteme.com"
+  },
+  {
+    "id": 2,
+    "title": "B2B Sales Executive",
+    "type": "CDI",
+    "location": "Paris",
+    "salary": "35-45K€ + variables",
+    "image": "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800",
+    "shortDesc": "Hospital portfolio development",
+    "mission": "Develop sales across the Île-de-France region.",
+    "objectifs": [
+      "Achieve revenue targets",
+      "Build customer loyalty"
+    ],
+    "prerequis": [
+      "Bachelor's in Business",
+      "Driver's License"
+    ],
+    "experience": "3 years in B2B sales",
+    "typeTravail": "Full-time - Travelling",
+    "workflow": [
+      "1. Application",
+      "2. HR Interview",
+      "3. Role-play assessment",
+      "4. Onboarding"
+    ],
+    "contact": "rh@sarisysteme.com"
+  },
+  {
+    "id": 3,
+    "title": "Logistics Manager",
+    "type": "CDI",
+    "location": "Lyon (69)",
+    "salary": "40-50K€",
+    "image": "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=800",
+    "shortDesc": "Inventory management and supply chain",
+    "mission": "Optimize logistics flows.",
+    "objectifs": [
+      "Reduce costs by 10%",
+      "Improve lead times"
+    ],
+    "prerequis": [
+      "Master's in Logistics",
+      "English"
+    ],
+    "experience": "5 years, including 2 in management",
+    "typeTravail": "Full-time - Headquarters",
+    "workflow": [
+      "1. Application",
+      "2. Line Manager Interview",
+      "3. Executive Interview",
+      "4. Onboarding"
+    ],
+    "contact": "rh@sarisysteme.com"
+  },
+  {
+    "id": 4,
+    "title": "Administrative Assistant",
+    "type": "CDD",
+    "location": "Lyon (69)",
+    "salary": "24-28K€",
+    "image": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800",
+    "shortDesc": "Support for sales teams",
+    "mission": "Manage orders and customer follow-up.",
+    "objectifs": [
+      "Zero data entry errors",
+      "Customer satisfaction"
+    ],
+    "prerequis": [
+      "BTS Business Administration",
+      "Microsoft Office"
+    ],
+    "experience": "1 year",
+    "typeTravail": "Full-time - Headquarters",
+    "workflow": [
+      "1. Application",
+      "2. HR Interview",
+      "3. Onboarding"
+    ],
+    "contact": "rh@sarisysteme.com"
+  },
+  {
+    "id": 5,
+    "title": "Imaging Application Engineer",
+    "type": "CDI",
+    "location": "Marseille (13)",
+    "salary": "45-55K€",
+    "image": "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=800",
+    "shortDesc": "Technical expertise and training",
+    "mission": "Train clients on new products.",
+    "objectifs": [
+      "100% of clients trained",
+      "Level 2 technical support"
+    ],
+    "prerequis": [
+      "Engineering degree or equivalent",
+      "Imaging expertise"
+    ],
+    "experience": "3 years",
+    "typeTravail": "Full-time - Regional",
+    "workflow": [
+      "1. Application",
+      "2. Technical Interview",
+      "3. Executive Interview",
+      "4. Onboarding"
+    ],
+    "contact": "rh@sarisysteme.com"
+  },
+  {
+    "id": 6,
+    "title": "Medical Facility Cleaner",
+    "type": "CDI",
+    "location": "Lyon (69)",
+    "salary": "20-22K€",
+    "image": "https://images.unsplash.com/photo-1584982751601-97dcc096659c?w=800",
+    "shortDesc": "Cleaning of premises and warehouse",
+    "mission": "Ensure hygiene across facilities.",
+    "objectifs": [
+      "Compliance with protocols",
+      "Availability"
+    ],
+    "prerequis": [
+      "CAP Cleaning Agent",
+      "Driver's License"
+    ],
+    "experience": "Beginners accepted",
+    "typeTravail": "Part-time - Morning",
+    "workflow": [
+      "1. Application",
+      "2. Brief Interview",
+      "3. Onboarding"
+    ],
+    "contact": "rh@sarisysteme.com"
+  },
+  {
+    "id": 7,
+    "title": "Digital Marketing Intern",
+    "type": "Stage",
+    "location": "Lyon (69)",
+    "salary": "600€/month",
+    "image": "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=800",
+    "shortDesc": "Social media and website management",
+    "mission": "Enhance online visibility.",
+    "objectifs": [
+      "Increase web traffic by 20%",
+      "Create content"
+    ],
+    "prerequis": [
+      "Bachelor's/Master's in Digital Marketing",
+      "Creative"
+    ],
+    "experience": "6 months",
+    "typeTravail": "6-month internship",
+    "workflow": [
+      "1. Application + Portfolio",
+      "2. Interview",
+      "3. Onboarding"
+    ],
+    "contact": "rh@sarisysteme.com"
+  },
+  {
+    "id": 8,
+    "title": "Warehouse Forklift Operator",
+    "type": "CDI",
+    "location": "Lyon (69)",
+    "salary": "26-30K€",
+    "image": "https://images.unsplash.com/photo-1551076805-e1869033e561?w=800",
+    "shortDesc": "Order preparation",
+    "mission": "Manage goods flow.",
+    "objectifs": [
+      "Preparation accuracy",
+      "Timeliness"
+    ],
+    "prerequis": [
+      "Forklift certification (CACES 1/3/5)",
+      "Rigor"
+    ],
+    "experience": "2 years",
+    "typeTravail": "Full-time - Warehouse",
+    "workflow": [
+      "1. Application",
+      "2. Forklift Test",
+      "3. Interview",
+      "4. Onboarding"
+    ],
+    "contact": "rh@sarisysteme.com"
+  },
+  {
+    "id": 9,
+    "title": "Accounts Payable Clerk",
+    "type": "CDI",
+    "location": "Lyon (69)",
+    "salary": "30-35K€",
+    "image": "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=800",
+    "shortDesc": "Invoice and payment processing",
+    "mission": "Ensure accurate accounting processing.",
+    "objectifs": [
+      "Meet payment deadlines",
+      "Data reliability"
+    ],
+    "prerequis": [
+      "BTS Accounting",
+      "Sage software"
+    ],
+    "experience": "2 years",
+    "typeTravail": "Full-time - Headquarters",
+    "workflow": [
+      "1. Application",
+      "2. HR Interview",
+      "3. Technical Test",
+      "4. Onboarding"
+    ],
+    "contact": "rh@sarisysteme.com"
+  },
+  {
+    "id": 10,
+    "title": "Regulatory & Quality Affairs Manager",
+    "type": "CDI",
+    "location": "Lyon (69)",
+    "salary": "45-55K€",
+    "image": "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800",
+    "shortDesc": "Regulatory watch and audits",
+    "mission": "Ensure product compliance.",
+    "objectifs": [
+      "Maintain certifications",
+      "Train staff"
+    ],
+    "prerequis": [
+      "Master's in Quality Assurance",
+      "Fluent English"
+    ],
+    "experience": "5 years in medical devices",
+    "typeTravail": "Full-time - Headquarters",
+    "workflow": [
+      "1. Application",
+      "2. Quality Interview",
+      "3. General Management Interview",
+      "4. Onboarding"
+    ],
+    "contact": "rh@sarisysteme.com"
+  },
+  {
+    "id": 11,
+    "title": "Full Stack Web Developer",
+    "type": "CDI",
+    "location": "Lyon (69) / Remote",
+    "salary": "40-50K€",
+    "image": "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800",
+    "shortDesc": "Maintenance and expansion of e-commerce site",
+    "mission": "Develop internal and external tools.",
+    "objectifs": [
+      "Site performance",
+      "User satisfaction"
+    ],
+    "prerequis": [
+      "Bachelor's in Computer Science",
+      "React/Node.js"
+    ],
+    "experience": "3 years",
+    "typeTravail": "Full-time - Hybrid",
+    "workflow": [
+      "1. Application",
+      "2. Technical Test",
+      "3. Team Interview",
+      "4. Onboarding"
+    ],
+    "contact": "rh@sarisysteme.com"
+  },
+  {
+    "id": 12,
+    "title": "Senior Account Manager",
+    "type": "CDI",
+    "location": "Bordeaux (33)",
+    "salary": "35-40K€",
+    "image": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800",
+    "shortDesc": "Management of a clinic portfolio",
+    "mission": "Retain clients and drive revenue growth.",
+    "objectifs": [
+      "Retention rate > 95%",
+      "Upselling"
+    ],
+    "prerequis": [
+      "Associate/Bachelor's Degree",
+      "Customer service orientation"
+    ],
+    "experience": "5 years",
+    "typeTravail": "Full-time - Regional",
+    "workflow": [
+      "1. Application",
+      "2. HR Interview",
+      "3. Manager Interview",
+      "4. Onboarding"
+    ],
+    "contact": "rh@sarisysteme.com"
+  },
+  {
+    "id": 13,
+    "title": "Apprentice Biomedical Technician",
+    "type": "Alternance",
+    "location": "Lyon (69)",
+    "salary": "% of SMIC",
+    "image": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800",
+    "shortDesc": "2-year work-study program",
+    "mission": "Assist senior technicians.",
+    "objectifs": [
+      "Obtain BTS degree",
+      "Progressive autonomy"
+    ],
+    "prerequis": [
+      "High School Diploma level",
+      "Technical curiosity"
+    ],
+    "experience": "Beginner",
+    "typeTravail": "Work-study 2 years",
+    "workflow": [
+      "1. Application",
+      "2. Interview",
+      "3. Contract signing",
+      "4. Start date"
+    ],
+    "contact": "rh@sarisysteme.com"
+  },
+  {
+    "id": 14,
+    "title": "Regional Agency Director",
+    "type": "CDI",
+    "location": "Nantes (44)",
+    "salary": "55-65K€",
+    "image": "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=800",
+    "shortDesc": "Management of Grand Ouest regional activities",
+    "mission": "Grow the agency and manage the team.",
+    "objectifs": [
+      "Revenue growth",
+      "Team management"
+    ],
+    "prerequis": [
+      "Master's degree",
+      "Management experience"
+    ],
+    "experience": "7 years minimum",
+    "typeTravail": "Full-time - Branch",
+    "workflow": [
+      "1. Application",
+      "2. Managing Director Interview",
+      "3. Executive Committee Interview",
+      "4. Onboarding"
+    ],
+    "contact": "rh@sarisysteme.com"
+  },
+  {
+    "id": 15,
+    "title": "Community Manager",
+    "type": "CDD",
+    "location": "Lyon (69)",
+    "salary": "28-32K€",
+    "image": "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800",
+    "shortDesc": "Social media management",
+    "mission": "Drive engagement around the brand.",
+    "objectifs": [
+      "Follower growth",
+      "Engagement rate"
+    ],
+    "prerequis": [
+      "Bachelor's in Communication",
+      "Creative"
+    ],
+    "experience": "2 years",
+    "typeTravail": "Full-time - Headquarters",
+    "workflow": [
+      "1. Application",
+      "2. Interview",
+      "3. Onboarding"
+    ],
+    "contact": "rh@sarisysteme.com"
+  }
+]

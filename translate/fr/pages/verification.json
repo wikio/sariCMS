@@ -1,0 +1,166 @@
+{
+  "title": "Vérification d'Authenticité",
+  "subtitle": "Vérifiez l'authenticité de vos documents SARI Système",
+  "breadcrumbHome": "Accueil",
+  "breadcrumbVerification": "Vérification",
+  "howToVerify": {
+    "title": "Comment vérifier ?",
+    "desc": "Tous les documents officiels SARI Système comportent un code unique au format",
+    "format": "SARI-XXX##-#####",
+    "andKey": "et une clé de vérification cryptée.",
+    "steps": [
+      {
+        "number": "1",
+        "title": "Localisez les codes",
+        "desc": "Trouvez le code et la clé sur votre document ou scannez le QR code"
+      },
+      {
+        "number": "2",
+        "title": "Saisissez les informations",
+        "desc": "Entrez le code et la clé dans le formulaire ci-dessous"
+      },
+      {
+        "number": "3",
+        "title": "Obtenez le résultat",
+        "desc": "Vérification instantanée de l'authenticité"
+      }
+    ],
+    "verifiableTypes": "Types de documents vérifiables :",
+    "types": [
+      "Factures (achat/vente)",
+      "Devis",
+      "Bons de commande",
+      "Bons de livraison",
+      "Certificats",
+      "Produits",
+      "Clients",
+      "Fournisseurs",
+      "Inventaires",
+      "NIF / NIS / NAI",
+      "G50",
+      "Documents fiscaux"
+    ]
+  },
+  "form": {
+    "title": "Formulaire de vérification",
+    "codeLabel": "Code du document",
+    "codePlaceholder": "Ex: SARI-FAC24-00001",
+    "keyLabel": "Clé de vérification",
+    "keyPlaceholder": "Ex: CTdxXe6ZdFVzWQ==",
+    "captchaLabel": "Vérification anti-robot",
+    "captchaPlaceholder": "?",
+    "newCaptcha": "Nouveau CAPTCHA",
+    "captchaHelp": "Résolvez cette opération pour prouver que vous êtes humain",
+    "verify": "Vérifier",
+    "verifying": "Vérification...",
+    "reset": "Réinitialiser",
+    "demoCodes": "Codes de démonstration :"
+  },
+  "results": {
+    "valid": {
+      "title": "Document authentique",
+      "message": "Document authentique",
+      "type": "Type :",
+      "issuer": "Émetteur :"
+    },
+    "expired": {
+      "title": "Document expiré",
+      "message": "Document expiré",
+      "desc": "Ce document n'est plus valide. Contactez SARI Système SARL pour obtenir une version actualisée."
+    },
+    "revoked": {
+      "title": "Document révoqué",
+      "message": "Document révoqué",
+      "reason": "Raison :",
+      "warning": "Ce document a été officiellement annulé. Ne l'utilisez pas."
+    },
+    "invalid": {
+      "title": "Document falsifié",
+      "message": "Document falsifié ou altéré.",
+      "reported": "Signalé :",
+      "legal": "Législation algérienne : La falsification de documents est punie par les Articles 214, 217 et 147 du Code pénal algérien."
+    },
+    "notFound": {
+      "title": "Document non reconnu",
+      "message": "Document non reconnu dans notre base de données.",
+      "actions": "Actions recommandées :",
+      "steps": [
+        "1. Vérifiez la saisie du code et de la clé",
+        "2. Assurez-vous que le document provient de SARI Système SARL",
+        "3. Ne procédez à aucun paiement si c'est une facture",
+        "4. Contactez notre support en cas de doute"
+      ],
+      "legal": "Législation algérienne : La falsification de documents est punie par les Articles 214, 217 et 147 du Code pénal algérien."
+    },
+    "captchaError": "CAPTCHA incorrect",
+    "captchaMessage": "Réponse CAPTCHA incorrecte. Veuillez réessayer.",
+    "blocked": "Accès temporairement bloqué",
+    "blockedMessage": "Trop de tentatives. Veuillez rafraîchir la page dans 5 minutes.",
+    "error": "Erreur",
+    "errorMessage": "Veuillez remplir tous les champs.",
+    "invalidFormat": "Format de code invalide. Format attendu : SARI-XXX##-#####"
+  },
+  "sidebar": {
+    "qrCode": {
+      "title": "Scan QR Code",
+      "desc": "Scannez le QR code présent sur vos documents avec votre smartphone pour une vérification automatique.",
+      "example": "Exemple de QR code"
+    },
+    "faq": {
+      "title": "Questions fréquentes",
+      "questions": [
+        {
+          "q": "Où trouver le code et la clé ?",
+          "a": "Sur tous les documents officiels SARI Système SARL : factures, devis, certificats, étiquettes produits. Le code suit le format SARI-XXX##-#####."
+        },
+        {
+          "q": "Que signifie le format du code ?",
+          "a": "SARI (préfixe entreprise) + Code type (FAC, DVV, etc.) + Année + Numéro de séquence. Ex: SARI-FAC24-00001 = Facture 2024 n°00001."
+        },
+        {
+          "q": "Que faire si le document n'est pas reconnu ?",
+          "a": "Contactez immédiatement notre support. Il peut s'agir d'une contrefaçon ou d'une erreur de saisie."
+        },
+        {
+          "q": "Quelle est la différence entre 'révoqué' et 'invalide' ?",
+          "a": "'Révoqué' signifie que le document a été annulé par nos soins (ex: commande annulée). 'Invalide' signifie que le document a été signalé comme falsifié ou altéré."
+        },
+        {
+          "q": "Combien de temps les documents restent-ils valides ?",
+          "a": "Les factures et devis sont valides indéfiniment. Les certificats ont une durée de validité variable (1 à 5 ans selon le type)."
+        }
+      ]
+    },
+    "support": {
+      "title": "Besoin d'aide ?",
+      "desc": "Notre équipe support est disponible pour vous assister dans vos vérifications.",
+      "cta": "Contacter le support"
+    }
+  },
+  "legal": {
+    "title": "Mentions légales et authenticité",
+    "intro": "Le système de vérification d'authenticité SARI Système SARL garantit l'origine et la validité de tous les documents officiels et produits émis par notre entreprise. Chaque document comporte un code unique au format",
+    "format": "SARI-XXX##-#####",
+    "andKey": "et une clé de vérification cryptée permettant une authentification instantanée.",
+    "formatTitle": "Format des codes",
+    "formatDesc": "Les codes suivent une structure normalisée :",
+    "prefix": "SARI",
+    "prefixDesc": "(préfixe entreprise) +",
+    "type": "XXX",
+    "typeDesc": "(code type de document) +",
+    "year": "##",
+    "yearDesc": "(année) +",
+    "sequence": "#####",
+    "sequenceDesc": "(numéro de séquence). Exemples : SARI-FAC24-00001 (Facture 2024), SARI-DVV24-00045 (Devis 2024).",
+    "legalValueTitle": "Valeur juridique",
+    "legalValueDesc": "Les documents vérifiés comme authentiques par ce système ont pleine valeur juridique et commerciale selon la législation algérienne en vigueur. En cas de litige, le résultat de vérification positif fait foi de l'authenticité du document devant les juridictions compétentes.",
+    "antiCounterfeitTitle": "Lutte contre la contrefaçon",
+    "antiCounterfeitDesc": "SARI Système SARL s'engage activement dans la lutte contre la contrefaçon de documents et de produits médicaux. Tout document non reconnu ou signalé comme falsifié par notre système de vérification doit être considéré comme suspect et signalé à nos services ainsi qu'aux autorités compétentes.",
+    "dataProtectionTitle": "Protection des données",
+    "dataProtectionDesc": "Les informations de vérification sont traitées de manière confidentielle et ne sont pas stockées au-delà de la session de vérification. Conformément à la",
+    "law": "Loi n° 18-07 du 10 juin 2018",
+    "lawDesc": "relative à la protection des personnes physiques dans le traitement des données à caractère personnel, aucune donnée personnelle n'est conservée lors du processus de vérification.",
+    "warning": "Avertissement :",
+    "warningDesc": "La falsification de documents officiels est un délit passible de poursuites pénales selon le Code pénal algérien (Articles 214, 217 et 147). En cas de doute sur l'authenticité d'un document, contactez immédiatement nos services ou les autorités judiciaires compétentes."
+  }
+}

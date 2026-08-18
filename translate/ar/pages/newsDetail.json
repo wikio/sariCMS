@@ -1,0 +1,21 @@
+{
+  "articleNotFound": "المقال غير موجود",
+  "articleNotFoundDesc": "المقال المطلوب غير موجود أو تم حذفه.",
+  "backToNews": "العودة إلى الأخبار",
+  "home": "الرئيسية",
+  "news": "الأخبار",
+  "author": "الكاتب",
+  "tags": "الوسوم",
+  "shareArticle": "مشاركة هذا المقال",
+  "previousArticle": "المقال السابق",
+  "nextArticle": "المقال التالي",
+  "relatedArticles": "مقالات ذات صلة",
+  "aboutAuthor": "عن الكاتب",
+  "latestArticles": "آخر المقالات",
+  "newsletter": "النشرة الإخبارية",
+  "newsletterDesc": "احصل على آخر أخبارنا مباشرة في بريدك",
+  "yourEmail": "بريدك الإلكتروني",
+  "subscribe": "اشترك",
+  "subscriptionSuccess": "تم التسجيل بنجاح!",
+  "popularTags": "الوسوم الشائعة"
+}

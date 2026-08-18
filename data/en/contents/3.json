@@ -1,0 +1,35 @@
+{
+  "content": "<p>Discover some of our achievements across Algeria. Each installation represents a partnership of trust with a healthcare facility.</p>",
+  "media": [
+    {
+      "src": "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=1200",
+      "caption": "Complete installation at Algiers University Hospital - 2023",
+      "type": "image"
+    },
+    {
+      "src": "https://images.unsplash.com/photo-1551076805-e1869033e561?w=1200",
+      "caption": "Modern operating room - El Afia Clinic, Oran",
+      "type": "image"
+    },
+    {
+      "src": "https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=1200",
+      "caption": "Cardiology department - Central Hospital, Constantine",
+      "type": "image"
+    },
+    {
+      "src": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1200",
+      "caption": "Analysis laboratory - Modern Clinic, Annaba",
+      "type": "image"
+    },
+    {
+      "src": "https://images.unsplash.com/photo-1519494026892-88bb237b200d?w=1200",
+      "caption": "Pediatrics department - Regional Hospital, Blida",
+      "type": "image"
+    },
+    {
+      "src": "https://images.unsplash.com/photo-1584982751601-97dcc096659c?w=1200",
+      "caption": "Medical imaging - Health Center, Tizi Ouzou",
+      "type": "image"
+    }
+  ]
+}

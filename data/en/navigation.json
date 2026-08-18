@@ -1,0 +1,60 @@
+[
+  {
+    "label": "Home",
+    "href": "/"
+  },
+  {
+    "label": "About",
+    "href": "/about"
+  },
+  {
+    "label": "Solutions",
+    "href": "/solutions",
+    "submenu": [
+      {
+        "label": "Heavy Equipment",
+        "href": "/solutions",
+        "desc": "Imaging and operating rooms"
+      },
+      {
+        "label": "Consumables",
+        "href": "/solutions",
+        "desc": "Daily medical supplies"
+      },
+      {
+        "label": "Diagnostic",
+        "href": "/solutions",
+        "desc": "Advanced diagnostic tools"
+      },
+      {
+        "label": "Surgery",
+        "href": "/solutions",
+        "desc": "Surgical equipment"
+      }
+    ]
+  },
+  {
+    "label": "Services",
+    "href": "/services"
+  },
+  {
+    "label": "Products",
+    "href": "/products"
+  },
+  {
+    "label": "Events",
+    "href": "/events"
+  },
+  {
+    "label": "News",
+    "href": "/news"
+  },
+  {
+    "label": "Careers",
+    "href": "/careers"
+  },
+  {
+    "label": "Contact",
+    "href": "/contact"
+  }
+]

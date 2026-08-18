@@ -1,0 +1,10 @@
+{
+  "content": "<h2>Notre Histoire</h2><p>Fondée en 2003 à Alger, SARI Système est née de la vision de fournir aux professionnels de santé algériens des équipements médicaux de pointe, accessibles et fiables.</p><h3>Nos Valeurs</h3><div class='grid grid-cols-2 gap-4 my-6'><div class='p-4 bg-sari-blue/5 border-l-4 border-sari-blue'><h4 class='font-bold mb-2'>🎯 Excellence</h4><p class='text-sm'>Nous visons l'excellence dans chaque interaction client.</p></div><div class='p-4 bg-sari-lime/10 border-l-4 border-sari-lime'><h4 class='font-bold mb-2'>🤝 Proximité</h4><p class='text-sm'>Une relation de confiance avec nos clients et partenaires.</p></div><div class='p-4 bg-purple-50 dark:bg-purple-900/20 border-l-4 border-purple-500'><h4 class='font-bold mb-2'>💡 Innovation</h4><p class='text-sm'>Toujours à la pointe des technologies médicales.</p></div><div class='p-4 bg-orange-50 dark:bg-orange-900/20 border-l-4 border-orange-500'><h4 class='font-bold mb-2'>🛡️ Fiabilité</h4><p class='text-sm'>Des équipements sur lesquels on peut compter.</p></div></div><h3>Nos Chiffres Clés</h3><p>Après 20 ans d'activité, nous sommes fiers de nos réalisations :</p><ul><li><strong>500+</strong> établissements équipés</li><li><strong>9</strong> catégories de solutions médicales</li><li><strong>24/7</strong> support technique disponible</li><li><strong>48</strong> wilayas couvertes</li></ul>",
+  "features": [
+    "Équipe de 50+ techniciens certifiés",
+    "Partenariats avec 30+ marques internationales",
+    "Centre de formation agréé",
+    "Laboratoire de tests interne",
+    "Service après-vente réactif"
+  ]
+}

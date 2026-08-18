@@ -1,0 +1,21 @@
+{
+  "articleNotFound": "Article non trouvé",
+  "articleNotFoundDesc": "L'article demandé n'existe pas ou a été supprimé.",
+  "backToNews": "Retour aux actualités",
+  "home": "Accueil",
+  "news": "Actualités",
+  "author": "Auteur",
+  "tags": "Tags",
+  "shareArticle": "Partager cet article",
+  "previousArticle": "Article précédent",
+  "nextArticle": "Article suivant",
+  "relatedArticles": "Articles connexes",
+  "aboutAuthor": "À propos de l'auteur",
+  "latestArticles": "Derniers articles",
+  "newsletter": "Newsletter",
+  "newsletterDesc": "Recevez nos dernières actualités directement dans votre boîte mail",
+  "yourEmail": "Votre email",
+  "subscribe": "S'inscrire",
+  "subscriptionSuccess": "Inscription réussie !",
+  "popularTags": "Tags populaires"
+}

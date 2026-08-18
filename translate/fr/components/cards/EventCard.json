@@ -1,0 +1,13 @@
+{
+  "learnMore": "En savoir plus",
+  "types": {
+    "Salon": "Salon",
+    "Formation": "Formation",
+    "Conférence": "Conférence",
+    "Portes Ouvertes": "Portes Ouvertes",
+    "Webinar": "Webinaire",
+    "Atelier": "Atelier",
+    "Lancement": "Lancement",
+    "Démonstration": "Démonstration"
+  }
+}

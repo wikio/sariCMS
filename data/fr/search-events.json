@@ -1,0 +1,61 @@
+[
+  {
+    "id": 999,
+    "title": "Salon Médical International 2024",
+    "date": "15-18 Mars 2024",
+    "location": "Paris Expo Porte de Versailles - Stand A42",
+    "type": "Salon",
+    "image": "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800",
+    "shortDesc": "Venez découvrir nos dernières innovations sur le stand SARI",
+    "fullContent": "<p>Le plus grand rassemblement de professionnels de santé en France.</p>",
+    "agenda": [
+      "10h00: Inauguration du stand",
+      "14h00: Démonstration Échographe Pro",
+      "16h00: Conférence innovation"
+    ]
+  },
+  {
+    "id": 998,
+    "title": "Webinar: Nouvelles Technologies d'Imagerie",
+    "date": "22 Février 2024 - 14h00",
+    "location": "En ligne (Zoom)",
+    "type": "Formation",
+    "image": "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=800",
+    "shortDesc": "Formation gratuite sur les dernières avancées en imagerie médicale",
+    "fullContent": "<p>Webinar gratuit de 90 minutes sur les nouvelles technologies d'imagerie.</p>",
+    "agenda": [
+      "14h00: Introduction",
+      "15h00: Témoignage praticien",
+      "15h30: Questions-Réponses"
+    ]
+  },
+  {
+    "id": 997,
+    "title": "Journée Portes Ouvertes SARI",
+    "date": "10 Avril 2024 - 9h00-17h00",
+    "location": "Siège social SARI - Lyon",
+    "type": "Portes Ouvertes",
+    "image": "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800",
+    "shortDesc": "Visite de nos locaux et démonstrations produits",
+    "fullContent": "<p>SARI Système ouvre ses portes pour une journée spéciale.</p>",
+    "agenda": [
+      "09h00: Accueil café",
+      "11h00: Démonstrations showroom",
+      "16h30: Cocktail de clôture"
+    ]
+  },
+  {
+    "id": 996,
+    "title": "Conférence : L'IA en Radiologie",
+    "date": "12 Juin 2024",
+    "location": "Hôtel Dieu, Lyon",
+    "type": "Conférence",
+    "image": "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=800",
+    "shortDesc": "Avec le Pr. Martin sur l'intelligence artificielle",
+    "fullContent": "<p>Conférence sur l'impact de l'IA en radiologie médicale.</p>",
+    "agenda": [
+      "18h00: Accueil",
+      "18h30: Conférence"
+    ]
+  }
+]

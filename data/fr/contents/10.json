@@ -1,0 +1,28 @@
+{
+  "slides": [
+    {
+      "title": "Dr. Ahmed Benali",
+      "subtitle": "Chirurgien Dentiste - Clinique El Afia, Oran",
+      "content": "« Un service exceptionnel et des équipements de très haute qualité. L'équipe SARI nous a accompagnés de A à Z, de la sélection à l'installation. Je recommande vivement ! »",
+      "image": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1920"
+    },
+    {
+      "title": "Dr. Fatima Zahra",
+      "subtitle": "Cardiologue - Hôpital Central, Alger",
+      "content": "« La qualité des équipements de cardiologie est remarquable. Le support technique 24/7 est un vrai plus pour notre service d'urgence. »",
+      "image": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=1920"
+    },
+    {
+      "title": "Dr. Mohamed Kaci",
+      "subtitle": "Directeur - Clinique Moderne, Constantine",
+      "content": "« L'informatique médicale proposée par SARI a transformé notre gestion. Le DMP est conforme à toutes les normes et l'interface est intuitive. »",
+      "image": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=1920"
+    },
+    {
+      "title": "Dr. Sarah Boumediene",
+      "subtitle": "Pédiatre - Hôpital Régional, Blida",
+      "content": "« Les équipements de pédiatrie sont parfaitement adaptés aux besoins des enfants. L'équipe SARI a été à l'écoute de nos spécificités. »",
+      "image": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=1920"
+    }
+  ]
+}

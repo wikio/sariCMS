@@ -1,0 +1,60 @@
+[
+  {
+    "label": "Accueil",
+    "href": "/"
+  },
+  {
+    "label": "À Propos",
+    "href": "/about"
+  },
+  {
+    "label": "Solutions",
+    "href": "/solutions",
+    "submenu": [
+      {
+        "label": "Équipements Lourds",
+        "href": "/solutions",
+        "desc": "Imagerie et blocs opératoires"
+      },
+      {
+        "label": "Consommables",
+        "href": "/solutions",
+        "desc": "Fournitures médicales quotidiennes"
+      },
+      {
+        "label": "Diagnostic",
+        "href": "/solutions",
+        "desc": "Outils de diagnostic avancés"
+      },
+      {
+        "label": "Chirurgie",
+        "href": "/solutions",
+        "desc": "Équipements chirurgicaux"
+      }
+    ]
+  },
+  {
+    "label": "Services",
+    "href": "/services"
+  },
+  {
+    "label": "Produits",
+    "href": "/products"
+  },
+  {
+    "label": "Événements",
+    "href": "/events"
+  },
+  {
+    "label": "Actualités",
+    "href": "/news"
+  },
+  {
+    "label": "Carrières",
+    "href": "/careers"
+  },
+  {
+    "label": "Contact",
+    "href": "/contact"
+  }
+]

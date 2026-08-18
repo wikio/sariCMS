@@ -1,0 +1,55 @@
+{
+  "sections": [
+    {
+      "title": "L'Excellence Médicale",
+      "subtitle": "Depuis plus de 20 ans",
+      "content": "SARI Système est le partenaire de confiance de plus de 500 établissements de santé en Algérie. Notre expertise couvre l'ensemble des spécialités médicales.",
+      "image": "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=1920",
+      "features": [
+        "Expertise reconnue",
+        "500+ clients",
+        "48 wilayas couvertes"
+      ],
+      "cta": {
+        "label": "En savoir plus",
+        "link": "#about"
+      }
+    },
+    {
+      "title": "Notre Histoire en Vidéo",
+      "subtitle": "Un parcours d'excellence",
+      "content": "Retour sur 20 ans d'innovation au service de la santé. De nos débuts modestes à notre position de leader actuel.",
+      "media": "https://www.youtube.com/embed/dQw4w9WgXcQ",
+      "mediaType": "youtube",
+      "cta": {
+        "label": "Nous rejoindre",
+        "link": "#carrieres"
+      }
+    },
+    {
+      "title": "Nos Solutions",
+      "subtitle": "Équipements de pointe",
+      "content": "Une gamme complète pour équiper votre établissement : diagnostic, imagerie, chirurgie, urgence, pédiatrie, cardiologie, informatique médicale, laboratoire et rééducation.",
+      "image": "https://images.unsplash.com/photo-1551076805-e1869033e561?w=1920",
+      "features": [
+        "9 catégories",
+        "500+ produits",
+        "Installation incluse"
+      ],
+      "cta": {
+        "label": "Découvrir",
+        "link": "#solutions"
+      }
+    },
+    {
+      "title": "Rejoignez-nous",
+      "subtitle": "Construisons l'avenir ensemble",
+      "content": "Que vous soyez professionnel de santé, partenaire ou candidat, nous avons une place pour vous. Contactez-nous pour discuter de vos projets.",
+      "image": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1920",
+      "cta": {
+        "label": "Nous contacter",
+        "link": "#contact"
+      }
+    }
+  ]
+}
