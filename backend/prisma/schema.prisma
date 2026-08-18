@@ -1,0 +1,412 @@
+// SARI CMS — Prisma schema
+// Default provider: MySQL.
+// To switch to PostgreSQL without touching business code:
+//   1. set provider = "postgresql"
+//   2. set DATABASE_URL to a postgres:// URL
+//   3. run `npx prisma generate && npx prisma migrate dev`
+// The repository layer never imports Prisma models directly in services.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Identity & access
+// ---------------------------------------------------------------------------
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String
+  firstName    String    @default("")
+  lastName     String    @default("")
+  phone        String?
+  company      String?
+  avatar       String?
+  type         String    @default("client") // admin | client | partner | candidate
+  status       String    @default("pending") // active | blocked | pending
+  locale       String    @default("fr")
+  roleId       String?
+  role         Role?     @relation(fields: [roleId], references: [id])
+  totpEnabled  Boolean   @default(false)
+  totpSecret   String?
+  partnerCode  String?
+  partnerKey   String?
+  address      String?   @db.Text
+  wilaya       String?
+  country      String?
+  position     String?
+  experience   String?
+  motivation   String?   @db.Text
+  cvUrl        String?
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+  createdBy    String?
+  updatedBy    String?
+
+  refreshTokens RefreshToken[]
+  auditLogs     AuditLog[]     @relation("ActorLogs")
+
+  @@index([type, status])
+  @@index([deletedAt])
+  @@index([roleId])
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+  userAgent String?   @db.Text
+  ip        String?
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
+}
+
+model Role {
+  id          String           @id @default(uuid())
+  name        String
+  slug        String           @unique
+  description   String?          @db.Text
+  isSystem      Boolean          @default(false)
+  permissionIds Json?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  deletedAt   DateTime?
+  createdBy   String?
+  updatedBy   String?
+  users       User[]
+  permissions RolePermission[]
+
+  @@index([deletedAt])
+  @@map("roles")
+}
+
+model Permission {
+  id          String           @id @default(uuid())
+  resource    String
+  action      String
+  description String?          @db.Text
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  deletedAt   DateTime?
+  createdBy   String?
+  updatedBy   String?
+  roles       RolePermission[]
+
+  @@unique([resource, action])
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+// ---------------------------------------------------------------------------
+// Content — group 2
+// ---------------------------------------------------------------------------
+
+model Page {
+  id          String    @id @default(uuid())
+  slug        String
+  locale      String    @default("fr")
+  kind        String // legal | about | generic
+  subtype     String    @default("simple") // simple | gallery | flyer | slide | scroll | full
+  title       String
+  subtitle    String?
+  category    String?
+  content     String?   @db.Text
+  media       Json?
+  slides      Json?
+  sections    Json?
+  features    Json?
+  pdfUrl      String?
+  status      String    @default("draft") // draft | published | archived
+  publishedAt DateTime?
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  createdBy   String?
+  updatedBy   String?
+
+  @@unique([slug, locale])
+  @@index([kind, subtype])
+  @@index([status])
+  @@index([deletedAt])
+  @@map("pages")
+}
+
+model Faq {
+  id        String    @id @default(uuid())
+  locale    String    @default("fr")
+  question  String    @db.Text
+  answer    String    @db.Text
+  category  String?
+  sortOrder Int       @default(0)
+  status    String    @default("published")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  createdBy String?
+  updatedBy String?
+
+  @@index([locale, category])
+  @@index([deletedAt])
+  @@map("faqs")
+}
+
+model Testimonial {
+  id        String    @id @default(uuid())
+  locale    String    @default("fr")
+  name      String
+  role      String?
+  clinic    String?
+  text      String    @db.Text
+  image     String?
+  rating    Int       @default(5)
+  sortOrder Int       @default(0)
+  status    String    @default("published")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  createdBy String?
+  updatedBy String?
+
+  @@index([locale, status])
+  @@index([deletedAt])
+  @@map("testimonials")
+}
+
+model Menu {
+  id        String    @id @default(uuid())
+  locale    String    @default("fr")
+  name      String
+  location  String // main | footer-nav | footer-legal | social
+  items     Json
+  status    String    @default("published")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  createdBy String?
+  updatedBy String?
+
+  @@unique([location, locale])
+  @@index([deletedAt])
+  @@map("menus")
+}
+
+model ContactInfo {
+  id        String    @id @default(uuid())
+  locale    String    @default("fr")
+  company   String?
+  tagline   String?
+  phone     String?
+  email     String?
+  address   String?   @db.Text
+  hours     String?
+  currency  String?
+  logo      String?
+  social    Json?
+  extras    Json?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  createdBy String?
+  updatedBy String?
+
+  @@unique([locale])
+  @@map("contact_info")
+}
+
+model ContactMessage {
+  id        String    @id @default(uuid())
+  name      String
+  email     String
+  phone     String?
+  subject   String?
+  message   String    @db.Text
+  status    String    @default("new") // new | read | archived
+  meta      Json?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  createdBy String?
+  updatedBy String?
+
+  @@index([status])
+  @@index([deletedAt])
+  @@map("contact_messages")
+}
+
+// ---------------------------------------------------------------------------
+// Transverse
+// ---------------------------------------------------------------------------
+
+model Translation {
+  id         String    @id @default(uuid())
+  entityType String
+  entityId   String
+  locale     String
+  field      String
+  value      String    @db.Text
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
+  createdBy  String?
+  updatedBy  String?
+
+  @@unique([entityType, entityId, locale, field])
+  @@index([entityType, entityId])
+  @@index([locale])
+  @@map("translations")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  actorId    String?
+  actor      User?    @relation("ActorLogs", fields: [actorId], references: [id])
+  action     String
+  resource   String
+  resourceId String?
+  payload    Json?
+  ip         String?
+  userAgent  String?  @db.Text
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  deletedAt  DateTime?
+  createdBy  String?
+  updatedBy  String?
+
+  @@index([resource, resourceId])
+  @@index([actorId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model Setting {
+  id        String    @id @default(uuid())
+  key       String    @unique
+  value     Json
+  group     String    @default("general")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  createdBy String?
+  updatedBy String?
+
+  @@map("settings")
+}
+
+// ---------------------------------------------------------------------------
+// Catalogue stubs used by unit tests & later modules (group 3 / 5)
+// ---------------------------------------------------------------------------
+
+model NewsArticle {
+  id             String    @id @default(uuid())
+  locale         String    @default("fr")
+  slug           String
+  title          String
+  category       String?
+  classification String?
+  sujet          String?
+  authorName     String?
+  authorId       String?
+  date           DateTime?
+  readTime       String?
+  shortDesc      String?   @db.Text
+  fullContent    String?   @db.Text
+  image          String?
+  tags           Json?
+  status         String    @default("draft")
+  publishedAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+  createdBy      String?
+  updatedBy      String?
+
+  @@unique([slug, locale])
+  @@index([status, date])
+  @@index([authorId])
+  @@index([deletedAt])
+  @@map("news_articles")
+}
+
+model EventItem {
+  id          String    @id @default(uuid())
+  locale      String    @default("fr")
+  slug        String
+  title       String
+  type        String?
+  date        DateTime?
+  endDate     DateTime?
+  location    String?
+  shortDesc   String?   @db.Text
+  fullContent String?   @db.Text
+  image       String?
+  agenda      Json?
+  status      String    @default("draft")
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  createdBy   String?
+  updatedBy   String?
+
+  @@unique([slug, locale])
+  @@index([date])
+  @@index([deletedAt])
+  @@map("events")
+}
+
+model Product {
+  id           String    @id @default(uuid())
+  locale       String    @default("fr")
+  slug         String
+  name         String
+  category     String?
+  sku          String?
+  price        String?
+  shortDesc    String?   @db.Text
+  fullDesc     String?   @db.Text
+  image        String?
+  gallery      Json?
+  inStock      Boolean   @default(true)
+  deliveryTime String?
+  features     Json?
+  specs        Json?
+  options      Json?
+  catalogPdf   String?
+  status       String    @default("draft")
+  publishedAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+  createdBy    String?
+  updatedBy    String?
+
+  @@unique([slug, locale])
+  @@index([category, inStock])
+  @@index([deletedAt])
+  @@map("products")
+}

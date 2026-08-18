@@ -1,0 +1,64 @@
+import { Inject, Injectable } from '@nestjs/common';
+import { AppCacheService } from '../../common/cache/cache.service';
+import { AuditService } from '../../common/audit/audit.service';
+import { NEWS_REPOSITORY } from '../../common/constants/tokens';
+import { BaseCrudService, CrudServiceOptions } from '../../common/crud/base-crud.service';
+import { ICrudRepository } from '../../common/crud/interfaces/repository.interface';
+import { slugify } from '../../common/crud/query.util';
+import { NewsEntity } from './entities/news.entity';
+
+@Injectable()
+export class NewsService extends BaseCrudService<NewsEntity> {
+  protected readonly repository: ICrudRepository<NewsEntity>;
+  protected readonly options: CrudServiceOptions = {
+    resource: 'news',
+    searchFields: ['title', 'shortDesc', 'category', 'authorName', 'sujet'],
+    sortableFields: ['createdAt', 'updatedAt', 'date', 'title', 'publishedAt'],
+    listFields: ['id', 'slug', 'title', 'category', 'authorName', 'date', 'status', 'locale'],
+    cardFields: [
+      'id',
+      'slug',
+      'title',
+      'shortDesc',
+      'image',
+      'category',
+      'authorName',
+      'date',
+      'readTime',
+      'status',
+    ],
+  };
+
+  constructor(
+    @Inject(NEWS_REPOSITORY) repository: ICrudRepository<NewsEntity>,
+    cache: AppCacheService,
+    audit: AuditService,
+  ) {
+    super(cache, audit);
+    this.repository = repository;
+  }
+
+  protected override beforeSave(
+    dto: Partial<NewsEntity>,
+    op: 'create' | 'update',
+    existing?: NewsEntity,
+  ): Partial<NewsEntity> {
+    const out = { ...dto };
+    if (!out.slug && out.title) out.slug = slugify(String(out.title));
+    if (op === 'create') {
+      out.locale = out.locale || 'fr';
+      out.status = out.status || 'draft';
+    }
+    if (out.status === 'published' && !out.publishedAt && !existing?.publishedAt) {
+      out.publishedAt = new Date().toISOString();
+      out.date = out.date || out.publishedAt;
+    }
+    return out;
+  }
+
+  async statsByAuthor(authorId: string) {
+    const published = await this.repository.count({ authorId, status: 'published' });
+    const drafts = await this.repository.count({ authorId, status: 'draft' });
+    return { authorId, published, drafts, total: published + drafts };
+  }
+}
