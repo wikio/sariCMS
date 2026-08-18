@@ -31,3 +31,25 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export async function PUT(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const locale = searchParams.get('locale') || 'fr';
+  const filePath = searchParams.get('path');
+  if (!filePath || filePath.includes('..')) {
+    return NextResponse.json({ error: 'Chemin invalide' }, { status: 400 });
+  }
+  try {
+    const body = await request.json();
+    const fullPath = path.join(TRANSLATIONS_DIR, locale, filePath);
+    const root = path.join(TRANSLATIONS_DIR, locale);
+    if (!fullPath.startsWith(root)) {
+      return NextResponse.json({ error: 'Chemin refusé' }, { status: 400 });
+    }
+    await fs.writeFile(fullPath, JSON.stringify(body, null, 2), 'utf-8');
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error('Erreur écriture fichier:', error);
+    return NextResponse.json({ error: 'Écriture impossible' }, { status: 500 });
+  }
+}

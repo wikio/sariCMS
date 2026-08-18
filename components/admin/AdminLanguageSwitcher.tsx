@@ -1,13 +1,12 @@
-// components/admin/AdminLanguageSwitcher.tsx
 'use client';
 
 import { useRouter, usePathname } from 'next/navigation';
 import { useLocale } from 'next-intl';
 
 const languages = [
-  { code: 'fr', name: 'Français', flag: '🇫🇷' },
-  { code: 'en', name: 'English', flag: '🇬🇧' },
-  { code: 'ar', name: 'العربية', flag: '🇸🇦' }
+  { code: 'fr', name: 'Français' },
+  { code: 'en', name: 'English' },
+  { code: 'ar', name: 'العربية' },
 ];
 
 export default function AdminLanguageSwitcher() {
@@ -17,35 +16,20 @@ export default function AdminLanguageSwitcher() {
 
   const handleLangChange = (newLocale: string) => {
     if (newLocale === currentLocale) return;
-
-    // ✅ Remplacer la locale dans l'URL
-    // Ex: /fr/admin/dashboard → /en/admin/dashboard
-    const newPathname = pathname.replace(
-      /^\/[a-z]{2}(\/|$)/,
-      `/${newLocale}$1`
-    );
-
-    console.log(`🌍 Changement de langue: ${currentLocale} → ${newLocale}`);
-    console.log(`📍 Navigation: ${pathname} → ${newPathname}`);
-
-    router.push(newPathname);
+    router.push(pathname.replace(/^\/[a-z]{2}(\/|$)/, `/${newLocale}$1`));
   };
 
   return (
-    <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+    <div className="flex items-center gap-1 p-1 rounded-full" style={{ background: 'var(--ad-surface-2)', border: '1px solid var(--ad-line)' }}>
       {languages.map((l) => (
         <button
           key={l.code}
           onClick={() => handleLangChange(l.code)}
-          className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-1.5 ${
-            currentLocale === l.code
-              ? 'bg-sari-blue text-white shadow-sm'
-              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
-          }`}
+          className={`px-2.5 py-1 rounded-full text-[11px] font-black tracking-wide ${currentLocale === l.code ? 'ad-btn-primary' : ''}`}
+          style={currentLocale === l.code ? { background: 'var(--ad-accent)', color: 'var(--ad-accent-ink)' } : { color: 'var(--ad-muted)' }}
           title={l.name}
         >
-          <span>{l.flag}</span>
-          <span className="hidden md:inline">{l.code.toUpperCase()}</span>
+          {l.code.toUpperCase()}
         </button>
       ))}
     </div>

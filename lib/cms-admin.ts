@@ -62,6 +62,7 @@ export const WRITABLE_FIELDS: Record<string, string[]> = {
     'email', 'password', 'firstName', 'lastName', 'phone', 'company', 'type', 'status',
     'roleId', 'locale', 'avatar', 'address', 'position', 'experience', 'motivation', 'cvUrl',
   ],
+  roles: ['name', 'slug', 'description', 'permissionIds', 'isSystem'],
 };
 
 const DEFAULTS: Record<string, Record<string, unknown>> = {
@@ -76,6 +77,14 @@ const DEFAULTS: Record<string, Record<string, unknown>> = {
   hero: { title: 'Nouveau slide', status: 'draft' },
   pages: { title: 'Nouvelle page', slug: `page-${Date.now()}`, kind: 'generic', subtype: 'simple', status: 'draft' },
   menus: { name: 'Nouveau menu', location: 'main', items: [], status: 'published' },
+  users: {
+    email: `user${Date.now()}@sarisysteme.com`,
+    firstName: 'Nouveau',
+    lastName: 'User',
+    password: 'ChangeMe_Sari2026!',
+    type: 'client',
+    status: 'pending',
+  },
 };
 
 function pick(resource: string, item: Record<string, unknown>): Record<string, unknown> {
@@ -204,4 +213,19 @@ export function extraFiltersForType(dataType: string, locale: string): Record<st
   if (dataType === 'legal') filter.kind = 'legal';
   if (dataType === 'genericContent') filter.kind = 'generic';
   return { filter: JSON.stringify(filter) };
+}
+
+export async function cmsAdminAutocomplete(
+  resource: string,
+  q: string,
+  field = 'title',
+): Promise<Array<{ id: string; value: string }>> {
+  if (!q.trim()) return [];
+  const params = new URLSearchParams({ q, field, limit: '12' });
+  try {
+    const payload = await cmsAdminFetch<unknown>(`/${resource}/autocomplete?${params.toString()}`);
+    return unwrapList<{ id: string; value: string }>(payload);
+  } catch {
+    return [];
+  }
 }

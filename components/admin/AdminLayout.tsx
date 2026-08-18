@@ -1,22 +1,23 @@
-// components/admin/AdminLayout.tsx
 'use client';
 
-import { useState, useEffect, ReactNode } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
-import { useLocale, useTranslations } from 'next-intl';
+import { ReactNode, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import { useLocale, useTranslations } from 'next-intl';
 import {
   LayoutDashboard, FileText, Package, Wrench, Briefcase, Newspaper,
   Calendar, Layers, MessageCircle, Handshake, Image as ImageIcon,
   FileStack, Menu as MenuIcon, Compass, Scale, Settings, ShoppingCart,
   Users, UserCog, FileCheck, Globe, Sliders, ExternalLink, LogOut,
-  Database, Shield
+  Shield, Search, ChevronLeft, Palette,
 } from 'lucide-react';
-import AdminLanguageSwitcher from '@/components/admin/AdminLanguageSwitcher';
+import '@/app/admin.css';
 import { ToastProvider } from '@/components/admin/Toast';
+import AdminLanguageSwitcher from '@/components/admin/AdminLanguageSwitcher';
+import { AdminThemeProvider, ADMIN_THEMES, useAdminTheme } from '@/components/admin/AdminTheme';
 import { clearAdminSession, hasAdminSession, readAdminUser } from '@/lib/admin-session';
 
-interface MenuItem {
+interface Item {
   id?: string;
   type?: 'divider';
   icon?: React.ElementType;
@@ -24,37 +25,24 @@ interface MenuItem {
   href?: string;
 }
 
-export default function AdminLayout({ children, title = 'Administration' }: { children: ReactNode; title?: string }) {
+function Shell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const locale = useLocale();
   const t = useTranslations('admin');
   const isRTL = locale === 'ar';
+  const { theme, setTheme } = useAdminTheme();
+  const [open, setOpen] = useState(true);
+  const [themesOpen, setThemesOpen] = useState(false);
+  const [user, setUser] = useState(readAdminUser());
+  const isLogin = pathname === `/${locale}/admin` || pathname === `/${locale}/admin/`;
 
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [adminUser, setAdminUser] = useState<ReturnType<typeof readAdminUser>>(null);
-
-  // ✅ Détection de la page de login (pas de sidebar)
-  const isLoginPage = pathname === `/${locale}/admin` || pathname === `/${locale}/admin/`;
-
-  // Vérification de l'authentification (sauf sur la page login)
   useEffect(() => {
-    setAdminUser(readAdminUser());
-    if (isLoginPage) return;
+    setUser(readAdminUser());
+    if (!isLogin && !hasAdminSession()) router.push(`/${locale}/admin`);
+  }, [pathname, locale, isLogin, router]);
 
-    if (!hasAdminSession()) {
-      router.push(`/${locale}/admin`);
-    }
-  }, [router, pathname, locale, isLoginPage]);
-
-  const handleLogout = () => {
-    clearAdminSession();
-    router.push(`/${locale}`);
-  };
-
-  // ✅ Menu admin complet
-  const menuItems: MenuItem[] = [
+  const menu: Item[] = [
     { id: 'dashboard', icon: LayoutDashboard, label: t('menu.dashboard'), href: `/${locale}/admin/dashboard` },
     { type: 'divider', label: t('menu.contentSection') },
     { id: 'pages', icon: FileText, label: t('menu.pages'), href: `/${locale}/admin/pages` },
@@ -70,7 +58,6 @@ export default function AdminLayout({ children, title = 'Administration' }: { ch
     { id: 'hero', icon: ImageIcon, label: t('menu.hero'), href: `/${locale}/admin/data/hero` },
     { id: 'genericContent', icon: FileStack, label: t('menu.genericContent'), href: `/${locale}/admin/data/genericContent` },
     { id: 'menu', icon: MenuIcon, label: t('menu.menuNav'), href: `/${locale}/admin/data/menu` },
-    { id: 'navigation', icon: Compass, label: t('menu.navigation'), href: `/${locale}/admin/data/navigation` },
     { id: 'legal', icon: Scale, label: t('menu.legal'), href: `/${locale}/admin/data/legal` },
     { id: 'config', icon: Settings, label: t('menu.config'), href: `/${locale}/admin/config` },
     { type: 'divider', label: t('menu.eshopSection') },
@@ -79,15 +66,17 @@ export default function AdminLayout({ children, title = 'Administration' }: { ch
     { id: 'clients', icon: Users, label: t('menu.clients'), href: `/${locale}/admin/clients` },
     { type: 'divider', label: t('menu.usersSection') },
     { id: 'users', icon: UserCog, label: t('menu.users'), href: `/${locale}/admin/users` },
+    { id: 'permissions', icon: Shield, label: t('menu.permissions') || 'Permissions', href: `/${locale}/admin/permissions` },
     { id: 'applications', icon: FileCheck, label: t('menu.applications'), href: `/${locale}/admin/applications` },
     { type: 'divider', label: t('menu.configSection') },
     { id: 'translations', icon: Globe, label: t('menu.translations'), href: `/${locale}/admin/translations` },
     { id: 'settings', icon: Sliders, label: t('menu.settings'), href: `/${locale}/admin/settings` },
   ];
 
-  const getActiveId = () => {
+  const active = (() => {
     if (pathname.includes('/admin/dashboard')) return 'dashboard';
     if (pathname.includes('/admin/data/')) return pathname.split('/admin/data/')[1];
+    if (pathname.includes('/admin/permissions')) return 'permissions';
     if (pathname.includes('/admin/config')) return 'config';
     if (pathname.includes('/admin/applications')) return 'applications';
     if (pathname.includes('/admin/orders')) return 'orders';
@@ -98,144 +87,126 @@ export default function AdminLayout({ children, title = 'Administration' }: { ch
     if (pathname.includes('/admin/translations')) return 'translations';
     if (pathname.includes('/admin/settings')) return 'settings';
     return null;
-  };
+  })();
 
-  const activeId = getActiveId();
-
-  // ✅ Si on est sur la page de login, on n'affiche PAS la sidebar
-  if (isLoginPage) {
+  if (isLogin) {
     return (
-      <ToastProvider>
-        <div dir={locale === 'ar' ? 'rtl' : 'ltr'} className="min-h-screen bg-gradient-to-br from-sari-dark via-gray-900 to-sari-dark">
-          {children}
+      <div data-admin-theme={theme} dir={isRTL ? 'rtl' : 'ltr'} className="ad-app min-h-screen relative overflow-hidden">
+        <div className="ad-grid-bg absolute inset-0 opacity-70" />
+        <div className="absolute top-5 right-5 z-10 flex gap-2">
+          <AdminLanguageSwitcher />
         </div>
-      </ToastProvider>
+        {children}
+      </div>
     );
   }
 
-  // ✅ Sinon, on affiche l'interface admin complète avec sidebar
   return (
-    <ToastProvider>
-      <div dir={isRTL ? 'rtl' : 'ltr'} className="min-h-screen bg-gray-100 dark:bg-[#0a0a0a] flex">
-        {/* Sidebar */}
-        <aside 
-          className={`${sidebarOpen ? 'w-64' : 'w-16'} bg-sari-dark text-white transition-all duration-300 flex flex-col fixed h-full z-40 shadow-2xl ${isRTL ? 'right-0' : 'left-0'}`}
-        >
-          <div className="p-4 border-b border-white/10 flex items-center gap-3">
-            <div className="w-9 h-9 bg-sari-lime rounded-lg flex items-center justify-center flex-shrink-0 shadow-lg">
-              <Shield className="w-5 h-5 text-sari-dark" />
+    <div data-admin-theme={theme} dir={isRTL ? 'rtl' : 'ltr'} className="ad-app">
+      <aside
+        className={`${open ? 'w-[272px]' : 'w-[76px]'} fixed inset-y-0 z-40 flex flex-col transition-all duration-300 ${isRTL ? 'right-0' : 'left-0'}`}
+        style={{ background: 'var(--ad-sidebar)', color: 'var(--ad-sidebar-ink)' }}
+      >
+        <div className="h-[72px] px-4 flex items-center gap-3 border-b border-white/10">
+          <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ background: 'var(--ad-accent-2)', color: 'var(--ad-accent-2-ink)' }}>
+            <Shield className="w-5 h-5" />
+          </div>
+          {open && (
+            <div className="leading-tight">
+              <div className="font-black tracking-tight">SARI OS</div>
+              <div className="text-[10px] uppercase tracking-[0.18em] opacity-60">Admin · v2</div>
             </div>
-            {sidebarOpen && (
-              <div>
-                <div className="font-bold text-sm">SARI Admin</div>
-                <div className="text-xs text-gray-400">{t('header.version')}</div>
-              </div>
-            )}
-          </div>
-
-          <nav className="flex-1 overflow-y-auto py-4 custom-scrollbar">
-            {menuItems.map((item, idx) => {
-              if (item.type === 'divider') {
-                return sidebarOpen ? (
-                  <div key={idx} className="px-4 py-2 text-xs text-gray-500 uppercase tracking-wider mt-4">
-                    {item.label}
-                  </div>
-                ) : <div key={idx} className="border-t border-white/10 my-2 mx-2"></div>;
-              }
-
-              const Icon = item.icon;
-              const isActive = activeId === item.id;
-
-              return (
-                <Link
-                  key={item.id}
-                  href={item.href || '#'}
-                  className={`flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg transition-all text-sm mb-0.5 ${
-                    isActive ? 'bg-sari-blue text-white shadow-lg' : 'text-gray-400 hover:bg-white/10 hover:text-white'
-                  }`}
-                >
-                  {Icon && <Icon className="w-4 h-4 flex-shrink-0" />}
-                  {sidebarOpen && <span className="truncate">{item.label}</span>}
-                </Link>
-              );
-            })}
-          </nav>
-
-          <div className="p-4 border-t border-white/10 space-y-2">
-            <Link href={`/${locale}`} className="flex items-center gap-3 text-gray-400 hover:text-white text-sm w-full">
-              <ExternalLink className="w-4 h-4" />
-              {sidebarOpen && <span>{t('header.seeSite')}</span>}
-            </Link>
-            <button onClick={handleLogout} className="flex items-center gap-3 text-red-400 hover:text-red-300 text-sm w-full">
-              <LogOut className="w-4 h-4" />
-              {sidebarOpen && <span>{t('header.logout')}</span>}
-            </button>
-          </div>
-        </aside>
-
-        {/* Main Content */}
-        <main className={`flex-1 transition-all duration-300 ${isRTL ? (sidebarOpen ? 'mr-64' : 'mr-16') : (sidebarOpen ? 'ml-64' : 'ml-16')}`}>
-          <header className="bg-white dark:bg-[#1a1a1a] border-b border-gray-200 dark:border-gray-800 px-6 py-3 flex items-center justify-between sticky top-0 z-30 shadow-sm">
-            <div className="flex items-center gap-4">
-              <button 
-                onClick={() => setSidebarOpen(!sidebarOpen)} 
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+          )}
+        </div>
+        <nav className="flex-1 overflow-y-auto ad-scroll py-3">
+          {menu.map((item, i) => {
+            if (item.type === 'divider') {
+              return open ? (
+                <div key={i} className="px-5 pt-4 pb-1 text-[10px] uppercase tracking-[0.18em] opacity-40">{item.label}</div>
+              ) : <div key={i} className="mx-3 my-2 border-t border-white/10" />;
+            }
+            const Icon = item.icon;
+            const on = active === item.id;
+            return (
+              <Link
+                key={item.id}
+                href={item.href || '#'}
+                className={`mx-2 mb-0.5 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all ${
+                  on ? 'bg-white/12 shadow-lg' : 'opacity-70 hover:opacity-100 hover:bg-white/6'
+                }`}
               >
-                <MenuIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-              </button>
-              <h1 className="text-lg font-bold text-sari-dark dark:text-white">{title}</h1>
+                {Icon && <Icon className="w-4 h-4 shrink-0" />}
+                {open && <span className="truncate">{item.label}</span>}
+                {on && open && <span className="ml-auto w-1.5 h-1.5 rounded-full" style={{ background: 'var(--ad-accent-2)' }} />}
+              </Link>
+            );
+          })}
+        </nav>
+        <div className="p-3 border-t border-white/10 space-y-1">
+          <Link href={`/${locale}`} className="flex items-center gap-3 px-3 py-2 text-sm opacity-70 hover:opacity-100">
+            <ExternalLink className="w-4 h-4" /> {open && t('header.seeSite')}
+          </Link>
+          <button onClick={() => { clearAdminSession(); router.push(`/${locale}`); }} className="flex items-center gap-3 px-3 py-2 text-sm text-rose-300 w-full">
+            <LogOut className="w-4 h-4" /> {open && t('header.logout')}
+          </button>
+        </div>
+      </aside>
+
+      <div className={`min-h-screen transition-all duration-300 ${isRTL ? (open ? 'mr-[272px]' : 'mr-[76px]') : (open ? 'ml-[272px]' : 'ml-[76px]')}`}>
+        <header className="sticky top-0 z-30 h-[72px] px-5 flex items-center justify-between backdrop-blur-xl border-b" style={{ background: 'color-mix(in srgb, var(--ad-surface) 82%, transparent)', borderColor: 'var(--ad-line)' }}>
+          <div className="flex items-center gap-3">
+            <button className="ad-btn ad-btn-icon ad-btn-ghost" onClick={() => setOpen((v) => !v)}>
+              <ChevronLeft className={`w-4 h-4 transition ${open ? '' : 'rotate-180'}`} />
+            </button>
+            <div className="hidden md:flex items-center gap-2 ad-input !w-72 !py-2">
+              <Search className="w-4 h-4" style={{ color: 'var(--ad-muted)' }} />
+              <input className="bg-transparent outline-none flex-1 text-sm" placeholder="Commande rapide…" readOnly />
             </div>
-            <div className="flex items-center gap-3">
-              <AdminLanguageSwitcher />
-              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 rounded-full text-xs font-semibold">
-                <Database className="w-3 h-3" />
-                {t('header.cmsMode')}
-              </div>
-              <div className="relative">
-                <button 
-                  onClick={() => setShowProfileMenu(!showProfileMenu)}
-                  className="flex items-center gap-2 p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
-                >
-                  <div className="w-8 h-8 bg-gradient-to-br from-sari-blue to-sari-dark rounded-full flex items-center justify-center text-white text-sm font-bold">
-                    A
-                  </div>
-                  <span className="hidden md:inline text-sm font-medium text-sari-dark dark:text-white">
-                    {t('header.admin')}
-                  </span>
-                </button>
-                {showProfileMenu && (
-                  <>
-                    <div className="fixed inset-0 z-40" onClick={() => setShowProfileMenu(false)}></div>
-                    <div className={`absolute ${isRTL ? 'left-0' : 'right-0'} mt-2 w-56 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 shadow-2xl z-50 rounded-lg overflow-hidden`}>
-                      <div className="p-4 border-b border-gray-200 dark:border-gray-800">
-                        <div className="font-bold text-sari-dark dark:text-white">
-                          {adminUser
-                            ? [adminUser.firstName, adminUser.lastName].filter(Boolean).join(' ') || t('header.administrator')
-                            : t('header.administrator')}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          {adminUser?.email || t('header.adminEmail')}
-                        </div>
-                      </div>
-                      <div className="p-2">
-                        <Link href={`/${locale}/admin/config`} onClick={() => setShowProfileMenu(false)} className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded text-sm">
-                          <Settings className="w-4 h-4" /> {t('header.settings')}
-                        </Link>
-                        <button onClick={handleLogout} className="w-full flex items-center gap-2 px-3 py-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 rounded text-sm">
-                          <LogOut className="w-4 h-4" /> {t('header.logout')}
-                        </button>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-          </header>
-          <div className="p-6">
-            {children}
           </div>
-        </main>
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <button className="ad-btn ad-btn-ghost" onClick={() => setThemesOpen((v) => !v)}>
+                <Palette className="w-4 h-4" /> <span className="hidden sm:inline">Thème</span>
+              </button>
+              {themesOpen && (
+                <div className="absolute right-0 mt-2 w-56 ad-card p-2 z-50">
+                  {ADMIN_THEMES.map((th) => (
+                    <button
+                      key={th.id}
+                      onClick={() => { setTheme(th.id); setThemesOpen(false); }}
+                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm ${theme === th.id ? 'bg-[var(--ad-surface-2)] font-bold' : ''}`}
+                    >
+                      <span className="w-3.5 h-3.5 rounded-full" style={{ background: th.swatch }} />
+                      {th.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <AdminLanguageSwitcher />
+            <div className="pl-2 flex items-center gap-2">
+              <div className="w-9 h-9 rounded-2xl flex items-center justify-center text-white text-xs font-black" style={{ background: 'linear-gradient(135deg, var(--ad-accent), #0d7a9e)' }}>
+                {(user?.firstName || user?.email || 'A').slice(0, 1).toUpperCase()}
+              </div>
+              <div className="hidden md:block leading-tight">
+                <div className="text-sm font-bold">{user?.firstName || t('header.admin')}</div>
+                <div className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>{user?.email || t('header.adminEmail')}</div>
+              </div>
+            </div>
+          </div>
+        </header>
+        <main className="p-5 md:p-7">{children}</main>
       </div>
-    </ToastProvider>
+    </div>
+  );
+}
+
+export default function AdminLayout({ children }: { children: ReactNode; title?: string }) {
+  return (
+    <AdminThemeProvider>
+      <ToastProvider>
+        <Shell>{children}</Shell>
+      </ToastProvider>
+    </AdminThemeProvider>
   );
 }
