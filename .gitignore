@@ -1,0 +1,26 @@
+# Dépendances
+/node_modules
+/.pnp
+.pnp.js
+
+# Fichiers de build
+/.next/
+/out/
+/build/
+/dist/
+
+# Variables d'environnement / Sécurité
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Fichiers système / OS
+.DS_Store
+Thumbs.db
