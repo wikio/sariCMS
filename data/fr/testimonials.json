@@ -1,0 +1,38 @@
+[
+  {
+    "id": 1,
+    "name": "Dr. Marie Laurent",
+    "role": "Directrice Médicale",
+    "clinic": "Clinique Saint-Louis",
+    "text": "SARI Système nous accompagne depuis 10 ans. Leur réactivité et la qualité de leurs équipements sont exceptionnelles. Le service après-vente est toujours disponible quand nous en avons besoin.",
+    "rating": 5,
+    "image": "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400"
+  },
+  {
+    "id": 2,
+    "name": "Dr. Philippe Martin",
+    "role": "Chef de Service Radiologie",
+    "clinic": "CHU de Lyon",
+    "text": "Un service après-vente irréprochable. Les techniciens sont compétents et toujours disponibles. Les équipements fournis sont de première qualité.",
+    "rating": 5,
+    "image": "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=400"
+  },
+  {
+    "id": 3,
+    "name": "Sarah Benali",
+    "role": "Responsable Achats",
+    "clinic": "Groupe Hospitalier Nord",
+    "text": "Des prix compétitifs et une gamme de produits très complète. Je recommande vivement SARI Système pour leur professionnalisme et leur écoute.",
+    "rating": 5,
+    "image": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400"
+  },
+  {
+    "id": 4,
+    "name": "Dr. Thomas Bernard",
+    "role": "Médecin Généraliste",
+    "clinic": "Cabinet Médical du Parc",
+    "text": "L'échographe portable que j'ai acheté chez SARI est parfait pour mes visites à domicile. Formation excellente et suivi impeccable.",
+    "rating": 5,
+    "image": "https://images.unsplash.com/photo-1537368910025-700350fe46c7?w=400"
+  }
+]

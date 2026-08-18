@@ -1,0 +1,46 @@
+[
+  {
+    "id": 999,
+    "title": "Nouvelle gamme d'échographes portables dernière génération",
+    "date": "15 Janvier 2024",
+    "author": "Dr. Marie Laurent",
+    "category": "Produits",
+    "classification": "Innovation",
+    "image": "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=800",
+    "shortDesc": "Découvrez notre nouvelle collection d'échographes avec IA intégrée",
+    "fullContent": "<p>L'Échographe Portable Pro X1 est un appareil de pointe conçu pour répondre aux besoins des professionnels de santé.</p>"
+  },
+  {
+    "id": 998,
+    "title": "Partenariat stratégique avec un leader mondial de l'imagerie",
+    "date": "10 Janvier 2024",
+    "author": "Jean Dupont",
+    "category": "Entreprise",
+    "classification": "Partenariat",
+    "image": "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=800",
+    "shortDesc": "SARI Système signe un accord de distribution exclusive avec MediTech",
+    "fullContent": "<p>Nous sommes ravis d'annoncer notre nouveau partenariat avec MediTech International.</p>"
+  },
+  {
+    "id": 997,
+    "title": "Formation continue 2024 : calendrier disponible",
+    "date": "5 Janvier 2024",
+    "author": "Service Formation",
+    "category": "Formation",
+    "classification": "Événement",
+    "image": "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800",
+    "shortDesc": "Découvrez le calendrier complet de nos formations pour l'année 2024",
+    "fullContent": "<p>Le calendrier des formations SARI Système pour 2024 est désormais disponible.</p>"
+  },
+  {
+    "id": 996,
+    "title": "SARI Système obtient la certification ISO 13485",
+    "date": "20 Décembre 2023",
+    "author": "Direction Qualité",
+    "category": "Entreprise",
+    "classification": "Qualité",
+    "image": "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800",
+    "shortDesc": "Reconnaissance de notre engagement qualité dans le dispositif médical",
+    "fullContent": "<p>Nous avons le plaisir d'annoncer l'obtention de la certification ISO 13485.</p>"
+  }
+]

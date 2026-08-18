@@ -1,0 +1,403 @@
+[
+  {
+    "id": 1,
+    "title": "Technicien Biomédical H/F",
+    "type": "CDI",
+    "location": "Lyon (69)",
+    "salary": "32-38K€",
+    "image": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800",
+    "shortDesc": "Maintenance et installation",
+    "mission": "Assurer la maintenance des équipements.",
+    "objectifs": [
+      "Garantir 99% de disponibilité",
+      "Former les utilisateurs"
+    ],
+    "prerequis": [
+      "BTS Biomédical",
+      "Permis B"
+    ],
+    "experience": "2 ans minimum",
+    "typeTravail": "Temps plein - Terrain",
+    "workflow": [
+      "1. Candidature",
+      "2. Entretien RH",
+      "3. Entretien technique",
+      "4. Intégration"
+    ],
+    "contact": "rh@sarisysteme.com"
+  },
+  {
+    "id": 2,
+    "title": "Commercial Sectoriel BtoB",
+    "type": "CDI",
+    "location": "Paris",
+    "salary": "35-45K€ + variables",
+    "image": "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800",
+    "shortDesc": "Développement portefeuille hospitalier",
+    "mission": "Développer les ventes sur l'Île-de-France.",
+    "objectifs": [
+      "Atteindre les objectifs de CA",
+      "Fidéliser les clients"
+    ],
+    "prerequis": [
+      "Bac+3 Commerce",
+      "Permis B"
+    ],
+    "experience": "3 ans en vente BtoB",
+    "typeTravail": "Temps plein - Itinérant",
+    "workflow": [
+      "1. Candidature",
+      "2. Entretien RH",
+      "3. Mise en situation",
+      "4. Intégration"
+    ],
+    "contact": "rh@sarisysteme.com"
+  },
+  {
+    "id": 3,
+    "title": "Responsable Logistique",
+    "type": "CDI",
+    "location": "Lyon (69)",
+    "salary": "40-50K€",
+    "image": "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=800",
+    "shortDesc": "Gestion des stocks et supply chain",
+    "mission": "Optimiser les flux logistiques.",
+    "objectifs": [
+      "Réduire les coûts de 10%",
+      "Améliorer les délais"
+    ],
+    "prerequis": [
+      "Bac+5 Logistique",
+      "Anglais"
+    ],
+    "experience": "5 ans dont 2 en management",
+    "typeTravail": "Temps plein - Siège",
+    "workflow": [
+      "1. Candidature",
+      "2. Entretien N+1",
+      "3. Entretien Direction",
+      "4. Intégration"
+    ],
+    "contact": "rh@sarisysteme.com"
+  },
+  {
+    "id": 4,
+    "title": "Assistant(e) Administratif(ve)",
+    "type": "CDD",
+    "location": "Lyon (69)",
+    "salary": "24-28K€",
+    "image": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800",
+    "shortDesc": "Support aux équipes commerciales",
+    "mission": "Gérer les commandes et le suivi client.",
+    "objectifs": [
+      "Zéro erreur de saisie",
+      "Satisfaction client"
+    ],
+    "prerequis": [
+      "BTS Assistant de Gestion",
+      "Pack Office"
+    ],
+    "experience": "1 an",
+    "typeTravail": "Temps plein - Siège",
+    "workflow": [
+      "1. Candidature",
+      "2. Entretien RH",
+      "3. Intégration"
+    ],
+    "contact": "rh@sarisysteme.com"
+  },
+  {
+    "id": 5,
+    "title": "Ingénieur d'Application Imagerie",
+    "type": "CDI",
+    "location": "Marseille (13)",
+    "salary": "45-55K€",
+    "image": "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=800",
+    "shortDesc": "Expertise technique et formation",
+    "mission": "Former les clients sur les nouveaux produits.",
+    "objectifs": [
+      "100% de clients formés",
+      "Support technique niveau 2"
+    ],
+    "prerequis": [
+      "École d'ingénieur ou équivalent",
+      "Expertise imagerie"
+    ],
+    "experience": "3 ans",
+    "typeTravail": "Temps plein - Régional",
+    "workflow": [
+      "1. Candidature",
+      "2. Entretien technique",
+      "3. Entretien Direction",
+      "4. Intégration"
+    ],
+    "contact": "rh@sarisysteme.com"
+  },
+  {
+    "id": 6,
+    "title": "Technicien de Surface Médical",
+    "type": "CDI",
+    "location": "Lyon (69)",
+    "salary": "20-22K€",
+    "image": "https://images.unsplash.com/photo-1584982751601-97dcc096659c?w=800",
+    "shortDesc": "Nettoyage des locaux et entrepôt",
+    "mission": "Assurer l'hygiène des locaux.",
+    "objectifs": [
+      "Respect des protocoles",
+      "Disponibilité"
+    ],
+    "prerequis": [
+      "CAP Agent de propreté",
+      "Permis B"
+    ],
+    "experience": "Débutant accepté",
+    "typeTravail": "Temps partiel - Matin",
+    "workflow": [
+      "1. Candidature",
+      "2. Entretien rapide",
+      "3. Intégration"
+    ],
+    "contact": "rh@sarisysteme.com"
+  },
+  {
+    "id": 7,
+    "title": "Stagiaire Marketing Digital",
+    "type": "Stage",
+    "location": "Lyon (69)",
+    "salary": "600€/mois",
+    "image": "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=800",
+    "shortDesc": "Gestion des réseaux sociaux et site web",
+    "mission": "Améliorer la visibilité en ligne.",
+    "objectifs": [
+      "Augmenter le trafic de 20%",
+      "Créer du contenu"
+    ],
+    "prerequis": [
+      "Bac+3/4 Marketing Digital",
+      "Créatif"
+    ],
+    "experience": "6 mois",
+    "typeTravail": "Stage 6 mois",
+    "workflow": [
+      "1. Candidature + Portfolio",
+      "2. Entretien",
+      "3. Intégration"
+    ],
+    "contact": "rh@sarisysteme.com"
+  },
+  {
+    "id": 8,
+    "title": "Magasinier Cariste",
+    "type": "CDI",
+    "location": "Lyon (69)",
+    "salary": "26-30K€",
+    "image": "https://images.unsplash.com/photo-1551076805-e1869033e561?w=800",
+    "shortDesc": "Préparation des commandes",
+    "mission": "Gérer les flux de marchandises.",
+    "objectifs": [
+      "Précision des préparations",
+      "Respect des délais"
+    ],
+    "prerequis": [
+      "CACES 1/3/5",
+      "Rigueur"
+    ],
+    "experience": "2 ans",
+    "typeTravail": "Temps plein - Entrepôt",
+    "workflow": [
+      "1. Candidature",
+      "2. Test CACES",
+      "3. Entretien",
+      "4. Intégration"
+    ],
+    "contact": "rh@sarisysteme.com"
+  },
+  {
+    "id": 9,
+    "title": "Comptable Fournisseurs",
+    "type": "CDI",
+    "location": "Lyon (69)",
+    "salary": "30-35K€",
+    "image": "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=800",
+    "shortDesc": "Gestion des factures et paiements",
+    "mission": "Assurer le bon traitement comptable.",
+    "objectifs": [
+      "Respect des échéances",
+      "Fiabilité des données"
+    ],
+    "prerequis": [
+      "BTS Comptabilité",
+      "Sage"
+    ],
+    "experience": "2 ans",
+    "typeTravail": "Temps plein - Siège",
+    "workflow": [
+      "1. Candidature",
+      "2. Entretien RH",
+      "3. Test technique",
+      "4. Intégration"
+    ],
+    "contact": "rh@sarisysteme.com"
+  },
+  {
+    "id": 10,
+    "title": "Responsable Qualité Réglementaire",
+    "type": "CDI",
+    "location": "Lyon (69)",
+    "salary": "45-55K€",
+    "image": "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800",
+    "shortDesc": "Veille réglementaire et audits",
+    "mission": "Garantir la conformité des produits.",
+    "objectifs": [
+      "Maintenir les certifications",
+      "Former les équipes"
+    ],
+    "prerequis": [
+      "Bac+5 Qualité",
+      "Anglais courant"
+    ],
+    "experience": "5 ans en dispositif médical",
+    "typeTravail": "Temps plein - Siège",
+    "workflow": [
+      "1. Candidature",
+      "2. Entretien Qualité",
+      "3. Entretien DG",
+      "4. Intégration"
+    ],
+    "contact": "rh@sarisysteme.com"
+  },
+  {
+    "id": 11,
+    "title": "Développeur Web Full Stack",
+    "type": "CDI",
+    "location": "Lyon (69) / Télétravail",
+    "salary": "40-50K€",
+    "image": "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800",
+    "shortDesc": "Maintenance et évolution du site e-commerce",
+    "mission": "Développer les outils internes et externes.",
+    "objectifs": [
+      "Performance du site",
+      "Satisfaction utilisateur"
+    ],
+    "prerequis": [
+      "Bac+3 Informatique",
+      "React/Node.js"
+    ],
+    "experience": "3 ans",
+    "typeTravail": "Temps plein - Hybride",
+    "workflow": [
+      "1. Candidature",
+      "2. Test technique",
+      "3. Entretien équipe",
+      "4. Intégration"
+    ],
+    "contact": "rh@sarisysteme.com"
+  },
+  {
+    "id": 12,
+    "title": "Chargé de Clientèle Sénior",
+    "type": "CDI",
+    "location": "Bordeaux (33)",
+    "salary": "35-40K€",
+    "image": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800",
+    "shortDesc": "Gestion d'un portefeuille de cliniques",
+    "mission": "Fidéliser et développer le CA.",
+    "objectifs": [
+      "Taux de rétention > 95%",
+      "Ventes additionnelles"
+    ],
+    "prerequis": [
+      "Bac+2/3",
+      "Sens du service"
+    ],
+    "experience": "5 ans",
+    "typeTravail": "Temps plein - Régional",
+    "workflow": [
+      "1. Candidature",
+      "2. Entretien RH",
+      "3. Entretien Manager",
+      "4. Intégration"
+    ],
+    "contact": "rh@sarisysteme.com"
+  },
+  {
+    "id": 13,
+    "title": "Apprenti(e) Technicien(ne) Biomédical(e)",
+    "type": "Alternance",
+    "location": "Lyon (69)",
+    "salary": "% du SMIC",
+    "image": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800",
+    "shortDesc": "Formation en entreprise sur 2 ans",
+    "mission": "Assister les techniciens seniors.",
+    "objectifs": [
+      "Obtenir le BTS",
+      "Autonomie progressive"
+    ],
+    "prerequis": [
+      "Niveau Bac",
+      "Curiosité technique"
+    ],
+    "experience": "Débutant",
+    "typeTravail": "Alternance 2 ans",
+    "workflow": [
+      "1. Candidature",
+      "2. Entretien",
+      "3. Signature contrat",
+      "4. Rentrée"
+    ],
+    "contact": "rh@sarisysteme.com"
+  },
+  {
+    "id": 14,
+    "title": "Directeur(trice) d'Agence Régionale",
+    "type": "CDI",
+    "location": "Nantes (44)",
+    "salary": "55-65K€",
+    "image": "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=800",
+    "shortDesc": "Pilotage de l'activité Grand Ouest",
+    "mission": "Développer l'agence et manager l'équipe.",
+    "objectifs": [
+      "Croissance du CA",
+      "Management d'équipe"
+    ],
+    "prerequis": [
+      "Bac+5",
+      "Expérience management"
+    ],
+    "experience": "7 ans minimum",
+    "typeTravail": "Temps plein - Agence",
+    "workflow": [
+      "1. Candidature",
+      "2. Entretien DG",
+      "3. Entretien COMEX",
+      "4. Intégration"
+    ],
+    "contact": "rh@sarisysteme.com"
+  },
+  {
+    "id": 15,
+    "title": "Community Manager",
+    "type": "CDD",
+    "location": "Lyon (69)",
+    "salary": "28-32K€",
+    "image": "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800",
+    "shortDesc": "Animation des réseaux sociaux",
+    "mission": "Créer de l'engagement autour de la marque.",
+    "objectifs": [
+      "Croissance des abonnés",
+      "Taux d'engagement"
+    ],
+    "prerequis": [
+      "Bac+3 Communication",
+      "Créatif"
+    ],
+    "experience": "2 ans",
+    "typeTravail": "Temps plein - Siège",
+    "workflow": [
+      "1. Candidature",
+      "2. Entretien",
+      "3. Intégration"
+    ],
+    "contact": "rh@sarisysteme.com"
+  }
+]

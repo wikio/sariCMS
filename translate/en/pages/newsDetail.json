@@ -1,0 +1,21 @@
+{
+  "articleNotFound": "Article Not Found",
+  "articleNotFoundDesc": "The requested article does not exist or has been deleted.",
+  "backToNews": "Back to News",
+  "home": "Home",
+  "news": "News",
+  "author": "Author",
+  "tags": "Tags",
+  "shareArticle": "Share this article",
+  "previousArticle": "Previous article",
+  "nextArticle": "Next article",
+  "relatedArticles": "Related articles",
+  "aboutAuthor": "About the author",
+  "latestArticles": "Latest articles",
+  "newsletter": "Newsletter",
+  "newsletterDesc": "Receive our latest news directly in your inbox",
+  "yourEmail": "Your email",
+  "subscribe": "Subscribe",
+  "subscriptionSuccess": "Subscription successful!",
+  "popularTags": "Popular tags"
+}

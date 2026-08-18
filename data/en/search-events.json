@@ -1,0 +1,61 @@
+[
+  {
+    "id": 999,
+    "title": "International Medical Exhibition 2024",
+    "date": "March 15-18, 2024",
+    "location": "Paris Expo Porte de Versailles - Booth A42",
+    "type": "Exhibition",
+    "image": "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800",
+    "shortDesc": "Come discover our latest innovations at the SARI booth",
+    "fullContent": "<p>The largest gathering of healthcare professionals in France.</p>",
+    "agenda": [
+      "10:00 AM: Booth inauguration",
+      "2:00 PM: Pro Ultrasound Demo",
+      "4:00 PM: Innovation Conference"
+    ]
+  },
+  {
+    "id": 998,
+    "title": "Webinar: New Imaging Technologies",
+    "date": "February 22, 2024 - 2:00 PM",
+    "location": "Online (Zoom)",
+    "type": "Training",
+    "image": "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=800",
+    "shortDesc": "Free training on the latest advances in medical imaging",
+    "fullContent": "<p>Free 90-minute webinar on new medical imaging technologies.</p>",
+    "agenda": [
+      "2:00 PM: Introduction",
+      "3:00 PM: Practitioner testimony",
+      "3:30 PM: Q&A"
+    ]
+  },
+  {
+    "id": 997,
+    "title": "SARI Open House Day",
+    "date": "April 10, 2024 - 9:00 AM-5:00 PM",
+    "location": "SARI Headquarters - Lyon",
+    "type": "Open House",
+    "image": "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800",
+    "shortDesc": "Visit our premises and product demonstrations",
+    "fullContent": "<p>SARI Système opens its doors for a special day.</p>",
+    "agenda": [
+      "9:00 AM: Welcome coffee",
+      "11:00 AM: Showroom demonstrations",
+      "4:30 PM: Closing cocktail"
+    ]
+  },
+  {
+    "id": 996,
+    "title": "Conference: AI in Radiology",
+    "date": "June 12, 2024",
+    "location": "Hôtel Dieu, Lyon",
+    "type": "Conference",
+    "image": "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=800",
+    "shortDesc": "With Prof. Martin on artificial intelligence",
+    "fullContent": "<p>Conference on the impact of AI in medical radiology.</p>",
+    "agenda": [
+      "6:00 PM: Welcome",
+      "6:30 PM: Conference"
+    ]
+  }
+]

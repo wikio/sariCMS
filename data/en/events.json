@@ -1,0 +1,212 @@
+[
+  {
+    "id": 1,
+    "title": "International Medical Exhibition 2024",
+    "date": "15-18 Mars 2024",
+    "location": "Paris Expo",
+    "type": "Exhibition",
+    "image": "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800",
+    "shortDesc": "Booth A42",
+    "fullContent": "<p>Exhibition details...</p>",
+    "agenda": [
+      "10:00 AM: Opening",
+      "2:00 PM: Demo"
+    ]
+  },
+  {
+    "id": 2,
+    "title": "Webinar: New Imaging Technologies",
+    "date": "22 Février 2024",
+    "location": "Online",
+    "type": "Training",
+    "image": "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=800",
+    "shortDesc": "Free upon registration",
+    "fullContent": "<p>Webinar details...</p>",
+    "agenda": [
+      "2:00 PM: Intro",
+      "3:30 PM: Q&A"
+    ]
+  },
+  {
+    "id": 3,
+    "title": "SARI Open House Day",
+    "date": "10 Avril 2024",
+    "location": "Lyon Headquarters",
+    "type": "Open House",
+    "image": "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800",
+    "shortDesc": "Tours and demonstrations",
+    "fullContent": "<p>Open House details...</p>",
+    "agenda": [
+      "09:00 AM: Welcome",
+      "11:00 AM: Showroom"
+    ]
+  },
+  {
+    "id": 4,
+    "title": "Training: Autoclave Maintenance",
+    "date": "5 Mai 2024",
+    "location": "Lyon Training Center",
+    "type": "Training",
+    "image": "https://images.unsplash.com/photo-1583947215259-38e31be8751f?w=800",
+    "shortDesc": "Certified, 2 days",
+    "fullContent": "<p>Training details...</p>",
+    "agenda": [
+      "Day 1: Theory",
+      "Day 2: Practice"
+    ]
+  },
+  {
+    "id": 5,
+    "title": "Conference: AI in Radiology",
+    "date": "12 Juin 2024",
+    "location": "Hôtel Dieu, Lyon",
+    "type": "Conference",
+    "image": "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=800",
+    "shortDesc": "With Prof. Martin",
+    "fullContent": "<p>Conference details...</p>",
+    "agenda": [
+      "6:00 PM: Welcome",
+      "6:30 PM: Keynote"
+    ]
+  },
+  {
+    "id": 6,
+    "title": "Regional Health Fair",
+    "date": "20-22 Septembre 2024",
+    "location": "Eurexpo Lyon",
+    "type": "Fair",
+    "image": "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800",
+    "shortDesc": "Booth B12",
+    "fullContent": "<p>Regional fair details...</p>",
+    "agenda": [
+      "10:00 AM: Opening",
+      "3:00 PM: Panel discussion"
+    ]
+  },
+  {
+    "id": 7,
+    "title": "Workshop: Managing Consumables Inventory",
+    "date": "15 Octobre 2024",
+    "location": "Online",
+    "type": "Workshop",
+    "image": "https://images.unsplash.com/photo-1584982751601-97dcc096659c?w=800",
+    "shortDesc": "Optimize your purchasing",
+    "fullContent": "<p>Workshop details...</p>",
+    "agenda": [
+      "2:00 PM: Key challenges",
+      "3:00 PM: Tools"
+    ]
+  },
+  {
+    "id": 8,
+    "title": "Product Launch: Ultrasound X2",
+    "date": "5 Novembre 2024",
+    "location": "Lyon Headquarters",
+    "type": "Launch",
+    "image": "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=800",
+    "shortDesc": "Client Exclusive",
+    "fullContent": "<p>Launch details...</p>",
+    "agenda": [
+      "10:00 AM: Presentation",
+      "11:30 AM: Cocktail"
+    ]
+  },
+  {
+    "id": 9,
+    "title": "Webinar: 2024 Hygiene Standards",
+    "date": "20 Novembre 2024",
+    "location": "Online",
+    "type": "Training",
+    "image": "https://images.unsplash.com/photo-1551076805-e1869033e561?w=800",
+    "shortDesc": "Regulatory update",
+    "fullContent": "<p>Hygiene webinar details...</p>",
+    "agenda": [
+      "2:00 PM: New standards",
+      "3:30 PM: Q&A"
+    ]
+  },
+  {
+    "id": 10,
+    "title": "Healthcare Employment Forum",
+    "date": "15 Janvier 2025",
+    "location": "Paris",
+    "type": "Recruitment",
+    "image": "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800",
+    "shortDesc": "Come meet us",
+    "fullContent": "<p>Employment forum details...</p>",
+    "agenda": [
+      "09:00 AM: Opening",
+      "All day: Interviews"
+    ]
+  },
+  {
+    "id": 11,
+    "title": "Training: Defibrillator Usage",
+    "date": "10 Février 2025",
+    "location": "Marseille",
+    "type": "Training",
+    "image": "https://images.unsplash.com/photo-1519494026892-88bb237b200d?w=800",
+    "shortDesc": "Life-saving gestures",
+    "fullContent": "<p>AED training details...</p>",
+    "agenda": [
+      "09:00 AM: Theory",
+      "11:00 AM: Practice"
+    ]
+  },
+  {
+    "id": 12,
+    "title": "Annual Partner Seminar",
+    "date": "20 Mars 2025",
+    "location": "Annecy",
+    "type": "Internal",
+    "image": "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=800",
+    "shortDesc": "Reserved for team members",
+    "fullContent": "<p>Seminar details...</p>",
+    "agenda": [
+      "Day 1: Strategy",
+      "Day 2: Team building"
+    ]
+  },
+  {
+    "id": 13,
+    "title": "Demonstration: Premium Electric Bed",
+    "date": "5 Avril 2025",
+    "location": "Lyon Showroom",
+    "type": "Demonstration",
+    "image": "https://images.unsplash.com/photo-1519494026892-88bb237b200d?w=800",
+    "shortDesc": "Try before you buy",
+    "fullContent": "<p>Bed demo details...</p>",
+    "agenda": [
+      "2:00 PM: Demo",
+      "3:00 PM: Q&A"
+    ]
+  },
+  {
+    "id": 14,
+    "title": "Conference: Telemedicine in Rural Areas",
+    "date": "15 Mai 2025",
+    "location": "Clermont-Ferrand",
+    "type": "Conference",
+    "image": "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=800",
+    "shortDesc": "Challenges and solutions",
+    "fullContent": "<p>Telemedicine conference details...</p>",
+    "agenda": [
+      "2:00 PM: Context",
+      "4:00 PM: Solutions"
+    ]
+  },
+  {
+    "id": 15,
+    "title": "National Nursing Fair",
+    "date": "10-12 Octobre 2025",
+    "location": "Paris",
+    "type": "Exhibition",
+    "image": "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800",
+    "shortDesc": "Booth C05",
+    "fullContent": "<p>Nursing fair details...</p>",
+    "agenda": [
+      "10:00 AM: Opening",
+      "2:00 PM: Workshops"
+    ]
+  }
+]

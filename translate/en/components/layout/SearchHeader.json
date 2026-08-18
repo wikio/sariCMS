@@ -1,0 +1,11 @@
+{
+  "title": "What are you looking for?",
+  "subtitle": "Products, news, events...",
+  "placeholder": "Search for a product, article, event...",
+  "searchButton": "Search",
+  "pressEscape": "to close",
+  "tipsTitle": "💡 Search tips:",
+  "tipOr": "= OR",
+  "tipAnd": "= AND",
+  "tipExample": "Ex: ultrasound, blood pressure"
+}

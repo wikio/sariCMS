@@ -1,0 +1,94 @@
+[
+  {
+    "id": 1,
+    "title": "Vente d'Équipements",
+    "icon": "shopping-cart",
+    "shortDesc": "Large gamme d'équipements médicaux neufs et reconditionnés",
+    "fullDesc": "Nous proposons une sélection rigoureuse d'équipements médicaux provenant des plus grands fabricants mondiaux. Que ce soit pour l'imagerie, le bloc opératoire ou la réanimation, nous vous accompagnons dans le choix du matériel le plus adapté à votre pratique et à votre budget.",
+    "features": [
+      "Audit de vos besoins",
+      "Comparatif des marques",
+      "Négociation des tarifs",
+      "Garantie constructeur étendue"
+    ],
+    "faq": [
+      {
+        "q": "Proposez-vous du matériel reconditionné ?",
+        "a": "Oui, nous proposons une gamme certifiée de matériel reconditionné avec une garantie de 12 mois."
+      },
+      {
+        "q": "Quels sont les délais de livraison ?",
+        "a": "Les délais varient de 24h pour les consommables à 4-6 semaines pour les équipements lourds sur commande."
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "title": "Installation & Formation",
+    "icon": "users",
+    "shortDesc": "Installation sur site et formation du personnel",
+    "fullDesc": "L'achat d'un équipement ne s'arrête pas à la livraison. Nos ingénieurs biomédicaux assurent une installation clé en main, le calibrage des appareils et une formation complète de vos équipes pour une prise en main immédiate et sécurisée.",
+    "features": [
+      "Installation clé en main",
+      "Calibrage et tests de sécurité",
+      "Formation théorique et pratique",
+      "Support documentaire complet"
+    ],
+    "faq": [
+      {
+        "q": "La formation est-elle incluse dans le prix ?",
+        "a": "Oui, une session de formation de base est incluse pour tout achat d'équipement lourd."
+      },
+      {
+        "q": "Pouvons-nous former de nouveaux arrivants plus tard ?",
+        "a": "Absolument, nous proposons des sessions de formation additionnelles sur devis."
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "title": "Maintenance & SAV",
+    "icon": "wrench",
+    "shortDesc": "Contrats de maintenance et service après-vente",
+    "fullDesc": "La disponibilité de vos équipements est critique. Nous offrons des contrats de maintenance préventive et curative, avec des interventions garanties sous 24h/48h et un stock de pièces détachées important.",
+    "features": [
+      "Maintenance préventive programmée",
+      "Intervention d'urgence 24/7",
+      "Pièces détachées d'origine",
+      "Rapports d'intervention détaillés"
+    ],
+    "faq": [
+      {
+        "q": "Quels sont les types de contrats de maintenance ?",
+        "a": "Nous proposons des contrats 'Sérénité' (tout inclus) et 'Essentiel' (main d'œuvre incluse, pièces en sus)."
+      },
+      {
+        "q": "Intervenez-vous sur toutes les marques ?",
+        "a": "Nous sommes agréés sur les principales marques et pouvons intervenir sur la plupart des équipements du marché."
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "title": "Fourniture de Consommables",
+    "icon": "package",
+    "shortDesc": "Fourniture régulière de consommables pour hôpitaux et cliniques",
+    "fullDesc": "Ne soyez plus jamais en rupture de stock. Nous mettons en place des approvisionnements automatiques et des tarifs dégressifs pour vos consommables quotidiens (gants, masques, désinfectants, matériel de soin).",
+    "features": [
+      "Catalogue de plus de 5000 références",
+      "Livraison en 24/48h",
+      "Tarifs dégressifs selon volume",
+      "Gestion des stocks à façon"
+    ],
+    "faq": [
+      {
+        "q": "Y a-t-il un minimum de commande ?",
+        "a": "La livraison est gratuite dès 500€ HT d'achat."
+      },
+      {
+        "q": "Pouvons-nous avoir des échantillons ?",
+        "a": "Oui, nous fournissons des échantillons pour tester la qualité avant un engagement."
+      }
+    ]
+  }
+]

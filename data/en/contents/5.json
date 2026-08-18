@@ -1,0 +1,46 @@
+{
+  "slides": [
+    {
+      "title": "Innovation",
+      "subtitle": "Latest generation equipment",
+      "content": "We distribute the best international brands: GE Healthcare, Philips, Siemens, Mindray and many others. Each piece of equipment is selected for its reliability and performance.",
+      "image": "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=1920",
+      "cta": {
+        "label": "Discover our solutions",
+        "link": "#solutions"
+      }
+    },
+    {
+      "title": "Our Presentation Video",
+      "subtitle": "Discover our universe",
+      "content": "An immersion in our facilities and our teams. Discover how we work every day to serve healthcare professionals.",
+      "media": "https://www.youtube.com/embed/dQw4w9WgXcQ",
+      "mediaType": "youtube",
+      "cta": {
+        "label": "Contact us",
+        "link": "#contact"
+      }
+    },
+    {
+      "title": "Our Equipment in Action",
+      "subtitle": "Performance and quality",
+      "content": "Demonstration video of our flagship products. See how our equipment transforms medical practice on a daily basis.",
+      "media": "videos/presentation.mp4",
+      "mediaType": "video",
+      "cta": {
+        "label": "View catalog",
+        "link": "#produits"
+      }
+    },
+    {
+      "title": "After-Sales Service",
+      "subtitle": "Always by your side",
+      "content": "Our team of 50+ certified technicians intervenes within 24 hours throughout Algeria. Preventive, corrective maintenance and continuous training.",
+      "image": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1920",
+      "cta": {
+        "label": "Our services",
+        "link": "#services"
+      }
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "slides": [
+    {
+      "title": "الابتكار",
+      "subtitle": "معدات من الجيل الأخير",
+      "content": "نوزع أفضل العلامات التجارية الدولية: GE Healthcare، Philips، Siemens، Mindray وغيرها. يتم اختيار كل جهاز لموثوقيته وأدائه.",
+      "image": "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=1920",
+      "cta": {
+        "label": "اكتشف حلولنا",
+        "link": "#solutions"
+      }
+    },
+    {
+      "title": "فيديو العرض التقديمي",
+      "subtitle": "اكتشف عالمنا",
+      "content": "غمر في مرافقنا وفرقنا. اكتشف كيف نعمل يوميًا لخدمة المهنيين الصحيين.",
+      "media": "https://www.youtube.com/embed/dQw4w9WgXcQ",
+      "mediaType": "youtube",
+      "cta": {
+        "label": "اتصل بنا",
+        "link": "#contact"
+      }
+    },
+    {
+      "title": "معداتنا في العمل",
+      "subtitle": "الأداء والجودة",
+      "content": "فيديو عرض لمنتجاتنا الرائدة. شاهد كيف تحول معداتنا الممارسة الطبية يوميًا.",
+      "media": "videos/presentation.mp4",
+      "mediaType": "video",
+      "cta": {
+        "label": "عرض الكتالوج",
+        "link": "#produits"
+      }
+    },
+    {
+      "title": "خدمة ما بعد البيع",
+      "subtitle": "دائمًا إلى جانبك",
+      "content": "يتدخل فريقنا من أكثر من 50 فنيًا معتمدًا في غضون 24 ساعة في جميع أنحاء الجزائر. صيانة وقائية وتصحيحية وتدريب مستمر.",
+      "image": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1920",
+      "cta": {
+        "label": "خدماتنا",
+        "link": "#services"
+      }
+    }
+  ]
+}

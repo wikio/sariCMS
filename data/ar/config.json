@@ -1,0 +1,25 @@
+{
+  "meta": {
+    "companyName": "صولوسيون صاري سيستام",
+    "tagline": "التميز الطبي في خدمتك",
+    "logo": "https://sarisysteme.com/wp-content/uploads/2022/07/cropped-logo-SARI-pixel-transparent-without-grid.png",
+    "description": "توزيع المعدات والمستلزمات الطبية منذ أكثر من 20 عامًا. تدعم ساري سيستم المهنيين الصحيين بحلول مبتكرة وموثوقة.",
+    "phone": "(+213)23.52.42.72",
+    "email": "contact@sarisysteme.com",
+    "address": "17 قطعة ONAB، حي سونلغاز، جسر قسنطينة، الجزائر - الجزائر",
+    "hours": "الأحد-الخميس: 8:00 صباحًا - 17:00 مساءً",
+    "currency": "د.ج", 
+    "social": {
+      "linkedin": "https://linkedin.com/company/sarisysteme",
+      "facebook": "https://facebook.com/sarisysteme",
+      "twitter": "https://twitter.com/sarisysteme",
+      "youtube": "https://youtube.com/sarisysteme"
+    }
+  },
+  "stats": {
+    "clients": "+500",
+    "experience": "20",
+    "support": "24/7",
+    "satisfaction": "98%"
+  }
+}

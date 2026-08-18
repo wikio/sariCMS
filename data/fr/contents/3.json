@@ -1,0 +1,35 @@
+{
+  "content": "<p>Découvrez quelques-unes de nos réalisations à travers l'Algérie. Chaque installation représente un partenariat de confiance avec un établissement de santé.</p>",
+  "media": [
+    {
+      "src": "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=1200",
+      "caption": "Installation complète au CHU d'Alger - 2023",
+      "type": "image"
+    },
+    {
+      "src": "https://images.unsplash.com/photo-1551076805-e1869033e561?w=1200",
+      "caption": "Bloc opératoire moderne - Clinique El Afia, Oran",
+      "type": "image"
+    },
+    {
+      "src": "https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=1200",
+      "caption": "Service de cardiologie - Hôpital Central, Constantine",
+      "type": "image"
+    },
+    {
+      "src": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1200",
+      "caption": "Laboratoire d'analyses - Clinique Moderne, Annaba",
+      "type": "image"
+    },
+    {
+      "src": "https://images.unsplash.com/photo-1519494026892-88bb237b200d?w=1200",
+      "caption": "Service de pédiatrie - Hôpital Régional, Blida",
+      "type": "image"
+    },
+    {
+      "src": "https://images.unsplash.com/photo-1584982751601-97dcc096659c?w=1200",
+      "caption": "Imagerie médicale - Centre de Santé, Tizi Ouzou",
+      "type": "image"
+    }
+  ]
+}

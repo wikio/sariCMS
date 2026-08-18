@@ -1,0 +1,13 @@
+{
+  "notFound": "Service non trouvé",
+  "notFoundDesc": "Ce service n'existe pas ou a été supprimé.",
+  "backToServices": "Retour aux services",
+  "home": "Accueil",
+  "services": "Services",
+  "aboutTitle": "À propos de ce service",
+  "commitmentsTitle": "Nos engagements",
+  "faqTitle": "Questions fréquentes",
+  "needService": "Besoin de ce service ?",
+  "needServiceDesc": "Contactez nos experts pour une étude personnalisée.",
+  "requestQuote": "Demander un devis"
+}

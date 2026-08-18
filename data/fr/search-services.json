@@ -1,0 +1,54 @@
+[
+  {
+    "id": 999,
+    "title": "Vente d'Équipements",
+    "icon": "shopping-cart",
+    "shortDesc": "Large gamme d'équipements médicaux neufs et reconditionnés",
+    "fullDesc": "<p>Nous proposons une sélection rigoureuse d'équipements médicaux provenant des plus grands fabricants mondiaux.</p>",
+    "features": [
+      "Audit de vos besoins",
+      "Comparatif des marques",
+      "Négociation des tarifs",
+      "Garantie constructeur étendue"
+    ]
+  },
+  {
+    "id": 998,
+    "title": "Installation & Formation",
+    "icon": "users",
+    "shortDesc": "Installation sur site et formation du personnel",
+    "fullDesc": "<p>L'achat d'un équipement ne s'arrête pas à la livraison. Nos ingénieurs biomédicaux assurent une installation clé en main.</p>",
+    "features": [
+      "Installation clé en main",
+      "Calibrage et tests de sécurité",
+      "Formation théorique et pratique",
+      "Support documentaire complet"
+    ]
+  },
+  {
+    "id": 997,
+    "title": "Maintenance & SAV",
+    "icon": "wrench",
+    "shortDesc": "Contrats de maintenance et service après-vente",
+    "fullDesc": "<p>La disponibilité de vos équipements est critique. Nous offrons des contrats de maintenance préventive et curative.</p>",
+    "features": [
+      "Maintenance préventive programmée",
+      "Intervention d'urgence 24/7",
+      "Pièces détachées d'origine",
+      "Rapports d'intervention détaillés"
+    ]
+  },
+  {
+    "id": 996,
+    "title": "Fourniture de Consommables",
+    "icon": "package",
+    "shortDesc": "Fourniture régulière de consommables pour hôpitaux et cliniques",
+    "fullDesc": "<p>Ne soyez plus jamais en rupture de stock. Nous mettons en place des approvisionnements automatiques.</p>",
+    "features": [
+      "Catalogue de plus de 5000 références",
+      "Livraison en 24/48h",
+      "Tarifs dégressifs selon volume",
+      "Gestion des stocks à façon"
+    ]
+  }
+]

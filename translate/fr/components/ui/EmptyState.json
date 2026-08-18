@@ -1,0 +1,14 @@
+{
+  "noResults": "Aucun résultat",
+  "noResultsDesc": "Essayez avec d'autres critères de recherche.",
+  "noData": "Aucune donnée disponible",
+  "noDataDesc": "Il n'y a rien à afficher pour le moment.",
+  "emptyCart": "Votre panier est vide",
+  "emptyCartDesc": "Ajoutez des produits pour commencer votre devis.",
+  "noMessages": "Aucun message",
+  "noMessagesDesc": "Vous n'avez pas encore reçu de messages.",
+  "noOrders": "Aucune commande",
+  "noOrdersDesc": "Vous n'avez pas encore passé de commande.",
+  "tryAgain": "Réessayer",
+  "backToHome": "Retour à l'accueil"
+}

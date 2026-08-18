@@ -1,0 +1,212 @@
+[
+  {
+    "id": 1,
+    "title": "Salon Médical International 2024",
+    "date": "15-18 Mars 2024",
+    "location": "Paris Expo",
+    "type": "Salon",
+    "image": "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800",
+    "shortDesc": "Stand A42",
+    "fullContent": "<p>Détails du salon...</p>",
+    "agenda": [
+      "10h00: Inauguration",
+      "14h00: Démo"
+    ]
+  },
+  {
+    "id": 2,
+    "title": "Webinar: Nouvelles Technologies d'Imagerie",
+    "date": "22 Février 2024",
+    "location": "En ligne",
+    "type": "Formation",
+    "image": "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=800",
+    "shortDesc": "Gratuit sur inscription",
+    "fullContent": "<p>Détails du webinar...</p>",
+    "agenda": [
+      "14h00: Intro",
+      "15h30: Q&R"
+    ]
+  },
+  {
+    "id": 3,
+    "title": "Journée Portes Ouvertes SARI",
+    "date": "10 Avril 2024",
+    "location": "Siège Lyon",
+    "type": "Portes Ouvertes",
+    "image": "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800",
+    "shortDesc": "Visite et démonstrations",
+    "fullContent": "<p>Détails JPO...</p>",
+    "agenda": [
+      "09h00: Accueil",
+      "11h00: Showroom"
+    ]
+  },
+  {
+    "id": 4,
+    "title": "Formation : Maintenance des Autoclaves",
+    "date": "5 Mai 2024",
+    "location": "Centre de Formation Lyon",
+    "type": "Formation",
+    "image": "https://images.unsplash.com/photo-1583947215259-38e31be8751f?w=800",
+    "shortDesc": "Certifiante, 2 jours",
+    "fullContent": "<p>Détails formation...</p>",
+    "agenda": [
+      "Jour 1: Théorie",
+      "Jour 2: Pratique"
+    ]
+  },
+  {
+    "id": 5,
+    "title": "Conférence : L'IA en Radiologie",
+    "date": "12 Juin 2024",
+    "location": "Hôtel Dieu, Lyon",
+    "type": "Conférence",
+    "image": "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=800",
+    "shortDesc": "Avec le Pr. Martin",
+    "fullContent": "<p>Détails conférence...</p>",
+    "agenda": [
+      "18h00: Accueil",
+      "18h30: Conférence"
+    ]
+  },
+  {
+    "id": 6,
+    "title": "Salon Régional de la Santé",
+    "date": "20-22 Septembre 2024",
+    "location": "Eurexpo Lyon",
+    "type": "Salon",
+    "image": "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800",
+    "shortDesc": "Stand B12",
+    "fullContent": "<p>Détails salon régional...</p>",
+    "agenda": [
+      "10h00: Ouverture",
+      "15h00: Table ronde"
+    ]
+  },
+  {
+    "id": 7,
+    "title": "Atelier : Gestion des stocks de consommables",
+    "date": "15 Octobre 2024",
+    "location": "En ligne",
+    "type": "Atelier",
+    "image": "https://images.unsplash.com/photo-1584982751601-97dcc096659c?w=800",
+    "shortDesc": "Optimisez vos achats",
+    "fullContent": "<p>Détails atelier...</p>",
+    "agenda": [
+      "14h00: Enjeux",
+      "15h00: Outils"
+    ]
+  },
+  {
+    "id": 8,
+    "title": "Lancement Produit : Échographe X2",
+    "date": "5 Novembre 2024",
+    "location": "Siège Lyon",
+    "type": "Lancement",
+    "image": "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=800",
+    "shortDesc": "Exclusivité clients",
+    "fullContent": "<p>Détails lancement...</p>",
+    "agenda": [
+      "10h00: Présentation",
+      "11h30: Cockail"
+    ]
+  },
+  {
+    "id": 9,
+    "title": "Webinar : Normes d'hygiène 2024",
+    "date": "20 Novembre 2024",
+    "location": "En ligne",
+    "type": "Formation",
+    "image": "https://images.unsplash.com/photo-1551076805-e1869033e561?w=800",
+    "shortDesc": "Mise à jour réglementaire",
+    "fullContent": "<p>Détails webinar hygiène...</p>",
+    "agenda": [
+      "14h00: Nouvelles normes",
+      "15h30: Q&R"
+    ]
+  },
+  {
+    "id": 10,
+    "title": "Forum de l'Emploi Santé",
+    "date": "15 Janvier 2025",
+    "location": "Paris",
+    "type": "Recrutement",
+    "image": "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800",
+    "shortDesc": "Venez nous rencontrer",
+    "fullContent": "<p>Détails forum emploi...</p>",
+    "agenda": [
+      "09h00: Ouverture",
+      "Toute la journée: Entretiens"
+    ]
+  },
+  {
+    "id": 11,
+    "title": "Formation : Utilisation du Défibrillateur",
+    "date": "10 Février 2025",
+    "location": "Marseille",
+    "type": "Formation",
+    "image": "https://images.unsplash.com/photo-1519494026892-88bb237b200d?w=800",
+    "shortDesc": "Gestes qui sauvent",
+    "fullContent": "<p>Détails formation DSA...</p>",
+    "agenda": [
+      "09h00: Théorie",
+      "11h00: Pratique"
+    ]
+  },
+  {
+    "id": 12,
+    "title": "Séminaire Partenaires Annuel",
+    "date": "20 Mars 2025",
+    "location": "Annecy",
+    "type": "Interne",
+    "image": "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=800",
+    "shortDesc": "Réservé aux collaborateurs",
+    "fullContent": "<p>Détails séminaire...</p>",
+    "agenda": [
+      "Jour 1: Stratégie",
+      "Jour 2: Team building"
+    ]
+  },
+  {
+    "id": 13,
+    "title": "Démonstration : Lit Électrique Premium",
+    "date": "5 Avril 2025",
+    "location": "Showroom Lyon",
+    "type": "Démonstration",
+    "image": "https://images.unsplash.com/photo-1519494026892-88bb237b200d?w=800",
+    "shortDesc": "Essayez avant d'acheter",
+    "fullContent": "<p>Détails démo lit...</p>",
+    "agenda": [
+      "14h00: Démo",
+      "15h00: Échanges"
+    ]
+  },
+  {
+    "id": 14,
+    "title": "Conférence : Télémédecine et Ruralité",
+    "date": "15 Mai 2025",
+    "location": "Clermont-Ferrand",
+    "type": "Conférence",
+    "image": "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=800",
+    "shortDesc": "Enjeux et solutions",
+    "fullContent": "<p>Détails conférence télémédecine...</p>",
+    "agenda": [
+      "14h00: Contexte",
+      "16h00: Solutions"
+    ]
+  },
+  {
+    "id": 15,
+    "title": "Salon Infirmier National",
+    "date": "10-12 Octobre 2025",
+    "location": "Paris",
+    "type": "Salon",
+    "image": "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800",
+    "shortDesc": "Stand C05",
+    "fullContent": "<p>Détails salon infirmier...</p>",
+    "agenda": [
+      "10h00: Inauguration",
+      "14h00: Ateliers"
+    ]
+  }
+]

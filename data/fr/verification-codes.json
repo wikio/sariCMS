@@ -1,0 +1,61 @@
+[
+  {
+    "code": "SARI-FAC24-00001",
+    "key": "CTdxXe6ZdFVzWQ==",
+    "type": "facture_vente",
+    "status": "valid",
+    "issuer": "SARI Système SARL"
+  },
+  {
+    "code": "SARI-DVV24-00045",
+    "key": "AB12Cd34Ef56Gh78==",
+    "type": "devis_vente",
+    "status": "valid",
+    "issuer": "SARI Système SARL"
+  },
+  {
+    "code": "SARI-CONF24-00089",
+    "key": "Zx21Cv43Bn65Nm87==",
+    "type": "certificat_conformite",
+    "status": "expired",
+    "validUntil": "2024-01-20",
+    "issuer": "SARI Système SARL"
+  },
+  {
+    "code": "SARI-BCV24-00001",
+    "key": "Xy98Zw76Vu54Ts32==",
+    "type": "bon_commande_vente",
+    "status": "revoked",
+    "revocationReason": "Commande annulée par le client",
+    "issuer": "SARI Système SARL"
+  },
+  {
+    "code": "SARI-FAC24-00789",
+    "key": "Fk92Lm34Np56Qr78==",
+    "type": "facture_vente",
+    "status": "invalid",
+    "invalidReason": "Document signalé comme falsifié",
+    "issuer": "SARI Système SARL"
+  },
+  {
+    "code": "SARI-PRO24-00156",
+    "key": "Qw12Er34Ty56Ui78==",
+    "type": "produit",
+    "status": "valid",
+    "issuer": "SARI Système SARL"
+  },
+  {
+    "code": "SARI-LIV24-00001",
+    "key": "As90Df87Gh65Jk43==",
+    "type": "bon_livraison",
+    "status": "valid",
+    "issuer": "SARI Système SARL"
+  },
+  {
+    "code": "SARI-NIF24-78901",
+    "key": "Tg90Yh87Uj65Ik43==",
+    "type": "nif",
+    "status": "valid",
+    "issuer": "SARI Système SARL"
+  }
+]

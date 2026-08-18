@@ -1,0 +1,30 @@
+{
+  "loading": "Services loading",
+  "loadingDesc": "Please try again in a moment.",
+  "backHome": "Back to Home",
+  "title": "Our Services",
+  "subtitle": "Complete support, from purchase to maintenance",
+  "home": "Home",
+  "services": "Services",
+  "expertiseSubtitle": "Our Expertise",
+  "expertiseTitle": "What we offer",
+  "faqTitle": "Frequently Asked Questions",
+  "faq": [
+    {
+      "q": "What are the delivery times?",
+      "a": "Times vary by product type: 24-48h for consumables, 1-2 weeks for standard equipment."
+    },
+    {
+      "q": "Do you offer refurbished equipment?",
+      "a": "Yes, we offer a certified range of refurbished equipment with a 12-month warranty."
+    },
+    {
+      "q": "How to get a personalized quote?",
+      "a": "You can request a quote via our contact form or directly from the product page."
+    },
+    {
+      "q": "Do you train staff on use?",
+      "a": "Yes, a basic training session is included with any heavy equipment purchase."
+    }
+  ]
+}

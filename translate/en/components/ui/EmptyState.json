@@ -1,0 +1,14 @@
+{
+  "noResults": "No results found",
+  "noResultsDesc": "Try with different search criteria.",
+  "noData": "No data available",
+  "noDataDesc": "There is nothing to display at the moment.",
+  "emptyCart": "Your cart is empty",
+  "emptyCartDesc": "Add products to start your quote.",
+  "noMessages": "No messages",
+  "noMessagesDesc": "You haven't received any messages yet.",
+  "noOrders": "No orders",
+  "noOrdersDesc": "You haven't placed any order yet.",
+  "tryAgain": "Try again",
+  "backToHome": "Back to home"
+}

@@ -1,0 +1,263 @@
+{
+  "demoAccounts": [
+    {
+      "email": "client@sari.dz",
+      "password": "client123",
+      "type": "زبون",
+      "profile": {
+        "firstName": "محمد",
+        "lastName": "بن علي",
+        "phone": "0555123456",
+        "country": "الجزائر",
+        "wilaya": "16 - الجزائر",
+        "address": "12 شارع ديدوش مراد، الجزائر",
+        "description": "زبون وفيّ منذ عام 2020، متخصص في معدات التشخيص.",
+        "photo": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200",
+        "joinDate": "2020-03-15"
+      },
+      "stats": {
+        "totalOrders": 24,
+        "totalInvoices": 18,
+        "pendingQuotes": 3,
+        "totalSpent": "2 450 000 د.ج"
+      },
+      "orders": [
+        {
+          "id": "CMD-2024-001",
+          "date": "2024-01-15",
+          "status": "تم التسليم",
+          "total": "125 000 د.ج",
+          "items": 3
+        },
+        {
+          "id": "CMD-2024-002",
+          "date": "2024-02-20",
+          "status": "قيد المعالجة",
+          "total": "89 000 د.ج",
+          "items": 2
+        },
+        {
+          "id": "CMD-2024-003",
+          "date": "2024-03-10",
+          "status": "مؤكد",
+          "total": "245 000 د.ج",
+          "items": 5
+        }
+      ],
+      "invoices": [
+        {
+          "id": "FAC-2024-001",
+          "date": "2024-01-20",
+          "amount": "125 000 د.ج",
+          "status": "مدفوعة"
+        },
+        {
+          "id": "FAC-2024-002",
+          "date": "2024-02-25",
+          "amount": "89 000 د.ج",
+          "status": "في الانتظار"
+        }
+      ],
+      "quotes": [
+        {
+          "id": "DEV-2024-001",
+          "date": "2024-03-01",
+          "amount": "350 000 د.ج",
+          "status": "في الانتظار",
+          "validUntil": "2024-04-01"
+        },
+        {
+          "id": "DEV-2024-002",
+          "date": "2024-03-15",
+          "amount": "180 000 د.ج",
+          "status": "مقبول",
+          "validUntil": "2024-04-15"
+        }
+      ],
+      "messages": [
+        {
+          "id": 1,
+          "from": "دعم ساري",
+          "subject": "تأكيد التسليم",
+          "date": "2024-03-10",
+          "read": false
+        },
+        {
+          "id": 2,
+          "from": "المصلحة التجارية",
+          "subject": "عرض خاص جديد",
+          "date": "2024-03-08",
+          "read": true
+        }
+      ]
+    },
+    {
+      "email": "partenaire@sari.dz",
+      "password": "partenaire123",
+      "type": "شريك",
+      "profile": {
+        "firstName": "أحمد",
+        "lastName": "بومدين",
+        "phone": "021456789",
+        "country": "الجزائر",
+        "wilaya": "31 - وهران",
+        "address": "المنطقة الصناعية، وهران",
+        "companyName": "شركة ميدتيك ذ.م.م",
+        "description": "شريك موزع إقليمي للغرب الجزائري.",
+        "photo": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200",
+        "joinDate": "2019-06-20"
+      },
+      "stats": {
+        "totalOrders": 156,
+        "totalInvoices": 142,
+        "pendingQuotes": 8,
+        "totalRevenue": "15 800 000 د.ج",
+        "activePartnerships": 3
+      },
+      "orders": [
+        {
+          "id": "CMD-2024-101",
+          "date": "2024-03-01",
+          "status": "تم التسليم",
+          "total": "890 000 د.ج",
+          "items": 12
+        },
+        {
+          "id": "CMD-2024-102",
+          "date": "2024-03-15",
+          "status": "قيد الإنتاج",
+          "total": "1 250 000 د.ج",
+          "items": 8
+        }
+      ],
+      "invoices": [
+        {
+          "id": "FAC-2024-050",
+          "date": "2024-02-28",
+          "amount": "890 000 د.ج",
+          "status": "مدفوعة"
+        },
+        {
+          "id": "FAC-2024-051",
+          "date": "2024-03-15",
+          "amount": "1 250 000 د.ج",
+          "status": "في الانتظار"
+        }
+      ],
+      "quotes": [
+        {
+          "id": "DEV-2024-020",
+          "date": "2024-03-10",
+          "amount": "2 500 000 د.ج",
+          "status": "قيد التفاوض",
+          "validUntil": "2024-04-10"
+        }
+      ],
+      "partnerships": [
+        {
+          "id": 1,
+          "name": "المستشفى الإقليمي لوهران",
+          "type": "توزيع",
+          "status": "نشط",
+          "since": "2020-01-15"
+        },
+        {
+          "id": 2,
+          "name": "عيادة العافية",
+          "type": "تزويد",
+          "status": "نشط",
+          "since": "2021-06-20"
+        }
+      ],
+      "messages": [
+        {
+          "id": 1,
+          "from": "الإدارة التجارية",
+          "subject": "أسعار الشركاء الجديدة 2024",
+          "date": "2024-03-12",
+          "read": false
+        }
+      ]
+    },
+    {
+      "email": "candidat@sari.dz",
+      "password": "candidat123",
+      "type": "مترشح",
+      "profile": {
+        "firstName": "أمينا",
+        "lastName": "خليفي",
+        "phone": "0555987654",
+        "country": "الجزائر",
+        "wilaya": "25 - قسنطينة",
+        "address": "حي 1000 مسكن، قسنطينة",
+        "position": "تقنية بيوطبية",
+        "experience": "3 سنوات",
+        "education": "ماستر في الهندسة البيوطبية",
+        "description": "شغوفة بالمعدات الطبية، أبحث عن الانضمام إلى فريق عمل ديناميكي.",
+        "photo": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200",
+        "joinDate": "2024-02-01"
+      },
+      "stats": {
+        "applicationsSent": 5,
+        "interviewsScheduled": 2,
+        "profileViews": 12,
+        "cvDownloads": 3
+      },
+      "applications": [
+        {
+          "id": 1,
+          "job": "تقني بيوطبي - الجزائر",
+          "date": "2024-03-01",
+          "status": "قيد المعالجة",
+          "stage": "مقابلة هاتفية"
+        },
+        {
+          "id": 2,
+          "job": "مهندس صيانة - وهران",
+          "date": "2024-03-10",
+          "status": "مقابلة",
+          "stage": "مقابلة تقنية مبرمجة"
+        },
+        {
+          "id": 3,
+          "job": "مندوب مبيعات معدات طبية",
+          "date": "2024-03-15",
+          "status": "تم إرسال الترشح",
+          "stage": "في الانتظار"
+        }
+      ],
+      "documents": [
+        {
+          "id": 1,
+          "name": "CV_Amina_Khelifi_2024.pdf",
+          "type": "سيرة ذاتية",
+          "uploadDate": "2024-02-01",
+          "size": "245 KB"
+        },
+        {
+          "id": 2,
+          "name": "Lettre_Motivation.pdf",
+          "type": "رسالة تحفيزية",
+          "uploadDate": "2024-02-01",
+          "size": "128 KB"
+        },
+        {
+          "id": 3,
+          "name": "Diplome_Master.pdf",
+          "type": "شهادة",
+          "uploadDate": "2024-02-05",
+          "size": "1.2 MB"
+        }
+      ],
+      "messages": [
+        {
+          "id": 1,
+          "from": "الموارد البشرية ساري سيستم",
+          "subject": "تأكيد المقابلة - 20 مارس",
+          "date": "2024-03-18",
+          "read": false
+        }
+      ]
+    }
+  ]
+}

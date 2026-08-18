@@ -1,0 +1,343 @@
+{
+  "notFound": "Category not found",
+  "notFoundDesc": "This category does not exist or has been removed.",
+  "backToSolutions": "Back to solutions",
+  "breadcrumb": {
+    "home": "Home",
+    "solutions": "Solutions"
+  },
+  "products": {
+    "subtitle": "Our selection",
+    "title": "Our Equipment",
+    "viewAll": "view all"
+  },
+  "features": {
+    "subtitle": "Our advantages",
+    "title": "Why choose our solutions?"
+  },
+  "faq": {
+    "title": "Frequently asked questions"
+  },
+  "cta": {
+    "title": "Ready to equip your facility?",
+    "description": "Contact us for a personalized study and free quote",
+    "primary": "Request a quote",
+    "secondary": "View products"
+  },
+  "related": {
+    "title": "Other categories"
+  },
+  "categories": {
+    "diagnostic": {
+      "title": "Diagnostic & Imaging",
+      "desc": "Ultrasound, blood pressure monitors, stethoscopes",
+      "icon": "stethoscope",
+      "image": "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=1920",
+      "productIds": [
+        1,
+        4,
+        5
+      ],
+      "features": [
+        {
+          "icon": "scan",
+          "text": "4D high-resolution imaging"
+        },
+        {
+          "icon": "wifi",
+          "text": "WiFi and Bluetooth connectivity"
+        },
+        {
+          "icon": "battery",
+          "text": "Long battery life"
+        },
+        {
+          "icon": "shield-check",
+          "text": "CE and ISO 13485 certified"
+        },
+        {
+          "icon": "monitor",
+          "text": "HD touch screens"
+        },
+        {
+          "icon": "truck",
+          "text": "Delivery and installation included"
+        }
+      ],
+      "faq": [
+        {
+          "q": "What types of ultrasound do you offer?",
+          "a": "We offer portable and fixed ultrasound machines with various probe configurations. All devices are CE certified and ISO 13485 compliant."
+        },
+        {
+          "q": "Are blood pressure monitors medically certified?",
+          "a": "Yes, all our monitors are Class IIa medical devices, CE certified with ESH protocol validation."
+        }
+      ]
+    },
+    "cardiology": {
+      "title": "Cardiology",
+      "desc": "ECG, defibrillators, cardiac monitors and holters",
+      "icon": "heart-pulse",
+      "image": "https://images.unsplash.com/photo-1559757175-5700dde675bc?w=1920",
+      "productIds": [
+        7
+      ],
+      "features": [
+        {
+          "icon": "activity",
+          "text": "3/5/12-lead ECG"
+        },
+        {
+          "icon": "zap",
+          "text": "AED and AED defibrillators"
+        },
+        {
+          "icon": "monitor",
+          "text": "Real-time cardiac monitors"
+        },
+        {
+          "icon": "clock",
+          "text": "24/48/72h ECG Holters"
+        }
+      ],
+      "faq": [
+        {
+          "q": "Are your ECGs 12-lead?",
+          "a": "Yes, we offer 3, 6 and 12-lead ECGs with touch screen and built-in thermal printer."
+        },
+        {
+          "q": "Are defibrillators easy to use?",
+          "a": "Yes, all our AEDs feature step-by-step voice guidance and automatic rhythm analysis in under 10 seconds."
+        }
+      ]
+    },
+    "imagerie": {
+      "title": "Medical Imaging",
+      "desc": "CT scanners, MRI, digital radiology and PACS solutions",
+      "icon": "scan",
+      "image": "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=1920",
+      "productIds": [],
+      "features": [
+        {
+          "icon": "scan",
+          "text": "CT scanners 16 to 128 slices"
+        },
+        {
+          "icon": "magnet",
+          "text": "MRI 1.5T and 3T"
+        },
+        {
+          "icon": "image",
+          "text": "DR/CR digital radiology"
+        },
+        {
+          "icon": "monitor",
+          "text": "PACS/RIS solutions"
+        }
+      ],
+      "faq": [
+        {
+          "q": "Do you offer CT scanners?",
+          "a": "Yes, from entry-level 16-slice to high-end 128-slice, with installation and training included."
+        }
+      ]
+    },
+    "chirurgie": {
+      "title": "Surgery",
+      "desc": "Surgical instruments, autoclaves, LED surgical lights",
+      "icon": "syringe",
+      "image": "https://images.unsplash.com/photo-1551076805-e1869033e561?w=1920",
+      "productIds": [
+        3,
+        9
+      ],
+      "features": [
+        {
+          "icon": "scissors",
+          "text": "Stainless steel surgical instruments"
+        },
+        {
+          "icon": "flame",
+          "text": "Class B autoclaves"
+        },
+        {
+          "icon": "lightbulb",
+          "text": "LED surgical lights"
+        },
+        {
+          "icon": "bed",
+          "text": "Electric operating tables"
+        }
+      ],
+      "faq": [
+        {
+          "q": "Are your autoclaves class B?",
+          "a": "Yes, all compliant with EN 13060 standards with vacuum drying cycle."
+        }
+      ]
+    },
+    "pediatrie": {
+      "title": "Pediatrics",
+      "desc": "Neonatal incubators, pediatric scales, phototherapy",
+      "icon": "baby",
+      "image": "https://images.unsplash.com/photo-1583947215259-38e31be8751f?w=1920",
+      "productIds": [
+        12
+      ],
+      "features": [
+        {
+          "icon": "baby",
+          "text": "Neonatal incubators"
+        },
+        {
+          "icon": "scale",
+          "text": "5g pediatric scales"
+        },
+        {
+          "icon": "sun",
+          "text": "Phototherapy lamps"
+        },
+        {
+          "icon": "heart-pulse",
+          "text": "Neonatal monitors"
+        }
+      ],
+      "faq": [
+        {
+          "q": "Are incubators suitable for premature babies?",
+          "a": "Yes, from 28 weeks of gestation with precise temperature, humidity and oxygen control."
+        }
+      ]
+    },
+    "urgence": {
+      "title": "Emergency & Resuscitation",
+      "desc": "Defibrillators, emergency carts, multiparameter monitors",
+      "icon": "activity",
+      "image": "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=1920",
+      "productIds": [
+        7,
+        15
+      ],
+      "features": [
+        {
+          "icon": "zap",
+          "text": "AED/DSA defibrillators"
+        },
+        {
+          "icon": "siren",
+          "text": "Complete emergency carts"
+        },
+        {
+          "icon": "monitor",
+          "text": "Multiparameter monitors"
+        },
+        {
+          "icon": "clock",
+          "text": "24/7 guaranteed support"
+        }
+      ],
+      "faq": [
+        {
+          "q": "Are defibrillators automatic?",
+          "a": "Yes, we offer semi-automatic and fully automatic AEDs with voice guidance."
+        }
+      ]
+    },
+    "informatique": {
+      "title": "Medical IT",
+      "desc": "EMR, telemedicine, PACS/RIS, HDS cybersecurity",
+      "icon": "monitor",
+      "image": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1920",
+      "productIds": [],
+      "features": [
+        {
+          "icon": "file-text",
+          "text": "Electronic Medical Records (EMR)"
+        },
+        {
+          "icon": "video",
+          "text": "Telemedicine and teleconsultation"
+        },
+        {
+          "icon": "image",
+          "text": "PACS/RIS solutions"
+        },
+        {
+          "icon": "lock",
+          "text": "HDS cybersecurity"
+        }
+      ],
+      "faq": [
+        {
+          "q": "Are your EMR solutions HDS compliant?",
+          "a": "Yes, all HDS certified and GDPR compliant."
+        }
+      ]
+    },
+    "laboratoire": {
+      "title": "Laboratory",
+      "desc": "Hematology analyzers, biochemistry, microscopes, centrifuges",
+      "icon": "flask-conical",
+      "image": "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=1920",
+      "productIds": [],
+      "features": [
+        {
+          "icon": "flask-conical",
+          "text": "Hematology analyzers"
+        },
+        {
+          "icon": "test-tube",
+          "text": "Biochemistry analyzers"
+        },
+        {
+          "icon": "microscope",
+          "text": "Laboratory microscopes"
+        },
+        {
+          "icon": "rotate-3d",
+          "text": "Centrifuges"
+        }
+      ],
+      "faq": [
+        {
+          "q": "What types of analyzers do you offer?",
+          "a": "Hematology, biochemistry, immunology and coagulation analyzers."
+        }
+      ]
+    },
+    "reeducation": {
+      "title": "Rehabilitation",
+      "desc": "Physiotherapy tables, electrotherapy, therapeutic ultrasound",
+      "icon": "accessibility",
+      "image": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1920",
+      "productIds": [
+        14
+      ],
+      "features": [
+        {
+          "icon": "accessibility",
+          "text": "Physiotherapy tables"
+        },
+        {
+          "icon": "zap",
+          "text": "Electrotherapy devices"
+        },
+        {
+          "icon": "waves",
+          "text": "Therapeutic ultrasound"
+        },
+        {
+          "icon": "dumbbell",
+          "text": "Exercise equipment"
+        }
+      ],
+      "faq": [
+        {
+          "q": "Do you offer neurological rehabilitation equipment?",
+          "a": "Yes, including virtual reality systems and exoskeletons."
+        }
+      ]
+    }
+  }
+}

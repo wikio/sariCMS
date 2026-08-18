@@ -1,0 +1,16 @@
+{
+  "notFound": "الفئة غير موجودة",
+  "notFoundDesc": "هذه الفئة غير موجودة أو تم حذفها.",
+  "backToSolutions": "العودة إلى الحلول",
+  "home": "الرئيسية",
+  "solutions": "الحلول",
+  "aboutTitle": "حول هذه الفئة",
+  "productsTitle": "المعدات في هذه الفئة",
+  "viewAllProducts": "عرض جميع المنتجات",
+  "commitmentsTitle": "التزاماتنا",
+  "faqTitle": "الأسئلة الشائعة",
+  "needSolution": "هل تحتاج هذا الحل؟",
+  "needSolutionDesc": "اتصل بخبرائنا لدراسة مخصصة وعرض سعر مجاني.",
+  "requestQuote": "طلب عرض سعر",
+  "otherCategories": "فئات أخرى"
+}

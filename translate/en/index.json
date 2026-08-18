@@ -1,0 +1,131 @@
+{
+  "meta": {
+    "name": "English",
+    "code": "en",
+    "flag": "🇬🇧",
+    "lastUpdated": "2026-07-30"
+  },
+  "structure": {
+    "admin": {
+      "label": "Admin Dashboard",
+      "icon": "shield",
+      "path": "admin.json"
+    },
+    "common": {
+      "label": "Common texts",
+      "icon": "globe",
+      "path": "common.json"
+    },
+    "components": {
+      "label": "Components",
+      "icon": "layout",
+      "children": {
+        "cards": {
+          "label": "Cards",
+          "icon": "credit-card",
+          "files": [
+            "EventCard",
+            "NewsCard",
+            "PartnerCard",
+            "ProductCard",
+            "ServiceCard",
+            "TestimonialCard"
+          ]
+        },
+        "layout": {
+          "label": "Layout",
+          "icon": "layout",
+          "files": [
+            "FloatingCartButton",
+            "Footer",
+            "header",
+            "LoadingSpinner",
+            "NotFound",
+            "SearchHeader"
+          ]
+        },
+        "sections": {
+          "label": "Sections",
+          "icon": "layers",
+          "files": [
+            "AlternatingSections",
+            "CTASection",
+            "FeaturedProducts",
+            "HeroSlider",
+            "LatestEvents",
+            "MarqueePartners",
+            "NavigationGrid",
+            "NewsletterSection",
+            "ParallaxSection",
+            "PartnersSection",
+            "StatsSection",
+            "TestimonialsSlider"
+          ]
+        },
+        "shared": {
+          "label": "Shared",
+          "icon": "share-2",
+          "files": [
+            "Alert",
+            "Avatar",
+            "Badge",
+            "Divider",
+            "IconButton",
+            "ImageWithFallback",
+            "LanguageSwitcher",
+            "Rating",
+            "SocialLinks",
+            "Spinner",
+            "Tag"
+          ]
+        },
+        "ui": {
+          "label": "UI",
+          "icon": "mouse-pointer",
+          "files": [
+            "Breadcrumb",
+            "CTAButton",
+            "EmptyState",
+            "FAQ",
+            "LoadingCard",
+            "Modal",
+            "Pagination",
+            "ProductFilters",
+            "SearchBar",
+            "SectionTitle"
+          ]
+        }
+      }
+    },
+    "pages": {
+      "label": "Pages",
+      "icon": "file-text",
+      "files": [
+        "about",
+        "careers",
+        "cart",
+        "contact",
+        "dashboard",
+        "eventDetail",
+        "events",
+        "genericContent",
+        "jobs",
+        "legal",
+        "login",
+        "news",
+        "newsDetail",
+        "payment",
+        "productDetail",
+        "products",
+        "register",
+        "search",
+        "serviceDetail",
+        "services",
+        "solutionCategory",
+        "solutionDetail",
+        "solutions",
+        "verification"
+      ]
+    }
+  }
+}

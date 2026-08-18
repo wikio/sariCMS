@@ -1,0 +1,81 @@
+{
+  "products": [
+    {
+      "id": 101,
+      "name": "Échographe Portable Pro X1",
+      "category": "Diagnostic",
+      "price": "Sur devis",
+      "image": "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=400",
+      "shortDesc": "Échographe haute résolution pour imagerie médicale portable avec écran tactile HD",
+      "fullDesc": "<p>L'Échographe Portable Pro X1 représente l'excellence en matière d'imagerie médicale mobile. Doté d'un écran tactile HD de 15 pouces et de sondes multifréquences interchangeables, cet appareil offre une qualité d'image exceptionnelle.</p><h3>Caractéristiques principales</h3><ul><li>Écran tactile de 15 pouces avec résolution 1920x1080</li><li>Portabilité optimisée (poids : 3,2 kg)</li><li>Autonomie de 6 heures avec batterie intégrée</li><li>Connectivité Wi-Fi et Bluetooth pour transfert de données</li></ul>",
+      "specs": {
+        "Écran": "15 pouces tactile HD",
+        "Poids": "3.2 kg",
+        "Autonomie": "6 heures",
+        "Sondes": "4 sondes incluses"
+      }
+    },
+    {
+      "id": 102,
+      "name": "Lit d'Examen Électrique Premium",
+      "category": "Équipements",
+      "price": "2 450 € HT",
+      "image": "https://images.unsplash.com/photo-1519494026892-88bb237b200d?w=400",
+      "shortDesc": "Lit médicalisé électrique réglable en hauteur avec moteurs silencieux",
+      "fullDesc": "<p>Le Lit d'Examen Électrique Premium offre un confort optimal pour vos patients et une ergonomie parfaite pour les praticiens.</p>",
+      "specs": {
+        "Charge maximale": "250 kg",
+        "Hauteur": "45-95 cm",
+        "Dimensions": "190 x 70 cm"
+      }
+    },
+    {
+      "id": 103,
+      "name": "Stérilisateur Autoclave Classe B",
+      "category": "Chirurgie",
+      "price": "3 890 € HT",
+      "image": "https://images.unsplash.com/photo-1583947215259-38e31be8751f?w=400",
+      "shortDesc": "Autoclave 23L pour stérilisation instruments médicaux avec imprimante",
+      "fullDesc": "<p>Autoclave de classe B conforme aux normes européennes pour la stérilisation de tous types d'instruments médicaux.</p>",
+      "specs": {
+        "Capacité": "23 litres",
+        "Pression": "2.3 bars",
+        "Température": "134°C"
+      }
+    }
+  ],
+  "events": [
+    {
+      "id": 301,
+      "title": "Salon Médical International 2024",
+      "date": "15-18 Mars 2024",
+      "location": "Paris Expo Porte de Versailles",
+      "type": "Salon",
+      "image": "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400",
+      "shortDesc": "Venez découvrir nos dernières innovations sur le stand SARI",
+      "fullContent": "<p>Le plus grand rassemblement de professionnels de santé en France. Venez rencontrer nos experts et découvrir nos dernières innovations.</p>"
+    },
+    {
+      "id": 302,
+      "title": "Webinar: Nouvelles Technologies d'Imagerie",
+      "date": "22 Février 2024 - 14h00",
+      "location": "En ligne (Zoom)",
+      "type": "Formation",
+      "image": "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=400",
+      "shortDesc": "Formation gratuite sur les dernières avancées en imagerie médicale",
+      "fullContent": "<p>Webinar gratuit de 90 minutes sur les nouvelles technologies d'imagerie médicale.</p>"
+    }
+  ],
+  "news": [
+    {
+      "id": 201,
+      "title": "Nouvelle gamme d'échographes portables dernière génération",
+      "date": "15 Janvier 2024",
+      "author": "Dr. Marie Laurent",
+      "category": "Produits",
+      "image": "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=400",
+      "shortDesc": "Découvrez notre nouvelle collection d'échographes avec IA intégrée",
+      "fullContent": "<p>L'Échographe Portable Pro X1 est un appareil de pointe conçu pour répondre aux besoins des professionnels de santé.</p>"
+    }
+  ]
+}

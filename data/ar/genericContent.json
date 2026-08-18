@@ -1,0 +1,200 @@
+[
+  {
+    "id": 1,
+    "type": "simple",
+    "title": "التزامنا بالجودة",
+    "category": "الشركة",
+    "media": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1920",
+    "content": "<h2>التزامنا بالجودة</h2><p>في ساري سيستم، الجودة ليست خيارًا، بل هي جزء من حمضنا النووي. منذ أكثر من 20 عامًا، نلتزم بتوفير معدات طبية تلبي أرقى المعايير الدولية.</p><h3>شهاداتنا</h3><ul><li><strong>ISO 13485</strong> : نظام إدارة الجودة للأجهزة الطبية</li><li><strong>CE Medical</strong> : المطابقة الأوروبية لجميع معداتنا</li><li><strong>FDA Approved</strong> : الشهادة الأمريكية للمنتجات المتميزة</li><li><strong>HDS</strong> : مزود بيانات صحية معتمد</li></ul><h3>عملية الجودة لدينا</h3><p>كل جهاز يخضع لرقابة صارمة في 5 مراحل:</p><ol><li>اختيار الموردين المعتمدين</li><li>الاختبارات في مختبر معتمد</li><li>مراقبة الجودة عند الاستلام</li><li>التركيب من قبل فنيين معتمدين</li><li>المتابعة بعد التركيب لمدة 24 شهرًا</li></ol><blockquote>« الجودة هي الجسر بين الوعد ورضا العميل. » — إدارة ساري سيستم</blockquote>"
+  },
+  {
+    "id": 2,
+    "type": "about",
+    "title": "عن ساري سيستم",
+    "category": "عرض تقديمي",
+    "media": "https://images.unsplash.com/photo-1519494026892-88bb237b200d?w=1920",
+    "content": "<h2>قصتنا</h2><p>تأسست ساري سيستم في عام 2003 في الجزائر، ولدت من رؤية توفير معدات طبية متطورة وموثوقة وبأسعار معقولة للمهنيين الصحيين الجزائريين.</p><h3>قيمنا</h3><p>التميز، القرب، الابتكار والموثوقية هي ركائز شركتنا. نحن نؤمن بأن التكنولوجيا يجب أن تكون في خدمة الإنسان.</p>",
+    "features": [
+      "فريق من أكثر من 50 فنيًا معتمدًا",
+      "شراكات مع أكثر من 30 علامة تجارية دولية",
+      "مركز تدريب معتمد",
+      "مختبر اختبارات داخلي",
+      "خدمة ما بعد البيع سريعة الاستجابة 24/7"
+    ]
+  },
+  {
+    "id": 3,
+    "type": "gallery",
+    "title": "إنجازاتنا بالصور",
+    "category": "معرض",
+    "media": [
+      "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=1200",
+      "https://images.unsplash.com/photo-1551076805-e1869033e561?w=1200",
+      "https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=1200",
+      "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1200",
+      "https://images.unsplash.com/photo-1519494026892-88bb237b200d?w=1200",
+      "https://images.unsplash.com/photo-1584982751601-97dcc096659c?w=1200"
+    ],
+    "content": "<p>اكتشف بعض إنجازاتنا عبر الجزائر. كل تركيب يمثل شراكة ثقة مع مؤسسة صحية، من العيادة الصغيرة إلى المركز الاستشفائي الكبير.</p>"
+  },
+  {
+    "id": 4,
+    "type": "flyer",
+    "title": "عرض صيف 2024",
+    "subtitle": "خصم يصل إلى 30% على جميع المعدات",
+    "category": "ترويج",
+    "media": "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1920",
+    "content": "<h2>🔥 عرض خاص صيف 2024</h2><p class='text-2xl font-bold text-sari-blue'>خصم يصل إلى 30% على جميع المعدات</p><p>استفد من عرضنا الاستثنائي الصالح من <strong>1 يونيو إلى 31 أغسطس 2024</strong>. معدات طبية بجودة احترافية بأسعار مخفضة.</p><h3>الفئات المعنية:</h3><ul><li>✅ أجهزة الموجات فوق الصوتية المحمولة</li><li>✅ أجهزة قياس ضغط الدم الرقمية</li><li>✅ أجهزة إزالة الرجفان</li><li>✅ أجهزة التعقيم</li><li>✅ مصابيح جراحية LED</li></ul><h3>مزايا حصرية:</h3><ul><li>🎁 توصيل مجاني في جميع أنحاء البلاد</li><li>🔧 تركيب مجاني من قبل فنيينا</li><li>📚 تدريب مشمول لفرقك</li><li>🛡️ ضمان موسع إلى 36 شهرًا</li><li>💳 تسهيلات الدفع على 12 دفعة</li></ul><blockquote class='bg-sari-lime/10 border-l-4 border-sari-lime p-4'>« هذا العرض محدود في الوقت. اتصل بنا الآن للاستفادة من أسعارنا التفضيلية. »</blockquote>",
+    "pdf": "data/promotions/ete-2024.pdf"
+  },
+  {
+    "id": 5,
+    "type": "slide",
+    "title": "ساري سيستم في حركة",
+    "category": "عرض تقديمي",
+    "slides": [
+      {
+        "media": "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=1920",
+        "mediaType": "image",
+        "title": "الابتكار",
+        "subtitle": "معدات من الجيل الأخير",
+        "description": "نوزع أفضل العلامات التجارية الدولية: GE Healthcare، Philips، Siemens، Mindray وغيرها. يتم اختيار كل جهاز لموثوقيته وأدائه.",
+        "cta": "اكتشف حلولنا",
+        "ctaLink": "#solutions"
+      },
+      {
+        "media": "https://www.youtube.com/embed/dQw4w9WgXcQ",
+        "mediaType": "youtube",
+        "title": "فيديو العرض التقديمي",
+        "subtitle": "اكتشف عالمنا",
+        "description": "غمر في مرافقنا وفرقنا. اكتشف كيف نعمل يوميًا لخدمة المهنيين الصحيين.",
+        "cta": "اتصل بنا",
+        "ctaLink": "#contact"
+      },
+      {
+        "media": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1920",
+        "mediaType": "image",
+        "title": "خدمة ما بعد البيع",
+        "subtitle": "دائمًا إلى جانبك",
+        "description": "يتدخل فريقنا من أكثر من 50 فنيًا معتمدًا في غضون 24 ساعة في جميع أنحاء الجزائر. صيانة وقائية وتصحيحية وتدريب مستمر.",
+        "cta": "خدماتنا",
+        "ctaLink": "#services"
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "type": "scroll",
+    "title": "اكتشف ساري سيستم",
+    "category": "عرض تقديمي",
+    "sections": [
+      {
+        "media": "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=1920",
+        "mediaType": "image",
+        "title": "التميز الطبي",
+        "subtitle": "منذ أكثر من 20 عامًا",
+        "description": "ساري سيستم هو الشريك الموثوق لأكثر من 500 مؤسسة صحية في الجزائر. خبرتنا تغطي جميع التخصصات الطبية.",
+        "cta": "اعرف المزيد",
+        "ctaLink": "#about"
+      },
+      {
+        "media": "https://www.youtube.com/embed/dQw4w9WgXcQ",
+        "mediaType": "youtube",
+        "title": "قصتنا في فيديو",
+        "subtitle": "مسار من التميز",
+        "description": "نظرة على 20 عامًا من الابتكار في خدمة الصحة. من بداياتنا المتواضعة إلى موقعنا كرائد حالي.",
+        "cta": "انضم إلينا",
+        "ctaLink": "#carrieres"
+      },
+      {
+        "media": "https://images.unsplash.com/photo-1551076805-e1869033e561?w=1920",
+        "mediaType": "image",
+        "title": "حلولنا",
+        "subtitle": "معدات متطورة",
+        "description": "مجموعة كاملة لتجهيز مؤسستك: التشخيص، التصوير، الجراحة، الطوارئ، طب الأطفال، أمراض القلب، المعلوماتية الطبية، المختبر وإعادة التأهيل.",
+        "cta": "اكتشف",
+        "ctaLink": "#solutions"
+      },
+      {
+        "media": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1920",
+        "mediaType": "image",
+        "title": "انضم إلينا",
+        "subtitle": "لنبني المستقبل معًا",
+        "description": "سواء كنت محترفًا صحيًا أو شريكًا أو مرشحًا، لدينا مكان لك. اتصل بنا لمناقشة مشاريعك.",
+        "cta": "اتصل بنا",
+        "ctaLink": "#contact"
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "type": "full",
+    "title": "الدليل الشامل: اختيار جهاز الموجات فوق الصوتية",
+    "subtitle": "الدليل النهائي للمهنيين الصحيين",
+    "category": "دليل",
+    "media": "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=1920",
+    "content": "<div class='max-w-4xl mx-auto'><div class='prose dark:prose-invert max-w-none'><p class='lead text-xl text-gray-600 dark:text-gray-400 mb-8'>أصبحت الموجات فوق الصوتية أداة لا غنى عنها في التشخيص الطبي الحديث. سيساعدك هذا الدليل الشامل على اتخاذ الخيار الصحيح لممارستك.</p><h2>🎯 معايير اختيار جهاز الموجات فوق الصوتية</h2><h3>1. نوع المجس</h3><p>يعتمد اختيار المجس مباشرة على التطبيق السريري:</p><ul><li><strong>مجس محدب (3-5 MHz)</strong> : مثالي للبطن والتوليد</li><li><strong>مجس خطي (7-12 MHz)</strong> : مثالي للهياكل السطحية</li><li><strong>مجس قطاعي (2-4 MHz)</strong> : أمثل لأمراض القلب</li><li><strong>مجس تجويفي</strong> : للفحوصات المتخصصة</li></ul><h3>2. دقة الصورة</h3><p>تتحدد جودة الصورة بعدة عوامل:</p><ol><li><strong>الدقة المكانية</strong> : القدرة على تمييز هيكلين قريبين</li><li><strong>الدقة الزمنية</strong> : سلاسة الصورة في الوقت الحقيقي</li><li><strong>دقة التباين</strong> : التمييز بين الأنسجة</li></ol><h3>3. الميزات المتقدمة</h3><div class='grid grid-cols-1 md:grid-cols-2 gap-4 my-6'><div class='p-4 bg-sari-blue/5 border-l-4 border-sari-blue rounded'><h4 class='font-bold mb-2'>🎨 دوبلر ملون</h4><p class='text-sm'>تصور تدفقات الدم في الوقت الحقيقي</p></div><div class='p-4 bg-sari-lime/10 border-l-4 border-sari-lime rounded'><h4 class='font-bold mb-2'>📊 3D/4D</h4><p class='text-sm'>إعادة بناء حجمية للتوليد</p></div><div class='p-4 bg-purple-50 dark:bg-purple-900/20 border-l-4 border-purple-500 rounded'><h4 class='font-bold mb-2'>🔬 المرونة</h4><p class='text-sm'>تقييم صلابة الأنسجة</p></div><div class='p-4 bg-orange-50 dark:bg-orange-900/20 border-l-4 border-orange-500 rounded'><h4 class='font-bold mb-2'>🤖 الذكاء الاصطناعي</h4><p class='text-sm'>قياسات تلقائية واكتشاف الأمراض</p></div></div><h2>💰 الميزانية والربحية</h2><p>يجب التفكير في الاستثمار في جهاز الموجات فوق الصوتية على المدى الطويل. إليك العناصر التي يجب مراعاتها:</p><ul><li><strong>تكلفة الاستحواذ</strong> : من 5000€ إلى 150000€ حسب النطاق</li><li><strong>الصيانة</strong> : 5-10% من سعر الشراء سنويًا</li><li><strong>التدريب</strong> : ضروري لتحسين الاستخدام</li><li><strong>التطور</strong> : إمكانية إضافة مجسات وبرامج</li></ul><h2>🏆 توصياتنا</h2><p>في ساري سيستم، نقدم ثلاثة نطاقات تناسب جميع الميزانيات:</p><table class='w-full my-6'><thead><tr class='bg-sari-blue text-white'><th class='p-3 text-right'>النطاق</th><th class='p-3 text-right'>الاستخدام</th><th class='p-3 text-right'>السعر</th></tr></thead><tbody><tr class='border-b'><td class='p-3'><strong>أساسي</strong></td><td class='p-3'>عيادة عامة</td><td class='p-3'>5000 - 15000€</td></tr><tr class='border-b bg-gray-50 dark:bg-gray-800'><td class='p-3'><strong>احترافي</strong></td><td class='p-3'>عيادة متخصصة</td><td class='p-3'>15000 - 50000€</td></tr><tr><td class='p-3'><strong>خبير</strong></td><td class='p-3'>المستشفيات الجامعية والمراكز المتخصصة</td><td class='p-3'>50000 - 150000€</td></tr></tbody></table><blockquote class='bg-sari-lime/10 border-l-4 border-sari-lime p-6 my-6'><p class='text-lg italic'>« أفضل جهاز موجات فوق صوتية ليس الأغلى، بل هو الذي يناسب تمامًا احتياجاتك السريرية. خبراؤنا هنا لإرشادك في هذا الاختيار الاستراتيجي. »</p><footer class='text-sm text-gray-600 mt-2'>— د. أحمد بن علي، المدير الطبي ساري سيستم</footer></blockquote><h2>📞 اتصل بنا</h2><p>فريق خبرائنا في خدمتك لعرض تقديمي مخصص وعرض سعر يتناسب مع احتياجاتك.</p><div class='flex gap-4 mt-6'><a href='#contact' class='btn-primary text-white px-6 py-3 font-semibold inline-flex items-center gap-2'>طلب عرض سعر <i data-lucide='arrow-left'></i></a><a href='#produits' class='border-2 border-sari-blue text-sari-blue px-6 py-3 font-semibold inline-flex items-center gap-2 hover:bg-sari-blue hover:text-white transition-colors'>عرض أجهزة الموجات فوق الصوتية</a></div></div></div>"
+  },
+  {
+    "id": 8,
+    "type": "full",
+    "title": "الذكاء الاصطناعي في الطب",
+    "subtitle": "كيف يحدث الذكاء الاصطناعي ثورة في التشخيص الطبي",
+    "category": "ابتكار",
+    "media": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1920",
+    "content": "<div class='max-w-4xl mx-auto'><div class='prose dark:prose-invert max-w-none'><p class='lead text-xl text-gray-600 dark:text-gray-400 mb-8'>يغير الذكاء الاصطناعي الطب الحديث بشكل جذري. من المساعدة في التشخيص إلى البحث عن علاجات جديدة، يفتح الذكاء الاصطناعي آفاقًا غير مسبوقة.</p><h2>🤖 الذكاء الاصطناعي في التشخيص الطبي</h2><p>تصل خوارزميات التعلم العميق الآن إلى أداء مماثل أو حتى متفوق على أداء الخبراء البشريين في بعض المجالات:</p><ul><li><strong>الأشعة</strong> : اكتشاف الأورام بدقة 95%</li><li><strong>طب العيون</strong> : تشخيص اعتلال الشبكية السكري</li><li><strong>الأمراض الجلدية</strong> : تحديد الآفات الجلدية</li><li><strong>علم الأمراض</strong> : تحليل تلقائي للخزعات</li></ul><h2>💊 الذكاء الاصطناعي واكتشاف الأدوية</h2><p>تقليديًا، يستغرق اكتشاف دواء جديد 10-15 سنة ويكلف أكثر من 2 مليار دولار. يقلل الذكاء الاصطناعي هذه المهل بشكل كبير:</p><ol><li><strong>تحليل البيانات</strong> : تحديد الأهداف العلاجية</li><li><strong>التصميم الجزيئي</strong> : توليد مرشحي الأدوية</li><li><strong>التجارب السريرية</strong> : تحسين البروتوكولات</li><li><strong>السلامة الدوائية</strong> : اكتشاف الآثار الجانبية</li></ol><h2>🏥 التطبيقات السريرية الملموسة</h2><div class='grid grid-cols-1 md:grid-cols-3 gap-4 my-6'><div class='p-4 bg-sari-blue/5 border-t-4 border-sari-blue rounded text-center'><div class='text-4xl mb-2'>🫀</div><h4 class='font-bold mb-2'>أمراض القلب</h4><p class='text-sm'>التنبؤ بالمخاطر القلبية الوعائية</p></div><div class='p-4 bg-sari-lime/10 border-t-4 border-sari-lime rounded text-center'><div class='text-4xl mb-2'>🧠</div><h4 class='font-bold mb-2'>الأعصاب</h4><p class='text-sm'>الاكتشاف المبكر لمرض الزهايمر</p></div><div class='p-4 bg-purple-50 dark:bg-purple-900/20 border-t-4 border-purple-500 rounded text-center'><div class='text-4xl mb-2'>🦴</div><h4 class='font-bold mb-2'>العظام</h4><p class='text-sm'>التخطيط الجراحي ثلاثي الأبعاد</p></div></div><h2>⚖️ التحديات الأخلاقية والتنظيمية</h2><p>يثير دمج الذكاء الاصطناعي في الطب أسئلة حاسمة:</p><ul><li><strong>المسؤولية</strong> : من المسؤول في حالة الخطأ؟</li><li><strong>الشفافية</strong> : كيف نشرح قرارات الذكاء الاصطناعي؟</li><li><strong>السرية</strong> : حماية البيانات الصحية</li><li><strong>التحيز</strong> : تمثيلية بيانات التدريب</li></ul><h2>🔮 مستقبل الذكاء الاصطناعي الطبي</h2><blockquote class='bg-sari-lime/10 border-l-4 border-sari-lime p-6 my-6'><p class='text-lg italic'>« لن يحل الذكاء الاصطناعي محل الأطباء، لكن الأطباء الذين يستخدمون الذكاء الاصطناعي سيحلون محل أولئك الذين لا يستخدمونه. »</p></blockquote><p>الاتجاهات التي يجب مراقبتها:</p><ul><li>🤖 <strong>الأطباء الافتراضيون</strong> : مساعدو الذكاء الاصطناعي للاستشارات</li><li>📱 <strong>الطب عن بعد المعزز</strong> : التشخيص عن بُعد</li><li>🧬 <strong>الطب الشخصي</strong> : علاجات مخصصة</li><li>🔬 <strong>البحث المتسارع</strong> : اكتشافات أسرع</li></ul><h2>🎓 التدريب والمرافقة</h2><p>تقدم ساري سيستم تدريبًا شاملاً على دمج الذكاء الاصطناعي في ممارستك الطبية. خبراؤنا يرافقونك من الألف إلى الياء.</p><div class='flex gap-4 mt-6'><a href='#contact' class='btn-primary text-white px-6 py-3 font-semibold inline-flex items-center gap-2'>اعرف المزيد <i data-lucide='arrow-left'></i></a></div></div></div>"
+  },
+  {
+    "id": 9,
+    "type": "gallery",
+    "title": "معداتنا الرائدة",
+    "subtitle": "كريم التقنيات الطبية",
+    "category": "المنتجات",
+    "media": [
+      "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=1200",
+      "https://images.unsplash.com/photo-1559757175-5700dde675bc?w=1200",
+      "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=1200",
+      "https://images.unsplash.com/photo-1551076805-e1869033e561?w=1200",
+      "https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=1200",
+      "https://images.unsplash.com/photo-1584982751601-97dcc096659c?w=1200"
+    ],
+    "content": "<p>اختيارنا لأفضل المعدات أداءً في السوق. تم اختبار كل منتج بدقة والموافقة عليه من قبل لجنة خبرائنا لضمان موثوقية مطلقة.</p>"
+  },
+  {
+    "id": 10,
+    "type": "slide",
+    "title": "شهادات عملائنا",
+    "subtitle": "يثقون بنا",
+    "category": "شهادات",
+    "slides": [
+      {
+        "media": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1920",
+        "mediaType": "image",
+        "title": "د. أحمد بن علي",
+        "subtitle": "جراح أسنان - عيادة العافية، وهران",
+        "description": "« خدمة استثنائية ومعدات عالية الجودة جدًا. رافقتنا فريق ساري من الألف إلى الياء، من الاختيار إلى التركيب. أوصي بشدة! »"
+      },
+      {
+        "media": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=1920",
+        "mediaType": "image",
+        "title": "د. فاطمة الزهراء",
+        "subtitle": "طبيبة قلب - المستشفى المركزي، الجزائر",
+        "description": "« جودة معدات أمراض القلب رائعة. الدعم التقني 24/7 ميزة حقيقية لقسم الطوارئ لدينا. »"
+      },
+      {
+        "media": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=1920",
+        "mediaType": "image",
+        "title": "د. محمد قاضي",
+        "subtitle": "مدير - العيادة الحديثة، قسنطينة",
+        "description": "« المعلوماتية الطبية التي تقدمها ساري غيرت إدارتنا. السجل الطبي متوافق مع جميع المعايير والواجهة بديهية. »"
+      },
+      {
+        "media": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=1920",
+        "mediaType": "image",
+        "title": "د. سارة بومدين",
+        "subtitle": "طبيبة أطفال - المستشفى الإقليمي، البليدة",
+        "description": "« معدات طب الأطفال متكيفة تمامًا مع احتياجات الأطفال. كان فريق ساري مستمعًا لخصوصياتنا. »"
+      }
+    ]
+  }
+]

@@ -1,0 +1,439 @@
+{
+  "notFound": "Catégorie introuvable",
+  "notFoundDesc": "Cette catégorie n'existe pas ou a été supprimée.",
+  "backToSolutions": "Retour aux solutions",
+  "breadcrumb": {
+    "home": "Accueil",
+    "solutions": "Solutions"
+  },
+  "products": {
+    "subtitle": "Notre sélection",
+    "title": "Nos Équipements",
+    "viewAll": "Voir tout"
+  },
+  "features": {
+    "subtitle": "Nos avantages",
+    "title": "Pourquoi choisir nos solutions ?"
+  },
+  "faq": {
+    "title": "Questions fréquentes"
+  },
+  "cta": {
+    "title": "Prêt à équiper votre établissement ?",
+    "description": "Contactez-nous pour une étude personnalisée et un devis gratuit",
+    "primary": "Demander un devis",
+    "secondary": "Voir les produits"
+  },
+  "related": {
+    "title": "Autres catégories"
+  },
+  "categories": {
+    "diagnostic": {
+      "title": "Diagnostic & Imagerie",
+      "desc": "Échographes, tensiomètres, stéthoscopes et équipements de diagnostic",
+      "icon": "stethoscope",
+      "image": "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=1920",
+      "productIds": [
+        1,
+        4,
+        5
+      ],
+      "features": [
+        {
+          "icon": "scan",
+          "text": "Imagerie haute résolution 4D"
+        },
+        {
+          "icon": "wifi",
+          "text": "Connectivité WiFi et Bluetooth"
+        },
+        {
+          "icon": "battery",
+          "text": "Autonomie longue durée"
+        },
+        {
+          "icon": "shield-check",
+          "text": "Certification CE et ISO 13485"
+        },
+        {
+          "icon": "monitor",
+          "text": "Écrans tactiles HD"
+        },
+        {
+          "icon": "truck",
+          "text": "Livraison et installation incluses"
+        }
+      ],
+      "faq": [
+        {
+          "q": "Quels types d'échographes proposez-vous ?",
+          "a": "Nous proposons des échographes portables et fixes, avec différentes configurations de sondes. Tous nos appareils sont certifiés CE et conformes ISO 13485."
+        },
+        {
+          "q": "Les tensiomètres sont-ils certifiés médicaux ?",
+          "a": "Oui, tous nos tensiomètres sont des dispositifs médicaux de classe IIa, certifiés CE avec validation clinique selon le protocole ESH."
+        },
+        {
+          "q": "Proposez-vous la formation à l'utilisation ?",
+          "a": "Oui, une session de formation de base est incluse avec chaque achat. Des formations avancées sont disponibles en option."
+        }
+      ]
+    },
+    "cardiology": {
+      "title": "Cardiologie",
+      "desc": "ECG, défibrillateurs, moniteurs cardiaques et holters",
+      "icon": "heart-pulse",
+      "image": "https://images.unsplash.com/photo-1559757175-5700dde675bc?w=1920",
+      "productIds": [
+        7
+      ],
+      "features": [
+        {
+          "icon": "activity",
+          "text": "ECG 3/5/12 dérivations"
+        },
+        {
+          "icon": "zap",
+          "text": "Défibrillateurs DSA et DAE"
+        },
+        {
+          "icon": "monitor",
+          "text": "Moniteurs cardiaques temps réel"
+        },
+        {
+          "icon": "clock",
+          "text": "Holters ECG 24/48/72h"
+        },
+        {
+          "icon": "shield-check",
+          "text": "Conformité CE médical"
+        },
+        {
+          "icon": "headphones",
+          "text": "Support technique 24/7"
+        }
+      ],
+      "faq": [
+        {
+          "q": "Vos ECG sont-ils 12 dérivations ?",
+          "a": "Oui, nous proposons des ECG 3, 6 et 12 dérivations selon vos besoins. Tous nos ECG disposent d'un écran tactile et d'une imprimante thermique intégrée."
+        },
+        {
+          "q": "Les défibrillateurs sont-ils faciles à utiliser ?",
+          "a": "Oui, tous nos DSA sont conçus pour une utilisation simple avec guide vocal pas à pas et analyse automatique du rythme en moins de 10 secondes."
+        }
+      ]
+    },
+    "imagerie": {
+      "title": "Imagerie Médicale",
+      "desc": "Scanners CT, IRM, radiologie numérique et solutions PACS",
+      "icon": "scan",
+      "image": "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=1920",
+      "productIds": [],
+      "features": [
+        {
+          "icon": "scan",
+          "text": "Scanners CT 16 à 128 coupes"
+        },
+        {
+          "icon": "magnet",
+          "text": "IRM 1.5T et 3T"
+        },
+        {
+          "icon": "image",
+          "text": "Radiologie numérique DR/CR"
+        },
+        {
+          "icon": "monitor",
+          "text": "Solutions PACS/RIS"
+        },
+        {
+          "icon": "shield-check",
+          "text": "Conformité HDS"
+        },
+        {
+          "icon": "wrench",
+          "text": "Maintenance préventive"
+        }
+      ],
+      "faq": [
+        {
+          "q": "Proposez-vous des scanners CT ?",
+          "a": "Oui, nous proposons une gamme complète de scanners CT, de 16 à 128 coupes, avec installation et formation incluses."
+        },
+        {
+          "q": "Les IRM sont-ils compatibles avec tous les patients ?",
+          "a": "Oui, nos IRM sont adaptés à tous les profils de patients, y compris les enfants et les personnes claustrophobes (IRM ouverte disponible)."
+        }
+      ]
+    },
+    "chirurgie": {
+      "title": "Chirurgie",
+      "desc": "Instruments chirurgicaux, autoclaves, lampes scialytiques",
+      "icon": "syringe",
+      "image": "https://images.unsplash.com/photo-1551076805-e1869033e561?w=1920",
+      "productIds": [
+        3,
+        9
+      ],
+      "features": [
+        {
+          "icon": "scissors",
+          "text": "Instruments chirurgicaux inox"
+        },
+        {
+          "icon": "flame",
+          "text": "Autoclaves classe B"
+        },
+        {
+          "icon": "lightbulb",
+          "text": "Lampes scialytiques LED"
+        },
+        {
+          "icon": "bed",
+          "text": "Tables opératoires électriques"
+        },
+        {
+          "icon": "shield-check",
+          "text": "Stérilisation certifiée"
+        },
+        {
+          "icon": "wrench",
+          "text": "Maintenance et SAV"
+        }
+      ],
+      "faq": [
+        {
+          "q": "Vos autoclaves sont-ils classe B ?",
+          "a": "Oui, tous nos autoclaves sont classe B, conformes aux normes européennes EN 13060, avec cycle de séchage sous vide et traçabilité complète."
+        },
+        {
+          "q": "Les lampes scialytiques sont-elles LED ?",
+          "a": "Oui, toutes nos lampes scialytiques sont LED avec une durée de vie de 50 000 heures, un IRC > 95 et une intensité jusqu'à 150 000 Lux."
+        }
+      ]
+    },
+    "pediatrie": {
+      "title": "Pédiatrie",
+      "desc": "Couveuses néonatales, balances pédiatriques, photothérapie",
+      "icon": "baby",
+      "image": "https://images.unsplash.com/photo-1583947215259-38e31be8751f?w=1920",
+      "productIds": [
+        12
+      ],
+      "features": [
+        {
+          "icon": "baby",
+          "text": "Couveuses néonatales"
+        },
+        {
+          "icon": "scale",
+          "text": "Balances pédiatriques 5g"
+        },
+        {
+          "icon": "sun",
+          "text": "Lampes de photothérapie"
+        },
+        {
+          "icon": "thermometer",
+          "text": "Thermomètres infrarouges"
+        },
+        {
+          "icon": "heart-pulse",
+          "text": "Moniteurs néonatals"
+        },
+        {
+          "icon": "shield-check",
+          "text": "Matériel adapté enfants"
+        }
+      ],
+      "faq": [
+        {
+          "q": "Les couveuses sont-elles adaptées aux prématurés ?",
+          "a": "Oui, nos couveuses sont adaptées aux prématurés dès 28 semaines de gestation, avec contrôle précis de la température, humidité et oxygène."
+        },
+        {
+          "q": "Les balances sont-elles précises ?",
+          "a": "Oui, nos balances pédiatriques ont une précision de 5g avec fonction maintien (Hold) pour les bébés agités et fonction tare pour les couches."
+        }
+      ]
+    },
+    "urgence": {
+      "title": "Urgence & Réanimation",
+      "desc": "Défibrillateurs, chariots d'urgence, moniteurs multiparamètres",
+      "icon": "activity",
+      "image": "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=1920",
+      "productIds": [
+        7,
+        15
+      ],
+      "features": [
+        {
+          "icon": "zap",
+          "text": "Défibrillateurs DSA/DAE"
+        },
+        {
+          "icon": "siren",
+          "text": "Chariots d'urgence complets"
+        },
+        {
+          "icon": "monitor",
+          "text": "Moniteurs multiparamètres"
+        },
+        {
+          "icon": "wind",
+          "text": "Aspirateurs de sécrétions"
+        },
+        {
+          "icon": "syringe",
+          "text": "Pousse-seringues"
+        },
+        {
+          "icon": "clock",
+          "text": "Support 24/7 garanti"
+        }
+      ],
+      "faq": [
+        {
+          "q": "Les défibrillateurs sont-ils automatiques ?",
+          "a": "Oui, nous proposons des DSA (semi-automatiques) et DAE (entièrement automatiques) avec guide vocal et analyse du rythme en moins de 10 secondes."
+        },
+        {
+          "q": "Les chariots d'urgence sont-ils complets ?",
+          "a": "Oui, nos chariots sont livrés avec tout le matériel nécessaire : défibrillateur, moniteur, aspirateur, oxygène et médicaments d'urgence."
+        }
+      ]
+    },
+    "informatique": {
+      "title": "Informatique Médicale",
+      "desc": "DMP, télémédecine, PACS/RIS, cybersécurité HDS",
+      "icon": "monitor",
+      "image": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1920",
+      "productIds": [],
+      "features": [
+        {
+          "icon": "file-text",
+          "text": "Dossier Médical Partagé (DMP)"
+        },
+        {
+          "icon": "video",
+          "text": "Télémédecine et téléconsultation"
+        },
+        {
+          "icon": "image",
+          "text": "Solutions PACS/RIS"
+        },
+        {
+          "icon": "lock",
+          "text": "Cybersécurité HDS"
+        },
+        {
+          "icon": "database",
+          "text": "Hébergement données santé"
+        },
+        {
+          "icon": "smartphone",
+          "text": "Applications mobiles"
+        }
+      ],
+      "faq": [
+        {
+          "q": "Vos solutions DMP sont-elles conformes HDS ?",
+          "a": "Oui, toutes nos solutions DMP sont certifiées HDS (Hébergeur de Données de Santé) et conformes au RGPD et à la réglementation algérienne."
+        },
+        {
+          "q": "Proposez-vous des solutions de télémédecine ?",
+          "a": "Oui, nous proposons des solutions complètes de téléconsultation, téléexpertise et télésurveillance avec visioconférence HD sécurisée."
+        }
+      ]
+    },
+    "laboratoire": {
+      "title": "Laboratoire",
+      "desc": "Analyseurs d'hématologie, biochimie, microscopes, centrifugeuses",
+      "icon": "flask-conical",
+      "image": "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=1920",
+      "productIds": [],
+      "features": [
+        {
+          "icon": "flask-conical",
+          "text": "Analyseurs d'hématologie"
+        },
+        {
+          "icon": "test-tube",
+          "text": "Analyseurs de biochimie"
+        },
+        {
+          "icon": "microscope",
+          "text": "Microscopes de laboratoire"
+        },
+        {
+          "icon": "rotate-3d",
+          "text": "Centrifugeuses"
+        },
+        {
+          "icon": "thermometer",
+          "text": "Étuves et incubateurs"
+        },
+        {
+          "icon": "droplets",
+          "text": "Réactifs et consommables"
+        }
+      ],
+      "faq": [
+        {
+          "q": "Quels types d'analyseurs proposez-vous ?",
+          "a": "Nous proposons des analyseurs d'hématologie, biochimie, immunologie et coagulation, de l'entrée de gamme au haut débit."
+        },
+        {
+          "q": "Les réactifs sont-ils inclus ?",
+          "a": "Les réactifs de démarrage sont inclus avec chaque analyseur. Nous proposons ensuite des contrats de fourniture à tarifs préférentiels."
+        }
+      ]
+    },
+    "reeducation": {
+      "title": "Rééducation",
+      "desc": "Tables de kinésithérapie, électrothérapie, ultrasons thérapeutiques",
+      "icon": "accessibility",
+      "image": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1920",
+      "productIds": [
+        14
+      ],
+      "features": [
+        {
+          "icon": "accessibility",
+          "text": "Tables de kinésithérapie"
+        },
+        {
+          "icon": "zap",
+          "text": "Appareils d'électrothérapie"
+        },
+        {
+          "icon": "waves",
+          "text": "Ultrasons thérapeutiques"
+        },
+        {
+          "icon": "dumbbell",
+          "text": "Équipements de musculation"
+        },
+        {
+          "icon": "footprints",
+          "text": "Plateformes de marche"
+        },
+        {
+          "icon": "shield-check",
+          "text": "Matériel certifié CE"
+        }
+      ],
+      "faq": [
+        {
+          "q": "Proposez-vous du matériel de rééducation neurologique ?",
+          "a": "Oui, nous proposons des plateformes de rééducation neurologique, des exosquelettes et des systèmes de réalité virtuelle."
+        },
+        {
+          "q": "Les appareils d'électrothérapie sont-ils multifonctions ?",
+          "a": "Oui, nos appareils combinent TENS, EMS, ultrasons et laser thérapeutique dans un seul dispositif compact."
+        }
+      ]
+    }
+  }
+}

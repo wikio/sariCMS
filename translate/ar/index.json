@@ -1,0 +1,131 @@
+{
+  "meta": {
+    "name": "العربية",
+    "code": "ar",
+    "flag": "🇸🇦",
+    "lastUpdated": "2026-07-30"
+  },
+  "structure": {
+    "admin": {
+      "label": "لوحة تحكم المسؤول",
+      "icon": "shield",
+      "path": "admin.json"
+    },
+    "common": {
+      "label": "نصوص شائعة",
+      "icon": "globe",
+      "path": "common.json"
+    },
+    "components": {
+      "label": "المكونات",
+      "icon": "layout",
+      "children": {
+        "cards": {
+          "label": "البطاقات",
+          "icon": "credit-card",
+          "files": [
+            "EventCard",
+            "NewsCard",
+            "PartnerCard",
+            "ProductCard",
+            "ServiceCard",
+            "TestimonialCard"
+          ]
+        },
+        "layout": {
+          "label": "التخطيط",
+          "icon": "layout",
+          "files": [
+            "FloatingCartButton",
+            "Footer",
+            "header",
+            "LoadingSpinner",
+            "NotFound",
+            "SearchHeader"
+          ]
+        },
+        "sections": {
+          "label": "الأقسام",
+          "icon": "layers",
+          "files": [
+            "AlternatingSections",
+            "CTASection",
+            "FeaturedProducts",
+            "HeroSlider",
+            "LatestEvents",
+            "MarqueePartners",
+            "NavigationGrid",
+            "NewsletterSection",
+            "ParallaxSection",
+            "PartnersSection",
+            "StatsSection",
+            "TestimonialsSlider"
+          ]
+        },
+        "shared": {
+          "label": "مشترك",
+          "icon": "share-2",
+          "files": [
+            "Alert",
+            "Avatar",
+            "Badge",
+            "Divider",
+            "IconButton",
+            "ImageWithFallback",
+            "LanguageSwitcher",
+            "Rating",
+            "SocialLinks",
+            "Spinner",
+            "Tag"
+          ]
+        },
+        "ui": {
+          "label": "واجهة المستخدم",
+          "icon": "mouse-pointer",
+          "files": [
+            "Breadcrumb",
+            "CTAButton",
+            "EmptyState",
+            "FAQ",
+            "LoadingCard",
+            "Modal",
+            "Pagination",
+            "ProductFilters",
+            "SearchBar",
+            "SectionTitle"
+          ]
+        }
+      }
+    },
+    "pages": {
+      "label": "الصفحات",
+      "icon": "file-text",
+      "files": [
+        "about",
+        "careers",
+        "cart",
+        "contact",
+        "dashboard",
+        "eventDetail",
+        "events",
+        "genericContent",
+        "jobs",
+        "legal",
+        "login",
+        "news",
+        "newsDetail",
+        "payment",
+        "productDetail",
+        "products",
+        "register",
+        "search",
+        "serviceDetail",
+        "services",
+        "solutionCategory",
+        "solutionDetail",
+        "solutions",
+        "verification"
+      ]
+    }
+  }
+}

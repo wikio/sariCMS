@@ -1,0 +1,299 @@
+{
+  "hero": {
+    "subtitle": "Our Solutions",
+    "title": "Equipment adapted to every need",
+    "description": "Discover our 9 categories of medical solutions, from diagnostic equipment to medical informatics"
+  },
+  "breadcrumb": {
+    "home": "Accueil",
+    "solutions": "Solutions"
+  },
+  "intro": {
+    "subtitle": "Our Expertise",
+    "title": "Complete support for healthcare professionals",
+    "description": "For over 20 years, we have been supporting healthcare facilities in choosing and installing their medical equipment.",
+    "stats": {
+      "categories": "9",
+      "categoriesLabel": "Solution categories",
+      "products": "500+",
+      "productsLabel": "Listed products",
+      "clients": "500+",
+      "clientsLabel": "Equipped facilities",
+      "support": "24/7",
+      "supportLabel": "Technical support"
+    }
+  },
+  "categories": {
+    "subtitle": "Our Categories",
+    "title": "Explore our solutions by domain",
+    "description": "Each category brings together the best equipment to meet the specific needs of your practice",
+    "items": {
+      "diagnostic": {
+        "icon": "stethoscope",
+        "color": "sari-blue",
+        "title": "Diagnostic",
+        "desc": "Ultrasound, blood pressure monitors, microscopes and auscultation tools",
+        "cta": "Discover",
+        "link": "#solutions/diagnostic",
+        "features": [
+          "Portable ultrasound",
+          "Digital blood pressure",
+          "Binocular microscopes",
+          "Stethoscopes"
+        ]
+      },
+      "cardiology": {
+        "icon": "heart-pulse",
+        "color": "red-500",
+        "title": "Cardiology",
+        "desc": "ECG, defibrillators, cardiac monitors and holters",
+        "cta": "Discover",
+        "link": "#solutions/cardiology",
+        "features": [
+          "12-lead ECG",
+          "AED defibrillators",
+          "Cardiac monitors",
+          "Holter ECG"
+        ]
+      },
+      "imaging": {
+        "icon": "scan",
+        "color": "purple-500",
+        "title": "Imaging",
+        "desc": "CT scanners, MRI, digital radiology and ultrasound",
+        "cta": "Discover",
+        "link": "#solutions/imagerie",
+        "features": [
+          "CT scanners",
+          "High-resolution MRI",
+          "Digital radiology",
+          "Fixed ultrasound"
+        ]
+      },
+      "surgery": {
+        "icon": "syringe",
+        "color": "green-500",
+        "title": "Surgery",
+        "desc": "Instruments, sterilizers, surgical lights and tables",
+        "cta": "Discover",
+        "link": "#solutions/chirurgie",
+        "features": [
+          "Surgical instruments",
+          "Class B autoclaves",
+          "LED surgical lights",
+          "Operating tables"
+        ]
+      },
+      "pediatrics": {
+        "icon": "baby",
+        "color": "pink-500",
+        "title": "Pediatrics",
+        "desc": "Incubators, scales, phototherapy and adapted equipment",
+        "cta": "Discover",
+        "link": "#solutions/pediatrie",
+        "features": [
+          "Neonatal incubators",
+          "Pediatric scales",
+          "Phototherapy lights",
+          "Adapted equipment"
+        ]
+      },
+      "emergency": {
+        "icon": "activity",
+        "color": "orange-500",
+        "title": "Emergency",
+        "desc": "Defibrillators, emergency carts, monitors and aspirators",
+        "cta": "Discover",
+        "link": "#solutions/urgence",
+        "features": [
+          "AED defibrillators",
+          "Emergency carts",
+          "Multiparameter monitors",
+          "Portable aspirators"
+        ]
+      },
+      "informatics": {
+        "icon": "monitor",
+        "color": "indigo-500",
+        "title": "Medical Informatics",
+        "desc": "EMR, professional software, telemedicine, PACS and cybersecurity",
+        "cta": "Discover",
+        "link": "#solutions/informatique",
+        "features": [
+          "Shared Medical Record",
+          "Professional software",
+          "Telemedicine",
+          "PACS solutions"
+        ]
+      },
+      "laboratory": {
+        "icon": "flask-conical",
+        "color": "teal-500",
+        "title": "Laboratory",
+        "desc": "Analyzers, centrifuges, reagents and diagnostic equipment",
+        "cta": "Discover",
+        "link": "#solutions/laboratoire",
+        "features": [
+          "Automatic analyzers",
+          "Centrifuges",
+          "Diagnostic reagents",
+          "Laboratory microscopes"
+        ]
+      },
+      "rehabilitation": {
+        "icon": "accessibility",
+        "color": "cyan-500",
+        "title": "Rehabilitation",
+        "desc": "Physiotherapy, electrotherapy, adapted equipment and mobility",
+        "cta": "Discover",
+        "link": "#solutions/reeducation",
+        "features": [
+          "Physiotherapy tables",
+          "Electrotherapy",
+          "Wheelchairs",
+          "Mobility aids"
+        ]
+      }
+    }
+  },
+  "process": {
+    "subtitle": "Our Method",
+    "title": "Support in 5 steps",
+    "description": "From analyzing your needs to maintaining your equipment, we support you at every step",
+    "steps": [
+      {
+        "number": "01",
+        "icon": "search",
+        "title": "Needs Analysis",
+        "desc": "Personalized study of your facility and technical constraints"
+      },
+      {
+        "number": "02",
+        "icon": "clipboard-list",
+        "title": "Custom Proposal",
+        "desc": "Selection of adapted equipment with detailed quote"
+      },
+      {
+        "number": "03",
+        "icon": "truck",
+        "title": "Delivery & Installation",
+        "desc": "Secure delivery and installation by certified technicians"
+      },
+      {
+        "number": "04",
+        "icon": "graduation-cap",
+        "title": "Team Training",
+        "desc": "Complete training for your teams on new equipment"
+      },
+      {
+        "number": "05",
+        "icon": "wrench",
+        "title": "Maintenance & Support",
+        "desc": "Preventive maintenance and 24/7 technical support"
+      }
+    ]
+  },
+  "featured": {
+    "subtitle": "Our Featured Solutions",
+    "title": "Equipment that makes the difference",
+    "description": "Discover our selection of the most efficient equipment on the market",
+    "items": [
+      {
+        "key": "diagnostic",
+        "image": "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=1200"
+      },
+      {
+        "key": "cardiology",
+        "image": "https://images.unsplash.com/photo-1559757175-5700dde675bc?w=1200"
+      },
+      {
+        "key": "imaging",
+        "image": "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=1200"
+      },
+      {
+        "key": "informatics",
+        "image": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1200"
+      }
+    ]
+  },
+  "alternating": {
+    "diagnostic": {
+      "subtitle": "Diagnostic",
+      "title": "Precision at the service of diagnosis",
+      "desc": "Our diagnostic equipment allows early and precise detection of pathologies.",
+      "features": [
+        "High-resolution imaging",
+        "Optimized portability",
+        "Bluetooth/WiFi connectivity",
+        "CE and ISO compliance"
+      ],
+      "cta": "Explore diagnostic",
+      "link": "#solutions/diagnostic",
+      "image": "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=1200"
+    },
+    "informatics": {
+      "subtitle": "Medical Informatics",
+      "title": "Digitalization at the service of health",
+      "desc": "Modernize your practice with our medical informatics solutions: EMR, telemedicine, PACS and HDS-compliant cybersecurity.",
+      "features": [
+        "HDS-compliant EMR",
+        "Secure telemedicine",
+        "PACS solutions",
+        "Advanced cybersecurity"
+      ],
+      "cta": "Explore medical informatics",
+      "link": "#solutions/informatique",
+      "image": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1200"
+    },
+    "emergency": {
+      "subtitle": "Emergency",
+      "title": "Equipment that saves lives",
+      "desc": "In emergency situations, every second counts. Our defibrillators, emergency carts and multiparameter monitors guarantee rapid and effective intervention.",
+      "features": [
+        "AED defibrillators",
+        "Complete emergency carts",
+        "Real-time monitors",
+        "24/7 support"
+      ],
+      "cta": "Explore emergencies",
+      "link": "#solutions/urgence",
+      "image": "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=1200"
+    }
+  },
+  "testimonials": {
+    "subtitle": "Testimonials",
+    "title": "They trust us",
+    "description": "Discover our clients' feedback"
+  },
+  "cta": {
+    "title": "Need a personalized solution?",
+    "description": "Our team of experts is at your disposal to analyze your needs and propose the most adapted solution.",
+    "primary": "Request a quote",
+    "secondary": "Contact us"
+  },
+  "faq": {
+    "title": "Frequently Asked Questions",
+    "items": [
+      {
+        "q": "What are the delivery times?",
+        "a": "Times vary by equipment type: 24-48h for consumables, 1-2 weeks for standard equipment, 4-8 weeks for heavy equipment (MRI, CT scanners)."
+      },
+      {
+        "q": "Do you offer financing solutions?",
+        "a": "Yes, we offer several options: rental, leasing, installment payments, and support for regional grant applications."
+      },
+      {
+        "q": "Is training included?",
+        "a": "Yes, a basic training session is included with any equipment purchase. Advanced training is available as an option."
+      },
+      {
+        "q": "What certifications do your equipment have?",
+        "a": "All our equipment is CE certified and ISO 13485 compliant. Some also have FDA or HDS certifications."
+      },
+      {
+        "q": "Do you offer maintenance services?",
+        "a": "Yes, we offer preventive and corrective maintenance contracts with guaranteed intervention within 24h nationwide."
+      }
+    ]
+  }
+}

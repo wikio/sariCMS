@@ -1,0 +1,200 @@
+[
+  {
+    "id": 1,
+    "type": "simple",
+    "title": "Our Quality Commitment",
+    "category": "Company",
+    "media": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1920",
+    "content": "<h2>Our Quality Commitment</h2><p>At SARI Système, quality is not an option, it's our DNA. For over 20 years, we have been committed to providing medical equipment that meets the strictest international standards.</p><h3>Our Certifications</h3><ul><li><strong>ISO 13485</strong> : Quality management system for medical devices</li><li><strong>CE Medical</strong> : European compliance for all our equipment</li><li><strong>FDA Approved</strong> : American certification for premium products</li><li><strong>HDS</strong> : Certified Health Data Host</li></ul><h3>Our Quality Process</h3><p>Each piece of equipment undergoes rigorous control in 5 steps:</p><ol><li>Selection of certified suppliers</li><li>Testing in accredited laboratory</li><li>Quality control upon receipt</li><li>Installation by certified technicians</li><li>Post-installation monitoring for 24 months</li></ol><blockquote>\"Quality is the bridge between promise and customer satisfaction.\" — SARI Système Management</blockquote>"
+  },
+  {
+    "id": 2,
+    "type": "about",
+    "title": "About SARI Système",
+    "category": "Presentation",
+    "media": "https://images.unsplash.com/photo-1519494026892-88bb237b200d?w=1920",
+    "content": "<h2>Our Story</h2><p>Founded in 2003 in Algiers, SARI Système was born from the vision of providing Algerian healthcare professionals with cutting-edge, accessible and reliable medical equipment.</p><h3>Our Values</h3><p>Excellence, Proximity, Innovation and Reliability are the pillars of our company. We believe that technology must be at the service of humans.</p>",
+    "features": [
+      "Team of 50+ certified technicians",
+      "Partnerships with 30+ international brands",
+      "Accredited training center",
+      "Internal testing laboratory",
+      "Responsive after-sales service 24/7"
+    ]
+  },
+  {
+    "id": 3,
+    "type": "gallery",
+    "title": "Our Achievements in Pictures",
+    "category": "Gallery",
+    "media": [
+      "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=1200",
+      "https://images.unsplash.com/photo-1551076805-e1869033e561?w=1200",
+      "https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=1200",
+      "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1200",
+      "https://images.unsplash.com/photo-1519494026892-88bb237b200d?w=1200",
+      "https://images.unsplash.com/photo-1584982751601-97dcc096659c?w=1200"
+    ],
+    "content": "<p>Discover some of our achievements across Algeria. Each installation represents a partnership of trust with a healthcare facility, from small clinics to large hospital centers.</p>"
+  },
+  {
+    "id": 4,
+    "type": "flyer",
+    "title": "Summer 2024 Promotion",
+    "subtitle": "Up to 30% off all equipment",
+    "category": "Promotion",
+    "media": "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1920",
+    "content": "<h2>🔥 Summer 2024 Special Offer</h2><p class='text-2xl font-bold text-sari-blue'>Up to 30% off all equipment</p><p>Take advantage of our exceptional offer valid from <strong>June 1st to August 31st, 2024</strong>. Professional quality medical equipment at reduced prices.</p><h3>Categories concerned:</h3><ul><li>✅ Portable ultrasound machines</li><li>✅ Digital blood pressure monitors</li><li>✅ Defibrillators</li><li>✅ Sterilizers</li><li>✅ LED surgical lights</li></ul><h3>Exclusive benefits:</h3><ul><li>🎁 Free delivery nationwide</li><li>🔧 Free installation by our technicians</li><li>📚 Training included for your teams</li><li>🛡️ Extended warranty to 36 months</li><li>💳 Payment facilities in 12 installments</li></ul><blockquote class='bg-sari-lime/10 border-l-4 border-sari-lime p-4'>\"This offer is limited in time. Contact us now to benefit from our preferential rates.\"</blockquote>",
+    "pdf": "data/promotions/ete-2024.pdf"
+  },
+  {
+    "id": 5,
+    "type": "slide",
+    "title": "SARI Système in Motion",
+    "category": "Presentation",
+    "slides": [
+      {
+        "media": "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=1920",
+        "mediaType": "image",
+        "title": "Innovation",
+        "subtitle": "Latest generation equipment",
+        "description": "We distribute the best international brands: GE Healthcare, Philips, Siemens, Mindray and many others. Each piece of equipment is selected for its reliability and performance.",
+        "cta": "Discover our solutions",
+        "ctaLink": "#solutions"
+      },
+      {
+        "media": "https://www.youtube.com/embed/dQw4w9WgXcQ",
+        "mediaType": "youtube",
+        "title": "Our Presentation Video",
+        "subtitle": "Discover our universe",
+        "description": "An immersion in our facilities and our teams. Discover how we work every day to serve healthcare professionals.",
+        "cta": "Contact us",
+        "ctaLink": "#contact"
+      },
+      {
+        "media": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1920",
+        "mediaType": "image",
+        "title": "After-Sales Service",
+        "subtitle": "Always by your side",
+        "description": "Our team of 50+ certified technicians intervenes within 24 hours throughout Algeria. Preventive, corrective maintenance and continuous training.",
+        "cta": "Our services",
+        "ctaLink": "#services"
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "type": "scroll",
+    "title": "Discover SARI Système",
+    "category": "Presentation",
+    "sections": [
+      {
+        "media": "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=1920",
+        "mediaType": "image",
+        "title": "Medical Excellence",
+        "subtitle": "For over 20 years",
+        "description": "SARI Système is the trusted partner of over 500 healthcare facilities in Algeria. Our expertise covers all medical specialties.",
+        "cta": "Learn more",
+        "ctaLink": "#about"
+      },
+      {
+        "media": "https://www.youtube.com/embed/dQw4w9WgXcQ",
+        "mediaType": "youtube",
+        "title": "Our Story in Video",
+        "subtitle": "A journey of excellence",
+        "description": "Looking back on 20 years of innovation in the service of health. From our modest beginnings to our current position as a leader.",
+        "cta": "Join us",
+        "ctaLink": "#carrieres"
+      },
+      {
+        "media": "https://images.unsplash.com/photo-1551076805-e1869033e561?w=1920",
+        "mediaType": "image",
+        "title": "Our Solutions",
+        "subtitle": "Cutting-edge equipment",
+        "description": "A complete range to equip your facility: diagnostic, imaging, surgery, emergency, pediatrics, cardiology, medical informatics, laboratory and rehabilitation.",
+        "cta": "Discover",
+        "ctaLink": "#solutions"
+      },
+      {
+        "media": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1920",
+        "mediaType": "image",
+        "title": "Join Us",
+        "subtitle": "Let's build the future together",
+        "description": "Whether you are a healthcare professional, partner or candidate, we have a place for you. Contact us to discuss your projects.",
+        "cta": "Contact us",
+        "ctaLink": "#contact"
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "type": "full",
+    "title": "Complete Guide: Choosing Your Ultrasound Machine",
+    "subtitle": "The ultimate guide for healthcare professionals",
+    "category": "Guide",
+    "media": "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=1920",
+    "content": "<div class='max-w-4xl mx-auto'><div class='prose dark:prose-invert max-w-none'><p class='lead text-xl text-gray-600 dark:text-gray-400 mb-8'>Ultrasound has become an indispensable tool in modern medical diagnosis. This complete guide will help you make the right choice for your practice.</p><h2>🎯 Ultrasound Machine Selection Criteria</h2><h3>1. The Probe Type</h3><p>The choice of probe depends directly on the clinical application:</p><ul><li><strong>Convex probe (3-5 MHz)</strong> : Ideal for abdomen and obstetrics</li><li><strong>Linear probe (7-12 MHz)</strong> : Perfect for superficial structures</li><li><strong>Sector probe (2-4 MHz)</strong> : Optimal for cardiology</li><li><strong>Endocavitary probe</strong> : For specialized examinations</li></ul><h3>2. Image Resolution</h3><p>Image quality is determined by several factors:</p><ol><li><strong>Spatial resolution</strong> : Ability to distinguish two close structures</li><li><strong>Temporal resolution</strong> : Smoothness of real-time image</li><li><strong>Contrast resolution</strong> : Differentiation of tissues</li></ol><h3>3. Advanced Features</h3><div class='grid grid-cols-1 md:grid-cols-2 gap-4 my-6'><div class='p-4 bg-sari-blue/5 border-l-4 border-sari-blue rounded'><h4 class='font-bold mb-2'>🎨 Color Doppler</h4><p class='text-sm'>Real-time visualization of blood flows</p></div><div class='p-4 bg-sari-lime/10 border-l-4 border-sari-lime rounded'><h4 class='font-bold mb-2'>📊 3D/4D</h4><p class='text-sm'>Volumetric reconstruction for obstetrics</p></div><div class='p-4 bg-purple-50 dark:bg-purple-900/20 border-l-4 border-purple-500 rounded'><h4 class='font-bold mb-2'>🔬 Elastography</h4><p class='text-sm'>Tissue hardness evaluation</p></div><div class='p-4 bg-orange-50 dark:bg-orange-900/20 border-l-4 border-orange-500 rounded'><h4 class='font-bold mb-2'>🤖 AI Assisted</h4><p class='text-sm'>Automatic measurements and pathology detection</p></div></div><h2>💰 Budget and Profitability</h2><p>The investment in an ultrasound machine must be considered in the long term. Here are the elements to consider:</p><ul><li><strong>Acquisition cost</strong> : From €5,000 to €150,000 depending on the range</li><li><strong>Maintenance</strong> : 5-10% of the purchase price per year</li><li><strong>Training</strong> : Essential to optimize use</li><li><strong>Evolution</strong> : Possibility to add probes and software</li></ul><h2>🏆 Our Recommendations</h2><p>At SARI Système, we offer three ranges adapted to all budgets:</p><table class='w-full my-6'><thead><tr class='bg-sari-blue text-white'><th class='p-3 text-left'>Range</th><th class='p-3 text-left'>Usage</th><th class='p-3 text-left'>Price</th></tr></thead><tbody><tr class='border-b'><td class='p-3'><strong>Essential</strong></td><td class='p-3'>General practice</td><td class='p-3'>€5,000 - €15,000</td></tr><tr class='border-b bg-gray-50 dark:bg-gray-800'><td class='p-3'><strong>Professional</strong></td><td class='p-3'>Specialized clinic</td><td class='p-3'>€15,000 - €50,000</td></tr><tr><td class='p-3'><strong>Expert</strong></td><td class='p-3'>University hospitals and specialized centers</td><td class='p-3'>€50,000 - €150,000</td></tr></tbody></table><blockquote class='bg-sari-lime/10 border-l-4 border-sari-lime p-6 my-6'><p class='text-lg italic'>\"The best ultrasound machine is not the most expensive, it's the one that exactly matches your clinical needs. Our experts are here to guide you in this strategic choice.\"</p><footer class='text-sm text-gray-600 mt-2'>— Dr. Ahmed Benali, Medical Director SARI Système</footer></blockquote><h2>📞 Contact Us</h2><p>Our team of experts is at your disposal for a personalized demonstration and a quote adapted to your needs.</p><div class='flex gap-4 mt-6'><a href='#contact' class='btn-primary text-white px-6 py-3 font-semibold inline-flex items-center gap-2'>Request a quote <i data-lucide='arrow-right'></i></a><a href='#produits' class='border-2 border-sari-blue text-sari-blue px-6 py-3 font-semibold inline-flex items-center gap-2 hover:bg-sari-blue hover:text-white transition-colors'>View our ultrasound machines</a></div></div></div>"
+  },
+  {
+    "id": 8,
+    "type": "full",
+    "title": "Artificial Intelligence in Medicine",
+    "subtitle": "How AI is revolutionizing medical diagnosis",
+    "category": "Innovation",
+    "media": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1920",
+    "content": "<div class='max-w-4xl mx-auto'><div class='prose dark:prose-invert max-w-none'><p class='lead text-xl text-gray-600 dark:text-gray-400 mb-8'>Artificial intelligence is radically transforming modern medicine. From diagnostic assistance to the search for new treatments, AI opens up unprecedented perspectives.</p><h2>🤖 AI in Medical Diagnosis</h2><p>Deep learning algorithms now achieve performance comparable, or even superior, to that of human experts in some fields:</p><ul><li><strong>Radiology</strong> : Tumor detection with 95% accuracy</li><li><strong>Ophthalmology</strong> : Diagnosis of diabetic retinopathy</li><li><strong>Dermatology</strong> : Identification of skin lesions</li><li><strong>Pathology</strong> : Automated biopsy analysis</li></ul><h2>💊 AI and Drug Discovery</h2><p>Traditionally, the discovery of a new drug takes 10-15 years and costs more than $2 billion. AI significantly reduces these delays:</p><ol><li><strong>Data analysis</strong> : Identification of therapeutic targets</li><li><strong>Molecular design</strong> : Generation of drug candidates</li><li><strong>Clinical trials</strong> : Optimization of protocols</li><li><strong>Pharmacovigilance</strong> : Detection of side effects</li></ol><h2>🏥 Concrete Clinical Applications</h2><div class='grid grid-cols-1 md:grid-cols-3 gap-4 my-6'><div class='p-4 bg-sari-blue/5 border-t-4 border-sari-blue rounded text-center'><div class='text-4xl mb-2'>🫀</div><h4 class='font-bold mb-2'>Cardiology</h4><p class='text-sm'>Prediction of cardiovascular risks</p></div><div class='p-4 bg-sari-lime/10 border-t-4 border-sari-lime rounded text-center'><div class='text-4xl mb-2'>🧠</div><h4 class='font-bold mb-2'>Neurology</h4><p class='text-sm'>Early detection of Alzheimer's</p></div><div class='p-4 bg-purple-50 dark:bg-purple-900/20 border-t-4 border-purple-500 rounded text-center'><div class='text-4xl mb-2'>🦴</div><h4 class='font-bold mb-2'>Orthopedics</h4><p class='text-sm'>3D surgical planning</p></div></div><h2>⚖️ Ethical and Regulatory Challenges</h2><p>The integration of AI in medicine raises crucial questions:</p><ul><li><strong>Responsibility</strong> : Who is responsible in case of error?</li><li><strong>Transparency</strong> : How to explain AI decisions?</li><li><strong>Confidentiality</strong> : Protection of health data</li><li><strong>Bias</strong> : Representativeness of training data</li></ul><h2>🔮 The Future of Medical AI</h2><blockquote class='bg-sari-lime/10 border-l-4 border-sari-lime p-6 my-6'><p class='text-lg italic'>\"AI will not replace doctors, but doctors who use AI will replace those who don't.\"</p></blockquote><p>Trends to watch:</p><ul><li>🤖 <strong>Virtual doctors</strong> : AI assistants for consultations</li><li>📱 <strong>Augmented telemedicine</strong> : Remote diagnosis</li><li>🧬 <strong>Personalized medicine</strong> : Custom treatments</li><li>🔬 <strong>Accelerated research</strong> : Faster discoveries</li></ul><h2>🎓 Training and Support</h2><p>SARI Système offers comprehensive training on integrating AI into your medical practice. Our experts support you from A to Z.</p><div class='flex gap-4 mt-6'><a href='#contact' class='btn-primary text-white px-6 py-3 font-semibold inline-flex items-center gap-2'>Learn more <i data-lucide='arrow-right'></i></a></div></div></div>"
+  },
+  {
+    "id": 9,
+    "type": "gallery",
+    "title": "Our Flagship Equipment",
+    "subtitle": "The cream of medical technologies",
+    "category": "Products",
+    "media": [
+      "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=1200",
+      "https://images.unsplash.com/photo-1559757175-5700dde675bc?w=1200",
+      "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=1200",
+      "https://images.unsplash.com/photo-1551076805-e1869033e561?w=1200",
+      "https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=1200",
+      "https://images.unsplash.com/photo-1584982751601-97dcc096659c?w=1200"
+    ],
+    "content": "<p>Our selection of the most efficient equipment on the market. Each product has been rigorously tested and approved by our committee of experts to guarantee absolute reliability.</p>"
+  },
+  {
+    "id": 10,
+    "type": "slide",
+    "title": "Testimonials from Our Clients",
+    "subtitle": "They trust us",
+    "category": "Testimonials",
+    "slides": [
+      {
+        "media": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1920",
+        "mediaType": "image",
+        "title": "Dr. Ahmed Benali",
+        "subtitle": "Dental Surgeon - El Afia Clinic, Oran",
+        "description": "\"Exceptional service and very high quality equipment. The SARI team supported us from A to Z, from selection to installation. I highly recommend!\""
+      },
+      {
+        "media": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=1920",
+        "mediaType": "image",
+        "title": "Dr. Fatima Zahra",
+        "subtitle": "Cardiologist - Central Hospital, Algiers",
+        "description": "\"The quality of the cardiology equipment is remarkable. The 24/7 technical support is a real plus for our emergency department.\""
+      },
+      {
+        "media": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=1920",
+        "mediaType": "image",
+        "title": "Dr. Mohamed Kaci",
+        "subtitle": "Director - Modern Clinic, Constantine",
+        "description": "\"The medical informatics offered by SARI has transformed our management. The EMR complies with all standards and the interface is intuitive.\""
+      },
+      {
+        "media": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=1920",
+        "mediaType": "image",
+        "title": "Dr. Sarah Boumediene",
+        "subtitle": "Pediatrician - Regional Hospital, Blida",
+        "description": "\"The pediatric equipment is perfectly adapted to the needs of children. The SARI team listened to our specificities.\""
+      }
+    ]
+  }
+]

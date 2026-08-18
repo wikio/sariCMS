@@ -1,0 +1,13 @@
+{
+  "notFound": "الخدمة غير موجودة",
+  "notFoundDesc": "هذه الخدمة غير موجودة أو تم حذفها.",
+  "backToServices": "العودة إلى الخدمات",
+  "home": "الرئيسية",
+  "services": "الخدمات",
+  "aboutTitle": "حول هذه الخدمة",
+  "commitmentsTitle": "التزاماتنا",
+  "faqTitle": "أسئلة شائعة",
+  "needService": "تحتاج هذه الخدمة؟",
+  "needServiceDesc": "اتصل بخبرائنا لدراسة مخصصة.",
+  "requestQuote": "طلب عرض سعر"
+}

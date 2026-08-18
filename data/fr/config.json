@@ -1,0 +1,25 @@
+{
+  "meta": {
+    "companyName": "Solution SARI Système",
+    "tagline": "L'excellence médicale à votre service",
+    "logo": "https://sarisysteme.com/wp-content/uploads/2022/07/cropped-logo-SARI-pixel-transparent-without-grid.png",
+    "description": "Distribution d'équipements et consommables médicaux depuis plus de 20 ans. SARI Système accompagne les professionnels de santé avec des solutions innovantes et fiables.",
+    "phone": "(+213)23.52.42.72",
+    "email": "contact@sarisysteme.com",
+    "address": "17 Lot ONAB, Cité SONELGAZ, Gue de Constantine, Alger - Algérie",
+    "hours": "Dim-Jeu: 8h00 - 17h00",
+    "currency": "DZD", 
+    "social": {
+      "linkedin": "https://linkedin.com/company/sarisysteme",
+      "facebook": "https://facebook.com/sarisysteme",
+      "twitter": "https://twitter.com/sarisysteme",
+      "youtube": "https://youtube.com/sarisysteme"
+    }
+  },
+  "stats": {
+    "clients": "500+",
+    "experience": "15",
+    "support": "24/7",
+    "satisfaction": "98%"
+  }
+}
