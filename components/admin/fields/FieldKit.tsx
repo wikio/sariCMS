@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  AtSign, Banknote, Check, GripVertical, ImagePlus, Link2, Mail, Phone, Plus, Star, Trash2, Upload,
+  Banknote, Check, ChevronsUpDown, GripVertical, Link2, Mail, Phone, Plus, Star, Trash2, Upload,
 } from 'lucide-react';
 import { slugify } from '@/lib/slugify';
 import type { FieldSpec } from '@/lib/cms-modules';
+import { addTaxonomyTerm, listTaxonomy } from '@/lib/taxonomies';
 import HtmlEditor from '@/components/admin/fields/HtmlEditor';
 
 const CURRENCIES = [
@@ -16,71 +17,84 @@ const CURRENCIES = [
   { code: 'TND', symbol: 'DT' },
 ];
 
-export function FieldLabel({ spec, children }: { spec: FieldSpec; children: React.ReactNode }) {
+export function FieldShell({ spec, value, children }: { spec: FieldSpec; value?: unknown; children: React.ReactNode }) {
+  const len = typeof value === 'string' ? value.length : 0;
+  const over = spec.maxLength != null && len > spec.maxLength;
   return (
-    <label className={`block space-y-1.5 ${spec.wide ? 'md:col-span-2' : ''}`}>
-      <span className="text-[11px] font-black uppercase tracking-[0.14em]" style={{ color: 'var(--ad-muted)' }}>{spec.label}</span>
+    <div className={`space-y-1.5 ${spec.wide || spec.kind === 'html' ? 'md:col-span-2' : ''}`}>
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-[11px] font-black uppercase tracking-[0.14em]" style={{ color: 'var(--ad-muted)' }}>
+          {spec.label}
+        </span>
+        {spec.required
+          ? <span className="ad-chip ad-chip-warn">Obligatoire</span>
+          : <span className="ad-chip ad-chip-mute">Optionnel</span>}
+        {spec.maxLength != null && (
+          <span className="ml-auto text-[10px] font-bold tabular-nums" style={{ color: over ? 'var(--ad-danger)' : 'var(--ad-muted)' }}>
+            {len} / {spec.maxLength}
+          </span>
+        )}
+      </div>
       {children}
-      {spec.hint && <span className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>{spec.hint}</span>}
-    </label>
+      {spec.hint && <p className="text-[11px] leading-snug" style={{ color: 'var(--ad-muted)' }}>{spec.hint}</p>}
+    </div>
   );
 }
 
+export function FieldLabel({ spec, children }: { spec: FieldSpec; children: React.ReactNode }) {
+  return <FieldShell spec={spec}>{children}</FieldShell>;
+}
+
 export function renderField(spec: FieldSpec, value: unknown, onChange: (v: unknown) => void, record: Record<string, unknown>) {
+  const ph = spec.placeholder || '';
   switch (spec.kind) {
     case 'html':
-      return <FieldLabel spec={spec}><HtmlEditor value={String(value || '')} onChange={onChange} /></FieldLabel>;
+      return <FieldShell spec={spec} value={value}><HtmlEditor value={String(value || '')} onChange={onChange} placeholder={ph || 'Rédigez le contenu détaillé…'} /></FieldShell>;
     case 'slug':
       return (
-        <FieldLabel spec={spec}>
+        <FieldShell spec={spec} value={value}>
           <div className="flex gap-2">
             <span className="ad-input !w-auto flex items-center text-xs" style={{ color: 'var(--ad-muted)' }}>/</span>
-            <input className="ad-input font-mono" value={String(value || '')} onChange={(e) => onChange(e.target.value)} />
+            <input className="ad-input font-mono" value={String(value || '')} placeholder={ph || 'url-de-la-fiche'} onChange={(e) => onChange(e.target.value)} />
             <button type="button" className="ad-btn ad-btn-ghost" onClick={() => onChange(slugify(String(record[spec.slugFrom || 'title'] || record.name || '')))}>Auto</button>
           </div>
-        </FieldLabel>
+        </FieldShell>
       );
     case 'email':
       return (
-        <FieldLabel spec={spec}>
+        <FieldShell spec={spec} value={value}>
           <div className="relative">
             <Mail className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--ad-accent)' }} />
-            <input className="ad-input pl-9" type="email" value={String(value || '')} onChange={(e) => onChange(e.target.value)} />
+            <input className="ad-input pl-9" type="email" placeholder={ph || 'contact@exemple.com'} value={String(value || '')} onChange={(e) => onChange(e.target.value)} />
           </div>
-        </FieldLabel>
+        </FieldShell>
       );
     case 'phone':
       return (
-        <FieldLabel spec={spec}>
+        <FieldShell spec={spec} value={value}>
           <div className="relative">
             <Phone className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--ad-accent)' }} />
-            <input className="ad-input pl-9" value={String(value || '')} onChange={(e) => onChange(e.target.value)} />
+            <input className="ad-input pl-9" placeholder={ph || '+213 …'} value={String(value || '')} onChange={(e) => onChange(e.target.value)} />
           </div>
-        </FieldLabel>
+        </FieldShell>
       );
     case 'url':
       return (
-        <FieldLabel spec={spec}>
+        <FieldShell spec={spec} value={value}>
           <div className="relative">
             <Link2 className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--ad-accent)' }} />
-            <input className="ad-input pl-9" value={String(value || '')} onChange={(e) => onChange(e.target.value)} />
+            <input className="ad-input pl-9" placeholder={ph || 'https://…'} value={String(value || '')} onChange={(e) => onChange(e.target.value)} />
           </div>
-        </FieldLabel>
+        </FieldShell>
       );
     case 'price':
       return <PriceField spec={spec} value={String(value || '')} onChange={onChange} />;
     case 'select':
-      return (
-        <FieldLabel spec={spec}>
-          <select className="ad-select" value={String(value || '')} onChange={(e) => onChange(e.target.value)}>
-            <option value="">—</option>
-            {(spec.options || []).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </select>
-        </FieldLabel>
-      );
+    case 'icon':
+      return <TaxonomySelect spec={spec} value={String(value || '')} onChange={onChange} />;
     case 'radio':
       return (
-        <FieldLabel spec={spec}>
+        <FieldShell spec={spec} value={value}>
           <div className="flex flex-wrap gap-2">
             {(spec.options || []).map((o) => (
               <button key={o.value} type="button" onClick={() => onChange(o.value)} className={`ad-btn ${String(value) === o.value ? 'ad-btn-primary' : 'ad-btn-ghost'}`}>
@@ -88,40 +102,50 @@ export function renderField(spec: FieldSpec, value: unknown, onChange: (v: unkno
               </button>
             ))}
           </div>
-        </FieldLabel>
+        </FieldShell>
       );
     case 'toggle':
       return (
-        <FieldLabel spec={spec}>
+        <FieldShell spec={spec} value={value}>
           <button type="button" onClick={() => onChange(!value)} className={`ad-btn ${value ? 'ad-btn-lime' : 'ad-btn-ghost'}`}>
             {value ? <Check className="w-4 h-4" /> : null} {value ? 'Oui' : 'Non'}
           </button>
-        </FieldLabel>
+        </FieldShell>
       );
     case 'textarea':
-      return <FieldLabel spec={spec}><textarea className="ad-textarea min-h-[90px]" value={String(value || '')} onChange={(e) => onChange(e.target.value)} /></FieldLabel>;
+      return (
+        <FieldShell spec={spec} value={value}>
+          <textarea
+            className="ad-textarea min-h-[90px]"
+            placeholder={ph || 'Saisissez le texte…'}
+            maxLength={spec.maxLength}
+            value={String(value || '')}
+            onChange={(e) => onChange(e.target.value)}
+          />
+        </FieldShell>
+      );
     case 'image':
-      return <FieldLabel spec={spec}><MediaPicker value={String(value || '')} onChange={onChange} /></FieldLabel>;
+      return <FieldShell spec={spec} value={value}><MediaPicker value={String(value || '')} onChange={onChange} /></FieldShell>;
     case 'gallery':
-      return <FieldLabel spec={spec}><GalleryEditor value={asStringArray(value)} onChange={onChange} /></FieldLabel>;
+      return <FieldShell spec={spec}><GalleryEditor value={asStringArray(value)} onChange={onChange} /></FieldShell>;
     case 'faq':
-      return <FieldLabel spec={spec}><FaqEditor value={asFaq(value)} onChange={onChange} /></FieldLabel>;
+      return <FieldShell spec={spec}><FaqEditor value={asFaq(value)} onChange={onChange} /></FieldShell>;
     case 'list':
-      return <FieldLabel spec={spec}><ListEditor value={asStringArray(value)} onChange={onChange} /></FieldLabel>;
+      return <FieldShell spec={spec}><ListEditor value={asStringArray(value)} onChange={onChange} /></FieldShell>;
     case 'tags':
-      return <FieldLabel spec={spec}><ListEditor value={asStringArray(value)} onChange={onChange} placeholder="Tag" /></FieldLabel>;
+      return <FieldShell spec={spec}><ListEditor value={asStringArray(value)} onChange={onChange} placeholder="Tag" /></FieldShell>;
     case 'specs':
-      return <FieldLabel spec={spec}><SpecsEditor value={asRecord(value)} onChange={onChange} /></FieldLabel>;
+      return <FieldShell spec={spec}><SpecsEditor value={asRecord(value)} onChange={onChange} /></FieldShell>;
     case 'options':
-      return <FieldLabel spec={spec}><OptionsEditor value={asOptions(value)} onChange={onChange} /></FieldLabel>;
+      return <FieldShell spec={spec}><OptionsEditor value={asOptions(value)} onChange={onChange} /></FieldShell>;
     case 'agenda':
-      return <FieldLabel spec={spec}><AgendaEditor value={value} onChange={onChange} /></FieldLabel>;
+      return <FieldShell spec={spec}><AgendaEditor value={value} onChange={onChange} /></FieldShell>;
     case 'slides':
     case 'sections':
-      return <FieldLabel spec={spec}><BlocksEditor value={asBlocks(value)} onChange={onChange} /></FieldLabel>;
+      return <FieldShell spec={spec}><BlocksEditor value={asBlocks(value)} onChange={onChange} /></FieldShell>;
     case 'rating':
       return (
-        <FieldLabel spec={spec}>
+        <FieldShell spec={spec} value={value}>
           <div className="flex gap-1">
             {[1, 2, 3, 4, 5].map((n) => (
               <button key={n} type="button" onClick={() => onChange(n)}>
@@ -129,21 +153,131 @@ export function renderField(spec: FieldSpec, value: unknown, onChange: (v: unkno
               </button>
             ))}
           </div>
-        </FieldLabel>
+        </FieldShell>
       );
-    case 'icon':
+    case 'number':
+      return (
+        <FieldShell spec={spec} value={value}>
+          <input className="ad-input" type="number" placeholder={ph || '0'} value={String(value ?? '')} onChange={(e) => onChange(e.target.value === '' ? '' : Number(e.target.value))} />
+        </FieldShell>
+      );
     case 'text':
     default:
       return (
-        <FieldLabel spec={spec}>
+        <FieldShell spec={spec} value={value}>
           <div className="relative">
             {spec.prefix && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold" style={{ color: 'var(--ad-muted)' }}>{spec.prefix}</span>}
-            <input className={`ad-input ${spec.prefix ? 'pl-12' : ''} ${spec.suffix ? 'pr-12' : ''}`} value={String(value ?? '')} onChange={(e) => onChange(e.target.value)} />
+            <input
+              className={`ad-input ${spec.prefix ? 'pl-12' : ''} ${spec.suffix ? 'pr-12' : ''}`}
+              placeholder={ph || `Saisir ${spec.label.toLowerCase()}…`}
+              maxLength={spec.maxLength}
+              value={String(value ?? '')}
+              onChange={(e) => onChange(e.target.value)}
+            />
             {spec.suffix && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold" style={{ color: 'var(--ad-muted)' }}>{spec.suffix}</span>}
           </div>
-        </FieldLabel>
+        </FieldShell>
       );
   }
+}
+
+function TaxonomySelect({ spec, value, onChange }: { spec: FieldSpec; value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState('');
+  const [adding, setAdding] = useState(false);
+  const [draft, setDraft] = useState('');
+  const [tick, setTick] = useState(0);
+  const box = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const onDoc = (e: MouseEvent) => {
+      if (!box.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onTax = () => setTick((n) => n + 1);
+    document.addEventListener('mousedown', onDoc);
+    window.addEventListener('sari-taxonomies', onTax);
+    return () => {
+      document.removeEventListener('mousedown', onDoc);
+      window.removeEventListener('sari-taxonomies', onTax);
+    };
+  }, []);
+
+  const options = useMemo(() => {
+    const tax = spec.taxonomy ? listTaxonomy(spec.taxonomy) : [];
+    const base = [...(spec.options || [])];
+    for (const t of tax) {
+      if (!base.some((o) => o.value === t.value)) base.push(t);
+    }
+    return base;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [spec.options, spec.taxonomy, tick]);
+
+  const filtered = options.filter((o) => {
+    const blob = `${o.label} ${o.value}`.toLowerCase();
+    return blob.includes(q.toLowerCase());
+  });
+  const current = options.find((o) => o.value === value);
+
+  const create = () => {
+    const label = draft.trim();
+    if (!label) return;
+    const next = spec.taxonomy ? addTaxonomyTerm(spec.taxonomy, { value: label, label }) : [];
+    const created = next.find((t) => t.label === label) || { value: label, label };
+    onChange(created.value);
+    setDraft('');
+    setAdding(false);
+    setOpen(false);
+    setTick((n) => n + 1);
+  };
+
+  return (
+    <FieldShell spec={spec} value={value}>
+      <div className="flex gap-2" ref={box}>
+        <div className="ad-combo flex-1">
+          <button type="button" className="ad-select text-left flex items-center justify-between" onClick={() => setOpen((v) => !v)}>
+            <span className={current ? '' : 'opacity-50'}>{current?.label || spec.placeholder || 'Sélectionner…'}</span>
+            <ChevronsUpDown className="w-4 h-4 opacity-50" />
+          </button>
+          {open && (
+            <div className="ad-combo-list">
+              <div className="p-2">
+                <input
+                  autoFocus
+                  className="ad-input"
+                  placeholder="Rechercher…"
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                />
+              </div>
+              {filtered.map((o) => (
+                <button
+                  key={o.value}
+                  type="button"
+                  className={`ad-combo-item ${o.value === value ? 'is-on font-bold' : ''}`}
+                  onClick={() => { onChange(o.value); setOpen(false); setQ(''); }}
+                >
+                  {o.label}
+                </button>
+              ))}
+              {filtered.length === 0 && <div className="px-3 py-2 text-xs" style={{ color: 'var(--ad-muted)' }}>Aucun résultat</div>}
+            </div>
+          )}
+        </div>
+        {spec.taxonomy && (
+          adding ? (
+            <div className="flex gap-1">
+              <input className="ad-input w-40" placeholder="Nouveau…" value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && create()} />
+              <button type="button" className="ad-btn ad-btn-primary" onClick={create}>OK</button>
+            </div>
+          ) : (
+            <button type="button" className="ad-btn ad-btn-ghost" onClick={() => setAdding(true)}>
+              <Plus className="w-4 h-4" /> Nouveau
+            </button>
+          )
+        )}
+      </div>
+    </FieldShell>
+  );
 }
 
 function PriceField({ spec, value, onChange }: { spec: FieldSpec; value: string; onChange: (v: string) => void }) {
@@ -151,14 +285,14 @@ function PriceField({ spec, value, onChange }: { spec: FieldSpec; value: string;
   const amount = match?.[1]?.trim() || '';
   const curr = CURRENCIES.find((c) => value.includes(c.symbol) || value.includes(c.code)) || CURRENCIES[0];
   return (
-    <FieldLabel spec={spec}>
+    <FieldShell spec={spec} value={value}>
       <div className="flex gap-2">
         <div className="relative flex-1">
           <Banknote className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--ad-accent-2)' }} />
-          <input className="ad-input pl-9" value={amount} onChange={(e) => onChange(`${e.target.value} ${curr.symbol}`.trim())} placeholder="0" />
+          <input className="ad-input pl-9" value={amount} onChange={(e) => onChange(`${e.target.value} ${curr.symbol}`.trim())} placeholder={spec.placeholder || '0'} />
         </div>
         <select
-          className="ad-select w-28"
+          className="ad-select w-32"
           value={curr.code}
           onChange={(e) => {
             const next = CURRENCIES.find((c) => c.code === e.target.value) || curr;
@@ -168,7 +302,7 @@ function PriceField({ spec, value, onChange }: { spec: FieldSpec; value: string;
           {CURRENCIES.map((c) => <option key={c.code} value={c.code}>{c.code} ({c.symbol})</option>)}
         </select>
       </div>
-    </FieldLabel>
+    </FieldShell>
   );
 }
 
@@ -196,7 +330,7 @@ export function MediaPicker({ value, onChange }: { value: string; onChange: (v: 
         </label>
       </div>
       {value && (
-        <div className="h-32 rounded-xl overflow-hidden pixel-frame">
+        <div className="h-32 overflow-hidden" style={{ border: '1px solid var(--ad-line)' }}>
           <img src={value} alt="" className="w-full h-full object-cover" />
         </div>
       )}
@@ -209,7 +343,7 @@ function GalleryEditor({ value, onChange }: { value: string[]; onChange: (v: str
     <div className="space-y-2">
       <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
         {value.map((src, i) => (
-          <div key={`${src}-${i}`} className="relative group pixel-frame rounded-lg overflow-hidden h-24">
+          <div key={`${src}-${i}`} className="relative group overflow-hidden h-24" style={{ border: '1px solid var(--ad-line)' }}>
             <img src={src} alt="" className="w-full h-full object-cover" />
             <button type="button" className="absolute top-1 right-1 ad-btn ad-btn-danger ad-btn-icon opacity-0 group-hover:opacity-100" onClick={() => onChange(value.filter((_, j) => j !== i))}>
               <Trash2 className="w-3 h-3" />

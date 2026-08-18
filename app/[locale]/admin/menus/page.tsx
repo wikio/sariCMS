@@ -1,5 +1,5 @@
 'use client';
-import { ModuleListPage } from '@/components/admin/CmsModulePages';
+import MenuStudio from '@/components/admin/MenuStudio';
 export default function Page() {
-  return <ModuleListPage moduleKey="menus" />;
+  return <MenuStudio />;
 }

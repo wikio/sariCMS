@@ -1,0 +1,99 @@
+export interface TaxonomyTerm {
+  value: string;
+  label: string;
+}
+
+export interface TaxonomyDef {
+  key: string;
+  label: string;
+  hint: string;
+  defaults: TaxonomyTerm[];
+}
+
+const STORAGE_KEY = 'sari_taxonomies';
+
+export const TAXONOMY_DEFS: TaxonomyDef[] = [
+  {
+    key: 'products.category',
+    label: 'Catégories produits',
+    hint: 'Rubriques du catalogue boutique.',
+    defaults: ['Diagnostic', 'Cardiologie', 'Imagerie', 'Chirurgie', 'Pédiatrie', 'Urgence', 'Laboratoire', 'Consommables']
+      .map((v) => ({ value: v, label: v })),
+  },
+  {
+    key: 'news.category',
+    label: 'Rubriques actualités',
+    hint: 'Classement des articles.',
+    defaults: ['Innovation', 'Produits', 'Santé', 'Formation', 'Corporate'].map((v) => ({ value: v, label: v })),
+  },
+  {
+    key: 'careers.type',
+    label: 'Types de contrat',
+    hint: 'CDI, stage, etc.',
+    defaults: ['CDI', 'CDD', 'Stage', 'Alternance', 'Freelance', 'Intérim'].map((v) => ({ value: v, label: v })),
+  },
+  {
+    key: 'events.type',
+    label: 'Types d’événements',
+    hint: 'Salon, formation, webinar…',
+    defaults: ['Salon', 'Formation', 'Conférence', 'Webinar', 'Atelier', 'Lancement', 'Portes Ouvertes']
+      .map((v) => ({ value: v, label: v })),
+  },
+  {
+    key: 'partners.category',
+    label: 'Catégories partenaires',
+    hint: 'Familles de partenaires.',
+    defaults: ['Diagnostic', 'Cardiologie', 'Imagerie', 'Chirurgie', 'Laboratoire'].map((v) => ({ value: v, label: v })),
+  },
+];
+
+type Store = Record<string, TaxonomyTerm[]>;
+
+function readStore(): Store {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as Store;
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeStore(store: Store) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+  window.dispatchEvent(new CustomEvent('sari-taxonomies'));
+}
+
+export function listTaxonomy(key: string): TaxonomyTerm[] {
+  const def = TAXONOMY_DEFS.find((d) => d.key === key);
+  const stored = readStore()[key];
+  if (stored?.length) return stored;
+  return def?.defaults ? [...def.defaults] : [];
+}
+
+export function saveTaxonomy(key: string, terms: TaxonomyTerm[]) {
+  const store = readStore();
+  store[key] = terms.filter((t) => t.value.trim());
+  writeStore(store);
+}
+
+export function addTaxonomyTerm(key: string, term: TaxonomyTerm): TaxonomyTerm[] {
+  const next = listTaxonomy(key);
+  const value = term.value.trim();
+  if (!value) return next;
+  if (!next.some((t) => t.value.toLowerCase() === value.toLowerCase())) {
+    next.push({ value, label: term.label.trim() || value });
+    saveTaxonomy(key, next);
+  }
+  return listTaxonomy(key);
+}
+
+export function removeTaxonomyTerm(key: string, value: string) {
+  saveTaxonomy(key, listTaxonomy(key).filter((t) => t.value !== value));
+}
+
+export function allTaxonomies(): Array<TaxonomyDef & { terms: TaxonomyTerm[] }> {
+  return TAXONOMY_DEFS.map((def) => ({ ...def, terms: listTaxonomy(def.key) }));
+}

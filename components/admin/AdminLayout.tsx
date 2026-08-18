@@ -9,7 +9,7 @@ import {
   Calendar, Layers, MessageCircle, Handshake, Image as ImageIcon,
   FileStack, Menu as MenuIcon, Compass, Scale, Settings, ShoppingCart,
   Users, UserCog, FileCheck, Globe, Sliders, ExternalLink, LogOut,
-  Shield, Search, ChevronLeft, Palette,
+  Shield, Search, ChevronLeft, Palette, BarChart3, ScrollText, Tags, UserPlus,
 } from 'lucide-react';
 import '@/app/admin.css';
 import { ToastProvider } from '@/components/admin/Toast';
@@ -43,39 +43,47 @@ function Shell({ children }: { children: ReactNode }) {
   }, [pathname, locale, isLogin, router]);
 
   const menu: Item[] = [
+    { type: 'divider', label: t('menu.pilotageSection') },
     { id: 'dashboard', icon: LayoutDashboard, label: t('menu.dashboard'), href: `/${locale}/admin/dashboard` },
+    { id: 'stats', icon: BarChart3, label: t('menu.stats'), href: `/${locale}/admin/stats` },
+    { id: 'logs', icon: ScrollText, label: t('menu.logs'), href: `/${locale}/admin/logs` },
     { type: 'divider', label: t('menu.contentSection') },
-    { id: 'pages', icon: FileText, label: t('menu.pages'), href: `/${locale}/admin/pages` },
     { id: 'products', icon: Package, label: t('menu.products'), href: `/${locale}/admin/products` },
     { id: 'services', icon: Wrench, label: t('menu.services'), href: `/${locale}/admin/services` },
-    { id: 'careers', icon: Briefcase, label: t('menu.careers'), href: `/${locale}/admin/careers` },
+    { id: 'solutions', icon: Layers, label: t('menu.solutions'), href: `/${locale}/admin/solutions` },
     { id: 'news', icon: Newspaper, label: t('menu.news'), href: `/${locale}/admin/news` },
     { id: 'events', icon: Calendar, label: t('menu.events'), href: `/${locale}/admin/events` },
-    { id: 'solutions', icon: Layers, label: t('menu.solutions'), href: `/${locale}/admin/solutions` },
+    { id: 'careers', icon: Briefcase, label: t('menu.careers'), href: `/${locale}/admin/careers` },
     { id: 'testimonials', icon: MessageCircle, label: t('menu.testimonials'), href: `/${locale}/admin/testimonials` },
     { id: 'partners', icon: Handshake, label: t('menu.partners'), href: `/${locale}/admin/partners` },
+    { id: 'pages', icon: FileText, label: t('menu.pages'), href: `/${locale}/admin/pages` },
     { type: 'divider', label: t('menu.siteSection') },
-    { id: 'hero', icon: ImageIcon, label: t('menu.hero'), href: `/${locale}/admin/hero` },
-    { id: 'galleries', icon: FileStack, label: 'Galeries', href: `/${locale}/admin/galleries` },
-    { id: 'media', icon: Compass, label: 'Médiathèque', href: `/${locale}/admin/media` },
     { id: 'menu', icon: MenuIcon, label: t('menu.menuNav'), href: `/${locale}/admin/menus` },
+    { id: 'hero', icon: ImageIcon, label: t('menu.hero'), href: `/${locale}/admin/hero` },
+    { id: 'galleries', icon: FileStack, label: t('menu.galleries'), href: `/${locale}/admin/galleries` },
+    { id: 'media', icon: Compass, label: t('menu.media'), href: `/${locale}/admin/media` },
     { id: 'legal', icon: Scale, label: t('menu.legal'), href: `/${locale}/admin/legal` },
-    { id: 'emails', icon: Settings, label: 'Emails', href: `/${locale}/admin/emails` },
-    { type: 'divider', label: t('menu.eshopSection') },
+    { type: 'divider', label: t('menu.crmSection') },
     { id: 'orders', icon: ShoppingCart, label: t('menu.orders'), href: `/${locale}/admin/orders` },
     { id: 'quotes', icon: FileText, label: t('menu.quotes'), href: `/${locale}/admin/quotes` },
     { id: 'clients', icon: Users, label: t('menu.clients'), href: `/${locale}/admin/clients` },
-    { type: 'divider', label: t('menu.usersSection') },
-    { id: 'users', icon: UserCog, label: t('menu.users'), href: `/${locale}/admin/users` },
-    { id: 'permissions', icon: Shield, label: t('menu.permissions') || 'Permissions', href: `/${locale}/admin/permissions` },
+    { id: 'candidates', icon: UserPlus, label: t('menu.candidates'), href: `/${locale}/admin/candidates` },
     { id: 'applications', icon: FileCheck, label: t('menu.applications'), href: `/${locale}/admin/applications` },
     { type: 'divider', label: t('menu.configSection') },
+    { id: 'taxonomies', icon: Tags, label: t('menu.taxonomies'), href: `/${locale}/admin/taxonomies` },
+    { id: 'users', icon: UserCog, label: t('menu.users'), href: `/${locale}/admin/users` },
+    { id: 'permissions', icon: Shield, label: t('menu.permissions'), href: `/${locale}/admin/permissions` },
     { id: 'translations', icon: Globe, label: t('menu.translations'), href: `/${locale}/admin/translations` },
+    { id: 'emails', icon: Settings, label: t('menu.emails'), href: `/${locale}/admin/emails` },
     { id: 'settings', icon: Sliders, label: t('menu.settings'), href: `/${locale}/admin/settings` },
   ];
 
   const active = (() => {
     if (pathname.includes('/admin/dashboard')) return 'dashboard';
+    if (pathname.includes('/admin/stats')) return 'stats';
+    if (pathname.includes('/admin/logs')) return 'logs';
+    if (pathname.includes('/admin/taxonomies')) return 'taxonomies';
+    if (pathname.includes('/admin/candidates')) return 'candidates';
     if (pathname.includes('/admin/data/')) return pathname.split('/admin/data/')[1];
     if (pathname.includes('/admin/products')) return 'products';
     if (pathname.includes('/admin/services')) return 'services';
@@ -123,7 +131,7 @@ function Shell({ children }: { children: ReactNode }) {
         style={{ background: 'var(--ad-sidebar)', color: 'var(--ad-sidebar-ink)' }}
       >
         <div className="h-[72px] px-4 flex items-center gap-3 border-b border-white/10">
-          <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ background: 'var(--ad-accent-2)', color: 'var(--ad-accent-2-ink)' }}>
+          <div className="w-10 h-10 flex items-center justify-center" style={{ background: 'var(--ad-accent-2)', color: 'var(--ad-accent-2-ink)', borderRadius: 2 }}>
             <Shield className="w-5 h-5" />
           </div>
           {open && (
@@ -146,8 +154,8 @@ function Shell({ children }: { children: ReactNode }) {
               <Link
                 key={item.id}
                 href={item.href || '#'}
-                className={`mx-2 mb-0.5 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all ${
-                  on ? 'bg-white/12 shadow-lg' : 'opacity-70 hover:opacity-100 hover:bg-white/6'
+                className={`mx-2 mb-0.5 flex items-center gap-3 px-3 py-2.5 text-sm transition-all ${
+                  on ? 'bg-white/12' : 'opacity-70 hover:opacity-100 hover:bg-white/6'
                 }`}
               >
                 {Icon && <Icon className="w-4 h-4 shrink-0" />}
@@ -189,7 +197,7 @@ function Shell({ children }: { children: ReactNode }) {
                     <button
                       key={th.id}
                       onClick={() => { setTheme(th.id); setThemesOpen(false); }}
-                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm ${theme === th.id ? 'bg-[var(--ad-surface-2)] font-bold' : ''}`}
+                      className={`w-full flex items-center gap-3 px-3 py-2 text-sm ${theme === th.id ? 'bg-[var(--ad-surface-2)] font-bold' : ''}`}
                     >
                       <span className="w-3.5 h-3.5 rounded-full" style={{ background: th.swatch }} />
                       {th.label}

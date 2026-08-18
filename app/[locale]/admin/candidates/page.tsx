@@ -1,5 +1,5 @@
 'use client';
 import PeopleDesk from '@/components/admin/PeopleDesk';
 export default function Page() {
-  return <PeopleDesk type="client" title="Clients" singular="client" />;
+  return <PeopleDesk type="candidate" title="Candidats" singular="candidat" />;
 }

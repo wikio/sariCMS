@@ -9,20 +9,24 @@ export type FieldKind =
   | 'image' | 'gallery' | 'faq' | 'list' | 'specs' | 'options' | 'agenda'
   | 'slides' | 'sections' | 'rating' | 'icon';
 
+export type ListLayout = 'catalog' | 'magazine' | 'timeline' | 'mosaic' | 'quotes' | 'people' | 'slides' | 'docs';
+
 export interface FieldSpec {
   key: string;
   label: string;
   kind: FieldKind;
   hint?: string;
+  placeholder?: string;
+  required?: boolean;
+  maxLength?: number;
   prefix?: string;
   suffix?: string;
   options?: Array<{ value: string; label: string }>;
+  taxonomy?: string;
   slugFrom?: string;
   wide?: boolean;
   group?: string;
 }
-
-export type ListLayout = 'catalog' | 'magazine' | 'timeline' | 'mosaic' | 'quotes' | 'people' | 'slides' | 'docs';
 
 export interface CmsModule {
   key: string;
@@ -41,6 +45,7 @@ export interface CmsModule {
   fields: FieldSpec[];
   defaults: Record<string, unknown>;
   filter?: Record<string, string>;
+  orderField?: string;
 }
 
 const STATUS = [
@@ -65,14 +70,20 @@ export const CMS_MODULES: CmsModule[] = [
     key: 'products', resource: 'products', path: 'products', label: 'Produits', singular: 'produit',
     icon: Package, layout: 'catalog', titleKey: 'name', imageKey: 'image', subtitleKey: 'category', badgeKey: 'status',
     searchKeys: ['name', 'category', 'sku', 'shortDesc'],
-    filterKeys: [{ key: 'status', label: 'Statut', options: STATUS.map((s) => s.value) }, { key: 'category', label: 'Catégorie' }],
+    filterKeys: [
+      { key: 'status', label: 'Statut', options: STATUS.map((s) => s.value) },
+      { key: 'category', label: 'Catégorie' },
+      { key: 'locale', label: 'Langue', options: ['fr', 'en', 'ar'] },
+      { key: 'inStock', label: 'Stock', options: ['true', 'false'] },
+    ],
+    orderField: 'sortOrder',
     defaults: { name: 'Nouveau produit', status: 'draft', inStock: true, locale: 'fr', gallery: [], features: [], specs: {}, options: [] },
     fields: [
-      { key: 'name', label: 'Nom commercial', kind: 'text', group: 'Identité' },
-      { key: 'slug', label: 'Slug URL', kind: 'slug', slugFrom: 'name', group: 'Identité' },
+      { key: 'name', label: 'Nom commercial', kind: 'text', required: true, placeholder: 'Ex. Échographe Portable Pro X1', hint: 'Nom affiché sur la vitrine.', maxLength: 120, group: 'Identité' },
+      { key: 'slug', label: 'Slug URL', kind: 'slug', slugFrom: 'name', hint: 'Généré depuis le titre, modifiable.', group: 'Identité' },
       { key: 'locale', label: 'Langue', kind: 'radio', options: LOCALES, group: 'Identité' },
       { key: 'status', label: 'Publication', kind: 'radio', options: STATUS, group: 'Identité' },
-      { key: 'category', label: 'Catégorie', kind: 'select', options: CATEGORIES, group: 'Catalogue' },
+      { key: 'category', label: 'Catégorie', kind: 'select', taxonomy: 'products.category', options: CATEGORIES, hint: 'Gérée dans Taxonomies. Vous pouvez en créer une ici.', group: 'Catalogue' },
       { key: 'sku', label: 'Référence SKU', kind: 'text', prefix: 'SKU', group: 'Catalogue' },
       { key: 'price', label: 'Prix', kind: 'price', group: 'Catalogue' },
       { key: 'inStock', label: 'En stock', kind: 'toggle', group: 'Catalogue' },
@@ -80,8 +91,8 @@ export const CMS_MODULES: CmsModule[] = [
       { key: 'image', label: 'Visuel principal', kind: 'image', group: 'Médias' },
       { key: 'gallery', label: 'Galerie', kind: 'gallery', wide: true, group: 'Médias' },
       { key: 'catalogPdf', label: 'Fiche PDF', kind: 'url', prefix: 'PDF', group: 'Médias' },
-      { key: 'shortDesc', label: 'Accroche', kind: 'textarea', wide: true, group: 'Contenu' },
-      { key: 'fullDesc', label: 'Description détaillée', kind: 'html', wide: true, group: 'Contenu' },
+      { key: 'shortDesc', label: 'Accroche', kind: 'textarea', wide: true, maxLength: 280, placeholder: 'Résumé court pour les cartes…', hint: 'Max 280 caractères.', group: 'Contenu' },
+      { key: 'fullDesc', label: 'Description détaillée', kind: 'html', wide: true, hint: 'Éditeur riche — section pleine largeur.', group: 'Contenu' },
       { key: 'features', label: 'Points forts', kind: 'list', wide: true, group: 'Technique' },
       { key: 'specs', label: 'Spécifications', kind: 'specs', wide: true, group: 'Technique' },
       { key: 'options', label: 'Options / variantes', kind: 'options', wide: true, group: 'Technique' },
@@ -92,6 +103,7 @@ export const CMS_MODULES: CmsModule[] = [
     icon: Wrench, layout: 'mosaic', titleKey: 'title', subtitleKey: 'icon', badgeKey: 'status',
     searchKeys: ['title', 'shortDesc'],
     filterKeys: [{ key: 'status', label: 'Statut', options: STATUS.map((s) => s.value) }],
+    orderField: 'sortOrder',
     defaults: { title: 'Nouveau service', status: 'draft', locale: 'fr', features: [], faq: [] },
     fields: [
       { key: 'title', label: 'Intitulé', kind: 'text', group: 'Identité' },
@@ -112,15 +124,15 @@ export const CMS_MODULES: CmsModule[] = [
     filterKeys: [{ key: 'status', label: 'Statut', options: STATUS.map((s) => s.value) }, { key: 'type', label: 'Contrat' }],
     defaults: { title: 'Nouvelle offre', status: 'draft', locale: 'fr', type: 'CDI', objectifs: [], prerequis: [], workflow: [], benefits: [] },
     fields: [
-      { key: 'title', label: 'Intitulé du poste', kind: 'text', group: 'Poste' },
+      { key: 'title', label: 'Intitulé du poste', kind: 'text', required: true, placeholder: 'Ex. Ingénieur biomédical', maxLength: 140, group: 'Poste' },
       { key: 'slug', label: 'Slug', kind: 'slug', slugFrom: 'title', group: 'Poste' },
       { key: 'locale', label: 'Langue', kind: 'radio', options: LOCALES, group: 'Poste' },
       { key: 'status', label: 'Statut', kind: 'radio', options: STATUS, group: 'Poste' },
-      { key: 'type', label: 'Contrat', kind: 'select', options: CONTRACTS, group: 'Poste' },
-      { key: 'location', label: 'Lieu', kind: 'text', group: 'Poste' },
-      { key: 'salary', label: 'Rémunération', kind: 'price', group: 'Poste' },
-      { key: 'typeTravail', label: 'Rythme', kind: 'text', group: 'Poste' },
-      { key: 'contact', label: 'Contact RH', kind: 'email', group: 'Poste' },
+      { key: 'type', label: 'Contrat', kind: 'select', taxonomy: 'careers.type', options: CONTRACTS, hint: 'Ajoutez un type à côté du sélecteur.', group: 'Poste' },
+      { key: 'location', label: 'Lieu', kind: 'text', placeholder: 'Alger, hybride…', group: 'Poste' },
+      { key: 'salary', label: 'Rémunération', kind: 'price', placeholder: '80000', group: 'Poste' },
+      { key: 'typeTravail', label: 'Rythme', kind: 'text', placeholder: 'Temps plein', group: 'Poste' },
+      { key: 'contact', label: 'Contact RH', kind: 'email', placeholder: 'rh@sarisysteme.com', group: 'Poste' },
       { key: 'image', label: 'Visuel', kind: 'image', group: 'Média' },
       { key: 'shortDesc', label: 'Accroche', kind: 'textarea', wide: true, group: 'Mission' },
       { key: 'mission', label: 'Mission', kind: 'textarea', wide: true, group: 'Mission' },
@@ -139,11 +151,11 @@ export const CMS_MODULES: CmsModule[] = [
     filterKeys: [{ key: 'status', label: 'Statut', options: STATUS.map((s) => s.value) }, { key: 'category', label: 'Rubrique' }],
     defaults: { title: 'Nouvel article', status: 'draft', locale: 'fr', tags: [] },
     fields: [
-      { key: 'title', label: 'Titre', kind: 'text', group: 'Article' },
+      { key: 'title', label: 'Titre', kind: 'text', required: true, placeholder: 'Ex. Nouvelle sonde cardiaque', maxLength: 160, group: 'Article' },
       { key: 'slug', label: 'Slug', kind: 'slug', slugFrom: 'title', group: 'Article' },
       { key: 'locale', label: 'Langue', kind: 'radio', options: LOCALES, group: 'Article' },
       { key: 'status', label: 'Statut', kind: 'radio', options: STATUS, group: 'Article' },
-      { key: 'category', label: 'Rubrique', kind: 'select', options: ['Innovation', 'Produits', 'Santé', 'Formation', 'Corporate'].map((v) => ({ value: v, label: v })), group: 'Article' },
+      { key: 'category', label: 'Rubrique', kind: 'select', taxonomy: 'news.category', options: ['Innovation', 'Produits', 'Santé', 'Formation', 'Corporate'].map((v) => ({ value: v, label: v })), hint: 'Gérée dans Taxonomies.', group: 'Article' },
       { key: 'classification', label: 'Classification', kind: 'text', group: 'Article' },
       { key: 'sujet', label: 'Sujet', kind: 'text', group: 'Article' },
       { key: 'authorName', label: 'Auteur', kind: 'text', group: 'Article' },
@@ -151,8 +163,8 @@ export const CMS_MODULES: CmsModule[] = [
       { key: 'readTime', label: 'Temps de lecture', kind: 'text', suffix: 'min', group: 'Article' },
       { key: 'image', label: 'Une', kind: 'image', group: 'Média' },
       { key: 'tags', label: 'Tags', kind: 'tags', wide: true, group: 'Média' },
-      { key: 'shortDesc', label: 'Chapô', kind: 'textarea', wide: true, group: 'Texte' },
-      { key: 'fullContent', label: 'Corps de l’article', kind: 'html', wide: true, group: 'Texte' },
+      { key: 'shortDesc', label: 'Chapô', kind: 'textarea', wide: true, maxLength: 280, placeholder: 'Accroche de l’article…', group: 'Texte' },
+      { key: 'fullContent', label: 'Corps de l’article', kind: 'html', wide: true, hint: 'Éditeur riche — pleine largeur.', group: 'Texte' },
     ],
   },
   {
@@ -162,13 +174,13 @@ export const CMS_MODULES: CmsModule[] = [
     filterKeys: [{ key: 'status', label: 'Statut', options: STATUS.map((s) => s.value) }, { key: 'type', label: 'Type' }],
     defaults: { title: 'Nouvel événement', status: 'draft', locale: 'fr', agenda: [] },
     fields: [
-      { key: 'title', label: 'Titre', kind: 'text', group: 'Événement' },
+      { key: 'title', label: 'Titre', kind: 'text', required: true, placeholder: 'Ex. Salon médical Alger', maxLength: 140, group: 'Événement' },
       { key: 'slug', label: 'Slug', kind: 'slug', slugFrom: 'title', group: 'Événement' },
       { key: 'locale', label: 'Langue', kind: 'radio', options: LOCALES, group: 'Événement' },
       { key: 'status', label: 'Statut', kind: 'radio', options: STATUS, group: 'Événement' },
-      { key: 'type', label: 'Type', kind: 'select', options: EVENT_TYPES, group: 'Événement' },
-      { key: 'date', label: 'Date / période', kind: 'text', group: 'Événement' },
-      { key: 'location', label: 'Lieu', kind: 'text', group: 'Événement' },
+      { key: 'type', label: 'Type', kind: 'select', taxonomy: 'events.type', options: EVENT_TYPES, hint: 'Ajoutez un type si besoin.', group: 'Événement' },
+      { key: 'date', label: 'Date / période', kind: 'text', placeholder: '12–14 octobre 2026', group: 'Événement' },
+      { key: 'location', label: 'Lieu', kind: 'text', placeholder: 'Hôtel El Aurassi, Alger', group: 'Événement' },
       { key: 'image', label: 'Visuel', kind: 'image', group: 'Média' },
       { key: 'shortDesc', label: 'Accroche', kind: 'textarea', wide: true, group: 'Contenu' },
       { key: 'fullContent', label: 'Présentation', kind: 'html', wide: true, group: 'Contenu' },
@@ -180,9 +192,10 @@ export const CMS_MODULES: CmsModule[] = [
     icon: MessageCircle, layout: 'quotes', titleKey: 'name', imageKey: 'image', subtitleKey: 'clinic', badgeKey: 'rating',
     searchKeys: ['name', 'clinic', 'text'],
     filterKeys: [{ key: 'status', label: 'Statut', options: STATUS.map((s) => s.value) }],
+    orderField: 'sortOrder',
     defaults: { name: 'Nouveau témoignage', text: '', rating: 5, status: 'published', locale: 'fr' },
     fields: [
-      { key: 'name', label: 'Nom', kind: 'text', group: 'Auteur' },
+      { key: 'name', label: 'Nom', kind: 'text', required: true, placeholder: 'Dr. …', group: 'Auteur' },
       { key: 'role', label: 'Fonction', kind: 'text', group: 'Auteur' },
       { key: 'clinic', label: 'Établissement', kind: 'text', group: 'Auteur' },
       { key: 'locale', label: 'Langue', kind: 'radio', options: LOCALES, group: 'Auteur' },
@@ -197,12 +210,13 @@ export const CMS_MODULES: CmsModule[] = [
     icon: Handshake, layout: 'mosaic', titleKey: 'name', imageKey: 'logo', subtitleKey: 'category', badgeKey: 'status',
     searchKeys: ['name', 'category'],
     filterKeys: [{ key: 'status', label: 'Statut', options: STATUS.map((s) => s.value) }],
+    orderField: 'sortOrder',
     defaults: { name: 'Nouveau partenaire', status: 'published', locale: 'fr' },
     fields: [
       { key: 'name', label: 'Nom', kind: 'text', group: 'Fiche' },
       { key: 'locale', label: 'Langue', kind: 'radio', options: LOCALES, group: 'Fiche' },
       { key: 'status', label: 'Statut', kind: 'radio', options: STATUS, group: 'Fiche' },
-      { key: 'category', label: 'Catégorie', kind: 'select', options: CATEGORIES, group: 'Fiche' },
+      { key: 'category', label: 'Catégorie', kind: 'select', taxonomy: 'partners.category', options: CATEGORIES, group: 'Fiche' },
       { key: 'website', label: 'Site web', kind: 'url', prefix: 'https', group: 'Fiche' },
       { key: 'logo', label: 'Logo', kind: 'image', group: 'Média' },
     ],
@@ -212,9 +226,10 @@ export const CMS_MODULES: CmsModule[] = [
     icon: Layers, layout: 'catalog', titleKey: 'title', imageKey: 'image', subtitleKey: 'slug', badgeKey: 'status',
     searchKeys: ['title', 'slug'],
     filterKeys: [{ key: 'status', label: 'Statut', options: STATUS.map((s) => s.value) }],
+    orderField: 'sortOrder',
     defaults: { title: 'Nouvelle solution', status: 'draft', locale: 'fr', features: [], faq: [], productIds: [] },
     fields: [
-      { key: 'title', label: 'Titre', kind: 'text', group: 'Identité' },
+      { key: 'title', label: 'Titre', kind: 'text', required: true, placeholder: 'Ex. Bloc opératoire connecté', maxLength: 140, group: 'Identité' },
       { key: 'slug', label: 'Slug', kind: 'slug', slugFrom: 'title', group: 'Identité' },
       { key: 'locale', label: 'Langue', kind: 'radio', options: LOCALES, group: 'Identité' },
       { key: 'status', label: 'Statut', kind: 'radio', options: STATUS, group: 'Identité' },
@@ -232,9 +247,10 @@ export const CMS_MODULES: CmsModule[] = [
     icon: ImageIcon, layout: 'slides', titleKey: 'title', imageKey: 'image', subtitleKey: 'cta', badgeKey: 'status',
     searchKeys: ['title', 'cta'],
     filterKeys: [{ key: 'status', label: 'Statut', options: STATUS.map((s) => s.value) }],
+    orderField: 'sortOrder',
     defaults: { title: 'Nouveau slide', status: 'draft', locale: 'fr' },
     fields: [
-      { key: 'title', label: 'Titre', kind: 'text', group: 'Slide' },
+      { key: 'title', label: 'Titre', kind: 'text', required: true, placeholder: 'Titre du slide', maxLength: 80, group: 'Slide' },
       { key: 'locale', label: 'Langue', kind: 'radio', options: LOCALES, group: 'Slide' },
       { key: 'status', label: 'Statut', kind: 'radio', options: STATUS, group: 'Slide' },
       { key: 'subtitle', label: 'Sous-titre', kind: 'text', group: 'Slide' },

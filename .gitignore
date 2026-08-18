@@ -33,3 +33,4 @@ yarn-error.log*
 # Fichiers système / OS
 .DS_Store
 Thumbs.db
+tsconfig.tsbuildinfo

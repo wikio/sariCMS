@@ -62,6 +62,11 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
 
   const save = async () => {
     if (!record) return;
+    const missing = mod.fields.filter((f) => f.required && !String(record[f.key] ?? '').trim());
+    if (missing.length) {
+      showToast(`Champs obligatoires : ${missing.map((f) => f.label).join(', ')}`, 'error');
+      return;
+    }
     setSaving(true);
     try {
       const payload = { ...record, locale: record.locale || locale };
@@ -103,29 +108,36 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
           </h1>
         </div>
         <div className="flex gap-2">
-          {record.id && <button className="ad-btn ad-btn-danger" onClick={remove}><Trash2 className="w-4 h-4" /></button>}
+          {record.id ? <button className="ad-btn ad-btn-danger" onClick={remove}><Trash2 className="w-4 h-4" /></button> : null}
           <button className="ad-btn ad-btn-primary" disabled={saving} onClick={save}><Save className="w-4 h-4" /> {saving ? '…' : 'Enregistrer'}</button>
         </div>
       </div>
 
       {previewImg && (
-        <div className="h-44 rounded-2xl overflow-hidden pixel-frame ad-rise ad-rise-2">
+        <div className="h-44 overflow-hidden ad-rise ad-rise-2" style={{ border: '1px solid var(--ad-line)' }}>
           <img src={previewImg} alt="" className="w-full h-full object-cover" />
         </div>
       )}
 
-      {groups.map(([group, fields], i) => (
-        <section key={group} className={`ad-card p-5 ad-rise pixel-frame`} style={{ animationDelay: `${i * 50}ms` }}>
-          <h2 className="text-[11px] font-black uppercase tracking-[0.2em] mb-4" style={{ color: 'var(--ad-accent)' }}>{group}</h2>
-          <div className="grid md:grid-cols-2 gap-4">
-            {fields.map((field) => (
-              <div key={field.key} onFocus={() => field.kind === 'slug' && setSlugLocked(true)}>
-                {renderField(field, record[field.key], (v) => set(field.key, v), record)}
-              </div>
-            ))}
-          </div>
-        </section>
-      ))}
+      {groups.map(([group, fields], i) => {
+        const htmlHeavy = fields.some((f) => f.kind === 'html');
+        return (
+          <section key={group} className="ad-card p-5 ad-rise" style={{ animationDelay: `${i * 50}ms` }}>
+            <h2 className="ad-section-title">{group}</h2>
+            <div className={htmlHeavy ? 'space-y-4' : 'grid md:grid-cols-2 gap-4'}>
+              {fields.map((field) => (
+                <div
+                  key={field.key}
+                  className={field.wide || field.kind === 'html' ? 'md:col-span-2' : ''}
+                  onFocus={() => field.kind === 'slug' && setSlugLocked(true)}
+                >
+                  {renderField(field, record[field.key], (v) => set(field.key, v), record)}
+                </div>
+              ))}
+            </div>
+          </section>
+        );
+      })}
     </div>
   );
 }

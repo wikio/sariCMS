@@ -46,7 +46,7 @@ export default function HtmlEditor({
     `ad-btn ad-btn-icon ${active ? 'ad-btn-primary' : 'ad-btn-ghost'}`;
 
   return (
-    <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--ad-line)', background: 'var(--ad-surface-2)' }}>
+    <div className="overflow-hidden" style={{ border: '1px solid var(--ad-line)', background: 'var(--ad-surface-2)', borderRadius: 2 }}>
       <div className="flex flex-wrap gap-1 p-2 border-b" style={{ borderColor: 'var(--ad-line)' }}>
         <button type="button" className={btn(editor.isActive('bold'))} onClick={() => editor.chain().focus().toggleBold().run()}><Bold className="w-4 h-4" /></button>
         <button type="button" className={btn(editor.isActive('italic'))} onClick={() => editor.chain().focus().toggleItalic().run()}><Italic className="w-4 h-4" /></button>
