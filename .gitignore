@@ -21,6 +21,11 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# JSON i18n fusionnés (générés par npm run merge:translations)
+/translate/fr.json
+/translate/en.json
+/translate/ar.json
+
 # Fichiers système / OS
 .DS_Store
 Thumbs.db
