@@ -47,12 +47,12 @@ export default function AdminDashboardPage() {
   };
 
   const tiles = [
-    { label: t('dashboard.stats.products'), value: counts.products || 0, icon: Package, href: `/${locale}/admin/data/products` },
-    { label: t('dashboard.stats.services'), value: counts.services || 0, icon: Wrench, href: `/${locale}/admin/data/services` },
-    { label: t('dashboard.stats.solutions'), value: counts.solutions || 0, icon: Layers, href: `/${locale}/admin/data/solution-categories` },
-    { label: t('dashboard.stats.careers'), value: counts.careers || 0, icon: Briefcase, href: `/${locale}/admin/data/careers` },
-    { label: t('dashboard.stats.news'), value: counts.news || 0, icon: Newspaper, href: `/${locale}/admin/data/news` },
-    { label: t('dashboard.stats.events'), value: counts.events || 0, icon: Calendar, href: `/${locale}/admin/data/events` },
+    { label: t('dashboard.stats.products'), value: counts.products || 0, icon: Package, href: `/${locale}/admin/products` },
+    { label: t('dashboard.stats.services'), value: counts.services || 0, icon: Wrench, href: `/${locale}/admin/services` },
+    { label: t('dashboard.stats.solutions'), value: counts.solutions || 0, icon: Layers, href: `/${locale}/admin/solutions` },
+    { label: t('dashboard.stats.careers'), value: counts.careers || 0, icon: Briefcase, href: `/${locale}/admin/careers` },
+    { label: t('dashboard.stats.news'), value: counts.news || 0, icon: Newspaper, href: `/${locale}/admin/news` },
+    { label: t('dashboard.stats.events'), value: counts.events || 0, icon: Calendar, href: `/${locale}/admin/events` },
     { label: 'Pages', value: counts.pages || 0, icon: FileText, href: `/${locale}/admin/pages` },
     { label: 'Utilisateurs', value: counts.users || 0, icon: Users, href: `/${locale}/admin/users` },
   ];

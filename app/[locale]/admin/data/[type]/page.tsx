@@ -1,12 +1,32 @@
 'use client';
 
-import { useParams } from 'next/navigation';
+import { useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
-import AdminCrud from '@/components/admin/AdminCrud';
 
-export default function AdminDataManagerPage() {
+const MAP: Record<string, string> = {
+  products: 'products',
+  services: 'services',
+  careers: 'careers',
+  news: 'news',
+  events: 'events',
+  testimonials: 'testimonials',
+  partners: 'partners',
+  'solution-categories': 'solutions',
+  hero: 'hero',
+  genericContent: 'pages',
+  legal: 'legal',
+  menu: 'menus',
+  navigation: 'menus',
+};
+
+export default function LegacyDataRedirect() {
   const params = useParams();
   const locale = useLocale();
-  const dataType = String(params.type || 'products');
-  return <AdminCrud dataType={dataType} locale={locale} />;
+  const router = useRouter();
+  useEffect(() => {
+    const dest = MAP[String(params.type)] || 'products';
+    router.replace(`/${locale}/admin/${dest}`);
+  }, [params.type, locale, router]);
+  return null;
 }

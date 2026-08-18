@@ -46,20 +46,21 @@ function Shell({ children }: { children: ReactNode }) {
     { id: 'dashboard', icon: LayoutDashboard, label: t('menu.dashboard'), href: `/${locale}/admin/dashboard` },
     { type: 'divider', label: t('menu.contentSection') },
     { id: 'pages', icon: FileText, label: t('menu.pages'), href: `/${locale}/admin/pages` },
-    { id: 'products', icon: Package, label: t('menu.products'), href: `/${locale}/admin/data/products` },
-    { id: 'services', icon: Wrench, label: t('menu.services'), href: `/${locale}/admin/data/services` },
-    { id: 'careers', icon: Briefcase, label: t('menu.careers'), href: `/${locale}/admin/data/careers` },
-    { id: 'news', icon: Newspaper, label: t('menu.news'), href: `/${locale}/admin/data/news` },
-    { id: 'events', icon: Calendar, label: t('menu.events'), href: `/${locale}/admin/data/events` },
-    { id: 'solutions', icon: Layers, label: t('menu.solutions'), href: `/${locale}/admin/data/solution-categories` },
-    { id: 'testimonials', icon: MessageCircle, label: t('menu.testimonials'), href: `/${locale}/admin/data/testimonials` },
-    { id: 'partners', icon: Handshake, label: t('menu.partners'), href: `/${locale}/admin/data/partners` },
+    { id: 'products', icon: Package, label: t('menu.products'), href: `/${locale}/admin/products` },
+    { id: 'services', icon: Wrench, label: t('menu.services'), href: `/${locale}/admin/services` },
+    { id: 'careers', icon: Briefcase, label: t('menu.careers'), href: `/${locale}/admin/careers` },
+    { id: 'news', icon: Newspaper, label: t('menu.news'), href: `/${locale}/admin/news` },
+    { id: 'events', icon: Calendar, label: t('menu.events'), href: `/${locale}/admin/events` },
+    { id: 'solutions', icon: Layers, label: t('menu.solutions'), href: `/${locale}/admin/solutions` },
+    { id: 'testimonials', icon: MessageCircle, label: t('menu.testimonials'), href: `/${locale}/admin/testimonials` },
+    { id: 'partners', icon: Handshake, label: t('menu.partners'), href: `/${locale}/admin/partners` },
     { type: 'divider', label: t('menu.siteSection') },
-    { id: 'hero', icon: ImageIcon, label: t('menu.hero'), href: `/${locale}/admin/data/hero` },
-    { id: 'genericContent', icon: FileStack, label: t('menu.genericContent'), href: `/${locale}/admin/data/genericContent` },
-    { id: 'menu', icon: MenuIcon, label: t('menu.menuNav'), href: `/${locale}/admin/data/menu` },
-    { id: 'legal', icon: Scale, label: t('menu.legal'), href: `/${locale}/admin/data/legal` },
-    { id: 'config', icon: Settings, label: t('menu.config'), href: `/${locale}/admin/config` },
+    { id: 'hero', icon: ImageIcon, label: t('menu.hero'), href: `/${locale}/admin/hero` },
+    { id: 'galleries', icon: FileStack, label: 'Galeries', href: `/${locale}/admin/galleries` },
+    { id: 'media', icon: Compass, label: 'Médiathèque', href: `/${locale}/admin/media` },
+    { id: 'menu', icon: MenuIcon, label: t('menu.menuNav'), href: `/${locale}/admin/menus` },
+    { id: 'legal', icon: Scale, label: t('menu.legal'), href: `/${locale}/admin/legal` },
+    { id: 'emails', icon: Settings, label: 'Emails', href: `/${locale}/admin/emails` },
     { type: 'divider', label: t('menu.eshopSection') },
     { id: 'orders', icon: ShoppingCart, label: t('menu.orders'), href: `/${locale}/admin/orders` },
     { id: 'quotes', icon: FileText, label: t('menu.quotes'), href: `/${locale}/admin/quotes` },
@@ -76,6 +77,20 @@ function Shell({ children }: { children: ReactNode }) {
   const active = (() => {
     if (pathname.includes('/admin/dashboard')) return 'dashboard';
     if (pathname.includes('/admin/data/')) return pathname.split('/admin/data/')[1];
+    if (pathname.includes('/admin/products')) return 'products';
+    if (pathname.includes('/admin/services')) return 'services';
+    if (pathname.includes('/admin/careers')) return 'careers';
+    if (pathname.includes('/admin/news')) return 'news';
+    if (pathname.includes('/admin/events')) return 'events';
+    if (pathname.includes('/admin/solutions')) return 'solutions';
+    if (pathname.includes('/admin/testimonials')) return 'testimonials';
+    if (pathname.includes('/admin/partners')) return 'partners';
+    if (pathname.includes('/admin/hero')) return 'hero';
+    if (pathname.includes('/admin/galleries')) return 'galleries';
+    if (pathname.includes('/admin/media')) return 'media';
+    if (pathname.includes('/admin/menus')) return 'menu';
+    if (pathname.includes('/admin/legal')) return 'legal';
+    if (pathname.includes('/admin/emails')) return 'emails';
     if (pathname.includes('/admin/permissions')) return 'permissions';
     if (pathname.includes('/admin/config')) return 'config';
     if (pathname.includes('/admin/applications')) return 'applications';
