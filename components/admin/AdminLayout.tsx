@@ -209,10 +209,12 @@ export default function AdminLayout({ children, title = 'Administration' }: { ch
                     <div className={`absolute ${isRTL ? 'left-0' : 'right-0'} mt-2 w-56 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 shadow-2xl z-50 rounded-lg overflow-hidden`}>
                       <div className="p-4 border-b border-gray-200 dark:border-gray-800">
                         <div className="font-bold text-sari-dark dark:text-white">
-                          {t('header.administrator')}
+                          {adminUser
+                            ? [adminUser.firstName, adminUser.lastName].filter(Boolean).join(' ') || t('header.administrator')
+                            : t('header.administrator')}
                         </div>
                         <div className="text-xs text-gray-500">
-                          {t('header.adminEmail')}
+                          {adminUser?.email || t('header.adminEmail')}
                         </div>
                       </div>
                       <div className="p-2">

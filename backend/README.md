@@ -203,7 +203,7 @@ GET /api/v1/public/contact?locale=fr
 POST /api/v1/auth/login
 ```
 
-Le login admin (`/[locale]/admin`) consomme JWT + 2FA optionnelle. IndexedDB / Dexie reste un cache navigateur optionnel, jamais une source de vérité.
+Le login admin (`/[locale]/admin`) consomme JWT + 2FA optionnelle. Le tableau de bord affiche l’état de l’API et un bouton **Importer le catalogue** (`POST /settings/import-catalog`) qui charge `data/{fr,en,ar}/*.json` dans le CMS. Les écrans Produits / Services / Actualités / Utilisateurs lisent et écrivent l’API (plus de localStorage).
 
 ---
 

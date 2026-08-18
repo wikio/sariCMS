@@ -1,7 +1,6 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import {
   IsArray,
-  IsDateString,
   IsIn,
   IsOptional,
   IsString,
@@ -60,9 +59,10 @@ export class CreateNewsDto {
   @IsUUID()
   authorId?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Date libre (ISO ou libellé vitrine)' })
   @IsOptional()
-  @IsDateString()
+  @IsString()
+  @MaxLength(80)
   date?: string;
 
   @ApiPropertyOptional()

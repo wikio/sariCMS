@@ -8,14 +8,15 @@ import {
   Shield, Key, FileText, QrCode, Eye, Briefcase, Mail, Phone,
   Building, Calendar, CheckCircle, AlertCircle, User
 } from 'lucide-react';
-import AdminLayout from '@/components/admin/AdminLayout';
 import { useToast } from '@/components/admin/Toast';
+import { cmsAdminCreate, cmsAdminDelete, cmsAdminFetch, cmsAdminList, cmsAdminUpdate } from '@/lib/cms-admin';
+import { CmsError } from '@/lib/cms';
 
 type UserType = 'client' | 'partner' | 'candidate' | 'admin';
 type UserStatus = 'active' | 'blocked' | 'pending';
 
 interface AdminUser {
-  id: number;
+  id: string | number;
   name: string;
   email: string;
   type: UserType;
@@ -60,33 +61,40 @@ export default function AdminUsersPage() {
     loadUsers();
   }, [locale]);
 
-  const loadUsers = () => {
-    const stored = localStorage.getItem('sari_users');
-    if (stored) {
-      try {
-        setUsers(JSON.parse(stored));
-      } catch (e) {
-        setUsers([]);
-      }
-    } else {
-      // Données par défaut
-      const defaultUsers: AdminUser[] = [
-        { id: 1, name: 'Dr. Marie Laurent', email: 'marie@clinique.fr', type: 'client', phone: '+213 555 123 456', company: 'Clinique Saint-Louis', status: 'active', createdAt: '2023-01-15', avatar: '👩‍⚕️' },
-        { id: 2, name: 'Dr. Philippe Martin', email: 'philippe@chu.dz', type: 'client', phone: '+213 555 789 012', company: 'CHU de Lyon', status: 'active', createdAt: '2023-03-20', avatar: '👨‍⚕️' },
-        { id: 3, name: 'Sarah Benali', email: 'sarah@hopital.dz', type: 'client', phone: '+213 555 345 678', company: 'Groupe Hospitalier Nord', status: 'active', createdAt: '2023-06-10', avatar: '👩‍💼' },
-        { id: 4, name: 'Ahmed Kaci', email: 'ahmed@meditech.dz', type: 'partner', phone: '+213 555 901 234', company: 'MediTech International', status: 'active', createdAt: '2022-11-05', avatar: '🤝', partnerCode: 'PART-001', secretKey: 'sk_live_abc123' },
-        { id: 5, name: 'Fatima Zahra', email: 'fatima@email.dz', type: 'candidate', phone: '+213 555 567 890', company: '', status: 'pending', createdAt: '2024-07-01', avatar: '👩‍🎓', cv: 'data/cv/fatima.pdf', experience: '5 ans', motivation: 'Passionnée par les équipements médicaux', position: 'Technicienne biomédicale' },
-        { id: 6, name: 'Admin SARI', email: 'admin@sarisysteme.com', type: 'admin', phone: '+213 23 52 42 72', company: 'SARI Système', status: 'active', createdAt: '2020-01-01', avatar: '🛡️', permissions: ['all'] }
-      ];
-      setUsers(defaultUsers);
-      localStorage.setItem('sari_users', JSON.stringify(defaultUsers));
+  const mapUser = (row: Record<string, unknown>): AdminUser => {
+    const first = String(row.firstName ?? '');
+    const last = String(row.lastName ?? '');
+    return {
+      id: String(row.id ?? ''),
+      name: `${first} ${last}`.trim() || String(row.email ?? ''),
+      email: String(row.email ?? ''),
+      type: (row.type as UserType) || 'client',
+      phone: String(row.phone ?? ''),
+      company: String(row.company ?? ''),
+      status: (row.status as UserStatus) || 'pending',
+      createdAt: String(row.createdAt ?? '').slice(0, 10),
+      avatar: String(row.avatar || '👤'),
+      partnerCode: row.partnerCode ? String(row.partnerCode) : undefined,
+      secretKey: row.partnerKey ? String(row.partnerKey) : undefined,
+      cv: row.cvUrl ? String(row.cvUrl) : undefined,
+      experience: row.experience ? String(row.experience) : undefined,
+      motivation: row.motivation ? String(row.motivation) : undefined,
+      position: row.position ? String(row.position) : undefined,
+    };
+  };
+
+  const loadUsers = async () => {
+    try {
+      const rows = await cmsAdminList<Record<string, unknown>>('users');
+      setUsers(rows.map(mapUser));
+    } catch (err) {
+      showToast(err instanceof CmsError ? err.message : t('saveSuccess'), 'error');
+      setUsers([]);
     }
   };
 
   const saveUsers = (newUsers: AdminUser[]) => {
     setUsers(newUsers);
-    localStorage.setItem('sari_users', JSON.stringify(newUsers));
-    showToast(t('saveSuccess'), 'success');
   };
 
   const filteredUsers = users.filter(u => {
@@ -97,26 +105,59 @@ export default function AdminUsersPage() {
     return matchSearch && matchType;
   });
 
-  const handleStatusToggle = (id: number) => {
-    const newUsers = users.map(u => u.id === id ? { ...u, status: u.status === 'active' ? 'blocked' : 'active' } : u);
-    saveUsers(newUsers);
-  };
-
-  const handleDelete = (id: number) => {
-    if (confirm(t('deleteConfirm'))) {
-      saveUsers(users.filter(u => u.id !== id));
+  const handleStatusToggle = async (id: string | number) => {
+    const current = users.find((u) => u.id === id);
+    if (!current) return;
+    const next = current.status === 'active' ? 'blocked' : 'active';
+    try {
+      const updated = await cmsAdminUpdate('users', String(id), { status: next });
+      saveUsers(users.map((u) => (u.id === id ? mapUser(updated as Record<string, unknown>) : u)));
+      showToast(t('saveSuccess'), 'success');
+    } catch (err) {
+      showToast(err instanceof CmsError ? err.message : 'Erreur', 'error');
     }
   };
 
-  const handleSaveEdit = () => {
+  const handleDelete = async (id: string | number) => {
+    if (!confirm(t('deleteConfirm'))) return;
+    try {
+      await cmsAdminDelete('users', String(id));
+      saveUsers(users.filter((u) => u.id !== id));
+      showToast(t('saveSuccess'), 'success');
+    } catch (err) {
+      showToast(err instanceof CmsError ? err.message : 'Erreur', 'error');
+    }
+  };
+
+  const splitName = (name: string) => {
+    const parts = name.trim().split(/\s+/);
+    return { firstName: parts[0] || 'User', lastName: parts.slice(1).join(' ') || parts[0] || 'SARI' };
+  };
+
+  const handleSaveEdit = async () => {
     if (!editingUser) return;
-    saveUsers(users.map(u => u.id === editingUser.id ? editingUser : u));
-    setEditingUser(null);
+    try {
+      const { firstName, lastName } = splitName(editingUser.name);
+      const updated = await cmsAdminUpdate('users', String(editingUser.id), {
+        firstName,
+        lastName,
+        email: editingUser.email,
+        phone: editingUser.phone,
+        company: editingUser.company,
+        type: editingUser.type,
+        status: editingUser.status,
+      });
+      saveUsers(users.map((u) => (u.id === editingUser.id ? mapUser(updated as Record<string, unknown>) : u)));
+      setEditingUser(null);
+      showToast(t('saveSuccess'), 'success');
+    } catch (err) {
+      showToast(err instanceof CmsError ? err.message : 'Erreur', 'error');
+    }
   };
 
   const handleAddUser = () => {
     const newUser: AdminUser = {
-      id: Date.now(),
+      id: '',
       name: '',
       email: '',
       type: 'client',
@@ -124,17 +165,33 @@ export default function AdminUsersPage() {
       company: '',
       status: 'active',
       createdAt: new Date().toISOString().split('T')[0],
-      avatar: '👤'
+      avatar: '👤',
     };
     setShowAddModal(true);
     setEditingUser(newUser);
   };
 
-  const handleSaveNew = () => {
+  const handleSaveNew = async () => {
     if (!editingUser) return;
-    saveUsers([editingUser, ...users]);
-    setEditingUser(null);
-    setShowAddModal(false);
+    try {
+      const { firstName, lastName } = splitName(editingUser.name || editingUser.email || 'Nouveau User');
+      const created = await cmsAdminCreate('users', {
+        firstName,
+        lastName,
+        email: editingUser.email,
+        password: 'ChangeMe_Sari2026!',
+        type: editingUser.type,
+        status: editingUser.status || 'active',
+        phone: editingUser.phone,
+        company: editingUser.company,
+      });
+      saveUsers([mapUser(created as Record<string, unknown>), ...users]);
+      setEditingUser(null);
+      setShowAddModal(false);
+      showToast(`${t('saveSuccess')} · mot de passe temporaire ChangeMe_Sari2026!`, 'success');
+    } catch (err) {
+      showToast(err instanceof CmsError ? err.message : 'Erreur', 'error');
+    }
   };
 
   const generateQRCode = (user: AdminUser) => {
@@ -142,18 +199,23 @@ export default function AdminUsersPage() {
     setShowQRModal({ user, data: qrData });
   };
 
-  const generateTempPassword = (user: AdminUser) => {
-    const tempPass = 'Temp' + Math.random().toString(36).slice(-8) + '!';
-    showToast(`${t('tempPassword')} : ${tempPass}`, 'info');
-    setShowPasswordModal({ user, password: tempPass });
+  const generateTempPassword = async (user: AdminUser) => {
+    try {
+      const result = await cmsAdminFetch<{ password: string }>(`/users/${user.id}/temp-password`, { method: 'POST' });
+      setShowPasswordModal({ user, password: result.password });
+    } catch (err) {
+      showToast(err instanceof CmsError ? err.message : 'Erreur', 'error');
+    }
   };
 
-  const generatePartnerCode = (user: AdminUser) => {
-    const code = 'PART-' + Math.random().toString(36).slice(2, 5).toUpperCase() + '-' + Date.now().toString().slice(-4);
-    const secretKey = 'sk_live_' + Math.random().toString(36).slice(2, 15);
-    const updatedUser = { ...user, partnerCode: code, secretKey: secretKey };
-    saveUsers(users.map(u => u.id === user.id ? updatedUser : u));
-    showToast(`${t('codeGenerated')} : ${code}`, 'success');
+  const generatePartnerCode = async (user: AdminUser) => {
+    try {
+      const result = await cmsAdminFetch<Record<string, unknown>>(`/users/${user.id}/partner-code`, { method: 'POST' });
+      saveUsers(users.map((u) => (u.id === user.id ? mapUser(result) : u)));
+      showToast(`${t('codeGenerated')} : ${String(result.partnerCode ?? '')}`, 'success');
+    } catch (err) {
+      showToast(err instanceof CmsError ? err.message : 'Erreur', 'error');
+    }
   };
 
   const handleShowCV = (user: AdminUser) => {
