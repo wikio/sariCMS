@@ -1,0 +1,9 @@
+{
+  "unauthorized": "Invalid credentials",
+  "forbidden": "Insufficient permissions",
+  "notFound": "Resource not found",
+  "conflict": "This value is already in use",
+  "purgeConfirm": "A confirmation token is required for permanent deletion",
+  "invalidToken": "Invalid or expired confirmation token",
+  "inactive": "Account is not active"
+}

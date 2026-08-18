@@ -1,0 +1,13 @@
+node_modules
+dist
+coverage
+.env
+.env.local
+storage/json/*.json
+storage/cache/*
+!storage/json/.gitkeep
+!storage/cache/.gitkeep
+*.log
+.DS_Store
+prisma/*.db
+*.sqlite

@@ -1,5 +1,7 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+The CMS API lives in [`backend/`](./backend/README.md) (NestJS, JWT + 2FA, multi-driver MySQL/PostgreSQL/MongoDB/JSON). Start it with `cd backend && npm install && npm run seed && npm run start:dev` then open `/api/v1/docs`.
+
 ## Getting Started
 
 First, run the development server:

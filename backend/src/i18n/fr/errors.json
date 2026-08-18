@@ -1,0 +1,9 @@
+{
+  "unauthorized": "Identifiants invalides",
+  "forbidden": "Permissions insuffisantes",
+  "notFound": "Ressource introuvable",
+  "conflict": "Cette valeur est déjà utilisée",
+  "purgeConfirm": "Un jeton de confirmation est requis pour la suppression définitive",
+  "invalidToken": "Jeton de confirmation invalide ou expiré",
+  "inactive": "Compte inactif"
+}
