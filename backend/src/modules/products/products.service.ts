@@ -50,4 +50,12 @@ export class ProductsService extends BaseCrudService<ProductEntity> {
     }
     return out;
   }
+
+  async findPublished(idOrSlug: string, locale?: string) {
+    const bySlug = await this.repository.findOne(locale ? { slug: idOrSlug, locale } : { slug: idOrSlug });
+    const entity = bySlug ?? (await this.repository.findById(idOrSlug));
+    if (!entity || entity.status !== 'published') return null;
+    if (locale && entity.locale && entity.locale !== locale) return null;
+    return this.toView(entity, 'block');
+  }
 }

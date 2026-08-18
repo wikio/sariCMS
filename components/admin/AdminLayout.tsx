@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import AdminLanguageSwitcher from '@/components/admin/AdminLanguageSwitcher';
 import { ToastProvider } from '@/components/admin/Toast';
+import { clearAdminSession, hasAdminSession, readAdminUser } from '@/lib/admin-session';
 
 interface MenuItem {
   id?: string;
@@ -32,33 +33,23 @@ export default function AdminLayout({ children, title = 'Administration' }: { ch
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [adminUser, setAdminUser] = useState<ReturnType<typeof readAdminUser>>(null);
 
   // ✅ Détection de la page de login (pas de sidebar)
   const isLoginPage = pathname === `/${locale}/admin` || pathname === `/${locale}/admin/`;
 
   // Vérification de l'authentification (sauf sur la page login)
   useEffect(() => {
+    setAdminUser(readAdminUser());
     if (isLoginPage) return;
 
-    const auth = localStorage.getItem('sari_admin_auth');
-    const authTime = localStorage.getItem('sari_admin_time');
-
-    if (auth !== 'true' || !authTime) {
-      router.push(`/${locale}/admin`);
-      return;
-    }
-
-    const elapsed = Date.now() - parseInt(authTime);
-    if (elapsed > 2 * 60 * 60 * 1000) {
-      localStorage.removeItem('sari_admin_auth');
-      localStorage.removeItem('sari_admin_time');
+    if (!hasAdminSession()) {
       router.push(`/${locale}/admin`);
     }
   }, [router, pathname, locale, isLoginPage]);
 
   const handleLogout = () => {
-    localStorage.removeItem('sari_admin_auth');
-    localStorage.removeItem('sari_admin_time');
+    clearAdminSession();
     router.push(`/${locale}`);
   };
 
@@ -196,9 +187,9 @@ export default function AdminLayout({ children, title = 'Administration' }: { ch
             </div>
             <div className="flex items-center gap-3">
               <AdminLanguageSwitcher />
-              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-orange-100 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400 rounded-full text-xs font-semibold">
+              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 rounded-full text-xs font-semibold">
                 <Database className="w-3 h-3" />
-                {t('header.jsonLocalMode')}
+                {t('header.cmsMode')}
               </div>
               <div className="relative">
                 <button 

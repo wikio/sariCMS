@@ -6,36 +6,52 @@ import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { Shield, LogIn, ArrowLeft, AlertCircle, Lock } from 'lucide-react';
 import AdminLanguageSwitcher from '@/components/admin/AdminLanguageSwitcher';
+import { cmsFetch, CmsError } from '@/lib/cms';
+import { hasAdminSession, persistAdminSession } from '@/lib/admin-session';
+
+interface LoginResult {
+  requires2fa?: boolean;
+  challengeToken?: string;
+  accessToken?: string;
+  refreshToken?: string;
+  user?: {
+    id: string;
+    email: string;
+    firstName?: string;
+    lastName?: string;
+    type?: string;
+    role?: string;
+    permissions?: string[];
+    totpEnabled?: boolean;
+  };
+}
 
 export default function AdminLoginPage() {
   const router = useRouter();
   const locale = useLocale();
   const t = useTranslations('admin.login');
 
+  const [email, setEmail] = useState('admin@sarisysteme.com');
   const [password, setPassword] = useState('');
+  const [totpCode, setTotpCode] = useState('');
+  const [challengeToken, setChallengeToken] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const [attempts, setAttempts] = useState(0);
   const [blocked, setBlocked] = useState(false);
 
-  const ADMIN_PASSWORD = 'SARI@admin2024!';
-  const MAX_ATTEMPTS = 3;
+  const MAX_ATTEMPTS = 8;
   const BLOCK_DURATION = 15 * 60 * 1000;
 
   useEffect(() => {
-    const auth = localStorage.getItem('sari_admin_auth');
-    const authTime = localStorage.getItem('sari_admin_time');
-
-    if (auth === 'true' && authTime) {
-      const elapsed = Date.now() - parseInt(authTime);
-      if (elapsed < 2 * 60 * 60 * 1000) {
-        router.replace(`/${locale}/admin/dashboard`);
-        return;
-      }
+    if (hasAdminSession()) {
+      router.replace(`/${locale}/admin/dashboard`);
+      return;
     }
 
     const blockTime = localStorage.getItem('sari_admin_blocked');
     if (blockTime) {
-      const elapsed = Date.now() - parseInt(blockTime);
+      const elapsed = Date.now() - parseInt(blockTime, 10);
       if (elapsed < BLOCK_DURATION) {
         setBlocked(true);
         setTimeout(() => {
@@ -47,33 +63,74 @@ export default function AdminLoginPage() {
     }
   }, [router, locale]);
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
+  const failAttempt = (message: string) => {
+    const newAttempts = attempts + 1;
+    setAttempts(newAttempts);
+    localStorage.setItem('sari_admin_attempts', newAttempts.toString());
+    if (newAttempts >= MAX_ATTEMPTS) {
+      localStorage.setItem('sari_admin_blocked', Date.now().toString());
+      setBlocked(true);
+      setError(t('tooManyAttempts'));
+    } else {
+      setError(`${message} ${MAX_ATTEMPTS - newAttempts} ${t('attemptsLeft')}`);
+    }
+    setPassword('');
+  };
 
+  const acceptSession = (result: LoginResult) => {
+    if (!result.accessToken || !result.user) {
+      setError(t('wrongPassword'));
+      return;
+    }
+    persistAdminSession({
+      accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
+      user: result.user,
+    });
+    localStorage.removeItem('sari_admin_blocked');
+    localStorage.removeItem('sari_admin_attempts');
+    router.push(`/${locale}/admin/dashboard`);
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (blocked) {
       setError(t('tooManyAttempts'));
       return;
     }
-
-    if (password === ADMIN_PASSWORD) {
-      localStorage.setItem('sari_admin_auth', 'true');
-      localStorage.setItem('sari_admin_time', Date.now().toString());
-      localStorage.removeItem('sari_admin_blocked');
-      localStorage.removeItem('sari_admin_attempts');
-      router.push(`/${locale}/admin/dashboard`);
-    } else {
-      const newAttempts = attempts + 1;
-      setAttempts(newAttempts);
-      localStorage.setItem('sari_admin_attempts', newAttempts.toString());
-
-      if (newAttempts >= MAX_ATTEMPTS) {
-        localStorage.setItem('sari_admin_blocked', Date.now().toString());
-        setBlocked(true);
-        setError(t('tooManyAttempts'));
-      } else {
-        setError(`${t('wrongPassword')} ${MAX_ATTEMPTS - newAttempts} ${t('attemptsLeft')}`);
+    setError('');
+    setLoading(true);
+    try {
+      if (challengeToken) {
+        const result = await cmsFetch<LoginResult>('/auth/2fa/challenge', {
+          method: 'POST',
+          json: { challengeToken, code: totpCode },
+          timeoutMs: 8000,
+        });
+        acceptSession(result);
+        return;
       }
-      setPassword('');
+
+      const result = await cmsFetch<LoginResult>('/auth/login', {
+        method: 'POST',
+        json: { email, password, ...(totpCode ? { totpCode } : {}) },
+        timeoutMs: 8000,
+      });
+
+      if (result.requires2fa && result.challengeToken) {
+        setChallengeToken(result.challengeToken);
+        setError('');
+        return;
+      }
+      acceptSession(result);
+    } catch (err) {
+      if (err instanceof CmsError) {
+        failAttempt(err.status === 401 ? t('wrongPassword') : err.message || t('wrongPassword'));
+      } else {
+        setError(t('apiUnreachable'));
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -81,7 +138,6 @@ export default function AdminLoginPage() {
     <div className="min-h-screen flex items-center justify-center p-4 relative">
       <div className="absolute inset-0 grid-pattern-bg opacity-5"></div>
 
-      {/* Sélecteur de langue en haut à droite */}
       <div className="absolute top-6 right-6 z-10">
         <AdminLanguageSwitcher />
       </div>
@@ -120,6 +176,21 @@ export default function AdminLoginPage() {
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label className="block text-sm font-bold text-sari-dark dark:text-white mb-2">
+                {t('emailLabel')}
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder={t('emailPlaceholder')}
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white rounded-lg focus:border-sari-blue outline-none"
+                autoFocus
+                disabled={blocked || !!challengeToken}
+                autoComplete="username"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-sari-dark dark:text-white mb-2">
                 {t('passwordLabel')}
               </label>
               <input
@@ -128,17 +199,33 @@ export default function AdminLoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder={t('passwordPlaceholder')}
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white rounded-lg focus:border-sari-blue outline-none"
-                autoFocus
-                disabled={blocked}
+                disabled={blocked || !!challengeToken}
+                autoComplete="current-password"
               />
             </div>
+            {(challengeToken || totpCode) && (
+              <div>
+                <label className="block text-sm font-bold text-sari-dark dark:text-white mb-2">
+                  {t('totpLabel')}
+                </label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={totpCode}
+                  onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="000000"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white rounded-lg focus:border-sari-blue outline-none tracking-[0.4em] text-center"
+                  autoFocus={!!challengeToken}
+                />
+              </div>
+            )}
             <button
               type="submit"
-              disabled={blocked || !password}
+              disabled={blocked || loading || !email || (!challengeToken && !password) || (!!challengeToken && totpCode.length !== 6)}
               className="w-full btn-primary text-white py-3 font-semibold rounded-lg flex items-center justify-center gap-2 disabled:opacity-50"
             >
               <LogIn className="w-5 h-5" />
-              {t('submit')}
+              {loading ? t('submitting') : challengeToken ? t('verifyTotp') : t('submit')}
             </button>
           </form>
         )}

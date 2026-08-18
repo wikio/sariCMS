@@ -37,6 +37,7 @@
     "adminEmail": "admin@sari-systeme.dz",
     "settings": "الإعدادات",
     "jsonLocalMode": "وضع JSON المحلي",
+    "cmsMode": "واجهة CMS",
     "version": "الإصدار 1.0 المرحلة 1"
   },
   "dashboard": {
@@ -79,16 +80,22 @@
   "login": {
     "title": "الإدارة",
     "subtitle": "الوصول مخصص للمسؤولين",
-    "passwordLabel": "كلمة مرور المسؤول",
+    "emailLabel": "البريد الإلكتروني",
+    "emailPlaceholder": "admin@sarisysteme.com",
+    "passwordLabel": "كلمة المرور",
     "passwordPlaceholder": "••••••••",
+    "totpLabel": "رمز التحقق الثنائي",
+    "verifyTotp": "تأكيد الرمز",
+    "submitting": "جاري الدخول…",
     "submit": "تسجيل الدخول",
     "backToSite": "العودة إلى الموقع",
     "tooManyAttempts": "محاولات كثيرة جداً. حاول مرة أخرى بعد 15 دقيقة.",
-    "wrongPassword": "كلمة المرور غير صحيحة.",
+    "wrongPassword": "بيانات الدخول غير صحيحة.",
+    "apiUnreachable": "واجهة CMS غير متاحة. شغّل الخادم الخلفي (المنفذ 3001).",
     "attemptsLeft": "محاولة(ات) متبقية.",
     "accessBlocked": "الوصول محظور مؤقتاً",
     "tryLater": "حاول مرة أخرى بعد بضع دقائق.",
-    "phase1": "وضع المرحلة 1 - المصادقة المحلية"
+    "phase1": "JWT مع تحقق ثنائي اختياري — الحساب admin@sarisysteme.com"
   },
   "dataManager": {
     "title": "العنوان",

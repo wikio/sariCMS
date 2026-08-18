@@ -37,6 +37,7 @@
     "adminEmail": "admin@sari-systeme.dz",
     "settings": "Settings",
     "jsonLocalMode": "Local JSON Mode",
+    "cmsMode": "CMS API",
     "version": "v1.0 Phase 1"
   },
   "dashboard": {
@@ -79,16 +80,22 @@
   "login": {
     "title": "Administration",
     "subtitle": "Access reserved for administrators",
-    "passwordLabel": "Administrator password",
+    "emailLabel": "Email",
+    "emailPlaceholder": "admin@sarisysteme.com",
+    "passwordLabel": "Password",
     "passwordPlaceholder": "••••••••",
+    "totpLabel": "2FA code",
+    "verifyTotp": "Verify code",
+    "submitting": "Signing in…",
     "submit": "Log in",
     "backToSite": "Back to site",
     "tooManyAttempts": "Too many attempts. Try again in 15 minutes.",
-    "wrongPassword": "Incorrect password.",
+    "wrongPassword": "Invalid credentials.",
+    "apiUnreachable": "CMS API unreachable. Start the backend (port 3001).",
     "attemptsLeft": "attempt(s) remaining.",
     "accessBlocked": "Access temporarily blocked",
     "tryLater": "Try again in a few minutes.",
-    "phase1": "Phase 1 Mode - Local Authentication"
+    "phase1": "JWT + optional 2FA — seed account admin@sarisysteme.com"
   },
   "dataManager": {
     "title": "Title",

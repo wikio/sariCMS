@@ -1,4 +1,4 @@
-# SARI CMS — Backend (étape 1)
+# SARI CMS — Backend (étapes 1–2)
 
 API NestJS du CMS SARI Système. Elle remplace progressivement les fichiers JSON statiques du site vitrine Next.js (`/data/{fr,en,ar}/*.json`) par une API versionnée, authentifiée et multi-bases.
 
@@ -55,7 +55,7 @@ SEED_ADMIN_PASSWORD=ChangeMe_Sari2026!
 ```
 
 ```bash
-npm test                      # BaseCrudService + News + Events + Products
+npm test                      # BaseCrudService + News + Events + Products + groupe 3
 ```
 
 ---
@@ -139,19 +139,28 @@ Filtres dynamiques :
 | GET | `/public/testimonials` | Témoignages |
 | GET | `/public/menus` `/public/menus/:location` | Navigation |
 | GET | `/public/contact?locale=fr` | Coordonnées |
+| GET | `/public/news` `/public/news/:slug` | Actualités |
+| GET | `/public/events` `/public/events/:slug` | Événements |
+| GET | `/public/products` `/public/products/:slug` | Catalogue |
+| GET | `/public/services` `/public/services/:slug` | Prestations |
+| GET | `/public/partners` | Partenaires |
+| GET | `/public/careers` `/public/careers/:slug` | Offres d’emploi |
+| GET | `/public/solutions` `/public/solutions/:slug` | Catégories de solutions |
+| GET | `/public/hero` | Slides hero |
 | POST | `/contact/messages` | Formulaire de contact (throttlé) |
 | GET | `/health` | Driver + uptime |
 
 ---
 
-## Modules livrés (groupes 1 et 2 + socle tests)
+## Modules livrés (groupes 1 à 3)
 
 **Groupe 1** — `auth`, `users`, `roles`, `permissions`  
 **Groupe 2** — `pages` (kinds `legal|about|generic`, subtypes `simple|gallery|flyer|slide|scroll|full`), `faqs`, `testimonials`, `menus`, `contact`  
+**Groupe 3** — `services`, `partners`, `careers`, `solutions`, `hero`  
 **Transverse** — `translations`, `audit-logs`, `settings` (purge corbeille)  
-**Socle tests / pont groupe 3-5** — `news` (stats auteur), `events` (agenda JSON), `products` (galerie, specs, options)
+**Socle tests** — `news` (stats auteur), `events` (agenda JSON), `products` (galerie, specs, options)
 
-Les groupes 3–8 restants (offres d’emploi, solutions, GED, newsletter, GrapesJS…) réutiliseront `BaseCrudService` / `BaseCrudController` sans réécrire le CRUD.
+Les groupes 4–8 restants (GED, newsletter, GrapesJS, e-shop commandes…) réutilisent `BaseCrudService` / `BaseCrudController` sans réécrire le CRUD.
 
 Arborescence imposée par module :
 
@@ -181,16 +190,20 @@ Le cache fichier (`storage/cache/keyv.json`) et le store JSON doivent être pers
 
 ## Brancher le frontend existant
 
-Aujourd’hui `lib/data.ts` importe `@/data/{locale}/*.json`. Cible :
+`lib/data.ts` interroge d’abord l’API publique, puis retombe sur `@/data/{locale}/*.json` si le backend est down **ou** si la collection est vide (seed structurel).
+
+Le navigateur n’appelle jamais `localhost` : il tape `/api/v1/*`, réécrit par Next vers `CMS_API_INTERNAL_URL` (défaut `http://127.0.0.1:3001/api/v1`).
 
 ```
 GET /api/v1/public/pages?locale=fr&view=block
-GET /api/v1/public/menus/main?locale=fr
-GET /api/v1/public/testimonials?locale=fr&view=card
+GET /api/v1/public/menus?locale=fr
+GET /api/v1/public/testimonials?locale=fr&view=block
+GET /api/v1/public/products?locale=fr&view=block
 GET /api/v1/public/contact?locale=fr
+POST /api/v1/auth/login
 ```
 
-Le back-office Next.js + shadcn consommera les routes admin JWT. IndexedDB / Dexie reste un cache navigateur optionnel, jamais une source de vérité.
+Le login admin (`/[locale]/admin`) consomme JWT + 2FA optionnelle. IndexedDB / Dexie reste un cache navigateur optionnel, jamais une source de vérité.
 
 ---
 
@@ -201,6 +214,10 @@ src/common/crud/base-crud.service.spec.ts   CRUD, vues, corbeille, jeton de purg
 src/modules/news/news.service.spec.ts        slug, publication, stats auteur
 src/modules/events/events.service.spec.ts    agenda JSON, upcoming
 src/modules/products/products.service.spec.ts slug, stock, specs
+src/modules/services/services.service.spec.ts slug, défauts
+src/modules/partners/partners.service.spec.ts défauts
+src/modules/careers/careers.service.spec.ts   slug, publishedAt
+src/modules/solutions/solutions.service.spec.ts slug explicite
 ```
 
 Les services sont testés contre un `ICrudRepository` mocké — aucun driver réel n’est requis.

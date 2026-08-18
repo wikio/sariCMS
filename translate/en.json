@@ -38,6 +38,7 @@
       "adminEmail": "admin@sari-systeme.dz",
       "settings": "Settings",
       "jsonLocalMode": "Local JSON Mode",
+      "cmsMode": "CMS API",
       "version": "v1.0 Phase 1"
     },
     "dashboard": {
@@ -80,16 +81,22 @@
     "login": {
       "title": "Administration",
       "subtitle": "Access reserved for administrators",
-      "passwordLabel": "Administrator password",
+      "emailLabel": "Email",
+      "emailPlaceholder": "admin@sarisysteme.com",
+      "passwordLabel": "Password",
       "passwordPlaceholder": "••••••••",
+      "totpLabel": "2FA code",
+      "verifyTotp": "Verify code",
+      "submitting": "Signing in…",
       "submit": "Log in",
       "backToSite": "Back to site",
       "tooManyAttempts": "Too many attempts. Try again in 15 minutes.",
-      "wrongPassword": "Incorrect password.",
+      "wrongPassword": "Invalid credentials.",
+      "apiUnreachable": "CMS API unreachable. Start the backend (port 3001).",
       "attemptsLeft": "attempt(s) remaining.",
       "accessBlocked": "Access temporarily blocked",
       "tryLater": "Try again in a few minutes.",
-      "phase1": "Phase 1 Mode - Local Authentication"
+      "phase1": "JWT + optional 2FA — seed account admin@sarisysteme.com"
     },
     "dataManager": {
       "title": "Title",
@@ -1184,6 +1191,27 @@
         "logoFallback": "Logo",
         "companyName": "Solution SARI Systeme"
       },
+      "LoadingSpinner": {
+        "loading": "Loading..."
+      },
+      "NotFound": {
+        "title": "Page Not Found",
+        "message": "Sorry, the page you are looking for does not exist or has been moved.",
+        "whatToDo": "What would you like to do?",
+        "backHome": "Back to Home",
+        "contactUs": "Contact Us"
+      },
+      "SearchHeader": {
+        "title": "What are you looking for?",
+        "subtitle": "Products, news, events...",
+        "placeholder": "Search for a product, article, event...",
+        "searchButton": "Search",
+        "pressEscape": "to close",
+        "tipsTitle": "💡 Search tips:",
+        "tipOr": "= OR",
+        "tipAnd": "= AND",
+        "tipExample": "Ex: ultrasound, blood pressure"
+      },
       "header": {
         "theme": "Change theme",
         "cart": "Cart",
@@ -1223,27 +1251,6 @@
         "signUp": "Sign up",
         "welcome": "Welcome",
         "guest": "Guest"
-      },
-      "LoadingSpinner": {
-        "loading": "Loading..."
-      },
-      "NotFound": {
-        "title": "Page Not Found",
-        "message": "Sorry, the page you are looking for does not exist or has been moved.",
-        "whatToDo": "What would you like to do?",
-        "backHome": "Back to Home",
-        "contactUs": "Contact Us"
-      },
-      "SearchHeader": {
-        "title": "What are you looking for?",
-        "subtitle": "Products, news, events...",
-        "placeholder": "Search for a product, article, event...",
-        "searchButton": "Search",
-        "pressEscape": "to close",
-        "tipsTitle": "💡 Search tips:",
-        "tipOr": "= OR",
-        "tipAnd": "= AND",
-        "tipExample": "Ex: ultrasound, blood pressure"
       }
     },
     "sections": {
