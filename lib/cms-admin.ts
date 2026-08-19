@@ -91,7 +91,10 @@ function pick(resource: string, item: Record<string, unknown>): Record<string, u
   const allowed = WRITABLE_FIELDS[resource] || Object.keys(item);
   const out: Record<string, unknown> = {};
   for (const key of allowed) {
-    if (item[key] !== undefined) out[key] = item[key];
+    const value = item[key];
+    if (value === undefined || value === null) continue;
+    if (value === '' && (key === 'slug' || key === 'sku')) continue;
+    out[key] = value;
   }
   return out;
 }

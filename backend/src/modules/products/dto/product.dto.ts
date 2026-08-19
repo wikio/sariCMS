@@ -7,7 +7,6 @@ import {
   IsObject,
   IsOptional,
   IsString,
-  Matches,
   MaxLength,
   MinLength,
   ValidateNested,
@@ -35,7 +34,6 @@ export class CreateProductDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  @Matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
   @MaxLength(180)
   slug?: string;
 
@@ -125,6 +123,10 @@ export class CreateProductDto {
   @IsOptional()
   @IsIn(['draft', 'published', 'archived'])
   status?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  sortOrder?: number;
 }
 
 export class UpdateProductDto extends PartialType(CreateProductDto) {}

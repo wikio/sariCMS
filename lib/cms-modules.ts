@@ -6,7 +6,7 @@ import {
 export type FieldKind =
   | 'text' | 'textarea' | 'html' | 'slug' | 'email' | 'phone' | 'url'
   | 'price' | 'number' | 'select' | 'radio' | 'toggle' | 'tags'
-  | 'image' | 'gallery' | 'faq' | 'list' | 'specs' | 'options' | 'agenda'
+  | 'image' | 'gallery' | 'file' | 'faq' | 'list' | 'specs' | 'options' | 'agenda'
   | 'slides' | 'sections' | 'rating' | 'icon';
 
 export type ListLayout = 'catalog' | 'magazine' | 'timeline' | 'mosaic' | 'quotes' | 'people' | 'slides' | 'docs';
@@ -26,6 +26,7 @@ export interface FieldSpec {
   slugFrom?: string;
   wide?: boolean;
   group?: string;
+  i18n?: boolean;
 }
 
 export interface CmsModule {
@@ -79,20 +80,20 @@ export const CMS_MODULES: CmsModule[] = [
     orderField: 'sortOrder',
     defaults: { name: 'Nouveau produit', status: 'draft', inStock: true, locale: 'fr', gallery: [], features: [], specs: {}, options: [] },
     fields: [
-      { key: 'name', label: 'Nom commercial', kind: 'text', required: true, placeholder: 'Ex. Échographe Portable Pro X1', hint: 'Nom affiché sur la vitrine.', maxLength: 120, group: 'Identité' },
+      { key: 'name', label: 'Nom commercial', kind: 'text', required: true, placeholder: 'Ex. Échographe Portable Pro X1', hint: 'Nom affiché sur la vitrine.', maxLength: 120, group: 'Identité', i18n: true },
       { key: 'slug', label: 'Slug URL', kind: 'slug', slugFrom: 'name', hint: 'Généré depuis le titre, modifiable.', group: 'Identité' },
       { key: 'locale', label: 'Langue', kind: 'radio', options: LOCALES, group: 'Identité' },
       { key: 'status', label: 'Publication', kind: 'radio', options: STATUS, group: 'Identité' },
       { key: 'category', label: 'Catégorie', kind: 'select', taxonomy: 'products.category', options: CATEGORIES, hint: 'Gérée dans Taxonomies. Vous pouvez en créer une ici.', group: 'Catalogue' },
-      { key: 'sku', label: 'Référence SKU', kind: 'text', prefix: 'SKU', group: 'Catalogue' },
+      { key: 'sku', label: 'Code produit', kind: 'text', prefix: 'SKU', placeholder: 'Laissé vide → PRO-00001', hint: 'Généré automatiquement si vide. Une saisie manuelle est conservée.', group: 'Catalogue' },
       { key: 'price', label: 'Prix', kind: 'price', group: 'Catalogue' },
       { key: 'inStock', label: 'En stock', kind: 'toggle', group: 'Catalogue' },
       { key: 'deliveryTime', label: 'Délai de livraison', kind: 'text', group: 'Catalogue' },
       { key: 'image', label: 'Visuel principal', kind: 'image', group: 'Médias' },
       { key: 'gallery', label: 'Galerie', kind: 'gallery', wide: true, group: 'Médias' },
-      { key: 'catalogPdf', label: 'Fiche PDF', kind: 'url', prefix: 'PDF', group: 'Médias' },
-      { key: 'shortDesc', label: 'Accroche', kind: 'textarea', wide: true, maxLength: 280, placeholder: 'Résumé court pour les cartes…', hint: 'Max 280 caractères.', group: 'Contenu' },
-      { key: 'fullDesc', label: 'Description détaillée', kind: 'html', wide: true, hint: 'Éditeur riche — section pleine largeur.', group: 'Contenu' },
+      { key: 'catalogPdf', label: 'Fiche technique PDF', kind: 'file', hint: 'Upload, GED, consultation et téléchargement.', group: 'Médias' },
+      { key: 'shortDesc', label: 'Accroche', kind: 'textarea', wide: true, maxLength: 280, placeholder: 'Résumé court pour les cartes…', hint: 'Max 280 caractères.', group: 'Contenu', i18n: true },
+      { key: 'fullDesc', label: 'Description détaillée', kind: 'html', wide: true, hint: 'Éditeur riche — section pleine largeur.', group: 'Contenu', i18n: true },
       { key: 'features', label: 'Points forts', kind: 'list', wide: true, group: 'Technique' },
       { key: 'specs', label: 'Spécifications', kind: 'specs', wide: true, group: 'Technique' },
       { key: 'options', label: 'Options / variantes', kind: 'options', wide: true, group: 'Technique' },

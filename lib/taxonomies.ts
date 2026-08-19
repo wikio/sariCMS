@@ -40,6 +40,24 @@ export const TAXONOMY_DEFS: TaxonomyDef[] = [
       .map((v) => ({ value: v, label: v })),
   },
   {
+    key: 'products.type',
+    label: 'Types de produits',
+    hint: 'Familles techniques du catalogue.',
+    defaults: ['Équipement', 'Consommable', 'Accessoire', 'Logiciel'].map((v) => ({ value: v, label: v })),
+  },
+  {
+    key: 'products.spec',
+    label: 'Clés de spécifications',
+    hint: 'Libellés réutilisables des fiches techniques.',
+    defaults: ['Poids', 'Dimensions', 'Alimentation', 'Classe'].map((v) => ({ value: v, label: v })),
+  },
+  {
+    key: 'products.attribute',
+    label: 'Attributs produits',
+    hint: 'Attributs filtrables (marque, classe, etc.).',
+    defaults: ['Marque', 'Classe', 'Garantie'].map((v) => ({ value: v, label: v })),
+  },
+  {
     key: 'partners.category',
     label: 'Catégories partenaires',
     hint: 'Familles de partenaires.',
@@ -92,6 +110,10 @@ export function addTaxonomyTerm(key: string, term: TaxonomyTerm): TaxonomyTerm[]
 
 export function removeTaxonomyTerm(key: string, value: string) {
   saveTaxonomy(key, listTaxonomy(key).filter((t) => t.value !== value));
+}
+
+export function renameTaxonomyTerm(key: string, value: string, label: string) {
+  saveTaxonomy(key, listTaxonomy(key).map((t) => (t.value === value ? { ...t, label } : t)));
 }
 
 export function allTaxonomies(): Array<TaxonomyDef & { terms: TaxonomyTerm[] }> {

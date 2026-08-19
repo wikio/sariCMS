@@ -8,12 +8,14 @@ import {
 } from '@dnd-kit/core';
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Filter, GripVertical, LayoutGrid, List as ListIcon, Pencil, Plus, Search, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, Copy, Download, Eye, Filter, GripVertical, LayoutGrid, List as ListIcon, Pencil, Plus, Search, Trash2 } from 'lucide-react';
 import PixelGridLoader from '@/components/admin/PixelGridLoader';
 import { useToast } from '@/components/admin/Toast';
-import { cmsAdminDelete, cmsAdminList, cmsAdminUpdate } from '@/lib/cms-admin';
+import { cmsAdminCreate, cmsAdminDelete, cmsAdminList, cmsAdminUpdate } from '@/lib/cms-admin';
 import type { CmsModule } from '@/lib/cms-modules';
 import { CmsError } from '@/lib/cms';
+import { nextSku } from '@/lib/admin-settings';
+import { slugify } from '@/lib/slugify';
 
 type ViewMode = 'list' | 'cards';
 
@@ -26,6 +28,9 @@ export default function CmsList({ mod }: { mod: CmsModule }) {
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [advanced, setAdvanced] = useState(false);
   const [view, setView] = useState<ViewMode>(mod.layout === 'docs' ? 'list' : 'cards');
+  const [sortKey, setSortKey] = useState(mod.titleKey);
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+  const [selected, setSelected] = useState<string[]>([]);
 
   const load = async () => {
     setLoading(true);
@@ -45,7 +50,7 @@ export default function CmsList({ mod }: { mod: CmsModule }) {
   useEffect(() => { load(); }, [mod.key, locale]);
 
   const shown = useMemo(() => {
-    return rows.filter((row) => {
+    const filtered = rows.filter((row) => {
       for (const [k, v] of Object.entries(filters)) {
         if (!v) continue;
         const raw = row[k];
@@ -57,7 +62,12 @@ export default function CmsList({ mod }: { mod: CmsModule }) {
       const blob = mod.searchKeys.map((k) => String(row[k] ?? '')).join(' ').toLowerCase();
       return blob.includes(q.toLowerCase());
     });
-  }, [rows, filters, q, mod.searchKeys]);
+    return [...filtered].sort((a, b) => {
+      const av = String(a[sortKey] ?? '');
+      const bv = String(b[sortKey] ?? '');
+      return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+    });
+  }, [rows, filters, q, mod.searchKeys, sortKey, sortDir]);
 
   const canReorder = Boolean(mod.orderField) && !q.trim() && Object.values(filters).every((v) => !v);
 
@@ -72,13 +82,28 @@ export default function CmsList({ mod }: { mod: CmsModule }) {
     }
   };
 
+  const duplicate = async (row: Record<string, unknown>) => {
+    try {
+      const saved = await cmsAdminCreate(mod.resource, {
+        ...row,
+        id: undefined,
+        slug: slugify(`${row[mod.titleKey] || 'copie'}-copie`),
+        [mod.titleKey]: `${row[mod.titleKey] || ''} (copie)`,
+        status: 'draft',
+        sku: mod.key === 'products' ? nextSku() : row.sku,
+      });
+      showToast('Dupliqué', 'success');
+      setRows((prev) => [saved as Record<string, unknown>, ...prev]);
+    } catch (err) {
+      showToast(err instanceof CmsError ? err.message : 'Duplication impossible', 'error');
+    }
+  };
+
   const persistOrder = async (next: Record<string, unknown>[]) => {
     if (!mod.orderField) return;
     setRows(next);
     try {
-      await Promise.all(next.map((row, i) => (
-        cmsAdminUpdate(mod.resource, String(row.id), { [mod.orderField!]: i })
-      )));
+      await Promise.all(next.map((row, i) => cmsAdminUpdate(mod.resource, String(row.id), { [mod.orderField!]: i })));
       showToast('Ordre enregistré', 'success');
     } catch (err) {
       showToast(err instanceof CmsError ? err.message : 'Ordre non enregistré', 'error');
@@ -94,30 +119,47 @@ export default function CmsList({ mod }: { mod: CmsModule }) {
     persistOrder(arrayMove(shown, oldIndex, newIndex));
   };
 
+  const exportCsv = () => {
+    const cols = [mod.titleKey, mod.subtitleKey, 'status', 'sku', 'category'].filter(Boolean) as string[];
+    const lines = [cols.join(';'), ...shown.map((r) => cols.map((c) => `"${String(r[c] ?? '').replace(/"/g, '""')}"`).join(';'))];
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${mod.key}.csv`;
+    a.click();
+  };
+
+  const bulkDelete = async () => {
+    if (!selected.length || !confirm(`Corbeille pour ${selected.length} fiche(s) ?`)) return;
+    for (const id of selected) await cmsAdminDelete(mod.resource, id);
+    setRows((prev) => prev.filter((r) => !selected.includes(String(r.id))));
+    setSelected([]);
+    showToast('Sélection en corbeille', 'success');
+  };
+
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
   const Icon = mod.icon;
+  const toggleSort = (key: string) => {
+    if (sortKey === key) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    else { setSortKey(key); setSortDir('asc'); }
+  };
 
   return (
     <div className="space-y-4">
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-3 ad-rise">
         <div>
           <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] font-black" style={{ color: 'var(--ad-muted)' }}>
-            <Icon className="w-3.5 h-3.5" /> Consultation
+            <Icon className="w-3.5 h-3.5" /> Catalogue
           </div>
           <h1 className="text-3xl font-black tracking-tight">{mod.label}</h1>
-          <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>
-            {shown.length} fiche(s) · lecture seule · l’édition se fait sur la fiche
-          </p>
+          <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>{shown.length} fiche(s)</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <div className="flex" style={{ border: '1px solid var(--ad-line)' }}>
-            <button type="button" className={`ad-btn ad-btn-icon ${view === 'list' ? 'ad-btn-primary' : 'ad-btn-ghost'}`} onClick={() => setView('list')} title="Liste">
-              <ListIcon className="w-4 h-4" />
-            </button>
-            <button type="button" className={`ad-btn ad-btn-icon ${view === 'cards' ? 'ad-btn-primary' : 'ad-btn-ghost'}`} onClick={() => setView('cards')} title="Cartes">
-              <LayoutGrid className="w-4 h-4" />
-            </button>
+            <button type="button" className={`ad-btn ad-btn-icon ${view === 'list' ? 'ad-btn-primary' : 'ad-btn-ghost'}`} onClick={() => setView('list')}><ListIcon className="w-4 h-4" /></button>
+            <button type="button" className={`ad-btn ad-btn-icon ${view === 'cards' ? 'ad-btn-primary' : 'ad-btn-ghost'}`} onClick={() => setView('cards')}><LayoutGrid className="w-4 h-4" /></button>
           </div>
+          <button className="ad-btn ad-btn-ghost" onClick={exportCsv}><Download className="w-4 h-4" /> Export</button>
           <Link href={`/${locale}/admin/${mod.path}/new`} className="ad-btn ad-btn-primary">
             <Plus className="w-4 h-4" /> Nouveau {mod.singular}
           </Link>
@@ -126,9 +168,9 @@ export default function CmsList({ mod }: { mod: CmsModule }) {
 
       <div className="ad-card p-3 ad-rise ad-rise-2">
         <div className="flex flex-col lg:flex-row gap-2">
-          <div className="relative flex-1">
+          <div className="relative flex-1 min-w-0">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--ad-muted)' }} />
-            <input className="ad-input pl-9" value={q} onChange={(e) => setQ(e.target.value)} placeholder={`Rechercher un ${mod.singular}…`} />
+            <input className="ad-input pl-9 w-full" value={q} onChange={(e) => setQ(e.target.value)} placeholder={`Rechercher un ${mod.singular}…`} />
           </div>
           {mod.filterKeys.slice(0, 2).map((f) => (
             <select key={f.key} className="ad-select lg:w-44" value={filters[f.key] || ''} onChange={(e) => setFilters((p) => ({ ...p, [f.key]: e.target.value }))}>
@@ -155,58 +197,81 @@ export default function CmsList({ mod }: { mod: CmsModule }) {
                 </select>
               </label>
             ))}
-            <div className="flex items-end">
-              <button type="button" className="ad-btn ad-btn-ghost w-full" onClick={() => setFilters({})}>Réinitialiser</button>
-            </div>
+            <div className="flex items-end"><button type="button" className="ad-btn ad-btn-ghost w-full" onClick={() => setFilters({})}>Réinitialiser</button></div>
           </div>
         )}
-        {mod.orderField && (
-          <p className="text-[11px] mt-2" style={{ color: 'var(--ad-muted)' }}>
-            {canReorder ? 'Glissez les poignées pour réordonner les fiches.' : 'Retirez la recherche et les filtres pour réordonner.'}
-          </p>
-        )}
       </div>
+
+      {selected.length > 0 && (
+        <div className="ad-card p-3 flex items-center gap-2">
+          <span className="text-sm font-bold">{selected.length} sélectionné(s)</span>
+          <button className="ad-btn ad-btn-danger" onClick={bulkDelete}><Trash2 className="w-4 h-4" /> Corbeille</button>
+        </div>
+      )}
 
       {loading ? (
         <div className="ad-card"><PixelGridLoader label={mod.label} /></div>
       ) : view === 'list' ? (
-        <ListTable mod={mod} rows={shown} locale={locale} onDelete={remove} canReorder={canReorder} sensors={sensors} onDragEnd={onDragEnd} />
+        <ListTable
+          mod={mod} rows={shown} locale={locale} onDelete={remove} onDuplicate={duplicate}
+          canReorder={canReorder} sensors={sensors} onDragEnd={onDragEnd}
+          sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}
+          selected={selected} setSelected={setSelected}
+        />
       ) : (
-        <CardCanvas mod={mod} rows={shown} locale={locale} onDelete={remove} canReorder={canReorder} sensors={sensors} onDragEnd={onDragEnd} />
+        <CardCanvas mod={mod} rows={shown} locale={locale} onDelete={remove} onDuplicate={duplicate} canReorder={canReorder} sensors={sensors} onDragEnd={onDragEnd} />
       )}
     </div>
   );
 }
 
+function SortMark({ active, dir }: { active: boolean; dir: 'asc' | 'desc' }) {
+  if (!active) return null;
+  return dir === 'asc' ? <ArrowUp className="w-3 h-3 inline" /> : <ArrowDown className="w-3 h-3 inline" />;
+}
+
 function ListTable({
-  mod, rows, locale, onDelete, canReorder, sensors, onDragEnd,
+  mod, rows, locale, onDelete, onDuplicate, canReorder, sensors, onDragEnd, sortKey, sortDir, onSort, selected, setSelected,
 }: {
   mod: CmsModule;
   rows: Record<string, unknown>[];
   locale: string;
   onDelete: (id: string) => void;
+  onDuplicate: (row: Record<string, unknown>) => void;
   canReorder: boolean;
   sensors: ReturnType<typeof useSensors>;
   onDragEnd: (e: DragEndEvent) => void;
+  sortKey: string;
+  sortDir: 'asc' | 'desc';
+  onSort: (k: string) => void;
+  selected: string[];
+  setSelected: (ids: string[]) => void;
 }) {
   if (rows.length === 0) return <Empty mod={mod} />;
+  const toggle = (id: string) => setSelected(selected.includes(id) ? selected.filter((x) => x !== id) : [...selected, id]);
   const body = (
     <table className="ad-table">
       <thead>
         <tr>
+          <th><input type="checkbox" checked={selected.length === rows.length} onChange={(e) => setSelected(e.target.checked ? rows.map((r) => String(r.id)) : [])} /></th>
           {canReorder && <th className="w-10"></th>}
-          <th>Titre</th>
-          <th>Meta</th>
-          <th>Statut</th>
+          {mod.imageKey && <th>Visuel</th>}
+          <th onClick={() => onSort(mod.titleKey)}>Titre <SortMark active={sortKey === mod.titleKey} dir={sortDir} /></th>
+          <th onClick={() => onSort(mod.subtitleKey || 'slug')}>Meta <SortMark active={sortKey === (mod.subtitleKey || 'slug')} dir={sortDir} /></th>
+          <th onClick={() => onSort('status')}>Statut <SortMark active={sortKey === 'status'} dir={sortDir} /></th>
           <th></th>
         </tr>
       </thead>
       <tbody>
         {rows.map((row) => (
           <SortableRow key={String(row.id)} id={String(row.id)} disabled={!canReorder}>
-            {canReorder && (
-              <td className="w-10">
-                <span className="opacity-40 cursor-grab"><GripVertical className="w-4 h-4" /></span>
+            <td><input type="checkbox" checked={selected.includes(String(row.id))} onChange={() => toggle(String(row.id))} /></td>
+            {canReorder && <td className="w-10"><span className="opacity-40 cursor-grab"><GripVertical className="w-4 h-4" /></span></td>}
+            {mod.imageKey && (
+              <td>
+                {String(row[mod.imageKey] || '') ? (
+                  <img src={String(row[mod.imageKey])} alt="" className="w-12 h-12 object-contain" style={{ border: '1px solid var(--ad-line)' }} />
+                ) : '—'}
               </td>
             )}
             <td className="font-bold">{String(row[mod.titleKey] || '—')}</td>
@@ -214,7 +279,9 @@ function ListTable({
             <td><span className="ad-chip ad-chip-acc">{String(row.status || row[mod.badgeKey || ''] || '')}</span></td>
             <td className="text-right">
               <div className="flex justify-end gap-1">
-                <Link href={`/${locale}/admin/${mod.path}/${row.id}`} className="ad-btn ad-btn-ghost"><Pencil className="w-4 h-4" /> Ouvrir</Link>
+                <Link href={`/${locale}/admin/${mod.path}/${row.id}?consult=1`} className="ad-btn ad-btn-icon ad-btn-ghost" title="Consulter"><Eye className="w-4 h-4" /></Link>
+                <Link href={`/${locale}/admin/${mod.path}/${row.id}`} className="ad-btn ad-btn-ghost"><Pencil className="w-4 h-4" /> Éditer</Link>
+                <button className="ad-btn ad-btn-icon ad-btn-ghost" onClick={() => onDuplicate(row)}><Copy className="w-4 h-4" /></button>
                 <button className="ad-btn ad-btn-danger ad-btn-icon" onClick={() => onDelete(String(row.id))}><Trash2 className="w-4 h-4" /></button>
               </div>
             </td>
@@ -224,12 +291,10 @@ function ListTable({
     </table>
   );
   return (
-    <div className="ad-card overflow-hidden ad-rise">
+    <div className="ad-card overflow-x-auto ad-rise">
       {canReorder ? (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-          <SortableContext items={rows.map((r) => String(r.id))} strategy={verticalListSortingStrategy}>
-            {body}
-          </SortableContext>
+          <SortableContext items={rows.map((r) => String(r.id))} strategy={verticalListSortingStrategy}>{body}</SortableContext>
         </DndContext>
       ) : body}
     </div>
@@ -237,12 +302,13 @@ function ListTable({
 }
 
 function CardCanvas({
-  mod, rows, locale, onDelete, canReorder, sensors, onDragEnd,
+  mod, rows, locale, onDelete, onDuplicate, canReorder, sensors, onDragEnd,
 }: {
   mod: CmsModule;
   rows: Record<string, unknown>[];
   locale: string;
   onDelete: (id: string) => void;
+  onDuplicate: (row: Record<string, unknown>) => void;
   canReorder: boolean;
   sensors: ReturnType<typeof useSensors>;
   onDragEnd: (e: DragEndEvent) => void;
@@ -250,52 +316,41 @@ function CardCanvas({
   if (rows.length === 0) return <Empty mod={mod} />;
   const cards = rows.map((row) => (
     <SortableCard key={String(row.id)} id={String(row.id)} disabled={!canReorder}>
-      <article className="ad-card ad-tile overflow-hidden h-full">
+      <article className="ad-card overflow-hidden h-full">
         {mod.imageKey && String(row[mod.imageKey] || '') && (
-          <div className="h-40 overflow-hidden relative">
-            <img src={String(row[mod.imageKey])} alt="" className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/55 to-transparent" />
+          <div className="h-40 overflow-hidden flex items-center justify-center" style={{ background: 'var(--ad-surface-2)' }}>
+            <img src={String(row[mod.imageKey])} alt="" className="max-h-full max-w-full object-contain" />
           </div>
         )}
         <div className="p-4 space-y-2">
           <div className="flex items-start justify-between gap-2">
-            <div>
-              {canReorder && <span className="inline-flex opacity-40 mb-1 cursor-grab"><GripVertical className="w-4 h-4" /></span>}
-              <h3 className="font-black leading-snug">{String(row[mod.titleKey] || '—')}</h3>
-              {mod.subtitleKey && <p className="text-xs mt-1" style={{ color: 'var(--ad-muted)' }}>{String(row[mod.subtitleKey] || '')}</p>}
-            </div>
+            <h3 className="font-black leading-snug">{String(row[mod.titleKey] || '—')}</h3>
             {mod.badgeKey && String(row[mod.badgeKey] || '') && (
-              <span className={`ad-chip ${['published', 'active'].includes(String(row[mod.badgeKey])) ? 'ad-chip-ok' : 'ad-chip-warn'}`}>
-                {String(row[mod.badgeKey])}
-              </span>
+              <span className={`ad-chip ${['published', 'active'].includes(String(row[mod.badgeKey])) ? 'ad-chip-ok' : 'ad-chip-warn'}`}>{String(row[mod.badgeKey])}</span>
             )}
           </div>
-          {mod.layout === 'quotes' && <p className="text-sm italic line-clamp-4">“{String(row.text || '')}”</p>}
+          {mod.subtitleKey && <p className="text-xs" style={{ color: 'var(--ad-muted)' }}>{String(row[mod.subtitleKey] || '')}</p>}
           {mod.key === 'products' && (
             <div className="flex justify-between text-sm">
-              <span style={{ color: 'var(--ad-muted)' }}>{String(row.category || '')}</span>
+              <span style={{ color: 'var(--ad-muted)' }}>{String(row.sku || row.category || '')}</span>
               <span className="font-black" style={{ color: 'var(--ad-accent)' }}>{String(row.price || '')}</span>
             </div>
           )}
-          {mod.key === 'careers' && (
-            <div className="text-xs" style={{ color: 'var(--ad-muted)' }}>{String(row.type || '')} · {String(row.salary || '')}</div>
-          )}
           <div className="flex gap-1 pt-2">
+            <Link href={`/${locale}/admin/${mod.path}/${row.id}?consult=1`} className="ad-btn ad-btn-icon ad-btn-ghost"><Eye className="w-4 h-4" /></Link>
             <Link href={`/${locale}/admin/${mod.path}/${row.id}`} className="ad-btn ad-btn-ghost"><Pencil className="w-4 h-4" /> Éditer</Link>
+            <button className="ad-btn ad-btn-icon ad-btn-ghost" onClick={() => onDuplicate(row)}><Copy className="w-4 h-4" /></button>
             <button className="ad-btn ad-btn-danger ad-btn-icon ml-auto" onClick={() => onDelete(String(row.id))}><Trash2 className="w-4 h-4" /></button>
           </div>
         </div>
       </article>
     </SortableCard>
   ));
-
   const grid = <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-3">{cards}</div>;
   if (!canReorder) return grid;
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-      <SortableContext items={rows.map((r) => String(r.id))} strategy={verticalListSortingStrategy}>
-        {grid}
-      </SortableContext>
+      <SortableContext items={rows.map((r) => String(r.id))} strategy={verticalListSortingStrategy}>{grid}</SortableContext>
     </DndContext>
   );
 }
@@ -303,12 +358,7 @@ function CardCanvas({
 function SortableRow({ id, disabled, children }: { id: string; disabled?: boolean; children: React.ReactNode }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id, disabled });
   return (
-    <tr
-      ref={setNodeRef}
-      style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.6 : 1 }}
-      {...attributes}
-      {...listeners}
-    >
+    <tr ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.6 : 1 }} {...attributes} {...listeners}>
       {children}
     </tr>
   );
@@ -317,21 +367,12 @@ function SortableRow({ id, disabled, children }: { id: string; disabled?: boolea
 function SortableCard({ id, disabled, children }: { id: string; disabled?: boolean; children: React.ReactNode }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id, disabled });
   return (
-    <div
-      ref={setNodeRef}
-      style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.6 : 1 }}
-      {...attributes}
-      {...listeners}
-    >
+    <div ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.6 : 1 }} {...attributes} {...listeners}>
       {children}
     </div>
   );
 }
 
 function Empty({ mod }: { mod: CmsModule }) {
-  return (
-    <div className="ad-card p-12 text-center" style={{ color: 'var(--ad-muted)' }}>
-      Aucune fiche. Créez un {mod.singular} ou importez le catalogue.
-    </div>
-  );
+  return <div className="ad-card p-12 text-center" style={{ color: 'var(--ad-muted)' }}>Aucune fiche. Créez un {mod.singular} ou importez le catalogue.</div>;
 }

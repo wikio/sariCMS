@@ -2,12 +2,13 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Banknote, Check, ChevronsUpDown, GripVertical, Link2, Mail, Phone, Plus, Star, Trash2, Upload,
+  Banknote, Check, ChevronsUpDown, Download, Eye, FolderOpen, GripVertical, Link2, Mail, Phone, Plus, Star, Trash2, Upload,
 } from 'lucide-react';
 import { slugify } from '@/lib/slugify';
 import type { FieldSpec } from '@/lib/cms-modules';
 import { addTaxonomyTerm, listTaxonomy } from '@/lib/taxonomies';
 import HtmlEditor from '@/components/admin/fields/HtmlEditor';
+import GedPicker from '@/components/admin/GedPicker';
 
 const CURRENCIES = [
   { code: 'DZD', symbol: 'DA' },
@@ -126,6 +127,8 @@ export function renderField(spec: FieldSpec, value: unknown, onChange: (v: unkno
       );
     case 'image':
       return <FieldShell spec={spec} value={value}><MediaPicker value={String(value || '')} onChange={onChange} /></FieldShell>;
+    case 'file':
+      return <FieldShell spec={spec} value={value}><FilePicker value={String(value || '')} onChange={onChange} /></FieldShell>;
     case 'gallery':
       return <FieldShell spec={spec}><GalleryEditor value={asStringArray(value)} onChange={onChange} /></FieldShell>;
     case 'faq':
@@ -408,7 +411,10 @@ function SpecsEditor({ value, onChange }: { value: Record<string, string>; onCha
   const entries = Object.entries(value);
   const set = (next: Array<[string, string]>) => onChange(Object.fromEntries(next.filter(([k]) => k)));
   return (
-    <div className="space-y-2">
+    <div id="specs" className="space-y-2 scroll-mt-28">
+      {entries.length === 0 && (
+        <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>Aucune spécification. Ajoutez une ligne pour commencer.</p>
+      )}
       {entries.map(([k, v], i) => (
         <div key={i} className="grid grid-cols-2 gap-2">
           <input className="ad-input" placeholder="Caractéristique" value={k} onChange={(e) => {

@@ -6,6 +6,7 @@ import PixelGridLoader from '@/components/admin/PixelGridLoader';
 import { useToast } from '@/components/admin/Toast';
 import { cmsAdminCreate, cmsAdminDelete, cmsAdminList, cmsAdminUpdate } from '@/lib/cms-admin';
 import { CmsError } from '@/lib/cms';
+import { loadOrders, loadQuotes, orderRevenue } from '@/lib/crm-store';
 
 type Person = Record<string, unknown> & {
   id?: string;
@@ -17,6 +18,7 @@ type Person = Record<string, unknown> & {
   status?: string;
   position?: string;
   type?: string;
+  notes?: string;
 };
 
 export default function PeopleDesk({
@@ -64,7 +66,10 @@ export default function PeopleDesk({
     }
     setSaving(true);
     try {
-      const payload = { ...editing, type };
+      const payload = { ...editing, type, password: editing.id ? undefined : 'ChangeMe_Sari2026!' };
+      if (editing.id && editing.notes) {
+        localStorage.setItem(`sari_notes_${editing.id}`, String(editing.notes));
+      }
       const saved = editing.id
         ? await cmsAdminUpdate<Person>('users', String(editing.id), payload)
         : await cmsAdminCreate<Person>('users', payload);
@@ -144,7 +149,7 @@ export default function PeopleDesk({
                   <td>{type === 'candidate' ? String(p.position || '—') : String(p.company || '—')}</td>
                   <td><span className="ad-chip ad-chip-acc">{String(p.status || '')}</span></td>
                   <td className="text-right">
-                    <button className="ad-btn ad-btn-ghost" onClick={() => setEditing({ ...p })}>Ouvrir</button>
+                    <button className="ad-btn ad-btn-ghost" onClick={() => setEditing({ ...p, notes: p.id ? localStorage.getItem(`sari_notes_${p.id}`) || '' : '' })}>Ouvrir</button>
                     {p.id && <button className="ad-btn ad-btn-icon ad-btn-danger ml-1" onClick={() => remove(String(p.id))}><Trash2 className="w-4 h-4" /></button>}
                   </td>
                 </tr>
@@ -197,6 +202,9 @@ export default function PeopleDesk({
                 </select>
               </label>
             </div>
+            {type === 'client' && editing.email && (
+              <ClientStats email={String(editing.email)} />
+            )}
             <div className="flex justify-end gap-2 pt-2">
               <button className="ad-btn ad-btn-ghost" onClick={() => setEditing(null)}>Fermer</button>
               <button className="ad-btn ad-btn-primary" disabled={saving} onClick={save}>{saving ? '…' : 'Enregistrer'}</button>
@@ -204,6 +212,17 @@ export default function PeopleDesk({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function ClientStats({ email }: { email: string }) {
+  const orders = loadOrders().filter((o) => o.email === email);
+  const quotes = loadQuotes().filter((q) => q.email === email);
+  return (
+    <div className="ad-card p-3 space-y-1 text-sm">
+      <div className="font-black">{orders.length} commande(s) · {quotes.length} devis · {orderRevenue(orders).toLocaleString()} DA livrés</div>
+      {orders.slice(0, 4).map((o) => <div key={o.id}>#{o.id} · {o.status} · {o.total.toLocaleString()} DA</div>)}
     </div>
   );
 }

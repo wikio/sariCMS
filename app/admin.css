@@ -196,6 +196,13 @@
   border-color: var(--ad-accent);
   box-shadow: 0 0 0 1px var(--ad-accent);
 }
+.ad-input:disabled, .ad-select:disabled, .ad-textarea:disabled {
+  opacity: 0.55;
+  background: var(--ad-surface-2);
+}
+.ad-input::placeholder, .ad-textarea::placeholder {
+  color: color-mix(in srgb, var(--ad-muted) 80%, transparent);
+}
 .ad-select {
   background-image: linear-gradient(45deg, transparent 50%, var(--ad-muted) 50%), linear-gradient(135deg, var(--ad-muted) 50%, transparent 50%);
   background-position: calc(100% - 16px) calc(1.15rem), calc(100% - 11px) calc(1.15rem);

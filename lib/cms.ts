@@ -93,10 +93,10 @@ export async function cmsFetch<T = unknown>(path: string, options: CmsRequestOpt
     }
 
     if (!res.ok) {
-      const message =
-        (parsed && typeof parsed === 'object' && 'message' in parsed
-          ? String((parsed as { message: unknown }).message)
-          : '') || `CMS ${res.status}`;
+      const raw = parsed && typeof parsed === 'object' && 'message' in parsed
+        ? (parsed as { message: unknown }).message
+        : '';
+      const message = Array.isArray(raw) ? raw.join(' · ') : String(raw || '') || `CMS ${res.status}`;
       throw new CmsError(message, res.status, parsed);
     }
 

@@ -1,14 +1,18 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Plus, Trash2 } from 'lucide-react';
-import { allTaxonomies, removeTaxonomyTerm, saveTaxonomy, type TaxonomyTerm } from '@/lib/taxonomies';
+import { allTaxonomies, removeTaxonomyTerm, renameTaxonomyTerm, saveTaxonomy, type TaxonomyTerm } from '@/lib/taxonomies';
 import { useToast } from '@/components/admin/Toast';
 
 export default function TaxonomiesPage() {
   const { showToast } = useToast();
+  const params = useSearchParams();
+  const focus = params.get('key') || '';
   const [groups, setGroups] = useState(allTaxonomies());
   const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [editing, setEditing] = useState<Record<string, string>>({});
 
   const refresh = () => setGroups(allTaxonomies());
   useEffect(() => {
@@ -17,6 +21,8 @@ export default function TaxonomiesPage() {
     window.addEventListener('sari-taxonomies', on);
     return () => window.removeEventListener('sari-taxonomies', on);
   }, []);
+
+  const shown = useMemo(() => focus ? groups.filter((g) => g.key === focus) : groups, [groups, focus]);
 
   const add = (key: string) => {
     const label = (drafts[key] || '').trim();
@@ -34,19 +40,30 @@ export default function TaxonomiesPage() {
       <header className="ad-rise">
         <div className="text-[11px] uppercase tracking-[0.22em] font-black" style={{ color: 'var(--ad-muted)' }}>Système</div>
         <h1 className="text-3xl font-black tracking-tight">Taxonomies</h1>
-        <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>Catégories et types réutilisés dans les sélecteurs (autocomplete + ajout rapide).</p>
+        <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>Édition inline ou fiche complète. Accessible aussi depuis chaque module.</p>
       </header>
       <div className="grid lg:grid-cols-2 gap-3">
-        {groups.map((g) => (
+        {shown.map((g) => (
           <section key={g.key} className="ad-card p-4 space-y-3 ad-rise">
             <div>
               <h2 className="font-black">{g.label}</h2>
-              <p className="text-xs" style={{ color: 'var(--ad-muted)' }}>{g.hint}</p>
+              <p className="text-xs" style={{ color: 'var(--ad-muted)' }}>{g.hint} · {g.key}</p>
             </div>
             <div className="space-y-1">
               {g.terms.map((t) => (
-                <div key={t.value} className="flex items-center justify-between gap-2 px-2 py-1" style={{ border: '1px solid var(--ad-line)' }}>
-                  <span className="text-sm font-semibold">{t.label}</span>
+                <div key={t.value} className="flex items-center gap-2 px-2 py-1" style={{ border: '1px solid var(--ad-line)' }}>
+                  <input
+                    className="ad-input"
+                    value={editing[`${g.key}:${t.value}`] ?? t.label}
+                    onChange={(e) => setEditing((p) => ({ ...p, [`${g.key}:${t.value}`]: e.target.value }))}
+                    onBlur={() => {
+                      const next = editing[`${g.key}:${t.value}`];
+                      if (next && next !== t.label) {
+                        renameTaxonomyTerm(g.key, t.value, next);
+                        refresh();
+                      }
+                    }}
+                  />
                   <button className="ad-btn ad-btn-icon ad-btn-danger" onClick={() => { removeTaxonomyTerm(g.key, t.value); refresh(); }}>
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
