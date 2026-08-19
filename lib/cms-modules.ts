@@ -78,7 +78,7 @@ export const CMS_MODULES: CmsModule[] = [
       { key: 'inStock', label: 'Stock', options: ['true', 'false'] },
     ],
     orderField: 'sortOrder',
-    defaults: { name: 'Nouveau produit', status: 'draft', inStock: true, locale: 'fr', gallery: [], features: [], specs: {}, options: [] },
+    defaults: { name: 'Nouveau produit', status: 'draft', inStock: true, stockQty: 10, stockFinal: false, locale: 'fr', gallery: [], features: [], specs: {}, options: [] },
     fields: [
       { key: 'name', label: 'Nom commercial', kind: 'text', required: true, placeholder: 'Ex. Échographe Portable Pro X1', hint: 'Nom affiché sur la vitrine.', maxLength: 120, group: 'Identité', i18n: true },
       { key: 'slug', label: 'Slug URL', kind: 'slug', slugFrom: 'name', hint: 'Généré depuis le titre, modifiable.', group: 'Identité' },

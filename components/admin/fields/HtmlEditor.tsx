@@ -10,17 +10,20 @@ import {
   ImagePlus, Italic, Link2, List, ListOrdered, Quote, Redo2, Table, Undo2,
 } from 'lucide-react';
 import GedPicker from '@/components/admin/GedPicker';
+import { MERGE_VARS } from '@/lib/notify-store';
 
 export default function HtmlEditor({
   value,
   onChange,
   placeholder = 'Rédigez le contenu…',
   readOnly = false,
+  mergeVars = false,
 }: {
   value: string;
   onChange: (html: string) => void;
   placeholder?: string;
   readOnly?: boolean;
+  mergeVars?: boolean;
 }) {
   const [code, setCode] = useState(false);
   const [ged, setGed] = useState(false);
@@ -80,6 +83,20 @@ export default function HtmlEditor({
           <button type="button" className={`ad-btn ${code ? 'ad-btn-primary' : 'ad-btn-ghost'}`} onClick={() => setCode((v) => !v)}>
             <Code2 className="w-4 h-4" /> {code ? 'Visuel' : 'Code'}
           </button>
+          {mergeVars && (
+            <select
+              className="ad-select w-52"
+              defaultValue=""
+              onChange={(e) => {
+                if (!e.target.value) return;
+                editor.chain().focus().insertContent(e.target.value).run();
+                e.target.value = '';
+              }}
+            >
+              <option value="">Insérer une variable…</option>
+              {MERGE_VARS.map((v) => <option key={v.key} value={v.key}>{v.label} · {v.key}</option>)}
+            </select>
+          )}
         </div>
       )}
       {code ? (

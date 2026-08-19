@@ -392,6 +392,10 @@ model Product {
   image        String?
   gallery      Json?
   inStock      Boolean   @default(true)
+  stockQty     Int?
+  stockFinal   Boolean   @default(false)
+  currency     String?
+  sortOrder    Int       @default(0)
   deliveryTime String?
   features     Json?
   specs        Json?

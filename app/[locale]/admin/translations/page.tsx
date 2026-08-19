@@ -111,6 +111,10 @@ export default function AdminTranslationEditorPage() {
         <div>
           <div className="text-[11px] uppercase tracking-[0.2em] font-bold" style={{ color: 'var(--ad-muted)' }}>i18n</div>
           <h1 className="text-2xl font-black">Gestionnaire de traductions</h1>
+          <p className="text-sm mt-1" style={{ color: 'var(--ad-muted)' }}>
+            L’interface d’administration (menus, boutons, messages) est indépendante de la traduction du contenu vitrine.
+            Ouvrez le fichier <code>admin.json</code> pour traduire le back-office.
+          </p>
         </div>
         <div className="flex gap-2">
           {['fr', 'en', 'ar'].map((l) => (

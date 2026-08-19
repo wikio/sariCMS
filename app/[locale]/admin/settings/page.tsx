@@ -35,6 +35,11 @@ export default function AdminSettingsPage() {
           <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Format code produit</span>
           <input className="ad-input" value={settings.skuFormat} onChange={(e) => setSettings({ ...settings, skuFormat: e.target.value })} placeholder="PRO-{ID}" />
         </label>
+        <label className="space-y-1.5 block">
+          <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Message de réapprovisionnement</span>
+          <textarea className="ad-textarea" value={settings.restockMessage || ''} onChange={(e) => setSettings({ ...settings, restockMessage: e.target.value })} />
+          <p className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>Affiché au client si le stock est dépassé et que le produit n’est pas en « stock final ». Variables : {'{{date_reapprovisionnement}}'}, {'{{produit}}'}.</p>
+        </label>
         <div className="grid grid-cols-2 gap-3">
           <label className="space-y-1.5 block">
             <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Crop front largeur</span>

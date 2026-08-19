@@ -7,6 +7,7 @@ const cmsInternal = (process.env.CMS_API_INTERNAL_URL || 'http://127.0.0.1:3001/
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  transpilePackages: ['grapesjs'],
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'images.unsplash.com' },

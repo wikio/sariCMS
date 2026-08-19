@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Banknote, Check, ChevronsUpDown, FolderOpen, GripVertical, Link2, Mail, Phone, Plus, Star, Trash2, Upload,
+  Banknote, ChevronsUpDown, FolderOpen, GripVertical, Link2, Mail, Phone, Plus, Star, Trash2, Upload,
 } from 'lucide-react';
 import { slugify } from '@/lib/slugify';
 import type { FieldSpec } from '@/lib/cms-modules';
@@ -13,14 +13,8 @@ import FilePicker from '@/components/admin/fields/FilePicker';
 import GedPicker from '@/components/admin/GedPicker';
 import IconMark from '@/components/admin/IconMark';
 import ProcessFlow, { normalizeSteps } from '@/components/admin/ProcessFlow';
-
-const CURRENCIES = [
-  { code: 'DZD', symbol: 'DA' },
-  { code: 'EUR', symbol: '€' },
-  { code: 'USD', symbol: '$' },
-  { code: 'MAD', symbol: 'DH' },
-  { code: 'TND', symbol: 'DT' },
-];
+import Toggle from '@/components/admin/Toggle';
+import { activeCurrencies, loadCurrencies, saveCurrencies, type Currency } from '@/lib/currencies';
 
 export function FieldShell({ spec, value, origin, originLocale, children }: { spec: FieldSpec; value?: unknown; origin?: unknown; originLocale?: string; children: React.ReactNode }) {
   const len = typeof value === 'string' ? value.length : 0;
@@ -115,9 +109,7 @@ export function renderField(
       );
     case 'toggle':
       return wrap(
-        <button type="button" onClick={() => onChange(!value)} className={`ad-btn ${value ? 'ad-btn-lime' : 'ad-btn-ghost'}`}>
-          {value ? <Check className="w-4 h-4" /> : null} {value ? 'Oui' : 'Non'}
-        </button>,
+        <Toggle on={Boolean(value)} onChange={onChange} label="" />,
       );
     case 'textarea':
       return wrap(
@@ -262,6 +254,7 @@ function TaxonomySelect({ spec, value, onChange }: { spec: FieldSpec; value: str
             <div className="flex gap-1">
               <input className="ad-input w-40" placeholder="Nouveau…" value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && create()} />
               <button type="button" className="ad-btn ad-btn-primary" onClick={create}>OK</button>
+              <button type="button" className="ad-btn ad-btn-ghost" onClick={() => { setAdding(false); setDraft(''); }}>Annuler</button>
             </div>
           ) : (
             <button type="button" className="ad-btn ad-btn-ghost" onClick={() => setAdding(true)}>
@@ -274,26 +267,61 @@ function TaxonomySelect({ spec, value, onChange }: { spec: FieldSpec; value: str
 }
 
 function PriceInner({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder?: string }) {
+  const [list, setList] = useState<Currency[]>([]);
+  const [adding, setAdding] = useState(false);
+  const [draft, setDraft] = useState({ code: '', symbol: '', name: '' });
+  useEffect(() => {
+    setList(activeCurrencies());
+    const on = () => setList(activeCurrencies());
+    window.addEventListener('sari-currencies', on);
+    return () => window.removeEventListener('sari-currencies', on);
+  }, []);
   const match = value.match(/^([\d\s.,]+)\s*(.*)$/);
   const amount = match?.[1]?.trim() || '';
-  const curr = CURRENCIES.find((c) => value.includes(c.symbol) || value.includes(c.code)) || CURRENCIES[0];
+  const curr = list.find((c) => value.includes(c.symbol) || value.includes(c.code)) || list[0] || { code: 'DZD', symbol: 'DA', name: 'Dinar', id: 'dzd', rate: 1, active: true };
+  const create = () => {
+    const code = draft.code.trim().toUpperCase();
+    if (!code || !draft.symbol.trim()) return;
+    const next: Currency = { id: `cur-${Date.now()}`, code, symbol: draft.symbol.trim(), name: draft.name.trim() || code, rate: 1, active: true };
+    saveCurrencies([...loadCurrencies(), next]);
+    onChange(`${amount} ${next.symbol}`.trim());
+    setAdding(false);
+    setDraft({ code: '', symbol: '', name: '' });
+  };
   return (
-      <div className="flex gap-2">
-        <div className="ad-search flex-1">
+    <div className="space-y-2">
+      <div className="flex gap-2 items-stretch">
+        <div className="ad-search flex-1 min-w-0">
           <Banknote className="ad-search-ico w-4 h-4" style={{ color: 'var(--ad-accent-2)' }} />
-          <input className="ad-input" value={amount} onChange={(e) => onChange(`${e.target.value} ${curr.symbol}`.trim())} placeholder={placeholder || '0'} />
+          <input className="ad-input ad-input-icon" value={amount} onChange={(e) => onChange(`${e.target.value} ${curr.symbol}`.trim())} placeholder={placeholder || '0'} inputMode="decimal" />
         </div>
         <select
-          className="ad-select w-32"
+          className="ad-select w-28 shrink-0"
           value={curr.code}
           onChange={(e) => {
-            const next = CURRENCIES.find((c) => c.code === e.target.value) || curr;
+            if (e.target.value === '__new') { setAdding(true); return; }
+            const next = list.find((c) => c.code === e.target.value) || curr;
             onChange(`${amount} ${next.symbol}`.trim());
           }}
         >
-          {CURRENCIES.map((c) => <option key={c.code} value={c.code}>{c.code} ({c.symbol})</option>)}
+          {list.map((c) => <option key={c.code} value={c.code}>{c.code}</option>)}
+          <option value="__new">+ Devise</option>
         </select>
       </div>
+      {adding && (
+        <div className="ad-card p-3 space-y-2">
+          <div className="grid grid-cols-3 gap-2">
+            <input className="ad-input" placeholder="Code" value={draft.code} onChange={(e) => setDraft({ ...draft, code: e.target.value })} />
+            <input className="ad-input" placeholder="Symbole" value={draft.symbol} onChange={(e) => setDraft({ ...draft, symbol: e.target.value })} />
+            <input className="ad-input" placeholder="Nom" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
+          </div>
+          <div className="flex gap-2 justify-end">
+            <button type="button" className="ad-btn ad-btn-ghost" onClick={() => { setAdding(false); setDraft({ code: '', symbol: '', name: '' }); }}>Annuler</button>
+            <button type="button" className="ad-btn ad-btn-primary" onClick={create}>OK</button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 

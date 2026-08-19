@@ -10,7 +10,7 @@ import {
   FileStack, Menu as MenuIcon, Compass, Scale, Settings, ShoppingCart,
   Users, UserCog, FileCheck, Globe, Sliders, ExternalLink, LogOut,
   Shield, Search, ChevronDown, ChevronLeft, Palette, BarChart3, ScrollText,
-  Tags, UserPlus, UserRound, CreditCard, TicketPercent, Percent, Paintbrush,
+  Tags, UserPlus, UserRound, Paintbrush, Banknote, MessageSquareText,
 } from 'lucide-react';
 import '@/app/admin.css';
 import { ToastProvider } from '@/components/admin/Toast';
@@ -53,21 +53,20 @@ function Shell({ children }: { children: ReactNode }) {
     { id: 'dashboard', icon: LayoutDashboard, label: t('menu.dashboard'), href: `/${locale}/admin/dashboard` },
     { id: 'stats', icon: BarChart3, label: t('menu.stats'), href: `/${locale}/admin/stats` },
     { id: 'logs', icon: ScrollText, label: t('menu.logs'), href: `/${locale}/admin/logs` },
-    { type: 'divider', label: 'E-SHOP' },
+    { type: 'divider', label: t('menu.eshopSection') },
     {
-      id: 'eshop', type: 'group', icon: ShoppingCart, label: 'Boutique',
+      id: 'eshop', type: 'group', icon: ShoppingCart, label: t('menu.shop'),
       children: [
-        { id: 'products-list', label: t('menu.products'), href: `/${locale}/admin/products` },
+        { id: 'products', label: t('menu.products'), href: `/${locale}/admin/products` },
         { id: 'orders', label: t('menu.orders'), href: `/${locale}/admin/orders` },
         { id: 'quotes', label: t('menu.quotes'), href: `/${locale}/admin/quotes` },
-        { id: 'shop-stats', label: 'Statistiques avancées', href: `/${locale}/admin/shop-stats` },
-        { id: 'payments', label: 'Paiements', href: `/${locale}/admin/payments` },
-        { id: 'coupons', label: 'Coupons', href: `/${locale}/admin/coupons` },
-        { id: 'taxes', label: 'Taxes', href: `/${locale}/admin/taxes` },
+        { id: 'shop-stats', label: t('menu.shopStats'), href: `/${locale}/admin/shop-stats` },
+        { id: 'payments', label: t('menu.payments'), href: `/${locale}/admin/payments` },
+        { id: 'coupons', label: t('menu.coupons'), href: `/${locale}/admin/coupons` },
+        { id: 'taxes', label: t('menu.taxes'), href: `/${locale}/admin/taxes` },
       ],
     },
     { type: 'divider', label: t('menu.contentSection') },
-    { id: 'products', icon: Package, label: t('menu.products'), href: `/${locale}/admin/products` },
     { id: 'services', icon: Wrench, label: t('menu.services'), href: `/${locale}/admin/services` },
     { id: 'solutions', icon: Layers, label: t('menu.solutions'), href: `/${locale}/admin/solutions` },
     { id: 'news', icon: Newspaper, label: t('menu.news'), href: `/${locale}/admin/news` },
@@ -86,23 +85,27 @@ function Shell({ children }: { children: ReactNode }) {
     { id: 'clients', icon: Users, label: t('menu.clients'), href: `/${locale}/admin/clients` },
     { id: 'candidates', icon: UserPlus, label: t('menu.candidates'), href: `/${locale}/admin/candidates` },
     { id: 'applications', icon: FileCheck, label: t('menu.applications'), href: `/${locale}/admin/applications` },
-    { type: 'divider', label: 'CONFIGURATION AVANCÉE' },
-    { id: 'taxonomies', icon: Tags, label: 'Taxonomies', href: `/${locale}/admin/taxonomies` },
+    { type: 'divider', label: t('menu.advancedSection') },
+    { id: 'taxonomies', icon: Tags, label: t('menu.taxonomies'), href: `/${locale}/admin/taxonomies` },
+    { id: 'currencies', icon: Banknote, label: t('menu.currencies'), href: `/${locale}/admin/currencies` },
+    { id: 'messages', icon: MessageSquareText, label: t('menu.messages'), href: `/${locale}/admin/messages` },
     { id: 'users', icon: UserCog, label: t('menu.users'), href: `/${locale}/admin/users` },
     { id: 'permissions', icon: Shield, label: t('menu.permissions'), href: `/${locale}/admin/permissions` },
     { id: 'translations', icon: Globe, label: t('menu.translations'), href: `/${locale}/admin/translations` },
     { id: 'emails', icon: Settings, label: t('menu.emails'), href: `/${locale}/admin/emails` },
-    { type: 'divider', label: 'PARAMÈTRES DU SITE VITRINE' },
-    { id: 'builder', icon: Paintbrush, label: 'Éditeur visuel', href: `/${locale}/admin/builder` },
+    { type: 'divider', label: t('menu.vitrineSection') },
+    { id: 'builder', icon: Paintbrush, label: t('menu.builder'), href: `/${locale}/admin/builder` },
     { id: 'settings', icon: Sliders, label: t('menu.settings'), href: `/${locale}/admin/settings` },
-    { id: 'profile', icon: UserRound, label: 'Profil', href: `/${locale}/admin/profile` },
+    { id: 'profile', icon: UserRound, label: t('menu.profile'), href: `/${locale}/admin/profile` },
   ], [locale, t]);
 
-  const active = pathname.includes('/admin/taxonomies') && pathname.includes('products') ? 'products'
-    : pathname.includes('/admin/products') ? 'products'
-    : pathname.includes('/admin/profile') ? 'profile'
+  const active = pathname.includes('/admin/profile') ? 'profile'
     : pathname.includes('/admin/search') ? 'search'
-    : menu.find((m) => m.href && pathname.includes(m.href.replace(`/${locale}`, '')))?.id || null;
+    : pathname.includes('/admin/products') ? 'products'
+    : pathname.includes('/admin/shop-stats') ? 'shop-stats'
+    : menu.find((m) => m.href && pathname.includes(m.href.replace(`/${locale}`, '')))?.id
+      || menu.find((m) => m.children?.some((c) => pathname.includes(c.href.replace(`/${locale}`, ''))))?.id
+      || null;
 
   if (isLogin) {
     return (
@@ -129,21 +132,25 @@ function Shell({ children }: { children: ReactNode }) {
               return open ? <div key={i} className="px-5 pt-4 pb-1 text-[10px] uppercase tracking-[0.18em] opacity-40">{item.label}</div> : <div key={i} className="mx-3 my-2 border-t border-white/10" />;
             }
             const Icon = item.icon;
-            const on = active === item.id || pathname.includes(`/${item.id}`);
+            const childOn = item.children?.some((c) => pathname.includes(c.href.replace(`/${locale}`, '')));
+            const on = active === item.id || childOn || (item.href ? pathname.includes(item.href.replace(`/${locale}`, '')) : false);
             if (item.type === 'group' && item.children) {
-              const shown = expanded === item.id && open;
+              const shown = (expanded === item.id || childOn) && open;
               return (
                 <div key={item.id}>
-                  <button type="button" onClick={() => setExpanded((v) => v === item.id ? '' : item.id || '')} className={`mx-2 mb-0.5 w-[calc(100%-1rem)] flex items-center gap-3 px-3 py-2.5 text-sm ${on ? 'bg-white/12' : 'opacity-70 hover:opacity-100 hover:bg-white/6'}`}>
+                  <button type="button" onClick={() => setExpanded((v) => v === item.id ? '' : item.id || '')} className={`mx-2 mb-0.5 w-[calc(100%-1rem)] flex items-center gap-3 px-3 py-2.5 text-sm ${on ? 'bg-white/12 text-white' : 'opacity-70 hover:opacity-100 hover:bg-white/6'}`} style={on ? { boxShadow: 'inset 3px 0 0 var(--ad-accent)' } : undefined}>
                     {Icon && <Icon className="w-4 h-4 shrink-0" />}
-                    {open && <span className="truncate flex-1 text-left">{item.label}</span>}
-                    {open && <ChevronDown className={`w-3.5 h-3.5 ${shown ? '' : '-rotate-90'}`} />}
+                    {open && <span className="truncate flex-1 text-start">{item.label}</span>}
+                    {open && <ChevronDown className={`w-3.5 h-3.5 ${shown ? '' : (isRTL ? 'rotate-90' : '-rotate-90')}`} />}
                   </button>
-                  {shown && item.children.map((ch) => (
-                    <Link key={ch.id} href={ch.href} className="mx-2 mb-0.5 flex items-center pl-10 pr-3 py-2 text-xs opacity-70 hover:opacity-100 hover:bg-white/6">
-                      {ch.label}
-                    </Link>
-                  ))}
+                  {shown && item.children.map((ch) => {
+                    const chOn = pathname.includes(ch.href.replace(`/${locale}`, ''));
+                    return (
+                      <Link key={ch.id} href={ch.href} className={`mx-2 mb-0.5 flex items-center ps-10 pe-3 py-2 text-xs ${chOn ? 'bg-white/12' : 'opacity-70 hover:opacity-100 hover:bg-white/6'}`}>
+                        {ch.label}
+                      </Link>
+                    );
+                  })}
                 </div>
               );
             }

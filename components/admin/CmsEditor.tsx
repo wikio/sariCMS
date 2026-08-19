@@ -267,7 +267,7 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
               ) : compare ? (
                 <div className="space-y-4">
                   {fields.map((field) => {
-                    const locked = ['sku', 'id', 'status', 'price', 'inStock'].includes(field.key);
+                    const locked = ['sku', 'id', 'status', 'price', 'inStock', 'locale', 'stockQty', 'stockFinal'].includes(field.key);
                     return (
                       <div key={`${tab}-${field.key}`} className="ad-compare">
                         <div>
@@ -299,7 +299,13 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
                       className={field.wide || field.kind === 'html' || field.kind === 'process' ? 'md:col-span-2' : ''}
                       onFocus={() => field.kind === 'slug' && setSlugLocked(true)}
                     >
-                      {renderField(field, valueOf(field.key), (v) => set(field.key, v), record)}
+                      {field.key === 'locale' ? (
+                        <div className="space-y-1.5">
+                          <div className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>{field.label}</div>
+                          <ConsultValue spec={field} value={tab} />
+                          <p className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>Verrouillé sur l’onglet de langue actif.</p>
+                        </div>
+                      ) : renderField(field, valueOf(field.key), (v) => set(field.key, v), record, { origin: originOf(field.key), originLocale: settings.defaultLocale })}
                     </div>
                   ))}
                 </div>

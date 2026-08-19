@@ -19,6 +19,7 @@ export interface AdminSettings {
   skuFormat: string;
   cropWidth: number;
   cropHeight: number;
+  restockMessage: string;
   smtp: SmtpSettings;
   db: DbSettings;
 }
@@ -30,6 +31,7 @@ export const DEFAULT_SETTINGS: AdminSettings = {
   skuFormat: 'PRO-{ID}',
   cropWidth: 800,
   cropHeight: 600,
+  restockMessage: 'Votre commande sera traitée dans les meilleurs délais, un nouvel arrivage étant prévu le {{date_reapprovisionnement}}.',
   smtp: {
     host: 'smtp.sarisysteme.com',
     port: 587,
