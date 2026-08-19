@@ -8,8 +8,10 @@ import {
 } from '@dnd-kit/core';
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ArrowDown, ArrowUp, Copy, Download, Eye, Filter, GripVertical, LayoutGrid, List as ListIcon, Pencil, Plus, Search, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, Copy, Download, Eye, Filter, GripVertical, LayoutGrid, List as ListIcon, Pencil, Plus, Trash2 } from 'lucide-react';
 import PixelGridLoader from '@/components/admin/PixelGridLoader';
+import SearchField from '@/components/admin/SearchField';
+import IconMark from '@/components/admin/IconMark';
 import { useToast } from '@/components/admin/Toast';
 import { cmsAdminCreate, cmsAdminDelete, cmsAdminList, cmsAdminUpdate } from '@/lib/cms-admin';
 import type { CmsModule } from '@/lib/cms-modules';
@@ -168,10 +170,7 @@ export default function CmsList({ mod }: { mod: CmsModule }) {
 
       <div className="ad-card p-3 ad-rise ad-rise-2">
         <div className="flex flex-col lg:flex-row gap-2">
-          <div className="relative flex-1 min-w-0">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--ad-muted)' }} />
-            <input className="ad-input pl-9 w-full" value={q} onChange={(e) => setQ(e.target.value)} placeholder={`Rechercher un ${mod.singular}…`} />
-          </div>
+          <SearchField className="flex-1 min-w-0" value={q} onChange={setQ} placeholder={`Rechercher un ${mod.singular}…`} />
           {mod.filterKeys.slice(0, 2).map((f) => (
             <select key={f.key} className="ad-select lg:w-44" value={filters[f.key] || ''} onChange={(e) => setFilters((p) => ({ ...p, [f.key]: e.target.value }))}>
               <option value="">{f.label}</option>
@@ -274,7 +273,12 @@ function ListTable({
                 ) : '—'}
               </td>
             )}
-            <td className="font-bold">{String(row[mod.titleKey] || '—')}</td>
+            <td className="font-bold">
+              <span className="inline-flex items-center gap-2">
+                {row.icon ? <IconMark name={String(row.icon)} /> : null}
+                {String(row[mod.titleKey] || '—')}
+              </span>
+            </td>
             <td className="text-sm" style={{ color: 'var(--ad-muted)' }}>{String(row[mod.subtitleKey || 'slug'] || '')}</td>
             <td><span className="ad-chip ad-chip-acc">{String(row.status || row[mod.badgeKey || ''] || '')}</span></td>
             <td className="text-right">
@@ -324,7 +328,10 @@ function CardCanvas({
         )}
         <div className="p-4 space-y-2">
           <div className="flex items-start justify-between gap-2">
-            <h3 className="font-black leading-snug">{String(row[mod.titleKey] || '—')}</h3>
+              <h3 className="font-black leading-snug inline-flex items-center gap-2">
+                {row.icon ? <IconMark name={String(row.icon)} /> : null}
+                {String(row[mod.titleKey] || '—')}
+              </h3>
             {mod.badgeKey && String(row[mod.badgeKey] || '') && (
               <span className={`ad-chip ${['published', 'active'].includes(String(row[mod.badgeKey])) ? 'ad-chip-ok' : 'ad-chip-warn'}`}>{String(row[mod.badgeKey])}</span>
             )}

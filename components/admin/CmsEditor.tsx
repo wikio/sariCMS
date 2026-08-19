@@ -6,14 +6,15 @@ import { useLocale } from 'next-intl';
 import { ArrowLeft, ChevronDown, Copy, Eye, Save, Trash2 } from 'lucide-react';
 import PixelGridLoader from '@/components/admin/PixelGridLoader';
 import { renderField } from '@/components/admin/fields/FieldKit';
-import HtmlEditor from '@/components/admin/fields/HtmlEditor';
+import ConsultValue from '@/components/admin/ConsultValue';
+import IconMark from '@/components/admin/IconMark';
 import { useToast } from '@/components/admin/Toast';
 import { cmsAdminCreate, cmsAdminDelete, cmsAdminFetch, cmsAdminUpdate } from '@/lib/cms-admin';
 import type { CmsModule } from '@/lib/cms-modules';
 import { slugify } from '@/lib/slugify';
 import { CmsError } from '@/lib/cms';
 import { loadAdminSettings, nextSku } from '@/lib/admin-settings';
-import { loadFicheLocale, saveFicheLocale } from '@/lib/fiche-i18n';
+import { isTranslatableField, loadFicheLocale, saveFicheLocale } from '@/lib/fiche-i18n';
 
 const LANGS = [
   { id: 'fr', label: 'FR' },
@@ -34,7 +35,12 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
   const [slugLocked, setSlugLocked] = useState(false);
   const [tab, setTab] = useState(settings.defaultLocale);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
-  const [i18nDraft, setI18nDraft] = useState<Record<string, string>>({});
+  const [overlays, setOverlays] = useState<Record<string, Record<string, unknown>>>({});
+
+  const transKeys = useMemo(
+    () => mod.fields.filter((f) => isTranslatableField(f.kind, f.i18n)).map((f) => f.key),
+    [mod.fields],
+  );
 
   useEffect(() => {
     if (id === 'new') {
@@ -46,7 +52,9 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
         const row = await cmsAdminFetch<Record<string, unknown>>(`/${mod.resource}/${id}?view=block`);
         setRecord(row);
         setSlugLocked(Boolean(row.slug));
-        setI18nDraft(loadFicheLocale(mod.resource, String(row.id), tab));
+        const next: Record<string, Record<string, unknown>> = {};
+        for (const lang of LANGS) next[lang.id] = loadFicheLocale(mod.resource, String(row.id), lang.id);
+        setOverlays(next);
       } catch (err) {
         showToast(err instanceof CmsError ? err.message : 'Fiche introuvable', 'error');
       } finally {
@@ -65,11 +73,28 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
     return Array.from(map.entries());
   }, [mod.fields]);
 
+  const isDefault = tab === settings.defaultLocale;
+
+  const valueOf = (key: string) => {
+    const field = mod.fields.find((f) => f.key === key);
+    const translatable = field ? isTranslatableField(field.kind, field.i18n) : false;
+    if (!isDefault && translatable) {
+      const overlay = overlays[tab] || {};
+      return overlay[key] ?? '';
+    }
+    return record?.[key];
+  };
+
+  const originOf = (key: string) => {
+    if (isDefault) return undefined;
+    return record?.[key];
+  };
+
   const set = (key: string, value: unknown) => {
     const field = mod.fields.find((f) => f.key === key);
-    const overlay = tab !== settings.defaultLocale && field?.i18n;
-    if (overlay) {
-      setI18nDraft((prev) => ({ ...prev, [key]: String(value ?? '') }));
+    const translatable = field ? isTranslatableField(field.kind, field.i18n) : false;
+    if (!isDefault && translatable) {
+      setOverlays((prev) => ({ ...prev, [tab]: { ...(prev[tab] || {}), [key]: value } }));
       return;
     }
     setRecord((prev) => {
@@ -82,12 +107,8 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
     });
   };
 
-  const valueOf = (key: string) => {
-    const field = mod.fields.find((f) => f.key === key);
-    if (tab !== settings.defaultLocale && field?.i18n) {
-      return i18nDraft[key] ?? record?.[key];
-    }
-    return record?.[key];
+  const switchLang = (lang: string) => {
+    setTab(lang as 'fr' | 'en' | 'ar');
   };
 
   const save = async () => {
@@ -108,7 +129,11 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
         ? await cmsAdminCreate(mod.resource, payload)
         : await cmsAdminUpdate(mod.resource, String(record.id), payload);
       const newId = String((saved as { id?: string }).id || record.id);
-      if (newId) saveFicheLocale(mod.resource, newId, tab, i18nDraft);
+      if (newId) {
+        for (const [lang, fields] of Object.entries(overlays)) {
+          saveFicheLocale(mod.resource, newId, lang, fields);
+        }
+      }
       showToast('Fiche enregistrée', 'success');
       if (id === 'new') router.replace(`/${locale}/admin/${mod.path}/${newId}`);
       else setRecord(saved as Record<string, unknown>);
@@ -148,6 +173,11 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
 
   const Icon = mod.icon;
   const previewImg = mod.imageKey ? String(record[mod.imageKey] || '') : '';
+  const iconName = String(record.icon || '');
+  const translatedCount = transKeys.filter((k) => {
+    const v = overlays[tab]?.[k];
+    return v != null && String(v) !== '';
+  }).length;
 
   return (
     <div className="space-y-4 pb-24">
@@ -157,7 +187,7 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
             <ArrowLeft className="w-3 h-3" /> {mod.label}
           </button>
           <h1 className="text-2xl font-black flex items-center gap-2">
-            <Icon className="w-6 h-6" style={{ color: 'var(--ad-accent)' }} />
+            {iconName ? <IconMark name={iconName} className="w-6 h-6" /> : <Icon className="w-6 h-6" style={{ color: 'var(--ad-accent)' }} />}
             {consult ? 'Consultation · ' : ''}{id === 'new' ? `Nouveau ${mod.singular}` : String(record[mod.titleKey] || 'Fiche')}
           </h1>
         </div>
@@ -174,24 +204,19 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2 ad-rise">
-        {LANGS.map((lang) => (
-          <button
-            key={lang.id}
-            type="button"
-            className={`ad-btn ${tab === lang.id ? 'ad-btn-primary' : 'ad-btn-ghost'}`}
-            onClick={() => {
-              if (record.id) setI18nDraft(loadFicheLocale(mod.resource, String(record.id), lang.id));
-              setTab(lang.id as 'fr' | 'en' | 'ar');
-            }}
-          >
-            {lang.label} {lang.id === settings.defaultLocale ? '· défaut' : ''}
-          </button>
-        ))}
-        {tab !== settings.defaultLocale && (
-          <span className="text-xs self-center" style={{ color: 'var(--ad-muted)' }}>
-            Champ vide → repli sur {settings.defaultLocale.toUpperCase()}
-          </span>
+      <div className="ad-card p-3 space-y-2 ad-rise">
+        <div className="flex flex-wrap gap-2">
+          {LANGS.map((lang) => (
+            <button key={lang.id} type="button" className={`ad-btn ${tab === lang.id ? 'ad-btn-primary' : 'ad-btn-ghost'}`} onClick={() => switchLang(lang.id)}>
+              {lang.label} {lang.id === settings.defaultLocale ? '· origine' : ''}
+            </button>
+          ))}
+        </div>
+        {!isDefault && (
+          <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>
+            Formulaire {tab.toUpperCase()} rechargé : {translatedCount} champ(s) déjà traduit(s), les autres sont vides.
+            Une note d’origine ({settings.defaultLocale.toUpperCase()}) apparaît sous chaque champ.
+          </p>
         )}
       </div>
 
@@ -213,7 +238,7 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
       )}
 
       {groups.map(([group, fields], i) => {
-        const htmlHeavy = fields.some((f) => f.kind === 'html');
+        const htmlHeavy = fields.some((f) => f.kind === 'html' || f.kind === 'process');
         const open = openGroups[group] !== false;
         return (
           <section id={`sec-${group}`} key={group} className="ad-card p-5 ad-rise scroll-mt-28" style={{ animationDelay: `${i * 40}ms` }}>
@@ -224,14 +249,11 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
               consult ? (
                 <div className={htmlHeavy ? 'space-y-4' : 'grid md:grid-cols-2 gap-4'}>
                   {fields.map((field) => (
-                    <div key={field.key} className={field.wide || field.kind === 'html' ? 'md:col-span-2' : ''}>
+                    <div key={field.key} className={field.wide || field.kind === 'html' || field.kind === 'process' ? 'md:col-span-2' : ''}>
                       <div className="text-[11px] font-black uppercase tracking-widest mb-1" style={{ color: 'var(--ad-muted)' }}>{field.label}</div>
-                      {field.kind === 'html' ? (
-                        <HtmlEditor value={String(valueOf(field.key) || '')} onChange={() => undefined} readOnly />
-                      ) : field.kind === 'image' && valueOf(field.key) ? (
-                        <img src={String(valueOf(field.key))} alt="" className="max-h-40 object-contain" />
-                      ) : (
-                        <div className="text-sm font-semibold">{String(valueOf(field.key) ?? '—')}</div>
+                      <ConsultValue spec={field} value={valueOf(field.key)} />
+                      {!isDefault && originOf(field.key) != null && String(originOf(field.key)) !== '' && (
+                        <p className="ad-origin">Origine ({settings.defaultLocale.toUpperCase()}) : {String(typeof originOf(field.key) === 'string' ? originOf(field.key) : '').replace(/<[^>]+>/g, ' ').slice(0, 220)}</p>
                       )}
                     </div>
                   ))}
@@ -240,11 +262,17 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
                 <div className={htmlHeavy ? 'space-y-4' : 'grid md:grid-cols-2 gap-4'}>
                   {fields.map((field) => (
                     <div
-                      key={field.key}
-                      className={field.wide || field.kind === 'html' ? 'md:col-span-2' : ''}
+                      key={`${tab}-${field.key}`}
+                      className={field.wide || field.kind === 'html' || field.kind === 'process' ? 'md:col-span-2' : ''}
                       onFocus={() => field.kind === 'slug' && setSlugLocked(true)}
                     >
-                      {renderField(field, valueOf(field.key), (v) => set(field.key, v), record)}
+                      {renderField(
+                        field,
+                        valueOf(field.key),
+                        (v) => set(field.key, v),
+                        record,
+                        { origin: isTranslatableField(field.kind, field.i18n) ? originOf(field.key) : undefined, originLocale: settings.defaultLocale },
+                      )}
                     </div>
                   ))}
                 </div>

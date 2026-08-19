@@ -7,7 +7,7 @@ export type FieldKind =
   | 'text' | 'textarea' | 'html' | 'slug' | 'email' | 'phone' | 'url'
   | 'price' | 'number' | 'select' | 'radio' | 'toggle' | 'tags'
   | 'image' | 'gallery' | 'file' | 'faq' | 'list' | 'specs' | 'options' | 'agenda'
-  | 'slides' | 'sections' | 'rating' | 'icon';
+  | 'slides' | 'sections' | 'rating' | 'icon' | 'process';
 
 export type ListLayout = 'catalog' | 'magazine' | 'timeline' | 'mosaic' | 'quotes' | 'people' | 'slides' | 'docs';
 
@@ -64,7 +64,7 @@ const LOCALES = [
 const CATEGORIES = ['Diagnostic', 'Cardiologie', 'Imagerie', 'Chirurgie', 'Pédiatrie', 'Urgence', 'Laboratoire', 'Consommables'].map((v) => ({ value: v, label: v }));
 const CONTRACTS = ['CDI', 'CDD', 'Stage', 'Alternance', 'Freelance', 'Intérim'].map((v) => ({ value: v, label: v }));
 const EVENT_TYPES = ['Salon', 'Formation', 'Conférence', 'Webinar', 'Atelier', 'Lancement', 'Portes Ouvertes'].map((v) => ({ value: v, label: v }));
-const ICONS = ['package', 'heart-pulse', 'stethoscope', 'wrench', 'users', 'shopping-cart', 'briefcase', 'activity'].map((v) => ({ value: v, label: v }));
+const ICONS = ['package', 'heart-pulse', 'stethoscope', 'wrench', 'users', 'shopping-cart', 'briefcase', 'activity', 'hospital', 'syringe', 'microscope'].map((v) => ({ value: v, label: v }));
 
 export const CMS_MODULES: CmsModule[] = [
   {
@@ -107,13 +107,13 @@ export const CMS_MODULES: CmsModule[] = [
     orderField: 'sortOrder',
     defaults: { title: 'Nouveau service', status: 'draft', locale: 'fr', features: [], faq: [] },
     fields: [
-      { key: 'title', label: 'Intitulé', kind: 'text', group: 'Identité' },
+      { key: 'title', label: 'Intitulé', kind: 'text', required: true, group: 'Identité', i18n: true },
       { key: 'slug', label: 'Slug', kind: 'slug', slugFrom: 'title', group: 'Identité' },
       { key: 'locale', label: 'Langue', kind: 'radio', options: LOCALES, group: 'Identité' },
       { key: 'status', label: 'Statut', kind: 'radio', options: STATUS, group: 'Identité' },
-      { key: 'icon', label: 'Icône Lucide', kind: 'icon', options: ICONS, group: 'Identité' },
-      { key: 'shortDesc', label: 'Accroche', kind: 'textarea', wide: true, group: 'Contenu' },
-      { key: 'fullDesc', label: 'Présentation', kind: 'html', wide: true, group: 'Contenu' },
+      { key: 'icon', label: 'Icône Lucide', kind: 'icon', options: ICONS, hint: 'Recherchez le nom Lucide, l’icône s’affiche à côté.', group: 'Identité' },
+      { key: 'shortDesc', label: 'Accroche', kind: 'textarea', wide: true, group: 'Contenu', i18n: true },
+      { key: 'fullDesc', label: 'Présentation', kind: 'html', wide: true, group: 'Contenu', i18n: true },
       { key: 'features', label: 'Engagements', kind: 'list', wide: true, group: 'Détails' },
       { key: 'faq', label: 'FAQ', kind: 'faq', wide: true, group: 'Détails' },
     ],
@@ -125,7 +125,7 @@ export const CMS_MODULES: CmsModule[] = [
     filterKeys: [{ key: 'status', label: 'Statut', options: STATUS.map((s) => s.value) }, { key: 'type', label: 'Contrat' }],
     defaults: { title: 'Nouvelle offre', status: 'draft', locale: 'fr', type: 'CDI', objectifs: [], prerequis: [], workflow: [], benefits: [] },
     fields: [
-      { key: 'title', label: 'Intitulé du poste', kind: 'text', required: true, placeholder: 'Ex. Ingénieur biomédical', maxLength: 140, group: 'Poste' },
+      { key: 'title', label: 'Intitulé du poste', kind: 'text', required: true, placeholder: 'Ex. Ingénieur biomédical', maxLength: 140, group: 'Poste', i18n: true },
       { key: 'slug', label: 'Slug', kind: 'slug', slugFrom: 'title', group: 'Poste' },
       { key: 'locale', label: 'Langue', kind: 'radio', options: LOCALES, group: 'Poste' },
       { key: 'status', label: 'Statut', kind: 'radio', options: STATUS, group: 'Poste' },
@@ -135,13 +135,13 @@ export const CMS_MODULES: CmsModule[] = [
       { key: 'typeTravail', label: 'Rythme', kind: 'text', placeholder: 'Temps plein', group: 'Poste' },
       { key: 'contact', label: 'Contact RH', kind: 'email', placeholder: 'rh@sarisysteme.com', group: 'Poste' },
       { key: 'image', label: 'Visuel', kind: 'image', group: 'Média' },
-      { key: 'shortDesc', label: 'Accroche', kind: 'textarea', wide: true, group: 'Mission' },
-      { key: 'mission', label: 'Mission', kind: 'textarea', wide: true, group: 'Mission' },
-      { key: 'fullDesc', label: 'Description', kind: 'html', wide: true, group: 'Mission' },
+      { key: 'shortDesc', label: 'Accroche', kind: 'textarea', wide: true, group: 'Mission', i18n: true },
+      { key: 'mission', label: 'Mission', kind: 'textarea', wide: true, group: 'Mission', i18n: true },
+      { key: 'fullDesc', label: 'Description', kind: 'html', wide: true, group: 'Mission', i18n: true },
       { key: 'objectifs', label: 'Objectifs', kind: 'list', wide: true, group: 'Profil' },
       { key: 'prerequis', label: 'Prérequis', kind: 'list', wide: true, group: 'Profil' },
       { key: 'experience', label: 'Expérience', kind: 'text', group: 'Profil' },
-      { key: 'workflow', label: 'Processus de recrutement', kind: 'list', wide: true, group: 'Profil' },
+      { key: 'workflow', label: 'Processus de recrutement', kind: 'process', wide: true, group: 'Profil' },
       { key: 'benefits', label: 'Avantages', kind: 'list', wide: true, group: 'Profil' },
     ],
   },
@@ -152,7 +152,7 @@ export const CMS_MODULES: CmsModule[] = [
     filterKeys: [{ key: 'status', label: 'Statut', options: STATUS.map((s) => s.value) }, { key: 'category', label: 'Rubrique' }],
     defaults: { title: 'Nouvel article', status: 'draft', locale: 'fr', tags: [] },
     fields: [
-      { key: 'title', label: 'Titre', kind: 'text', required: true, placeholder: 'Ex. Nouvelle sonde cardiaque', maxLength: 160, group: 'Article' },
+      { key: 'title', label: 'Titre', kind: 'text', required: true, placeholder: 'Ex. Nouvelle sonde cardiaque', maxLength: 160, group: 'Article', i18n: true },
       { key: 'slug', label: 'Slug', kind: 'slug', slugFrom: 'title', group: 'Article' },
       { key: 'locale', label: 'Langue', kind: 'radio', options: LOCALES, group: 'Article' },
       { key: 'status', label: 'Statut', kind: 'radio', options: STATUS, group: 'Article' },
@@ -164,8 +164,8 @@ export const CMS_MODULES: CmsModule[] = [
       { key: 'readTime', label: 'Temps de lecture', kind: 'text', suffix: 'min', group: 'Article' },
       { key: 'image', label: 'Une', kind: 'image', group: 'Média' },
       { key: 'tags', label: 'Tags', kind: 'tags', wide: true, group: 'Média' },
-      { key: 'shortDesc', label: 'Chapô', kind: 'textarea', wide: true, maxLength: 280, placeholder: 'Accroche de l’article…', group: 'Texte' },
-      { key: 'fullContent', label: 'Corps de l’article', kind: 'html', wide: true, hint: 'Éditeur riche — pleine largeur.', group: 'Texte' },
+      { key: 'shortDesc', label: 'Chapô', kind: 'textarea', wide: true, maxLength: 280, placeholder: 'Accroche de l’article…', group: 'Texte', i18n: true },
+      { key: 'fullContent', label: 'Corps de l’article', kind: 'html', wide: true, hint: 'Éditeur riche — pleine largeur.', group: 'Texte', i18n: true },
     ],
   },
   {
@@ -175,7 +175,7 @@ export const CMS_MODULES: CmsModule[] = [
     filterKeys: [{ key: 'status', label: 'Statut', options: STATUS.map((s) => s.value) }, { key: 'type', label: 'Type' }],
     defaults: { title: 'Nouvel événement', status: 'draft', locale: 'fr', agenda: [] },
     fields: [
-      { key: 'title', label: 'Titre', kind: 'text', required: true, placeholder: 'Ex. Salon médical Alger', maxLength: 140, group: 'Événement' },
+      { key: 'title', label: 'Titre', kind: 'text', required: true, placeholder: 'Ex. Salon médical Alger', maxLength: 140, group: 'Événement', i18n: true },
       { key: 'slug', label: 'Slug', kind: 'slug', slugFrom: 'title', group: 'Événement' },
       { key: 'locale', label: 'Langue', kind: 'radio', options: LOCALES, group: 'Événement' },
       { key: 'status', label: 'Statut', kind: 'radio', options: STATUS, group: 'Événement' },
@@ -183,8 +183,8 @@ export const CMS_MODULES: CmsModule[] = [
       { key: 'date', label: 'Date / période', kind: 'text', placeholder: '12–14 octobre 2026', group: 'Événement' },
       { key: 'location', label: 'Lieu', kind: 'text', placeholder: 'Hôtel El Aurassi, Alger', group: 'Événement' },
       { key: 'image', label: 'Visuel', kind: 'image', group: 'Média' },
-      { key: 'shortDesc', label: 'Accroche', kind: 'textarea', wide: true, group: 'Contenu' },
-      { key: 'fullContent', label: 'Présentation', kind: 'html', wide: true, group: 'Contenu' },
+      { key: 'shortDesc', label: 'Accroche', kind: 'textarea', wide: true, group: 'Contenu', i18n: true },
+      { key: 'fullContent', label: 'Présentation', kind: 'html', wide: true, group: 'Contenu', i18n: true },
       { key: 'agenda', label: 'Programme', kind: 'agenda', wide: true, group: 'Programme' },
     ],
   },

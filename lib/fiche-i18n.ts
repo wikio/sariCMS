@@ -1,4 +1,4 @@
-type Bundle = Record<string, Record<string, Record<string, string>>>;
+type Bundle = Record<string, Record<string, Record<string, unknown>>>;
 
 const KEY = 'sari_fiche_i18n';
 
@@ -19,28 +19,20 @@ export function ficheKey(resource: string, id: string) {
   return `${resource}:${id}`;
 }
 
-export function loadFicheLocale(resource: string, id: string, locale: string): Record<string, string> {
-  return read()[ficheKey(resource, id)]?.[locale] || {};
+export function loadFicheLocale(resource: string, id: string, locale: string): Record<string, unknown> {
+  if (!id) return {};
+  return { ...(read()[ficheKey(resource, id)]?.[locale] || {}) };
 }
 
-export function saveFicheLocale(resource: string, id: string, locale: string, fields: Record<string, string>) {
+export function saveFicheLocale(resource: string, id: string, locale: string, fields: Record<string, unknown>) {
+  if (!id) return;
   const bundle = read();
   const key = ficheKey(resource, id);
   bundle[key] = { ...(bundle[key] || {}), [locale]: fields };
   write(bundle);
 }
 
-export function resolveField(
-  value: unknown,
-  resource: string,
-  id: string | undefined,
-  locale: string,
-  defaultLocale: string,
-  field: string,
-): string {
-  const primary = String(value ?? '');
-  if (locale === defaultLocale) return primary;
-  if (!id) return primary;
-  const translated = loadFicheLocale(resource, id, locale)[field];
-  return translated || primary;
+export function isTranslatableField(kind: string, flagged?: boolean) {
+  if (flagged) return true;
+  return ['text', 'textarea', 'html', 'slug', 'list', 'tags', 'faq', 'specs', 'options', 'agenda', 'slides', 'sections', 'process'].includes(kind);
 }

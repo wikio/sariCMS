@@ -161,9 +161,9 @@ function Shell({ children }: { children: ReactNode }) {
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <button className="ad-btn ad-btn-icon ad-btn-ghost" onClick={() => setOpen((v) => !v)}><ChevronLeft className={`w-4 h-4 transition ${open ? '' : 'rotate-180'}`} /></button>
             <form className="flex-1 max-w-xl" onSubmit={(e) => { e.preventDefault(); router.push(`/${locale}/admin/search?q=${encodeURIComponent(q)}`); }}>
-              <div className="relative">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--ad-muted)' }} />
-                <input className="ad-input pl-9 w-full" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Recherche globale…" />
+              <div className="ad-search">
+                <Search className="ad-search-ico w-4 h-4" />
+                <input className="ad-input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Recherche globale…" />
               </div>
             </form>
           </div>

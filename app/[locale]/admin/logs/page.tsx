@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Search } from 'lucide-react';
 import PixelGridLoader from '@/components/admin/PixelGridLoader';
+import SearchField from '@/components/admin/SearchField';
 import { cmsAdminFetch } from '@/lib/cms-admin';
 import { unwrapList } from '@/lib/cms';
 
@@ -52,10 +52,7 @@ export default function LogsPage() {
       </header>
 
       <div className="ad-card p-3 flex flex-col lg:flex-row gap-2">
-        <div className="relative flex-1">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--ad-muted)' }} />
-          <input className="ad-input pl-9" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Action, ressource, acteur…" />
-        </div>
+        <SearchField className="flex-1" value={q} onChange={setQ} placeholder="Action, ressource, acteur…" />
         <select className="ad-select lg:w-48" value={resource} onChange={(e) => setResource(e.target.value)}>
           <option value="">Toutes les ressources</option>
           {resources.map((r) => <option key={r} value={r}>{r}</option>)}

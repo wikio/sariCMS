@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Eye, Search, Trash2 } from 'lucide-react';
+import { Eye, Trash2 } from 'lucide-react';
 import { useToast } from '@/components/admin/Toast';
+import SearchField from '@/components/admin/SearchField';
+import ProcessFlow from '@/components/admin/ProcessFlow';
 
 type AppRow = {
   id: number;
@@ -75,10 +77,7 @@ export default function AdminApplicationsPage() {
         ))}
       </div>
       <div className="ad-card p-3 flex flex-col lg:flex-row gap-2">
-        <div className="relative flex-1">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--ad-muted)' }} />
-          <input className="ad-input pl-9" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Candidat, poste…" />
-        </div>
+        <SearchField className="flex-1" value={q} onChange={setQ} placeholder="Candidat, poste…" />
         <select className="ad-select lg:w-48" value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="">Tous les statuts</option>
           {STEPS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
@@ -109,6 +108,14 @@ export default function AdminApplicationsPage() {
             <h2 className="text-xl font-black">{open.candidate}</h2>
             <p className="text-sm">{open.jobTitle} · {open.experience}</p>
             <p className="text-sm">{open.motivation}</p>
+            <ProcessFlow
+              current={open.status}
+              steps={STEPS.map((s) => ({
+                id: s.value,
+                label: s.label,
+                done: STEPS.findIndex((x) => x.value === open.status) > STEPS.findIndex((x) => x.value === s.value),
+              }))}
+            />
             <div className="flex flex-wrap gap-1">
               {STEPS.map((s) => (
                 <button key={s.value} className={`ad-btn ${open.status === s.value ? 'ad-btn-primary' : 'ad-btn-ghost'}`} onClick={() => {

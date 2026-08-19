@@ -3,9 +3,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useLocale } from 'next-intl';
-import { Eye, LayoutGrid, List as ListIcon, Search, Trash2 } from 'lucide-react';
+import { Eye, LayoutGrid, List as ListIcon, Trash2 } from 'lucide-react';
 import { loadOrders, loadQuotes, saveOrders, saveQuotes, type Order, type Quote } from '@/lib/crm-store';
 import { useToast } from '@/components/admin/Toast';
+import SearchField from '@/components/admin/SearchField';
+import ProcessFlow from '@/components/admin/ProcessFlow';
 
 type Kind = 'orders' | 'quotes';
 type Row = (Order | Quote) & { history?: Array<{ status: string; at: string; note?: string }> };
@@ -93,10 +95,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
       </div>
 
       <div className="ad-card p-3 flex flex-col lg:flex-row gap-2">
-        <div className="relative flex-1">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--ad-muted)' }} />
-          <input className="ad-input pl-9" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Client, email, n°…" />
-        </div>
+        <SearchField className="flex-1" value={q} onChange={setQ} placeholder="Client, email, n°…" />
         <select className="ad-select lg:w-48" value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="">Tous les statuts</option>
           {statuses.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
