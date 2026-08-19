@@ -1,148 +1,151 @@
-// app/[locale]/admin/settings/page.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useLocale, useTranslations } from 'next-intl';
-import { Settings as SettingsIcon, Palette, Bell, Shield, Database, Save, Download } from 'lucide-react';
-import AdminLayout from '@/components/admin/AdminLayout';
+import { useEffect, useState } from 'react';
+import { Save } from 'lucide-react';
+import { DEFAULT_SETTINGS, loadAdminSettings, saveAdminSettings, type AdminSettings } from '@/lib/admin-settings';
 import { useToast } from '@/components/admin/Toast';
 
 export default function AdminSettingsPage() {
-  const locale = useLocale();
-  const t = useTranslations('admin.settings');
   const { showToast } = useToast();
+  const [settings, setSettings] = useState<AdminSettings>(DEFAULT_SETTINGS);
 
-  const [settings, setSettings] = useState({
-    theme: 'system',
-    language: locale,
-    notifications: {
-      email: true,
-      browser: true,
-      orders: true,
-      applications: true
-    },
-    security: {
-      twoFactor: false,
-      sessionTimeout: 120
-    }
+  useEffect(() => { setSettings(loadAdminSettings()); }, []);
+
+  const setSmtp = (patch: Partial<AdminSettings['smtp']>) => setSettings({ ...settings, smtp: { ...settings.smtp, ...patch } });
+  const setDb = (patch: Partial<AdminSettings['db']>) => setSettings({ ...settings, db: { ...settings.db, ...patch } });
+
+  return (
+    <div className="space-y-4 max-w-3xl">
+      <header className="ad-rise">
+        <div className="text-[11px] uppercase tracking-[0.22em] font-black" style={{ color: 'var(--ad-muted)' }}>Système</div>
+        <h1 className="text-3xl font-black">Paramètres</h1>
+      </header>
+
+      <section className="ad-card p-5 space-y-4">
+        <h2 className="ad-section-title">Général</h2>
+        <label className="space-y-1.5 block">
+          <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Langue d’origine</span>
+          <select className="ad-select" value={settings.defaultLocale} onChange={(e) => setSettings({ ...settings, defaultLocale: e.target.value as AdminSettings['defaultLocale'] })}>
+            <option value="fr">Français</option>
+            <option value="en">English</option>
+            <option value="ar">العربية</option>
+          </select>
+        </label>
+        <label className="space-y-1.5 block">
+          <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Format code produit</span>
+          <input className="ad-input" value={settings.skuFormat} onChange={(e) => setSettings({ ...settings, skuFormat: e.target.value })} placeholder="PRO-{ID}" />
+        </label>
+        <div className="grid grid-cols-2 gap-3">
+          <label className="space-y-1.5 block">
+            <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Crop front largeur</span>
+            <input className="ad-input" type="number" value={settings.cropWidth} onChange={(e) => setSettings({ ...settings, cropWidth: Number(e.target.value) })} />
+          </label>
+          <label className="space-y-1.5 block">
+            <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Crop front hauteur</span>
+            <input className="ad-input" type="number" value={settings.cropHeight} onChange={(e) => setSettings({ ...settings, cropHeight: Number(e.target.value) })} />
+          </label>
+        </div>
+      </section>
+
+      <section className="ad-card p-5 space-y-4">
+        <h2 className="ad-section-title">SMTP avancé</h2>
+        <div className="grid md:grid-cols-2 gap-3">
+          <Field label="Hôte" value={settings.smtp.host} onChange={(v) => setSmtp({ host: v })} />
+          <Field label="Port" value={String(settings.smtp.port)} onChange={(v) => setSmtp({ port: Number(v) || 587 })} />
+          <Field label="Utilisateur" value={settings.smtp.user} onChange={(v) => setSmtp({ user: v })} />
+          <label className="space-y-1.5">
+            <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Mot de passe</span>
+            <input className="ad-input" type="password" value={settings.smtp.pass} onChange={(e) => setSmtp({ pass: e.target.value })} />
+          </label>
+          <Field label="Expéditeur" value={settings.smtp.from} onChange={(v) => setSmtp({ from: v })} />
+          <Field label="Reply-To" value={settings.smtp.replyTo} onChange={(v) => setSmtp({ replyTo: v })} />
+        </div>
+        <button type="button" className={`ad-btn ${settings.smtp.secure ? 'ad-btn-lime' : 'ad-btn-ghost'}`} onClick={() => setSmtp({ secure: !settings.smtp.secure })}>
+          TLS/SSL : {settings.smtp.secure ? 'activé' : 'désactivé'}
+        </button>
+        <p className="text-xs" style={{ color: 'var(--ad-muted)' }}>Ces valeurs sont stockées pour le connecteur mail. Le backend lit SMTP_* au prochain déploiement.</p>
+      </section>
+
+      <SeoSection />
+
+      <section className="ad-card p-5 space-y-4">
+        <h2 className="ad-section-title">Base de données</h2>
+        <label className="space-y-1.5 block">
+          <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Driver</span>
+          <select className="ad-select" value={settings.db.driver} onChange={(e) => setDb({ driver: e.target.value as AdminSettings['db']['driver'] })}>
+            <option value="mysql">MySQL</option>
+            <option value="postgresql">PostgreSQL</option>
+            <option value="mongodb">MongoDB</option>
+            <option value="json">JSON local</option>
+          </select>
+        </label>
+        <Field label="URL de connexion" value={settings.db.url} onChange={(v) => setDb({ url: v })} />
+        <Field label="Schéma" value={settings.db.schema} onChange={(v) => setDb({ schema: v })} />
+        <p className="text-xs" style={{ color: 'var(--ad-muted)' }}>Le backend Nest utilise DATABASE_URL / DB_DRIVER. Ces champs documentent la cible et préparent le switch multi-driver.</p>
+      </section>
+
+      <button className="ad-btn ad-btn-primary" onClick={() => { saveAdminSettings(settings); showToast('Paramètres enregistrés', 'success'); }}>
+        <Save className="w-4 h-4" /> Enregistrer
+      </button>
+    </div>
+  );
+}
+
+function SeoSection() {
+  const { showToast } = useToast();
+  const [locale, setLocale] = useState('fr');
+  const [seo, setSeo] = useState({
+    title: '', titleTemplate: '', description: '', keywords: '',
+    ogTitle: '', ogDescription: '', ogImage: '', twitter: '',
+    canonical: '', robots: 'index, follow', googleSiteVerification: '', favicon: '',
   });
 
   useEffect(() => {
-    const stored = localStorage.getItem(`sari_settings_${locale}`);
-    if (stored) {
-      try {
-        setSettings(JSON.parse(stored));
-      } catch (e) {}
-    }
+    (async () => {
+      const res = await fetch(`/api/admin/seo?locale=${locale}`);
+      const json = await res.json();
+      if (json.seo) setSeo((prev) => ({ ...prev, ...json.seo }));
+    })();
   }, [locale]);
 
-  const handleSave = () => {
-    try {
-      localStorage.setItem(`sari_settings_${locale}`, JSON.stringify(settings));
-      showToast(t('saveSuccess', 'Configuration sauvegardée !'), 'success');
-    } catch (err) {
-      showToast(t('saveError', 'Erreur lors de la sauvegarde'), 'error');
-    }
-  };
-
-  const handleExport = () => {
-    const dataStr = JSON.stringify(settings, null, 2);
-    const blob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `settings_${locale}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const sections = [
-    {
-      id: 'general',
-      icon: SettingsIcon,
-      color: 'sari-blue',
-      title: t('general', 'Général'),
-      desc: t('generalDesc', 'Configurez les paramètres généraux de l\'application')
-    },
-    {
-      id: 'contact',
-      icon: Bell,
-      color: 'orange-500',
-      title: t('contact', 'Contact'),
-      desc: t('contactDesc', 'Gérez les informations de contact et les notifications')
-    },
-    {
-      id: 'social',
-      icon: Palette,
-      color: 'purple-500',
-      title: t('social', 'Réseaux sociaux'),
-      desc: t('socialDesc', 'Personnalisez l\'apparence et les liens sociaux')
-    },
-    {
-      id: 'stats',
-      icon: Database,
-      color: 'green-500',
-      title: t('stats', 'Statistiques'),
-      desc: t('statsDesc', 'Consultez et exportez les statistiques du site')
-    }
-  ];
-
   return (
-    <div className="space-y-6">
-      <div className="space-y-6">
-        {/* En-tête */}
-        <div className="bg-white dark:bg-[#1a1a1a] p-6 border border-gray-200 dark:border-gray-800 rounded-xl">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-sari-blue/10 rounded-xl flex items-center justify-center">
-                <SettingsIcon className="w-6 h-6 text-sari-blue" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-sari-dark dark:text-white">{t('title', 'Paramètres')}</h1>
-                {/* ✅ CORRECTION : Utilisation d'un <div> au lieu d'un <p> pour éviter l'imbrication interdite */}
-                <div className="text-sm text-gray-500">
-                  {t('generalDesc', 'Configurez les paramètres généraux de l\'application')}
-                </div>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <button 
-                onClick={handleExport}
-                className="px-4 py-2 bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-lg text-sm flex items-center gap-2"
-              >
-                <Download className="w-4 h-4" /> {t('export', 'Exporter')}
-              </button>
-              <button 
-                onClick={handleSave}
-                className="btn-primary text-white px-4 py-2 font-semibold rounded-lg text-sm flex items-center gap-2"
-              >
-                <Save className="w-4 h-4" /> {t('save', 'Sauvegarder')}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Grille des sections */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {sections.map(section => {
-            const Icon = section.icon;
-            return (
-              <div 
-                key={section.id}
-                className="bg-white dark:bg-[#1a1a1a] p-6 border border-gray-200 dark:border-gray-800 rounded-xl hover:shadow-lg hover:border-sari-blue transition-all group"
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className={`w-12 h-12 bg-${section.color}/10 rounded-lg flex items-center justify-center group-hover:bg-${section.color} transition-colors`}>
-                    <Icon className={`w-6 h-6 text-${section.color} group-hover:text-white transition-colors`} />
-                  </div>
-                </div>
-                <h3 className="font-bold text-sari-dark dark:text-white mb-1">{section.title}</h3>
-                <p className="text-xs text-gray-500">{section.desc}</p>
-              </div>
-            );
-          })}
-        </div>
+    <section className="ad-card p-5 space-y-4">
+      <h2 className="ad-section-title">SEO vitrine</h2>
+      <div className="flex gap-2">
+        {['fr', 'en', 'ar'].map((loc) => (
+          <button key={loc} type="button" className={`ad-btn ${locale === loc ? 'ad-btn-primary' : 'ad-btn-ghost'}`} onClick={() => setLocale(loc)}>{loc.toUpperCase()}</button>
+        ))}
       </div>
-    </div>
+      <div className="grid md:grid-cols-2 gap-3">
+        <Field label="Titre" value={seo.title} onChange={(v) => setSeo({ ...seo, title: v })} />
+        <Field label="Modèle de titre" value={seo.titleTemplate} onChange={(v) => setSeo({ ...seo, titleTemplate: v })} />
+        <label className="md:col-span-2 space-y-1.5">
+          <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Description</span>
+          <textarea className="ad-textarea" value={seo.description} onChange={(e) => setSeo({ ...seo, description: e.target.value })} />
+        </label>
+        <Field label="Mots-clés" value={seo.keywords} onChange={(v) => setSeo({ ...seo, keywords: v })} />
+        <Field label="Robots" value={seo.robots} onChange={(v) => setSeo({ ...seo, robots: v })} />
+        <Field label="Titre Open Graph" value={seo.ogTitle} onChange={(v) => setSeo({ ...seo, ogTitle: v })} />
+        <Field label="Description Open Graph" value={seo.ogDescription} onChange={(v) => setSeo({ ...seo, ogDescription: v })} />
+        <Field label="Image OG / partage" value={seo.ogImage} onChange={(v) => setSeo({ ...seo, ogImage: v })} />
+        <Field label="Twitter / X" value={seo.twitter} onChange={(v) => setSeo({ ...seo, twitter: v })} />
+        <Field label="URL canonique" value={seo.canonical} onChange={(v) => setSeo({ ...seo, canonical: v })} />
+        <Field label="Favicon" value={seo.favicon} onChange={(v) => setSeo({ ...seo, favicon: v })} />
+        <Field label="Google Search Console" value={seo.googleSiteVerification} onChange={(v) => setSeo({ ...seo, googleSiteVerification: v })} />
+      </div>
+      <button type="button" className="ad-btn ad-btn-primary" onClick={async () => {
+        await fetch('/api/admin/seo', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ locale, seo }) });
+        showToast('Métadonnées SEO enregistrées', 'success');
+      }}>Enregistrer le SEO {locale.toUpperCase()}</button>
+    </section>
+  );
+}
+
+function Field({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <label className="space-y-1.5 block">
+      <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>{label}</span>
+      <input className="ad-input" value={value} onChange={(e) => onChange(e.target.value)} />
+    </label>
   );
 }

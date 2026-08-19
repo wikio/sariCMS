@@ -43,7 +43,8 @@ export interface Menu {
 }
 
 export interface Product {
-  id: number;
+  id: number | string;
+  slug?: string;
   name: string;
   category: string;
   price: string;
@@ -63,7 +64,8 @@ export interface Product {
 }
 
 export interface Event {
-  id: number;
+  id: number | string;
+  slug?: string;
   title: string;
   type: string;
   date: string;
@@ -75,7 +77,8 @@ export interface Event {
 }
 
 export interface News {
-  id: number;
+  id: number | string;
+  slug?: string;
   title: string;
   category: string;
   date: string;
@@ -90,7 +93,8 @@ export interface News {
 }
 
 export interface Career {
-  id: number;
+  id: number | string;
+  slug?: string;
   title: string;
   type: string;
   location: string;
@@ -109,7 +113,8 @@ export interface Career {
 }
 
 export interface Service {
-  id: number;
+  id: number | string;
+  slug?: string;
   title: string;
   icon: string;
   shortDesc: string;
@@ -119,7 +124,7 @@ export interface Service {
 }
 
 export interface Testimonial {
-  id: number;
+  id: number | string;
   name: string;
   role: string;
   clinic: string;
@@ -129,7 +134,7 @@ export interface Testimonial {
 }
 
 export interface Partner {
-  id: number;
+  id: number | string;
   name: string;
   logo: string;
   category?: string;
@@ -180,6 +185,16 @@ export interface VerificationCode {
   revocationReason?: string;
 }
 
+export interface HeroSlide {
+  id: number | string;
+  title: string;
+  subtitle: string;
+  description: string;
+  image: string;
+  cta: string;
+  ctaLink: string;
+}
+
 export interface SolutionCategory {
   id: string;
   title: string;
@@ -188,7 +203,7 @@ export interface SolutionCategory {
   icon: string;
   image: string;
   color: string;
-  productIds: number[];
+  productIds: Array<number | string>;
   features?: string[];
   faq?: Array<{ q: string; a: string }>;
 }

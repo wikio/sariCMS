@@ -1,0 +1,237 @@
+'use client';
+
+import { useEffect, useMemo, useState } from 'react';
+import { LayoutGrid, List as ListIcon, Plus, Trash2, User } from 'lucide-react';
+import PixelGridLoader from '@/components/admin/PixelGridLoader';
+import SearchField from '@/components/admin/SearchField';
+import { useToast } from '@/components/admin/Toast';
+import { cmsAdminCreate, cmsAdminDelete, cmsAdminList, cmsAdminUpdate } from '@/lib/cms-admin';
+import { CmsError } from '@/lib/cms';
+import { loadOrders, loadQuotes, orderRevenue } from '@/lib/crm-store';
+
+type Person = Record<string, unknown> & {
+  id?: string;
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  company?: string;
+  status?: string;
+  position?: string;
+  type?: string;
+  notes?: string;
+};
+
+export default function PeopleDesk({
+  type, title, singular,
+}: {
+  type: 'client' | 'candidate';
+  title: string;
+  singular: string;
+}) {
+  const { showToast } = useToast();
+  const [rows, setRows] = useState<Person[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [q, setQ] = useState('');
+  const [status, setStatus] = useState('');
+  const [view, setView] = useState<'list' | 'cards'>('list');
+  const [editing, setEditing] = useState<Person | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const list = await cmsAdminList<Person>('users', { filter: JSON.stringify({ type }) });
+      setRows(list);
+    } catch (err) {
+      showToast(err instanceof CmsError ? err.message : 'Chargement impossible', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { load(); }, [type]);
+
+  const shown = useMemo(() => rows.filter((r) => {
+    if (status && String(r.status || '') !== status) return false;
+    if (!q.trim()) return true;
+    const blob = [r.firstName, r.lastName, r.email, r.company, r.phone, r.position].join(' ').toLowerCase();
+    return blob.includes(q.toLowerCase());
+  }), [rows, q, status]);
+
+  const save = async () => {
+    if (!editing) return;
+    if (!String(editing.email || '').trim()) {
+      showToast('Email obligatoire', 'error');
+      return;
+    }
+    setSaving(true);
+    try {
+      const payload = { ...editing, type, password: editing.id ? undefined : 'ChangeMe_Sari2026!' };
+      if (editing.id && editing.notes) {
+        localStorage.setItem(`sari_notes_${editing.id}`, String(editing.notes));
+      }
+      const saved = editing.id
+        ? await cmsAdminUpdate<Person>('users', String(editing.id), payload)
+        : await cmsAdminCreate<Person>('users', payload);
+      showToast('Fiche enregistrée', 'success');
+      setEditing(null);
+      await load();
+      if (saved?.id) setRows((prev) => prev.some((p) => p.id === saved.id) ? prev : [saved, ...prev]);
+    } catch (err) {
+      showToast(err instanceof CmsError ? err.message : 'Enregistrement impossible', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const remove = async (id: string) => {
+    if (!confirm(`Supprimer ce ${singular} ?`)) return;
+    try {
+      await cmsAdminDelete('users', id);
+      setRows((prev) => prev.filter((r) => r.id !== id));
+      showToast('Supprimé', 'success');
+    } catch (err) {
+      showToast(err instanceof CmsError ? err.message : 'Erreur', 'error');
+    }
+  };
+
+  const nameOf = (p: Person) => [p.firstName, p.lastName].filter(Boolean).join(' ') || p.email || '—';
+
+  return (
+    <div className="space-y-4">
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-3 ad-rise">
+        <div>
+          <div className="text-[11px] uppercase tracking-[0.22em] font-black" style={{ color: 'var(--ad-muted)' }}>CRM</div>
+          <h1 className="text-3xl font-black tracking-tight">{title}</h1>
+          <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>{shown.length} {singular}(s)</p>
+        </div>
+        <div className="flex gap-2">
+          <div className="flex" style={{ border: '1px solid var(--ad-line)' }}>
+            <button type="button" className={`ad-btn ad-btn-icon ${view === 'list' ? 'ad-btn-primary' : 'ad-btn-ghost'}`} onClick={() => setView('list')}><ListIcon className="w-4 h-4" /></button>
+            <button type="button" className={`ad-btn ad-btn-icon ${view === 'cards' ? 'ad-btn-primary' : 'ad-btn-ghost'}`} onClick={() => setView('cards')}><LayoutGrid className="w-4 h-4" /></button>
+          </div>
+          <button className="ad-btn ad-btn-primary" onClick={() => setEditing({ type, status: 'active', firstName: '', lastName: '', email: '' })}>
+            <Plus className="w-4 h-4" /> Nouveau {singular}
+          </button>
+        </div>
+      </header>
+
+      <div className="ad-card p-3 flex flex-col lg:flex-row gap-2 ad-rise">
+        <SearchField className="flex-1" value={q} onChange={setQ} placeholder={`Rechercher un ${singular}…`} />
+        <select className="ad-select lg:w-44" value={status} onChange={(e) => setStatus(e.target.value)}>
+          <option value="">Tous les statuts</option>
+          <option value="active">Actif</option>
+          <option value="pending">En attente</option>
+          <option value="blocked">Bloqué</option>
+        </select>
+      </div>
+
+      {loading ? <div className="ad-card"><PixelGridLoader label={title} /></div> : view === 'list' ? (
+        <div className="ad-card overflow-hidden">
+          <table className="ad-table">
+            <thead>
+              <tr>
+                <th>Nom</th>
+                <th>Email</th>
+                <th>{type === 'candidate' ? 'Poste' : 'Société'}</th>
+                <th>Statut</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {shown.map((p) => (
+                <tr key={String(p.id)}>
+                  <td className="font-bold">{nameOf(p)}</td>
+                  <td className="text-sm" style={{ color: 'var(--ad-muted)' }}>{p.email}</td>
+                  <td>{type === 'candidate' ? String(p.position || '—') : String(p.company || '—')}</td>
+                  <td><span className="ad-chip ad-chip-acc">{String(p.status || '')}</span></td>
+                  <td className="text-right">
+                    <button className="ad-btn ad-btn-ghost" onClick={() => setEditing({ ...p, notes: p.id ? localStorage.getItem(`sari_notes_${p.id}`) || '' : '' })}>Ouvrir</button>
+                    {p.id && <button className="ad-btn ad-btn-icon ad-btn-danger ml-1" onClick={() => remove(String(p.id))}><Trash2 className="w-4 h-4" /></button>}
+                  </td>
+                </tr>
+              ))}
+              {shown.length === 0 && <tr><td colSpan={5} className="text-center py-10" style={{ color: 'var(--ad-muted)' }}>Aucun {singular}</td></tr>}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-3">
+          {shown.map((p) => (
+            <article key={String(p.id)} className="ad-card p-4 space-y-2">
+              <div className="flex items-center gap-2">
+                <div className="w-9 h-9 flex items-center justify-center" style={{ background: 'color-mix(in srgb, var(--ad-accent) 16%, transparent)', color: 'var(--ad-accent)' }}>
+                  <User className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="font-black">{nameOf(p)}</div>
+                  <div className="text-xs" style={{ color: 'var(--ad-muted)' }}>{p.email}</div>
+                </div>
+              </div>
+              <p className="text-sm">{type === 'candidate' ? p.position : p.company}</p>
+              <div className="flex gap-1">
+                <button className="ad-btn ad-btn-ghost" onClick={() => setEditing({ ...p })}>Éditer</button>
+                {p.id && <button className="ad-btn ad-btn-icon ad-btn-danger ml-auto" onClick={() => remove(String(p.id))}><Trash2 className="w-4 h-4" /></button>}
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+
+      {editing && (
+        <div className="ad-modal" onClick={() => setEditing(null)}>
+          <div className="ad-modal-card space-y-3" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-xl font-black">{editing.id ? `Fiche ${singular}` : `Nouveau ${singular}`}</h2>
+            <div className="grid md:grid-cols-2 gap-3">
+              <Field label="Prénom" required value={String(editing.firstName || '')} onChange={(v) => setEditing({ ...editing, firstName: v })} />
+              <Field label="Nom" required value={String(editing.lastName || '')} onChange={(v) => setEditing({ ...editing, lastName: v })} />
+              <Field label="Email" required value={String(editing.email || '')} onChange={(v) => setEditing({ ...editing, email: v })} />
+              <Field label="Téléphone" value={String(editing.phone || '')} onChange={(v) => setEditing({ ...editing, phone: v })} />
+              {type === 'client'
+                ? <Field label="Société" value={String(editing.company || '')} onChange={(v) => setEditing({ ...editing, company: v })} />
+                : <Field label="Poste visé" value={String(editing.position || '')} onChange={(v) => setEditing({ ...editing, position: v })} />}
+              <label className="space-y-1.5">
+                <span className="text-[11px] font-black uppercase tracking-[0.14em]" style={{ color: 'var(--ad-muted)' }}>Statut <span className="ad-chip ad-chip-mute">Optionnel</span></span>
+                <select className="ad-select" value={String(editing.status || 'active')} onChange={(e) => setEditing({ ...editing, status: e.target.value })}>
+                  <option value="active">Actif</option>
+                  <option value="pending">En attente</option>
+                  <option value="blocked">Bloqué</option>
+                </select>
+              </label>
+            </div>
+            {type === 'client' && editing.email && (
+              <ClientStats email={String(editing.email)} />
+            )}
+            <div className="flex justify-end gap-2 pt-2">
+              <button className="ad-btn ad-btn-ghost" onClick={() => setEditing(null)}>Fermer</button>
+              <button className="ad-btn ad-btn-primary" disabled={saving} onClick={save}>{saving ? '…' : 'Enregistrer'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ClientStats({ email }: { email: string }) {
+  const orders = loadOrders().filter((o) => o.email === email);
+  const quotes = loadQuotes().filter((q) => q.email === email);
+  return (
+    <div className="ad-card p-3 space-y-1 text-sm">
+      <div className="font-black">{orders.length} commande(s) · {quotes.length} devis · {orderRevenue(orders).toLocaleString()} DA livrés</div>
+      {orders.slice(0, 4).map((o) => <div key={o.id}>#{o.id} · {o.status} · {o.total.toLocaleString()} DA</div>)}
+    </div>
+  );
+}
+
+function Field({ label, value, onChange, required }: { label: string; value: string; onChange: (v: string) => void; required?: boolean }) {
+  return (
+    <label className="space-y-1.5">
+      <span className="text-[11px] font-black uppercase tracking-[0.14em] flex items-center gap-2" style={{ color: 'var(--ad-muted)' }}>
+        {label} {required ? <span className="ad-chip ad-chip-warn">Obligatoire</span> : <span className="ad-chip ad-chip-mute">Optionnel</span>}
+      </span>
+      <input className="ad-input" value={value} placeholder={label} onChange={(e) => onChange(e.target.value)} />
+    </label>
+  );
+}

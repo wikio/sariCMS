@@ -42,12 +42,25 @@ export class ProductsService extends BaseCrudService<ProductEntity> {
     op: 'create' | 'update',
   ): Partial<ProductEntity> {
     const out = { ...dto };
+    if (out.slug === '') delete out.slug;
     if (!out.slug && out.name) out.slug = slugify(String(out.name));
     if (op === 'create') {
       out.locale = out.locale || 'fr';
       out.status = out.status || 'draft';
       if (out.inStock === undefined) out.inStock = true;
+      if (!out.sku) {
+        const stamp = Date.now().toString().slice(-5);
+        out.sku = `PRO-${stamp}`;
+      }
     }
     return out;
+  }
+
+  async findPublished(idOrSlug: string, locale?: string) {
+    const bySlug = await this.repository.findOne(locale ? { slug: idOrSlug, locale } : { slug: idOrSlug });
+    const entity = bySlug ?? (await this.repository.findById(idOrSlug));
+    if (!entity || entity.status !== 'published') return null;
+    if (locale && entity.locale && entity.locale !== locale) return null;
+    return this.toView(entity, 'block');
   }
 }

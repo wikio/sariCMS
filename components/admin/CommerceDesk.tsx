@@ -1,0 +1,189 @@
+'use client';
+
+import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
+import { useLocale } from 'next-intl';
+import { Eye, LayoutGrid, List as ListIcon, Trash2 } from 'lucide-react';
+import { loadOrders, loadQuotes, saveOrders, saveQuotes, type Order, type Quote } from '@/lib/crm-store';
+import { useToast } from '@/components/admin/Toast';
+import SearchField from '@/components/admin/SearchField';
+import ProcessFlow from '@/components/admin/ProcessFlow';
+
+type Kind = 'orders' | 'quotes';
+type Row = (Order | Quote) & { history?: Array<{ status: string; at: string; note?: string }> };
+
+const ORDER_STATUS = [
+  { value: 'pending', label: 'En attente' },
+  { value: 'processing', label: 'Préparation' },
+  { value: 'shipped', label: 'Expédiée' },
+  { value: 'delivered', label: 'Livrée' },
+  { value: 'cancelled', label: 'Annulée' },
+];
+const QUOTE_STATUS = [
+  { value: 'pending', label: 'Brouillon' },
+  { value: 'sent', label: 'Envoyé' },
+  { value: 'accepted', label: 'Accepté' },
+  { value: 'rejected', label: 'Refusé' },
+  { value: 'expired', label: 'Expiré' },
+];
+
+export default function CommerceDesk({ kind }: { kind: Kind }) {
+  const locale = useLocale();
+  const { showToast } = useToast();
+  const [rows, setRows] = useState<Row[]>([]);
+  const [q, setQ] = useState('');
+  const [status, setStatus] = useState('');
+  const [view, setView] = useState<'list' | 'cards'>('list');
+  const [open, setOpen] = useState<Row | null>(null);
+  const [note, setNote] = useState('');
+  const statuses = kind === 'orders' ? ORDER_STATUS : QUOTE_STATUS;
+  const title = kind === 'orders' ? 'Commandes' : 'Devis';
+
+  useEffect(() => {
+    setRows((kind === 'orders' ? loadOrders() : loadQuotes()) as Row[]);
+  }, [kind]);
+
+  const persist = (next: Row[]) => {
+    setRows(next);
+    if (kind === 'orders') saveOrders(next as Order[]);
+    else saveQuotes(next as Quote[]);
+  };
+
+  const setStatusOf = (id: number, nextStatus: string) => {
+    persist(rows.map((r) => r.id === id ? {
+      ...r,
+      status: nextStatus as never,
+      history: [...(r.history || []), { status: nextStatus, at: new Date().toISOString(), note }],
+    } : r));
+    setNote('');
+    showToast('Statut mis à jour', 'success');
+  };
+
+  const shown = useMemo(() => rows.filter((r) => {
+    if (status && r.status !== status) return false;
+    if (!q.trim()) return true;
+    return `${r.client} ${r.email} ${r.id}`.toLowerCase().includes(q.toLowerCase());
+  }), [rows, q, status]);
+
+  const related = open ? rows.filter((r) => r.email === open.email && r.id !== open.id) : [];
+  const stats = {
+    total: rows.length,
+    amount: rows.reduce((s, r) => s + Number(r.total || 0), 0),
+    pending: rows.filter((r) => r.status === 'pending' || r.status === 'sent' || r.status === 'processing').length,
+  };
+
+  return (
+    <div className="space-y-4">
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-3 ad-rise">
+        <div>
+          <div className="text-[11px] uppercase tracking-[0.22em] font-black" style={{ color: 'var(--ad-muted)' }}>Boutique</div>
+          <h1 className="text-3xl font-black tracking-tight">{title}</h1>
+        </div>
+        <div className="flex" style={{ border: '1px solid var(--ad-line)' }}>
+          <button type="button" className={`ad-btn ad-btn-icon ${view === 'list' ? 'ad-btn-primary' : 'ad-btn-ghost'}`} onClick={() => setView('list')}><ListIcon className="w-4 h-4" /></button>
+          <button type="button" className={`ad-btn ad-btn-icon ${view === 'cards' ? 'ad-btn-primary' : 'ad-btn-ghost'}`} onClick={() => setView('cards')}><LayoutGrid className="w-4 h-4" /></button>
+        </div>
+      </header>
+
+      <div className="grid grid-cols-3 gap-3">
+        {[[stats.total, title], [`${stats.amount.toLocaleString()} DA`, 'Montant'], [stats.pending, 'En cours']].map(([v, l]) => (
+          <div key={String(l)} className="ad-card p-4">
+            <div className="text-2xl font-black tabular-nums">{v}</div>
+            <div className="text-xs" style={{ color: 'var(--ad-muted)' }}>{l}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="ad-card p-3 flex flex-col lg:flex-row gap-2">
+        <SearchField className="flex-1" value={q} onChange={setQ} placeholder="Client, email, n°…" />
+        <select className="ad-select lg:w-48" value={status} onChange={(e) => setStatus(e.target.value)}>
+          <option value="">Tous les statuts</option>
+          {statuses.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+        </select>
+      </div>
+
+      {view === 'list' ? (
+        <div className="ad-card overflow-x-auto">
+          <table className="ad-table">
+            <thead><tr><th>N°</th><th>Client</th><th>Date</th><th>Total</th><th>Statut</th><th></th></tr></thead>
+            <tbody>
+              {shown.map((row) => (
+                <tr key={row.id}>
+                  <td className="font-mono text-sm">#{row.id}</td>
+                  <td><div className="font-bold">{row.client}</div><div className="text-xs" style={{ color: 'var(--ad-muted)' }}>{row.email}</div></td>
+                  <td>{row.date}</td>
+                  <td className="font-black">{Number(row.total).toLocaleString()} DA</td>
+                  <td><span className="ad-chip ad-chip-acc">{row.status}</span></td>
+                  <td className="text-right">
+                    <button className="ad-btn ad-btn-ghost" onClick={() => setOpen(row)}><Eye className="w-4 h-4" /> Voir</button>
+                    <button className="ad-btn ad-btn-icon ad-btn-danger ml-1" onClick={() => persist(rows.filter((r) => r.id !== row.id))}><Trash2 className="w-4 h-4" /></button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-3">
+          {shown.map((row) => (
+            <article key={row.id} className="ad-card p-4 space-y-2">
+              <div className="flex justify-between"><span className="font-mono text-xs">#{row.id}</span><span className="ad-chip ad-chip-acc">{row.status}</span></div>
+              <h3 className="font-black">{row.client}</h3>
+              <div className="font-black" style={{ color: 'var(--ad-accent)' }}>{Number(row.total).toLocaleString()} DA</div>
+              <button className="ad-btn ad-btn-ghost w-full" onClick={() => setOpen(row)}>Détail</button>
+            </article>
+          ))}
+        </div>
+      )}
+
+      {open && (
+        <div className="ad-modal" onClick={() => setOpen(null)}>
+          <div className="ad-modal-card space-y-4" style={{ width: 'min(720px, 100%)' }} onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-xl font-black">{title} #{open.id}</h2>
+            <div className="flex flex-wrap gap-1">
+              {statuses.map((s, i) => (
+                <button key={s.value} type="button" className={`ad-btn ${open.status === s.value ? 'ad-btn-primary' : 'ad-btn-ghost'}`} onClick={() => { setStatusOf(open.id, s.value); setOpen({ ...open, status: s.value as never }); }}>
+                  {i + 1}. {s.label}
+                </button>
+              ))}
+            </div>
+            <input className="ad-input" placeholder="Commentaire d’étape…" value={note} onChange={(e) => setNote(e.target.value)} />
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div><span style={{ color: 'var(--ad-muted)' }}>Client</span><div className="font-bold">{open.client}</div></div>
+              <div>
+                <span style={{ color: 'var(--ad-muted)' }}>Fiche client</span>
+                <div><Link className="underline" href={`/${locale}/admin/clients`}>{open.email}</Link></div>
+              </div>
+              <div><span style={{ color: 'var(--ad-muted)' }}>Date</span><div className="font-bold">{open.date}</div></div>
+              <div><span style={{ color: 'var(--ad-muted)' }}>Total</span><div className="font-black" style={{ color: 'var(--ad-accent)' }}>{Number(open.total).toLocaleString()} DA</div></div>
+            </div>
+            <div className="space-y-2">
+              {(open.items || []).map((it, i) => (
+                <div key={i} className="flex justify-between ad-card p-3 text-sm">
+                  <div><div className="font-bold">{it.name}</div><div style={{ color: 'var(--ad-muted)' }}>{it.quantity} × {it.price.toLocaleString()} DA</div></div>
+                  <div className="font-black">{(it.quantity * it.price).toLocaleString()} DA</div>
+                </div>
+              ))}
+            </div>
+            {related.length > 0 && (
+              <div>
+                <h3 className="text-xs font-black uppercase tracking-widest mb-2" style={{ color: 'var(--ad-muted)' }}>Autres {title.toLowerCase()} du client</h3>
+                <ul className="text-sm space-y-1">{related.map((r) => <li key={r.id}>#{r.id} · {r.status} · {Number(r.total).toLocaleString()} DA</li>)}</ul>
+              </div>
+            )}
+            <div>
+              <h3 className="text-xs font-black uppercase tracking-widest mb-2" style={{ color: 'var(--ad-muted)' }}>Historique</h3>
+              <ul className="text-sm space-y-1">
+                {(open.history || []).map((h, i) => (
+                  <li key={i}>{new Date(h.at).toLocaleString()} · {h.status} {h.note ? `· ${h.note}` : ''}</li>
+                ))}
+                {(open.history || []).length === 0 && <li style={{ color: 'var(--ad-muted)' }}>Aucune action encore.</li>}
+              </ul>
+            </div>
+            <div className="flex justify-end"><button className="ad-btn ad-btn-ghost" onClick={() => setOpen(null)}>Fermer</button></div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

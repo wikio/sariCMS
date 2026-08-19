@@ -1,0 +1,16 @@
+{
+  "fr": {
+    "title": "SARI Système — Équipements médicaux",
+    "titleTemplate": "%s | SARI Système",
+    "description": "Distribution d’équipements et consommables médicaux depuis plus de 20 ans.",
+    "keywords": "équipement médical, échographe, SARI, Algérie, diagnostic",
+    "ogTitle": "SARI Système",
+    "ogDescription": "L’excellence médicale à votre service.",
+    "ogImage": "/logo.png",
+    "twitter": "@sarisysteme",
+    "canonical": "https://sarisysteme.com",
+    "robots": "index, follow",
+    "googleSiteVerification": "",
+    "favicon": "/favicon.ico"
+  }
+}

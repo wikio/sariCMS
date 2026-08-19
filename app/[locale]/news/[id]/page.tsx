@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { Calendar, Clock, ChevronLeft, ChevronRight, Mail, CheckCircle } from 'lucide-react';
 import { getNews } from '@/lib/data';
+import { matchesEntity } from '@/lib/ids';
 import type { News } from '@/types';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 
@@ -35,8 +36,7 @@ export default function NewsDetailPage() {
     const loadArticle = async () => {
       const news = await getNews(locale);
       
-      // ✅ Recherche par l'ID numérique extrait
-      const found = news.find(n => n.id === numericId);
+      const found = news.find((n) => matchesEntity(n, idString) || matchesEntity(n, rawIdParam));
       
       if (found) {
         setItem(found);
@@ -53,11 +53,10 @@ export default function NewsDetailPage() {
       }
     };
     
-    // Déclenche le chargement si numericId est valide
-    if (!isNaN(numericId)) {
+    if (idString) {
       loadArticle();
     }
-  }, [numericId, locale]);
+  }, [idString, rawIdParam, locale]);
 
   useEffect(() => {
     const handleScroll = () => {

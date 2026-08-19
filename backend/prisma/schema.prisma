@@ -410,3 +410,137 @@ model Product {
   @@index([deletedAt])
   @@map("products")
 }
+
+// ---------------------------------------------------------------------------
+// Catalogue — group 3 (services, partners, careers, solutions, hero)
+// ---------------------------------------------------------------------------
+
+model ServiceItem {
+  id        String    @id @default(uuid())
+  locale    String    @default("fr")
+  slug      String
+  title     String
+  icon      String?
+  shortDesc String?   @db.Text
+  fullDesc  String?   @db.Text
+  features  Json?
+  faq       Json?
+  sortOrder Int       @default(0)
+  legacyId  Int?
+  status    String    @default("draft")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  createdBy String?
+  updatedBy String?
+
+  @@unique([slug, locale])
+  @@index([status])
+  @@index([deletedAt])
+  @@map("services")
+}
+
+model Partner {
+  id        String    @id @default(uuid())
+  locale    String    @default("fr")
+  name      String
+  logo      String?
+  category  String?
+  website   String?
+  sortOrder Int       @default(0)
+  legacyId  Int?
+  status    String    @default("draft")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  createdBy String?
+  updatedBy String?
+
+  @@index([locale, status])
+  @@index([deletedAt])
+  @@map("partners")
+}
+
+model Career {
+  id          String    @id @default(uuid())
+  locale      String    @default("fr")
+  slug        String
+  title       String
+  type        String?
+  location    String?
+  salary      String?
+  shortDesc   String?   @db.Text
+  fullDesc    String?   @db.Text
+  image       String?
+  typeTravail String?
+  mission     String?   @db.Text
+  objectifs   Json?
+  prerequis   Json?
+  experience  String?
+  workflow    Json?
+  benefits    Json?
+  contact     String?
+  legacyId    Int?
+  status      String    @default("draft")
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  createdBy   String?
+  updatedBy   String?
+
+  @@unique([slug, locale])
+  @@index([status, location])
+  @@index([deletedAt])
+  @@map("careers")
+}
+
+model SolutionCategory {
+  id         String    @id @default(uuid())
+  locale     String    @default("fr")
+  slug       String
+  title      String
+  shortDesc  String?   @db.Text
+  fullDesc   String?   @db.Text
+  icon       String?
+  image      String?
+  color      String?
+  productIds Json?
+  features   Json?
+  faq        Json?
+  sortOrder  Int       @default(0)
+  status     String    @default("draft")
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
+  createdBy  String?
+  updatedBy  String?
+
+  @@unique([slug, locale])
+  @@index([status])
+  @@index([deletedAt])
+  @@map("solutions")
+}
+
+model HeroSlide {
+  id          String    @id @default(uuid())
+  locale      String    @default("fr")
+  title       String
+  subtitle    String?
+  description String?   @db.Text
+  image       String?
+  cta         String?
+  ctaLink     String?
+  sortOrder   Int       @default(0)
+  legacyId    Int?
+  status      String    @default("draft")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  createdBy   String?
+  updatedBy   String?
+
+  @@index([locale, status, sortOrder])
+  @@index([deletedAt])
+  @@map("hero_slides")
+}

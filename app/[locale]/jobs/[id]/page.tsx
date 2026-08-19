@@ -12,6 +12,7 @@ import {
   FileText, Mail
 } from 'lucide-react';
 import { getCareers } from '@/lib/data';
+import { matchesEntity } from '@/lib/ids';
 import { useAuth } from '@/contexts/AuthContext';
 import { useApplications } from '@/contexts/ApplicationsContext';
 import type { Career } from '@/types';
@@ -43,7 +44,7 @@ export default function JobDetailPage() {
   useEffect(() => {
     const loadJob = async () => {
       const careers = await getCareers(locale);
-      const found = careers.find(j => j.id === parseInt(id));
+      const found = careers.find(j => matchesEntity(j, id));
       setJob(found || null);
       
       if (found) {
@@ -93,7 +94,7 @@ export default function JobDetailPage() {
 
   const handleQuickApply = () => {
     if (!isAuthenticated) {
-      localStorage.setItem('sari_pending_action', JSON.stringify({ type: 'apply', jobId: parseInt(id) }));
+      localStorage.setItem('sari_pending_action', JSON.stringify({ type: 'apply', jobId: id }));
       router.push(`/${locale}/connexion?source=carriere`);
       return;
     }

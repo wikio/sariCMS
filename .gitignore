@@ -21,6 +21,16 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Uploads GED (on garde le dossier)
+/public/uploads/*
+!/public/uploads/.gitkeep
+
+# JSON i18n fusionnés (générés par npm run merge:translations)
+/translate/fr.json
+/translate/en.json
+/translate/ar.json
+
 # Fichiers système / OS
 .DS_Store
 Thumbs.db
+tsconfig.tsbuildinfo
