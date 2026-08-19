@@ -2,13 +2,14 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Banknote, Check, ChevronsUpDown, Download, Eye, FolderOpen, GripVertical, Link2, Mail, Phone, Plus, Star, Trash2, Upload,
+  Banknote, Check, ChevronsUpDown, FolderOpen, GripVertical, Link2, Mail, Phone, Plus, Star, Trash2, Upload,
 } from 'lucide-react';
 import { slugify } from '@/lib/slugify';
 import type { FieldSpec } from '@/lib/cms-modules';
 import { addTaxonomyTerm, listTaxonomy } from '@/lib/taxonomies';
 import { searchLucideIcons } from '@/lib/lucide-icons';
 import HtmlEditor from '@/components/admin/fields/HtmlEditor';
+import FilePicker from '@/components/admin/fields/FilePicker';
 import GedPicker from '@/components/admin/GedPicker';
 import IconMark from '@/components/admin/IconMark';
 import ProcessFlow, { normalizeSteps } from '@/components/admin/ProcessFlow';
@@ -226,7 +227,7 @@ function TaxonomySelect({ spec, value, onChange }: { spec: FieldSpec; value: str
 
   return (
       <div className="flex gap-2" ref={box}>
-        <div className="ad-combo flex-1">
+        <div className={`ad-combo flex-1 ${open ? 'is-open' : ''}`}>
           <button type="button" className="ad-select text-left flex items-center justify-between" onClick={() => setOpen((v) => !v)}>
             <span className={current ? '' : 'opacity-50'}>{current?.label || spec.placeholder || 'Sélectionner…'}</span>
             <ChevronsUpDown className="w-4 h-4 opacity-50" />
@@ -378,34 +379,6 @@ export function MediaPicker({ value, onChange, moduleName = 'ged' }: { value: st
         </div>
       )}
       {ged && <GedPicker onClose={() => setGed(false)} onPick={(url) => { onChange(url); setGed(false); }} />}
-    </div>
-  );
-}
-
-function FilePicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const [ged, setGed] = useState(false);
-  return (
-    <div className="space-y-2">
-      <div className="flex flex-wrap gap-2">
-        <input className="ad-input flex-1 min-w-[180px]" value={value} onChange={(e) => onChange(e.target.value)} placeholder="URL ou fichier GED…" />
-        <label className="ad-btn ad-btn-ghost cursor-pointer">
-          <Upload className="w-4 h-4" /> PDF
-          <input type="file" accept="application/pdf,.pdf" className="hidden" onChange={async (e) => {
-            const f = e.target.files?.[0];
-            if (!f) return;
-            const url = await uploadOriginal(f, 'documents');
-            if (url) onChange(url);
-          }} />
-        </label>
-        <button type="button" className="ad-btn ad-btn-ghost" onClick={() => setGed(true)}><FolderOpen className="w-4 h-4" /> GED</button>
-        {value && (
-          <>
-            <a className="ad-btn ad-btn-ghost" href={value} target="_blank" rel="noreferrer"><Eye className="w-4 h-4" /> Consulter</a>
-            <a className="ad-btn ad-btn-ghost" href={value} download><Download className="w-4 h-4" /> Télécharger</a>
-          </>
-        )}
-      </div>
-      {ged && <GedPicker accept=".pdf,application/pdf" onClose={() => setGed(false)} onPick={(url) => { onChange(url); setGed(false); }} />}
     </div>
   );
 }

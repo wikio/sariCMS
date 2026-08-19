@@ -66,6 +66,8 @@ export default function AdminSettingsPage() {
         <p className="text-xs" style={{ color: 'var(--ad-muted)' }}>Ces valeurs sont stockées pour le connecteur mail. Le backend lit SMTP_* au prochain déploiement.</p>
       </section>
 
+      <SeoSection />
+
       <section className="ad-card p-5 space-y-4">
         <h2 className="ad-section-title">Base de données</h2>
         <label className="space-y-1.5 block">
@@ -86,6 +88,56 @@ export default function AdminSettingsPage() {
         <Save className="w-4 h-4" /> Enregistrer
       </button>
     </div>
+  );
+}
+
+function SeoSection() {
+  const { showToast } = useToast();
+  const [locale, setLocale] = useState('fr');
+  const [seo, setSeo] = useState({
+    title: '', titleTemplate: '', description: '', keywords: '',
+    ogTitle: '', ogDescription: '', ogImage: '', twitter: '',
+    canonical: '', robots: 'index, follow', googleSiteVerification: '', favicon: '',
+  });
+
+  useEffect(() => {
+    (async () => {
+      const res = await fetch(`/api/admin/seo?locale=${locale}`);
+      const json = await res.json();
+      if (json.seo) setSeo((prev) => ({ ...prev, ...json.seo }));
+    })();
+  }, [locale]);
+
+  return (
+    <section className="ad-card p-5 space-y-4">
+      <h2 className="ad-section-title">SEO vitrine</h2>
+      <div className="flex gap-2">
+        {['fr', 'en', 'ar'].map((loc) => (
+          <button key={loc} type="button" className={`ad-btn ${locale === loc ? 'ad-btn-primary' : 'ad-btn-ghost'}`} onClick={() => setLocale(loc)}>{loc.toUpperCase()}</button>
+        ))}
+      </div>
+      <div className="grid md:grid-cols-2 gap-3">
+        <Field label="Titre" value={seo.title} onChange={(v) => setSeo({ ...seo, title: v })} />
+        <Field label="Modèle de titre" value={seo.titleTemplate} onChange={(v) => setSeo({ ...seo, titleTemplate: v })} />
+        <label className="md:col-span-2 space-y-1.5">
+          <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Description</span>
+          <textarea className="ad-textarea" value={seo.description} onChange={(e) => setSeo({ ...seo, description: e.target.value })} />
+        </label>
+        <Field label="Mots-clés" value={seo.keywords} onChange={(v) => setSeo({ ...seo, keywords: v })} />
+        <Field label="Robots" value={seo.robots} onChange={(v) => setSeo({ ...seo, robots: v })} />
+        <Field label="Titre Open Graph" value={seo.ogTitle} onChange={(v) => setSeo({ ...seo, ogTitle: v })} />
+        <Field label="Description Open Graph" value={seo.ogDescription} onChange={(v) => setSeo({ ...seo, ogDescription: v })} />
+        <Field label="Image OG / partage" value={seo.ogImage} onChange={(v) => setSeo({ ...seo, ogImage: v })} />
+        <Field label="Twitter / X" value={seo.twitter} onChange={(v) => setSeo({ ...seo, twitter: v })} />
+        <Field label="URL canonique" value={seo.canonical} onChange={(v) => setSeo({ ...seo, canonical: v })} />
+        <Field label="Favicon" value={seo.favicon} onChange={(v) => setSeo({ ...seo, favicon: v })} />
+        <Field label="Google Search Console" value={seo.googleSiteVerification} onChange={(v) => setSeo({ ...seo, googleSiteVerification: v })} />
+      </div>
+      <button type="button" className="ad-btn ad-btn-primary" onClick={async () => {
+        await fetch('/api/admin/seo', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ locale, seo }) });
+        showToast('Métadonnées SEO enregistrées', 'success');
+      }}>Enregistrer le SEO {locale.toUpperCase()}</button>
+    </section>
   );
 }
 

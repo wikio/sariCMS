@@ -11,11 +11,11 @@ export default function IconMark({
   className?: string;
   showLabel?: boolean;
 }) {
-  if (!name) return showLabel ? <span>—</span> : null;
   const Icon = getLucideIcon(name);
+  if (!name) return showLabel ? <span>—</span> : null;
   return (
-    <span className="inline-flex items-center gap-2">
-      <Icon className={className} style={{ color: 'var(--ad-accent)' }} />
+    <span className="inline-flex items-center gap-2 align-middle">
+      <Icon className={className} strokeWidth={2} style={{ color: 'var(--ad-accent)', flexShrink: 0 }} />
       {showLabel && <span className="font-mono text-sm">{name}</span>}
     </span>
   );

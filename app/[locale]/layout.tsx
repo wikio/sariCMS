@@ -31,10 +31,42 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  const config = await getConfig(locale);
+  const [{ getSeo }] = await Promise.all([import('@/lib/seo')]);
+  const [config, seo] = await Promise.all([getConfig(locale), getSeo(locale)]);
+  const title = seo.title || `${config.meta.companyName} - ${config.meta.tagline}`;
+  const description = seo.description || config.meta.description;
+  let metadataBase: URL | undefined;
+  try {
+    if (seo.canonical) metadataBase = new URL(seo.canonical);
+  } catch {
+    metadataBase = undefined;
+  }
   return {
-    title: `${config.meta.companyName} - ${config.meta.tagline}`,
-    description: config.meta.description,
+    title: {
+      default: title,
+      template: seo.titleTemplate || '%s | SARI Système',
+    },
+    description,
+    keywords: seo.keywords ? seo.keywords.split(',').map((k) => k.trim()).filter(Boolean) : undefined,
+    robots: seo.robots || 'index, follow',
+    metadataBase,
+    alternates: seo.canonical ? { canonical: seo.canonical } : undefined,
+    openGraph: {
+      title: seo.ogTitle || title,
+      description: seo.ogDescription || description,
+      images: seo.ogImage ? [{ url: seo.ogImage }] : undefined,
+      locale,
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      site: seo.twitter || undefined,
+      title: seo.ogTitle || title,
+      description: seo.ogDescription || description,
+      images: seo.ogImage ? [seo.ogImage] : undefined,
+    },
+    verification: seo.googleSiteVerification ? { google: seo.googleSiteVerification } : undefined,
+    icons: seo.favicon ? { icon: seo.favicon } : undefined,
   };
 }
 

@@ -131,6 +131,7 @@
   border: 1px solid var(--ad-line);
   border-radius: 2px;
   box-shadow: none;
+  overflow: visible;
 }
 
 .ad-btn {
@@ -338,18 +339,23 @@
 }
 .ad-combo {
   position: relative;
+  z-index: 2;
+}
+.ad-combo.is-open,
+.ad-combo:focus-within {
+  z-index: 80;
 }
 .ad-combo-list {
   position: absolute;
-  z-index: 30;
+  z-index: 90;
   left: 0;
   right: 0;
   top: calc(100% + 2px);
-  max-height: 220px;
+  max-height: 240px;
   overflow: auto;
   background: var(--ad-surface);
   border: 1px solid var(--ad-line);
-  box-shadow: var(--ad-shadow);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.16);
 }
 .ad-combo-item {
   display: flex;
