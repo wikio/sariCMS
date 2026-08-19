@@ -17,6 +17,9 @@ export interface Order {
   total: number;
   items: CommerceItem[];
   address?: string;
+  payment?: string;
+  cost?: number;
+  coupon?: string;
 }
 
 export interface Quote {
@@ -36,12 +39,12 @@ const QUOTES_KEY = 'sari_quotes';
 const DEFAULT_ORDERS: Order[] = [
   {
     id: 1001, client: 'Dr. Marie Laurent', email: 'marie@clinique.fr', date: '2026-06-15',
-    status: 'delivered', total: 4500,
+    status: 'delivered', total: 4500, payment: 'virement', cost: 3100,
     items: [{ id: 1, name: 'Échographe Portable Pro', quantity: 1, price: 4500 }],
   },
   {
     id: 1002, client: 'CHU de Lyon', email: 'achats@chu-lyon.fr', date: '2026-07-01',
-    status: 'processing', total: 18500,
+    status: 'processing', total: 18500, payment: 'cib', cost: 12800,
     items: [
       { id: 7, name: 'Défibrillateur DSA Premium', quantity: 2, price: 8500 },
       { id: 15, name: 'Moniteur Multiparamètres', quantity: 1, price: 1500 },
@@ -49,7 +52,7 @@ const DEFAULT_ORDERS: Order[] = [
   },
   {
     id: 1003, client: 'Cabinet Médical du Parc', email: 'secretariat@cabinet-parc.dz', date: '2026-07-10',
-    status: 'pending', total: 850,
+    status: 'pending', total: 850, payment: 'cod', cost: 420, coupon: 'SARI10',
     items: [
       { id: 4, name: 'Tensiomètre Digital Brassard', quantity: 5, price: 120 },
       { id: 5, name: 'Stéthoscope Littmann Classic', quantity: 5, price: 50 },

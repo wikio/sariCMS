@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, ReactNode } from 'react';
 
 export const ADMIN_THEMES = [
-  { id: 'light', label: 'Clair', swatch: '#169EC9' },
+  { id: 'light', label: 'Clair', swatch: '#199ACA' },
   { id: 'dark', label: 'Sombre', swatch: '#2EB6DE' },
   { id: 'midnight', label: 'Minuit', swatch: '#C6DA34' },
   { id: 'lime', label: 'Lime', swatch: '#9AAA18' },

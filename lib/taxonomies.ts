@@ -58,6 +58,18 @@ export const TAXONOMY_DEFS: TaxonomyDef[] = [
     defaults: ['Marque', 'Classe', 'Garantie'].map((v) => ({ value: v, label: v })),
   },
   {
+    key: 'products.unit',
+    label: 'Unités',
+    hint: 'Unités de vente et de stock.',
+    defaults: ['pièce', 'boîte', 'carton', 'litre', 'kit'].map((v) => ({ value: v, label: v })),
+  },
+  {
+    key: 'products.label',
+    label: 'Labels produits',
+    hint: 'Badges vitrine (nouveau, promo…).',
+    defaults: ['Nouveau', 'Promo', 'Best-seller', 'Sur commande'].map((v) => ({ value: v, label: v })),
+  },
+  {
     key: 'partners.category',
     label: 'Catégories partenaires',
     hint: 'Familles de partenaires.',

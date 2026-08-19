@@ -1,18 +1,16 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { Plus, Trash2 } from 'lucide-react';
-import { allTaxonomies, removeTaxonomyTerm, renameTaxonomyTerm, saveTaxonomy, type TaxonomyTerm } from '@/lib/taxonomies';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { allTaxonomies, removeTaxonomyTerm, saveTaxonomy, type TaxonomyTerm } from '@/lib/taxonomies';
 import { useToast } from '@/components/admin/Toast';
 
 export default function TaxonomiesPage() {
   const { showToast } = useToast();
-  const params = useSearchParams();
-  const focus = params.get('key') || '';
   const [groups, setGroups] = useState(allTaxonomies());
-  const [drafts, setDrafts] = useState<Record<string, string>>({});
-  const [editing, setEditing] = useState<Record<string, string>>({});
+  const [tab, setTab] = useState(groups[0]?.key || 'products.category');
+  const [draft, setDraft] = useState<TaxonomyTerm | null>(null);
+  const [original, setOriginal] = useState<TaxonomyTerm | null>(null);
 
   const refresh = () => setGroups(allTaxonomies());
   useEffect(() => {
@@ -22,68 +20,82 @@ export default function TaxonomiesPage() {
     return () => window.removeEventListener('sari-taxonomies', on);
   }, []);
 
-  const shown = useMemo(() => focus ? groups.filter((g) => g.key === focus) : groups, [groups, focus]);
+  const current = useMemo(() => groups.find((g) => g.key === tab) || groups[0], [groups, tab]);
 
-  const add = (key: string) => {
-    const label = (drafts[key] || '').trim();
-    if (!label) return;
-    const group = groups.find((g) => g.key === key);
-    const terms: TaxonomyTerm[] = [...(group?.terms || []), { value: label, label }];
-    saveTaxonomy(key, terms);
-    setDrafts((p) => ({ ...p, [key]: '' }));
+  const persist = (terms: TaxonomyTerm[]) => {
+    if (!current) return;
+    saveTaxonomy(current.key, terms);
     refresh();
-    showToast('Terme ajouté', 'success');
+    showToast('Taxonomie enregistrée', 'success');
+    setDraft(null);
   };
 
   return (
     <div className="space-y-4">
       <header className="ad-rise">
-        <div className="text-[11px] uppercase tracking-[0.22em] font-black" style={{ color: 'var(--ad-muted)' }}>Système</div>
-        <h1 className="text-3xl font-black tracking-tight">Taxonomies</h1>
-        <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>Édition inline ou fiche complète. Accessible aussi depuis chaque module.</p>
+        <div className="ad-breadcrumb">Configuration avancée / Taxonomies</div>
+        <h1 className="text-3xl font-black tracking-tight">Configuration des taxonomies</h1>
+        <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>Un onglet par famille. L’édition se fait dans un panneau, plus d’édition inline.</p>
       </header>
-      <div className="grid lg:grid-cols-2 gap-3">
-        {shown.map((g) => (
-          <section key={g.key} className="ad-card p-4 space-y-3 ad-rise">
-            <div>
-              <h2 className="font-black">{g.label}</h2>
-              <p className="text-xs" style={{ color: 'var(--ad-muted)' }}>{g.hint} · {g.key}</p>
-            </div>
-            <div className="space-y-1">
-              {g.terms.map((t) => (
-                <div key={t.value} className="flex items-center gap-2 px-2 py-1" style={{ border: '1px solid var(--ad-line)' }}>
-                  <input
-                    className="ad-input"
-                    value={editing[`${g.key}:${t.value}`] ?? t.label}
-                    onChange={(e) => setEditing((p) => ({ ...p, [`${g.key}:${t.value}`]: e.target.value }))}
-                    onBlur={() => {
-                      const next = editing[`${g.key}:${t.value}`];
-                      if (next && next !== t.label) {
-                        renameTaxonomyTerm(g.key, t.value, next);
-                        refresh();
-                      }
-                    }}
-                  />
-                  <button className="ad-btn ad-btn-icon ad-btn-danger" onClick={() => { removeTaxonomyTerm(g.key, t.value); refresh(); }}>
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              ))}
-              {g.terms.length === 0 && <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>Aucun terme</p>}
-            </div>
-            <div className="flex gap-2">
-              <input
-                className="ad-input"
-                placeholder="Nouveau terme…"
-                value={drafts[g.key] || ''}
-                onChange={(e) => setDrafts((p) => ({ ...p, [g.key]: e.target.value }))}
-                onKeyDown={(e) => e.key === 'Enter' && add(g.key)}
-              />
-              <button className="ad-btn ad-btn-primary" onClick={() => add(g.key)}><Plus className="w-4 h-4" /></button>
-            </div>
-          </section>
+      <div className="flex flex-wrap gap-2">
+        {groups.map((g) => (
+          <button key={g.key} type="button" className={`ad-btn ${current?.key === g.key ? 'ad-btn-primary' : 'ad-btn-ghost'}`} onClick={() => setTab(g.key)}>
+            {g.label}
+          </button>
         ))}
       </div>
+      {current && (
+        <section className="ad-card p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="font-black">{current.label}</h2>
+              <p className="text-xs" style={{ color: 'var(--ad-muted)' }}>{current.hint}</p>
+            </div>
+            <button className="ad-btn ad-btn-primary" onClick={() => { setOriginal(null); setDraft({ value: '', label: '' }); }}><Plus className="w-4 h-4" /> Ajouter</button>
+          </div>
+          <table className="ad-table">
+            <thead><tr><th>Valeur</th><th>Libellé</th><th></th></tr></thead>
+            <tbody>
+              {current.terms.map((t) => (
+                <tr key={t.value}>
+                  <td className="font-mono text-sm">{t.value}</td>
+                  <td>{t.label}</td>
+                  <td className="text-right">
+                    <button className="ad-btn ad-btn-ghost" onClick={() => { setOriginal(t); setDraft({ ...t }); }}><Pencil className="w-4 h-4" /> Modifier</button>
+                    <button className="ad-btn ad-btn-icon ad-btn-danger ml-1" onClick={() => { removeTaxonomyTerm(current.key, t.value); refresh(); }}><Trash2 className="w-4 h-4" /></button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      )}
+
+      {draft && current && (
+        <div className="ad-drawer" onClick={() => setDraft(null)}>
+          <div className="ad-drawer-panel space-y-3" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-xl font-black">{original ? 'Modifier le terme' : 'Nouveau terme'}</h3>
+            <label className="block space-y-1.5">
+              <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Valeur</span>
+              <input className="ad-input" value={draft.value} onChange={(e) => setDraft({ ...draft, value: e.target.value })} placeholder="slug-interne" />
+            </label>
+            <label className="block space-y-1.5">
+              <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Libellé</span>
+              <input className="ad-input" value={draft.label} onChange={(e) => setDraft({ ...draft, label: e.target.value })} placeholder="Nom affiché" />
+            </label>
+            <div className="flex gap-2 pt-2">
+              <button className="ad-btn ad-btn-ghost" onClick={() => setDraft(original ? { ...original } : { value: '', label: '' })}>Annuler</button>
+              <button className="ad-btn ad-btn-primary" onClick={() => {
+                if (!draft.value.trim()) return;
+                const next = original
+                  ? current.terms.map((t) => (t.value === original.value ? { value: draft.value.trim(), label: draft.label.trim() || draft.value } : t))
+                  : [...current.terms, { value: draft.value.trim(), label: draft.label.trim() || draft.value }];
+                persist(next);
+              }}>Enregistrer</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

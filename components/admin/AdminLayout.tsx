@@ -10,7 +10,7 @@ import {
   FileStack, Menu as MenuIcon, Compass, Scale, Settings, ShoppingCart,
   Users, UserCog, FileCheck, Globe, Sliders, ExternalLink, LogOut,
   Shield, Search, ChevronDown, ChevronLeft, Palette, BarChart3, ScrollText,
-  Tags, UserPlus, UserRound,
+  Tags, UserPlus, UserRound, CreditCard, TicketPercent, Percent, Paintbrush,
 } from 'lucide-react';
 import '@/app/admin.css';
 import { ToastProvider } from '@/components/admin/Toast';
@@ -53,17 +53,21 @@ function Shell({ children }: { children: ReactNode }) {
     { id: 'dashboard', icon: LayoutDashboard, label: t('menu.dashboard'), href: `/${locale}/admin/dashboard` },
     { id: 'stats', icon: BarChart3, label: t('menu.stats'), href: `/${locale}/admin/stats` },
     { id: 'logs', icon: ScrollText, label: t('menu.logs'), href: `/${locale}/admin/logs` },
-    { type: 'divider', label: t('menu.contentSection') },
+    { type: 'divider', label: 'E-SHOP' },
     {
-      id: 'products', type: 'group', icon: Package, label: t('menu.products'), href: `/${locale}/admin/products`,
+      id: 'eshop', type: 'group', icon: ShoppingCart, label: 'Boutique',
       children: [
-        { id: 'products-list', label: 'Liste', href: `/${locale}/admin/products` },
-        { id: 'products-cat', label: 'Catégories', href: `/${locale}/admin/taxonomies?key=products.category` },
-        { id: 'products-type', label: 'Types', href: `/${locale}/admin/taxonomies?key=products.type` },
-        { id: 'products-spec', label: 'Spécifications', href: `/${locale}/admin/taxonomies?key=products.spec` },
-        { id: 'products-attr', label: 'Attributs', href: `/${locale}/admin/taxonomies?key=products.attribute` },
+        { id: 'products-list', label: t('menu.products'), href: `/${locale}/admin/products` },
+        { id: 'orders', label: t('menu.orders'), href: `/${locale}/admin/orders` },
+        { id: 'quotes', label: t('menu.quotes'), href: `/${locale}/admin/quotes` },
+        { id: 'shop-stats', label: 'Statistiques avancées', href: `/${locale}/admin/shop-stats` },
+        { id: 'payments', label: 'Paiements', href: `/${locale}/admin/payments` },
+        { id: 'coupons', label: 'Coupons', href: `/${locale}/admin/coupons` },
+        { id: 'taxes', label: 'Taxes', href: `/${locale}/admin/taxes` },
       ],
     },
+    { type: 'divider', label: t('menu.contentSection') },
+    { id: 'products', icon: Package, label: t('menu.products'), href: `/${locale}/admin/products` },
     { id: 'services', icon: Wrench, label: t('menu.services'), href: `/${locale}/admin/services` },
     { id: 'solutions', icon: Layers, label: t('menu.solutions'), href: `/${locale}/admin/solutions` },
     { id: 'news', icon: Newspaper, label: t('menu.news'), href: `/${locale}/admin/news` },
@@ -79,17 +83,17 @@ function Shell({ children }: { children: ReactNode }) {
     { id: 'media', icon: Compass, label: t('menu.media'), href: `/${locale}/admin/media` },
     { id: 'legal', icon: Scale, label: t('menu.legal'), href: `/${locale}/admin/legal` },
     { type: 'divider', label: t('menu.crmSection') },
-    { id: 'orders', icon: ShoppingCart, label: t('menu.orders'), href: `/${locale}/admin/orders` },
-    { id: 'quotes', icon: FileText, label: t('menu.quotes'), href: `/${locale}/admin/quotes` },
     { id: 'clients', icon: Users, label: t('menu.clients'), href: `/${locale}/admin/clients` },
     { id: 'candidates', icon: UserPlus, label: t('menu.candidates'), href: `/${locale}/admin/candidates` },
     { id: 'applications', icon: FileCheck, label: t('menu.applications'), href: `/${locale}/admin/applications` },
-    { type: 'divider', label: t('menu.configSection') },
-    { id: 'taxonomies', icon: Tags, label: t('menu.taxonomies'), href: `/${locale}/admin/taxonomies` },
+    { type: 'divider', label: 'CONFIGURATION AVANCÉE' },
+    { id: 'taxonomies', icon: Tags, label: 'Taxonomies', href: `/${locale}/admin/taxonomies` },
     { id: 'users', icon: UserCog, label: t('menu.users'), href: `/${locale}/admin/users` },
     { id: 'permissions', icon: Shield, label: t('menu.permissions'), href: `/${locale}/admin/permissions` },
     { id: 'translations', icon: Globe, label: t('menu.translations'), href: `/${locale}/admin/translations` },
     { id: 'emails', icon: Settings, label: t('menu.emails'), href: `/${locale}/admin/emails` },
+    { type: 'divider', label: 'PARAMÈTRES DU SITE VITRINE' },
+    { id: 'builder', icon: Paintbrush, label: 'Éditeur visuel', href: `/${locale}/admin/builder` },
     { id: 'settings', icon: Sliders, label: t('menu.settings'), href: `/${locale}/admin/settings` },
     { id: 'profile', icon: UserRound, label: 'Profil', href: `/${locale}/admin/profile` },
   ], [locale, t]);
@@ -114,10 +118,10 @@ function Shell({ children }: { children: ReactNode }) {
     <div data-admin-theme={theme} dir={isRTL ? 'rtl' : 'ltr'} className="ad-app">
       <aside className={`${open ? 'w-[272px]' : 'w-[76px]'} fixed inset-y-0 z-40 flex flex-col transition-all duration-300 ${isRTL ? 'right-0' : 'left-0'}`} style={{ background: 'var(--ad-sidebar)', color: 'var(--ad-sidebar-ink)' }}>
         <div className="h-[72px] px-4 flex items-center gap-3 border-b border-white/10">
-          <div className="w-10 h-10 flex items-center justify-center" style={{ background: 'var(--ad-accent-2)', color: 'var(--ad-accent-2-ink)', borderRadius: 2 }}>
+          <div className="w-10 h-10 flex items-center justify-center" style={{ background: 'var(--ad-accent-2)', color: 'var(--ad-accent-2-ink)', borderRadius: 10 }}>
             <Shield className="w-5 h-5" />
           </div>
-          {open && <div className="leading-tight"><div className="font-black tracking-tight">SARI OS</div><div className="text-[10px] uppercase tracking-[0.18em] opacity-60">Admin · v3</div></div>}
+          {open && <div className="leading-tight"><div className="font-black tracking-tight">SARI OS</div><div className="text-[10px] uppercase tracking-[0.18em] opacity-60">Admin · Studio</div></div>}
         </div>
         <nav className="flex-1 overflow-y-auto ad-scroll py-3">
           {menu.map((item, i) => {

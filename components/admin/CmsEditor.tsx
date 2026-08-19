@@ -206,11 +206,19 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
 
       <div className="ad-card p-3 space-y-2 ad-rise">
         <div className="flex flex-wrap gap-2">
-          {LANGS.map((lang) => (
-            <button key={lang.id} type="button" className={`ad-btn ${tab === lang.id ? 'ad-btn-primary' : 'ad-btn-ghost'}`} onClick={() => switchLang(lang.id)}>
-              {lang.label} {lang.id === settings.defaultLocale ? '· origine' : ''}
-            </button>
-          ))}
+          {LANGS.map((lang) => {
+            const done = transKeys.filter((k) => {
+              const v = lang.id === settings.defaultLocale ? record[k] : overlays[lang.id]?.[k];
+              return v != null && String(v) !== '';
+            }).length;
+            const pct = transKeys.length ? Math.round((done / transKeys.length) * 100) : 100;
+            return (
+              <button key={lang.id} type="button" className={`ad-btn ${tab === lang.id ? 'ad-btn-primary' : 'ad-btn-ghost'}`} onClick={() => switchLang(lang.id)}>
+                {lang.label} {lang.id === settings.defaultLocale ? '· origine' : ''}
+                <span className="ad-chip ad-chip-acc">{pct}%</span>
+              </button>
+            );
+          })}
         </div>
         {!isDefault && (
           <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>
@@ -240,6 +248,7 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
       {groups.map(([group, fields], i) => {
         const htmlHeavy = fields.some((f) => f.kind === 'html' || f.kind === 'process');
         const open = openGroups[group] !== false;
+        const compare = !isDefault && !consult;
         return (
           <section id={`sec-${group}`} key={group} className="ad-card p-5 ad-rise scroll-mt-28" style={{ animationDelay: `${i * 40}ms` }}>
             <button type="button" className="ad-section-title w-full justify-between" onClick={() => setOpenGroups((p) => ({ ...p, [group]: !open }))}>
@@ -252,11 +261,35 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
                     <div key={field.key} className={field.wide || field.kind === 'html' || field.kind === 'process' ? 'md:col-span-2' : ''}>
                       <div className="text-[11px] font-black uppercase tracking-widest mb-1" style={{ color: 'var(--ad-muted)' }}>{field.label}</div>
                       <ConsultValue spec={field} value={valueOf(field.key)} />
-                      {!isDefault && originOf(field.key) != null && String(originOf(field.key)) !== '' && (
-                        <p className="ad-origin">Origine ({settings.defaultLocale.toUpperCase()}) : {String(typeof originOf(field.key) === 'string' ? originOf(field.key) : '').replace(/<[^>]+>/g, ' ').slice(0, 220)}</p>
-                      )}
                     </div>
                   ))}
+                </div>
+              ) : compare ? (
+                <div className="space-y-4">
+                  {fields.map((field) => {
+                    const locked = ['sku', 'id', 'status', 'price', 'inStock'].includes(field.key);
+                    return (
+                      <div key={`${tab}-${field.key}`} className="ad-compare">
+                        <div>
+                          <div className="text-[11px] font-black uppercase tracking-widest mb-1" style={{ color: 'var(--ad-muted)' }}>{field.label} · {settings.defaultLocale.toUpperCase()}</div>
+                          <ConsultValue spec={field} value={record[field.key]} />
+                        </div>
+                        <div>
+                          {locked || (field.kind === 'image' && overlays[tab]?.[`${field.key}Keep`] !== 'replace') ? (
+                            <div className="space-y-2">
+                              <ConsultValue spec={field} value={record[field.key]} />
+                              {field.kind === 'image' && (
+                                <button className="ad-btn ad-btn-ghost" onClick={() => set(field.key + 'Keep', 'replace')}>Remplacer dans cette traduction</button>
+                              )}
+                              {locked && <p className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>Champ partagé, verrouillé.</p>}
+                            </div>
+                          ) : (
+                            renderField(field, valueOf(field.key), (v) => set(field.key, v), record)
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               ) : (
                 <div className={htmlHeavy ? 'space-y-4' : 'grid md:grid-cols-2 gap-4'}>
@@ -266,13 +299,7 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
                       className={field.wide || field.kind === 'html' || field.kind === 'process' ? 'md:col-span-2' : ''}
                       onFocus={() => field.kind === 'slug' && setSlugLocked(true)}
                     >
-                      {renderField(
-                        field,
-                        valueOf(field.key),
-                        (v) => set(field.key, v),
-                        record,
-                        { origin: isTranslatableField(field.kind, field.i18n) ? originOf(field.key) : undefined, originLocale: settings.defaultLocale },
-                      )}
+                      {renderField(field, valueOf(field.key), (v) => set(field.key, v), record)}
                     </div>
                   ))}
                 </div>

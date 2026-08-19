@@ -1,34 +1,35 @@
-/* SARI Admin — design system (charte: blue #169EC9 / lime #C6DA34 / yellow #EAB616 / dark #333) */
+/* SARI Admin — Notion/Linear/Shopify inspired, charte #199ACA / #C6DA34 / #EBB518 / #FFF */
 
 [data-admin-theme] {
-  --ad-radius: 2px;
-  --ad-radius-sm: 2px;
-  --ad-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+  --ad-radius: 10px;
+  --ad-radius-sm: 8px;
+  --ad-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
   --ad-ease: cubic-bezier(0.22, 1, 0.36, 1);
   min-height: 100%;
   background: var(--ad-bg);
   color: var(--ad-ink);
+  font-family: var(--font-admin-latin), var(--font-admin-arabic), Inter, "Noto Sans Arabic", system-ui, sans-serif;
   font-feature-settings: "ss01", "cv11";
 }
 
 [data-admin-theme="light"] {
-  --ad-bg: #eef4f7;
-  --ad-bg-2: #e4eef3;
+  --ad-bg: #f4f8fa;
+  --ad-bg-2: #eef4f7;
   --ad-surface: #ffffff;
   --ad-surface-2: #f7fbfd;
-  --ad-ink: #243038;
+  --ad-ink: #1d2a31;
   --ad-muted: #66757e;
-  --ad-line: #d5e2e8;
-  --ad-accent: #169ec9;
+  --ad-line: #e3eef2;
+  --ad-accent: #199aca;
   --ad-accent-ink: #ffffff;
   --ad-accent-2: #c6da34;
   --ad-accent-2-ink: #2a3308;
-  --ad-warn: #eab616;
+  --ad-warn: #ebb518;
   --ad-danger: #e11d48;
   --ad-ok: #0f9f6e;
-  --ad-sidebar: #16323c;
+  --ad-sidebar: #12323c;
   --ad-sidebar-ink: #d7e8ee;
-  --ad-pixel: #169ec9;
+  --ad-pixel: #199aca;
 }
 
 [data-admin-theme="dark"] {
@@ -39,7 +40,7 @@
   --ad-ink: #e8eef1;
   --ad-muted: #8aa0ab;
   --ad-line: #2a3942;
-  --ad-accent: #2eb6de;
+  --ad-accent: #3bb6dd;
   --ad-accent-ink: #042029;
   --ad-accent-2: #d4e85a;
   --ad-accent-2-ink: #1c2204;
@@ -59,7 +60,7 @@
   --ad-ink: #eef2ff;
   --ad-muted: #93a0c7;
   --ad-line: #2a3560;
-  --ad-accent: #169ec9;
+  --ad-accent: #199aca;
   --ad-accent-ink: #04151c;
   --ad-accent-2: #c6da34;
   --ad-accent-2-ink: #1d2404;
@@ -129,8 +130,8 @@
 .ad-card {
   background: var(--ad-surface);
   border: 1px solid var(--ad-line);
-  border-radius: 2px;
-  box-shadow: none;
+  border-radius: var(--ad-radius);
+  box-shadow: var(--ad-shadow);
   overflow: visible;
 }
 
@@ -139,7 +140,7 @@
   align-items: center;
   justify-content: center;
   gap: 0.45rem;
-  border-radius: 2px;
+  border-radius: var(--ad-radius-sm);
   font-weight: 650;
   font-size: 0.82rem;
   letter-spacing: 0.01em;
@@ -180,7 +181,7 @@
   background: var(--ad-surface);
   color: var(--ad-ink);
   border: 1px solid var(--ad-line);
-  border-radius: 2px;
+  border-radius: var(--ad-radius-sm);
   padding: 0 0.8rem;
   outline: none;
   font-size: 0.9rem;
@@ -234,8 +235,8 @@
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  border-radius: 2px;
-  padding: 0.18rem 0.45rem;
+  border-radius: 999px;
+  padding: 0.18rem 0.55rem;
   font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -335,7 +336,41 @@
   overflow: auto;
   background: var(--ad-surface);
   border: 1px solid var(--ad-line);
+  border-radius: var(--ad-radius);
+  box-shadow: var(--ad-shadow);
   padding: 1.4rem;
+}
+.ad-drawer {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  justify-content: flex-end;
+  background: rgba(8, 16, 20, 0.4);
+}
+.ad-drawer-panel {
+  width: min(460px, 100%);
+  height: 100%;
+  background: var(--ad-surface);
+  border-left: 1px solid var(--ad-line);
+  padding: 1.4rem;
+  overflow: auto;
+  box-shadow: var(--ad-shadow);
+}
+.ad-breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  font-size: 12px;
+  color: var(--ad-muted);
+}
+.ad-compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+@media (max-width: 900px) {
+  .ad-compare { grid-template-columns: 1fr; }
 }
 .ad-combo {
   position: relative;
