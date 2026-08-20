@@ -41,6 +41,8 @@ export default function CompareCandidatesPage() {
   const offersList = useMemo(() => groupByOffer(rows), [rows]);
 
   const scoreOf = (app: Application): number => {
+    // Un score manuel saisi par le recruteur prime sur le score calculé.
+    if (app.score != null && !Number.isNaN(Number(app.score))) return Number(app.score);
     const years = parseInt(String(app.experience || '0'), 10) || 0;
     const statusScore = APP_STEPS.length - 1 - Math.max(0, statusRank(app.status));
     const rating = app.rating || 0;
@@ -85,6 +87,10 @@ export default function CompareCandidatesPage() {
 
   const setNote = (id: number, note: string) => {
     commit(rows.map((r) => r.id === id ? { ...r, note } : r));
+  };
+
+  const setScore = (id: number, score: number) => {
+    commit(rows.map((r) => r.id === id ? { ...r, score } : r));
   };
 
   const openDoc = (kind: 'cv' | 'lm', app: Application) => {
@@ -187,7 +193,18 @@ export default function CompareCandidatesPage() {
                       <input className="ad-input !h-8 text-xs" placeholder="Note recruteur…" defaultValue={app.note || ''} onBlur={(e) => setNote(app.id, e.target.value)} />
                     </td>
                     <td><span className={`ad-chip ${app.status === 'accepted' ? 'ad-chip-ok' : app.status === 'rejected' ? 'ad-chip-warn' : 'ad-chip-acc'}`}>{app.status}</span></td>
-                    <td className="font-black tabular-nums" style={{ color: 'var(--ad-accent)' }}>{score}</td>
+                    <td className="min-w-[90px]">
+                      <input
+                        className="ad-input !h-8 text-xs tabular-nums"
+                        type="number"
+                        title="Score (modifiable, prime sur le calcul automatique)"
+                        defaultValue={score}
+                        onBlur={(e) => {
+                          const v = parseInt(e.target.value, 10);
+                          if (!Number.isNaN(v)) setScore(app.id, v);
+                        }}
+                      />
+                    </td>
                     <td className="text-right">
                       <div className="flex justify-end gap-1">
                         <button className="ad-btn ad-btn-icon ad-btn-ghost" title="CV" onClick={() => openDoc('cv', app)}><FileText className="w-4 h-4" /></button>

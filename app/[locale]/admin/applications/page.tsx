@@ -77,6 +77,12 @@ export default function AdminApplicationsPage() {
     showToast('Note du recruteur enregistrée', 'success');
   };
 
+  const setScoreOf = (ids: number[], score: number) => {
+    const set = new Set(ids);
+    commit(rows.map((r) => set.has(r.id) ? { ...r, score } : r));
+    showToast(`Score ${score} appliqué (${ids.length})`, 'success');
+  };
+
   const remove = (id: number) => commit(rows.filter((r) => r.id !== id));
 
   const bulkRemove = () => {
@@ -200,7 +206,7 @@ export default function AdminApplicationsPage() {
                   {isOpen && (
                     <tr>
                       <td colSpan={7} style={{ background: 'var(--ad-surface-2)' }}>
-                        <OfferDetails offer={offer} app={row} onOpenDoc={(kind) => openDoc(kind, row)} onNote={(v) => setNoteOf([row.id], v)} />
+                        <OfferDetails offer={offer} app={row} onOpenDoc={(kind) => openDoc(kind, row)} onNote={(v) => setNoteOf([row.id], v)} onScore={(v) => setScoreOf([row.id], v)} />
                       </td>
                     </tr>
                   )}
@@ -260,7 +266,7 @@ export function StarRating({ value, onChange }: { value: number; onChange: (v: n
   );
 }
 
-function OfferDetails({ offer, app, onOpenDoc, onNote }: { offer?: Offer; app: Application; onOpenDoc: (kind: 'cv' | 'lm') => void; onNote: (v: string) => void }) {
+function OfferDetails({ offer, app, onOpenDoc, onNote, onScore }: { offer?: Offer; app: Application; onOpenDoc: (kind: 'cv' | 'lm') => void; onNote: (v: string) => void; onScore: (v: number) => void }) {
   return (
     <div className="p-3 space-y-3">
       <div className="flex flex-wrap items-center gap-2">
@@ -275,10 +281,27 @@ function OfferDetails({ offer, app, onOpenDoc, onNote }: { offer?: Offer; app: A
         <button className="ad-btn ad-btn-ghost" onClick={() => onOpenDoc('cv')}><Eye className="w-4 h-4" /> Voir CV</button>
         <button className="ad-btn ad-btn-ghost" onClick={() => onOpenDoc('lm')}><FileText className="w-4 h-4" /> Voir lettre de motivation</button>
       </div>
-      <label className="block space-y-1">
-        <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Note du recruteur</span>
-        <input className="ad-input" placeholder="Commentaire / évaluation du recruteur…" defaultValue={app.note || ''} onBlur={(e) => onNote(e.target.value)} />
-      </label>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <label className="block space-y-1">
+          <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Score</span>
+          <input
+            className="ad-input"
+            type="number"
+            min={0}
+            step={1}
+            placeholder="Score (ex. 85)…"
+            defaultValue={app.score != null ? String(app.score) : ''}
+            onBlur={(e) => {
+              const v = parseInt(e.target.value, 10);
+              if (!Number.isNaN(v)) onScore(v);
+            }}
+          />
+        </label>
+        <label className="block space-y-1">
+          <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Note du recruteur</span>
+          <input className="ad-input" placeholder="Commentaire / évaluation du recruteur…" defaultValue={app.note || ''} onBlur={(e) => onNote(e.target.value)} />
+        </label>
+      </div>
     </div>
   );
 }

@@ -16,6 +16,7 @@ export interface Application {
   experience: string;
   motivation: string;
   rating?: number;
+  score?: number;
   note?: string;
   cv?: string;
   lm?: string;
@@ -111,11 +112,16 @@ export function candidateStats(rows: Application[]) {
 }
 
 export function exportApplicationsCsv(rows: Application[], title?: string) {
-  const cols = ['Candidat', 'Email', 'Téléphone', 'Offre', 'Expérience', 'Statut', 'Date', 'Motivation'];
+  const cols = ['Candidat', 'Email', 'Téléphone', 'Offre', 'Expérience', 'Statut', 'Note', 'Score', 'Date', 'Motivation', 'Commentaire'];
   const lines = [cols.join(';')];
   for (const r of rows) {
     lines.push(
-      [r.candidate, r.email, r.phone, r.jobTitle, r.experience, r.status, r.date, `"${String(r.motivation || '').replace(/"/g, '""')}"`].join(';'),
+      [
+        r.candidate, r.email, r.phone, r.jobTitle, r.experience, r.status,
+        r.rating || '', r.score != null ? r.score : '', r.date,
+        `"${String(r.motivation || '').replace(/"/g, '""')}"`,
+        `"${String(r.note || '').replace(/"/g, '""')}"`,
+      ].join(';'),
     );
   }
   const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
