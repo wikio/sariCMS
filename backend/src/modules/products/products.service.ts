@@ -13,7 +13,7 @@ export class ProductsService extends BaseCrudService<ProductEntity> {
   protected readonly options: CrudServiceOptions = {
     resource: 'products',
     searchFields: ['name', 'shortDesc', 'category', 'sku'],
-    sortableFields: ['createdAt', 'updatedAt', 'name', 'category', 'price'],
+    sortableFields: ['createdAt', 'updatedAt', 'name', 'category', 'price', 'sortOrder'],
     listFields: ['id', 'slug', 'name', 'category', 'price', 'inStock', 'status'],
     cardFields: [
       'id',

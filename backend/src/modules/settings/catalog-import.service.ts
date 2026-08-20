@@ -64,6 +64,7 @@ export class CatalogImportService {
         specs: row.specs ?? {},
         options: row.options ?? [],
         catalogPdf: row.catalogPdf ?? null,
+        sortOrder: typeof row.id === 'number' ? row.id : 0,
         status: 'published',
         publishedAt: new Date().toISOString(),
         legacyId: typeof row.id === 'number' ? row.id : null,
