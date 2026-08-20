@@ -86,7 +86,7 @@ export const CMS_MODULES: CmsModule[] = [
       { key: 'status', label: 'Publication', kind: 'radio', options: STATUS, group: 'Identité' },
       { key: 'category', label: 'Catégorie', kind: 'select', taxonomy: 'products.category', options: CATEGORIES, hint: 'Gérée dans Taxonomies. Vous pouvez en créer une ici.', group: 'Catalogue' },
       { key: 'sku', label: 'Code produit', kind: 'text', prefix: 'SKU', placeholder: 'Laissé vide → PRO-00001', hint: 'Généré automatiquement si vide. Une saisie manuelle est conservée.', group: 'Catalogue' },
-      { key: 'price', label: 'Prix', kind: 'price', group: 'Catalogue' },
+      { key: 'price', label: 'Prix', kind: 'price', wide: true, hint: 'Montant et devise sont deux champs distincts. Ajoutez une devise manquante via « Ajouter ».', group: 'Catalogue' },
       { key: 'inStock', label: 'En stock', kind: 'toggle', group: 'Catalogue' },
       { key: 'deliveryTime', label: 'Délai de livraison', kind: 'text', group: 'Catalogue' },
       { key: 'image', label: 'Visuel principal', kind: 'image', group: 'Médias' },
