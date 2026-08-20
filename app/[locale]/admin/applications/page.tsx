@@ -12,7 +12,7 @@ import Drawer from '@/components/admin/Drawer';
 import { DEMO_APPLICATIONS, DEMO_FLAG } from '@/lib/demo-seed';
 import {
   APP_STEPS, Application, candidateStats, downloadText, exportApplicationsCsv,
-  groupByOffer, loadApplications, loadOffers, offerById, saveApplications, statusRank, type Offer,
+  groupByOffer, loadApplications, loadOffers, offerById, saveApplications, type Offer,
 } from '@/lib/recruitment';
 
 const SEED: Application[] = DEMO_APPLICATIONS as Application[];
