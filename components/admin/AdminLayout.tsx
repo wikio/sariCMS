@@ -40,7 +40,9 @@ function Shell({ children }: { children: ReactNode }) {
   const [themesOpen, setThemesOpen] = useState(false);
   const [userOpen, setUserOpen] = useState(false);
   const [expanded, setExpanded] = useState<string>('products');
-  const [user, setUser] = useState(readAdminUser());
+  // Initialisé à null puis chargé côté client (évite le mismatch d'hydratation
+  // entre le rendu serveur et le localStorage du navigateur).
+  const [user, setUser] = useState<ReturnType<typeof readAdminUser>>(null);
   const [q, setQ] = useState('');
   const isLogin = pathname === `/${locale}/admin` || pathname === `/${locale}/admin/`;
 

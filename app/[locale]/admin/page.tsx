@@ -5,8 +5,10 @@ import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { ArrowLeft, Lock, LogIn, Shield } from 'lucide-react';
 import PixelGridLoader from '@/components/admin/PixelGridLoader';
+import ImageCaptcha from '@/components/ImageCaptcha';
 import { cmsFetch, CmsError } from '@/lib/cms';
 import { hasAdminSession, persistAdminSession } from '@/lib/admin-session';
+import { loadAdminSettings } from '@/lib/admin-settings';
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -19,10 +21,17 @@ export default function AdminLoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [blocked, setBlocked] = useState(false);
+  const [security, setSecurity] = useState({ admin2fa: false, adminCaptcha: true, siteCaptcha: true });
+  const [captchaOk, setCaptchaOk] = useState(false);
 
   useEffect(() => {
     if (hasAdminSession()) router.replace(`/${locale}/admin/dashboard`);
   }, [router, locale]);
+
+  useEffect(() => {
+    const s = loadAdminSettings();
+    setSecurity(s.security);
+  }, []);
 
   const accept = (result: { accessToken?: string; refreshToken?: string; user?: never; requires2fa?: boolean; challengeToken?: string }) => {
     if (result.requires2fa && result.challengeToken) {
@@ -40,6 +49,10 @@ export default function AdminLoginPage() {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    if (security.adminCaptcha && !captchaOk) {
+      setError('Veuillez saisir le code CAPTCHA correctement.');
+      return;
+    }
     setLoading(true);
     try {
       const path = challengeToken ? '/auth/2fa/challenge' : '/auth/login';
@@ -65,6 +78,9 @@ export default function AdminLoginPage() {
           </div>
           <h1 className="text-2xl font-black">{t('title')}</h1>
           <p className="text-sm mt-1" style={{ color: 'var(--ad-muted)' }}>{t('subtitle')}</p>
+          {security.admin2fa && (
+            <div className="mt-3 inline-flex items-center gap-2 text-xs ad-chip ad-chip-ok"><Lock className="w-3 h-3" /> Double authentification (2FA) requise</div>
+          )}
         </div>
         {error && <div className="mb-4 text-sm ad-chip ad-chip-warn w-full justify-start py-2 px-3">{error}</div>}
         {blocked ? (
@@ -77,6 +93,9 @@ export default function AdminLoginPage() {
             <input className="ad-input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t('passwordPlaceholder')} disabled={!!challengeToken} />
             {(challengeToken || totpCode) && (
               <input className="ad-input text-center tracking-[0.4em]" value={totpCode} onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="000000" />
+            )}
+            {security.adminCaptcha && (
+              <ImageCaptcha onChange={setCaptchaOk} />
             )}
             <button className="ad-btn ad-btn-primary w-full py-3" disabled={!email || (!challengeToken && !password)}>
               <LogIn className="w-4 h-4" /> {challengeToken ? t('verifyTotp') : t('submit')}

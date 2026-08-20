@@ -53,6 +53,29 @@ export default function AdminSettingsPage() {
       </section>
 
       <section className="ad-card p-5 space-y-4">
+        <h2 className="ad-section-title">Sécurité &amp; accès</h2>
+        <p className="text-xs" style={{ color: 'var(--ad-muted)' }}>Activez la double authentification pour l’admin, et les CAPTCHA image pour l’admin et la vitrine.</p>
+        <ToggleRow
+          label="Exiger la 2FA pour l’Admin"
+          hint="Double authentification TOTP requise à la connexion back-office."
+          on={settings.security.admin2fa}
+          onToggle={() => setSettings({ ...settings, security: { ...settings.security, admin2fa: !settings.security.admin2fa } })}
+        />
+        <ToggleRow
+          label="CAPTCHA image — Admin"
+          hint="Affiche un CAPTCHA image sur la page de connexion admin."
+          on={settings.security.adminCaptcha}
+          onToggle={() => setSettings({ ...settings, security: { ...settings.security, adminCaptcha: !settings.security.adminCaptcha } })}
+        />
+        <ToggleRow
+          label="CAPTCHA image — Vitrine"
+          hint="Affiche un CAPTCHA image sur les formulaires du site (contact, inscription…)."
+          on={settings.security.siteCaptcha}
+          onToggle={() => setSettings({ ...settings, security: { ...settings.security, siteCaptcha: !settings.security.siteCaptcha } })}
+        />
+      </section>
+
+      <section className="ad-card p-5 space-y-4">
         <h2 className="ad-section-title">SMTP avancé</h2>
         <div className="grid md:grid-cols-2 gap-3">
           <Field label="Hôte" value={settings.smtp.host} onChange={(v) => setSmtp({ host: v })} />
@@ -143,6 +166,21 @@ function SeoSection() {
         showToast('Métadonnées SEO enregistrées', 'success');
       }}>Enregistrer le SEO {locale.toUpperCase()}</button>
     </section>
+  );
+}
+
+function ToggleRow({ label, hint, on, onToggle }: { label: string; hint?: string; on: boolean; onToggle: () => void }) {
+  return (
+    <div className="flex items-start justify-between gap-4 py-2" style={{ borderBottom: '1px solid var(--ad-line)' }}>
+      <div className="space-y-0.5">
+        <div className="text-sm font-bold">{label}</div>
+        {hint && <div className="text-xs" style={{ color: 'var(--ad-muted)' }}>{hint}</div>}
+      </div>
+      <button type="button" onClick={onToggle} className={`ad-toggle ${on ? 'is-on' : ''}`}>
+        <span className="ad-toggle-label">{on ? 'Activé' : 'Désactivé'}</span>
+        <span className="ad-toggle-knob" />
+      </button>
+    </div>
   );
 }
 
