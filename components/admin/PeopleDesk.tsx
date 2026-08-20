@@ -25,7 +25,7 @@ type Person = Record<string, unknown> & {
 export default function PeopleDesk({
   type, title, singular,
 }: {
-  type: 'client' | 'candidate';
+  type: 'client' | 'candidate' | 'partner';
   title: string;
   singular: string;
 }) {
@@ -189,9 +189,9 @@ export default function PeopleDesk({
               <Field label="Nom" required value={String(editing.lastName || '')} onChange={(v) => setEditing({ ...editing, lastName: v })} />
               <Field label="Email" required value={String(editing.email || '')} onChange={(v) => setEditing({ ...editing, email: v })} />
               <Field label="Téléphone" value={String(editing.phone || '')} onChange={(v) => setEditing({ ...editing, phone: v })} />
-              {type === 'client'
-                ? <Field label="Société" value={String(editing.company || '')} onChange={(v) => setEditing({ ...editing, company: v })} />
-                : <Field label="Poste visé" value={String(editing.position || '')} onChange={(v) => setEditing({ ...editing, position: v })} />}
+              {type === 'candidate'
+                ? <Field label="Poste visé" value={String(editing.position || '')} onChange={(v) => setEditing({ ...editing, position: v })} />
+                : <Field label="Société" value={String(editing.company || '')} onChange={(v) => setEditing({ ...editing, company: v })} />}
               <label className="space-y-1.5">
                 <span className="text-[11px] font-black uppercase tracking-[0.14em]" style={{ color: 'var(--ad-muted)' }}>Statut <span className="ad-chip ad-chip-mute">Optionnel</span></span>
                 <select className="ad-select" value={String(editing.status || 'active')} onChange={(e) => setEditing({ ...editing, status: e.target.value })}>
@@ -218,10 +218,41 @@ export default function PeopleDesk({
 function ClientStats({ email }: { email: string }) {
   const orders = loadOrders().filter((o) => o.email === email);
   const quotes = loadQuotes().filter((q) => q.email === email);
+  const delivered = orders.filter((o) => o.status === 'delivered').length;
+  const inProgress = orders.filter((o) => o.status === 'processing' || o.status === 'shipped').length;
+  const totalSpent = orders.filter((o) => o.status !== 'cancelled').reduce((s, o) => s + Number(o.total || 0), 0);
   return (
-    <div className="ad-card p-3 space-y-1 text-sm">
-      <div className="font-black">{orders.length} commande(s) · {quotes.length} devis · {orderRevenue(orders).toLocaleString()} DA livrés</div>
-      {orders.slice(0, 4).map((o) => <div key={o.id}>#{o.id} · {o.status} · {o.total.toLocaleString()} DA</div>)}
+    <div className="ad-card p-3 space-y-2 text-sm ad-rise">
+      <div className="font-black flex items-center justify-between">
+        <span>Activité commerciale</span>
+        <span className="ad-chip ad-chip-ok">{delivered} livrées</span>
+      </div>
+      <div className="grid grid-cols-3 gap-2 text-center">
+        <div className="ad-card p-2" style={{ background: 'var(--ad-surface-2)' }}>
+          <div className="text-xl font-black">{orders.length}</div>
+          <div className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--ad-muted)' }}>Commandes</div>
+        </div>
+        <div className="ad-card p-2" style={{ background: 'var(--ad-surface-2)' }}>
+          <div className="text-xl font-black">{quotes.length}</div>
+          <div className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--ad-muted)' }}>Devis</div>
+        </div>
+        <div className="ad-card p-2" style={{ background: 'var(--ad-surface-2)' }}>
+          <div className="text-xl font-black">{totalSpent.toLocaleString()}</div>
+          <div className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--ad-muted)' }}>DA cumulés</div>
+        </div>
+      </div>
+      <div className="text-xs" style={{ color: 'var(--ad-muted)' }}>
+        {inProgress} en cours · {orderRevenue(orders).toLocaleString()} DA livrés
+      </div>
+      <div className="space-y-1">
+        {orders.slice(0, 4).map((o) => (
+          <div key={o.id} className="flex items-center justify-between border-b border-[var(--ad-line)] pb-1">
+            <span>#{o.id} <span style={{ color: 'var(--ad-muted)' }}>{o.date}</span></span>
+            <span className={`ad-chip ${o.status === 'delivered' ? 'ad-chip-ok' : o.status === 'cancelled' ? 'ad-chip-warn' : 'ad-chip-acc'}`}>{o.status}</span>
+            <span className="font-bold tabular-nums">{Number(o.total || 0).toLocaleString()} DA</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

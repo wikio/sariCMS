@@ -9,7 +9,7 @@ import { renderField } from '@/components/admin/fields/FieldKit';
 import ConsultValue from '@/components/admin/ConsultValue';
 import IconMark from '@/components/admin/IconMark';
 import { useToast } from '@/components/admin/Toast';
-import { cmsAdminCreate, cmsAdminDelete, cmsAdminFetch, cmsAdminUpdate } from '@/lib/cms-admin';
+import { cmsAdminCreate, cmsAdminDelete, cmsAdminFetch, cmsAdminList, cmsAdminUpdate } from '@/lib/cms-admin';
 import type { CmsModule } from '@/lib/cms-modules';
 import { slugify } from '@/lib/slugify';
 import { CmsError } from '@/lib/cms';
@@ -52,8 +52,36 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
         const row = await cmsAdminFetch<Record<string, unknown>>(`/${mod.resource}/${id}?view=block`);
         setRecord(row);
         setSlugLocked(Boolean(row.slug));
+
+        // Récupère les versions traduites (fiches sœurs) de la même fiche.
+        const translatableKeys = mod.fields.filter((f) => isTranslatableField(f.kind, f.i18n)).map((f) => f.key);
+        const linkKeys: Array<keyof Record<string, unknown>> = ['legacyId', 'slug'];
+        let siblings: Record<string, unknown>[] = [];
+        try {
+          const all = await cmsAdminList<Record<string, unknown>>(mod.resource, {});
+          const linkKey = linkKeys.find((k) => row[k] != null && String(row[k]) !== '');
+          if (linkKey) {
+            const ref = String(row[linkKey]);
+            siblings = all.filter((r) => r.id !== row.id && String(r[linkKey]) === ref);
+          }
+        } catch {
+          siblings = [];
+        }
+
         const next: Record<string, Record<string, unknown>> = {};
-        for (const lang of LANGS) next[lang.id] = loadFicheLocale(mod.resource, String(row.id), lang.id);
+        for (const lang of LANGS) {
+          const saved = loadFicheLocale(mod.resource, String(row.id), lang.id);
+          const sibling = siblings.find((s) => String(s.locale ?? '') === lang.id);
+          const merged: Record<string, unknown> = {};
+          if (sibling && lang.id !== String(row.locale ?? '')) {
+            for (const k of translatableKeys) {
+              if (sibling[k] !== undefined && sibling[k] !== null && String(sibling[k]) !== '') {
+                merged[k] = sibling[k];
+              }
+            }
+          }
+          next[lang.id] = { ...merged, ...saved };
+        }
         setOverlays(next);
       } catch (err) {
         showToast(err instanceof CmsError ? err.message : 'Fiche introuvable', 'error');

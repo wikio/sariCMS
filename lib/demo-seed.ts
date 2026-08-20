@@ -27,12 +27,16 @@ const CANDIDATES = [
 ];
 
 export const DEMO_APPLICATIONS = [
-  { id: 501, candidate: 'Fatima Zahra', email: 'fatima.zahra@email.dz', phone: '+213 555 567 890', jobTitle: 'Technicien biomédical', status: 'interview', date: '2026-07-15', experience: '3 ans', motivation: 'Je souhaite rejoindre le SAV SARI pour intervenir sur le parc échographes des cliniques d’Alger.' },
-  { id: 502, candidate: 'Karim Boudiaf', email: 'karim.boudiaf@email.dz', phone: '+213 555 111 222', jobTitle: 'Commercial médical', status: 'reviewed', date: '2026-07-10', experience: '5 ans', motivation: 'Réseau de 40 établissements déjà suivis. Objectif : développer l’Ouest algérien.' },
-  { id: 503, candidate: 'Sara Meziane', email: 'sara.meziane@email.dz', phone: '+213 555 440 118', jobTitle: 'Ingénieure application imagerie', status: 'new', date: '2026-08-02', experience: '4 ans', motivation: 'Expérience recette salles d’écho et formation médecins.' },
-  { id: 504, candidate: 'Yacine Larbi', email: 'yacine.larbi@email.dz', phone: '+213 555 902 441', jobTitle: 'Technicien autoclaves', status: 'accepted', date: '2026-06-20', experience: '6 ans', motivation: 'Qualification IQ/OQ des autoclaves classe B, disponible immédiatement.' },
-  { id: 505, candidate: 'Inès Hammoudi', email: 'ines.hammoudi@email.dz', phone: '+213 555 220 773', jobTitle: 'Chargée de clientèle B2B', status: 'rejected', date: '2026-07-28', experience: '2 ans', motivation: 'Souhaite passer du support au suivi devis / commandes.' },
-  { id: 506, candidate: 'Fatima Zahra', email: 'fatima.zahra@email.dz', phone: '+213 555 567 890', jobTitle: 'Responsable SAV régional', status: 'new', date: '2026-08-12', experience: '3 ans', motivation: 'Candidature interne de progression après l’entretien technicien.' },
+  { id: 501, candidate: 'Fatima Zahra', email: 'fatima.zahra@email.dz', phone: '+213 555 567 890', jobTitle: 'Technicien Biomédical', offerId: 1, status: 'interview', date: '2026-07-15', experience: '3 ans', motivation: 'Je souhaite rejoindre le SAV SARI pour intervenir sur le parc échographes des cliniques d’Alger.', cv: 'FATIMA ZAHRA\nTechnicienne biomédicale — 3 ans\nCHU Mustapha Pacha · maintenance échographes, moniteurs et autoclaves.\nCompétences : électronique médicale, DICOM, qualification IQ/OQ.\n', lm: 'Madame, Monsieur,\nForte d’une expérience de 3 ans en maintenance biomédicale, je souhaite intégrer votre service SAV pour intervenir sur le terrain.' },
+  { id: 502, candidate: 'Karim Boudiaf', email: 'karim.boudiaf@email.dz', phone: '+213 555 111 222', jobTitle: 'Commercial Sectoriel BtoB', offerId: 2, status: 'reviewed', date: '2026-07-10', experience: '5 ans', motivation: 'Réseau de 40 établissements déjà suivis. Objectif : développer l’Ouest algérien.', cv: 'KARIM BOUDIAF\nCommercial médical — 5 ans\nPortefeuille de 40 établissements (cliniques privées, hôpitaux).\nCompétences : prospection B2B, appels d’offres, CRM.\n', lm: 'Je souhaite mettre mon réseau au service du développement commercial de SARI Système sur l’Ouest algérien.' },
+  { id: 503, candidate: 'Sara Meziane', email: 'sara.meziane@email.dz', phone: '+213 555 440 118', jobTitle: "Ingénieur d'Application Imagerie", offerId: 5, status: 'new', date: '2026-08-02', experience: '4 ans', motivation: 'Expérience recette salles d’écho et formation médecins.', cv: 'SARA MEZIANE\nIngénieure application imagerie — 4 ans\nRecette de salles d’échographie, formation utilisateurs.\nCompétences : échographie, PACS, conduite de projet.\n', lm: 'Mon expertise en imagerie médicale et en formation utilisateurs correspond au profil recherché.' },
+  { id: 504, candidate: 'Yacine Larbi', email: 'yacine.larbi@email.dz', phone: '+213 555 902 441', jobTitle: 'Technicien de Surface Médical', offerId: 6, status: 'accepted', date: '2026-06-20', experience: '6 ans', motivation: 'Qualification IQ/OQ des autoclaves classe B, disponible immédiatement.', cv: 'YACINE LARBI\nTechnicien autoclaves — 6 ans\nSpécialiste classe B, qualification IQ/OQ.\nCompétences : stérilisation, hygiène hospitalière.\n', lm: 'Disponible immédiatement, je souhaite mettre mon expertise stérilisation au service de vos clients.' },
+  { id: 505, candidate: 'Inès Hammoudi', email: 'ines.hammoudi@email.dz', phone: '+213 555 220 773', jobTitle: 'Chargé de Clientèle Sénior', offerId: 12, status: 'rejected', date: '2026-07-28', experience: '2 ans', motivation: 'Souhaite passer du support au suivi devis / commandes.', cv: 'INÈS HAMMOUDI\nChargée de clientèle B2B — 2 ans\nSuivi devis et relance hôpitaux publics.\nCompétences : relation client, ERP, devis.\n', lm: 'Je souhaite évoluer vers le suivi complet devis / commandes au sein de votre équipe commerciale.' },
+  { id: 506, candidate: 'Fatima Zahra', email: 'fatima.zahra@email.dz', phone: '+213 555 567 890', jobTitle: 'Technicien Biomédical', offerId: 1, status: 'new', date: '2026-08-12', experience: '3 ans', motivation: 'Candidature interne de progression après l’entretien technicien.', cv: 'FATIMA ZAHRA\nTechnicienne biomédicale — 3 ans\nCHU Mustapha Pacha · maintenance échographes, moniteurs et autoclaves.\n', lm: 'Candidature interne pour progression vers un poste à responsabilités au sein du SAV.' },
+  { id: 507, candidate: 'Amine Touati', email: 'amine.touati@email.dz', phone: '+213 555 330 912', jobTitle: 'Technicien Biomédical', offerId: 1, status: 'new', date: '2026-08-10', experience: '2 ans', motivation: 'Jeune diplômé spécialisé en instrumentation médicale.', cv: 'AMINE TOUATI\nTechnicien biomédical junior — 2 ans\nStage CHU + certification électronique médicale.\n', lm: 'Débutant motivé, je souhaite rejoindre une équipe terrain dynamique.' },
+  { id: 508, candidate: 'Nora Ait', email: 'nora.ait@email.dz', phone: '+213 555 771 204', jobTitle: 'Technicien Biomédical', offerId: 1, status: 'reviewed', date: '2026-08-01', experience: '7 ans', motivation: 'Experte imagerie et blocs opératoires, référente SAV.' , cv: 'NORA AIT\nTechnicienne biomédicale senior — 7 ans\nRéférente SAV imagerie et blocs opératoires.\n', lm: 'Mon expérience senior me permet d’encadrer une équipe et d’assurer le SAV régional.' },
+  { id: 509, candidate: 'Riad Mansouri', email: 'riad.mansouri@email.dz', phone: '+213 555 118 733', jobTitle: 'Commercial Sectoriel BtoB', offerId: 2, status: 'interview', date: '2026-08-08', experience: '4 ans', motivation: 'Réseau hôpitaux publics et appels d’offres.', cv: 'RIAD MANSOURI\nCommercial B2B — 4 ans\nRéseau hôpitaux publics, appels d’offres nationaux.\n', lm: 'Je souhaite piloter les grands comptes publics de SARI Système.' },
+  { id: 510, candidate: 'Lina Kaci', email: 'lina.kaci@email.dz', phone: '+213 555 664 029', jobTitle: 'Chargé de Clientèle Sénior', offerId: 12, status: 'new', date: '2026-08-14', experience: '3 ans', motivation: 'Expérience en suivi de commandes et SAV commercial.', cv: 'LINA KACI\nChargée de clientèle — 3 ans\nSuivi commandes, SAV commercial, fidélisation.\n', lm: 'Je souhaite accompagner vos clients sur le suivi complet de leurs commandes.' },
 ];
 
 export const DEMO_ORDERS: Order[] = [
@@ -58,10 +62,17 @@ export const DEMO_QUOTES: Quote[] = [
   { id: 2006, client: 'Polyclinique Oran Est', email: 'direction@oran-est.dz', date: '2026-08-12', status: 'pending', total: 1870000, validity: '21 jours', coupon: 'SARI10', zone: 'DZ', items: [{ id: 15, name: 'Moniteur de Signes Vitaux Multiparamètres', quantity: 3, price: 245000, category: 'Urgence' }, { id: 4, name: 'Tensiomètre Digital Pro', quantity: 10, price: 12000, category: 'Diagnostic' }] },
 ];
 
+const PARTNERS = [
+  { email: 'partenaire@medic-distrib.dz', firstName: 'Rachid', lastName: 'Boumediene', phone: '+213 21 50 60 70', company: 'Medic Distrib', type: 'partner', status: 'active', address: 'Alger Centre' },
+  { email: 'partenaire@bio-lab-ouest.dz', firstName: 'Nadia', lastName: 'Ferhat', phone: '+213 41 44 55 66', company: 'Bio Lab Ouest', type: 'partner', status: 'active', address: 'Oran' },
+  { email: 'partenaire@sante-sud.dz', firstName: 'Sofiane', lastName: 'Gherbi', phone: '+213 32 12 13 14', company: 'Santé Sud', type: 'partner', status: 'pending', address: 'Constantine' },
+  { email: 'partenaire@imagerie-est.dz', firstName: 'Lyna', lastName: 'Benaissa', phone: '+213 31 20 21 22', company: 'Imagerie Est', type: 'partner', status: 'active', address: 'Annaba' },
+];
+
 async function ensurePeople() {
   const existing = await cmsAdminList('users', { limit: '200' });
   const emails = new Set(existing.map((u) => String(u.email || '').toLowerCase()));
-  for (const person of [...CLIENTS, ...CANDIDATES]) {
+  for (const person of [...CLIENTS, ...CANDIDATES, ...PARTNERS]) {
     if (emails.has(person.email.toLowerCase())) continue;
     try {
       await cmsAdminCreate('users', { ...person, password: PASS, locale: 'fr' });
@@ -89,5 +100,5 @@ export async function seedDemoWorkspace() {
   } catch {
     /* API offline */
   }
-  return { imported, orders: DEMO_ORDERS.length, quotes: DEMO_QUOTES.length, applications: DEMO_APPLICATIONS.length, people: CLIENTS.length + CANDIDATES.length };
+  return { imported, orders: DEMO_ORDERS.length, quotes: DEMO_QUOTES.length, applications: DEMO_APPLICATIONS.length, people: CLIENTS.length + CANDIDATES.length + PARTNERS.length };
 }

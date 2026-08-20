@@ -18,7 +18,7 @@ export default function SearchPage() {
       const next = [];
       for (const mod of CMS_MODULES.slice(0, 8)) {
         try {
-          const rows = await cmsAdminList(mod.resource, { q, filter: JSON.stringify({ locale }) });
+          const rows = await cmsAdminList(mod.resource, { search: q, filter: JSON.stringify({ locale }) });
           const hit = rows.filter((r) => mod.searchKeys.some((k) => String(r[k] ?? '').toLowerCase().includes(q.toLowerCase())));
           if (hit.length) next.push({ key: mod.key, label: mod.label, path: mod.path, rows: hit.slice(0, 6) });
         } catch { /* */ }

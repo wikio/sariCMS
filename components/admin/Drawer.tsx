@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useEffect, useRef, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { X } from 'lucide-react';
 
@@ -25,6 +25,8 @@ export default function Drawer({
   const rtl = locale === 'ar';
   const [shown, setShown] = useState(open);
   const [closing, setClosing] = useState(false);
+  const [w, setW] = useState(width);
+  const dragging = useRef(false);
 
   useEffect(() => {
     if (open) {
@@ -35,10 +37,27 @@ export default function Drawer({
       const t = window.setTimeout(() => {
         setShown(false);
         setClosing(false);
-      }, 220);
+      }, 260);
       return () => window.clearTimeout(t);
     }
   }, [open, shown]);
+
+  const startDrag = (e: React.PointerEvent) => {
+    e.preventDefault();
+    dragging.current = true;
+    const onMove = (ev: PointerEvent) => {
+      if (!dragging.current) return;
+      const next = rtl ? window.innerWidth - ev.clientX : ev.clientX;
+      setW(Math.min(Math.max(next, 320), Math.round(window.innerWidth * 0.92)));
+    };
+    const onUp = () => {
+      dragging.current = false;
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  };
 
   useEffect(() => {
     if (!shown) return;
@@ -55,9 +74,17 @@ export default function Drawer({
     <div className={`ad-drawer ${closing ? 'is-closing' : ''} ${rtl ? 'is-rtl' : ''}`} onClick={onClose}>
       <aside
         className="ad-drawer-panel"
-        style={{ width: `min(${width}px, 100%)` }}
+        style={{ width: `min(${w}px, 100%)` }}
         onClick={(e) => e.stopPropagation()}
       >
+        <button
+          type="button"
+          className="ad-drawer-handle"
+          onPointerDown={startDrag}
+          onClick={onClose}
+          title="Glisser pour redimensionner · cliquer pour fermer"
+          aria-label="Glisser pour redimensionner ou fermer"
+        />
         <header className="flex items-start justify-between gap-3 mb-4">
           <div>
             <h3 className="text-xl font-black tracking-tight">{title}</h3>

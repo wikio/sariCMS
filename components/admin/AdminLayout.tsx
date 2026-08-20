@@ -36,6 +36,7 @@ function Shell({ children }: { children: ReactNode }) {
   const isRTL = locale === 'ar';
   const { theme, setTheme } = useAdminTheme();
   const [open, setOpen] = useState(true);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [themesOpen, setThemesOpen] = useState(false);
   const [userOpen, setUserOpen] = useState(false);
   const [expanded, setExpanded] = useState<string>('products');
@@ -48,6 +49,7 @@ function Shell({ children }: { children: ReactNode }) {
     if (!isLogin && !hasAdminSession()) router.push(`/${locale}/admin`);
   }, [pathname, locale, isLogin, router]);
 
+  const closeMobile = () => setMobileOpen(false);
   const menu: Item[] = useMemo(() => [
     { type: 'divider', label: t('menu.pilotageSection') },
     { id: 'dashboard', icon: LayoutDashboard, label: t('menu.dashboard'), href: `/${locale}/admin/dashboard` },
@@ -83,7 +85,7 @@ function Shell({ children }: { children: ReactNode }) {
     { id: 'legal', icon: Scale, label: t('menu.legal'), href: `/${locale}/admin/legal` },
     { type: 'divider', label: t('menu.crmSection') },
     { id: 'clients', icon: Users, label: t('menu.clients'), href: `/${locale}/admin/clients` },
-    { id: 'candidates', icon: UserPlus, label: t('menu.candidates'), href: `/${locale}/admin/candidates` },
+    { id: 'partners-accounts', icon: UserPlus, label: t('menu.partnersAccounts'), href: `/${locale}/admin/partners-accounts` },
     { id: 'applications', icon: FileCheck, label: t('menu.applications'), href: `/${locale}/admin/applications` },
     { type: 'divider', label: t('menu.advancedSection') },
     { id: 'taxonomies', icon: Tags, label: t('menu.taxonomies'), href: `/${locale}/admin/taxonomies` },
@@ -119,14 +121,14 @@ function Shell({ children }: { children: ReactNode }) {
 
   return (
     <div data-admin-theme={theme} dir={isRTL ? 'rtl' : 'ltr'} className="ad-app">
-      <aside className={`${open ? 'w-[272px]' : 'w-[76px]'} fixed inset-y-0 z-40 flex flex-col transition-all duration-300 ${isRTL ? 'right-0' : 'left-0'}`} style={{ background: 'var(--ad-sidebar)', color: 'var(--ad-sidebar-ink)' }}>
+      <aside className={`ad-sidebar ${open ? 'w-[272px]' : 'w-[76px]'} fixed inset-y-0 z-40 flex flex-col transition-all duration-300 ${isRTL ? 'right-0' : 'left-0'} ${mobileOpen ? 'is-open' : 'is-closed'}`} style={{ background: 'var(--ad-sidebar)', color: 'var(--ad-sidebar-ink)' }}>
         <div className="h-[72px] px-4 flex items-center gap-3 border-b border-white/10">
           <div className="w-10 h-10 flex items-center justify-center" style={{ background: 'var(--ad-accent-2)', color: 'var(--ad-accent-2-ink)', borderRadius: 10 }}>
             <Shield className="w-5 h-5" />
           </div>
           {open && <div className="leading-tight"><div className="font-black tracking-tight">SARI OS</div><div className="text-[10px] uppercase tracking-[0.18em] opacity-60">Admin · Studio</div></div>}
         </div>
-        <nav className="flex-1 overflow-y-auto ad-scroll py-3">
+        <nav className="flex-1 overflow-y-auto ad-scroll py-3" onClick={closeMobile}>
           {menu.map((item, i) => {
             if (item.type === 'divider') {
               return open ? <div key={i} className="px-5 pt-4 pb-1 text-[10px] uppercase tracking-[0.18em] opacity-40">{item.label}</div> : <div key={i} className="mx-3 my-2 border-t border-white/10" />;
@@ -167,10 +169,12 @@ function Shell({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      <div className={`min-h-screen transition-all duration-300 ${isRTL ? (open ? 'mr-[272px]' : 'mr-[76px]') : (open ? 'ml-[272px]' : 'ml-[76px]')}`}>
+      {mobileOpen && <div className="ad-backdrop" onClick={closeMobile} />}
+      <div className={`ad-main min-h-screen transition-all duration-300 ${isRTL ? (open ? 'mr-[272px]' : 'mr-[76px]') : (open ? 'ml-[272px]' : 'ml-[76px]')}`}>
         <header className="sticky top-0 z-30 h-[72px] px-5 flex items-center justify-between backdrop-blur-xl border-b" style={{ background: 'color-mix(in srgb, var(--ad-surface) 82%, transparent)', borderColor: 'var(--ad-line)' }}>
           <div className="flex items-center gap-3 flex-1 min-w-0">
-            <button className="ad-btn ad-btn-icon ad-btn-ghost" onClick={() => setOpen((v) => !v)}><ChevronLeft className={`w-4 h-4 transition ${open ? '' : 'rotate-180'}`} /></button>
+            <button className="ad-burger ad-btn ad-btn-icon ad-btn-ghost" onClick={() => setMobileOpen((v) => !v)} aria-label="Menu"><MenuIcon className="w-5 h-5" /></button>
+            <button className="ad-collapse-btn ad-btn ad-btn-icon ad-btn-ghost" onClick={() => setOpen((v) => !v)}><ChevronLeft className={`w-4 h-4 transition ${open ? '' : 'rotate-180'}`} /></button>
             <form className="flex-1 max-w-xl" onSubmit={(e) => { e.preventDefault(); router.push(`/${locale}/admin/search?q=${encodeURIComponent(q)}`); }}>
               <div className="ad-search">
                 <Search className="ad-search-ico w-4 h-4" />

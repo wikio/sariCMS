@@ -89,18 +89,18 @@ export default function AdminTranslationEditorPage() {
       const expanded = open.has(n.id);
       return (
         <div key={n.id}>
-          <button className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm" style={{ paddingLeft: 8 + depth * 12 }} onClick={() => setOpen((s) => { const nset = new Set(s); nset.has(n.id) ? nset.delete(n.id) : nset.add(n.id); return nset; })}>
-            {expanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-            <Folder className="w-4 h-4" style={{ color: 'var(--ad-accent)' }} />
-            {n.label}
+          <button className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm min-w-0" style={{ paddingLeft: 8 + depth * 12 }} onClick={() => setOpen((s) => { const nset = new Set(s); nset.has(n.id) ? nset.delete(n.id) : nset.add(n.id); return nset; })}>
+            {expanded ? <ChevronDown className="w-3 h-3 shrink-0" /> : <ChevronRight className="w-3 h-3 shrink-0" />}
+            <Folder className="w-4 h-4 shrink-0" style={{ color: 'var(--ad-accent)' }} />
+            <span className="truncate">{n.label}</span>
           </button>
           {expanded && n.children?.map((c) => renderNode(c, depth + 1))}
         </div>
       );
     }
     return (
-      <button key={n.id} onClick={() => setNode(n)} className={`w-full text-left px-2 py-1.5 rounded-lg text-sm flex items-center gap-2 ${node?.id === n.id ? 'font-bold' : ''}`} style={{ paddingLeft: 20 + depth * 12, background: node?.id === n.id ? 'color-mix(in srgb, var(--ad-accent) 16%, transparent)' : undefined }}>
-        <FileJson className="w-4 h-4" /> {n.label}
+      <button key={n.id} onClick={() => setNode(n)} className={`w-full text-left px-2 py-1.5 rounded-lg text-sm flex items-center gap-2 min-w-0 ${node?.id === n.id ? 'font-bold' : ''}`} style={{ paddingLeft: 20 + depth * 12, background: node?.id === n.id ? 'color-mix(in srgb, var(--ad-accent) 16%, transparent)' : undefined }}>
+        <FileJson className="w-4 h-4 shrink-0" /> <span className="truncate">{n.label}</span>
       </button>
     );
   };
@@ -122,15 +122,15 @@ export default function AdminTranslationEditorPage() {
           ))}
         </div>
       </div>
-      <div className="grid lg:grid-cols-4 gap-4">
-        <aside className="ad-card p-3 ad-rise ad-rise-2 max-h-[74vh] overflow-y-auto ad-scroll">
+      <div className="grid lg:grid-cols-4 gap-4 lg:min-h-0">
+        <aside className="ad-card p-3 ad-rise ad-rise-2 max-h-[74vh] min-w-0 overflow-y-auto overflow-x-hidden ad-scroll">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--ad-muted)' }}>Arbre</span>
             <button onClick={loadTree}><RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /></button>
           </div>
           {tree.map((n) => renderNode(n))}
         </aside>
-        <section className="lg:col-span-3 ad-card p-4 ad-rise ad-rise-3 min-h-[60vh]">
+        <section className="lg:col-span-3 min-w-0 ad-card p-4 ad-rise ad-rise-3 min-h-[60vh]">
           {!node ? (
             <div className="h-full flex items-center justify-center" style={{ color: 'var(--ad-muted)' }}>Choisissez un fichier JSON</div>
           ) : loading ? (

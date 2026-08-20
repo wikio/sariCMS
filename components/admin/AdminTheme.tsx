@@ -5,6 +5,7 @@ import { createContext, useContext, useEffect, useMemo, useState, ReactNode } fr
 export const ADMIN_THEMES = [
   { id: 'light', label: 'Clair', swatch: '#199ACA' },
   { id: 'dark', label: 'Sombre', swatch: '#2EB6DE' },
+  { id: 'aurora', label: 'Aurora', swatch: 'linear-gradient(135deg,#7c5cff,#22d3ee)' },
   { id: 'midnight', label: 'Minuit', swatch: '#C6DA34' },
   { id: 'lime', label: 'Lime', swatch: '#9AAA18' },
   { id: 'contrast', label: 'Contraste', swatch: '#EAB616' },
