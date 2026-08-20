@@ -57,7 +57,7 @@ export default function AdminSettingsPage() {
         <p className="text-xs" style={{ color: 'var(--ad-muted)' }}>Activez la double authentification pour l’admin, et les CAPTCHA image pour l’admin et la vitrine.</p>
         <ToggleRow
           label="Exiger la 2FA pour l’Admin"
-          hint="Double authentification TOTP requise à la connexion back-office."
+          hint="Activez d’abord la 2FA de votre compte dans Profil (scan du QR code), puis ce réglage exige la double authentification à la connexion."
           on={settings.security.admin2fa}
           onToggle={() => setSettings({ ...settings, security: { ...settings.security, admin2fa: !settings.security.admin2fa } })}
         />
