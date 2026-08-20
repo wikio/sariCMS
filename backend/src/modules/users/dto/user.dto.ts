@@ -124,6 +124,12 @@ export class CreateUserDto {
 
   @ApiPropertyOptional()
   @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  ip?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsBoolean()
   totpEnabled?: boolean;
 }

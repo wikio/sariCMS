@@ -26,6 +26,7 @@ export interface Order {
   coupon?: string;
   quoteId?: number;
   zone?: string;
+  ip?: string;
   history?: Array<{ status: string; at: string; note?: string }>;
 }
 
@@ -43,6 +44,7 @@ export interface Quote {
   coupon?: string;
   orderId?: number;
   zone?: string;
+  ip?: string;
   history?: Array<{ status: string; at: string; note?: string }>;
 }
 

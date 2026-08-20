@@ -15,6 +15,8 @@ export interface Application {
   date: string;
   experience: string;
   motivation: string;
+  rating?: number;
+  note?: string;
   cv?: string;
   lm?: string;
   history?: Array<{ status: string; at: string; note?: string }>;

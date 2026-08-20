@@ -10,9 +10,10 @@ import { computeTotals, money } from '@/lib/commerce-math';
 import { useToast } from '@/components/admin/Toast';
 import SearchField from '@/components/admin/SearchField';
 import Drawer from '@/components/admin/Drawer';
+import GeoBadge from '@/components/admin/GeoBadge';
 
 type Kind = 'orders' | 'quotes';
-type Row = (Order | Quote) & { history?: Array<{ status: string; at: string; note?: string }>; phone?: string; company?: string; coupon?: string; quoteId?: number; orderId?: number; zone?: string };
+type Row = (Order | Quote) & { history?: Array<{ status: string; at: string; note?: string }>; phone?: string; company?: string; coupon?: string; quoteId?: number; orderId?: number; zone?: string; ip?: string; address?: string };
 
 const ORDER_STATUS = [
   { value: 'pending', label: 'En attente' },
@@ -134,19 +135,20 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
       {view === 'list' ? (
         <div className="ad-card overflow-x-auto">
           <table className="ad-table">
-            <thead><tr><th>N°</th><th>Client</th><th>Date</th><th>Total TTC</th><th>Statut</th><th></th></tr></thead>
+            <thead><tr><th>N°</th><th>Client</th><th>Date</th><th>Total TTC</th><th>Pays / IP</th><th>Statut</th><th></th></tr></thead>
             <tbody>
               {shown.map((row) => (
                 <tr key={row.id}>
                   <td className="font-mono text-sm">#{row.id}</td>
                   <td><div className="font-bold">{row.client}</div><div className="text-xs" style={{ color: 'var(--ad-muted)' }}>{row.email}</div></td>
                   <td>{row.date}</td>
-                  <td className="font-black">{Number(row.total).toLocaleString()} DA</td>
+                  <td className="font-black whitespace-nowrap">{Number(row.total).toLocaleString()} DA</td>
+                  <td><GeoBadge ip={row.ip} /></td>
                   <td><span className={`ad-chip ${row.status === 'delivered' || row.status === 'accepted' ? 'ad-chip-ok' : row.status === 'cancelled' || row.status === 'rejected' ? 'ad-chip-mute' : 'ad-chip-warn'}`}>{row.status}</span></td>
                   <td className="text-right whitespace-nowrap">
-                    <button className="ad-btn ad-btn-ghost" onClick={() => { setConsult(true); setOpen(row); }}><Eye className="w-4 h-4" /></button>
+                    <button className="ad-btn ad-btn-ghost" onClick={() => { setConsult(true); setOpen(row); }}><Eye className="w-4 h-4" /> Voir</button>
                     <button className="ad-btn ad-btn-ghost" onClick={() => { setConsult(false); setOpen(row); }}>Éditer</button>
-                    <button className="ad-btn ad-btn-icon ad-btn-danger ml-1" onClick={() => persist(rows.filter((r) => r.id !== row.id))}><Trash2 className="w-4 h-4" /></button>
+                    <button className="ad-btn ad-btn-icon ad-btn-danger ml-1" title="Supprimer" onClick={() => persist(rows.filter((r) => r.id !== row.id))}><Trash2 className="w-4 h-4" /></button>
                   </td>
                 </tr>
               ))}
@@ -205,13 +207,31 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
               <div><span style={{ color: 'var(--ad-muted)' }}>Société</span><div>{open.company || '—'}</div></div>
               <div><span style={{ color: 'var(--ad-muted)' }}>Date</span><div className="font-bold">{open.date}</div></div>
               <div><span style={{ color: 'var(--ad-muted)' }}>Paiement</span><div>{('payment' in open && open.payment) || '—'}</div></div>
+              <div className="col-span-2"><span style={{ color: 'var(--ad-muted)' }}>Adresse</span><div>{open.address || '—'}</div></div>
+              <div className="col-span-2">
+                <span style={{ color: 'var(--ad-muted)' }}>Pays / IP</span>
+                <div><GeoBadge ip={open.ip} /></div>
+              </div>
             </div>
+
+            {kind === 'quotes' && (
+              <div className="ad-card p-3 space-y-1 text-sm" style={{ borderColor: 'color-mix(in srgb, var(--ad-accent) 35%, var(--ad-line))' }}>
+                <div className="font-black flex items-center gap-2" style={{ color: 'var(--ad-accent)' }}>Conversion du devis</div>
+                {linkedOrder ? (
+                  <div>
+                    Abouti à la commande{' '}
+                    <button className="underline font-bold" onClick={() => { setOpen(null); window.location.href = `/${locale}/admin/orders`; }}>
+                      #{linkedOrder.id} · {linkedOrder.status} · {Number(linkedOrder.total).toLocaleString()} DA
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ color: 'var(--ad-muted)' }}>Aucune commande liée à ce devis.</div>
+                )}
+              </div>
+            )}
 
             {linkedQuote && (
               <div className="ad-origin">Devis d’origine : <button className="underline font-bold" onClick={() => { window.location.href = `/${locale}/admin/quotes`; }}>#{linkedQuote.id} · {linkedQuote.status} · {linkedQuote.total.toLocaleString()} DA</button></div>
-            )}
-            {linkedOrder && (
-              <div className="ad-origin">Commande liée : <button className="underline font-bold" onClick={() => { window.location.href = `/${locale}/admin/orders`; }}>#{linkedOrder.id} · {linkedOrder.status} · {linkedOrder.total.toLocaleString()} DA</button></div>
             )}
 
             <button type="button" className="ad-btn ad-btn-ghost" onClick={() => setHistoryOpen((v) => !v)}>

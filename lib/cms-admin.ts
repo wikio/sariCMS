@@ -61,6 +61,7 @@ export const WRITABLE_FIELDS: Record<string, string[]> = {
   users: [
     'email', 'password', 'firstName', 'lastName', 'phone', 'company', 'type', 'status',
     'roleId', 'locale', 'avatar', 'address', 'position', 'experience', 'motivation', 'cvUrl',
+    'ip', 'country',
   ],
   roles: ['name', 'slug', 'description', 'permissionIds', 'isSystem'],
 };

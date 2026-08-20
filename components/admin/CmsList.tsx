@@ -256,7 +256,7 @@ function ListTable({
   if (rows.length === 0) return <Empty mod={mod} />;
   const toggle = (id: string) => setSelected(selected.includes(id) ? selected.filter((x) => x !== id) : [...selected, id]);
   const body = (
-    <table className="ad-table">
+    <table className="ad-table min-w-[720px]">
       <thead>
         <tr>
           <th><input type="checkbox" checked={selected.length === rows.length} onChange={(e) => setSelected(e.target.checked ? rows.map((r) => String(r.id)) : [])} /></th>

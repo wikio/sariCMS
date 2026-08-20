@@ -8,6 +8,7 @@ import { useToast } from '@/components/admin/Toast';
 import { cmsAdminCreate, cmsAdminDelete, cmsAdminList, cmsAdminUpdate } from '@/lib/cms-admin';
 import { CmsError } from '@/lib/cms';
 import { loadOrders, loadQuotes, orderRevenue } from '@/lib/crm-store';
+import GeoBadge from '@/components/admin/GeoBadge';
 
 type Person = Record<string, unknown> & {
   id?: string;
@@ -20,6 +21,8 @@ type Person = Record<string, unknown> & {
   position?: string;
   type?: string;
   notes?: string;
+  ip?: string;
+  country?: string;
 };
 
 export default function PeopleDesk({
@@ -129,13 +132,14 @@ export default function PeopleDesk({
       </div>
 
       {loading ? <div className="ad-card"><PixelGridLoader label={title} /></div> : view === 'list' ? (
-        <div className="ad-card overflow-hidden">
-          <table className="ad-table">
+        <div className="ad-card overflow-x-auto">
+          <table className="ad-table min-w-[720px]">
             <thead>
               <tr>
                 <th>Nom</th>
                 <th>Email</th>
                 <th>{type === 'candidate' ? 'Poste' : 'Société'}</th>
+                <th>Pays / IP</th>
                 <th>Statut</th>
                 <th></th>
               </tr>
@@ -146,6 +150,7 @@ export default function PeopleDesk({
                   <td className="font-bold">{nameOf(p)}</td>
                   <td className="text-sm" style={{ color: 'var(--ad-muted)' }}>{p.email}</td>
                   <td>{type === 'candidate' ? String(p.position || '—') : String(p.company || '—')}</td>
+                  <td><GeoBadge ip={p.ip} country={p.country} /></td>
                   <td><span className="ad-chip ad-chip-acc">{String(p.status || '')}</span></td>
                   <td className="text-right">
                     <button className="ad-btn ad-btn-ghost" onClick={() => setEditing({ ...p, notes: p.id ? localStorage.getItem(`sari_notes_${p.id}`) || '' : '' })}>Ouvrir</button>
@@ -153,7 +158,7 @@ export default function PeopleDesk({
                   </td>
                 </tr>
               ))}
-              {shown.length === 0 && <tr><td colSpan={5} className="text-center py-10" style={{ color: 'var(--ad-muted)' }}>Aucun {singular}</td></tr>}
+              {shown.length === 0 && <tr><td colSpan={6} className="text-center py-10" style={{ color: 'var(--ad-muted)' }}>Aucun {singular}</td></tr>}
             </tbody>
           </table>
         </div>
@@ -192,6 +197,13 @@ export default function PeopleDesk({
               {type === 'candidate'
                 ? <Field label="Poste visé" value={String(editing.position || '')} onChange={(v) => setEditing({ ...editing, position: v })} />
                 : <Field label="Société" value={String(editing.company || '')} onChange={(v) => setEditing({ ...editing, company: v })} />}
+              <Field label="Adresse IP" value={String(editing.ip || '')} onChange={(v) => setEditing({ ...editing, ip: v })} />
+              {editing.ip && (
+                <label className="space-y-1.5">
+                  <span className="text-[11px] font-black uppercase tracking-[0.14em]" style={{ color: 'var(--ad-muted)' }}>Pays</span>
+                  <GeoBadge ip={String(editing.ip)} />
+                </label>
+              )}
               <label className="space-y-1.5">
                 <span className="text-[11px] font-black uppercase tracking-[0.14em]" style={{ color: 'var(--ad-muted)' }}>Statut <span className="ad-chip ad-chip-mute">Optionnel</span></span>
                 <select className="ad-select" value={String(editing.status || 'active')} onChange={(e) => setEditing({ ...editing, status: e.target.value })}>

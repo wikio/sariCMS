@@ -33,6 +33,7 @@ import { SolutionsModule } from './modules/solutions/solutions.module';
 import { HeroModule } from './modules/hero/hero.module';
 import { HealthModule } from './modules/health/health.module';
 import { SettingsModule } from './modules/settings/settings.module';
+import { GeoModule } from './modules/geo/geo.module';
 
 @Module({
   imports: [
@@ -86,6 +87,7 @@ import { SettingsModule } from './modules/settings/settings.module';
     HeroModule,
     HealthModule,
     SettingsModule,
+    GeoModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },
