@@ -211,3 +211,100 @@ export function loadProgress(offerId: string, applicationId: number): FlowProgre
 export function saveProgress(offerId: string, applicationId: number, progress: FlowProgress[]) {
   localStorage.setItem(progressKey(offerId, applicationId), JSON.stringify(progress));
 }
+
+/* ============================================================
+   Analyse d'entonnoir (funnel) + progression candidat + reprise
+   ============================================================ */
+
+export interface FlowProgressRecord {
+  applicationId: number;
+  progress: FlowProgress[];
+}
+
+/** Énumère toutes les progressions enregistrées pour une offre (scan localStorage). */
+export function listFlowProgress(offerId: string): FlowProgressRecord[] {
+  if (typeof window === 'undefined') return [];
+  const out: FlowProgressRecord[] = [];
+  const prefix = `sari_flow_progress_${offerId}_`;
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!key || !key.startsWith(prefix)) continue;
+    const appId = Number(key.slice(prefix.length));
+    if (!Number.isFinite(appId)) continue;
+    try {
+      out.push({ applicationId: appId, progress: JSON.parse(localStorage.getItem(key) || '[]') as FlowProgress[] });
+    } catch { /* ignore */ }
+  }
+  return out;
+}
+
+export interface StepFunnel {
+  stepId: string;
+  title: string;
+  reached: number;
+  completed: number;
+  abandoned: number;
+  dropRate: number; // % des candidats partis à cette étape
+}
+
+/** Métriques d'entonnoir par étape (où les candidats abandonnent). */
+export function flowFunnel(steps: FlowStep[], offerId: string): StepFunnel[] {
+  const records = listFlowProgress(offerId);
+  const total = records.length;
+  return steps.map((step) => {
+    const reached = records.filter((r) => r.progress.some((p) => p.stepId === step.id)).length;
+    const completed = records.filter((r) => r.progress.some((p) => p.stepId === step.id && p.done)).length;
+    const abandoned = reached - completed;
+    return {
+      stepId: step.id,
+      title: step.title,
+      reached,
+      completed,
+      abandoned,
+      dropRate: total ? Math.round((abandoned / total) * 100) : 0,
+    };
+  });
+}
+
+export function flowCompletionRate(offerId: string, steps: FlowStep[]): number {
+  const records = listFlowProgress(offerId);
+  if (!records.length || !steps.length) return 0;
+  const avg = records.reduce((s, r) => s + r.progress.filter((p) => p.done).length / steps.length, 0) / records.length;
+  return Math.round(avg * 100);
+}
+
+export function resumeKey(offerId: string, applicationId: number) {
+  return `sari_flow_resume_${offerId}_${applicationId}`;
+}
+
+export function generateResumeToken(): string {
+  return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
+}
+
+export function getResumeToken(offerId: string, applicationId: number): string | null {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem(resumeKey(offerId, applicationId));
+}
+
+/** Lien unique de reprise (à envoyer par email). */
+export function resumeUrl(offerId: string, applicationId: number, locale = 'fr'): string {
+  const token = getResumeToken(offerId, applicationId) || generateResumeToken();
+  localStorage.setItem(resumeKey(offerId, applicationId), token);
+  return `/${locale}/careers/${offerId}?resume=${token}`;
+}
+
+/** Seed une progression de démo pour rendre le funnel et les timelines visibles. */
+export function ensureDemoFlowProgress(offerId: string, steps: FlowStep[], applicationIds: number[]): void {
+  if (typeof window === 'undefined') return;
+  if (listFlowProgress(offerId).length) return;
+  applicationIds.forEach((appId, idx) => {
+    // Chaque candidat avance plus ou moins loin (idx % 3 → niveau d'abandon)
+    const stopAt = steps.length - (idx % 3);
+    const progress: FlowProgress[] = steps.map((step, i) => ({
+      stepId: step.id,
+      done: i < stopAt,
+      at: i < stopAt ? new Date(Date.now() - (steps.length - i) * 86_400_000).toISOString() : undefined,
+    }));
+    saveProgress(offerId, appId, progress);
+  });
+}

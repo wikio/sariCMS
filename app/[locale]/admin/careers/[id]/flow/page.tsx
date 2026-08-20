@@ -10,15 +10,18 @@ import {
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import {
-  ArrowLeft, BookMarked, Brain, Briefcase, Check, ChevronDown, Circle, Edit,
-  Eye, File, FileText, GripVertical, Layers, Plus, Save, Trash2, User, X, Play,
+  ArrowLeft, BarChart3, BookMarked, Brain, Briefcase, Check, Circle,
+  Edit, File, FileText, GripVertical, Layers, Plus, Save, Trash2,
+  TrendingDown, User, X, Play,
 } from 'lucide-react';
 import { useToast } from '@/components/admin/Toast';
 import Drawer from '@/components/admin/Drawer';
 import { cmsAdminFetch } from '@/lib/cms-admin';
+import { loadApplications } from '@/lib/recruitment';
 import {
-  FLOW_STEP_META, FlowStep, FlowStepType, FlowTemplate, ensureTemplates,
-  flowKey, loadFlow, loadTemplates, newStep, saveFlow, saveTemplates, flowMaxScore,
+  FLOW_STEP_META, FlowStep, FlowStepType, FlowTemplate, ensureDemoFlowProgress, ensureTemplates,
+  flowCompletionRate, flowFunnel, flowKey, flowMaxScore, loadFlow, loadTemplates, newStep,
+  resumeUrl, saveFlow, saveTemplates,
 } from '@/lib/recruitment-flow';
 
 const STEP_ICONS: Record<FlowStepType, React.ElementType> = {
@@ -35,6 +38,7 @@ export default function FlowBuilderPage() {
   const [offer, setOffer] = useState<{ title?: string; status?: string } | null>(null);
   const [steps, setSteps] = useState<FlowStep[]>([]);
   const [editing, setEditing] = useState<FlowStep | null>(null);
+  const [viewMode, setViewMode] = useState<'timeline' | 'funnel'>('timeline');
   const [preview, setPreview] = useState(false);
   const [previewIndex, setPreviewIndex] = useState(0);
   const [templatesOpen, setTemplatesOpen] = useState(false);
@@ -49,8 +53,12 @@ export default function FlowBuilderPage() {
       } catch { setOffer(null); }
     })();
     const stored = loadFlow(id);
-    setSteps(stored.length ? stored : [newStep('personal'), newStep('cv')]);
+    const initial = stored.length ? stored : [newStep('personal'), newStep('cv')];
+    setSteps(initial);
     setTemplates(ensureTemplates());
+    // Seed une progression de démo pour rendre l'entonnoir visible.
+    const apps = loadApplications();
+    ensureDemoFlowProgress(id, initial, apps.map((a) => a.id));
   }, [id]);
 
   const persist = (next: FlowStep[]) => {
@@ -118,6 +126,8 @@ export default function FlowBuilderPage() {
   }, []);
 
   const maxScore = flowMaxScore(steps);
+  const funnel = useMemo(() => flowFunnel(steps, id), [steps, id]);
+  const completionRate = useMemo(() => flowCompletionRate(id, steps), [id, steps]);
 
   return (
     <div className="space-y-4">
@@ -132,6 +142,12 @@ export default function FlowBuilderPage() {
           <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>{offer?.title || 'Offre'} · {steps.length} étape(s) · score max {maxScore}</p>
         </div>
         <div className="flex flex-wrap gap-2">
+          {!preview && (
+            <div className="flex" style={{ border: '1px solid var(--ad-line)' }}>
+              <button type="button" className={`ad-btn ad-btn-icon ${viewMode === 'timeline' ? 'ad-btn-primary' : 'ad-btn-ghost'}`} onClick={() => setViewMode('timeline')} title="Timeline"><Layers className="w-4 h-4" /></button>
+              <button type="button" className={`ad-btn ad-btn-icon ${viewMode === 'funnel' ? 'ad-btn-primary' : 'ad-btn-ghost'}`} onClick={() => setViewMode('funnel')} title="Entonnoir"><BarChart3 className="w-4 h-4" /></button>
+            </div>
+          )}
           <button className={`ad-btn ${preview ? 'ad-btn-primary' : 'ad-btn-ghost'}`} onClick={() => { setPreview((v) => !v); setPreviewIndex(0); }}>
             {preview ? <Edit className="w-4 h-4" /> : <Play className="w-4 h-4" />} {preview ? 'Quitter l’aperçu' : 'Aperçu candidat'}
           </button>
@@ -164,10 +180,12 @@ export default function FlowBuilderPage() {
           ))}
         </aside>
 
-        {/* Timeline */}
+        {/* Timeline / Entonnoir */}
         <div className="min-w-0">
           {preview ? (
-            <PreviewMode steps={steps} index={previewIndex} onNav={setPreviewIndex} />
+            <PreviewMode steps={steps} index={previewIndex} onNav={setPreviewIndex} offerId={id} />
+          ) : viewMode === 'funnel' ? (
+            <FunnelView funnel={funnel} completionRate={completionRate} />
           ) : (
             <div className="ad-card p-4 ad-rise ad-rise-3">
               {steps.length === 0 && (
@@ -350,6 +368,39 @@ function StepEditor({ step, onChange }: { step: FlowStep; onChange: (patch: Part
           <button className="ad-btn ad-btn-ghost" onClick={() => onChange({ answers: [...(step.answers || []), { id: `a${Date.now()}`, label: 'Nouvelle réponse' }] })}>
             <Plus className="w-4 h-4" /> Réponse
           </button>
+
+          {/* Logique conditionnelle */}
+          <div className="pt-2 space-y-2" style={{ borderTop: '1px solid var(--ad-line)' }}>
+            <div className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Logique conditionnelle (saut / fin)</div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <select
+                className="ad-select"
+                value={step.skipRule?.value || ''}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (!value) { onChange({ skipRule: undefined }); return; }
+                  onChange({ skipRule: { when: value, operator: 'eq', value, action: 'end', message: step.skipRule?.message || 'Candidature interrompue.' } });
+                }}
+              >
+                <option value="">Aucune règle de saut</option>
+                {(step.answers || []).map((a) => <option key={a.id} value={a.id}>Si réponse « {a.label} »</option>)}
+              </select>
+              {step.skipRule && (
+                <select className="ad-select" value={step.skipRule.action} onChange={(e) => onChange({ skipRule: { ...step.skipRule!, action: e.target.value as 'next' | 'end' } })}>
+                  <option value="end">→ Terminer la candidature</option>
+                  <option value="next">→ Passer à l'étape suivante</option>
+                </select>
+              )}
+            </div>
+            {step.skipRule && (
+              <input
+                className="ad-input"
+                placeholder="Message affiché au candidat (si fin de parcours)…"
+                value={step.skipRule.message || ''}
+                onChange={(e) => onChange({ skipRule: { ...step.skipRule!, message: e.target.value } })}
+              />
+            )}
+          </div>
         </div>
       )}
 
@@ -418,11 +469,48 @@ function StepEditor({ step, onChange }: { step: FlowStep; onChange: (patch: Part
   );
 }
 
-function PreviewMode({ steps, index, onNav }: { steps: FlowStep[]; index: number; onNav: (i: number) => void }) {
+function PreviewMode({ steps, index, onNav, offerId }: { steps: FlowStep[]; index: number; onNav: (i: number) => void; offerId: string }) {
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [ended, setEnded] = useState<{ message: string } | null>(null);
   const step = steps[index];
   if (!steps.length) return <div className="ad-card p-12 text-center" style={{ color: 'var(--ad-muted)' }}>Aucun parcours.</div>;
   if (!step) return null;
   const Icon = STEP_ICONS[step.type];
+
+  const selected = answers[step.id];
+
+  // Évalue la logique conditionnelle à la navigation « Suivant ».
+  const goNext = () => {
+    if (ended) return;
+    const rule = step.skipRule;
+    const chosen = (step.answers || []).find((a) => a.id === selected);
+    // réponse bloquante
+    if (chosen?.blocking) {
+      setEnded({ message: 'Candidature interrompue : réponse bloquante sélectionnée.' });
+      return;
+    }
+    if (rule) {
+      const match = rule.operator === 'eq' ? selected === rule.value : selected !== rule.value;
+      if (match) {
+        if (rule.action === 'end') { setEnded({ message: rule.message || 'Candidature terminée.' }); return; }
+        // action 'next' → on saute simplement (continue)
+      }
+    }
+    if (index === steps.length - 1) setEnded({ message: 'Merci ! Votre candidature est enregistrée. Vous pouvez la reprendre à tout moment.' });
+    else onNav(index + 1);
+  };
+
+  if (ended) {
+    return (
+      <div className="ad-card p-12 text-center ad-rise space-y-3">
+        <Check className="w-10 h-10 mx-auto" style={{ color: 'var(--ad-ok)' }} />
+        <div className="font-black text-lg">Parcours terminé</div>
+        <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>{ended.message}</p>
+        <button className="ad-btn ad-btn-ghost" onClick={() => { setEnded(null); setAnswers({}); onNav(0); }}>Recommencer la simulation</button>
+      </div>
+    );
+  }
+
   return (
     <div className="ad-card p-6 ad-rise space-y-4">
       <div className="flex items-center justify-between text-xs" style={{ color: 'var(--ad-muted)' }}>
@@ -444,29 +532,68 @@ function PreviewMode({ steps, index, onNav }: { steps: FlowStep[]; index: number
       {/* Simulation des champs */}
       <div className="space-y-2">
         {step.type === 'personal' && (step.fields || []).filter((f) => !f.hidden).slice(0, 3).map((f) => (
-          <input key={f.key} className="ad-input" placeholder={f.label} disabled />
+          <input key={f.key} className="ad-input" placeholder={f.label} />
         ))}
         {step.type === 'multiple' && (step.answers || []).map((a) => (
-          <label key={a.id} className="flex items-center gap-2 text-sm"><input type="checkbox" disabled /> {a.label}</label>
+          <label key={a.id} className="flex items-center gap-2 text-sm"><input type="checkbox" checked={selected === a.id} onChange={() => setAnswers((p) => ({ ...p, [step.id]: a.id }))} /> {a.label}{a.blocking && <span className="ad-chip ad-chip-warn">bloquant</span>}</label>
         ))}
         {step.type === 'single' && (step.answers || []).map((a) => (
-          <label key={a.id} className="flex items-center gap-2 text-sm"><input type="radio" name="preview" disabled /> {a.label}</label>
+          <label key={a.id} className="flex items-center gap-2 text-sm"><input type="radio" name={`preview-${step.id}`} checked={selected === a.id} onChange={() => setAnswers((p) => ({ ...p, [step.id]: a.id }))} /> {a.label}{a.blocking && <span className="ad-chip ad-chip-warn">bloquant</span>}</label>
         ))}
-        {step.type === 'open' && <textarea className="ad-textarea" placeholder="Votre réponse…" disabled />}
+        {step.type === 'open' && <textarea className="ad-textarea" placeholder="Votre réponse…" />}
         {step.type === 'cv' && <div className="ad-card p-4 text-center text-sm border-dashed" style={{ border: '1px dashed var(--ad-line)', color: 'var(--ad-muted)' }}>Glissez votre CV ici (PDF, DOCX)</div>}
-        {step.type === 'motivation' && <textarea className="ad-textarea" placeholder="Votre lettre de motivation…" disabled />}
+        {step.type === 'motivation' && <textarea className="ad-textarea" placeholder="Votre lettre de motivation…" />}
         {step.type === 'test' && (step.questions || []).slice(0, 1).map((q) => (
           <div key={q.id} className="ad-card p-3 space-y-1">
             <div className="font-bold text-sm">{q.question}</div>
-            {(q.options || []).map((o) => <label key={o.id} className="flex items-center gap-2 text-sm"><input type="radio" name="qpreview" disabled /> {o.label}</label>)}
+            {(q.options || []).map((o) => <label key={o.id} className="flex items-center gap-2 text-sm"><input type="radio" name={`qpreview-${q.id}`} /> {o.label}</label>)}
           </div>
         ))}
-        {step.type === 'experience' && <input className="ad-input" placeholder="Poste occupé…" disabled />}
+        {step.type === 'experience' && <input className="ad-input" placeholder="Poste occupé…" />}
       </div>
 
       <div className="flex justify-between pt-2">
         <button className="ad-btn ad-btn-ghost" disabled={index === 0} onClick={() => onNav(index - 1)}>Précédent</button>
-        <button className="ad-btn ad-btn-primary" onClick={() => onNav(Math.min(index + 1, steps.length - 1))}>{index === steps.length - 1 ? 'Terminer' : 'Suivant'}</button>
+        <button className="ad-btn ad-btn-primary" onClick={goNext}>{index === steps.length - 1 ? 'Terminer' : 'Suivant'}</button>
+      </div>
+    </div>
+  );
+}
+
+function FunnelView({ funnel, completionRate }: { funnel: ReturnType<typeof flowFunnel>; completionRate: number }) {
+  const maxReached = Math.max(1, ...funnel.map((f) => f.reached));
+  return (
+    <div className="ad-card p-5 ad-rise ad-rise-3 space-y-4">
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <div>
+          <h3 className="font-black flex items-center gap-2"><TrendingDown className="w-4 h-4" style={{ color: 'var(--ad-accent)' }} /> Entonnoir de candidature</h3>
+          <p className="text-xs" style={{ color: 'var(--ad-muted)' }}>Taux d'abandon par étape et complétion globale du parcours.</p>
+        </div>
+        <div className="ad-card p-3 text-center">
+          <div className="text-2xl font-black" style={{ color: 'var(--ad-accent)' }}>{completionRate}%</div>
+          <div className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--ad-muted)' }}>Complétion moyenne</div>
+        </div>
+      </div>
+
+      {funnel.length === 0 && <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>Aucune donnée de progression.</p>}
+      <div className="space-y-2">
+        {funnel.map((f, i) => (
+          <div key={f.stepId} className="ad-card p-3">
+            <div className="flex items-center justify-between text-sm mb-1.5">
+              <span className="font-bold flex items-center gap-2">
+                <span className="w-6 h-6 flex items-center justify-center rounded-full text-xs font-black" style={{ background: 'var(--ad-surface-2)', color: 'var(--ad-muted)' }}>{i + 1}</span>
+                {f.title}
+              </span>
+              <span className="text-xs tabular-nums" style={{ color: 'var(--ad-muted)' }}>
+                {f.completed}/{f.reached} complétées · <span style={f.dropRate > 0 ? { color: 'var(--ad-danger)' } : { color: 'var(--ad-ok)' }}>{f.abandoned} abandon(s)</span>
+              </span>
+            </div>
+            <div className="h-2 w-full overflow-hidden" style={{ background: 'var(--ad-line)', borderRadius: 99 }}>
+              <div className="h-full" style={{ width: `${(f.reached / maxReached) * 100}%`, background: 'var(--ad-accent)' }} />
+            </div>
+            {f.dropRate > 0 && <div className="text-[11px] mt-1" style={{ color: 'var(--ad-danger)' }}>{f.dropRate}% des candidats quittent le parcours à cette étape.</div>}
+          </div>
+        ))}
       </div>
     </div>
   );

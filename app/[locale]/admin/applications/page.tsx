@@ -5,7 +5,7 @@ import { useLocale } from 'next-intl';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import {
-  ChevronDown, Download, Eye, FileText, GitCompare, Mail, Phone, Star, Trash2, Users, X,
+  Check, ChevronDown, Download, Eye, FileText, GitCompare, Layers, Link as LinkIcon, Mail, Phone, Star, Trash2, Users, X,
 } from 'lucide-react';
 import { useToast } from '@/components/admin/Toast';
 import SearchField from '@/components/admin/SearchField';
@@ -15,6 +15,7 @@ import {
   APP_STEPS, Application, candidateStats, downloadText, exportApplicationsCsv,
   groupByOffer, loadApplications, loadOffers, offerById, saveApplications, type Offer,
 } from '@/lib/recruitment';
+import { loadFlow, loadProgress, resumeUrl, type FlowProgress } from '@/lib/recruitment-flow';
 
 const SEED: Application[] = DEMO_APPLICATIONS as Application[];
 
@@ -287,6 +288,7 @@ function OfferDetails({ offer, app, onOpenDoc, onNote, onScore }: { offer?: Offe
         <button className="ad-btn ad-btn-ghost" onClick={() => onOpenDoc('cv')}><Eye className="w-4 h-4" /> Voir CV</button>
         <button className="ad-btn ad-btn-ghost" onClick={() => onOpenDoc('lm')}><FileText className="w-4 h-4" /> Voir lettre de motivation</button>
       </div>
+      {offer && <FlowProgression offer={offer} app={app} />}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <label className="block space-y-1">
           <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Score</span>
@@ -308,6 +310,59 @@ function OfferDetails({ offer, app, onOpenDoc, onNote, onScore }: { offer?: Offe
           <input className="ad-input" placeholder="Commentaire / évaluation du recruteur…" defaultValue={app.note || ''} onBlur={(e) => onNote(e.target.value)} />
         </label>
       </div>
+    </div>
+  );
+}
+
+/** Progression du candidat dans le parcours de candidature + lien de reprise. */
+function FlowProgression({ offer, app }: { offer: Offer; app: Application }) {
+  const { showToast } = useToast();
+  const steps = loadFlow(offer.id);
+  const progress = loadProgress(offer.id, app.id);
+  if (!steps.length) return null;
+
+  const doneCount = progress.filter((p) => p.done).length;
+  const total = steps.length;
+  const pct = total ? Math.round((doneCount / total) * 100) : 0;
+  const resume = resumeUrl(offer.id, app.id);
+
+  return (
+    <div className="ad-card p-3 space-y-2" style={{ borderColor: 'color-mix(in srgb, var(--ad-accent) 30%, var(--ad-line))' }}>
+      <div className="flex items-center justify-between">
+        <div className="font-black text-sm flex items-center gap-2">
+          <Layers className="w-4 h-4" style={{ color: 'var(--ad-accent)' }} /> Progression dans le parcours
+        </div>
+        <span className="text-xs font-black tabular-nums" style={{ color: 'var(--ad-accent)' }}>{doneCount}/{total} · {pct}%</span>
+      </div>
+      <div className="h-2 w-full overflow-hidden" style={{ background: 'var(--ad-line)', borderRadius: 99 }}>
+        <div className="h-full transition-all" style={{ width: `${pct}%`, background: 'var(--ad-accent)' }} />
+      </div>
+      <ol className="space-y-1.5 mt-1">
+        {steps.map((step, i) => {
+          const p = progress.find((x) => x.stepId === step.id);
+          const done = !!p?.done;
+          return (
+            <li key={step.id} className="flex items-center gap-2 text-sm">
+              <span
+                className="w-5 h-5 flex items-center justify-center rounded-full text-[10px] font-black shrink-0"
+                style={done ? { background: 'var(--ad-ok)', color: '#fff' } : { background: 'var(--ad-surface-2)', color: 'var(--ad-muted)' }}
+              >
+                {done ? <Check className="w-3 h-3" /> : i + 1}
+              </span>
+              <span className={done ? '' : 'opacity-60'}>{step.title}</span>
+              {p?.at && <span className="text-[10px] ml-auto" style={{ color: 'var(--ad-muted)' }}>{new Date(p.at).toLocaleDateString()}</span>}
+            </li>
+          );
+        })}
+      </ol>
+      <button
+        type="button"
+        className="ad-btn ad-btn-ghost text-xs"
+        onClick={() => { navigator.clipboard?.writeText(window.location.origin + resume); showToast('Lien de reprise copié', 'success'); }}
+        title="Copier le lien de reprise (à envoyer par email au candidat)"
+      >
+        <LinkIcon className="w-3.5 h-3.5" /> Lien de reprise : {resume}
+      </button>
     </div>
   );
 }
