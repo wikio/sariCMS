@@ -17,6 +17,7 @@ import { ToastProvider } from '@/components/admin/Toast';
 import AdminLanguageSwitcher from '@/components/admin/AdminLanguageSwitcher';
 import { AdminThemeProvider, ADMIN_THEMES, useAdminTheme } from '@/components/admin/AdminTheme';
 import { clearAdminSession, hasAdminSession, readAdminUser } from '@/lib/admin-session';
+import { DEMO_FLAG, seedDemoWorkspace } from '@/lib/demo-seed';
 
 interface Child { id: string; label: string; href: string }
 interface Item {
@@ -47,6 +48,13 @@ function Shell({ children }: { children: ReactNode }) {
     setUser(readAdminUser());
     if (!isLogin && !hasAdminSession()) router.push(`/${locale}/admin`);
   }, [pathname, locale, isLogin, router]);
+
+  useEffect(() => {
+    if (isLogin || !hasAdminSession()) return;
+    if (typeof window === 'undefined') return;
+    if (localStorage.getItem(DEMO_FLAG) === '1') return;
+    seedDemoWorkspace({ force: false }).catch(() => undefined);
+  }, [isLogin, pathname]);
 
   const menu: Item[] = useMemo(() => [
     { type: 'divider', label: t('menu.pilotageSection') },

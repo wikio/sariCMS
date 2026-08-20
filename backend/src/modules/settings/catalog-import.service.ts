@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
 import * as fs from 'fs';
@@ -23,13 +23,24 @@ export interface ImportCatalogResult {
 const DEFAULT_LOCALES = ['fr', 'en', 'ar'];
 
 @Injectable()
-export class CatalogImportService {
+export class CatalogImportService implements OnModuleInit {
   private readonly logger = new Logger(CatalogImportService.name);
 
   constructor(
     @Inject(REPOSITORY_FACTORY) private readonly factory: RepositoryFactory,
     private readonly config: ConfigService,
   ) {}
+
+  async onModuleInit() {
+    try {
+      const existing = await this.factory(COLLECTIONS.products).count();
+      if (existing > 0) return;
+      const result = await this.importFromDisk({ replace: false });
+      this.logger.log(`Auto-import catalogue: ${JSON.stringify(result.imported)}`);
+    } catch (err) {
+      this.logger.warn(`Auto-import catalogue ignoré : ${(err as Error).message}`);
+    }
+  }
 
   async importFromDisk(options: ImportCatalogOptions = {}): Promise<ImportCatalogResult> {
     const locales = (options.locales?.length ? options.locales : DEFAULT_LOCALES).map((l) => l.toLowerCase());

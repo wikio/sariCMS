@@ -42,9 +42,27 @@ export default function CmsList({ mod }: { mod: CmsModule }) {
         filter: JSON.stringify({ locale, ...(mod.filter || {}) }),
       };
       if (mod.orderField) query.sortBy = mod.orderField;
-      setRows(await cmsAdminList(mod.resource, query));
+      let list = await cmsAdminList(mod.resource, query);
+      if (list.length === 0) {
+        try {
+          await cmsImportCatalog(false);
+          list = await cmsAdminList(mod.resource, query);
+        } catch {
+          /* catalogue déjà présent ou API hors ligne */
+        }
+      }
+      if (list.length === 0) {
+        list = await loadLocalExamples(mod.resource, locale);
+      }
+      setRows(list);
     } catch (err) {
-      showToast(err instanceof CmsError ? err.message : 'Chargement impossible', 'error');
+      try {
+        const fallback = await loadLocalExamples(mod.resource, locale);
+        if (fallback.length) setRows(fallback);
+        else showToast(err instanceof CmsError ? err.message : 'Chargement impossible', 'error');
+      } catch {
+        showToast(err instanceof CmsError ? err.message : 'Chargement impossible', 'error');
+      }
     } finally {
       setLoading(false);
     }
@@ -389,4 +407,37 @@ function SortableCard({ id, disabled, children }: { id: string; disabled?: boole
 
 function Empty({ mod }: { mod: CmsModule }) {
   return <div className="ad-card p-12 text-center" style={{ color: 'var(--ad-muted)' }}>Aucune fiche. Créez un {mod.singular} ou importez le catalogue.</div>;
+}
+
+const LOCAL_FILES: Record<string, string> = {
+  products: 'products',
+  services: 'services',
+  careers: 'careers',
+  news: 'news',
+  events: 'events',
+  testimonials: 'testimonials',
+  partners: 'partners',
+  solutions: 'solution-categories',
+  hero: 'hero',
+};
+
+async function loadLocalExamples(resource: string, locale: string): Promise<Record<string, unknown>[]> {
+  const file = LOCAL_FILES[resource];
+  if (!file) return [];
+  try {
+    const data = await import(`@/data/${locale}/${file}.json`);
+    const rows = (data.default || data) as unknown;
+    if (!Array.isArray(rows)) return [];
+    return rows.map((row) => {
+      const item = row as Record<string, unknown>;
+      return {
+        ...item,
+        id: item.id ?? `demo-${String(item.slug || item.name || item.title || Math.random())}`,
+        locale: item.locale || locale,
+        status: item.status || 'published',
+      };
+    });
+  } catch {
+    return [];
+  }
 }

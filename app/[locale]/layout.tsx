@@ -18,6 +18,8 @@ export const viewport = {
   maximumScale: 5,
 };
 
+export const dynamicParams = true;
+
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
 }

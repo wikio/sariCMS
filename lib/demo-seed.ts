@@ -3,7 +3,7 @@
 import { cmsAdminCreate, cmsAdminList, cmsImportCatalog } from '@/lib/cms-admin';
 import { saveOrders, saveQuotes, type Order, type Quote } from '@/lib/crm-store';
 
-export const DEMO_FLAG = 'sari_demo_v3';
+export const DEMO_FLAG = 'sari_demo_v4';
 const PASS = 'ChangeMe_Sari2026!';
 
 const CLIENTS = [
@@ -58,7 +58,7 @@ export const DEMO_QUOTES: Quote[] = [
   { id: 2006, client: 'Polyclinique Oran Est', email: 'direction@oran-est.dz', date: '2026-08-12', status: 'pending', total: 1870000, validity: '21 jours', coupon: 'SARI10', zone: 'DZ', items: [{ id: 15, name: 'Moniteur de Signes Vitaux Multiparamètres', quantity: 3, price: 245000, category: 'Urgence' }, { id: 4, name: 'Tensiomètre Digital Pro', quantity: 10, price: 12000, category: 'Diagnostic' }] },
 ];
 
-async function ensurePeople() {
+export async function ensurePeople() {
   const existing = await cmsAdminList('users', { limit: '200' });
   const emails = new Set(existing.map((u) => String(u.email || '').toLowerCase()));
   for (const person of [...CLIENTS, ...CANDIDATES]) {
@@ -71,16 +71,36 @@ async function ensurePeople() {
   }
 }
 
-export async function seedDemoWorkspace() {
-  saveOrders(DEMO_ORDERS);
-  saveQuotes(DEMO_QUOTES);
-  localStorage.setItem('sari_applications', JSON.stringify(DEMO_APPLICATIONS));
-  localStorage.setItem(DEMO_FLAG, '1');
+function isEmptyStore(key: string) {
+  if (typeof window === 'undefined') return true;
+  const raw = localStorage.getItem(key);
+  if (!raw) return true;
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) && parsed.length === 0;
+  } catch {
+    return true;
+  }
+}
+
+export async function seedDemoWorkspace(opts: { force?: boolean } = {}) {
+  const force = Boolean(opts.force);
+  if (typeof window !== 'undefined') {
+    if (force || isEmptyStore('sari_orders')) saveOrders(DEMO_ORDERS);
+    if (force || isEmptyStore('sari_quotes')) saveQuotes(DEMO_QUOTES);
+    if (force || isEmptyStore('sari_applications')) {
+      localStorage.setItem('sari_applications', JSON.stringify(DEMO_APPLICATIONS));
+    }
+    localStorage.setItem(DEMO_FLAG, '1');
+  }
 
   let imported = 0;
   try {
-    const result = await cmsImportCatalog(false);
-    imported = Object.values(result.imported || {}).reduce((a, b) => a + Number(b), 0);
+    const existing = await cmsAdminList('products', { limit: '1' });
+    if (force || existing.length === 0) {
+      const result = await cmsImportCatalog(force);
+      imported = Object.values(result.imported || {}).reduce((a, b) => a + Number(b), 0);
+    }
   } catch {
     imported = 0;
   }
@@ -89,5 +109,11 @@ export async function seedDemoWorkspace() {
   } catch {
     /* API offline */
   }
-  return { imported, orders: DEMO_ORDERS.length, quotes: DEMO_QUOTES.length, applications: DEMO_APPLICATIONS.length, people: CLIENTS.length + CANDIDATES.length };
+  return {
+    imported,
+    orders: DEMO_ORDERS.length,
+    quotes: DEMO_QUOTES.length,
+    applications: DEMO_APPLICATIONS.length,
+    people: CLIENTS.length + CANDIDATES.length,
+  };
 }

@@ -169,7 +169,20 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
     router.push(`/${locale}/admin/${mod.path}`);
   };
 
-  if (loading || !record) return <div className="ad-card"><PixelGridLoader label="Fiche" /></div>;
+  if (loading) return <div className="ad-card"><PixelGridLoader label="Fiche" /></div>;
+  if (!record) {
+    return (
+      <div className="ad-card p-10 text-center space-y-3">
+        <h1 className="text-2xl font-black">Fiche introuvable</h1>
+        <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>
+          Cette fiche n’existe pas encore, ou l’API CMS n’est pas joignable.
+        </p>
+        <button className="ad-btn ad-btn-primary" onClick={() => router.push(`/${locale}/admin/${mod.path}`)}>
+          Retour à la liste
+        </button>
+      </div>
+    );
+  }
 
   const Icon = mod.icon;
   const previewImg = mod.imageKey ? String(record[mod.imageKey] || '') : '';

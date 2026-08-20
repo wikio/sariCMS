@@ -154,7 +154,7 @@ export default function AdminDashboardPage() {
             <button className="ad-btn ad-btn-lime" disabled={seeding} onClick={async () => {
               setSeeding(true);
               try {
-                const r = await seedDemoWorkspace();
+                const r = await seedDemoWorkspace({ force: true });
                 showToast(`Démo prête : ${r.orders} commandes, ${r.quotes} devis, ${r.applications} candidatures, ${r.people} fiches CRM`, 'success');
                 await refresh();
               } catch {

@@ -472,6 +472,18 @@
   box-shadow: var(--ad-shadow);
   padding: 1.4rem;
 }
+@keyframes adFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes adSlideIn {
+  from { transform: translateX(100%); }
+  to { transform: none; }
+}
+@keyframes adSlideInRtl {
+  from { transform: translateX(-100%); }
+  to { transform: none; }
+}
 .ad-drawer {
   position: fixed;
   inset: 0;
@@ -479,6 +491,7 @@
   display: flex;
   justify-content: flex-end;
   background: rgba(8, 16, 20, 0.4);
+  animation: adFadeIn 0.2s var(--ad-ease) both;
 }
 .ad-drawer-panel {
   width: min(460px, 100%);
@@ -488,6 +501,21 @@
   padding: 1.4rem;
   overflow: auto;
   box-shadow: var(--ad-shadow);
+  animation: adSlideIn 0.28s var(--ad-ease) both;
+}
+.ad-drawer.is-rtl .ad-drawer-panel {
+  border-left: 0;
+  border-right: 1px solid var(--ad-line);
+  animation-name: adSlideInRtl;
+}
+.ad-drawer.is-closing {
+  animation: adFadeIn 0.2s ease reverse both;
+}
+.ad-drawer.is-closing .ad-drawer-panel {
+  animation: adSlideIn 0.22s ease reverse both;
+}
+.ad-drawer.is-closing.is-rtl .ad-drawer-panel {
+  animation-name: adSlideInRtl;
 }
 .ad-breadcrumb {
   display: flex;

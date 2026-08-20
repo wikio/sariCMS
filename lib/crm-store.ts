@@ -195,7 +195,7 @@ function normalizeItems(items: CommerceItem[] = []): CommerceItem[] {
 
 export function loadOrders(): Order[] {
   const stored = typeof window !== 'undefined' ? localStorage.getItem(ORDERS_KEY) : null;
-  if (!stored) {
+  if (!stored || stored === '[]') {
     if (typeof window !== 'undefined') localStorage.setItem(ORDERS_KEY, JSON.stringify(DEFAULT_ORDERS));
     return DEFAULT_ORDERS;
   }

@@ -8,6 +8,7 @@ import { useToast } from '@/components/admin/Toast';
 import { cmsAdminCreate, cmsAdminDelete, cmsAdminList, cmsAdminUpdate } from '@/lib/cms-admin';
 import { CmsError } from '@/lib/cms';
 import { loadOrders, loadQuotes, orderRevenue } from '@/lib/crm-store';
+import { ensurePeople } from '@/lib/demo-seed';
 
 type Person = Record<string, unknown> & {
   id?: string;
@@ -42,7 +43,15 @@ export default function PeopleDesk({
   const load = async () => {
     setLoading(true);
     try {
-      const list = await cmsAdminList<Person>('users', { filter: JSON.stringify({ type }) });
+      let list = await cmsAdminList<Person>('users', { filter: JSON.stringify({ type }) });
+      if (list.length === 0) {
+        try {
+          await ensurePeople();
+          list = await cmsAdminList<Person>('users', { filter: JSON.stringify({ type }) });
+        } catch {
+          /* API hors ligne */
+        }
+      }
       setRows(list);
     } catch (err) {
       showToast(err instanceof CmsError ? err.message : 'Chargement impossible', 'error');
