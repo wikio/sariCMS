@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocale } from 'next-intl';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import {
   ChevronDown, Download, Eye, FileText, GitCompare, Mail, Phone, Star, Trash2, Users, X,
 } from 'lucide-react';
@@ -26,6 +27,11 @@ export default function AdminApplicationsPage() {
   const [draft, setDraft] = useState('');
   const [status, setStatus] = useState('');
   const [offerFilter, setOfferFilter] = useState('');
+
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search).get('offer');
+    if (p) setOfferFilter(p);
+  }, []);
   const [expanded, setExpanded] = useState<number | null>(null);
   const [viewer, setViewer] = useState<{ title: string; content: string; filename: string } | null>(null);
   const [selected, setSelected] = useState<number[]>([]);

@@ -3,22 +3,33 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocale } from 'next-intl';
 import Link from 'next/link';
-import { Briefcase, Download, GitCompare, MapPin, Plus, Users } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import {
+  Briefcase, CalendarDays, Copy, Download, Eye, GitCompare, Layers, MapPin,
+  Plus, Users,
+} from 'lucide-react';
 import PixelGridLoader from '@/components/admin/PixelGridLoader';
 import SearchField from '@/components/admin/SearchField';
+import Drawer from '@/components/admin/Drawer';
 import { useToast } from '@/components/admin/Toast';
+import { cmsAdminCreate } from '@/lib/cms-admin';
+import { slugify } from '@/lib/slugify';
+import ProcessFlow, { normalizeSteps } from '@/components/admin/ProcessFlow';
 import {
   exportApplicationsCsv, loadApplications, loadOffers, type Application, type Offer,
 } from '@/lib/recruitment';
 
 export default function AdminCareersPage() {
   const locale = useLocale();
+  const router = useRouter();
   const { showToast } = useToast();
   const [offers, setOffers] = useState<Offer[]>([]);
   const [apps, setApps] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
   const [draft, setDraft] = useState('');
+  const [consult, setConsult] = useState<Offer | null>(null);
+  const [duplicating, setDuplicating] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -33,7 +44,7 @@ export default function AdminCareersPage() {
     }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [locale]);
 
   const shown = useMemo(() => offers.filter((o) => {
     if (!q.trim()) return true;
@@ -50,6 +61,39 @@ export default function AdminCareersPage() {
     if (!rows.length) { showToast('Aucune candidature pour cette offre', 'warning'); return; }
     exportApplicationsCsv(rows, String(o.title));
     showToast('Export CSV généré', 'success');
+  };
+
+  const duplicate = async (o: Offer) => {
+    setDuplicating(true);
+    try {
+      const saved = await cmsAdminCreate<{ id: string }>('careers', {
+        title: `${String(o.title)} (copie)`,
+        slug: slugify(`${String(o.title)}-copie`),
+        locale,
+        type: o.type,
+        location: o.location,
+        salary: o.salary,
+        shortDesc: o.shortDesc,
+        fullDesc: o.fullDesc,
+        mission: o.mission,
+        typeTravail: o.typeTravail,
+        experience: o.experience,
+        objectifs: o.objectifs,
+        prerequis: o.prerequis,
+        workflow: o.workflow,
+        benefits: o.benefits,
+        contact: o.contact,
+        status: 'draft',
+      });
+      showToast('Offre dupliquée', 'success');
+      setConsult(null);
+      await load();
+      if (saved?.id) router.push(`/${locale}/admin/careers/${saved.id}`);
+    } catch {
+      showToast('Duplication impossible', 'error');
+    } finally {
+      setDuplicating(false);
+    }
   };
 
   return (
@@ -83,7 +127,7 @@ export default function AdminCareersPage() {
         <div className="ad-card"><PixelGridLoader label="Offres" /></div>
       ) : (
         <div className="ad-card overflow-x-auto ad-rise ad-rise-3">
-          <table className="ad-table">
+          <table className="ad-table min-w-[820px]">
             <thead>
               <tr>
                 <th>Offre</th><th>Localisation</th><th>Type</th><th>Statut</th><th>Candidats</th><th className="text-right">Actions</th>
@@ -104,7 +148,9 @@ export default function AdminCareersPage() {
                       </span>
                     </td>
                     <td className="text-right">
-                      <div className="flex justify-end gap-1">
+                      <div className="flex justify-end gap-1 flex-wrap">
+                        <button className="ad-btn ad-btn-icon ad-btn-ghost" title="Consulter" onClick={() => setConsult(o)}><Eye className="w-4 h-4" /></button>
+                        <Link href={`/${locale}/admin/careers/${o.id}/flow`} className="ad-btn ad-btn-ghost" title="Parcours candidat"><Layers className="w-4 h-4" /> Parcours</Link>
                         <Link href={`/${locale}/admin/applications/compare?offer=${encodeURIComponent(String(o.title))}`} className="ad-btn ad-btn-ghost" title="Comparer les candidats"><GitCompare className="w-4 h-4" /> Comparer</Link>
                         <button className="ad-btn ad-btn-icon ad-btn-ghost" title="Exporter les candidatures" onClick={() => exportFor(o)}><Download className="w-4 h-4" /></button>
                         <Link href={`/${locale}/admin/careers/${o.id}`} className="ad-btn ad-btn-ghost">Éditer</Link>
@@ -120,6 +166,96 @@ export default function AdminCareersPage() {
           </table>
         </div>
       )}
+
+      {/* Drawer de consultation */}
+      <Drawer
+        open={!!consult}
+        title={consult ? String(consult.title) : ''}
+        subtitle={consult ? `Offre d’emploi · ${consult.status || 'draft'}` : undefined}
+        onClose={() => setConsult(null)}
+        width={640}
+        footer={consult ? (
+          <>
+            <button className="ad-btn ad-btn-ghost mr-auto" disabled={duplicating} onClick={() => duplicate(consult)}><Copy className="w-4 h-4" /> Dupliquer</button>
+            <Link href={`/${locale}/admin/applications?offer=${encodeURIComponent(String(consult.title))}`} className="ad-btn ad-btn-ghost"><Users className="w-4 h-4" /> Voir les candidatures</Link>
+            <Link href={`/${locale}/admin/careers/${consult.id}`} className="ad-btn ad-btn-primary"><Briefcase className="w-4 h-4" /> Modifier</Link>
+          </>
+        ) : null}
+      >
+        {consult && <OfferConsult offer={consult} appCount={appsFor(consult).length} />}
+      </Drawer>
+    </div>
+  );
+}
+
+function OfferConsult({ offer, appCount }: { offer: Offer; appCount: number }) {
+  const steps = normalizeSteps(offer.workflow);
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap gap-2">
+        <span className="ad-chip ad-chip-acc">{String(offer.type || 'Contrat non précisé')}</span>
+        <span className="ad-chip ad-chip-mute"><MapPin className="w-3 h-3" /> {String(offer.location || 'Lieu non précisé')}</span>
+        {offer.salary && <span className="ad-chip ad-chip-ok">{String(offer.salary)}</span>}
+        <span className={`ad-chip ${offer.status === 'published' ? 'ad-chip-ok' : 'ad-chip-acc'}`}>{String(offer.status || 'draft')}</span>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 text-sm">
+        <div><span style={{ color: 'var(--ad-muted)' }}>Nombre de candidatures</span><div className="font-black text-lg">{appCount}</div></div>
+        <div><span style={{ color: 'var(--ad-muted)' }}>Rythme</span><div>{String(offer.typeTravail || '—')}</div></div>
+        <div><span style={{ color: 'var(--ad-muted)' }}>Expérience requise</span><div>{String(offer.experience || '—')}</div></div>
+        <div><span style={{ color: 'var(--ad-muted)' }}>Contact RH</span><div>{String(offer.contact || '—')}</div></div>
+        {offer.publishedAt && (
+          <div className="col-span-2"><span style={{ color: 'var(--ad-muted)' }}>Date de publication</span>
+            <div className="inline-flex items-center gap-1"><CalendarDays className="w-3.5 h-3.5" /> {new Date(offer.publishedAt).toLocaleDateString()}</div>
+          </div>
+        )}
+      </div>
+
+      {offer.shortDesc && (
+        <div>
+          <div className="text-[11px] font-black uppercase tracking-widest mb-1" style={{ color: 'var(--ad-muted)' }}>Description</div>
+          <p className="text-sm">{String(offer.shortDesc)}</p>
+        </div>
+      )}
+
+      {offer.fullDesc && (
+        <div className="text-sm ad-tiptap" dangerouslySetInnerHTML={{ __html: String(offer.fullDesc) }} />
+      )}
+
+      {offer.mission && (
+        <div>
+          <div className="text-[11px] font-black uppercase tracking-widest mb-1" style={{ color: 'var(--ad-muted)' }}>Mission</div>
+          <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>{String(offer.mission)}</p>
+        </div>
+      )}
+
+      {Array.isArray(offer.objectifs) && offer.objectifs.length > 0 && (
+        <div>
+          <div className="text-[11px] font-black uppercase tracking-widest mb-1" style={{ color: 'var(--ad-muted)' }}>Objectifs</div>
+          <ul className="text-sm space-y-1 list-disc pl-5">{offer.objectifs.map((o, i) => <li key={i}>{String(o)}</li>)}</ul>
+        </div>
+      )}
+
+      {Array.isArray(offer.prerequis) && offer.prerequis.length > 0 && (
+        <div>
+          <div className="text-[11px] font-black uppercase tracking-widest mb-1" style={{ color: 'var(--ad-muted)' }}>Prérequis</div>
+          <ul className="text-sm space-y-1 list-disc pl-5">{offer.prerequis.map((o, i) => <li key={i}>{String(o)}</li>)}</ul>
+        </div>
+      )}
+
+      {Array.isArray(offer.benefits) && offer.benefits.length > 0 && (
+        <div>
+          <div className="text-[11px] font-black uppercase tracking-widest mb-1" style={{ color: 'var(--ad-muted)' }}>Avantages</div>
+          <ul className="text-sm space-y-1 list-disc pl-5">{offer.benefits.map((o, i) => <li key={i}>{String(o)}</li>)}</ul>
+        </div>
+      )}
+
+      <div>
+        <div className="text-[11px] font-black uppercase tracking-widest mb-1" style={{ color: 'var(--ad-muted)' }}>Parcours de candidature (aperçu)</div>
+        {steps.length ? <ProcessFlow steps={steps} /> : (
+          <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>Aucun parcours défini. Utilisez l’onglet « Parcours » pour construire le parcours candidat.</p>
+        )}
+      </div>
     </div>
   );
 }

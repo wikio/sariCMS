@@ -31,9 +31,17 @@ export interface Offer {
   type?: string | null;
   salary?: string | null;
   shortDesc?: string | null;
+  fullDesc?: string | null;
   mission?: string | null;
   typeTravail?: string | null;
+  experience?: string | null;
+  contact?: string | null;
+  objectifs?: string[] | null;
+  prerequis?: string[] | null;
+  workflow?: string[] | null;
+  benefits?: string[] | null;
   status?: string;
+  publishedAt?: string | null;
   [key: string]: unknown;
 }
 
