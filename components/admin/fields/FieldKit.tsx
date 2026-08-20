@@ -100,16 +100,19 @@ export function renderField(
     case 'radio':
       return wrap(
         <div className="flex flex-wrap gap-2">
-          {(spec.options || []).map((o) => (
-            <button key={o.value} type="button" onClick={() => onChange(o.value)} className={`ad-btn ${String(value) === o.value ? 'ad-btn-primary' : 'ad-btn-ghost'}`}>
-              {o.label}
-            </button>
-          ))}
+          {(spec.options || []).map((o) => {
+            const on = String(value ?? '') === String(o.value);
+            return (
+              <button key={o.value} type="button" onClick={() => onChange(o.value)} className={`ad-choice ${on ? 'is-on' : ''}`} aria-pressed={on}>
+                {o.label}
+              </button>
+            );
+          })}
         </div>,
       );
     case 'toggle':
       return wrap(
-        <Toggle on={Boolean(value)} onChange={onChange} label="" />,
+        <Toggle on={value === true || value === 'true'} onChange={onChange} label="" />,
       );
     case 'textarea':
       return wrap(
@@ -287,8 +290,10 @@ function PriceInner({ value, onChange, placeholder }: { value: string; onChange:
     || list[0]
     || { code: 'DZD', symbol: 'DA', name: 'Dinar algérien', id: 'dzd', rate: 1, active: true };
 
+  const quote = /sur\s*devis/i.test(value) || suffix.toLowerCase() === 'sur devis';
   const setAmount = (next: string) => onChange(next.trim() ? `${next.trim()} ${curr.symbol}` : '');
   const setCurrency = (next: Currency) => onChange(amount ? `${amount} ${next.symbol}` : next.symbol);
+  const setQuote = () => onChange('Sur devis');
 
   const create = () => {
     const code = draft.code.trim().toUpperCase();
@@ -308,22 +313,26 @@ function PriceInner({ value, onChange, placeholder }: { value: string; onChange:
           <Banknote className="ad-price-ico" aria-hidden />
           <input
             className="ad-input"
-            value={amount}
+            value={quote ? '' : amount}
             onChange={(e) => setAmount(e.target.value.replace(/[^\d\s.,]/g, ''))}
-            placeholder={placeholder || '0'}
+            placeholder={quote ? 'Sur devis' : (placeholder || '0')}
             inputMode="decimal"
             autoComplete="off"
+            disabled={quote}
           />
         </span>
       </label>
       <div className="ad-price-currency">
         <span className="ad-price-kicker">Devise</span>
         <div className="ad-price-chips">
+          <button type="button" className={`ad-price-chip ${quote ? 'is-on' : ''}`} onClick={setQuote}>
+            <b>Sur devis</b>
+          </button>
           {list.map((c) => (
             <button
               key={c.id || c.code}
               type="button"
-              className={`ad-price-chip ${curr.code === c.code ? 'is-on' : ''}`}
+              className={`ad-price-chip ${!quote && curr.code === c.code ? 'is-on' : ''}`}
               onClick={() => setCurrency(c)}
               title={c.name}
             >

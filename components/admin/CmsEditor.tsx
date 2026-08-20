@@ -296,7 +296,7 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
                   {fields.map((field) => (
                     <div
                       key={`${tab}-${field.key}`}
-                      className={field.wide || field.kind === 'html' || field.kind === 'process' ? 'md:col-span-2' : ''}
+                      className={field.wide || field.kind === 'html' || field.kind === 'process' || field.kind === 'price' ? 'md:col-span-2' : ''}
                       onFocus={() => field.kind === 'slug' && setSlugLocked(true)}
                     >
                       {field.key === 'locale' ? (

@@ -5,6 +5,7 @@ import { Eye, Trash2 } from 'lucide-react';
 import { useToast } from '@/components/admin/Toast';
 import SearchField from '@/components/admin/SearchField';
 import ProcessFlow from '@/components/admin/ProcessFlow';
+import { DEMO_APPLICATIONS, DEMO_FLAG } from '@/lib/demo-seed';
 
 type AppRow = {
   id: number;
@@ -27,22 +28,26 @@ const STEPS = [
   { value: 'rejected', label: 'Refusée' },
 ];
 
-const SEED: AppRow[] = [
-  { id: 1, candidate: 'Fatima Zahra', email: 'fatima@email.dz', phone: '+213 555 567 890', jobTitle: 'Technicien Biomédical', status: 'new', date: '2026-07-15', experience: '3 ans', motivation: 'Passionnée par les équipements médicaux.' },
-  { id: 2, candidate: 'Karim Boudiaf', email: 'karim@email.dz', phone: '+213 555 111 222', jobTitle: 'Commercial Médical', status: 'reviewed', date: '2026-07-10', experience: '5 ans', motivation: 'Expert en vente de dispositifs médicaux.' },
-];
+const SEED: AppRow[] = DEMO_APPLICATIONS;
 
 export default function AdminApplicationsPage() {
   const { showToast } = useToast();
   const [rows, setRows] = useState<AppRow[]>([]);
   const [q, setQ] = useState('');
+  const [draft, setDraft] = useState('');
   const [status, setStatus] = useState('');
   const [open, setOpen] = useState<AppRow | null>(null);
   const [note, setNote] = useState('');
 
   useEffect(() => {
     const stored = localStorage.getItem('sari_applications');
-    if (stored) {
+    if (stored && !localStorage.getItem(DEMO_FLAG)) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length >= SEED.length) { setRows(parsed); return; }
+      } catch { /* */ }
+    }
+    if (stored && localStorage.getItem(DEMO_FLAG)) {
       try { setRows(JSON.parse(stored)); return; } catch { /* */ }
     }
     setRows(SEED);

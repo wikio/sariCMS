@@ -24,8 +24,17 @@ export default function Toggle({
         onClick={() => onChange(!on)}
         aria-pressed={on}
       >
-        <span className="ad-toggle-knob" />
-        <span className="ad-toggle-label">{on ? 'Oui' : 'Non'}</span>
+        {on ? (
+          <>
+            <span className="ad-toggle-label">Oui</span>
+            <span className="ad-toggle-knob" />
+          </>
+        ) : (
+          <>
+            <span className="ad-toggle-knob" />
+            <span className="ad-toggle-label">Non</span>
+          </>
+        )}
       </button>
     </div>
   );

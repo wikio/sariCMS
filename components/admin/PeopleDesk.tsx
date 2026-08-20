@@ -33,6 +33,7 @@ export default function PeopleDesk({
   const [rows, setRows] = useState<Person[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
+  const [draft, setDraft] = useState('');
   const [status, setStatus] = useState('');
   const [view, setView] = useState<'list' | 'cards'>('list');
   const [editing, setEditing] = useState<Person | null>(null);
@@ -117,9 +118,9 @@ export default function PeopleDesk({
         </div>
       </header>
 
-      <div className="ad-card p-3 flex flex-col lg:flex-row gap-2 ad-rise">
-        <SearchField className="flex-1" value={q} onChange={setQ} placeholder={`Rechercher un ${singular}…`} />
-        <select className="ad-select lg:w-44" value={status} onChange={(e) => setStatus(e.target.value)}>
+      <div className="ad-card p-3 space-y-3 ad-rise">
+        <SearchField value={draft} onChange={setDraft} onSubmit={() => setQ(draft)} showSubmit placeholder={`Rechercher un ${singular} (nom, e-mail, société…)…`} />
+        <select className="ad-select sm:w-56" value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="">Tous les statuts</option>
           <option value="active">Actif</option>
           <option value="pending">En attente</option>

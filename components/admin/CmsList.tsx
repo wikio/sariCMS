@@ -27,6 +27,7 @@ export default function CmsList({ mod }: { mod: CmsModule }) {
   const [rows, setRows] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
+  const [draft, setDraft] = useState('');
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [advanced, setAdvanced] = useState(false);
   const [view, setView] = useState<ViewMode>(mod.layout === 'docs' ? 'list' : 'cards');
@@ -168,11 +169,17 @@ export default function CmsList({ mod }: { mod: CmsModule }) {
         </div>
       </header>
 
-      <div className="ad-card p-3 ad-rise ad-rise-2">
-        <div className="flex flex-col lg:flex-row gap-2">
-          <SearchField className="flex-1 min-w-0" value={q} onChange={setQ} placeholder={`Rechercher un ${mod.singular}…`} />
+      <div className="ad-card p-3 ad-rise ad-rise-2 space-y-3">
+        <SearchField
+          value={draft}
+          onChange={setDraft}
+          onSubmit={() => setQ(draft)}
+          showSubmit
+          placeholder={`Rechercher un ${mod.singular} (nom, SKU, catégorie…)…`}
+        />
+        <div className="flex flex-col sm:flex-row flex-wrap gap-2">
           {mod.filterKeys.slice(0, 2).map((f) => (
-            <select key={f.key} className="ad-select lg:w-44" value={filters[f.key] || ''} onChange={(e) => setFilters((p) => ({ ...p, [f.key]: e.target.value }))}>
+            <select key={f.key} className="ad-select sm:w-48" value={filters[f.key] || ''} onChange={(e) => setFilters((p) => ({ ...p, [f.key]: e.target.value }))}>
               <option value="">{f.label}</option>
               {(f.options || Array.from(new Set(rows.map((r) => String(r[f.key] ?? '')).filter(Boolean)))).map((o) => (
                 <option key={o} value={o}>{o === 'true' ? 'Oui' : o === 'false' ? 'Non' : o}</option>

@@ -34,6 +34,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
   const { showToast } = useToast();
   const [rows, setRows] = useState<Row[]>([]);
   const [q, setQ] = useState('');
+  const [draft, setDraft] = useState('');
   const [status, setStatus] = useState('');
   const [view, setView] = useState<'list' | 'cards'>('list');
   const [open, setOpen] = useState<Row | null>(null);
@@ -122,9 +123,9 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
         ))}
       </div>
 
-      <div className="ad-card p-3 flex flex-col lg:flex-row gap-2">
-        <SearchField className="flex-1" value={q} onChange={setQ} placeholder="Client, email, n°…" />
-        <select className="ad-select lg:w-48" value={status} onChange={(e) => setStatus(e.target.value)}>
+      <div className="ad-card p-3 space-y-3">
+        <SearchField value={draft} onChange={setDraft} onSubmit={() => setQ(draft)} showSubmit placeholder="Rechercher un client, e-mail ou n°…" />
+        <select className="ad-select sm:w-56" value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="">Tous les statuts</option>
           {statuses.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
         </select>

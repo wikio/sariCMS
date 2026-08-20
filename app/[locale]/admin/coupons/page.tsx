@@ -69,8 +69,9 @@ export default function CouponsPage() {
         <button className="ad-btn ad-btn-primary" onClick={() => { setMode('edit'); setDraft(empty()); }}><Plus className="w-4 h-4" /> Nouveau</button>
       </header>
 
-      <div className="ad-card p-3 grid md:grid-cols-5 gap-2">
-        <SearchField value={q} onChange={setQ} placeholder="Code, cible…" />
+      <div className="ad-card p-3 space-y-3">
+        <SearchField value={q} onChange={setQ} onSubmit={() => undefined} showSubmit placeholder="Rechercher un code ou une cible…" />
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-2">
         <select className="ad-select" value={st} onChange={(e) => setSt(e.target.value)}>
           <option value="">Tous les statuts</option>
           {['actif', 'à venir', 'expiré', 'épuisé', 'inactif'].map((s) => <option key={s}>{s}</option>)}
@@ -91,6 +92,7 @@ export default function CouponsPage() {
           <option value="used">Tri : usages</option>
           <option value="revenue">Tri : CA</option>
         </select>
+        </div>
       </div>
 
       {selected.length > 0 && (

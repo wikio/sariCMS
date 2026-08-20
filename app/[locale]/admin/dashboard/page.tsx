@@ -13,6 +13,7 @@ import { useToast } from '@/components/admin/Toast';
 import { cmsAdminFetch, cmsHealth, cmsImportCatalog, cmsStatus } from '@/lib/cms-admin';
 import { unwrapList, CmsError } from '@/lib/cms';
 import { loadOrders, orderRevenue } from '@/lib/crm-store';
+import { seedDemoWorkspace } from '@/lib/demo-seed';
 
 export default function AdminDashboardPage() {
   const locale = useLocale();
@@ -22,6 +23,7 @@ export default function AdminDashboardPage() {
   const [driver, setDriver] = useState('');
   const [loading, setLoading] = useState(true);
   const [importing, setImporting] = useState(false);
+  const [seeding, setSeeding] = useState(false);
   const [logs, setLogs] = useState<Array<{ id?: string; action?: string; resource?: string; createdAt?: string }>>([]);
   const [orders, setOrders] = useState<ReturnType<typeof loadOrders>>([]);
 
@@ -148,6 +150,20 @@ export default function AdminDashboardPage() {
             </button>
             <button className="ad-btn ad-btn-ghost" disabled={importing || !connected} onClick={() => handleImport(true)}>
               Réimporter
+            </button>
+            <button className="ad-btn ad-btn-lime" disabled={seeding} onClick={async () => {
+              setSeeding(true);
+              try {
+                const r = await seedDemoWorkspace();
+                showToast(`Démo prête : ${r.orders} commandes, ${r.quotes} devis, ${r.applications} candidatures, ${r.people} fiches CRM`, 'success');
+                await refresh();
+              } catch {
+                showToast('Jeu de démo partiel (API hors ligne pour le catalogue / CRM)', 'warning');
+              } finally {
+                setSeeding(false);
+              }
+            }}>
+              {seeding ? 'Chargement…' : 'Charger le jeu de démo'}
             </button>
           </div>
         </div>

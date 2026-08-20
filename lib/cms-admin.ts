@@ -29,7 +29,7 @@ export const RESOURCE_BY_TYPE: Record<string, string> = {
 export const WRITABLE_FIELDS: Record<string, string[]> = {
   products: [
     'name', 'slug', 'locale', 'category', 'sku', 'price', 'shortDesc', 'fullDesc',
-    'image', 'gallery', 'inStock', 'deliveryTime', 'features', 'specs', 'options',
+    'image', 'gallery', 'inStock', 'stockQty', 'stockFinal', 'currency', 'deliveryTime', 'features', 'specs', 'options',
     'catalogPdf', 'status', 'sortOrder',
   ],
   services: ['title', 'slug', 'locale', 'icon', 'shortDesc', 'fullDesc', 'features', 'faq', 'sortOrder', 'status'],

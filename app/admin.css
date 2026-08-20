@@ -677,13 +677,13 @@
 .ad-price-chip.is-add { color: var(--ad-muted); }
 
 .ad-toggle {
-  position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 0.65rem;
-  min-width: 4.6rem;
+  justify-content: space-between;
+  gap: 0.4rem;
+  min-width: 5.1rem;
   height: 2rem;
-  padding: 0 0.45rem 0 2.35rem;
+  padding: 0 0.25rem 0 0.55rem;
   border-radius: 999px;
   border: 1px solid var(--ad-line);
   background: color-mix(in srgb, var(--ad-muted) 16%, var(--ad-surface));
@@ -694,24 +694,59 @@
   text-transform: uppercase;
 }
 .ad-toggle.is-on {
+  padding: 0 0.25rem 0 0.6rem;
   background: color-mix(in srgb, var(--ad-accent) 18%, var(--ad-surface));
   border-color: color-mix(in srgb, var(--ad-accent) 45%, var(--ad-line));
   color: var(--ad-accent);
 }
+.ad-toggle-label {
+  line-height: 1;
+  flex: 1;
+  text-align: start;
+}
+.ad-toggle:not(.is-on) .ad-toggle-label { text-align: end; padding-right: 0.15rem; }
 .ad-toggle-knob {
-  position: absolute;
-  left: 0.22rem;
-  top: 0.22rem;
-  width: 1.5rem;
-  height: 1.5rem;
+  width: 1.45rem;
+  height: 1.45rem;
+  flex: 0 0 1.45rem;
   border-radius: 999px;
   background: #fff;
   box-shadow: 0 2px 6px rgba(15, 23, 42, 0.16);
-  transition: transform 0.22s var(--ad-ease);
 }
-.ad-toggle.is-on .ad-toggle-knob {
-  transform: translateX(1.55rem);
+.ad-toggle.is-on .ad-toggle-knob { background: var(--ad-accent); }
+
+.ad-search-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.55rem 0.6rem;
+  align-items: center;
+  width: 100%;
+}
+.ad-search-bar .ad-search { grid-column: 1; }
+.ad-search-bar .ad-btn { grid-column: 2; }
+.ad-search-hint {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 11px;
+  color: var(--ad-muted);
+}
+.ad-choice {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  padding: 0 0.95rem;
+  border: 1px solid var(--ad-line);
+  border-radius: var(--ad-radius-sm);
+  background: var(--ad-surface);
+  color: var(--ad-ink);
+  font-weight: 650;
+  font-size: 0.82rem;
+}
+.ad-choice.is-on {
   background: var(--ad-accent);
+  border-color: var(--ad-accent);
+  color: var(--ad-accent-ink);
 }
 .ad-drawer.is-rtl { justify-content: flex-start; }
 .ad-drawer-actions {

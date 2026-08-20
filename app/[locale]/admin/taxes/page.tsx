@@ -56,8 +56,9 @@ export default function TaxesPage() {
         </div>
         <button className="ad-btn ad-btn-primary" onClick={() => { setMode('edit'); setDraft(empty()); }}><Plus className="w-4 h-4" /> Nouvelle taxe</button>
       </header>
-      <div className="ad-card p-3 grid md:grid-cols-4 gap-2">
-        <SearchField value={q} onChange={setQ} placeholder="Nom, zone, catégorie…" />
+      <div className="ad-card p-3 space-y-3">
+        <SearchField value={q} onChange={setQ} onSubmit={() => undefined} showSubmit placeholder="Rechercher une taxe, une zone ou une catégorie…" />
+        <div className="grid sm:grid-cols-3 gap-2">
         <input className="ad-input" placeholder="Zone" value={zone} onChange={(e) => setZone(e.target.value)} />
         <select className="ad-select" value={active} onChange={(e) => setActive(e.target.value)}>
           <option value="">Actif / inactif</option>
@@ -69,6 +70,7 @@ export default function TaxesPage() {
           <option value="true">Incluse</option>
           <option value="false">Ajoutée</option>
         </select>
+        </div>
       </div>
       {selected.length > 0 && (
         <div className="flex gap-2">
