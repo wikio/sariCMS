@@ -79,7 +79,7 @@ export async function GET() {
     return NextResponse.json({
       files: files.map((f) => {
         const known = byFile.get(f);
-        return known || {
+        const item = known || {
           file: f,
           url: `/uploads/${f}`,
           originalName: f,
@@ -88,6 +88,7 @@ export async function GET() {
           createdAt: '',
           size: 0,
         };
+        return { ...item, name: item.label || item.originalName || item.file };
       }),
     });
   } catch {

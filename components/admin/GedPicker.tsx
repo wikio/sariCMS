@@ -1,7 +1,38 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { FolderOpen, Upload } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { FolderOpen, Upload, X } from 'lucide-react';
+
+type GedFile = {
+  name: string;
+  url: string;
+  file?: string;
+  originalName?: string;
+  label?: string;
+  module?: string;
+  createdAt?: string;
+};
+
+function fileName(f: Partial<GedFile> | null | undefined) {
+  return String(f?.label || f?.originalName || f?.name || f?.file || f?.url || '').trim();
+}
+
+function normalize(raw: unknown): GedFile | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const row = raw as Record<string, unknown>;
+  const url = String(row.url || (row.file ? `/uploads/${row.file}` : ''));
+  if (!url) return null;
+  const name = fileName(row);
+  return {
+    name: name || url.split('/').pop() || url,
+    url,
+    file: row.file ? String(row.file) : undefined,
+    originalName: row.originalName ? String(row.originalName) : undefined,
+    label: row.label ? String(row.label) : undefined,
+    module: row.module ? String(row.module) : undefined,
+    createdAt: row.createdAt ? String(row.createdAt) : undefined,
+  };
+}
 
 export default function GedPicker({
   accept = 'image/*,.pdf',
@@ -12,39 +43,68 @@ export default function GedPicker({
   onPick: (url: string) => void;
   onClose: () => void;
 }) {
-  const [files, setFiles] = useState<Array<{ name: string; url: string }>>([]);
+  const [files, setFiles] = useState<GedFile[]>([]);
   const [q, setQ] = useState('');
+  const [busy, setBusy] = useState(false);
 
   const load = async () => {
-    const res = await fetch('/api/admin/upload');
-    const json = await res.json();
-    setFiles(json.files || []);
+    try {
+      const res = await fetch('/api/admin/upload');
+      const json = await res.json();
+      setFiles((json.files || []).map(normalize).filter(Boolean) as GedFile[]);
+    } catch {
+      setFiles([]);
+    }
   };
 
   useEffect(() => { load(); }, []);
 
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
   const upload = async (file: File) => {
-    const body = new FormData();
-    body.append('file', file);
-    const res = await fetch('/api/admin/upload', { method: 'POST', body });
-    const json = await res.json();
-    if (json.url) onPick(json.url);
+    setBusy(true);
+    try {
+      const body = new FormData();
+      body.append('file', file);
+      body.append('module', 'ged');
+      body.append('label', file.name);
+      const res = await fetch('/api/admin/upload', { method: 'POST', body });
+      const json = await res.json();
+      if (json.url) onPick(json.url);
+    } finally {
+      setBusy(false);
+    }
   };
 
-  const shown = files.filter((f) => f.name.toLowerCase().includes(q.toLowerCase()));
+  const shown = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    return files.filter((f) => {
+      if (!needle) return true;
+      const blob = `${f.name} ${f.label || ''} ${f.originalName || ''} ${f.module || ''} ${f.url}`.toLowerCase();
+      return blob.includes(needle);
+    });
+  }, [files, q]);
 
   return (
     <div className="ad-modal" onClick={onClose}>
       <div className="ad-modal-card space-y-3" style={{ width: 'min(860px, 100%)' }} onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between gap-2">
           <h3 className="font-black">Médiathèque GED</h3>
-          <label className="ad-btn ad-btn-primary cursor-pointer">
-            <Upload className="w-4 h-4" /> Importer
-            <input type="file" accept={accept} multiple className="hidden" onChange={(e) => {
-              const list = Array.from(e.target.files || []);
-              list.forEach(upload);
-            }} />
-          </label>
+          <div className="flex gap-2">
+            <label className="ad-btn ad-btn-primary cursor-pointer">
+              <Upload className="w-4 h-4" /> {busy ? 'Import…' : 'Importer'}
+              <input type="file" accept={accept} multiple className="hidden" onChange={(e) => {
+                Array.from(e.target.files || []).forEach(upload);
+              }} />
+            </label>
+            <button type="button" className="ad-btn ad-btn-icon ad-btn-ghost" onClick={onClose} aria-label="Fermer">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
         <input className="ad-input" placeholder="Rechercher un fichier…" value={q} onChange={(e) => setQ(e.target.value)} />
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 max-h-[50vh] overflow-auto">
@@ -60,7 +120,7 @@ export default function GedPicker({
           ))}
           {shown.length === 0 && <div className="col-span-full text-sm p-6 text-center" style={{ color: 'var(--ad-muted)' }}>Aucun fichier</div>}
         </div>
-        <div className="flex justify-end"><button className="ad-btn ad-btn-ghost" onClick={onClose}>Fermer</button></div>
+        <div className="flex justify-end"><button type="button" className="ad-btn ad-btn-ghost" onClick={onClose}>Fermer</button></div>
       </div>
     </div>
   );

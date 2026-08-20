@@ -21,7 +21,7 @@ export function FieldShell({ spec, value, origin, originLocale, children }: { sp
   const over = spec.maxLength != null && len > spec.maxLength;
   const originText = origin == null || origin === '' ? '' : typeof origin === 'string' ? origin : JSON.stringify(origin);
   return (
-    <div className={`space-y-1.5 ${spec.wide || spec.kind === 'html' || spec.kind === 'process' ? 'md:col-span-2' : ''}`}>
+    <div className={`space-y-1.5 ${spec.wide || spec.kind === 'html' || spec.kind === 'process' || spec.kind === 'price' ? 'md:col-span-2' : ''}`}>
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-[11px] font-black uppercase tracking-[0.14em]" style={{ color: 'var(--ad-muted)' }}>
           {spec.label}
@@ -266,6 +266,12 @@ function TaxonomySelect({ spec, value, onChange }: { spec: FieldSpec; value: str
   );
 }
 
+function parsePrice(value: string) {
+  const raw = String(value || '').trim();
+  const match = raw.match(/^([\d\s.,]+)\s*(.*)$/);
+  return { amount: match?.[1]?.trim() || '', suffix: match?.[2]?.trim() || '' };
+}
+
 function PriceInner({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder?: string }) {
   const [list, setList] = useState<Currency[]>([]);
   const [adding, setAdding] = useState(false);
@@ -276,51 +282,73 @@ function PriceInner({ value, onChange, placeholder }: { value: string; onChange:
     window.addEventListener('sari-currencies', on);
     return () => window.removeEventListener('sari-currencies', on);
   }, []);
-  const match = value.match(/^([\d\s.,]+)\s*(.*)$/);
-  const amount = match?.[1]?.trim() || '';
-  const curr = list.find((c) => value.includes(c.symbol) || value.includes(c.code)) || list[0] || { code: 'DZD', symbol: 'DA', name: 'Dinar', id: 'dzd', rate: 1, active: true };
+  const { amount, suffix } = parsePrice(value);
+  const curr = list.find((c) => suffix === c.symbol || suffix === c.code || suffix.includes(c.symbol) || suffix.includes(c.code))
+    || list[0]
+    || { code: 'DZD', symbol: 'DA', name: 'Dinar algérien', id: 'dzd', rate: 1, active: true };
+
+  const setAmount = (next: string) => onChange(next.trim() ? `${next.trim()} ${curr.symbol}` : '');
+  const setCurrency = (next: Currency) => onChange(amount ? `${amount} ${next.symbol}` : next.symbol);
+
   const create = () => {
     const code = draft.code.trim().toUpperCase();
     if (!code || !draft.symbol.trim()) return;
     const next: Currency = { id: `cur-${Date.now()}`, code, symbol: draft.symbol.trim(), name: draft.name.trim() || code, rate: 1, active: true };
     saveCurrencies([...loadCurrencies(), next]);
-    onChange(`${amount} ${next.symbol}`.trim());
+    setCurrency(next);
     setAdding(false);
     setDraft({ code: '', symbol: '', name: '' });
   };
+
   return (
-    <div className="space-y-2">
-      <div className="flex gap-2 items-stretch">
-        <div className="ad-search flex-1 min-w-0">
-          <Banknote className="ad-search-ico w-4 h-4" style={{ color: 'var(--ad-accent-2)' }} />
-          <input className="ad-input ad-input-icon" value={amount} onChange={(e) => onChange(`${e.target.value} ${curr.symbol}`.trim())} placeholder={placeholder || '0'} inputMode="decimal" />
+    <div className="ad-price-split">
+      <label className="ad-price-amount">
+        <span className="ad-price-kicker">Montant</span>
+        <span className="ad-price-box">
+          <Banknote className="ad-price-ico" aria-hidden />
+          <input
+            className="ad-input"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value.replace(/[^\d\s.,]/g, ''))}
+            placeholder={placeholder || '0'}
+            inputMode="decimal"
+            autoComplete="off"
+          />
+        </span>
+      </label>
+      <div className="ad-price-currency">
+        <span className="ad-price-kicker">Devise</span>
+        <div className="ad-price-chips">
+          {list.map((c) => (
+            <button
+              key={c.id || c.code}
+              type="button"
+              className={`ad-price-chip ${curr.code === c.code ? 'is-on' : ''}`}
+              onClick={() => setCurrency(c)}
+              title={c.name}
+            >
+              <b>{c.symbol}</b>
+              <span>{c.code}</span>
+            </button>
+          ))}
+          <button type="button" className="ad-price-chip is-add" onClick={() => setAdding((v) => !v)}>
+            <Plus className="w-3.5 h-3.5" /> Ajouter
+          </button>
         </div>
-        <select
-          className="ad-select w-28 shrink-0"
-          value={curr.code}
-          onChange={(e) => {
-            if (e.target.value === '__new') { setAdding(true); return; }
-            const next = list.find((c) => c.code === e.target.value) || curr;
-            onChange(`${amount} ${next.symbol}`.trim());
-          }}
-        >
-          {list.map((c) => <option key={c.code} value={c.code}>{c.code}</option>)}
-          <option value="__new">+ Devise</option>
-        </select>
+        {adding && (
+          <div className="ad-card p-3 space-y-2 mt-2">
+            <div className="grid grid-cols-3 gap-2">
+              <input className="ad-input" placeholder="Code" value={draft.code} onChange={(e) => setDraft({ ...draft, code: e.target.value })} />
+              <input className="ad-input" placeholder="Symbole" value={draft.symbol} onChange={(e) => setDraft({ ...draft, symbol: e.target.value })} />
+              <input className="ad-input" placeholder="Nom" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button type="button" className="ad-btn ad-btn-ghost" onClick={() => { setAdding(false); setDraft({ code: '', symbol: '', name: '' }); }}>Annuler</button>
+              <button type="button" className="ad-btn ad-btn-primary" onClick={create}>OK</button>
+            </div>
+          </div>
+        )}
       </div>
-      {adding && (
-        <div className="ad-card p-3 space-y-2">
-          <div className="grid grid-cols-3 gap-2">
-            <input className="ad-input" placeholder="Code" value={draft.code} onChange={(e) => setDraft({ ...draft, code: e.target.value })} />
-            <input className="ad-input" placeholder="Symbole" value={draft.symbol} onChange={(e) => setDraft({ ...draft, symbol: e.target.value })} />
-            <input className="ad-input" placeholder="Nom" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
-          </div>
-          <div className="flex gap-2 justify-end">
-            <button type="button" className="ad-btn ad-btn-ghost" onClick={() => { setAdding(false); setDraft({ code: '', symbol: '', name: '' }); }}>Annuler</button>
-            <button type="button" className="ad-btn ad-btn-primary" onClick={create}>OK</button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
