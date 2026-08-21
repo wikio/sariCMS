@@ -16,6 +16,7 @@ import { useOrders } from '@/contexts/OrdersContext';
 import { useCart } from '@/contexts/CartContext';
 import { getProducts } from '@/lib/data';
 import type { Product } from '@/types';
+import QuoteRequestModule from '@/components/dashboard/QuoteRequestModule';
 
 export default function DashboardPage() {
   const locale = useLocale();
@@ -381,44 +382,9 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {/* === QUOTES (client) === */}
+            {/* === QUOTES / DEMANDE DE DEVIS (client) === */}
             {activeTab === 'quotes' && isClient && (
-              <div className="space-y-6">
-                <h2 className="text-2xl font-bold text-sari-dark dark:text-white flex items-center gap-3">
-                  <FileText className="w-6 h-6 text-sari-blue" /> {t('quotes')} ({myQuotes.length})
-                </h2>
-                {myQuotes.length === 0 ? (
-                  <div className="bg-white dark:bg-[#1a1a1a] p-12 border border-gray-200 dark:border-gray-800 shadow-xl rounded-xl text-center">
-                    <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-xl font-bold text-sari-dark dark:text-white mb-2">{t('noQuotes')}</h3>
-                    <p className="text-gray-600 dark:text-gray-400 mb-6">{t('noQuotesDesc')}</p>
-                    <Link href={`/${locale}/contact`} className="btn-primary text-white px-6 py-3 inline-block font-semibold rounded-lg">{t('requestQuote')}</Link>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {myQuotes.map((q) => (
-                      <div key={q.id} className="bg-white dark:bg-[#1a1a1a] p-6 border border-gray-200 dark:border-gray-800 shadow-xl rounded-xl">
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="text-sm text-gray-500">#{q.id} · {new Date(q.createdAt).toLocaleDateString()}</div>
-                          {getStatusBadge(q.status)}
-                        </div>
-                        <div className="space-y-2 mb-3">
-                          {q.items.map((it) => (
-                            <div key={it.id} className="flex items-center justify-between text-sm">
-                              <span className="text-gray-600 dark:text-gray-400">{it.name} × {it.quantity}</span>
-                              <span className="font-semibold text-sari-dark dark:text-white">{Number(it.price) * it.quantity} DA</span>
-                            </div>
-                          ))}
-                        </div>
-                        <div className="flex items-center justify-between border-t border-gray-100 dark:border-gray-800 pt-3">
-                          <span className="font-bold text-sari-dark dark:text-white">{t('total')}</span>
-                          <span className="font-black text-sari-lime text-lg">{q.grandTotal.toFixed(2)} DA</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <QuoteRequestModule user={user} locale={locale} />
             )}
 
             {/* === MESSAGES === */}

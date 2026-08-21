@@ -1,5 +1,8 @@
 export type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
-export type QuoteStatus = 'pending' | 'sent' | 'accepted' | 'rejected' | 'expired';
+export type QuoteStatus =
+  | 'draft' | 'submitted' | 'processing' | 'replied' | 'revision'
+  | 'accepted' | 'rejected' | 'transformed' | 'expired' | 'cancelled'
+  | 'pending' | 'sent'; // legacy (admin demo)
 
 export interface CommerceItem {
   id: number | string;
@@ -8,6 +11,14 @@ export interface CommerceItem {
   price: number;
   discount?: number;
   category?: string;
+  /** Unité de mesure (pièce, kg, carton, m²…) */
+  unit?: string;
+  /** Description / spécifications techniques */
+  description?: string;
+  /** Nom du fichier de référence joint */
+  attachment?: string;
+  /** Taux de taxe (%) appliqué par ligne (côté Admin) */
+  taxRate?: number;
 }
 
 export interface Order {
@@ -30,6 +41,27 @@ export interface Order {
   history?: Array<{ status: string; at: string; note?: string }>;
 }
 
+export interface QuoteResponseLine {
+  name: string;
+  quantity: number;
+  unitPrice: number;
+  discount?: number;
+  taxRate?: number;
+}
+
+export interface QuoteResponse {
+  mode: 'detailed' | 'file';
+  fileUrl?: string;
+  fileNote?: string; // HTML (éditeur riche Admin)
+  lines?: QuoteResponseLine[];
+  subtotal?: number;
+  discount?: number;
+  taxTotal?: number;
+  deliveryFee?: number;
+  total?: number;
+  sentAt?: string;
+}
+
 export interface Quote {
   id: number;
   client: string;
@@ -46,6 +78,19 @@ export interface Quote {
   zone?: string;
   ip?: string;
   history?: Array<{ status: string; at: string; note?: string }>;
+  /** Référence unique de la demande (DV-YYYY-NNNNN) */
+  reference?: string;
+  /** Nature de la demande (vente, consultation, appel d'offre, vente en gros, autre) */
+  nature?: string;
+  natureOther?: string;
+  note?: string;
+  /** Date souhaitée de livraison/prestation */
+  desiredDate?: string;
+  address?: string;
+  country?: string;
+  attachments?: string[];
+  response?: QuoteResponse | null;
+  revisionHistory?: Array<{ at: string; note: string }>;
 }
 
 const ORDERS_KEY = 'sari_orders';

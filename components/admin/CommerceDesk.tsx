@@ -23,11 +23,16 @@ const ORDER_STATUS = [
   { value: 'cancelled', label: 'Annulée' },
 ];
 const QUOTE_STATUS = [
-  { value: 'pending', label: 'Brouillon' },
-  { value: 'sent', label: 'Envoyé' },
+  { value: 'draft', label: 'Brouillon' },
+  { value: 'submitted', label: 'Soumis' },
+  { value: 'processing', label: 'En cours de traitement' },
+  { value: 'replied', label: 'Répondu' },
+  { value: 'revision', label: 'Révision demandée' },
   { value: 'accepted', label: 'Accepté' },
   { value: 'rejected', label: 'Refusé' },
+  { value: 'transformed', label: 'Transformé en commande' },
   { value: 'expired', label: 'Expiré' },
+  { value: 'cancelled', label: 'Annulé' },
 ];
 
 export default function CommerceDesk({ kind }: { kind: Kind }) {

@@ -48,5 +48,8 @@
   "newCaptcha": "New CAPTCHA",
   "captchaHelp": "Solve this operation to prove you are human",
   "captchaError": "Incorrect CAPTCHA answer. Please try again.",
-  "captchaBlocked": "Too many attempts. Please refresh the page in 5 minutes."
+  "captchaBlocked": "Too many attempts. Please refresh the page in 5 minutes.",
+  "quoteCtaText": "For a more detailed quote request (multiple products, request tracking), create a client account and sign in to your dashboard.",
+  "quoteCtaLogin": "Sign in",
+  "quoteCtaRegister": "Create an account"
 }

@@ -375,6 +375,23 @@ export default function ContactPage() {
                       </button>
                     ))}
                   </div>
+
+                  {/* CTA dashboard pour une demande de devis détaillée */}
+                  {formData.subject === 'devis' && (
+                    <div className="mt-3 bg-sari-blue/5 border border-sari-blue/30 rounded-lg p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {t('quoteCtaText', { defaultMessage: 'Pour une demande de devis plus détaillée (plusieurs produits, suivi de votre demande), créez un compte client et connectez-vous à votre dashboard.' })}
+                      </p>
+                      <div className="flex gap-2 shrink-0">
+                        <Link href={`/${locale}/connexion?source=produit`} className="btn-primary text-white px-4 py-2 text-sm font-semibold rounded-lg whitespace-nowrap">
+                          {t('quoteCtaLogin', { defaultMessage: 'Se connecter' })}
+                        </Link>
+                        <Link href={`/${locale}/inscription?source=produit`} className="border border-sari-blue text-sari-blue px-4 py-2 text-sm font-semibold rounded-lg whitespace-nowrap">
+                          {t('quoteCtaRegister', { defaultMessage: 'Créer un compte' })}
+                        </Link>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Nom et Email */}
