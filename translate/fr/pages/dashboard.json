@@ -55,5 +55,20 @@
   "noMessagesDesc": "Vos conversations avec les recruteurs apparaîtront ici.",
   "noQuotes": "Aucun devis",
   "noQuotesDesc": "Vos devis apparaîtront ici.",
-  "requestQuote": "Demander un devis"
+  "requestQuote": "Demander un devis",
+  "productsTab": "Produits",
+  "productsDesc": "Parcourez le catalogue et ajoutez des articles à votre panier.",
+  "addToCart": "Ajouter au panier",
+  "inCart": "Dans le panier",
+  "noProducts": "Aucun produit disponible.",
+  "partnerStats": "Activité partenaire",
+  "referrals": "Commandes référées",
+  "revenue": "Chiffre d’affaires",
+  "totalOrders": "Commandes",
+  "totalQuotes": "Devis",
+  "overviewDesc": "Vue d’ensemble de votre activité.",
+  "recentOrders": "Commandes récentes",
+  "recentApplications": "Candidatures récentes",
+  "browseCatalog": "Voir le catalogue",
+  "quoteRequested": "Devis demandé"
 }

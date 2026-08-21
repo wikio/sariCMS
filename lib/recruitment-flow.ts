@@ -134,13 +134,28 @@ export function flowLegacyKey(legacyId: number | string) {
 }
 
 /** Charge un parcours à partir d'un id UUID ou d'un legacyId (vitrine). */
+/** Parcours par défaut appliqué à toute offre qui n'en a pas encore un. */
+export function defaultFlow(): FlowStep[] {
+  const personal = newStep('personal');
+  personal.title = 'Vos informations';
+  personal.instructions = '<p>Renseignez vos coordonnées afin que nous puissions vous recontacter.</p>';
+  const cv = newStep('cv');
+  cv.title = 'Votre CV';
+  cv.instructions = '<p>Déposez votre CV au format PDF ou DOCX.</p>';
+  const motivation = newStep('motivation');
+  motivation.title = 'Votre motivation';
+  motivation.instructions = '<p>Expliquez en quelques lignes pourquoi vous souhaitez rejoindre SARI Système.</p>';
+  return [personal, cv, motivation];
+}
+
 export function loadFlowFor(legacyIdOrUuid: number | string): FlowStep[] {
   if (typeof window === 'undefined') return [];
   const direct = localStorage.getItem(flowKey(String(legacyIdOrUuid)));
-  if (direct) { try { const p = JSON.parse(direct); if (Array.isArray(p)) return p; } catch { /* */ } }
+  if (direct) { try { const p = JSON.parse(direct); if (Array.isArray(p) && p.length) return p; } catch { /* */ } }
   const legacy = localStorage.getItem(flowLegacyKey(legacyIdOrUuid));
-  if (legacy) { try { const p = JSON.parse(legacy); if (Array.isArray(p)) return p; } catch { /* */ } }
-  return [];
+  if (legacy) { try { const p = JSON.parse(legacy); if (Array.isArray(p) && p.length) return p; } catch { /* */ } }
+  // Fallback : chaque offre affiche un parcours, même sans personnalisation admin.
+  return defaultFlow();
 }
 
 export function templatesKey() {

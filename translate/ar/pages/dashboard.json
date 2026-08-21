@@ -55,5 +55,20 @@
   "noMessagesDesc": "ستظهر محادثاتك مع المسؤولين عن التوظيف هنا.",
   "noQuotes": "لا توجد عروض أسعار",
   "noQuotesDesc": "ستظهر عروض الأسعار الخاصة بك هنا.",
-  "requestQuote": "طلب عرض سعر"
+  "requestQuote": "طلب عرض سعر",
+  "productsTab": "المنتجات",
+  "productsDesc": "تصفح الكتالوج وأضف المنتجات إلى سلة التسوق.",
+  "addToCart": "أضف إلى السلة",
+  "inCart": "في السلة",
+  "noProducts": "لا توجد منتجات.",
+  "partnerStats": "نشاط الشريك",
+  "referrals": "الطلبات المحالة",
+  "revenue": "الإيرادات",
+  "totalOrders": "الطلبات",
+  "totalQuotes": "عروض الأسعار",
+  "overviewDesc": "نظرة عامة على نشاطك.",
+  "recentOrders": "الطلبات الأخيرة",
+  "recentApplications": "الطلبات الأخيرة",
+  "browseCatalog": "تصفح الكتالوج",
+  "quoteRequested": "تم طلب عرض السعر"
 }

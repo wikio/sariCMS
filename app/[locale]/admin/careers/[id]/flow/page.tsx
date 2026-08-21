@@ -20,7 +20,7 @@ import { cmsAdminFetch } from '@/lib/cms-admin';
 import { loadApplications } from '@/lib/recruitment';
 import {
   FLOW_STEP_META, FlowStep, FlowStepType, FlowTemplate, ensureDemoFlowProgress, ensureTemplates,
-  flowCompletionRate, flowFunnel, flowKey, flowMaxScore, loadFlow, loadTemplates, newStep,
+  flowCompletionRate, flowFunnel, flowKey, flowMaxScore, loadFlow, loadTemplates, defaultFlow, newStep,
   resumeUrl, saveFlow, saveFlowLegacy, saveTemplates,
 } from '@/lib/recruitment-flow';
 
@@ -53,7 +53,7 @@ export default function FlowBuilderPage() {
       } catch { setOffer(null); }
     })();
     const stored = loadFlow(id);
-    const initial = stored.length ? stored : [newStep('personal'), newStep('cv')];
+    const initial = stored.length ? stored : defaultFlow();
     setSteps(initial);
     setTemplates(ensureTemplates());
     // Seed une progression de démo pour rendre l'entonnoir visible.

@@ -55,5 +55,20 @@
   "noMessagesDesc": "Your conversations with recruiters will appear here.",
   "noQuotes": "No Quotes",
   "noQuotesDesc": "Your quotes will appear here.",
-  "requestQuote": "Request a Quote"
+  "requestQuote": "Request a Quote",
+  "productsTab": "Products",
+  "productsDesc": "Browse the catalogue and add items to your cart.",
+  "addToCart": "Add to cart",
+  "inCart": "In cart",
+  "noProducts": "No products available.",
+  "partnerStats": "Partner activity",
+  "referrals": "Referred orders",
+  "revenue": "Revenue",
+  "totalOrders": "Orders",
+  "totalQuotes": "Quotes",
+  "overviewDesc": "Overview of your activity.",
+  "recentOrders": "Recent orders",
+  "recentApplications": "Recent applications",
+  "browseCatalog": "Browse catalogue",
+  "quoteRequested": "Quote requested"
 }
