@@ -23,6 +23,7 @@ const YoutubeIcon = () => (
 export default function Footer({ config, menu }: { config: Config; menu: MenuType }) {
   const locale = useLocale();
   const t = useTranslations('components.layout.Footer');
+  const tNav = useTranslations('common.nav');
 
   const navigation = menu.footerMenu?.navigation || [];
   const legal = menu.footerMenu?.legal || [];
@@ -32,6 +33,17 @@ export default function Footer({ config, menu }: { config: Config; menu: MenuTyp
     // Supprime les '#' ou '/' au début pour éviter les doubles slashes ou les mots collés
     const cleanPath = href.replace(/^[#\/]+/, '');
     return `/${locale}/${cleanPath}`;
+  };
+
+  // Traduit un libellé de menu par son id (common.nav ou clés légales du Footer),
+  // sinon conserve le libellé fourni (données CMS déjà localisées).
+  const getLabel = (item: { id?: string; label: string }) => {
+    if (!item.id) return item.label;
+    const viaNav = tNav(item.id as never);
+    if (viaNav && viaNav !== item.id) return viaNav;
+    const viaFooter = t(item.id as never);
+    if (viaFooter && viaFooter !== item.id) return viaFooter;
+    return item.label;
   };
 
   return (
@@ -89,7 +101,7 @@ export default function Footer({ config, menu }: { config: Config; menu: MenuTyp
                     className="hover:text-sari-lime transition-colors inline-flex items-center gap-2 group"
                   >
                     <span className="w-0 group-hover:w-2 h-0.5 bg-sari-lime transition-all"></span>
-                    {item.label}
+                    {getLabel(item)}
                   </Link>
                 </li>
               ))}
@@ -110,7 +122,7 @@ export default function Footer({ config, menu }: { config: Config; menu: MenuTyp
                     className="hover:text-sari-lime transition-colors inline-flex items-center gap-2 group"
                   >
                     <span className="w-0 group-hover:w-2 h-0.5 bg-sari-lime transition-all"></span>
-                    {item.label}
+                    {getLabel(item)}
                   </Link>
                 </li>
               ))}
