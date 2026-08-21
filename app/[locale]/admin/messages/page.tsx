@@ -13,6 +13,7 @@ import Toggle from '@/components/admin/Toggle';
 import HtmlEditor from '@/components/admin/fields/HtmlEditor';
 import SearchField from '@/components/admin/SearchField';
 import MessageComposer from '@/components/admin/MessageComposer';
+import { renderTemplate, sendMail } from '@/lib/mail';
 
 const empty = (): NotifyMessage => ({
   id: `m-${Date.now()}`, name: '', trigger: 'stock_backorder', subject: '', body: '<p></p>', active: true, locale: 'fr',
@@ -293,9 +294,27 @@ function TemplatesTab() {
                 <td>{TRIGGERS.find((t) => t.value === m.trigger)?.label || m.trigger}</td>
                 <td>{m.locale.toUpperCase()}</td>
                 <td><span className={`ad-chip ${m.active ? 'ad-chip-ok' : 'ad-chip-mute'}`}>{m.active ? 'Actif' : 'Inactif'}</span></td>
-                <td className="text-right">
+                <td className="text-right whitespace-nowrap">
                   <button className="ad-btn ad-btn-ghost" onClick={() => { setMode('consult'); setDraft({ ...m }); }}><Eye className="w-4 h-4" /></button>
                   <button className="ad-btn ad-btn-ghost" onClick={() => { setMode('edit'); setDraft({ ...m }); }}><Pencil className="w-4 h-4" /></button>
+                  <button className="ad-btn ad-btn-ghost" title="Tester l'envoi" onClick={async () => {
+                    const email = prompt('Adresse de destination du test :');
+                    if (!email) return;
+                    try {
+                      const { subject, html } = renderTemplate(m, {
+                        nom_societe: 'SARI Système',
+                        nom_client: 'Client de test',
+                        email_client: email,
+                        numero_commande: '1001',
+                        numero_devis: 'DV-2026-00001',
+                        montant_ttc: '4 500 DA',
+                      });
+                      await sendMail({ to: email, subject, html });
+                      showToast('Email de test envoyé', 'success');
+                    } catch (err) {
+                      showToast(err instanceof Error ? err.message : 'Envoi impossible', 'error');
+                    }
+                  }}><Send className="w-4 h-4" /></button>
                   <button className="ad-btn ad-btn-icon ad-btn-danger" onClick={() => persist(rows.filter((x) => x.id !== m.id))}><Trash2 className="w-4 h-4" /></button>
                 </td>
               </tr>

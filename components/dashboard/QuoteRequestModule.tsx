@@ -6,9 +6,10 @@ import {
   AlertCircle, ArrowLeft, Calendar, Check, ChevronLeft, ChevronRight, Copy, FileText,
   MapPin, Package, Plus, Search, Send, Trash2, Mail, Phone, Globe, ShoppingCart, Upload,
 } from 'lucide-react';
-import { getProducts } from '@/lib/data';
+import { getConfig, getProducts } from '@/lib/data';
 import type { Product } from '@/types';
 import type { User } from '@/contexts/AuthContext';
+import { quotePdfHtml, printHtml } from '@/lib/pdf-templates';
 import {
   loadQuotes, saveQuotes, type CommerceItem, type Quote,
 } from '@/lib/crm-store';
@@ -45,7 +46,7 @@ export default function QuoteRequestModule({ user, locale }: { user: User; local
   }
 
   if (view === 'detail' && detail) {
-    return <QuoteDetail quote={detail} onBack={() => setView('list')} onRefresh={refresh} />;
+    return <QuoteDetail quote={detail} locale={locale} onBack={() => setView('list')} onRefresh={refresh} />;
   }
 
   return (
@@ -469,7 +470,7 @@ function QuoteWizard({ user, locale, onCancel, onDone }: { user: User; locale: s
 
 /* ============================ Détail ============================ */
 
-function QuoteDetail({ quote, onBack, onRefresh }: { quote: Quote; onBack: () => void; onRefresh: () => void }) {
+function QuoteDetail({ quote, locale, onBack, onRefresh }: { quote: Quote; locale: string; onBack: () => void; onRefresh: () => void }) {
   const t = useTranslations('pages.quoteRequest');
 
   const action = (status: Quote['status'], note?: string) => {
@@ -477,32 +478,17 @@ function QuoteDetail({ quote, onBack, onRefresh }: { quote: Quote; onBack: () =>
     onRefresh();
   };
 
-  const printQuote = () => {
-    const resp = quote.response;
-    const linesHtml = resp?.mode === 'detailed' && resp.lines
-      ? resp.lines.map((l) => `<tr><td>${l.name}</td><td style="text-align:right">${l.quantity}</td><td style="text-align:right">${(l.unitPrice || 0).toFixed(2)}</td><td style="text-align:right">${((l.quantity || 0) * (l.unitPrice || 0)).toFixed(2)}</td></tr>`).join('')
-      : '';
-    const totalsHtml = resp?.mode === 'detailed'
-      ? `<div style="margin-top:12px;text-align:right">
-           <div>Sous-total HT : ${(resp.subtotal || 0).toFixed(2)} DA</div>
-           ${resp.discount ? `<div>Remise : -${(resp.discount).toFixed(2)} DA</div>` : ''}
-           <div>Taxes : ${(resp.taxTotal || 0).toFixed(2)} DA</div>
-           ${resp.deliveryFee ? `<div>Livraison : ${(resp.deliveryFee).toFixed(2)} DA</div>` : ''}
-           <div style="font-weight:bold;font-size:18px;margin-top:8px">Total TTC : ${(resp.total || 0).toFixed(2)} DA</div>
-         </div>`
-      : '';
-    const w = window.open('', '_blank', 'width=800,height=900');
-    if (!w) return;
-    w.document.write(`<!doctype html><html><head><title>${quote.reference || `Devis #${quote.id}`}</title>
-      <style>body{font-family:sans-serif;color:#111;padding:32px;max-width:760px;margin:auto}h1{font-size:22px}h2{font-size:15px;margin-top:24px}table{width:100%;border-collapse:collapse;margin-top:8px}td,th{border:1px solid #ddd;padding:6px 8px;font-size:13px}th{background:#f4f4f4;text-align:left}.meta{color:#555;font-size:13px}</style></head><body>
-      <h1>${quote.reference || `Devis #${quote.id}`}</h1>
-      <div class="meta">${quote.client} · ${quote.email}<br/>Date : ${quote.date}</div>
-      ${resp?.mode === 'detailed' ? `<h2>Détail de l'offre</h2><table><thead><tr><th>Article</th><th>Qté</th><th>Prix unit.</th><th>Total</th></tr></thead><tbody>${linesHtml}</tbody></table>${totalsHtml}` : ''}
-      ${resp?.mode === 'file' ? `<h2>Commentaire</h2><div>${resp.fileNote || ''}</div>` : ''}
-      </body></html>`);
-    w.document.close();
-    w.focus();
-    setTimeout(() => w.print(), 300);
+  const printQuote = async () => {
+    const cfg = await getConfig(locale);
+    const html = quotePdfHtml(quote, {
+      name: cfg.meta.companyName,
+      tagline: cfg.meta.tagline,
+      phone: cfg.meta.phone,
+      email: cfg.meta.email,
+      address: cfg.meta.address,
+      logo: cfg.meta.logo,
+    });
+    printHtml(quote.reference || `Devis #${quote.id}`, html);
   };
 
   return (

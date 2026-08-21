@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useLocale } from 'next-intl';
-import { Eye, History, LayoutGrid, List as ListIcon, MessageSquareText, Plus, Reply, Trash2 } from 'lucide-react';
+import { Eye, History, LayoutGrid, List as ListIcon, MessageSquareText, Plus, Printer, Reply, Trash2 } from 'lucide-react';
 import { loadOrders, loadQuotes, saveOrders, saveQuotes, type Order, type Quote, type CommerceItem } from '@/lib/crm-store';
 import { loadCoupons, loadTaxes } from '@/lib/shop-store';
 import { loadAdminSettings } from '@/lib/admin-settings';
@@ -14,6 +14,10 @@ import Drawer from '@/components/admin/Drawer';
 import GeoBadge from '@/components/admin/GeoBadge';
 import MessageComposer from '@/components/admin/MessageComposer';
 import QuoteResponseComposer from '@/components/admin/QuoteResponseComposer';
+import { messageByTrigger } from '@/lib/notify-store';
+import { renderTemplate, sendMail } from '@/lib/mail';
+import { getConfig } from '@/lib/data';
+import { orderPdfHtml, printHtml, quotePdfHtml } from '@/lib/pdf-templates';
 
 type Kind = 'orders' | 'quotes';
 type Row = (Order | Quote) & { history?: Array<{ status: string; at: string; note?: string }>; phone?: string; company?: string; coupon?: string; quoteId?: number; orderId?: number; zone?: string; ip?: string; address?: string };
@@ -121,6 +125,27 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
     if (updated) setOpen(updated);
     setNote('');
     showToast(orderId ? `Devis accepté → commande #${orderId} créée` : 'Statut mis à jour', 'success');
+    if (updated) notifyByStatus(updated, effectiveStatus);
+  };
+
+  /** Envoie l'email de notification correspondant au nouveau statut (si un modèle actif existe). */
+  const notifyByStatus = (row: Row, statusValue: string) => {
+    const triggerMap: Record<string, string> = kind === 'orders'
+      ? { pending: 'order_confirmed', processing: 'order_confirmed', shipped: 'order_shipped', delivered: 'order_delivered' }
+      : { replied: 'quote_sent', accepted: 'quote_accepted', transformed: 'quote_accepted' };
+    const trigger = triggerMap[statusValue];
+    if (!trigger) return;
+    const template = messageByTrigger(trigger);
+    if (!template) return;
+    const { subject, html } = renderTemplate(template, {
+      nom_societe: 'SARI Système',
+      nom_client: row.client,
+      email_client: row.email,
+      numero_commande: String(row.id),
+      numero_devis: ('reference' in row && row.reference) || String(row.id),
+      montant_ttc: `${Number(row.total).toLocaleString()} DA`,
+    });
+    sendMail({ to: row.email, toName: row.client, subject, html }).catch(() => {});
   };
 
   const convertToOrder = (quote: Row): Order => {
@@ -166,6 +191,26 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
     if (!open) return;
     const items = (open.items || []).map((it, idx) => idx === i ? { ...it, ...patch } : it);
     setOpen({ ...open, items });
+  };
+
+  /** Génère le PDF (template HTML prédéfini) du document ouvert. */
+  const printRow = async (row: Row) => {
+    const cfg = await getConfig(locale);
+    const company = {
+      name: cfg.meta.companyName,
+      tagline: cfg.meta.tagline,
+      phone: cfg.meta.phone,
+      email: cfg.meta.email,
+      address: cfg.meta.address,
+      logo: cfg.meta.logo,
+    };
+    const html = kind === 'quotes'
+      ? quotePdfHtml(row as Quote, company)
+      : orderPdfHtml(row as Order, company);
+    const title = kind === 'quotes'
+      ? (('reference' in row && row.reference) || `Devis #${row.id}`)
+      : `Commande #${row.id}`;
+    printHtml(title, html);
   };
 
   return (
@@ -247,12 +292,14 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
         footer={consult ? (
           <>
             <button className="ad-btn ad-btn-ghost" onClick={() => open && setMessageTo(open)}><MessageSquareText className="w-4 h-4" /> Message</button>
+            <button className="ad-btn ad-btn-ghost" onClick={() => open && printRow(open)}><Printer className="w-4 h-4" /> PDF</button>
             <button className="ad-btn ad-btn-ghost" onClick={() => setOpen(null)}>Fermer</button>
             <button className="ad-btn ad-btn-primary" onClick={() => setConsult(false)}>Éditer</button>
           </>
         ) : (
           <>
             <button className="ad-btn ad-btn-ghost" onClick={() => open && setMessageTo(open)}><MessageSquareText className="w-4 h-4" /> Message</button>
+            <button className="ad-btn ad-btn-ghost" onClick={() => open && printRow(open)}><Printer className="w-4 h-4" /> PDF</button>
             {kind === 'quotes' && (
               <button className="ad-btn ad-btn-ghost" onClick={() => open && setRespondTo(open)}><Reply className="w-4 h-4" /> Répondre au devis</button>
             )}

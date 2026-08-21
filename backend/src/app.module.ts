@@ -34,6 +34,7 @@ import { HeroModule } from './modules/hero/hero.module';
 import { HealthModule } from './modules/health/health.module';
 import { SettingsModule } from './modules/settings/settings.module';
 import { GeoModule } from './modules/geo/geo.module';
+import { MailModule } from './modules/mail/mail.module';
 
 @Module({
   imports: [
@@ -88,6 +89,7 @@ import { GeoModule } from './modules/geo/geo.module';
     HealthModule,
     SettingsModule,
     GeoModule,
+    MailModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },
