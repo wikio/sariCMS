@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useLocale } from 'next-intl';
 import { Eye, History, LayoutGrid, List as ListIcon, MessageSquareText, Plus, Reply, Trash2 } from 'lucide-react';
-import { loadOrders, loadQuotes, saveOrders, saveQuotes, type Order, type Quote, type CommerceItem, type QuoteResponse } from '@/lib/crm-store';
+import { loadOrders, loadQuotes, saveOrders, saveQuotes, type Order, type Quote, type CommerceItem } from '@/lib/crm-store';
 import { loadCoupons, loadTaxes } from '@/lib/shop-store';
 import { loadAdminSettings } from '@/lib/admin-settings';
 import { computeTotals, money } from '@/lib/commerce-math';
