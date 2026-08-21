@@ -9,6 +9,7 @@ import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
 import SearchHeader from '@/components/layout/SearchHeader';
 import type { Config, Menu as MenuType } from '@/types';
 import { loadAdminSettings } from '@/lib/admin-settings';
+import { useCart } from '@/contexts/CartContext';
 
 export default function Header({ config, menu }: { config: Config; menu: MenuType }) {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -19,6 +20,10 @@ export default function Header({ config, menu }: { config: Config; menu: MenuTyp
 
   const locale = useLocale();
   const t = useTranslations('components.layout.header');
+
+  // Nombre exact d'articles dans le panier (somme des quantités).
+  const { items: cartItems } = useCart();
+  const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   // ✅ Fonction robuste pour générer les liens avec la locale
   const getLinkHref = (href: string) => {
@@ -92,10 +97,14 @@ export default function Header({ config, menu }: { config: Config; menu: MenuTyp
               <SearchHeader />
               
               {/* Bouton Panier */}
-              <Link href={getLinkHref('#cart')} className="relative p-2.5 text-sari-lime hover:text-white transition-all group" aria-label={t('cart')}>
+              <Link href={getLinkHref('#cart')} className="relative p-2.5 text-sari-lime hover:text-white transition-all group" aria-label={`${t('cart')} (${cartCount})`}>
                 <div className="absolute inset-0 bg-sari-lime/0 group-hover:bg-sari-lime/20 transition-all"></div>
                 <ShoppingCart className="w-5 h-5 relative z-10" />
-                {/* Ajoutez votre logique de compteur de panier ici si nécessaire */}
+                {cartCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 z-20 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[11px] font-bold flex items-center justify-center shadow">
+                    {cartCount}
+                  </span>
+                )}
               </Link>
 
               {/* Connexion / Utilisateur */}
