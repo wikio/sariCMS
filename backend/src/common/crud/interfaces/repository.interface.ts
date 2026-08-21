@@ -3,8 +3,8 @@ export interface BaseEntity {
   createdAt: Date | string;
   updatedAt: Date | string;
   deletedAt?: Date | string | null;
-  createdBy?: string | null;
-  updatedBy?: string | null;
+  createdBy?: number | null;
+  updatedBy?: number | null;
   [key: string]: unknown;
 }
 

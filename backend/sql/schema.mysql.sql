@@ -87,17 +87,22 @@ CREATE TABLE `users` (
 
 DROP TABLE IF EXISTS `refresh_tokens`;
 CREATE TABLE `refresh_tokens` (
-  `id`           INT          NOT NULL AUTO_INCREMENT,
-  `userId` INT  NOT NULL,
+  `id`        INT          NOT NULL AUTO_INCREMENT,
+  `userId`    INT          NOT NULL,
   `tokenHash` VARCHAR(255) NOT NULL,
   `expiresAt` DATETIME(3)  NOT NULL,
   `revokedAt` DATETIME(3)  NULL,
   `createdAt` DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `updatedAt` DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  `deletedAt` DATETIME(3)  NULL,
+  `createdBy` INT          NULL,
+  `updatedBy` INT          NULL,
   `userAgent` TEXT         NULL,
   `ip`        VARCHAR(64)  NULL,
   PRIMARY KEY (`id`),
   KEY `refresh_tokens_userId_idx` (`userId`),
   KEY `refresh_tokens_expiresAt_idx` (`expiresAt`),
+  KEY `refresh_tokens_deletedAt_idx` (`deletedAt`),
   CONSTRAINT `refresh_tokens_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `users` (`id`)
     ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

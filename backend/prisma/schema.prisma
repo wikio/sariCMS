@@ -61,18 +61,23 @@ model User {
 }
 
 model RefreshToken {
-  id    Int      @id @default(autoincrement())
-  userId    Int
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tokenHash String
-  expiresAt DateTime
-  revokedAt DateTime?
-  createdAt DateTime  @default(now())
-  userAgent String?   @db.Text
-  ip        String?
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash  String
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  deletedAt  DateTime?
+  createdBy  Int?
+  updatedBy  Int?
+  userAgent  String?  @db.Text
+  ip         String?
 
   @@index([userId])
   @@index([expiresAt])
+  @@index([deletedAt])
   @@map("refresh_tokens")
 }
 
