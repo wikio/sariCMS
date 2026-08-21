@@ -209,6 +209,32 @@ function mapSolution(row: Record<string, unknown>): SolutionCategory {
   };
 }
 
+/**
+ * Vérifie qu'une ligne CMS correspond à la locale demandée. Les lignes sans
+ * `locale` (données héritées) sont conservées pour ne rien casser.
+ */
+function rowMatchesLocale(row: Record<string, unknown>, locale: string): boolean {
+  const rowLocale = String(row.locale ?? '').trim().toLowerCase();
+  return !rowLocale || rowLocale === locale.toLowerCase();
+}
+
+/**
+ * Résout la date de mise à jour d'un document légal : champ `lastUpdate` libre
+ * (déjà lisible, ex. « 15 Janvier 2024 ») sinon date technique (`publishedAt`,
+ * `updatedAt`) formatée en toutes lettres.
+ */
+function pickLastUpdate(row?: Record<string, unknown>): string | undefined {
+  const raw = row?.lastUpdate ?? row?.publishedAt ?? row?.updatedAt;
+  if (raw === undefined || raw === null || raw === '') return undefined;
+  const value = String(raw);
+  // Déjà une date lisible en clair (contient des lettres, pas de forme ISO).
+  if (/[a-zA-Z\u00C0-\u024F\u0600-\u06FF]/.test(value) && !/^\d{4}-\d{2}-\d{2}/.test(value)) {
+    return value;
+  }
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString();
+}
+
 function mapMenu(rows: Array<Record<string, unknown>>): Menu | null {
   if (!rows.length) return null;
   const byLocation = (loc: string) => rows.find((r) => r.location === loc);
@@ -365,7 +391,7 @@ export async function getLegal(locale: string): Promise<Legal> {
   };
   return fromCmsOrJson(locale, 'legal', fallback, async () => {
     const rows = (await cmsPublicList<Record<string, unknown>>('pages', locale)).filter(
-      (r) => String(r.kind ?? '') === 'legal',
+      (r) => String(r.kind ?? '') === 'legal' && rowMatchesLocale(r, locale),
     );
     if (!rows.length) return null;
     const pick = (...slugParts: string[]) => {
@@ -380,6 +406,7 @@ export async function getLegal(locale: string): Promise<Legal> {
       return {
         title: String(row?.title ?? ''),
         content: String(row?.content ?? ''),
+        lastUpdate: pickLastUpdate(row),
       };
     };
     const mapped: Legal = {
@@ -398,7 +425,7 @@ export async function getLegal(locale: string): Promise<Legal> {
 export async function getGenericContent(locale: string): Promise<GenericContent[]> {
   return fromCmsOrJson(locale, 'genericContent', [], async () => {
     const rows = (await cmsPublicList<Record<string, unknown>>('pages', locale)).filter(
-      (r) => String(r.kind ?? '') === 'generic',
+      (r) => String(r.kind ?? '') === 'generic' && rowMatchesLocale(r, locale),
     );
     if (!rows.length) return null;
     return rows.map((row) => ({

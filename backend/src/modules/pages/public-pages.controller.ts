@@ -2,6 +2,7 @@ import { Controller, Get, NotFoundException, Param, Query } from '@nestjs/common
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Public } from '../../common/decorators/public.decorator';
 import { QueryDto } from '../../common/crud/dto/query.dto';
+import { publishedQuery } from '../../common/crud/query.util';
 import { PagesService } from './pages.service';
 
 @ApiTags('public')
@@ -12,11 +13,10 @@ export class PublicPagesController {
 
   @Get()
   @ApiOperation({ summary: 'Pages publiées (vitrine)' })
-  list(@Query() query: QueryDto) {
-    return this.pages.findAll({
-      ...query,
-      filter: { ...(query.filter ?? {}), status: 'published' },
-    });
+  list(@Query() query: QueryDto, @Query('locale') locale?: string) {
+    // Filtre par locale (comme les autres endpoints publics) pour que la vitrine
+    // reçoive uniquement les pages de la langue demandée.
+    return this.pages.findAll(publishedQuery(query, locale ? { locale } : {}));
   }
 
   @Get(':slug')

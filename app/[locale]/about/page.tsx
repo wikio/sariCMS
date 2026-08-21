@@ -61,7 +61,7 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
         <div className="prose dark:prose-invert max-w-none text-gray-600 dark:text-gray-400 text-lg leading-relaxed mb-12">
           <p>{t('historyP1')}</p>
           <p>{t('historyP2')}</p>
-          <Link href={`/${locale}/contenu/1`} className="text-sari-blue hover:underline">
+          <Link href={`/${locale}/content/1`} className="text-sari-blue hover:underline">
             {t('qualityLink')}
           </Link>
         </div>
