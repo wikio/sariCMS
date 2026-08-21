@@ -37,6 +37,11 @@ mysql -u root -p sari_cms < backend/sql/seed.mysql.sql
 > la base actuellement sélectionnée (ou passée en argument au CLI). Aucune
 > modification nécessaire même si votre base porte un préfixe d'hébergeur.
 
+> 🔁 Le seed utilise **`INSERT IGNORE`** avec des identifiants déterministes :
+> vous pouvez le **ré-importer à volonté** — les lignes déjà présentes sont
+> ignorées (pas de doublon), seules les lignes manquantes sont ajoutées.
+> Pratique après un import interrompu.
+
 ### « Avertissements » affichés par phpMyAdmin (normaux)
 
 Au premier import du schéma, phpMyAdmin affiche ~23 « avertissements ».
