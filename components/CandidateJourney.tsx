@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Check, ChevronLeft, ChevronRight, Send, Upload } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight, Send, ShieldCheck, Upload } from 'lucide-react';
+import ImageCaptcha from '@/components/ImageCaptcha';
 import {
   FlowStep, flowMaxScore, loadAnswers, loadProgress, saveAnswers, saveProgress,
   type FlowProgress,
@@ -22,6 +23,7 @@ export default function CandidateJourney({
   const [answers, setAnswers] = useState<Record<string, string>>(() => loadAnswers(offerId, applicationId));
   const [progress, setProgress] = useState<FlowProgress[]>(() => loadProgress(offerId, applicationId));
   const [ended, setEnded] = useState<{ message: string; score: number } | null>(null);
+  const [captchaOk, setCaptchaOk] = useState(false);
 
   // Reprend à la première étape non complétée (sauvegarde progressive).
   useEffect(() => {
@@ -84,6 +86,11 @@ export default function CandidateJourney({
         setEnded({ message: rule.message || 'Candidature terminée.', score: finalScore });
         return;
       }
+    }
+
+    // Sécurité : CAPTCHA requis pour finaliser la candidature (dernière étape).
+    if (index === steps.length - 1 && !captchaOk) {
+      return;
     }
 
     const p = markDone();
@@ -233,14 +240,24 @@ export default function CandidateJourney({
           ))}
         </div>
 
+        {/* CAPTCHA avant finalisation */}
+        {index === steps.length - 1 && (
+          <div className="bg-gray-50 dark:bg-gray-900/30 border border-sari-blue/30 rounded-lg p-4">
+            <div className="flex items-center gap-2 text-sm font-bold text-sari-dark dark:text-white mb-2">
+              <ShieldCheck className="w-4 h-4 text-sari-blue" /> Sécurité — CAPTCHA <span className="text-red-500">*</span>
+            </div>
+            <ImageCaptcha onChange={setCaptchaOk} />
+          </div>
+        )}
+
         {/* Navigation */}
         <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-800">
           <button type="button" onClick={goBack} disabled={index === 0}
             className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-600 dark:text-gray-400 disabled:opacity-40">
             <ChevronLeft className="w-4 h-4" /> Précédent
           </button>
-          <button type="button" onClick={goNext}
-            className="inline-flex items-center gap-2 bg-sari-blue text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-sari-blue/90 transition-colors">
+          <button type="button" onClick={goNext} disabled={index === steps.length - 1 && !captchaOk}
+            className="inline-flex items-center gap-2 bg-sari-blue text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-sari-blue/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
             {index === steps.length - 1 ? (<><Send className="w-4 h-4" /> Terminer</>) : (<>Suivant <ChevronRight className="w-4 h-4" /></>)}
           </button>
         </div>

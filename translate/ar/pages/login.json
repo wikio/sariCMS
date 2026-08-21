@@ -59,10 +59,12 @@
     "تنبيهات للوظائف الجديدة",
     "تواصل مباشر مع الموارد البشرية"
   ],
-  "title":"الدخول",
-  "remember":"تذكرني",
-  "loginButton":"الدخول",
-  "email":"البريد الإلكتروني",
-  "loginError":"معلومات الدخول خاطئة",
-  "loggingIn":" يتم الدخول..."
+  "title": "الدخول",
+  "remember": "تذكرني",
+  "loginButton": "الدخول",
+  "email": "البريد الإلكتروني",
+  "loginError": "معلومات الدخول خاطئة",
+  "loggingIn": " يتم الدخول...",
+  "captchaError": "يرجى إدخال رمز التحقق الصحيح.",
+  "demoHint": "حسابات تجريبية: client@sari.dz / partner@sari.dz / candidate@sari.dz · كلمة المرور demo123"
 }

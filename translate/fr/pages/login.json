@@ -59,10 +59,12 @@
     "Alertes pour les nouvelles offres",
     "Communication directe avec les RH"
   ],
-  "title":"Connexion",
-  "remember":"Se souvenir de moi",
-  "loginButton":"Se connecter",
-  "email":"Adresse email",
-  "loginError":"Email ou mot de passe incorrect",
-  "loggingIn":"Connexion en cours..."
+  "title": "Connexion",
+  "remember": "Se souvenir de moi",
+  "loginButton": "Se connecter",
+  "email": "Adresse email",
+  "loginError": "Email ou mot de passe incorrect",
+  "loggingIn": "Connexion en cours...",
+  "captchaError": "Veuillez saisir le code CAPTCHA correctement.",
+  "demoHint": "Démo : client@sari.dz / partner@sari.dz / candidate@sari.dz · mot de passe demo123"
 }

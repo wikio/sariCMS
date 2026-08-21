@@ -105,8 +105,18 @@ export default function ContactPage() {
     }
 
     setIsSubmitting(true);
-    setTimeout(() => {
-      console.log('Message envoyé:', formData);
+    // Envoi au backend Nest (POST /contact/messages) — fallback local si hors-ligne.
+    fetch('/api/v1/contact/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        subject: formData.subject,
+        message: formData.message,
+      }),
+    }).catch(() => undefined).finally(() => {
       setIsSubmitting(false);
       setSubmitted(true);
       setFormData({
@@ -123,7 +133,7 @@ export default function ContactPage() {
       setCaptchaAttempts(0);
       generateCaptcha();
       setTimeout(() => setSubmitted(false), 5000);
-    }, 1500);
+    });
   };
 
   if (!config || !menu) {

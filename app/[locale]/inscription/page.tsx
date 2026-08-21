@@ -92,12 +92,17 @@ export default function RegisterPage() {
     }
 
     setIsLoading(true);
-    setTimeout(() => {
-      register(formData.email, formData.password, formData.type).then(() => {
-        setIsLoading(false);
-        router.push(`/${locale}/dashboard`);
-      });
-    }, 1000);
+    register({
+      name: formData.name,
+      email: formData.email,
+      password: formData.password,
+      type: formData.type as 'client' | 'partner' | 'candidate',
+      phone: formData.phone,
+      company: formData.company,
+    }).then(() => {
+      setIsLoading(false);
+      router.push(`/${locale}/dashboard`);
+    });
   };
 
   return (
