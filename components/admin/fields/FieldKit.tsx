@@ -363,28 +363,47 @@ function PriceInner({ value, onChange, placeholder }: { value: string; onChange:
 }
 
 export function IconPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const [q, setQ] = useState(value);
-  const hits = searchLucideIcons(q || value, 36);
+  const [q, setQ] = useState('');
+  const [open, setOpen] = useState(false);
+  const boxRef = useRef<HTMLDivElement>(null);
+  const hits = useMemo(() => searchLucideIcons(q, 60), [q]);
+
+  useEffect(() => {
+    const onDoc = (e: MouseEvent) => {
+      if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, []);
+
   return (
-    <div className="space-y-2">
-      <div className="flex gap-2 items-center">
-        <div className="w-11 h-11 flex items-center justify-center" style={{ border: '1px solid var(--ad-line)', background: 'var(--ad-surface-2)' }}>
-          <IconMark name={value} className="w-5 h-5" />
-        </div>
-        <div className="ad-search flex-1">
-          <input className="ad-input" style={{ paddingLeft: '0.8rem' }} value={q} placeholder="Rechercher une icône Lucide…" onChange={(e) => {
-            setQ(e.target.value);
-          }} />
-        </div>
+    <div className="relative" ref={boxRef}>
+      <div className="ad-search">
+        <span className="ad-search-ico"><IconMark name={value} className="w-4 h-4" /></span>
+        <input
+          className="ad-input"
+          placeholder="Rechercher une icône Lucide…"
+          value={q}
+          onFocus={() => setOpen(true)}
+          onChange={(e) => { setQ(e.target.value); setOpen(true); }}
+        />
       </div>
-      <div className="ad-icon-grid">
-        {hits.map((name) => (
-          <button key={name} type="button" className={`ad-combo-item items-center gap-2 ${name === value ? 'is-on font-bold' : ''}`} onClick={() => { onChange(name); setQ(name); }}>
-            <IconMark name={name} className="w-4 h-4" />
-            <span className="truncate">{name}</span>
-          </button>
-        ))}
-      </div>
+      {open && (
+        <div className="ad-combo-list ad-scroll max-h-64 z-50">
+          {hits.length === 0 && <div className="ad-combo-item text-xs" style={{ color: 'var(--ad-muted)' }}>Aucune icône trouvée</div>}
+          {hits.map((name) => (
+            <button
+              key={name}
+              type="button"
+              className={`ad-combo-item items-center gap-2 ${name === value ? 'is-on font-bold' : ''}`}
+              onClick={() => { onChange(name); setQ(''); setOpen(false); }}
+            >
+              <IconMark name={name} className="w-4 h-4 shrink-0" />
+              <span className="truncate">{name}</span>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
