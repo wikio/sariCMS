@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useLocale } from 'next-intl';
-import { Eye, History, LayoutGrid, List as ListIcon, MessageSquareText, Plus, Printer, Reply, Trash2 } from 'lucide-react';
-import { loadOrders, loadQuotes, saveOrders, saveQuotes, type Order, type Quote, type CommerceItem } from '@/lib/crm-store';
+import { Eye, FileCheck2, History, LayoutGrid, Link2, List as ListIcon, MessageSquareText, Plus, Printer, Reply, Trash2, Upload } from 'lucide-react';
+import { isOrderPaid, loadOrders, loadQuotes, saveOrders, saveQuotes, type Order, type OrderInvoice, type Quote, type CommerceItem } from '@/lib/crm-store';
 import { loadCoupons, loadTaxes } from '@/lib/shop-store';
 import { loadAdminSettings } from '@/lib/admin-settings';
 import { computeTotals, money } from '@/lib/commerce-math';
@@ -18,6 +18,8 @@ import { messageByTrigger } from '@/lib/notify-store';
 import { renderTemplate, sendMail } from '@/lib/mail';
 import { getConfig } from '@/lib/data';
 import { orderPdfHtml, printHtml, quotePdfHtml } from '@/lib/pdf-templates';
+import { nextCodeFor } from '@/lib/codes';
+import { fetchInvoiceFromErp } from '@/lib/erp';
 
 type Kind = 'orders' | 'quotes';
 type Row = (Order | Quote) & { history?: Array<{ status: string; at: string; note?: string }>; phone?: string; company?: string; coupon?: string; quoteId?: number; orderId?: number; zone?: string; ip?: string; address?: string };
@@ -56,6 +58,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
   const [note, setNote] = useState('');
   const [messageTo, setMessageTo] = useState<Row | null>(null);
   const [respondTo, setRespondTo] = useState<Row | null>(null);
+  const [invoiceBusy, setInvoiceBusy] = useState(false);
   const statuses = kind === 'orders' ? ORDER_STATUS : QUOTE_STATUS;
   const title = kind === 'orders' ? 'Commandes' : 'Devis';
   const taxes = loadTaxes();
@@ -141,7 +144,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
       nom_societe: 'SARI Système',
       nom_client: row.client,
       email_client: row.email,
-      numero_commande: String(row.id),
+      numero_commande: ('code' in row && row.code) || String(row.id),
       numero_devis: ('reference' in row && row.reference) || String(row.id),
       montant_ttc: `${Number(row.total).toLocaleString()} DA`,
     });
@@ -152,6 +155,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
     const all = loadOrders();
     const newOrder: Order = {
       id: (all.length ? Math.max(...all.map((o) => Number(o.id) || 0)) : 1000) + 1,
+      code: nextCodeFor('order', all.map((o) => o.code || '')),
       client: quote.client,
       email: quote.email,
       phone: quote.phone,
@@ -167,6 +171,45 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
     };
     saveOrders([newOrder, ...all]);
     return newOrder;
+  };
+
+  /** Lie une facture à la commande ouverte (upload manuel). */
+  const linkManualInvoice = (fileName: string) => {
+    if (!open || kind !== 'orders') return;
+    const invoice: OrderInvoice = {
+      number: nextCodeFor('invoice', loadOrders().flatMap((o) => o.invoice?.number ? [o.invoice.number] : [])),
+      url: fileName,
+      fileName,
+      source: 'manual',
+      linkedAt: new Date().toISOString(),
+    };
+    persist(rows.map((r) => (r.id === open.id ? ({ ...r, invoice } as Row) : r)));
+    setOpen({ ...open, invoice } as Row);
+    showToast('Facture liée', 'success');
+  };
+
+  /** Récupère automatiquement la facture via l'API ERP. */
+  const linkInvoiceFromErp = async () => {
+    if (!open || kind !== 'orders') return;
+    const order = open as Order;
+    setInvoiceBusy(true);
+    try {
+      const result = await fetchInvoiceFromErp(order.code || `#${order.id}`, order.id);
+      const invoice: OrderInvoice = {
+        number: result.number,
+        url: result.url,
+        fileName: result.fileName,
+        source: 'api',
+        linkedAt: new Date().toISOString(),
+      };
+      persist(rows.map((r) => (r.id === order.id ? ({ ...r, invoice } as Row) : r)));
+      setOpen({ ...open, invoice } as Row);
+      showToast('Facture liée via ERP', 'success');
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Liaison ERP impossible', 'error');
+    } finally {
+      setInvoiceBusy(false);
+    }
   };
 
   const shown = useMemo(() => rows.filter((r) => {
@@ -209,7 +252,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
       : orderPdfHtml(row as Order, company);
     const title = kind === 'quotes'
       ? (('reference' in row && row.reference) || `Devis #${row.id}`)
-      : `Commande #${row.id}`;
+      : (('code' in row && row.code) || `Commande #${row.id}`);
     printHtml(title, html);
   };
 
@@ -246,15 +289,15 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
       {view === 'list' ? (
         <div className="ad-card overflow-x-auto">
           <table className="ad-table">
-            <thead><tr><th>N°</th><th>Client</th><th>Date</th><th>Total TTC</th><th>Pays / IP</th><th>Statut</th><th></th></tr></thead>
+            <thead><tr><th>N°</th><th>Client</th><th>Date</th><th>Total TTC</th><th>Facture</th><th>Statut</th><th></th></tr></thead>
             <tbody>
               {shown.map((row) => (
                 <tr key={row.id}>
-                  <td className="font-mono text-sm">#{row.id}</td>
+                  <td className="font-mono text-sm">{('code' in row && row.code) || `#${row.id}`}</td>
                   <td><div className="font-bold">{row.client}</div><div className="text-xs" style={{ color: 'var(--ad-muted)' }}>{row.email}</div></td>
                   <td>{row.date}</td>
                   <td className="font-black whitespace-nowrap">{Number(row.total).toLocaleString()} DA</td>
-                  <td><GeoBadge ip={row.ip} /></td>
+                  <td>{'invoice' in row && row.invoice ? <span className="ad-chip ad-chip-ok">{row.invoice.number}</span> : <span style={{ color: 'var(--ad-muted)' }}>—</span>}</td>
                   <td><span className={`ad-chip ${row.status === 'delivered' || row.status === 'accepted' ? 'ad-chip-ok' : row.status === 'cancelled' || row.status === 'rejected' ? 'ad-chip-mute' : 'ad-chip-warn'}`}>{row.status}</span></td>
                   <td className="text-right whitespace-nowrap">
                     <button className="ad-btn ad-btn-icon ad-btn-ghost" title="Message au client" onClick={() => setMessageTo(row)}><MessageSquareText className="w-4 h-4" /></button>
@@ -378,6 +421,62 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
               <div className="ad-origin">Devis d’origine : <button className="underline font-bold" onClick={() => { window.location.href = `/${locale}/admin/quotes`; }}>#{linkedQuote.id} · {linkedQuote.status} · {linkedQuote.total.toLocaleString()} DA</button></div>
             )}
 
+            {kind === 'orders' && (
+              <div className="ad-card p-3 space-y-2 text-sm" style={{ borderColor: 'color-mix(in srgb, var(--ad-accent) 35%, var(--ad-line))' }}>
+                <div className="font-black flex items-center gap-2" style={{ color: 'var(--ad-accent)' }}>
+                  <FileCheck2 className="w-4 h-4" /> Facturation
+                </div>
+                {'invoice' in open && open.invoice ? (
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="ad-chip ad-chip-ok">{open.invoice.number}</span>
+                      <span style={{ color: 'var(--ad-muted)' }}>· {open.invoice.source === 'api' ? 'liée via ERP' : 'upload manuel'}</span>
+                    </div>
+                    {open.invoice.url && (
+                      <a className="underline inline-flex items-center gap-1" href={open.invoice.url} target="_blank" rel="noopener noreferrer">
+                        <Link2 className="w-3.5 h-3.5" /> {open.invoice.fileName || 'Voir la facture'}
+                      </a>
+                    )}
+                    {!consult && (
+                      <div className="flex gap-2 pt-1">
+                        <button className="ad-btn ad-btn-ghost" onClick={linkInvoiceFromErp} disabled={invoiceBusy}>
+                          <Link2 className="w-4 h-4" /> {invoiceBusy ? '…' : 'Relier via ERP'}
+                        </button>
+                        <label className="ad-btn ad-btn-ghost cursor-pointer">
+                          <Upload className="w-4 h-4" /> Remplacer (upload)
+                          <input type="file" className="hidden" onChange={(e) => e.target.files?.[0]?.name && linkManualInvoice(e.target.files[0].name)} />
+                        </label>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {isOrderPaid(open as Order) ? (
+                      <div className="flex flex-wrap gap-2">
+                        <button className="ad-btn ad-btn-primary" onClick={linkInvoiceFromErp} disabled={invoiceBusy}>
+                          <Link2 className="w-4 h-4" /> {invoiceBusy ? 'Récupération…' : 'Lier automatiquement via ERP'}
+                        </button>
+                        <label className="ad-btn ad-btn-ghost cursor-pointer">
+                          <Upload className="w-4 h-4" /> Uploader la facture de vente
+                          <input type="file" className="hidden" onChange={(e) => e.target.files?.[0]?.name && linkManualInvoice(e.target.files[0].name)} />
+                        </label>
+                      </div>
+                    ) : (
+                      <div style={{ color: 'var(--ad-muted)' }}>
+                        La commande doit être confirmée et payée pour lier une facture.
+                        {!consult && (
+                          <label className="ml-2 inline-flex items-center gap-1 cursor-pointer">
+                            <input type="checkbox" checked={Boolean((open as Order).paid)} onChange={(e) => { const v = e.target.checked; persist(rows.map((r) => r.id === open.id ? ({ ...r, paid: v } as Row) : r)); setOpen({ ...open, paid: v } as Row); }} />
+                            Marquer comme payée
+                          </label>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
             <button type="button" className="ad-btn ad-btn-ghost" onClick={() => setHistoryOpen((v) => !v)}>
               <History className="w-4 h-4" /> Autres {title.toLowerCase()} du client ({related.length})
             </button>
@@ -479,7 +578,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
           subject={
             kind === 'quotes'
               ? `Votre devis ${('reference' in messageTo && messageTo.reference) || `#${messageTo.id}`}`
-              : `Votre commande #${messageTo.id}`
+              : `Votre commande ${('code' in messageTo && messageTo.code) || `#${messageTo.id}`}`
           }
           context={
             kind === 'quotes'

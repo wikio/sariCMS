@@ -200,7 +200,7 @@ export function orderPdfHtml(order: Order, company: CompanyInfo): string {
 
   return documentShell({
     title: 'Commande',
-    reference: `#${order.id}`,
+    reference: order.code || `#${order.id}`,
     date: order.date,
     company,
     client: { name: order.client, email: order.email, phone: order.phone, address: order.address },

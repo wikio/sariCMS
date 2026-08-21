@@ -1,6 +1,7 @@
 'use client';
 
 import { loadQuotes, saveQuotes, type Quote, type QuoteStatus } from '@/lib/crm-store';
+import { nextCodeFor } from '@/lib/codes';
 
 /** Métadonnées de workflow (badge + libellé) pour les demandes de devis. */
 export const QUOTE_STATUS_META: Array<{ value: QuoteStatus; label: string }> = [
@@ -52,15 +53,9 @@ export function quoteStatusColor(status: QuoteStatus): string {
   }
 }
 
-/** Génère un numéro de référence unique DV-YYYY-NNNNN. */
+/** Génère le numéro de devis (format configuré, ex. SARI-WDEV-00001). */
 export function generateQuoteReference(existing: Quote[]): string {
-  const year = new Date().getFullYear();
-  const prefix = `DV-${year}-`;
-  const nums = existing
-    .map((q) => (q.reference || '').startsWith(prefix) ? Number((q.reference || '').slice(prefix.length)) : 0)
-    .filter((n) => Number.isFinite(n));
-  const next = (nums.length ? Math.max(...nums) : 0) + 1;
-  return `${prefix}${String(next).padStart(5, '0')}`;
+  return nextCodeFor('quote', (existing || []).map((q) => q.reference || ''));
 }
 
 /** Liste des demandes d'un client (par email). */

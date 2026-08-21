@@ -31,6 +31,33 @@ export interface QuoteSettings {
   requireAttachment: boolean;
 }
 
+export interface CodeFormats {
+  /** Format du numéro de devis (ex. SARI-WDEV-{ID}). */
+  quote: string;
+  /** Format du numéro de commande (ex. SARI-WCMD{XX}-{ID}). */
+  order: string;
+  /** Format du numéro de facture (ex. SARI-WFAV{XX}-{ID}). */
+  invoice: string;
+  /** Format du code produit / SKU (ex. SARI-WPRO{XX}-{ID}). */
+  product: string;
+}
+
+export interface ErpSettings {
+  /** ERP externe activé (facturation par API). */
+  enabled: boolean;
+  /** URL de base de l'API ERP. */
+  apiUrl: string;
+  /** Clé d'API / jeton d'authentification. */
+  apiKey: string;
+}
+
+export interface InvoicingSettings {
+  /** Une commande doit être confirmée + payée avant de lier une facture. */
+  requirePaidToInvoice: boolean;
+  /** Tenter automatiquement la récupération de facture par API. */
+  autoFetchInvoice: boolean;
+}
+
 export interface AdminSettings {
   defaultLocale: 'fr' | 'en' | 'ar';
   skuFormat: string;
@@ -43,6 +70,9 @@ export interface AdminSettings {
   smtp: SmtpSettings;
   db: DbSettings;
   quote: QuoteSettings;
+  codes: CodeFormats;
+  erp: ErpSettings;
+  invoicing: InvoicingSettings;
 }
 
 const KEY = 'sari_admin_settings';
@@ -79,6 +109,21 @@ export const DEFAULT_SETTINGS: AdminSettings = {
     validityDays: 30,
     requireAttachment: false,
   },
+  codes: {
+    quote: 'SARI-WDEV-{ID}',
+    order: 'SARI-WCMD{XX}-{ID}',
+    invoice: 'SARI-WFAV{XX}-{ID}',
+    product: 'SARI-WPRO{XX}-{ID}',
+  },
+  erp: {
+    enabled: false,
+    apiUrl: '',
+    apiKey: '',
+  },
+  invoicing: {
+    requirePaidToInvoice: true,
+    autoFetchInvoice: false,
+  },
 };
 
 export function loadAdminSettings(): AdminSettings {
@@ -94,6 +139,9 @@ export function loadAdminSettings(): AdminSettings {
       smtp: { ...DEFAULT_SETTINGS.smtp, ...(parsed.smtp || {}) },
       db: { ...DEFAULT_SETTINGS.db, ...(parsed.db || {}) },
       quote: { ...DEFAULT_SETTINGS.quote, ...(parsed.quote || {}) },
+      codes: { ...DEFAULT_SETTINGS.codes, ...(parsed.codes || {}) },
+      erp: { ...DEFAULT_SETTINGS.erp, ...(parsed.erp || {}) },
+      invoicing: { ...DEFAULT_SETTINGS.invoicing, ...(parsed.invoicing || {}) },
     };
   } catch {
     return DEFAULT_SETTINGS;
@@ -104,8 +152,13 @@ export function saveAdminSettings(next: AdminSettings) {
   localStorage.setItem(KEY, JSON.stringify(next));
 }
 
-export function nextSku(format = loadAdminSettings().skuFormat): string {
+export function nextSku(format = loadAdminSettings().codes.product): string {
   const n = Number(typeof window !== 'undefined' ? localStorage.getItem('sari_sku_seq') : 0) + 1;
   if (typeof window !== 'undefined') localStorage.setItem('sari_sku_seq', String(n));
-  return format.replace('{ID}', String(n).padStart(5, '0'));
+  const y = new Date().getFullYear();
+  const yy = String(y % 100).padStart(2, '0');
+  return format
+    .replace(/\{XX\}/g, yy)
+    .replace(/\{YY\}/g, yy)
+    .replace(/\{ID\}/g, String(n).padStart(5, '0'));
 }

@@ -151,7 +151,7 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
       const payload = { ...record, locale: record.locale || settings.defaultLocale };
       if (mod.key === 'products') {
         if (!String(payload.slug || '').trim()) payload.slug = slugify(String(payload.name || ''));
-        if (!String(payload.sku || '').trim()) payload.sku = nextSku(settings.skuFormat);
+        if (!String(payload.sku || '').trim()) payload.sku = nextSku(settings.codes.product);
       }
       const saved = id === 'new' || !record.id
         ? await cmsAdminCreate(mod.resource, payload)
@@ -181,7 +181,7 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
         slug: slugify(`${record[mod.titleKey] || 'copie'}-copie`),
         [mod.titleKey]: `${record[mod.titleKey] || ''} (copie)`,
         status: 'draft',
-        sku: nextSku(settings.skuFormat),
+        sku: nextSku(settings.codes.product),
       };
       const saved = await cmsAdminCreate(mod.resource, copy);
       showToast('Fiche dupliquée', 'success');

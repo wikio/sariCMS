@@ -21,8 +21,22 @@ export interface CommerceItem {
   taxRate?: number;
 }
 
+export interface OrderInvoice {
+  /** Numéro de facture (format configuré, ex. SARI-WFAV26-00001). */
+  number: string;
+  /** Lien / URL du document de facture (upload ou retour ERP). */
+  url?: string;
+  /** Nom du fichier uploadé manuellement. */
+  fileName?: string;
+  /** Origine du lien : manuel ou API ERP. */
+  source: 'manual' | 'api';
+  linkedAt?: string;
+}
+
 export interface Order {
   id: number;
+  /** Code de commande (format configuré, ex. SARI-WCMD26-00001). */
+  code?: string;
   client: string;
   email: string;
   phone?: string;
@@ -33,12 +47,16 @@ export interface Order {
   items: CommerceItem[];
   address?: string;
   payment?: string;
+  /** Paiement confirmé (requis pour lier une facture si activé). */
+  paid?: boolean;
   cost?: number;
   coupon?: string;
   quoteId?: number;
   zone?: string;
   ip?: string;
   history?: Array<{ status: string; at: string; note?: string }>;
+  /** Facture de vente liée (ERP ou upload manuel). */
+  invoice?: OrderInvoice | null;
 }
 
 export interface QuoteResponseLine {
@@ -273,6 +291,14 @@ export function saveQuotes(quotes: Quote[]) {
 
 export function orderRevenue(orders: Order[]) {
   return orders.filter((o) => o.status === 'delivered').reduce((sum, o) => sum + (Number(o.total) || 0), 0);
+}
+
+/** Une commande est « confirmée et payée » si elle est payée OU livrée, et non annulée/en attente. */
+export function isOrderPaid(order: Order): boolean {
+  if (order.paid) return true;
+  if (order.status === 'delivered') return true;
+  if (order.status === 'cancelled' || order.status === 'pending') return false;
+  return Boolean(order.payment);
 }
 
 export function quoteConversion(quotes: Quote[]) {
