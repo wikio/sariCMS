@@ -30,7 +30,7 @@ export const DEFAULT_SEO: SeoLocale = {
   canonical: 'https://sarisysteme.com',
   robots: 'index, follow',
   googleSiteVerification: '',
-  favicon: '/favicon.ico',
+  favicon: '/logo.png',
 };
 
 const FILE = path.join(process.cwd(), 'data', 'seo.json');
