@@ -8,6 +8,7 @@ import { Menu, X, Phone, Mail, ShoppingCart, User, LogOut, LayoutDashboard, Pack
 import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
 import SearchHeader from '@/components/layout/SearchHeader';
 import type { Config, Menu as MenuType } from '@/types';
+import { loadAdminSettings } from '@/lib/admin-settings';
 
 export default function Header({ config, menu }: { config: Config; menu: MenuType }) {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -27,6 +28,12 @@ export default function Header({ config, menu }: { config: Config; menu: MenuTyp
   };
 
   const navigation = menu.mainMenu || [];
+
+  // Logo du site : le logo configuré dans Paramètres prime sur celui des données CMS.
+  const [logo, setLogo] = useState<string>(config.meta?.logo || '');
+  useEffect(() => {
+    try { setLogo(loadAdminSettings().siteLogo || config.meta?.logo || ''); } catch { /* */ }
+  }, [config]);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
@@ -147,7 +154,7 @@ export default function Header({ config, menu }: { config: Config; menu: MenuTyp
         <div className="container mx-auto px-6">
           <div className="flex items-center justify-between h-16 lg:h-20">
             <Link href={getLinkHref('#home')} className="flex items-center gap-3 group flex-shrink-0">
-              <img src={config.meta?.logo || ''} alt={config.meta?.companyName} className="h-12 w-auto transition-transform duration-500 group-hover:scale-110" />
+              <img src={logo} alt={config.meta?.companyName} className="h-12 w-auto transition-transform duration-500 group-hover:scale-110" />
               <div className="hidden md:block">
                 <h1 className="font-bold text-xl lg:text-2xl text-sari-dark dark:text-white leading-tight">{config.meta?.companyName || 'SARI Système'}</h1>
                 <p className="text-xs text-gray-500 dark:text-gray-400 -mt-1">{config.meta?.tagline || 'Équipements Médicaux'}</p>

@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { CheckCircle2, Eye, Pencil, Trash2, XCircle } from 'lucide-react';
+import { CheckCircle2, Download, Eye, Pencil, Trash2, XCircle } from 'lucide-react';
 import {
-  deletePayment, loadPaymentRecords, paymentStatusLabel, paymentTypeLabel,
+  deletePayment, exportPaymentsCsv, loadPaymentRecords, paymentStatusLabel, paymentTypeLabel,
   rejectPayment, validatePayment, type PaymentRecord, type PaymentStatus,
 } from '@/lib/payments';
 import { useToast } from '@/components/admin/Toast';
@@ -67,12 +67,19 @@ export default function PaymentRecordsPage() {
 
   return (
     <div className="space-y-4">
-      <header className="flex items-end justify-between">
+      <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <div className="ad-breadcrumb">E-shop / Paiements effectués</div>
           <h1 className="text-3xl font-black">Paiements</h1>
           <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>Journal des paiements effectués et validés sur la vitrine.</p>
         </div>
+        <button
+          type="button"
+          className="ad-btn ad-btn-ghost"
+          onClick={() => { exportPaymentsCsv(shown); showToast('Export CSV généré', 'success'); }}
+        >
+          <Download className="w-4 h-4" /> Export CSV
+        </button>
       </header>
 
       <div className="grid grid-cols-3 gap-3">

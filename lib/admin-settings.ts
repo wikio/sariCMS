@@ -64,6 +64,8 @@ export interface AdminSettings {
   cropWidth: number;
   cropHeight: number;
   restockMessage: string;
+  /** Logo du site vitrine (URL). Surcharge le logo configuré dans les données du site. */
+  siteLogo: string;
   /** Connexion requise par défaut pour postuler à une offre d'emploi. */
   requireAuthToApply: boolean;
   security: SecuritySettings;
@@ -83,6 +85,7 @@ export const DEFAULT_SETTINGS: AdminSettings = {
   cropWidth: 800,
   cropHeight: 600,
   restockMessage: 'Votre commande sera traitée dans les meilleurs délais, un nouvel arrivage étant prévu le {{date_reapprovisionnement}}.',
+  siteLogo: '',
   requireAuthToApply: false,
   security: {
     admin2fa: false,

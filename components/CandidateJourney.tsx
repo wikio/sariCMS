@@ -7,6 +7,7 @@ import {
   FlowStep, flowMaxScore, loadAnswers, loadProgress, saveAnswers, saveProgress,
   type FlowProgress,
 } from '@/lib/recruitment-flow';
+import { maskPhone } from '@/lib/masks';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_RE = /^[+\d][\d\s().-]{6,}$/;
@@ -260,17 +261,18 @@ export default function CandidateJourney({
           {step.type === 'personal' && (step.fields || []).filter((f) => !f.hidden).map((f) => {
             const key = `${step.id}:${f.key}`;
             const isEmail = f.key === 'email';
+            const isPhone = f.key === 'phone' || f.key === 'telephone';
             return (
               <div key={f.key}>
                 <label className="block text-sm font-semibold text-sari-dark dark:text-white mb-1">
                   {f.label} {f.required ? <span className="text-red-500">*</span> : <span className="text-gray-400 font-normal">(optionnel)</span>}
                 </label>
                 <input
-                  type={isEmail ? 'email' : f.key === 'phone' ? 'tel' : 'text'}
+                  type={isEmail ? 'email' : isPhone ? 'tel' : 'text'}
                   className={inputCls(key)}
                   placeholder={f.label}
                   value={answers[key] || ''}
-                  onChange={(e) => setAnswer(key, e.target.value)}
+                  onChange={(e) => setAnswer(key, isPhone ? maskPhone(e.target.value) : e.target.value)}
                 />
                 {fieldError(key)}
               </div>

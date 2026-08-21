@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Save, Search } from 'lucide-react';
+import { FolderOpen, Image as ImageIcon, Save, Search, Upload } from 'lucide-react';
 import { DEFAULT_SETTINGS, loadAdminSettings, saveAdminSettings, type AdminSettings } from '@/lib/admin-settings';
 import { previewCode, DEFAULT_TEMPLATES, type CodeKind } from '@/lib/codes';
 import { testErpConnection } from '@/lib/erp';
 import { useToast } from '@/components/admin/Toast';
+import GedPicker from '@/components/admin/GedPicker';
 
 type SectionId = 'general' | 'commerce' | 'security' | 'integrations' | 'seo';
 type TabId = 'general' | 'codes' | 'quotes' | 'invoicing' | 'security' | 'smtp' | 'database' | 'seo';
@@ -36,7 +37,7 @@ const SECTIONS: SectionDef[] = [
 
 // Index de recherche : onglet → mots-clés.
 const SEARCH_INDEX: Record<TabId, string> = {
-  general: 'langue format produit réapprovisionnement crop largeur hauteur code sku',
+  general: 'langue format produit réapprovisionnement crop largeur hauteur code sku logo site vitrine identité',
   codes: 'code format devis commande facture produit numéro année',
   quotes: 'devis ligne validité commande pièce jointe transformer expiration',
   invoicing: 'facture facturation erp api clé url upload paiement',
@@ -153,6 +154,13 @@ export default function AdminSettingsPage() {
           {tab === 'general' && (
             <section className="ad-card p-5 space-y-4">
               <h2 className="ad-section-title">Général</h2>
+              <div className="space-y-1.5">
+                <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Logo du site vitrine</span>
+                <SiteLogoField value={settings.siteLogo || ''} onChange={(v) => setSettings({ ...settings, siteLogo: v })} />
+                <p className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>
+                  Utilisé dans l’en-tête et le pied de page de la vitrine. Laissez vide pour conserver le logo configuré dans les données du site.
+                </p>
+              </div>
               <label className="space-y-1.5 block">
                 <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Langue d’origine</span>
                 <select className="ad-select" value={settings.defaultLocale} onChange={(e) => setSettings({ ...settings, defaultLocale: e.target.value as AdminSettings['defaultLocale'] })}>
@@ -456,5 +464,67 @@ function Field({ label, value, onChange }: { label: string; value: string; onCha
       <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>{label}</span>
       <input className="ad-input" value={value} onChange={(e) => onChange(e.target.value)} />
     </label>
+  );
+}
+
+function SiteLogoField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const { showToast } = useToast();
+  const [ged, setGed] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const body = new FormData();
+      body.append('file', file);
+      body.append('module', 'logo');
+      body.append('label', file.name);
+      const res = await fetch('/api/admin/upload', { method: 'POST', body });
+      const json = await res.json();
+      if (json.url) onChange(json.url);
+      else showToast(json.error || 'Upload impossible', 'error');
+    } catch {
+      showToast('Upload impossible', 'error');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="flex flex-col sm:flex-row items-start gap-4">
+        <div
+          className="w-24 h-24 shrink-0 flex items-center justify-center rounded-lg border border-dashed overflow-hidden"
+          style={{ borderColor: 'var(--ad-line)', background: 'var(--ad-surface-2)' }}
+        >
+          {value ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={value} alt="Logo du site" className="max-w-full max-h-full object-contain p-2" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+          ) : (
+            <ImageIcon className="w-8 h-8" style={{ color: 'var(--ad-muted)' }} />
+          )}
+        </div>
+        <div className="flex-1 space-y-2">
+          <input className="ad-input" value={value} onChange={(e) => onChange(e.target.value)} placeholder="https://… ou importez une image" />
+          <div className="flex flex-wrap gap-2">
+            <label className="ad-btn ad-btn-ghost cursor-pointer">
+              <Upload className="w-4 h-4" /> {uploading ? 'Envoi…' : 'Uploader'}
+              <input type="file" accept="image/*" className="hidden" disabled={uploading} onChange={handleUpload} />
+            </label>
+            <button type="button" className="ad-btn ad-btn-ghost" onClick={() => setGed(true)}>
+              <FolderOpen className="w-4 h-4" /> Médiathèque
+            </button>
+            {value && (
+              <button type="button" className="ad-btn ad-btn-ghost" onClick={() => onChange('')}>
+                Retirer
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+      {ged && <GedPicker accept="image/*" onClose={() => setGed(false)} onPick={(url) => { onChange(url); setGed(false); }} />}
+    </div>
   );
 }

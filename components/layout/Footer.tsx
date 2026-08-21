@@ -1,10 +1,12 @@
 // components/layout/Footer.tsx
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { Mail, Phone, MapPin, Compass, Shield, Send, Heart } from 'lucide-react';
 import type { Config, Menu as MenuType } from '@/types';
+import { loadAdminSettings } from '@/lib/admin-settings';
 
 // ✅ Icônes SVG inline pour éviter les bugs Turbopack
 const FacebookIcon = () => (
@@ -28,6 +30,12 @@ export default function Footer({ config, menu }: { config: Config; menu: MenuTyp
 
   const navigation = menu.footerMenu?.navigation || [];
   const legal = menu.footerMenu?.legal || [];
+
+  // Logo du site : le logo configuré dans Paramètres prime sur celui des données CMS.
+  const [logo, setLogo] = useState<string>(config.meta?.logo || '');
+  useEffect(() => {
+    try { setLogo(loadAdminSettings().siteLogo || config.meta?.logo || ''); } catch { /* */ }
+  }, [config]);
 
   // ✅ Fonction utilitaire pour nettoyer et formater les liens avec la locale
   const getLinkHref = (href: string) => {
@@ -65,9 +73,10 @@ export default function Footer({ config, menu }: { config: Config; menu: MenuTyp
           {/* Colonne 1 : À propos */}
           <div>
             <img
-              src={config.meta?.logo || ''}
+              src={logo}
               alt={config.meta?.companyName || 'Logo'}
               className="h-12 mb-6 brightness-0 invert"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
             />
             <p className="text-gray-400 text-sm mb-6">
               {config.meta?.description || ''}

@@ -22,6 +22,7 @@ import Badge from '@/components/shared/Badge';
 import CandidateJourney from '@/components/CandidateJourney';
 import { loadFlowFor, findResumeByToken, type FlowStep } from '@/lib/recruitment-flow';
 import { loadAdminSettings } from '@/lib/admin-settings';
+import { maskPhone } from '@/lib/masks';
 
 export default function JobDetailPage() {
   const params = useParams();
@@ -407,7 +408,7 @@ export default function JobDetailPage() {
                   </div>
                   <div>
                     <input type="tel" placeholder={t('phone')} value={appFormData.phone}
-                      onChange={(e) => { setAppFormData({ ...appFormData, phone: e.target.value }); setFormErrors((p) => { const { phone: _n, ...r } = p; return r; }); }}
+                      onChange={(e) => { setAppFormData({ ...appFormData, phone: maskPhone(e.target.value) }); setFormErrors((p) => { const { phone: _n, ...r } = p; return r; }); }}
                       className={`w-full px-4 py-3 border rounded-lg outline-none transition-colors dark:bg-[#111111] dark:text-white ${formErrors.phone ? 'border-red-500 focus:border-red-500' : 'border-gray-300 dark:border-gray-700 focus:border-sari-blue'}`} />
                     {formErrors.phone && <p className="text-xs text-red-500 mt-1">{formErrors.phone}</p>}
                   </div>

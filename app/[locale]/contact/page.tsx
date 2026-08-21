@@ -13,6 +13,7 @@ import type { Config, Menu } from '@/types';
 import SocialLinks from '@/components/shared/SocialLinks';
 import ImageCaptcha from '@/components/ImageCaptcha';
 import { loadAdminSettings } from '@/lib/admin-settings';
+import { maskPhone } from '@/lib/masks';
 
 export default function ContactPage() {
   const [config, setConfig] = useState<Config | null>(null);
@@ -433,7 +434,7 @@ export default function ContactPage() {
                     <input
                       type="tel"
                       value={formData.phone}
-                      onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                      onChange={(e) => setFormData({...formData, phone: maskPhone(e.target.value)})}
                       className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none"
                       placeholder="+33 1 23 45 67 89"
                     />

@@ -187,3 +187,35 @@ export function rejectPayment(id: string, note: string): void {
 export function deletePayment(id: string): void {
   savePaymentRecords(loadPaymentRecords().filter((p) => p.id !== id));
 }
+
+/**
+ * Export CSV du journal des paiements (séparateur « ; » + BOM UTF-8,
+ * compatible Excel). Masque les numéros de carte (derniers 4 chiffres).
+ */
+export function exportPaymentsCsv(rows: PaymentRecord[], filename = 'paiements') {
+  const esc = (v: string) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const cols = ['Commande', 'Client', 'Email', 'Méthode', 'Carte', 'Montant (DA)', 'Statut', 'Note', 'Date', 'Validé le'];
+  const lines = [cols.join(';')];
+  for (const p of rows) {
+    lines.push(
+      [
+        esc(p.orderCode || (p.orderId ? `#${p.orderId}` : '')),
+        esc(p.client),
+        esc(p.email),
+        esc(p.methodName || paymentTypeLabel(p.method)),
+        esc(p.cardMasked || ''),
+        String(p.amount),
+        esc(paymentStatusLabel(p.status)),
+        esc(p.note || ''),
+        esc(new Date(p.date).toLocaleString()),
+        esc(p.validatedAt ? new Date(p.validatedAt).toLocaleString() : ''),
+      ].join(';'),
+    );
+  }
+  const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${filename}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}

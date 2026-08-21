@@ -13,6 +13,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import ImageCaptcha from '@/components/ImageCaptcha';
 import { loadAdminSettings } from '@/lib/admin-settings';
+import { maskPhone } from '@/lib/masks';
 
 export default function RegisterPage() {
   const locale = useLocale();
@@ -306,7 +307,7 @@ export default function RegisterPage() {
                       <div>
                         <label className="block text-sm font-bold text-sari-dark dark:text-white mb-2">{t('phone')}</label>
                         <input type="tel" value={formData.phone}
-                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                          onChange={(e) => setFormData({ ...formData, phone: maskPhone(e.target.value) })}
                           className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none rounded-lg"
                           placeholder="+213 21 23 45 67" />
                       </div>
