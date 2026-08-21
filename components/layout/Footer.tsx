@@ -24,6 +24,7 @@ export default function Footer({ config, menu }: { config: Config; menu: MenuTyp
   const locale = useLocale();
   const t = useTranslations('components.layout.Footer');
   const tNav = useTranslations('common.nav');
+  const tLegal = useTranslations('pages.legal');
 
   const navigation = menu.footerMenu?.navigation || [];
   const legal = menu.footerMenu?.legal || [];
@@ -35,14 +36,20 @@ export default function Footer({ config, menu }: { config: Config; menu: MenuTyp
     return `/${locale}/${cleanPath}`;
   };
 
-  // Traduit un libellé de menu par son id (common.nav ou clés légales du Footer),
-  // sinon conserve le libellé fourni (données CMS déjà localisées).
+  // Traduit un libellé de menu par son id :
+  //  1. common.nav  (liens de navigation)
+  //  2. pages.legal (mentions / privacy / conditions / verification)
+  //  3. Footer      (clés spécifiques au pied de page)
+  //  sinon conserve le libellé fourni (données CMS déjà localisées).
   const getLabel = (item: { id?: string; label: string }) => {
     if (!item.id) return item.label;
-    const viaNav = tNav(item.id as never);
-    if (viaNav && viaNav !== item.id) return viaNav;
-    const viaFooter = t(item.id as never);
-    if (viaFooter && viaFooter !== item.id) return viaFooter;
+    const id = item.id;
+    const viaNav = tNav(id as never);
+    if (viaNav && viaNav !== id) return viaNav;
+    const viaLegal = tLegal(id as never);
+    if (viaLegal && viaLegal !== id) return viaLegal;
+    const viaFooter = t(id as never);
+    if (viaFooter && viaFooter !== id) return viaFooter;
     return item.label;
   };
 

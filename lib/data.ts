@@ -360,7 +360,7 @@ export async function getLegal(locale: string): Promise<Legal> {
   const fallback: Legal = {
     mentions: { title: '', content: '' },
     privacy: { title: '', content: '' },
-    cgv: { title: '', content: '' },
+    conditions: { title: '', content: '' },
     about: { title: '', content: '' },
   };
   return fromCmsOrJson(locale, 'legal', fallback, async () => {
@@ -385,10 +385,10 @@ export async function getLegal(locale: string): Promise<Legal> {
     const mapped: Legal = {
       mentions: pick('mention', 'legal-notice', 'mentions'),
       privacy: pick('privacy', 'confidential'),
-      cgv: pick('cgv', 'condition'),
+      conditions: pick('condition', 'cgv', 'conditions', 'terms'),
       about: pick('about'),
     };
-    if (!mapped.mentions.title && !mapped.privacy.title && !mapped.cgv.title && !mapped.about.title) {
+    if (!mapped.mentions.title && !mapped.privacy.title && !mapped.conditions.title && !mapped.about.title) {
       return null;
     }
     return mapped;

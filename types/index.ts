@@ -141,11 +141,18 @@ export interface Partner {
   category?: string;
 }
 
+export interface LegalDoc {
+  title: string;
+  content: string;
+  lastUpdate?: string;
+}
+
 export interface Legal {
-  mentions: { title: string; content: string };
-  privacy: { title: string; content: string };
-  cgv: { title: string; content: string };
-  about: { title: string; content: string };
+  mentions: LegalDoc;
+  privacy: LegalDoc;
+  conditions: LegalDoc;
+  about: LegalDoc;
+  [key: string]: LegalDoc;
 }
 
 export interface GenericContent {
