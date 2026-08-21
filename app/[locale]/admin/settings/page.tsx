@@ -182,9 +182,18 @@ function ToggleRow({ label, hint, on, onToggle }: { label: string; hint?: string
         <div className="text-sm font-bold">{label}</div>
         {hint && <div className="text-xs" style={{ color: 'var(--ad-muted)' }}>{hint}</div>}
       </div>
-      <button type="button" onClick={onToggle} className={`ad-toggle ${on ? 'is-on' : ''}`}>
-        <span className="ad-toggle-label">{on ? 'Activé' : 'Désactivé'}</span>
-        <span className="ad-toggle-knob" />
+      <button type="button" onClick={onToggle} className={`ad-toggle ${on ? 'is-on' : ''}`} aria-pressed={on} role="switch">
+        {on ? (
+          <>
+            <span className="ad-toggle-label">Activé</span>
+            <span className="ad-toggle-knob" />
+          </>
+        ) : (
+          <>
+            <span className="ad-toggle-knob" />
+            <span className="ad-toggle-label">Désactivé</span>
+          </>
+        )}
       </button>
     </div>
   );
