@@ -3,14 +3,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Check, ChevronLeft, ChevronRight, Send, Upload } from 'lucide-react';
 import {
-  FlowStep, FlowStepType, flowMaxScore, loadAnswers, loadProgress, saveAnswers, saveProgress,
+  FlowStep, flowMaxScore, loadAnswers, loadProgress, saveAnswers, saveProgress,
   type FlowProgress,
 } from '@/lib/recruitment-flow';
-
-const STEP_ICONS: Record<FlowStepType, React.ElementType> = {
-  personal: () => null, experience: () => null, motivation: () => null, cv: () => null,
-  multiple: () => null, single: () => null, open: () => null, test: () => null,
-};
 
 export default function CandidateJourney({
   steps,

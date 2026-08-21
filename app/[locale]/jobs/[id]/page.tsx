@@ -52,7 +52,9 @@ export default function JobDetailPage() {
   useEffect(() => {
     const loadJob = async () => {
       const careers = await getCareers(locale);
-      const found = careers.find(j => matchesEntity(j, id));
+      // L'URL est au format `<id>-<slug>` : on isole l'id numérique de tête.
+      const idString = id.split('-')[0];
+      const found = careers.find(j => matchesEntity(j, idString) || matchesEntity(j, id));
       setJob(found || null);
       
       if (found) {
@@ -124,13 +126,18 @@ export default function JobDetailPage() {
   };
 
   const handleQuickApply = () => {
+    if (job && hasApplied(job.id)) {
+      alert(t('alreadyApplied'));
+      return;
+    }
+    // Si l'offre possède un parcours de candidature, on ouvre le wizard.
+    if (flowSteps.length > 0) {
+      setShowApplicationForm(true);
+      return;
+    }
     if (!isAuthenticated) {
       localStorage.setItem('sari_pending_action', JSON.stringify({ type: 'apply', jobId: id }));
       router.push(`/${locale}/connexion?source=carriere`);
-      return;
-    }
-    if (job && hasApplied(job.id)) {
-      alert(t('alreadyApplied'));
       return;
     }
     if (job) {

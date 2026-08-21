@@ -67,6 +67,14 @@ export default function FlowBuilderPage() {
     saveFlowLegacy(id, offer?.legacyId, next);
   };
 
+  // Dès que l'offre (et donc son legacyId) est connue, on synchronise le
+  // parcours sous la clé legacyId pour que la vitrine publique le retrouve,
+  // y compris le parcours par défaut chargé à l'ouverture.
+  useEffect(() => {
+    if (offer?.legacyId == null) return;
+    saveFlowLegacy(id, offer.legacyId, steps);
+  }, [offer?.legacyId, id, steps]);
+
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   const onDragEnd = (event: DragEndEvent) => {

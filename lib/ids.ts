@@ -9,6 +9,13 @@ export function matchesEntity(
   if (item.slug !== undefined && item.slug !== null && String(item.slug) === needle) return true;
   const n = Number(rawId);
   if (!Number.isNaN(n) && Number(item.id) === n) return true;
+  // URL de type `<id>-<slug>` : on retente avec la tête numérique (ex. "14" de "14-directeur").
+  const prefix = needle.split('-')[0];
+  if (prefix !== needle && prefix) {
+    if (item.id !== undefined && item.id !== null && String(item.id) === prefix) return true;
+    const pn = Number(prefix);
+    if (!Number.isNaN(pn) && Number(item.id) === pn) return true;
+  }
   return false;
 }
 
