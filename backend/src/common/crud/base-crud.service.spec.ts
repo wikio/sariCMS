@@ -20,6 +20,7 @@ interface Item extends BaseEntity {
 class MemoryRepo implements ICrudRepository<Item> {
   readonly collection = 'items';
   items: Item[] = [];
+  private seq = 0;
 
   async findMany(options: QueryOptions): Promise<PaginatedResult<Item>> {
     let rows = this.items.filter((i) => (options.onlyDeleted ? i.deletedAt : !i.deletedAt));
@@ -45,7 +46,14 @@ class MemoryRepo implements ICrudRepository<Item> {
     );
   }
   async create(data: Partial<Item>): Promise<Item> {
-    const item = { ...data } as Item;
+    const now = new Date().toISOString();
+    const item = {
+      ...data,
+      id: (data as { id?: number }).id ?? ++this.seq,
+      createdAt: now,
+      updatedAt: now,
+      deletedAt: null,
+    } as Item;
     this.items.push(item);
     return item;
   }
