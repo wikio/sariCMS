@@ -129,6 +129,20 @@ export function flowKey(offerId: string) {
   return `sari_flow_${offerId}`;
 }
 
+export function flowLegacyKey(legacyId: number | string) {
+  return `sari_flow_legacy_${legacyId}`;
+}
+
+/** Charge un parcours à partir d'un id UUID ou d'un legacyId (vitrine). */
+export function loadFlowFor(legacyIdOrUuid: number | string): FlowStep[] {
+  if (typeof window === 'undefined') return [];
+  const direct = localStorage.getItem(flowKey(String(legacyIdOrUuid)));
+  if (direct) { try { const p = JSON.parse(direct); if (Array.isArray(p)) return p; } catch { /* */ } }
+  const legacy = localStorage.getItem(flowLegacyKey(legacyIdOrUuid));
+  if (legacy) { try { const p = JSON.parse(legacy); if (Array.isArray(p)) return p; } catch { /* */ } }
+  return [];
+}
+
 export function templatesKey() {
   return 'sari_flow_templates';
 }
@@ -145,6 +159,14 @@ export function loadFlow(offerId: string): FlowStep[] {
 
 export function saveFlow(offerId: string, steps: FlowStep[]) {
   localStorage.setItem(flowKey(offerId), JSON.stringify(steps));
+}
+
+/** Sauvegarde aussi sous la clé legacyId pour que la vitrine puisse retrouver le parcours. */
+export function saveFlowLegacy(offerId: string, legacyId: number | string | null | undefined, steps: FlowStep[]) {
+  saveFlow(offerId, steps);
+  if (legacyId != null && String(legacyId) !== '') {
+    localStorage.setItem(flowLegacyKey(legacyId), JSON.stringify(steps));
+  }
 }
 
 export function loadTemplates(): FlowTemplate[] {
@@ -210,6 +232,24 @@ export function loadProgress(offerId: string, applicationId: number): FlowProgre
 
 export function saveProgress(offerId: string, applicationId: number, progress: FlowProgress[]) {
   localStorage.setItem(progressKey(offerId, applicationId), JSON.stringify(progress));
+}
+
+/** Réponses du candidat (sauvegarde progressive de la vitrine). */
+export function answersKey(offerId: string, applicationId: number) {
+  return `sari_flow_answers_${offerId}_${applicationId}`;
+}
+
+export function loadAnswers(offerId: string, applicationId: number): Record<string, string> {
+  if (typeof window === 'undefined') return {};
+  try {
+    return JSON.parse(localStorage.getItem(answersKey(offerId, applicationId)) || '{}') as Record<string, string>;
+  } catch {
+    return {};
+  }
+}
+
+export function saveAnswers(offerId: string, applicationId: number, answers: Record<string, string>) {
+  localStorage.setItem(answersKey(offerId, applicationId), JSON.stringify(answers));
 }
 
 /* ============================================================
@@ -286,11 +326,36 @@ export function getResumeToken(offerId: string, applicationId: number): string |
   return localStorage.getItem(resumeKey(offerId, applicationId));
 }
 
-/** Lien unique de reprise (à envoyer par email). */
-export function resumeUrl(offerId: string, applicationId: number, locale = 'fr'): string {
+/** Retrouve (offerId, applicationId) à partir d'un jeton de reprise. */
+export function findResumeByToken(token: string): { offerId: string; applicationId: number } | null {
+  if (typeof window === 'undefined' || !token) return null;
+  const prefix = 'sari_flow_resume_';
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!key || !key.startsWith(prefix)) continue;
+    if (localStorage.getItem(key) !== token) continue;
+    // key = sari_flow_resume_<offerId>_<applicationId>
+    const rest = key.slice(prefix.length);
+    const idx = rest.lastIndexOf('_');
+    if (idx < 0) continue;
+    const offerId = rest.slice(0, idx);
+    const applicationId = Number(rest.slice(idx + 1));
+    if (Number.isFinite(applicationId)) return { offerId, applicationId };
+  }
+  return null;
+}
+
+/** Lien unique de reprise (à envoyer par email). Pointe vers la page publique /jobs. */
+export function resumeUrl(
+  offerId: string,
+  applicationId: number,
+  legacyId: number | string | null | undefined,
+  locale = 'fr',
+): string {
   const token = getResumeToken(offerId, applicationId) || generateResumeToken();
   localStorage.setItem(resumeKey(offerId, applicationId), token);
-  return `/${locale}/careers/${offerId}?resume=${token}`;
+  const jobId = legacyId != null && String(legacyId) !== '' ? String(legacyId) : offerId;
+  return `/${locale}/jobs/${jobId}?resume=${token}`;
 }
 
 /** Seed une progression de démo pour rendre le funnel et les timelines visibles. */

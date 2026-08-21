@@ -324,7 +324,7 @@ function FlowProgression({ offer, app }: { offer: Offer; app: Application }) {
   const doneCount = progress.filter((p) => p.done).length;
   const total = steps.length;
   const pct = total ? Math.round((doneCount / total) * 100) : 0;
-  const resume = resumeUrl(offer.id, app.id);
+  const resume = resumeUrl(offer.id, app.id, offer.legacyId);
 
   return (
     <div className="ad-card p-3 space-y-2" style={{ borderColor: 'color-mix(in srgb, var(--ad-accent) 30%, var(--ad-line))' }}>

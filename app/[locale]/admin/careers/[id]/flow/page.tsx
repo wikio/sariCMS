@@ -21,7 +21,7 @@ import { loadApplications } from '@/lib/recruitment';
 import {
   FLOW_STEP_META, FlowStep, FlowStepType, FlowTemplate, ensureDemoFlowProgress, ensureTemplates,
   flowCompletionRate, flowFunnel, flowKey, flowMaxScore, loadFlow, loadTemplates, newStep,
-  resumeUrl, saveFlow, saveTemplates,
+  resumeUrl, saveFlow, saveFlowLegacy, saveTemplates,
 } from '@/lib/recruitment-flow';
 
 const STEP_ICONS: Record<FlowStepType, React.ElementType> = {
@@ -35,7 +35,7 @@ export default function FlowBuilderPage() {
   const id = String(params.id);
   const { showToast } = useToast();
 
-  const [offer, setOffer] = useState<{ title?: string; status?: string } | null>(null);
+  const [offer, setOffer] = useState<{ title?: string; status?: string; legacyId?: number | null } | null>(null);
   const [steps, setSteps] = useState<FlowStep[]>([]);
   const [editing, setEditing] = useState<FlowStep | null>(null);
   const [viewMode, setViewMode] = useState<'timeline' | 'funnel'>('timeline');
@@ -48,7 +48,7 @@ export default function FlowBuilderPage() {
   useEffect(() => {
     (async () => {
       try {
-        const o = await cmsAdminFetch<{ title?: string; status?: string }>(`/careers/${id}?view=block`);
+        const o = await cmsAdminFetch<{ title?: string; status?: string; legacyId?: number | null }>(`/careers/${id}?view=block`);
         setOffer(o);
       } catch { setOffer(null); }
     })();
@@ -64,6 +64,7 @@ export default function FlowBuilderPage() {
   const persist = (next: FlowStep[]) => {
     setSteps(next);
     saveFlow(id, next);
+    saveFlowLegacy(id, offer?.legacyId, next);
   };
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));

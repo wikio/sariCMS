@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { 
@@ -19,6 +19,8 @@ import type { Career } from '@/types';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import CTAButton from '@/components/ui/CTAButton';
 import Badge from '@/components/shared/Badge';
+import CandidateJourney from '@/components/CandidateJourney';
+import { loadFlowFor, findResumeByToken, type FlowStep } from '@/lib/recruitment-flow';
 
 export default function JobDetailPage() {
   const params = useParams();
@@ -26,8 +28,14 @@ export default function JobDetailPage() {
   const locale = useLocale();
   const t = useTranslations('pages.jobs');
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, isAuthenticated } = useAuth();
   const { addApplication, hasApplied } = useApplications();
+
+  // Parcours de candidature
+  const [flowSteps, setFlowSteps] = useState<FlowStep[]>([]);
+  const [journeyAppId, setJourneyAppId] = useState<number>(0);
+  const [journeyOfferId, setJourneyOfferId] = useState<string>('');
 
   const [job, setJob] = useState<Career | null>(null);
   const [relatedJobs, setRelatedJobs] = useState<Career[]>([]);
@@ -68,6 +76,29 @@ export default function JobDetailPage() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Charge le parcours candidat + gère la reprise.
+  useEffect(() => {
+    if (!job) return;
+    const steps = loadFlowFor(job.id);
+    setFlowSteps(steps);
+
+    const resumeToken = searchParams.get('resume');
+    if (resumeToken) {
+      const found = findResumeByToken(resumeToken);
+      if (found) {
+        setJourneyOfferId(found.offerId);
+        setJourneyAppId(found.applicationId);
+        setShowApplicationForm(true);
+        return;
+      }
+    }
+    // Nouvelle candidature : id local + offre résolue par legacyId.
+    if (steps.length) {
+      setJourneyAppId(Date.now());
+      setJourneyOfferId(String(job.id));
+    }
+  }, [job, searchParams]);
 
   const handleApplication = (e: React.FormEvent) => {
     e.preventDefault();
@@ -329,8 +360,19 @@ export default function JobDetailPage() {
                 </div>
               ) : !showApplicationForm ? (
                 <CTAButton onClick={() => setShowApplicationForm(true)} variant="primary" icon="send" fullWidth>
-                  {t('applyNow')}
+                  {flowSteps.length > 0 ? t('startJourney') : t('applyNow')}
                 </CTAButton>
+              ) : flowSteps.length > 0 ? (
+                <CandidateJourney
+                  steps={flowSteps}
+                  offerId={journeyOfferId || String(job.id)}
+                  applicationId={journeyAppId || Date.now()}
+                  onComplete={() => {
+                    setApplicationSubmitted(true);
+                    setAddedToCart(true);
+                    setTimeout(() => setAddedToCart(false), 3000);
+                  }}
+                />
               ) : (
                 <form onSubmit={handleApplication} className="space-y-4">
                   <input type="text" required placeholder={t('fullName')} value={appFormData.name} onChange={(e) => setAppFormData({...appFormData, name: e.target.value})} className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none rounded-lg" />
