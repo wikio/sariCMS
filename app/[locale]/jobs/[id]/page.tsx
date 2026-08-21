@@ -49,6 +49,7 @@ export default function JobDetailPage() {
   const [appFormData, setAppFormData] = useState({
     name: '', email: '', phone: '', linkedin: '', experience: '', motivation: '', cvName: '', acceptTerms: false
   });
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const loadJob = async () => {
@@ -105,6 +106,17 @@ export default function JobDetailPage() {
 
   const handleApplication = (e: React.FormEvent) => {
     e.preventDefault();
+    // Validation côté client (champs requis + formats).
+    const errs: Record<string, string> = {};
+    if (!appFormData.name.trim()) errs.name = 'Le nom complet est requis.';
+    if (!appFormData.email.trim()) errs.email = 'L’adresse e-mail est requise.';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(appFormData.email.trim())) errs.email = 'Adresse e-mail invalide.';
+    if (appFormData.phone.trim() && !/^[+\d][\d\s().-]{6,}$/.test(appFormData.phone.trim())) errs.phone = 'Numéro de téléphone invalide.';
+    if (!appFormData.motivation.trim()) errs.motivation = 'Votre motivation est requise.';
+    if (!appFormData.acceptTerms) errs.acceptTerms = 'Vous devez accepter les conditions.';
+    if (Object.keys(errs).length > 0) { setFormErrors(errs); return; }
+    setFormErrors({});
+
     if (job) {
       addApplication({
         jobId: job.id,
@@ -380,25 +392,47 @@ export default function JobDetailPage() {
                   }}
                 />
               ) : (
-                <form onSubmit={handleApplication} className="space-y-4">
-                  <input type="text" required placeholder={t('fullName')} value={appFormData.name} onChange={(e) => setAppFormData({...appFormData, name: e.target.value})} className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none rounded-lg" />
-                  <input type="email" required placeholder={t('email')} value={appFormData.email} onChange={(e) => setAppFormData({...appFormData, email: e.target.value})} className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none rounded-lg" />
-                  <input type="tel" placeholder={t('phone')} value={appFormData.phone} onChange={(e) => setAppFormData({...appFormData, phone: e.target.value})} className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none rounded-lg" />
-                  <input type="text" placeholder={t('linkedin')} value={appFormData.linkedin} onChange={(e) => setAppFormData({...appFormData, linkedin: e.target.value})} className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none rounded-lg" />
-                  <input type="text" placeholder={t('yearsExp')} value={appFormData.experience} onChange={(e) => setAppFormData({...appFormData, experience: e.target.value})} className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none rounded-lg" />
+                <form onSubmit={handleApplication} noValidate className="space-y-4">
+                  <div>
+                    <input type="text" placeholder={t('fullName')} value={appFormData.name}
+                      onChange={(e) => { setAppFormData({ ...appFormData, name: e.target.value }); setFormErrors((p) => { const { name: _n, ...r } = p; return r; }); }}
+                      className={`w-full px-4 py-3 border rounded-lg outline-none transition-colors dark:bg-[#111111] dark:text-white ${formErrors.name ? 'border-red-500 focus:border-red-500' : 'border-gray-300 dark:border-gray-700 focus:border-sari-blue'}`} />
+                    {formErrors.name && <p className="text-xs text-red-500 mt-1">{formErrors.name}</p>}
+                  </div>
+                  <div>
+                    <input type="email" placeholder={t('email')} value={appFormData.email}
+                      onChange={(e) => { setAppFormData({ ...appFormData, email: e.target.value }); setFormErrors((p) => { const { email: _n, ...r } = p; return r; }); }}
+                      className={`w-full px-4 py-3 border rounded-lg outline-none transition-colors dark:bg-[#111111] dark:text-white ${formErrors.email ? 'border-red-500 focus:border-red-500' : 'border-gray-300 dark:border-gray-700 focus:border-sari-blue'}`} />
+                    {formErrors.email && <p className="text-xs text-red-500 mt-1">{formErrors.email}</p>}
+                  </div>
+                  <div>
+                    <input type="tel" placeholder={t('phone')} value={appFormData.phone}
+                      onChange={(e) => { setAppFormData({ ...appFormData, phone: e.target.value }); setFormErrors((p) => { const { phone: _n, ...r } = p; return r; }); }}
+                      className={`w-full px-4 py-3 border rounded-lg outline-none transition-colors dark:bg-[#111111] dark:text-white ${formErrors.phone ? 'border-red-500 focus:border-red-500' : 'border-gray-300 dark:border-gray-700 focus:border-sari-blue'}`} />
+                    {formErrors.phone && <p className="text-xs text-red-500 mt-1">{formErrors.phone}</p>}
+                  </div>
+                  <input type="text" placeholder={t('linkedin')} value={appFormData.linkedin} onChange={(e) => setAppFormData({ ...appFormData, linkedin: e.target.value })} className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none rounded-lg" />
+                  <input type="text" placeholder={t('yearsExp')} value={appFormData.experience} onChange={(e) => setAppFormData({ ...appFormData, experience: e.target.value })} className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none rounded-lg" />
                   <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 p-4 text-center hover:border-sari-blue transition-colors rounded-lg">
-                    <input type="file" id="cv-upload" accept=".pdf,.doc,.docx" onChange={(e) => { if (e.target.files && e.target.files[0]) setAppFormData({...appFormData, cvName: e.target.files[0].name}); }} className="hidden" />
+                    <input type="file" id="cv-upload" accept=".pdf,.doc,.docx" onChange={(e) => { if (e.target.files && e.target.files[0]) setAppFormData({ ...appFormData, cvName: e.target.files[0].name }); }} className="hidden" />
                     <label htmlFor="cv-upload" className="cursor-pointer">
                       <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                       <p className="text-sm text-gray-500">{appFormData.cvName || t('uploadCv')}</p>
                       <p className="text-xs text-gray-400 mt-1">{t('cvFormats')}</p>
                     </label>
                   </div>
-                  <textarea rows={4} required placeholder={t('motivation')} value={appFormData.motivation} onChange={(e) => setAppFormData({...appFormData, motivation: e.target.value})} className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none resize-none rounded-lg"></textarea>
-                  <div className="flex items-start gap-2">
-                    <input type="checkbox" id="accept-terms" required checked={appFormData.acceptTerms} onChange={(e) => setAppFormData({...appFormData, acceptTerms: e.target.checked})} className="w-4 h-4 mt-1" />
-                    <label htmlFor="accept-terms" className="text-xs text-gray-600 dark:text-gray-400">{t('acceptTerms')}</label>
+                  <div>
+                    <textarea rows={4} placeholder={t('motivation')} value={appFormData.motivation}
+                      onChange={(e) => { setAppFormData({ ...appFormData, motivation: e.target.value }); setFormErrors((p) => { const { motivation: _n, ...r } = p; return r; }); }}
+                      className={`w-full px-4 py-3 border rounded-lg outline-none resize-none transition-colors dark:bg-[#111111] dark:text-white ${formErrors.motivation ? 'border-red-500 focus:border-red-500' : 'border-gray-300 dark:border-gray-700 focus:border-sari-blue'}`}></textarea>
+                    {formErrors.motivation && <p className="text-xs text-red-500 mt-1">{formErrors.motivation}</p>}
                   </div>
+                  <div className="flex items-start gap-2">
+                    <input type="checkbox" id="accept-terms" checked={appFormData.acceptTerms}
+                      onChange={(e) => { setAppFormData({ ...appFormData, acceptTerms: e.target.checked }); setFormErrors((p) => { const { acceptTerms: _n, ...r } = p; return r; }); }} className="w-4 h-4 mt-1" />
+                    <label htmlFor="accept-terms" className={`text-xs ${formErrors.acceptTerms ? 'text-red-500' : 'text-gray-600 dark:text-gray-400'}`}>{t('acceptTerms')}</label>
+                  </div>
+                  {formErrors.acceptTerms && <p className="text-xs text-red-500">{formErrors.acceptTerms}</p>}
                   <CTAButton type="submit" variant="primary" fullWidth>{t('sendApplication')}</CTAButton>
                   <button type="button" onClick={() => setShowApplicationForm(false)} className="w-full text-gray-500 hover:text-sari-dark dark:hover:text-white text-sm">{t('cancel')}</button>
                 </form>

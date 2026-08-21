@@ -1,12 +1,15 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Check, ChevronLeft, ChevronRight, Send, ShieldCheck, Upload } from 'lucide-react';
+import { AlertCircle, Check, ChevronLeft, ChevronRight, Send, ShieldCheck, Upload } from 'lucide-react';
 import ImageCaptcha from '@/components/ImageCaptcha';
 import {
   FlowStep, flowMaxScore, loadAnswers, loadProgress, saveAnswers, saveProgress,
   type FlowProgress,
 } from '@/lib/recruitment-flow';
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_RE = /^[+\d][\d\s().-]{6,}$/;
 
 export default function CandidateJourney({
   steps,
@@ -24,6 +27,7 @@ export default function CandidateJourney({
   const [progress, setProgress] = useState<FlowProgress[]>(() => loadProgress(offerId, applicationId));
   const [ended, setEnded] = useState<{ message: string; score: number } | null>(null);
   const [captchaOk, setCaptchaOk] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Reprend à la première étape non complétée (sauvegarde progressive).
   useEffect(() => {
@@ -40,6 +44,18 @@ export default function CandidateJourney({
     saveAnswers(offerId, applicationId, nextAnswers);
     setProgress(nextProgress);
     saveProgress(offerId, applicationId, nextProgress);
+  };
+
+  const setAnswer = (key: string, value: string) => {
+    const next = { ...answers, [key]: value };
+    setAnswers(next);
+    saveAnswers(offerId, applicationId, next);
+    // efface l'erreur du champ dès qu'on le corrige
+    setErrors((prev) => {
+      if (!prev[key]) return prev;
+      const { [key]: _removed, ...rest } = prev;
+      return rest;
+    });
   };
 
   const markDone = () => {
@@ -60,6 +76,65 @@ export default function CandidateJourney({
       }
     }
     return score;
+  };
+
+  /** Valide l'étape courante. Retourne un objet { clé: message }. */
+  const validateStep = (): Record<string, string> => {
+    const out: Record<string, string> = {};
+    if (!step) return out;
+
+    if (step.type === 'personal') {
+      for (const f of step.fields || []) {
+        if (f.hidden) continue;
+        const key = `${step.id}:${f.key}`;
+        const value = (answers[key] || '').trim();
+        if (f.required && !value) {
+          out[key] = 'Ce champ est obligatoire.';
+          continue;
+        }
+        if (value && f.key === 'email' && !EMAIL_RE.test(value)) {
+          out[key] = 'Adresse e-mail invalide.';
+        }
+        if (value && (f.key === 'phone' || f.key === 'telephone') && !PHONE_RE.test(value)) {
+          out[key] = 'Numéro de téléphone invalide.';
+        }
+      }
+    }
+
+    if (step.type === 'experience') {
+      const value = (answers[step.id] || '').trim();
+      if (step.required && !value) out[step.id] = 'Veuillez renseigner au moins une expérience.';
+      if (step.minExperiences && step.minExperiences > 0 && !value) out[step.id] = `Minimum ${step.minExperiences} expérience(s) requise(s).`;
+    }
+
+    if (step.type === 'motivation') {
+      const value = (answers[step.id] || '').trim();
+      if (step.required && !value) out[step.id] = 'Votre lettre de motivation est requise.';
+    }
+
+    if (step.type === 'cv') {
+      if (step.required && !answers[step.id]) out[step.id] = 'Veuillez joindre votre CV.';
+    }
+
+    if (step.type === 'open') {
+      const value = (answers[step.id] || '').trim();
+      if (step.required && !value) out[step.id] = 'Veuillez répondre à cette question.';
+      if (value && step.minLength && value.length < step.minLength) out[step.id] = `Minimum ${step.minLength} caractères.`;
+      if (value && step.maxLength && value.length > step.maxLength) out[step.id] = `Maximum ${step.maxLength} caractères.`;
+    }
+
+    if (step.type === 'multiple' || step.type === 'single') {
+      if (step.required && !answers[step.id]) out[step.id] = 'Veuillez sélectionner une réponse.';
+    }
+
+    if (step.type === 'test') {
+      for (const q of step.questions || []) {
+        const key = `${step.id}:${q.id}`;
+        if (step.required && !answers[key]) out[key] = 'Veuillez répondre à cette question.';
+      }
+    }
+
+    return out;
   };
 
   const goNext = () => {
@@ -88,8 +163,16 @@ export default function CandidateJourney({
       }
     }
 
+    // Validation des champs requis / formats.
+    const errs = validateStep();
+    if (Object.keys(errs).length > 0) {
+      setErrors(errs);
+      return;
+    }
+
     // Sécurité : CAPTCHA requis pour finaliser la candidature (dernière étape).
     if (index === steps.length - 1 && !captchaOk) {
+      setErrors({ captcha: 'Veuillez saisir le code CAPTCHA.' });
       return;
     }
 
@@ -102,12 +185,14 @@ export default function CandidateJourney({
       onComplete?.(answers, finalScore);
     } else {
       commit(answers, p);
+      setErrors({});
       setIndex(index + 1);
     }
   };
 
   const goBack = () => {
     if (index === 0) return;
+    setErrors({});
     setIndex(index - 1);
   };
 
@@ -131,6 +216,18 @@ export default function CandidateJourney({
   if (!step) return null;
 
   const progressPct = Math.round((index / steps.length) * 100);
+
+  const inputCls = (key: string) =>
+    `w-full px-4 py-3 border rounded-lg outline-none transition-colors dark:bg-[#111111] dark:text-white ${
+      errors[key] ? 'border-red-500 focus:border-red-500' : 'border-gray-300 dark:border-gray-700 focus:border-sari-blue'
+    }`;
+
+  const fieldError = (key: string) =>
+    errors[key] ? (
+      <p className="flex items-center gap-1 text-xs text-red-500 mt-1">
+        <AlertCircle className="w-3.5 h-3.5" /> {errors[key]}
+      </p>
+    ) : null;
 
   return (
     <div className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 shadow-xl rounded-xl overflow-hidden">
@@ -160,84 +257,122 @@ export default function CandidateJourney({
 
         {/* Champs de l'étape */}
         <div className="space-y-3">
-          {step.type === 'personal' && (step.fields || []).filter((f) => !f.hidden).map((f) => (
-            <input
-              key={f.key}
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none rounded-lg"
-              placeholder={f.label + (f.required ? ' *' : '')}
-              required={f.required}
-              value={answers[`${step.id}:${f.key}`] || ''}
-              onChange={(e) => commit({ ...answers, [`${step.id}:${f.key}`]: e.target.value }, progress)}
-            />
-          ))}
+          {step.type === 'personal' && (step.fields || []).filter((f) => !f.hidden).map((f) => {
+            const key = `${step.id}:${f.key}`;
+            const isEmail = f.key === 'email';
+            return (
+              <div key={f.key}>
+                <label className="block text-sm font-semibold text-sari-dark dark:text-white mb-1">
+                  {f.label} {f.required ? <span className="text-red-500">*</span> : <span className="text-gray-400 font-normal">(optionnel)</span>}
+                </label>
+                <input
+                  type={isEmail ? 'email' : f.key === 'phone' ? 'tel' : 'text'}
+                  className={inputCls(key)}
+                  placeholder={f.label}
+                  value={answers[key] || ''}
+                  onChange={(e) => setAnswer(key, e.target.value)}
+                />
+                {fieldError(key)}
+              </div>
+            );
+          })}
 
           {step.type === 'experience' && (
-            <input
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none rounded-lg"
-              placeholder="Poste occupé, entreprise, durée…"
-              value={answers[step.id] || ''}
-              onChange={(e) => commit({ ...answers, [step.id]: e.target.value }, progress)}
-            />
+            <div>
+              <label className="block text-sm font-semibold text-sari-dark dark:text-white mb-1">
+                Expérience professionnelle {step.required && <span className="text-red-500">*</span>}
+              </label>
+              <input
+                className={inputCls(step.id)}
+                placeholder="Poste occupé, entreprise, durée…"
+                value={answers[step.id] || ''}
+                onChange={(e) => setAnswer(step.id, e.target.value)}
+              />
+              {fieldError(step.id)}
+            </div>
           )}
 
-          {step.type === 'multiple' && (step.answers || []).map((a) => (
-            <label key={a.id} className="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-800 rounded-lg cursor-pointer hover:border-sari-blue transition-colors">
-              <input type="checkbox" className="w-4 h-4" checked={answers[step.id] === a.id} onChange={() => commit({ ...answers, [step.id]: a.id }, progress)} />
-              <span className="text-sari-dark dark:text-white">{a.label}</span>
-            </label>
-          ))}
+          {step.type === 'multiple' && (
+            <div className="space-y-2">
+              {(step.answers || []).map((a) => (
+                <label key={a.id} className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${answers[step.id] === a.id ? 'border-sari-blue bg-sari-blue/5' : 'border-gray-200 dark:border-gray-800 hover:border-sari-blue'}`}>
+                  <input type="checkbox" className="w-4 h-4" checked={answers[step.id] === a.id} onChange={() => setAnswer(step.id, a.id)} />
+                  <span className="text-sari-dark dark:text-white">{a.label}</span>
+                </label>
+              ))}
+              {fieldError(step.id)}
+            </div>
+          )}
 
-          {step.type === 'single' && (step.answers || []).map((a) => (
-            <label key={a.id} className="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-800 rounded-lg cursor-pointer hover:border-sari-blue transition-colors">
-              <input type="radio" name={`j-${step.id}`} className="w-4 h-4" checked={answers[step.id] === a.id} onChange={() => commit({ ...answers, [step.id]: a.id }, progress)} />
-              <span className="text-sari-dark dark:text-white">{a.label}</span>
-            </label>
-          ))}
+          {step.type === 'single' && (
+            <div className="space-y-2">
+              {(step.answers || []).map((a) => (
+                <label key={a.id} className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${answers[step.id] === a.id ? 'border-sari-blue bg-sari-blue/5' : 'border-gray-200 dark:border-gray-800 hover:border-sari-blue'}`}>
+                  <input type="radio" name={`j-${step.id}`} className="w-4 h-4" checked={answers[step.id] === a.id} onChange={() => setAnswer(step.id, a.id)} />
+                  <span className="text-sari-dark dark:text-white">{a.label}</span>
+                </label>
+              ))}
+              {fieldError(step.id)}
+            </div>
+          )}
 
           {step.type === 'open' && (
-            <textarea
-              rows={4}
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none resize-none rounded-lg"
-              placeholder="Votre réponse…"
-              maxLength={step.maxLength || undefined}
-              value={answers[step.id] || ''}
-              onChange={(e) => commit({ ...answers, [step.id]: e.target.value }, progress)}
-            />
+            <div>
+              <textarea
+                rows={4}
+                className={inputCls(step.id)}
+                placeholder="Votre réponse…"
+                maxLength={step.maxLength || undefined}
+                value={answers[step.id] || ''}
+                onChange={(e) => setAnswer(step.id, e.target.value)}
+              />
+              {fieldError(step.id)}
+            </div>
           )}
 
           {step.type === 'motivation' && (
-            <textarea
-              rows={5}
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none resize-none rounded-lg"
-              placeholder="Votre lettre de motivation…"
-              value={answers[step.id] || ''}
-              onChange={(e) => commit({ ...answers, [step.id]: e.target.value }, progress)}
-            />
+            <div>
+              <textarea
+                rows={5}
+                className={inputCls(step.id)}
+                placeholder="Votre lettre de motivation…"
+                value={answers[step.id] || ''}
+                onChange={(e) => setAnswer(step.id, e.target.value)}
+              />
+              {fieldError(step.id)}
+            </div>
           )}
 
           {step.type === 'cv' && (
-            <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 p-6 text-center hover:border-sari-blue transition-colors rounded-lg">
-              <input type="file" accept=".pdf,.doc,.docx" className="hidden" id={`cv-${step.id}`}
-                onChange={(e) => commit({ ...answers, [step.id]: e.target.files?.[0]?.name || '' }, progress)} />
-              <label htmlFor={`cv-${step.id}`} className="cursor-pointer block">
-                <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                <p className="text-sm text-gray-500">{answers[step.id] || 'Déposer votre CV (PDF, DOCX)'}</p>
-              </label>
+            <div>
+              <div className={`border-2 border-dashed p-6 text-center transition-colors rounded-lg ${errors[step.id] ? 'border-red-400' : 'border-gray-300 dark:border-gray-700 hover:border-sari-blue'}`}>
+                <input type="file" accept=".pdf,.doc,.docx" className="hidden" id={`cv-${step.id}`}
+                  onChange={(e) => setAnswer(step.id, e.target.files?.[0]?.name || '')} />
+                <label htmlFor={`cv-${step.id}`} className="cursor-pointer block">
+                  <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                  <p className="text-sm text-gray-500">{answers[step.id] || 'Déposer votre CV (PDF, DOCX)'}</p>
+                </label>
+              </div>
+              {fieldError(step.id)}
             </div>
           )}
 
-          {step.type === 'test' && (step.questions || []).map((q, qi) => (
-            <div key={q.id} className="p-4 border border-gray-200 dark:border-gray-800 rounded-lg space-y-2">
-              <div className="font-semibold text-sari-dark dark:text-white">{qi + 1}. {q.question}</div>
-              {(q.options || []).map((o) => (
-                <label key={o.id} className="flex items-center gap-3 p-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded">
-                  <input type="radio" name={`q-${q.id}`} className="w-4 h-4" checked={answers[`${step.id}:${q.id}`] === o.id}
-                    onChange={() => commit({ ...answers, [`${step.id}:${q.id}`]: o.id }, progress)} />
-                  <span className="text-gray-700 dark:text-gray-300">{o.label}</span>
-                </label>
-              ))}
-            </div>
-          ))}
+          {step.type === 'test' && (step.questions || []).map((q, qi) => {
+            const key = `${step.id}:${q.id}`;
+            return (
+              <div key={q.id} className="p-4 border border-gray-200 dark:border-gray-800 rounded-lg space-y-2">
+                <div className="font-semibold text-sari-dark dark:text-white">{qi + 1}. {q.question} {step.required && <span className="text-red-500">*</span>}</div>
+                {(q.options || []).map((o) => (
+                  <label key={o.id} className={`flex items-center gap-3 p-2 cursor-pointer rounded ${answers[key] === o.id ? 'bg-sari-blue/5' : 'hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
+                    <input type="radio" name={`q-${q.id}`} className="w-4 h-4" checked={answers[key] === o.id}
+                      onChange={() => setAnswer(key, o.id)} />
+                    <span className="text-gray-700 dark:text-gray-300">{o.label}</span>
+                  </label>
+                ))}
+                {fieldError(key)}
+              </div>
+            );
+          })}
         </div>
 
         {/* CAPTCHA avant finalisation */}
@@ -246,7 +381,10 @@ export default function CandidateJourney({
             <div className="flex items-center gap-2 text-sm font-bold text-sari-dark dark:text-white mb-2">
               <ShieldCheck className="w-4 h-4 text-sari-blue" /> Sécurité — CAPTCHA <span className="text-red-500">*</span>
             </div>
-            <ImageCaptcha onChange={setCaptchaOk} />
+            <ImageCaptcha onChange={(ok) => { setCaptchaOk(ok); if (ok) setErrors((p) => { const { captcha: _c, ...rest } = p; return rest; }); }} />
+            {errors.captcha && (
+              <p className="flex items-center gap-1 text-xs text-red-500 mt-1"><AlertCircle className="w-3.5 h-3.5" /> {errors.captcha}</p>
+            )}
           </div>
         )}
 
@@ -256,8 +394,8 @@ export default function CandidateJourney({
             className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-600 dark:text-gray-400 disabled:opacity-40">
             <ChevronLeft className="w-4 h-4" /> Précédent
           </button>
-          <button type="button" onClick={goNext} disabled={index === steps.length - 1 && !captchaOk}
-            className="inline-flex items-center gap-2 bg-sari-blue text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-sari-blue/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+          <button type="button" onClick={goNext}
+            className="inline-flex items-center gap-2 bg-sari-blue text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-sari-blue/90 transition-colors">
             {index === steps.length - 1 ? (<><Send className="w-4 h-4" /> Terminer</>) : (<>Suivant <ChevronRight className="w-4 h-4" /></>)}
           </button>
         </div>
