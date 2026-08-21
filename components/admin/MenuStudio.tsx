@@ -10,6 +10,8 @@ import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Plus, Save, Trash2 } from 'lucide-react';
 import PixelGridLoader from '@/components/admin/PixelGridLoader';
 import { useToast } from '@/components/admin/Toast';
+import { IconPicker } from '@/components/admin/fields/FieldKit';
+import SlugPicker from '@/components/admin/SlugPicker';
 import { cmsAdminCreate, cmsAdminList, cmsAdminUpdate } from '@/lib/cms-admin';
 import { CmsError } from '@/lib/cms';
 
@@ -169,17 +171,20 @@ export default function MenuStudio() {
           <div className="space-y-2">
             {draft.map((item, i) => (
               <SortableItem key={item.id || item.href} id={item.id || item.href}>
-                <div className="ad-card p-3 grid md:grid-cols-[auto_1fr_1fr_auto] gap-2 items-center">
-                  <GripVertical className="w-4 h-4 opacity-40 cursor-grab" />
-                  <input className="ad-input" placeholder="Libellé" value={item.label} onChange={(e) => setItem(i, { label: e.target.value })} />
-                  <input className="ad-input font-mono" placeholder="/chemin" value={item.href} onChange={(e) => setItem(i, { href: e.target.value })} />
+                <div className="ad-card p-3 grid md:grid-cols-[auto_1fr_auto] gap-3 items-start">
+                  <GripVertical className="w-4 h-4 opacity-40 cursor-grab mt-2" />
+                  <div className="space-y-3 min-w-0">
+                    <input className="ad-input" placeholder="Libellé" value={item.label} onChange={(e) => setItem(i, { label: e.target.value })} />
+                    <input className="ad-input" placeholder="Description (optionnel)" value={item.desc || ''} onChange={(e) => setItem(i, { desc: e.target.value })} />
+                    <SlugPicker value={item.href} onChange={(href) => setItem(i, { href })} />
+                    <div>
+                      <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Icône Lucide (optionnel)</span>
+                      <IconPicker value={item.icon || ''} onChange={(icon) => setItem(i, { icon })} />
+                    </div>
+                  </div>
                   <button type="button" className="ad-btn ad-btn-icon ad-btn-danger" onClick={() => setDraft((prev) => prev.filter((_, j) => j !== i))}>
                     <Trash2 className="w-4 h-4" />
                   </button>
-                  <div className="md:col-span-4 grid md:grid-cols-2 gap-2">
-                    <input className="ad-input" placeholder="Description (optionnel)" value={item.desc || ''} onChange={(e) => setItem(i, { desc: e.target.value })} />
-                    <input className="ad-input" placeholder="Icône Lucide (optionnel)" value={item.icon || ''} onChange={(e) => setItem(i, { icon: e.target.value })} />
-                  </div>
                 </div>
               </SortableItem>
             ))}

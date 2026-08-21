@@ -362,7 +362,7 @@ function PriceInner({ value, onChange, placeholder }: { value: string; onChange:
   );
 }
 
-function IconPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+export function IconPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const [q, setQ] = useState(value);
   const hits = searchLucideIcons(q || value, 36);
   return (
