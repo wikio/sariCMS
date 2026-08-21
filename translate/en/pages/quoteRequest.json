@@ -60,6 +60,8 @@
   "errNoLines": "Add at least one product.",
   "errNameRequired": "Product name is required.",
   "errQty": "Invalid quantity (min. 1).",
+  "errLineLimit": "Maximum number of lines reached.",
+  "errAttachment": "An attachment is required for off-catalogue items.",
   "errNature": "Select the request type.",
   "errNatureOther": "Specify the request type.",
   "errPhone": "Invalid phone number.",

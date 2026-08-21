@@ -20,6 +20,17 @@ export interface SecuritySettings {
   siteCaptcha: boolean;
 }
 
+export interface QuoteSettings {
+  /** Nombre maximal de lignes par demande de devis (0 = illimité). */
+  maxLines: number;
+  /** Transformer automatiquement un devis « accepté » en commande. */
+  autoTransformToOrder: boolean;
+  /** Durée de validité d'un devis (en jours) avant expiration. */
+  validityDays: number;
+  /** Pièce jointe obligatoire pour les lignes hors-catalogue. */
+  requireAttachment: boolean;
+}
+
 export interface AdminSettings {
   defaultLocale: 'fr' | 'en' | 'ar';
   skuFormat: string;
@@ -31,6 +42,7 @@ export interface AdminSettings {
   security: SecuritySettings;
   smtp: SmtpSettings;
   db: DbSettings;
+  quote: QuoteSettings;
 }
 
 const KEY = 'sari_admin_settings';
@@ -61,6 +73,12 @@ export const DEFAULT_SETTINGS: AdminSettings = {
     url: 'mysql://user:pass@127.0.0.1:3306/saricms',
     schema: 'public',
   },
+  quote: {
+    maxLines: 100,
+    autoTransformToOrder: true,
+    validityDays: 30,
+    requireAttachment: false,
+  },
 };
 
 export function loadAdminSettings(): AdminSettings {
@@ -75,6 +93,7 @@ export function loadAdminSettings(): AdminSettings {
       security: { ...DEFAULT_SETTINGS.security, ...(parsed.security || {}) },
       smtp: { ...DEFAULT_SETTINGS.smtp, ...(parsed.smtp || {}) },
       db: { ...DEFAULT_SETTINGS.db, ...(parsed.db || {}) },
+      quote: { ...DEFAULT_SETTINGS.quote, ...(parsed.quote || {}) },
     };
   } catch {
     return DEFAULT_SETTINGS;

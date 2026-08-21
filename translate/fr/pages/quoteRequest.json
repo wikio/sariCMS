@@ -60,6 +60,8 @@
   "errNoLines": "Ajoutez au moins un produit.",
   "errNameRequired": "Le nom du produit est requis.",
   "errQty": "Quantité invalide (min. 1).",
+  "errLineLimit": "Nombre maximal de lignes atteint.",
+  "errAttachment": "Pièce jointe requise pour les articles hors-catalogue.",
   "errNature": "Sélectionnez la nature de la demande.",
   "errNatureOther": "Précisez la nature de la demande.",
   "errPhone": "Numéro de téléphone invalide.",

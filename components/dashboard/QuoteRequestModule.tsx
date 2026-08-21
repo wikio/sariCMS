@@ -16,6 +16,7 @@ import {
   QUOTE_NATURES, QUOTE_UNITS, generateQuoteReference, loadClientQuotes, nextQuoteId,
   quoteStatusColor, quoteStatusLabel,
 } from '@/lib/quote-requests';
+import { loadAdminSettings } from '@/lib/admin-settings';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_RE = /^[+\d][\d\s().-]{6,}$/;
@@ -139,16 +140,21 @@ function QuoteWizard({ user, locale, onCancel, onDone }: { user: User; locale: s
     return products.filter((p) => (p.name || '').toLowerCase().includes(q) || (p.category || '').toLowerCase().includes(q)).slice(0, 12);
   }, [products, catalogQ]);
 
+  const maxLines = loadAdminSettings().quote.maxLines;
+  const limitReached = maxLines > 0 && lines.length >= maxLines;
+
   const addCatalog = (p: Product) => {
     setLines((prev) => {
       const existing = prev.find((l) => String(l.id) === String(p.id));
       if (existing) return prev.map((l) => String(l.id) === String(p.id) ? { ...l, quantity: l.quantity + 1 } : l);
+      if (maxLines > 0 && prev.length >= maxLines) { setErrors((e) => ({ ...e, step1: t('errLineLimit') })); return prev; }
       return [...prev, { id: p.id, name: p.name, quantity: 1, price: 0, category: p.category, unit: 'pièce', description: '' }];
     });
     setCatalogQ('');
   };
 
   const addSpecial = () => {
+    if (maxLines > 0 && lines.length >= maxLines) { setErrors((e) => ({ ...e, step1: t('errLineLimit') })); return; }
     setLines((prev) => [...prev, { id: `sp-${Date.now()}`, name: '', quantity: 1, price: 0, category: 'special', unit: 'pièce', description: '' }]);
   };
 
@@ -165,6 +171,7 @@ function QuoteWizard({ user, locale, onCancel, onDone }: { user: User; locale: s
       else lines.forEach((l, i) => {
         if (!String(l.name || '').trim()) out[`line-${i}-name`] = t('errNameRequired');
         if (!l.quantity || l.quantity < 1) out[`line-${i}-qty`] = t('errQty');
+        if (l.category === 'special' && loadAdminSettings().quote.requireAttachment && !l.attachment) out[`line-${i}-att`] = t('errAttachment');
       });
     }
     if (s === 2) {
@@ -319,11 +326,14 @@ function QuoteWizard({ user, locale, onCancel, onDone }: { user: User; locale: s
                   </div>
                   <input value={l.description || ''} onChange={(e) => patchLine(l.id, { description: e.target.value })} placeholder={t('description')} className="ad-input" />
                   {l.category === 'special' && (
-                    <label className="flex items-center gap-2 text-xs text-gray-500 cursor-pointer">
-                      <Upload className="w-3.5 h-3.5" />
-                      <input type="file" className="hidden" onChange={(e) => patchLine(l.id, { attachment: e.target.files?.[0]?.name || '' })} />
-                      {l.attachment || t('attachFile')}
-                    </label>
+                    <div>
+                      <label className="flex items-center gap-2 text-xs text-gray-500 cursor-pointer">
+                        <Upload className="w-3.5 h-3.5" />
+                        <input type="file" className="hidden" onChange={(e) => { patchLine(l.id, { attachment: e.target.files?.[0]?.name || '' }); setErrors((p) => { const { [`line-${i}-att`]: _x, ...rest } = p; return rest; }); }} />
+                        {l.attachment || t('attachFile')}
+                      </label>
+                      <FieldError k={`line-${i}-att`} />
+                    </div>
                   )}
                 </div>
               ))}
@@ -467,6 +477,34 @@ function QuoteDetail({ quote, onBack, onRefresh }: { quote: Quote; onBack: () =>
     onRefresh();
   };
 
+  const printQuote = () => {
+    const resp = quote.response;
+    const linesHtml = resp?.mode === 'detailed' && resp.lines
+      ? resp.lines.map((l) => `<tr><td>${l.name}</td><td style="text-align:right">${l.quantity}</td><td style="text-align:right">${(l.unitPrice || 0).toFixed(2)}</td><td style="text-align:right">${((l.quantity || 0) * (l.unitPrice || 0)).toFixed(2)}</td></tr>`).join('')
+      : '';
+    const totalsHtml = resp?.mode === 'detailed'
+      ? `<div style="margin-top:12px;text-align:right">
+           <div>Sous-total HT : ${(resp.subtotal || 0).toFixed(2)} DA</div>
+           ${resp.discount ? `<div>Remise : -${(resp.discount).toFixed(2)} DA</div>` : ''}
+           <div>Taxes : ${(resp.taxTotal || 0).toFixed(2)} DA</div>
+           ${resp.deliveryFee ? `<div>Livraison : ${(resp.deliveryFee).toFixed(2)} DA</div>` : ''}
+           <div style="font-weight:bold;font-size:18px;margin-top:8px">Total TTC : ${(resp.total || 0).toFixed(2)} DA</div>
+         </div>`
+      : '';
+    const w = window.open('', '_blank', 'width=800,height=900');
+    if (!w) return;
+    w.document.write(`<!doctype html><html><head><title>${quote.reference || `Devis #${quote.id}`}</title>
+      <style>body{font-family:sans-serif;color:#111;padding:32px;max-width:760px;margin:auto}h1{font-size:22px}h2{font-size:15px;margin-top:24px}table{width:100%;border-collapse:collapse;margin-top:8px}td,th{border:1px solid #ddd;padding:6px 8px;font-size:13px}th{background:#f4f4f4;text-align:left}.meta{color:#555;font-size:13px}</style></head><body>
+      <h1>${quote.reference || `Devis #${quote.id}`}</h1>
+      <div class="meta">${quote.client} · ${quote.email}<br/>Date : ${quote.date}</div>
+      ${resp?.mode === 'detailed' ? `<h2>Détail de l'offre</h2><table><thead><tr><th>Article</th><th>Qté</th><th>Prix unit.</th><th>Total</th></tr></thead><tbody>${linesHtml}</tbody></table>${totalsHtml}` : ''}
+      ${resp?.mode === 'file' ? `<h2>Commentaire</h2><div>${resp.fileNote || ''}</div>` : ''}
+      </body></html>`);
+    w.document.close();
+    w.focus();
+    setTimeout(() => w.print(), 300);
+  };
+
   return (
     <div className="space-y-5">
       <button onClick={onBack} className="flex items-center gap-1 text-sm text-gray-500 hover:text-sari-dark dark:hover:text-white">
@@ -509,7 +547,7 @@ function QuoteDetail({ quote, onBack, onRefresh }: { quote: Quote; onBack: () =>
                   {quote.response.deliveryFee ? <div className="flex justify-between"><span className="text-gray-500">{t('delivery')}</span><span>{(quote.response.deliveryFee).toFixed(2)}</span></div> : null}
                   <div className="flex justify-between font-bold text-lg text-sari-dark dark:text-white pt-1"><span>{t('totalTtc')}</span><span className="text-sari-lime">{(quote.response.total || 0).toFixed(2)}</span></div>
                 </div>
-                <button className="btn-primary text-white px-4 py-2 text-sm rounded-lg">{t('downloadPdf')}</button>
+                <button onClick={printQuote} className="btn-primary text-white px-4 py-2 text-sm rounded-lg">{t('downloadPdf')}</button>
               </div>
             ) : (
               <div className="space-y-2">

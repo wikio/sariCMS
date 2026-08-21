@@ -82,6 +82,32 @@ export default function AdminSettingsPage() {
       </section>
 
       <section className="ad-card p-5 space-y-4">
+        <h2 className="ad-section-title">Devis &amp; demandes</h2>
+        <div className="grid grid-cols-2 gap-3">
+          <label className="space-y-1.5 block">
+            <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Limite de lignes (0 = illimitée)</span>
+            <input className="ad-input" type="number" min={0} value={settings.quote.maxLines} onChange={(e) => setSettings({ ...settings, quote: { ...settings.quote, maxLines: Number(e.target.value) || 0 } })} />
+          </label>
+          <label className="space-y-1.5 block">
+            <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Validité d'un devis (jours)</span>
+            <input className="ad-input" type="number" min={1} value={settings.quote.validityDays} onChange={(e) => setSettings({ ...settings, quote: { ...settings.quote, validityDays: Number(e.target.value) || 30 } })} />
+          </label>
+        </div>
+        <ToggleRow
+          label="Transformer automatiquement en commande"
+          hint="Quand un devis passe au statut « Accepté », crée automatiquement la commande liée (statut « Transformé en commande »)."
+          on={settings.quote.autoTransformToOrder}
+          onToggle={() => setSettings({ ...settings, quote: { ...settings.quote, autoTransformToOrder: !settings.quote.autoTransformToOrder } })}
+        />
+        <ToggleRow
+          label="Pièce jointe obligatoire (hors-catalogue)"
+          hint="Exige une pièce jointe sur les lignes hors-catalogue lors de la demande de devis côté client."
+          on={settings.quote.requireAttachment}
+          onToggle={() => setSettings({ ...settings, quote: { ...settings.quote, requireAttachment: !settings.quote.requireAttachment } })}
+        />
+      </section>
+
+      <section className="ad-card p-5 space-y-4">
         <h2 className="ad-section-title">SMTP avancé</h2>
         <div className="grid md:grid-cols-2 gap-3">
           <Field label="Hôte" value={settings.smtp.host} onChange={(v) => setSmtp({ host: v })} />

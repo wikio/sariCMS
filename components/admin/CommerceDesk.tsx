@@ -6,6 +6,7 @@ import { useLocale } from 'next-intl';
 import { Eye, History, LayoutGrid, List as ListIcon, MessageSquareText, Plus, Reply, Trash2 } from 'lucide-react';
 import { loadOrders, loadQuotes, saveOrders, saveQuotes, type Order, type Quote, type CommerceItem, type QuoteResponse } from '@/lib/crm-store';
 import { loadCoupons, loadTaxes } from '@/lib/shop-store';
+import { loadAdminSettings } from '@/lib/admin-settings';
 import { computeTotals, money } from '@/lib/commerce-math';
 import { useToast } from '@/components/admin/Toast';
 import SearchField from '@/components/admin/SearchField';
@@ -57,7 +58,30 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
   const coupons = loadCoupons();
 
   useEffect(() => {
-    setRows((kind === 'orders' ? loadOrders() : loadQuotes()) as Row[]);
+    const loaded = (kind === 'orders' ? loadOrders() : loadQuotes()) as Row[];
+    if (kind === 'quotes') {
+      // Expiration automatique : les devis encore actifs au-delà de leur validité passent en « Expiré ».
+      const settings = loadAdminSettings();
+      const today = Date.now();
+      const ACTIVE = ['submitted', 'processing', 'replied', 'revision', 'pending', 'sent', 'draft'];
+      const expired = loaded.map((r) => {
+        const st = String(r.status);
+        if (!ACTIVE.includes(st) || !r.date) return r;
+        const days = (today - new Date(r.date).getTime()) / 86400000;
+        if (days > settings.quote.validityDays) {
+          return {
+            ...r,
+            status: 'expired' as never,
+            history: [...(r.history || []), { status: 'expired', at: new Date().toISOString(), note: 'Expiré automatiquement' }],
+          };
+        }
+        return r;
+      });
+      setRows(expired);
+      saveQuotes(expired as Quote[]);
+    } else {
+      setRows(loaded);
+    }
   }, [kind]);
 
   const persist = (next: Row[]) => {
@@ -75,16 +99,49 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
   };
 
   const setStatusOf = (id: number, nextStatus: string) => {
+    const quoteSettings = loadAdminSettings().quote;
+    let orderId: number | undefined;
+    let effectiveStatus = nextStatus;
+    if (kind === 'quotes' && nextStatus === 'accepted' && quoteSettings.autoTransformToOrder) {
+      const quote = rows.find((r) => r.id === id);
+      if (quote) {
+        const created = convertToOrder(quote);
+        orderId = created.id;
+        effectiveStatus = 'transformed';
+      }
+    }
     const next = rows.map((r) => r.id === id ? {
       ...r,
-      status: nextStatus as never,
-      history: [...(r.history || []), { status: nextStatus, at: new Date().toISOString(), note }],
+      status: effectiveStatus as never,
+      ...(orderId ? { orderId } : {}),
+      history: [...(r.history || []), { status: effectiveStatus, at: new Date().toISOString(), note }],
     } : r);
     persist(next);
     const updated = next.find((r) => r.id === id);
     if (updated) setOpen(updated);
     setNote('');
-    showToast('Statut mis à jour', 'success');
+    showToast(orderId ? `Devis accepté → commande #${orderId} créée` : 'Statut mis à jour', 'success');
+  };
+
+  const convertToOrder = (quote: Row): Order => {
+    const all = loadOrders();
+    const newOrder: Order = {
+      id: (all.length ? Math.max(...all.map((o) => Number(o.id) || 0)) : 1000) + 1,
+      client: quote.client,
+      email: quote.email,
+      phone: quote.phone,
+      company: quote.company,
+      date: new Date().toISOString().slice(0, 10),
+      status: 'pending',
+      total: Number(quote.total) || 0,
+      items: (quote.items || []).map((it) => ({ ...it })),
+      address: quote.address,
+      zone: quote.zone,
+      ip: quote.ip,
+      quoteId: quote.id,
+    };
+    saveOrders([newOrder, ...all]);
+    return newOrder;
   };
 
   const shown = useMemo(() => rows.filter((r) => {
@@ -248,7 +305,24 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                     </button>
                   </div>
                 ) : (
-                  <div style={{ color: 'var(--ad-muted)' }}>Aucune commande liée à ce devis.</div>
+                  <div className="space-y-2">
+                    <div style={{ color: 'var(--ad-muted)' }}>Aucune commande liée à ce devis.</div>
+                    {!consult && open.status === 'accepted' && (
+                      <button className="ad-btn ad-btn-ghost" onClick={() => {
+                        const created = convertToOrder(open);
+                        const next = rows.map((r) => r.id === open.id ? {
+                          ...r,
+                          orderId: created.id,
+                          status: 'transformed' as never,
+                          history: [...(r.history || []), { status: 'transformed', at: new Date().toISOString(), note: `Transformé en commande #${created.id}` }],
+                        } as Row : r);
+                        persist(next);
+                        const updated = next.find((r) => r.id === open.id);
+                        if (updated) setOpen(updated);
+                        showToast(`Commande #${created.id} créée`, 'success');
+                      }}>Convertir en commande</button>
+                    )}
+                  </div>
                 )}
               </div>
             )}
