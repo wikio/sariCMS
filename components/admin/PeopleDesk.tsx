@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { LayoutGrid, List as ListIcon, Plus, Trash2, User } from 'lucide-react';
+import { LayoutGrid, List as ListIcon, MessageSquareText, Plus, Trash2, User } from 'lucide-react';
 import PixelGridLoader from '@/components/admin/PixelGridLoader';
 import SearchField from '@/components/admin/SearchField';
 import { useToast } from '@/components/admin/Toast';
@@ -9,6 +9,7 @@ import { cmsAdminCreate, cmsAdminDelete, cmsAdminList, cmsAdminUpdate } from '@/
 import { CmsError } from '@/lib/cms';
 import { loadOrders, loadQuotes, orderRevenue } from '@/lib/crm-store';
 import GeoBadge from '@/components/admin/GeoBadge';
+import MessageComposer from '@/components/admin/MessageComposer';
 
 type Person = Record<string, unknown> & {
   id?: string;
@@ -41,6 +42,7 @@ export default function PeopleDesk({
   const [view, setView] = useState<'list' | 'cards'>('list');
   const [editing, setEditing] = useState<Person | null>(null);
   const [saving, setSaving] = useState(false);
+  const [messageTo, setMessageTo] = useState<Person | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -152,7 +154,8 @@ export default function PeopleDesk({
                   <td>{type === 'candidate' ? String(p.position || '—') : String(p.company || '—')}</td>
                   <td><GeoBadge ip={p.ip} country={p.country} /></td>
                   <td><span className="ad-chip ad-chip-acc">{String(p.status || '')}</span></td>
-                  <td className="text-right">
+                  <td className="text-right whitespace-nowrap">
+                    <button className="ad-btn ad-btn-icon ad-btn-ghost" title="Message" onClick={() => setMessageTo(p)}><MessageSquareText className="w-4 h-4" /></button>
                     <button className="ad-btn ad-btn-ghost" onClick={() => setEditing({ ...p, notes: p.id ? localStorage.getItem(`sari_notes_${p.id}`) || '' : '' })}>Ouvrir</button>
                     {p.id && <button className="ad-btn ad-btn-icon ad-btn-danger ml-1" onClick={() => remove(String(p.id))}><Trash2 className="w-4 h-4" /></button>}
                   </td>
@@ -178,6 +181,7 @@ export default function PeopleDesk({
               <p className="text-sm">{type === 'candidate' ? p.position : p.company}</p>
               <div className="flex gap-1">
                 <button className="ad-btn ad-btn-ghost" onClick={() => setEditing({ ...p })}>Éditer</button>
+                <button className="ad-btn ad-btn-icon ad-btn-ghost" title="Message" onClick={() => setMessageTo(p)}><MessageSquareText className="w-4 h-4" /></button>
                 {p.id && <button className="ad-btn ad-btn-icon ad-btn-danger ml-auto" onClick={() => remove(String(p.id))}><Trash2 className="w-4 h-4" /></button>}
               </div>
             </article>
@@ -222,6 +226,15 @@ export default function PeopleDesk({
             </div>
           </div>
         </div>
+      )}
+
+      {messageTo && (
+        <MessageComposer
+          email={String(messageTo.email || '')}
+          name={nameOf(messageTo)}
+          type={type}
+          onClose={() => setMessageTo(null)}
+        />
       )}
     </div>
   );

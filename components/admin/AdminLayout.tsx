@@ -17,6 +17,7 @@ import { ToastProvider } from '@/components/admin/Toast';
 import AdminLanguageSwitcher from '@/components/admin/AdminLanguageSwitcher';
 import { AdminThemeProvider, ADMIN_THEMES, useAdminTheme } from '@/components/admin/AdminTheme';
 import { clearAdminSession, hasAdminSession, readAdminUser } from '@/lib/admin-session';
+import { unreadForAdmin } from '@/lib/messages';
 
 interface Child { id: string; label: string; href: string }
 interface Item {
@@ -44,7 +45,15 @@ function Shell({ children }: { children: ReactNode }) {
   // entre le rendu serveur et le localStorage du navigateur).
   const [user, setUser] = useState<ReturnType<typeof readAdminUser>>(null);
   const [q, setQ] = useState('');
+  const [unread, setUnread] = useState(0);
   const isLogin = pathname === `/${locale}/admin` || pathname === `/${locale}/admin/`;
+
+  useEffect(() => {
+    const refresh = () => setUnread(unreadForAdmin());
+    refresh();
+    window.addEventListener('sari-threads-changed', refresh);
+    return () => window.removeEventListener('sari-threads-changed', refresh);
+  }, []);
 
   useEffect(() => {
     setUser(readAdminUser());
@@ -161,7 +170,10 @@ function Shell({ children }: { children: ReactNode }) {
             return (
               <Link key={item.id} href={item.href || '#'} className={`mx-2 mb-0.5 flex items-center gap-3 px-3 py-2.5 text-sm transition-all ${on ? 'bg-white/12' : 'opacity-70 hover:opacity-100 hover:bg-white/6'}`}>
                 {Icon && <Icon className="w-4 h-4 shrink-0" />}
-                {open && <span className="truncate">{item.label}</span>}
+                {open && <span className="truncate flex-1">{item.label}</span>}
+                {item.id === 'messages' && unread > 0 && (
+                  <span className="shrink-0 text-[10px] font-black px-1.5 py-0.5 rounded-full" style={{ background: 'var(--ad-accent)', color: 'var(--ad-accent-ink, #fff)' }}>{unread}</span>
+                )}
               </Link>
             );
           })}

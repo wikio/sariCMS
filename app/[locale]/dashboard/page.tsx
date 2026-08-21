@@ -17,6 +17,8 @@ import { useCart } from '@/contexts/CartContext';
 import { getProducts } from '@/lib/data';
 import type { Product } from '@/types';
 import QuoteRequestModule from '@/components/dashboard/QuoteRequestModule';
+import MessagesModule from '@/components/dashboard/MessagesModule';
+import { unreadForUser } from '@/lib/messages';
 
 export default function DashboardPage() {
   const locale = useLocale();
@@ -29,6 +31,14 @@ export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState('overview');
   const [products, setProducts] = useState<Product[]>([]);
   const [productQ, setProductQ] = useState('');
+  const [unreadMessages, setUnreadMessages] = useState(0);
+
+  useEffect(() => {
+    const refreshUnread = () => setUnreadMessages(user?.email ? unreadForUser(user.email) : 0);
+    refreshUnread();
+    window.addEventListener('sari-threads-changed', refreshUnread);
+    return () => window.removeEventListener('sari-threads-changed', refreshUnread);
+  }, [user?.email]);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -117,7 +127,7 @@ export default function DashboardPage() {
               <nav className="p-4 space-y-1">
                 {menuItems.map((item) => {
                   const Icon = item.icon;
-                  const badge = item.id === 'applications' ? applications.length : item.id === 'orders' ? realOrders.length : null;
+                  const badge = item.id === 'applications' ? applications.length : item.id === 'orders' ? realOrders.length : item.id === 'messages' ? unreadMessages : null;
                   return (
                     <button
                       key={item.id}
@@ -389,14 +399,7 @@ export default function DashboardPage() {
 
             {/* === MESSAGES === */}
             {activeTab === 'messages' && (
-              <div className="bg-white dark:bg-[#1a1a1a] p-8 border border-gray-200 dark:border-gray-800 shadow-xl rounded-xl">
-                <h2 className="text-2xl font-bold text-sari-dark dark:text-white mb-6 flex items-center gap-3"><Mail className="w-6 h-6 text-sari-blue" /> {t('messages')}</h2>
-                <div className="text-center py-12">
-                  <Inbox className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-xl font-bold text-sari-dark dark:text-white mb-2">{t('noMessages')}</h3>
-                  <p className="text-gray-600 dark:text-gray-400">{t('noMessagesDesc')}</p>
-                </div>
-              </div>
+              <MessagesModule user={user} />
             )}
 
             {/* === PROFILE === */}

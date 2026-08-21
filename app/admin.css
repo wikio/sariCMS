@@ -690,6 +690,15 @@
   color: var(--ad-accent);
   margin-bottom: 1rem;
 }
+.field-label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ad-muted);
+}
 .ad-origin {
   margin-top: 0.35rem;
   padding: 0.45rem 0.6rem;

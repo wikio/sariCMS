@@ -3,14 +3,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useLocale } from 'next-intl';
-import { Eye, History, LayoutGrid, List as ListIcon, Plus, Trash2 } from 'lucide-react';
-import { loadOrders, loadQuotes, saveOrders, saveQuotes, type Order, type Quote, type CommerceItem } from '@/lib/crm-store';
+import { Eye, History, LayoutGrid, List as ListIcon, MessageSquareText, Plus, Reply, Trash2 } from 'lucide-react';
+import { loadOrders, loadQuotes, saveOrders, saveQuotes, type Order, type Quote, type CommerceItem, type QuoteResponse } from '@/lib/crm-store';
 import { loadCoupons, loadTaxes } from '@/lib/shop-store';
 import { computeTotals, money } from '@/lib/commerce-math';
 import { useToast } from '@/components/admin/Toast';
 import SearchField from '@/components/admin/SearchField';
 import Drawer from '@/components/admin/Drawer';
 import GeoBadge from '@/components/admin/GeoBadge';
+import MessageComposer from '@/components/admin/MessageComposer';
+import QuoteResponseComposer from '@/components/admin/QuoteResponseComposer';
 
 type Kind = 'orders' | 'quotes';
 type Row = (Order | Quote) & { history?: Array<{ status: string; at: string; note?: string }>; phone?: string; company?: string; coupon?: string; quoteId?: number; orderId?: number; zone?: string; ip?: string; address?: string };
@@ -47,6 +49,8 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
   const [consult, setConsult] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [note, setNote] = useState('');
+  const [messageTo, setMessageTo] = useState<Row | null>(null);
+  const [respondTo, setRespondTo] = useState<Row | null>(null);
   const statuses = kind === 'orders' ? ORDER_STATUS : QUOTE_STATUS;
   const title = kind === 'orders' ? 'Commandes' : 'Devis';
   const taxes = loadTaxes();
@@ -151,6 +155,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                   <td><GeoBadge ip={row.ip} /></td>
                   <td><span className={`ad-chip ${row.status === 'delivered' || row.status === 'accepted' ? 'ad-chip-ok' : row.status === 'cancelled' || row.status === 'rejected' ? 'ad-chip-mute' : 'ad-chip-warn'}`}>{row.status}</span></td>
                   <td className="text-right whitespace-nowrap">
+                    <button className="ad-btn ad-btn-icon ad-btn-ghost" title="Message au client" onClick={() => setMessageTo(row)}><MessageSquareText className="w-4 h-4" /></button>
                     <button className="ad-btn ad-btn-ghost" onClick={() => { setConsult(true); setOpen(row); }}><Eye className="w-4 h-4" /> Voir</button>
                     <button className="ad-btn ad-btn-ghost" onClick={() => { setConsult(false); setOpen(row); }}>Éditer</button>
                     <button className="ad-btn ad-btn-icon ad-btn-danger ml-1" title="Supprimer" onClick={() => persist(rows.filter((r) => r.id !== row.id))}><Trash2 className="w-4 h-4" /></button>
@@ -167,7 +172,10 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
               <div className="flex justify-between"><span className="font-mono text-xs">#{row.id}</span><span className="ad-chip ad-chip-acc">{row.status}</span></div>
               <h3 className="font-black">{row.client}</h3>
               <div className="font-black" style={{ color: 'var(--ad-accent)' }}>{Number(row.total).toLocaleString()} DA</div>
-              <button className="ad-btn ad-btn-ghost w-full" onClick={() => { setConsult(true); setOpen(row); }}>Consulter</button>
+              <div className="flex gap-2">
+                <button className="ad-btn ad-btn-ghost flex-1" onClick={() => { setConsult(true); setOpen(row); }}>Consulter</button>
+                <button className="ad-btn ad-btn-icon ad-btn-ghost" title="Message au client" onClick={() => setMessageTo(row)}><MessageSquareText className="w-4 h-4" /></button>
+              </div>
             </article>
           ))}
         </div>
@@ -181,11 +189,16 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
         width={720}
         footer={consult ? (
           <>
+            <button className="ad-btn ad-btn-ghost" onClick={() => open && setMessageTo(open)}><MessageSquareText className="w-4 h-4" /> Message</button>
             <button className="ad-btn ad-btn-ghost" onClick={() => setOpen(null)}>Fermer</button>
             <button className="ad-btn ad-btn-primary" onClick={() => setConsult(false)}>Éditer</button>
           </>
         ) : (
           <>
+            <button className="ad-btn ad-btn-ghost" onClick={() => open && setMessageTo(open)}><MessageSquareText className="w-4 h-4" /> Message</button>
+            {kind === 'quotes' && (
+              <button className="ad-btn ad-btn-ghost" onClick={() => open && setRespondTo(open)}><Reply className="w-4 h-4" /> Répondre au devis</button>
+            )}
             <button className="ad-btn ad-btn-ghost" onClick={() => setOpen(null)}>Annuler</button>
             <button className="ad-btn ad-btn-primary" onClick={() => open && saveOpen(open)}>Enregistrer</button>
           </>
@@ -200,7 +213,12 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                 </button>
               ))}
             </div>
-            {!consult && <input className="ad-input" placeholder="Commentaire d’étape…" value={note} onChange={(e) => setNote(e.target.value)} />}
+            {!consult && (
+              <label className="block space-y-1.5">
+                <span className="field-label">Commentaire d'étape</span>
+                <input className="ad-input" placeholder="Indication : note visible dans l'historique lors du changement de statut…" value={note} onChange={(e) => setNote(e.target.value)} />
+              </label>
+            )}
 
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div><span style={{ color: 'var(--ad-muted)' }}>Client</span><div className="font-bold">{open.client}</div></div>
@@ -255,34 +273,62 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
             )}
 
             <h3 className="ad-section-title">Lignes</h3>
+            {!consult && (
+              <p className="text-xs" style={{ color: 'var(--ad-muted)' }}>
+                Indication : renseignez le nom de l'article, la quantité vendue, le prix unitaire HT et, le cas échéant, une remise en %.
+              </p>
+            )}
             <div className="space-y-2">
               {(open.items || []).map((it, i) => (
-                <div key={i} className="ad-card p-3 grid grid-cols-12 gap-2 items-center text-sm">
+                <div key={i} className="ad-card p-3 grid grid-cols-12 gap-2 items-end text-sm">
                   <div className="col-span-4">
-                    {consult ? <div className="font-bold">{it.name}</div> : <input className="ad-input" value={it.name} onChange={(e) => patchItem(i, { name: e.target.value })} />}
+                    <label className="block">
+                      <span className="field-label">Article</span>
+                      {consult
+                        ? <div className="font-bold pt-1.5">{it.name}</div>
+                        : <input className="ad-input" placeholder="Nom de l'article…" value={it.name} onChange={(e) => patchItem(i, { name: e.target.value })} />}
+                    </label>
                   </div>
                   <div className="col-span-2">
-                    {consult ? <span>× {it.quantity}</span> : <input className="ad-input" type="number" value={it.quantity} onChange={(e) => patchItem(i, { quantity: Number(e.target.value) })} />}
+                    <label className="block">
+                      <span className="field-label">Quantité</span>
+                      {consult
+                        ? <div className="pt-1.5">× {it.quantity}</div>
+                        : <input className="ad-input" type="number" min={1} placeholder="Qté" value={it.quantity} onChange={(e) => patchItem(i, { quantity: Number(e.target.value) })} />}
+                    </label>
                   </div>
                   <div className="col-span-2">
-                    {consult ? <span>{it.price.toLocaleString()}</span> : <input className="ad-input" type="number" value={it.price} onChange={(e) => patchItem(i, { price: Number(e.target.value) })} />}
+                    <label className="block">
+                      <span className="field-label">Prix unit. HT (DA)</span>
+                      {consult
+                        ? <div className="pt-1.5">{it.price.toLocaleString()}</div>
+                        : <input className="ad-input" type="number" min={0} placeholder="Prix HT" value={it.price} onChange={(e) => patchItem(i, { price: Number(e.target.value) })} />}
+                    </label>
                   </div>
                   <div className="col-span-2">
-                    {consult ? <span>-{it.discount || 0}%</span> : <input className="ad-input" type="number" value={it.discount || 0} onChange={(e) => patchItem(i, { discount: Number(e.target.value) })} />}
+                    <label className="block">
+                      <span className="field-label">Remise %</span>
+                      {consult
+                        ? <div className="pt-1.5">-{it.discount || 0}%</div>
+                        : <input className="ad-input" type="number" min={0} max={100} placeholder="0" value={it.discount || 0} onChange={(e) => patchItem(i, { discount: Number(e.target.value) })} />}
+                    </label>
                   </div>
-                  <div className="col-span-1 font-black text-right">{((it.quantity * it.price) * (1 - (it.discount || 0) / 100)).toLocaleString()}</div>
-                  {!consult && <button className="ad-btn ad-btn-icon ad-btn-danger col-span-1" onClick={() => setOpen({ ...open, items: (open.items || []).filter((_, j) => j !== i) })}><Trash2 className="w-4 h-4" /></button>}
+                  <div className="col-span-1 font-black text-right pb-1.5" title="Total de la ligne (remise déduite)">{((it.quantity * it.price) * (1 - (it.discount || 0) / 100)).toLocaleString()}</div>
+                  {!consult && <button className="ad-btn ad-btn-icon ad-btn-danger col-span-1" title="Supprimer la ligne" onClick={() => setOpen({ ...open, items: (open.items || []).filter((_, j) => j !== i) })}><Trash2 className="w-4 h-4" /></button>}
                 </div>
               ))}
               {!consult && (
-                <button className="ad-btn ad-btn-ghost" onClick={() => setOpen({ ...open, items: [...(open.items || []), { id: Date.now(), name: 'Article', quantity: 1, price: 0 }] })}>
-                  <Plus className="w-4 h-4" /> Ligne
+                <button className="ad-btn ad-btn-ghost" onClick={() => setOpen({ ...open, items: [...(open.items || []), { id: Date.now(), name: '', quantity: 1, price: 0 }] })}>
+                  <Plus className="w-4 h-4" /> Ajouter une ligne
                 </button>
               )}
             </div>
 
             {!consult && (
-              <input className="ad-input font-mono" placeholder="Coupon" value={open.coupon || ''} onChange={(e) => setOpen({ ...open, coupon: e.target.value.toUpperCase() })} />
+              <label className="block space-y-1.5">
+                <span className="field-label">Code promo / Coupon</span>
+                <input className="ad-input font-mono" placeholder="Ex. SARI10 (facultatif)" value={open.coupon || ''} onChange={(e) => setOpen({ ...open, coupon: e.target.value.toUpperCase() })} />
+              </label>
             )}
 
             <div className="ad-card p-4 space-y-1 text-sm">
@@ -303,6 +349,45 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
           </>
         )}
       </Drawer>
+
+      {messageTo && (
+        <MessageComposer
+          email={messageTo.email}
+          name={messageTo.client}
+          type="client"
+          subject={
+            kind === 'quotes'
+              ? `Votre devis ${('reference' in messageTo && messageTo.reference) || `#${messageTo.id}`}`
+              : `Votre commande #${messageTo.id}`
+          }
+          context={
+            kind === 'quotes'
+              ? { kind: 'quote', id: messageTo.id, ref: ('reference' in messageTo && messageTo.reference) || undefined }
+              : { kind: 'order', id: messageTo.id }
+          }
+          onClose={() => setMessageTo(null)}
+        />
+      )}
+
+      {respondTo && (
+        <QuoteResponseComposer
+          quote={respondTo as Quote}
+          onClose={() => setRespondTo(null)}
+          onSave={(response) => {
+            const next = rows.map((r) => (r.id === respondTo.id ? ({
+              ...r,
+              response,
+              status: 'replied',
+              history: [...(r.history || []), { status: 'replied', at: new Date().toISOString(), note: 'Réponse au devis envoyée' }],
+            } as Row) : r));
+            persist(next);
+            const updated = next.find((r) => r.id === respondTo.id);
+            if (updated) setOpen(updated);
+            setRespondTo(null);
+            showToast('Réponse au devis envoyée', 'success');
+          }}
+        />
+      )}
     </div>
   );
 }
