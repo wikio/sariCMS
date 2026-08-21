@@ -34,7 +34,7 @@ class MemoryRepo implements ICrudRepository<Item> {
       meta: { total, page, limit, totalPages: Math.max(1, Math.ceil(total / limit)) },
     };
   }
-  async findById(id: string, includeDeleted = false): Promise<Item | null> {
+  async findById(id: number, includeDeleted = false): Promise<Item | null> {
     const hit = this.items.find((i) => i.id === id) ?? null;
     if (hit?.deletedAt && !includeDeleted) return null;
     return hit;
@@ -49,18 +49,18 @@ class MemoryRepo implements ICrudRepository<Item> {
     this.items.push(item);
     return item;
   }
-  async update(id: string, data: Partial<Item>): Promise<Item> {
+  async update(id: number, data: Partial<Item>): Promise<Item> {
     const idx = this.items.findIndex((i) => i.id === id);
     this.items[idx] = { ...this.items[idx], ...data };
     return this.items[idx];
   }
-  async softDelete(id: string): Promise<Item> {
+  async softDelete(id: number): Promise<Item> {
     return this.update(id, { deletedAt: new Date().toISOString() });
   }
-  async restore(id: string): Promise<Item> {
+  async restore(id: number): Promise<Item> {
     return this.update(id, { deletedAt: null });
   }
-  async hardDelete(id: string): Promise<void> {
+  async hardDelete(id: number): Promise<void> {
     this.items = this.items.filter((i) => i.id !== id);
   }
   async purgeExpired(olderThan: Date): Promise<number> {
@@ -75,7 +75,7 @@ class MemoryRepo implements ICrudRepository<Item> {
     return this.items
       .filter((i) => String((i as any)[field] ?? '').toLowerCase().includes(q.toLowerCase()))
       .slice(0, limit)
-      .map((i) => ({ id: i.id, value: String((i as any)[field]) }));
+      .map((i) => ({ id: String(i.id), value: String((i as any)[field]) }));
   }
 }
 

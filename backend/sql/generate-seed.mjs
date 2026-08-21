@@ -5,11 +5,10 @@
  * Exécution (depuis `backend/` pour résoudre bcryptjs) :
  *   node sql/generate-seed.mjs
  *
- * Identifiants déterministes (UUID v5) : relancer le script produit le même
- * fichier. Le hash bcrypt est calculé au moment de la génération puis figé
- * dans le SQL.
+ * Identifiants ENTIERS déterministes (séquentiels par table) : relancer le
+ * script produit le même fichier. Le hash bcrypt est calculé au moment de la
+ * génération puis figé dans le SQL.
  */
-import { createHash } from 'node:crypto';
 import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -18,31 +17,32 @@ import bcrypt from 'bcryptjs';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // ---------------------------------------------------------------------------
-// UUID v5 déterministe (stable entre exécutions)
+// Identifiants entiers séquentiels et déterministes (stables entre exécutions).
+// Les clés étrangères réutilisent id('role', …), id('perm', …), id('user', …)
+// donc restent cohérentes quel que soit l'ordre d'appel.
 // ---------------------------------------------------------------------------
-const NS = 'a6edc906-2f9f-5fb2-a373-fefd7bc73b0c';
-function uuid5(name) {
-  const hex = createHash('sha1').update(`${NS}:${name}`, 'utf8').digest('hex');
-  // Version 5 : bits de version à 0101 et variant RFC 4122 (10xx).
-  const timeHi = (parseInt(hex.slice(12, 16), 16) & 0x0fff) | 0x5000;
-  const clockHi = (parseInt(hex.slice(16, 18), 16) & 0x3f) | 0x80;
-  return [
-    hex.slice(0, 8),
-    hex.slice(8, 12),
-    timeHi.toString(16).padStart(4, '0'),
-    clockHi.toString(16).padStart(2, '0') + hex.slice(18, 20),
-    hex.slice(20, 32),
-  ].join('-');
+const SEQ = {};
+function id(kind, key) {
+  const k = `${kind}:${key}`;
+  if (!(k in SEQ)) {
+    const n = Object.keys(SEQ).filter((x) => x.startsWith(`${kind}:`)).length + 1;
+    SEQ[k] = n;
+  }
+  return SEQ[k];
 }
-const id = (kind, key) => uuid5(`${kind}:${key}`);
 const now = '2026-08-21 10:00:00.000';
 
 // ---------------------------------------------------------------------------
 // Escaping SQL
 // ---------------------------------------------------------------------------
+/** Échappe une valeur texte (guillemets + antislash). */
 function esc(v) {
   if (v === null || v === undefined) return 'NULL';
   return `'${String(v).replace(/\\/g, '\\\\').replace(/'/g, "''")}'`;
+}
+/** Valeur entière brute (sans guillemets) — pour les colonnes INT. */
+function num(v) {
+  return String(v);
 }
 function json(v) {
   return esc(JSON.stringify(v));
@@ -698,7 +698,7 @@ push('INSERT IGNORE INTO `permissions` (`id`, `resource`, `action`, `description
 const permRows = [];
 const PERM_DESC = { create: 'Créer', read: 'Consulter', update: 'Modifier', delete: 'Supprimer', admin: 'Administrer' };
 for (const r of RESOURCES) for (const a of ACTIONS) {
-  permRows.push(`(${esc(permId(r, a))}, ${esc(r)}, ${esc(a)}, ${esc(PERM_DESC[a] + ' ' + r)}, ${esc(now)}, ${esc(now)})`);
+  permRows.push(`(${num(permId(r, a))}, ${esc(r)}, ${esc(a)}, ${esc(PERM_DESC[a] + ' ' + r)}, ${esc(now)}, ${esc(now)})`);
 }
 push(permRows.join(',\n') + ';');
 push('');
@@ -711,7 +711,7 @@ const roleRows = ROLES.map((role) => {
   const rid = id('role', role.slug);
   const perms = rolePermKeys[role.slug];
   const permIds = perms.map((k) => { const [rr, aa] = k.split(':'); return permId(rr, aa); });
-  return `(${esc(rid)}, ${esc(role.name)}, ${esc(role.slug)}, ${esc(role.desc)}, ${role.system}, ${json(permIds)}, ${esc(now)}, ${esc(now)})`;
+  return `(${num(rid)}, ${esc(role.name)}, ${esc(role.slug)}, ${esc(role.desc)}, ${role.system}, ${json(permIds)}, ${esc(now)}, ${esc(now)})`;
 });
 push(roleRows.join(',\n') + ';');
 push('');
@@ -725,7 +725,7 @@ for (const role of ROLES) {
   const rid = id('role', role.slug);
   for (const k of rolePermKeys[role.slug]) {
     const [rr, aa] = k.split(':');
-    rpRows.push(`(${esc(rid)}, ${esc(permId(rr, aa))})`);
+    rpRows.push(`(${num(rid)}, ${num(permId(rr, aa))})`);
   }
 }
 push(rpRows.join(',\n') + ';');
@@ -737,7 +737,7 @@ push('-- -----------------------------------------------------------------------
 push('INSERT IGNORE INTO `users` (`id`, `email`, `passwordHash`, `firstName`, `lastName`, `phone`, `company`, `type`, `status`, `locale`, `roleId`, `address`, `wilaya`, `country`, `position`, `createdAt`, `updatedAt`) VALUES');
 const userRows = USERS.map((u) => {
   const rid = u.role ? id('role', u.role) : null;
-  return `(${esc(id('user', u.email))}, ${esc(u.email)}, ${esc(passwordHash)}, ${esc(u.first)}, ${esc(u.last)}, ${esc(u.phone ?? null)}, ${esc(u.company ?? null)}, ${esc(u.type)}, ${esc(u.status)}, 'fr', ${esc(rid)}, ${esc(u.address ?? null)}, ${esc(u.wilaya ?? null)}, ${esc(u.country ?? null)}, ${esc(u.position ?? null)}, ${esc(now)}, ${esc(now)})`;
+  return `(${num(id('user', u.email))}, ${esc(u.email)}, ${esc(passwordHash)}, ${esc(u.first)}, ${esc(u.last)}, ${esc(u.phone ?? null)}, ${esc(u.company ?? null)}, ${esc(u.type)}, ${esc(u.status)}, 'fr', ${u.role ? num(rid) : 'NULL'}, ${esc(u.address ?? null)}, ${esc(u.wilaya ?? null)}, ${esc(u.country ?? null)}, ${esc(u.position ?? null)}, ${esc(now)}, ${esc(now)})`;
 });
 push(userRows.join(',\n') + ';');
 push('');
@@ -747,7 +747,7 @@ push('-- Coordonnées (contact_info)');
 push('-- ---------------------------------------------------------------------------');
 push('INSERT IGNORE INTO `contact_info` (`id`, `locale`, `company`, `tagline`, `phone`, `email`, `address`, `hours`, `currency`, `social`, `extras`, `createdAt`, `updatedAt`) VALUES');
 const contactRows = Object.entries(CONTACT).map(([loc, c]) => {
-  return `(${esc(id('contact', loc))}, ${esc(loc)}, ${esc(c.company)}, ${esc(c.tagline)}, ${esc(c.phone)}, ${esc(c.email)}, ${esc(c.address)}, ${esc(c.hours)}, ${esc(c.currency)}, ${json(c.social)}, ${json(c.extras)}, ${esc(now)}, ${esc(now)})`;
+  return `(${num(id('contact', loc))}, ${esc(loc)}, ${esc(c.company)}, ${esc(c.tagline)}, ${esc(c.phone)}, ${esc(c.email)}, ${esc(c.address)}, ${esc(c.hours)}, ${esc(c.currency)}, ${json(c.social)}, ${json(c.extras)}, ${esc(now)}, ${esc(now)})`;
 });
 push(contactRows.join(',\n') + ';');
 push('');
@@ -759,9 +759,9 @@ push('INSERT IGNORE INTO `menus` (`id`, `locale`, `name`, `location`, `items`, `
 const menuRows = [];
 for (const loc of Object.keys(MENUS)) {
   const m = MENUS[loc];
-  menuRows.push(`(${esc(id('menu', loc + ':main'))}, ${esc(loc)}, 'Menu principal', 'main', ${json(m.main)}, 'published', ${esc(now)}, ${esc(now)})`);
-  menuRows.push(`(${esc(id('menu', loc + ':footer-nav'))}, ${esc(loc)}, 'Navigation pied de page', 'footer-nav', ${json(m.nav)}, 'published', ${esc(now)}, ${esc(now)})`);
-  menuRows.push(`(${esc(id('menu', loc + ':footer-legal'))}, ${esc(loc)}, 'Liens légaux', 'footer-legal', ${json(m.legal)}, 'published', ${esc(now)}, ${esc(now)})`);
+  menuRows.push(`(${num(id('menu', loc + ':main'))}, ${esc(loc)}, 'Menu principal', 'main', ${json(m.main)}, 'published', ${esc(now)}, ${esc(now)})`);
+  menuRows.push(`(${num(id('menu', loc + ':footer-nav'))}, ${esc(loc)}, 'Navigation pied de page', 'footer-nav', ${json(m.nav)}, 'published', ${esc(now)}, ${esc(now)})`);
+  menuRows.push(`(${num(id('menu', loc + ':footer-legal'))}, ${esc(loc)}, 'Liens légaux', 'footer-legal', ${json(m.legal)}, 'published', ${esc(now)}, ${esc(now)})`);
 }
 push(menuRows.join(',\n') + ';');
 push('');
@@ -773,7 +773,7 @@ push('INSERT IGNORE INTO `pages` (`id`, `slug`, `locale`, `kind`, `subtype`, `ti
 const pageRows = [];
 for (const loc of Object.keys(PAGES)) {
   for (const [key, p] of Object.entries(PAGES[loc])) {
-    pageRows.push(`(${esc(id('page', loc + ':' + key))}, ${esc(key)}, ${esc(loc)}, ${esc(key === 'about' ? 'about' : 'legal')}, 'simple', ${esc(p.title)}, ${esc(p.content)}, 'published', ${esc(now)}, ${key === 'about' ? 1 : 0}, ${esc(now)}, ${esc(now)})`);
+    pageRows.push(`(${num(id('page', loc + ':' + key))}, ${esc(key)}, ${esc(loc)}, ${esc(key === 'about' ? 'about' : 'legal')}, 'simple', ${esc(p.title)}, ${esc(p.content)}, 'published', ${esc(now)}, ${key === 'about' ? 1 : 0}, ${esc(now)}, ${esc(now)})`);
   }
 }
 push(pageRows.join(',\n') + ';');
@@ -786,7 +786,7 @@ push('INSERT IGNORE INTO `products` (`id`, `locale`, `slug`, `name`, `category`,
 const productRows = [];
 for (const loc of Object.keys(PRODUCTS)) {
   PRODUCTS[loc].forEach((p, i) => {
-    productRows.push(`(${esc(id('product', loc + ':' + p.slug))}, ${esc(loc)}, ${esc(p.slug)}, ${esc(p.name)}, ${esc(p.cat)}, ${esc(p.sku)}, ${esc(p.price)}, ${esc(p.desc)}, NULL, 1, 10, 'DZD', ${i + 1}, ${esc(p.delivery)}, 'published', ${esc(now)}, ${esc(now)}, ${esc(now)})`);
+    productRows.push(`(${num(id('product', loc + ':' + p.slug))}, ${esc(loc)}, ${esc(p.slug)}, ${esc(p.name)}, ${esc(p.cat)}, ${esc(p.sku)}, ${esc(p.price)}, ${esc(p.desc)}, NULL, 1, 10, 'DZD', ${i + 1}, ${esc(p.delivery)}, 'published', ${esc(now)}, ${esc(now)}, ${esc(now)})`);
   });
 }
 push(productRows.join(',\n') + ';');
@@ -799,7 +799,7 @@ push('INSERT IGNORE INTO `services` (`id`, `locale`, `slug`, `title`, `icon`, `s
 const serviceRows = [];
 for (const loc of Object.keys(SERVICES)) {
   SERVICES[loc].forEach((s, i) => {
-    serviceRows.push(`(${esc(id('service', loc + ':' + s.slug))}, ${esc(loc)}, ${esc(s.slug)}, ${esc(s.title)}, ${esc(s.icon)}, ${esc(s.desc)}, ${i + 1}, ${i + 1}, 'published', ${esc(now)}, ${esc(now)})`);
+    serviceRows.push(`(${num(id('service', loc + ':' + s.slug))}, ${esc(loc)}, ${esc(s.slug)}, ${esc(s.title)}, ${esc(s.icon)}, ${esc(s.desc)}, ${i + 1}, ${i + 1}, 'published', ${esc(now)}, ${esc(now)})`);
   });
 }
 push(serviceRows.join(',\n') + ';');
@@ -812,7 +812,7 @@ push('INSERT IGNORE INTO `partners` (`id`, `locale`, `name`, `category`, `websit
 const partnerRows = [];
 for (const loc of Object.keys(PARTNERS)) {
   PARTNERS[loc].forEach((p, i) => {
-    partnerRows.push(`(${esc(id('partner', loc + ':' + i))}, ${esc(loc)}, ${esc(p.name)}, ${esc(p.category)}, ${esc(p.website)}, ${i + 1}, ${i + 1}, 'published', ${esc(now)}, ${esc(now)})`);
+    partnerRows.push(`(${num(id('partner', loc + ':' + i))}, ${esc(loc)}, ${esc(p.name)}, ${esc(p.category)}, ${esc(p.website)}, ${i + 1}, ${i + 1}, 'published', ${esc(now)}, ${esc(now)})`);
   });
 }
 push(partnerRows.join(',\n') + ';');
@@ -825,7 +825,7 @@ push('INSERT IGNORE INTO `careers` (`id`, `locale`, `slug`, `title`, `type`, `lo
 const careerRows = [];
 for (const loc of Object.keys(CAREERS)) {
   CAREERS[loc].forEach((c, i) => {
-    careerRows.push(`(${esc(id('career', loc + ':' + c.slug))}, ${esc(loc)}, ${esc(c.slug)}, ${esc(c.title)}, ${esc(c.type)}, ${esc(c.loc)}, ${esc(c.salary)}, ${esc(c.desc)}, ${i + 1}, 'published', ${esc(now)}, ${esc(now)}, ${esc(now)})`);
+    careerRows.push(`(${num(id('career', loc + ':' + c.slug))}, ${esc(loc)}, ${esc(c.slug)}, ${esc(c.title)}, ${esc(c.type)}, ${esc(c.loc)}, ${esc(c.salary)}, ${esc(c.desc)}, ${i + 1}, 'published', ${esc(now)}, ${esc(now)}, ${esc(now)})`);
   });
 }
 push(careerRows.join(',\n') + ';');
@@ -838,7 +838,7 @@ push('INSERT IGNORE INTO `solutions` (`id`, `locale`, `slug`, `title`, `shortDes
 const solutionRows = [];
 for (const loc of Object.keys(SOLUTIONS)) {
   SOLUTIONS[loc].forEach((s, i) => {
-    solutionRows.push(`(${esc(id('solution', loc + ':' + s.slug))}, ${esc(loc)}, ${esc(s.slug)}, ${esc(s.title)}, ${esc(s.desc)}, ${i + 1}, 'published', ${esc(now)}, ${esc(now)})`);
+    solutionRows.push(`(${num(id('solution', loc + ':' + s.slug))}, ${esc(loc)}, ${esc(s.slug)}, ${esc(s.title)}, ${esc(s.desc)}, ${i + 1}, 'published', ${esc(now)}, ${esc(now)})`);
   });
 }
 push(solutionRows.join(',\n') + ';');
@@ -851,7 +851,7 @@ push('INSERT IGNORE INTO `testimonials` (`id`, `locale`, `name`, `role`, `clinic
 const testimonialRows = [];
 for (const loc of Object.keys(TESTIMONIALS)) {
   TESTIMONIALS[loc].forEach((t, i) => {
-    testimonialRows.push(`(${esc(id('testimonial', loc + ':' + i))}, ${esc(loc)}, ${esc(t.name)}, ${esc(t.role)}, ${esc(t.clinic)}, ${esc(t.text)}, ${t.rating}, ${i + 1}, 'published', ${esc(now)}, ${esc(now)})`);
+    testimonialRows.push(`(${num(id('testimonial', loc + ':' + i))}, ${esc(loc)}, ${esc(t.name)}, ${esc(t.role)}, ${esc(t.clinic)}, ${esc(t.text)}, ${t.rating}, ${i + 1}, 'published', ${esc(now)}, ${esc(now)})`);
   });
 }
 push(testimonialRows.join(',\n') + ';');
@@ -864,7 +864,7 @@ push('INSERT IGNORE INTO `hero_slides` (`id`, `locale`, `title`, `subtitle`, `de
 const heroRows = [];
 for (const loc of Object.keys(HERO)) {
   HERO[loc].forEach((h, i) => {
-    heroRows.push(`(${esc(id('hero', loc + ':' + i))}, ${esc(loc)}, ${esc(h.title)}, ${esc(h.subtitle)}, ${esc(h.desc)}, ${esc(h.cta)}, ${esc(h.link)}, ${i + 1}, ${i + 1}, 'published', ${esc(now)}, ${esc(now)})`);
+    heroRows.push(`(${num(id('hero', loc + ':' + i))}, ${esc(loc)}, ${esc(h.title)}, ${esc(h.subtitle)}, ${esc(h.desc)}, ${esc(h.cta)}, ${esc(h.link)}, ${i + 1}, ${i + 1}, 'published', ${esc(now)}, ${esc(now)})`);
   });
 }
 push(heroRows.join(',\n') + ';');
@@ -877,7 +877,7 @@ push('INSERT IGNORE INTO `news_articles` (`id`, `locale`, `slug`, `title`, `cate
 const newsRows = [];
 for (const loc of Object.keys(NEWS)) {
   NEWS[loc].forEach((n) => {
-    newsRows.push(`(${esc(id('news', loc + ':' + n.slug))}, ${esc(loc)}, ${esc(n.slug)}, ${esc(n.title)}, ${esc(n.category)}, ${esc(n.classification)}, ${esc(n.sujet)}, 'SARI Système', ${esc(n.date)}, ${esc(n.readTime)}, ${esc(n.desc)}, ${esc(n.content)}, 'published', ${esc(n.date)}, ${esc(now)}, ${esc(now)})`);
+    newsRows.push(`(${num(id('news', loc + ':' + n.slug))}, ${esc(loc)}, ${esc(n.slug)}, ${esc(n.title)}, ${esc(n.category)}, ${esc(n.classification)}, ${esc(n.sujet)}, 'SARI Système', ${esc(n.date)}, ${esc(n.readTime)}, ${esc(n.desc)}, ${esc(n.content)}, 'published', ${esc(n.date)}, ${esc(now)}, ${esc(now)})`);
   });
 }
 push(newsRows.join(',\n') + ';');
@@ -890,7 +890,7 @@ push('INSERT IGNORE INTO `events` (`id`, `locale`, `slug`, `title`, `type`, `dat
 const eventRows = [];
 for (const loc of Object.keys(EVENTS)) {
   EVENTS[loc].forEach((e) => {
-    eventRows.push(`(${esc(id('event', loc + ':' + e.slug))}, ${esc(loc)}, ${esc(e.slug)}, ${esc(e.title)}, ${esc(e.type)}, ${esc(e.date)}, ${esc(e.loc)}, ${esc(e.desc)}, 'published', ${esc(e.date)}, ${esc(now)}, ${esc(now)})`);
+    eventRows.push(`(${num(id('event', loc + ':' + e.slug))}, ${esc(loc)}, ${esc(e.slug)}, ${esc(e.title)}, ${esc(e.type)}, ${esc(e.date)}, ${esc(e.loc)}, ${esc(e.desc)}, 'published', ${esc(e.date)}, ${esc(now)}, ${esc(now)})`);
   });
 }
 push(eventRows.join(',\n') + ';');
@@ -903,7 +903,7 @@ push('INSERT IGNORE INTO `faqs` (`id`, `locale`, `question`, `answer`, `category
 const faqRows = [];
 for (const loc of Object.keys(FAQS)) {
   FAQS[loc].forEach((f, i) => {
-    faqRows.push(`(${esc(id('faq', loc + ':' + i))}, ${esc(loc)}, ${esc(f.q)}, ${esc(f.a)}, ${esc(f.cat)}, ${i + 1}, 'published', ${esc(now)}, ${esc(now)})`);
+    faqRows.push(`(${num(id('faq', loc + ':' + i))}, ${esc(loc)}, ${esc(f.q)}, ${esc(f.a)}, ${esc(f.cat)}, ${i + 1}, 'published', ${esc(now)}, ${esc(now)})`);
   });
 }
 push(faqRows.join(',\n') + ';');
@@ -914,7 +914,7 @@ push('-- Messages de contact');
 push('-- ---------------------------------------------------------------------------');
 push('INSERT IGNORE INTO `contact_messages` (`id`, `name`, `email`, `phone`, `subject`, `message`, `status`, `createdAt`, `updatedAt`) VALUES');
 const messageRows = MESSAGES.map((m, i) => {
-  return `(${esc(id('message', String(i)))}, ${esc(m.name)}, ${esc(m.email)}, ${esc(m.phone)}, ${esc(m.subject)}, ${esc(m.message)}, ${esc(m.status)}, ${esc(now)}, ${esc(now)})`;
+  return `(${num(id('message', String(i)))}, ${esc(m.name)}, ${esc(m.email)}, ${esc(m.phone)}, ${esc(m.subject)}, ${esc(m.message)}, ${esc(m.status)}, ${esc(now)}, ${esc(now)})`;
 });
 push(messageRows.join(',\n') + ';');
 push('');
@@ -924,7 +924,7 @@ push('-- Paramètres');
 push('-- ---------------------------------------------------------------------------');
 push('INSERT IGNORE INTO `settings` (`id`, `key`, `value`, `group`, `createdAt`, `updatedAt`) VALUES');
 const settingRows = SETTINGS.map((s) => {
-  return `(${esc(id('setting', s.key))}, ${esc(s.key)}, ${json(s.value)}, ${esc(s.group)}, ${esc(now)}, ${esc(now)})`;
+  return `(${num(id('setting', s.key))}, ${esc(s.key)}, ${json(s.value)}, ${esc(s.group)}, ${esc(now)}, ${esc(now)})`;
 });
 push(settingRows.join(',\n') + ';');
 push('');
@@ -932,7 +932,7 @@ push('');
 push('-- ---------------------------------------------------------------------------');
 push('-- Journal d\'audit (entrée de démarrage)');
 push('-- ---------------------------------------------------------------------------');
-push(`INSERT IGNORE INTO \`audit_logs\` (\`id\`, \`actorId\`, \`action\`, \`resource\`, \`resourceId\`, \`payload\`, \`createdAt\`, \`updatedAt\`) VALUES (${esc(id('audit', 'bootstrap'))}, ${esc(id('user', 'admin@sarisysteme.com'))}, 'seed', 'database', NULL, ${json({ driver: 'mysql', locales: ['fr', 'en', 'ar'] })}, ${esc(now)}, ${esc(now)});`);
+push(`INSERT IGNORE INTO \`audit_logs\` (\`id\`, \`actorId\`, \`action\`, \`resource\`, \`resourceId\`, \`payload\`, \`createdAt\`, \`updatedAt\`) VALUES (${num(id('audit', 'bootstrap'))}, ${num(id('user', 'admin@sarisysteme.com'))}, 'seed', 'database', NULL, ${json({ driver: 'mysql', locales: ['fr', 'en', 'ar'] })}, ${esc(now)}, ${esc(now)});`);
 push('');
 
 const out = L.join('\n');

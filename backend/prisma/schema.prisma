@@ -20,7 +20,7 @@ datasource db {
 // ---------------------------------------------------------------------------
 
 model User {
-  id           String    @id @default(uuid())
+  id    Int      @id @default(autoincrement())
   email        String    @unique
   passwordHash String
   firstName    String    @default("")
@@ -31,7 +31,7 @@ model User {
   type         String    @default("client") // admin | client | partner | candidate
   status       String    @default("pending") // active | blocked | pending
   locale       String    @default("fr")
-  roleId       String?
+  roleId    Int?
   role         Role?     @relation(fields: [roleId], references: [id])
   totpEnabled  Boolean   @default(false)
   totpSecret   String?
@@ -48,8 +48,8 @@ model User {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   deletedAt    DateTime?
-  createdBy    String?
-  updatedBy    String?
+  createdBy   Int?
+  updatedBy   Int?
 
   refreshTokens RefreshToken[]
   auditLogs     AuditLog[]     @relation("ActorLogs")
@@ -61,8 +61,8 @@ model User {
 }
 
 model RefreshToken {
-  id        String    @id @default(uuid())
-  userId    String
+  id    Int      @id @default(autoincrement())
+  userId    Int
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   tokenHash String
   expiresAt DateTime
@@ -77,7 +77,7 @@ model RefreshToken {
 }
 
 model Role {
-  id          String           @id @default(uuid())
+  id    Int      @id @default(autoincrement())
   name        String
   slug        String           @unique
   description   String?          @db.Text
@@ -86,8 +86,8 @@ model Role {
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
   deletedAt   DateTime?
-  createdBy   String?
-  updatedBy   String?
+  createdBy   Int?
+  updatedBy   Int?
   users       User[]
   permissions RolePermission[]
 
@@ -96,15 +96,15 @@ model Role {
 }
 
 model Permission {
-  id          String           @id @default(uuid())
+  id    Int      @id @default(autoincrement())
   resource    String
   action      String
   description String?          @db.Text
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
   deletedAt   DateTime?
-  createdBy   String?
-  updatedBy   String?
+  createdBy   Int?
+  updatedBy   Int?
   roles       RolePermission[]
 
   @@unique([resource, action])
@@ -112,8 +112,8 @@ model Permission {
 }
 
 model RolePermission {
-  roleId       String
-  permissionId String
+  roleId    Int
+  permissionId    Int
   role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
   permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
 
@@ -126,7 +126,7 @@ model RolePermission {
 // ---------------------------------------------------------------------------
 
 model Page {
-  id          String    @id @default(uuid())
+  id    Int      @id @default(autoincrement())
   slug        String
   locale      String    @default("fr")
   kind        String // legal | about | generic
@@ -146,8 +146,8 @@ model Page {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
-  createdBy   String?
-  updatedBy   String?
+  createdBy   Int?
+  updatedBy   Int?
 
   @@unique([slug, locale])
   @@index([kind, subtype])
@@ -157,7 +157,7 @@ model Page {
 }
 
 model Faq {
-  id        String    @id @default(uuid())
+  id    Int      @id @default(autoincrement())
   locale    String    @default("fr")
   question  String    @db.Text
   answer    String    @db.Text
@@ -167,8 +167,8 @@ model Faq {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
-  createdBy String?
-  updatedBy String?
+  createdBy   Int?
+  updatedBy   Int?
 
   @@index([locale, category])
   @@index([deletedAt])
@@ -176,7 +176,7 @@ model Faq {
 }
 
 model Testimonial {
-  id        String    @id @default(uuid())
+  id    Int      @id @default(autoincrement())
   locale    String    @default("fr")
   name      String
   role      String?
@@ -189,8 +189,8 @@ model Testimonial {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
-  createdBy String?
-  updatedBy String?
+  createdBy   Int?
+  updatedBy   Int?
 
   @@index([locale, status])
   @@index([deletedAt])
@@ -198,7 +198,7 @@ model Testimonial {
 }
 
 model Menu {
-  id        String    @id @default(uuid())
+  id    Int      @id @default(autoincrement())
   locale    String    @default("fr")
   name      String
   location  String // main | footer-nav | footer-legal | social
@@ -207,8 +207,8 @@ model Menu {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
-  createdBy String?
-  updatedBy String?
+  createdBy   Int?
+  updatedBy   Int?
 
   @@unique([location, locale])
   @@index([deletedAt])
@@ -216,7 +216,7 @@ model Menu {
 }
 
 model ContactInfo {
-  id        String    @id @default(uuid())
+  id    Int      @id @default(autoincrement())
   locale    String    @default("fr")
   company   String?
   tagline   String?
@@ -231,15 +231,15 @@ model ContactInfo {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
-  createdBy String?
-  updatedBy String?
+  createdBy   Int?
+  updatedBy   Int?
 
   @@unique([locale])
   @@map("contact_info")
 }
 
 model ContactMessage {
-  id        String    @id @default(uuid())
+  id    Int      @id @default(autoincrement())
   name      String
   email     String
   phone     String?
@@ -250,8 +250,8 @@ model ContactMessage {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
-  createdBy String?
-  updatedBy String?
+  createdBy   Int?
+  updatedBy   Int?
 
   @@index([status])
   @@index([deletedAt])
@@ -263,17 +263,17 @@ model ContactMessage {
 // ---------------------------------------------------------------------------
 
 model Translation {
-  id         String    @id @default(uuid())
+  id    Int      @id @default(autoincrement())
   entityType String
-  entityId   String
+  entityId    Int
   locale     String
   field      String
   value      String    @db.Text
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
   deletedAt  DateTime?
-  createdBy  String?
-  updatedBy  String?
+  createdBy   Int?
+  updatedBy   Int?
 
   @@unique([entityType, entityId, locale, field])
   @@index([entityType, entityId])
@@ -282,20 +282,20 @@ model Translation {
 }
 
 model AuditLog {
-  id         String   @id @default(uuid())
-  actorId    String?
+  id    Int      @id @default(autoincrement())
+  actorId    Int?
   actor      User?    @relation("ActorLogs", fields: [actorId], references: [id])
   action     String
   resource   String
-  resourceId String?
+  resourceId    Int?
   payload    Json?
   ip         String?
   userAgent  String?  @db.Text
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   deletedAt  DateTime?
-  createdBy  String?
-  updatedBy  String?
+  createdBy   Int?
+  updatedBy   Int?
 
   @@index([resource, resourceId])
   @@index([actorId])
@@ -304,15 +304,15 @@ model AuditLog {
 }
 
 model Setting {
-  id        String    @id @default(uuid())
+  id    Int      @id @default(autoincrement())
   key       String    @unique
   value     Json
   group     String    @default("general")
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
-  createdBy String?
-  updatedBy String?
+  createdBy   Int?
+  updatedBy   Int?
 
   @@map("settings")
 }
@@ -322,7 +322,7 @@ model Setting {
 // ---------------------------------------------------------------------------
 
 model NewsArticle {
-  id             String    @id @default(uuid())
+  id    Int      @id @default(autoincrement())
   locale         String    @default("fr")
   slug           String
   title          String
@@ -330,7 +330,7 @@ model NewsArticle {
   classification String?
   sujet          String?
   authorName     String?
-  authorId       String?
+  authorId    Int?
   date           DateTime?
   readTime       String?
   shortDesc      String?   @db.Text
@@ -342,8 +342,8 @@ model NewsArticle {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   deletedAt      DateTime?
-  createdBy      String?
-  updatedBy      String?
+  createdBy   Int?
+  updatedBy   Int?
 
   @@unique([slug, locale])
   @@index([status, date])
@@ -353,7 +353,7 @@ model NewsArticle {
 }
 
 model EventItem {
-  id          String    @id @default(uuid())
+  id    Int      @id @default(autoincrement())
   locale      String    @default("fr")
   slug        String
   title       String
@@ -370,8 +370,8 @@ model EventItem {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
-  createdBy   String?
-  updatedBy   String?
+  createdBy   Int?
+  updatedBy   Int?
 
   @@unique([slug, locale])
   @@index([date])
@@ -380,7 +380,7 @@ model EventItem {
 }
 
 model Product {
-  id           String    @id @default(uuid())
+  id    Int      @id @default(autoincrement())
   locale       String    @default("fr")
   slug         String
   name         String
@@ -406,8 +406,8 @@ model Product {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   deletedAt    DateTime?
-  createdBy    String?
-  updatedBy    String?
+  createdBy   Int?
+  updatedBy   Int?
 
   @@unique([slug, locale])
   @@index([category, inStock])
@@ -420,7 +420,7 @@ model Product {
 // ---------------------------------------------------------------------------
 
 model ServiceItem {
-  id        String    @id @default(uuid())
+  id    Int      @id @default(autoincrement())
   locale    String    @default("fr")
   slug      String
   title     String
@@ -435,8 +435,8 @@ model ServiceItem {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
-  createdBy String?
-  updatedBy String?
+  createdBy   Int?
+  updatedBy   Int?
 
   @@unique([slug, locale])
   @@index([status])
@@ -445,7 +445,7 @@ model ServiceItem {
 }
 
 model Partner {
-  id        String    @id @default(uuid())
+  id    Int      @id @default(autoincrement())
   locale    String    @default("fr")
   name      String
   logo      String?
@@ -457,8 +457,8 @@ model Partner {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
-  createdBy String?
-  updatedBy String?
+  createdBy   Int?
+  updatedBy   Int?
 
   @@index([locale, status])
   @@index([deletedAt])
@@ -466,7 +466,7 @@ model Partner {
 }
 
 model Career {
-  id          String    @id @default(uuid())
+  id    Int      @id @default(autoincrement())
   locale      String    @default("fr")
   slug        String
   title       String
@@ -490,8 +490,8 @@ model Career {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
-  createdBy   String?
-  updatedBy   String?
+  createdBy   Int?
+  updatedBy   Int?
 
   @@unique([slug, locale])
   @@index([status, location])
@@ -500,7 +500,7 @@ model Career {
 }
 
 model SolutionCategory {
-  id         String    @id @default(uuid())
+  id    Int      @id @default(autoincrement())
   locale     String    @default("fr")
   slug       String
   title      String
@@ -517,8 +517,8 @@ model SolutionCategory {
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
   deletedAt  DateTime?
-  createdBy  String?
-  updatedBy  String?
+  createdBy   Int?
+  updatedBy   Int?
 
   @@unique([slug, locale])
   @@index([status])
@@ -527,7 +527,7 @@ model SolutionCategory {
 }
 
 model HeroSlide {
-  id          String    @id @default(uuid())
+  id    Int      @id @default(autoincrement())
   locale      String    @default("fr")
   title       String
   subtitle    String?
@@ -541,8 +541,8 @@ model HeroSlide {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
-  createdBy   String?
-  updatedBy   String?
+  createdBy   Int?
+  updatedBy   Int?
 
   @@index([locale, status, sortOrder])
   @@index([deletedAt])

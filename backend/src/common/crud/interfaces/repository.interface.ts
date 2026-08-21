@@ -1,5 +1,5 @@
 export interface BaseEntity {
-  id: string;
+  id: number;
   createdAt: Date | string;
   updatedAt: Date | string;
   deletedAt?: Date | string | null;
@@ -63,13 +63,13 @@ export interface ICrudRepository<T extends BaseEntity> {
   readonly collection: string;
 
   findMany(options: QueryOptions): Promise<PaginatedResult<T>>;
-  findById(id: string, includeDeleted?: boolean): Promise<T | null>;
+  findById(id: number, includeDeleted?: boolean): Promise<T | null>;
   findOne(where: Record<string, unknown>, includeDeleted?: boolean): Promise<T | null>;
   create(data: Partial<T>): Promise<T>;
-  update(id: string, data: Partial<T>): Promise<T>;
-  softDelete(id: string): Promise<T>;
-  restore(id: string): Promise<T>;
-  hardDelete(id: string): Promise<void>;
+  update(id: number, data: Partial<T>): Promise<T>;
+  softDelete(id: number): Promise<T>;
+  restore(id: number): Promise<T>;
+  hardDelete(id: number): Promise<void>;
   purgeExpired(olderThan: Date): Promise<number>;
   count(where?: Record<string, unknown>, includeDeleted?: boolean): Promise<number>;
   autocomplete(field: string, q: string, limit: number): Promise<AutocompleteHit[]>;

@@ -29,7 +29,7 @@ USE `sari_cms`;
 
 DROP TABLE IF EXISTS `roles`;
 CREATE TABLE `roles` (
-  `id`            VARCHAR(36)  NOT NULL,
+  `id`           INT          NOT NULL AUTO_INCREMENT,
   `name`          VARCHAR(255) NOT NULL,
   `slug`          VARCHAR(255) NOT NULL,
   `description`   TEXT         NULL,
@@ -38,8 +38,8 @@ CREATE TABLE `roles` (
   `createdAt`     DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   `updatedAt`     DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
   `deletedAt`     DATETIME(3)  NULL,
-  `createdBy`     VARCHAR(36)  NULL,
-  `updatedBy`     VARCHAR(36)  NULL,
+  `createdBy` INT  NULL,
+  `updatedBy` INT  NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `roles_slug_key` (`slug`),
   KEY `roles_deletedAt_idx` (`deletedAt`)
@@ -47,7 +47,7 @@ CREATE TABLE `roles` (
 
 DROP TABLE IF EXISTS `users`;
 CREATE TABLE `users` (
-  `id`           VARCHAR(36)  NOT NULL,
+  `id`           INT          NOT NULL AUTO_INCREMENT,
   `email`        VARCHAR(255) NOT NULL,
   `passwordHash` VARCHAR(255) NOT NULL,
   `firstName`    VARCHAR(255) NOT NULL DEFAULT '',
@@ -58,7 +58,7 @@ CREATE TABLE `users` (
   `type`         VARCHAR(32)  NOT NULL DEFAULT 'client',
   `status`       VARCHAR(32)  NOT NULL DEFAULT 'pending',
   `locale`       VARCHAR(8)   NOT NULL DEFAULT 'fr',
-  `roleId`       VARCHAR(36)  NULL,
+  `roleId` INT  NULL,
   `totpEnabled`  TINYINT(1)   NOT NULL DEFAULT 0,
   `totpSecret`   VARCHAR(255) NULL,
   `partnerCode`  VARCHAR(64)  NULL,
@@ -74,8 +74,8 @@ CREATE TABLE `users` (
   `createdAt`    DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   `updatedAt`    DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
   `deletedAt`    DATETIME(3)  NULL,
-  `createdBy`    VARCHAR(36)  NULL,
-  `updatedBy`    VARCHAR(36)  NULL,
+  `createdBy` INT  NULL,
+  `updatedBy` INT  NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `users_email_key` (`email`),
   KEY `users_type_status_idx` (`type`, `status`),
@@ -87,8 +87,8 @@ CREATE TABLE `users` (
 
 DROP TABLE IF EXISTS `refresh_tokens`;
 CREATE TABLE `refresh_tokens` (
-  `id`        VARCHAR(36)  NOT NULL,
-  `userId`    VARCHAR(36)  NOT NULL,
+  `id`           INT          NOT NULL AUTO_INCREMENT,
+  `userId` INT  NOT NULL,
   `tokenHash` VARCHAR(255) NOT NULL,
   `expiresAt` DATETIME(3)  NOT NULL,
   `revokedAt` DATETIME(3)  NULL,
@@ -104,23 +104,23 @@ CREATE TABLE `refresh_tokens` (
 
 DROP TABLE IF EXISTS `permissions`;
 CREATE TABLE `permissions` (
-  `id`          VARCHAR(36)  NOT NULL,
+  `id`           INT          NOT NULL AUTO_INCREMENT,
   `resource`    VARCHAR(64)  NOT NULL,
   `action`      VARCHAR(32)  NOT NULL,
   `description` TEXT         NULL,
   `createdAt`   DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   `updatedAt`   DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
   `deletedAt`   DATETIME(3)  NULL,
-  `createdBy`   VARCHAR(36)  NULL,
-  `updatedBy`   VARCHAR(36)  NULL,
+  `createdBy` INT  NULL,
+  `updatedBy` INT  NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `permissions_resource_action_key` (`resource`, `action`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `role_permissions`;
 CREATE TABLE `role_permissions` (
-  `roleId`       VARCHAR(36) NOT NULL,
-  `permissionId` VARCHAR(36) NOT NULL,
+  `roleId` INT NOT NULL,
+  `permissionId` INT NOT NULL,
   PRIMARY KEY (`roleId`, `permissionId`),
   KEY `role_permissions_permissionId_idx` (`permissionId`),
   CONSTRAINT `role_permissions_roleId_fkey` FOREIGN KEY (`roleId`) REFERENCES `roles` (`id`)
@@ -135,7 +135,7 @@ CREATE TABLE `role_permissions` (
 
 DROP TABLE IF EXISTS `pages`;
 CREATE TABLE `pages` (
-  `id`          VARCHAR(36)  NOT NULL,
+  `id`           INT          NOT NULL AUTO_INCREMENT,
   `slug`        VARCHAR(255) NOT NULL,
   `locale`      VARCHAR(8)   NOT NULL DEFAULT 'fr',
   `kind`        VARCHAR(32)  NOT NULL,
@@ -155,8 +155,8 @@ CREATE TABLE `pages` (
   `createdAt`   DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   `updatedAt`   DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
   `deletedAt`   DATETIME(3)  NULL,
-  `createdBy`   VARCHAR(36)  NULL,
-  `updatedBy`   VARCHAR(36)  NULL,
+  `createdBy` INT  NULL,
+  `updatedBy` INT  NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `pages_slug_locale_key` (`slug`, `locale`),
   KEY `pages_kind_subtype_idx` (`kind`, `subtype`),
@@ -166,7 +166,7 @@ CREATE TABLE `pages` (
 
 DROP TABLE IF EXISTS `faqs`;
 CREATE TABLE `faqs` (
-  `id`        VARCHAR(36)  NOT NULL,
+  `id`           INT          NOT NULL AUTO_INCREMENT,
   `locale`    VARCHAR(8)   NOT NULL DEFAULT 'fr',
   `question`  TEXT         NOT NULL,
   `answer`    TEXT         NOT NULL,
@@ -176,8 +176,8 @@ CREATE TABLE `faqs` (
   `createdAt` DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   `updatedAt` DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
   `deletedAt` DATETIME(3)  NULL,
-  `createdBy` VARCHAR(36)  NULL,
-  `updatedBy` VARCHAR(36)  NULL,
+  `createdBy` INT  NULL,
+  `updatedBy` INT  NULL,
   PRIMARY KEY (`id`),
   KEY `faqs_locale_category_idx` (`locale`, `category`),
   KEY `faqs_deletedAt_idx` (`deletedAt`)
@@ -185,7 +185,7 @@ CREATE TABLE `faqs` (
 
 DROP TABLE IF EXISTS `testimonials`;
 CREATE TABLE `testimonials` (
-  `id`        VARCHAR(36)  NOT NULL,
+  `id`           INT          NOT NULL AUTO_INCREMENT,
   `locale`    VARCHAR(8)   NOT NULL DEFAULT 'fr',
   `name`      VARCHAR(255) NOT NULL,
   `role`      VARCHAR(255) NULL,
@@ -198,8 +198,8 @@ CREATE TABLE `testimonials` (
   `createdAt` DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   `updatedAt` DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
   `deletedAt` DATETIME(3)  NULL,
-  `createdBy` VARCHAR(36)  NULL,
-  `updatedBy` VARCHAR(36)  NULL,
+  `createdBy` INT  NULL,
+  `updatedBy` INT  NULL,
   PRIMARY KEY (`id`),
   KEY `testimonials_locale_status_idx` (`locale`, `status`),
   KEY `testimonials_deletedAt_idx` (`deletedAt`)
@@ -207,7 +207,7 @@ CREATE TABLE `testimonials` (
 
 DROP TABLE IF EXISTS `menus`;
 CREATE TABLE `menus` (
-  `id`        VARCHAR(36) NOT NULL,
+  `id`           INT          NOT NULL AUTO_INCREMENT,
   `locale`    VARCHAR(8)  NOT NULL DEFAULT 'fr',
   `name`      VARCHAR(255) NOT NULL,
   `location`  VARCHAR(32) NOT NULL,
@@ -216,8 +216,8 @@ CREATE TABLE `menus` (
   `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   `updatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
   `deletedAt` DATETIME(3) NULL,
-  `createdBy` VARCHAR(36) NULL,
-  `updatedBy` VARCHAR(36) NULL,
+  `createdBy` INT NULL,
+  `updatedBy` INT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `menus_location_locale_key` (`location`, `locale`),
   KEY `menus_deletedAt_idx` (`deletedAt`)
@@ -225,7 +225,7 @@ CREATE TABLE `menus` (
 
 DROP TABLE IF EXISTS `contact_info`;
 CREATE TABLE `contact_info` (
-  `id`        VARCHAR(36) NOT NULL,
+  `id`           INT          NOT NULL AUTO_INCREMENT,
   `locale`    VARCHAR(8)  NOT NULL DEFAULT 'fr',
   `company`   VARCHAR(255) NULL,
   `tagline`   VARCHAR(255) NULL,
@@ -240,15 +240,15 @@ CREATE TABLE `contact_info` (
   `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   `updatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
   `deletedAt` DATETIME(3) NULL,
-  `createdBy` VARCHAR(36) NULL,
-  `updatedBy` VARCHAR(36) NULL,
+  `createdBy` INT NULL,
+  `updatedBy` INT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `contact_info_locale_key` (`locale`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `contact_messages`;
 CREATE TABLE `contact_messages` (
-  `id`        VARCHAR(36)  NOT NULL,
+  `id`           INT          NOT NULL AUTO_INCREMENT,
   `name`      VARCHAR(255) NOT NULL,
   `email`     VARCHAR(255) NOT NULL,
   `phone`     VARCHAR(64)  NULL,
@@ -259,8 +259,8 @@ CREATE TABLE `contact_messages` (
   `createdAt` DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   `updatedAt` DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
   `deletedAt` DATETIME(3)  NULL,
-  `createdBy` VARCHAR(36)  NULL,
-  `updatedBy` VARCHAR(36)  NULL,
+  `createdBy` INT  NULL,
+  `updatedBy` INT  NULL,
   PRIMARY KEY (`id`),
   KEY `contact_messages_status_idx` (`status`),
   KEY `contact_messages_deletedAt_idx` (`deletedAt`)
@@ -272,17 +272,17 @@ CREATE TABLE `contact_messages` (
 
 DROP TABLE IF EXISTS `translations`;
 CREATE TABLE `translations` (
-  `id`         VARCHAR(36)  NOT NULL,
+  `id`           INT          NOT NULL AUTO_INCREMENT,
   `entityType` VARCHAR(64)  NOT NULL,
-  `entityId`   VARCHAR(36)  NOT NULL,
+  `entityId` INT  NOT NULL,
   `locale`     VARCHAR(8)   NOT NULL,
   `field`      VARCHAR(64)  NOT NULL,
   `value`      TEXT         NOT NULL,
   `createdAt`  DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   `updatedAt`  DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
   `deletedAt`  DATETIME(3)  NULL,
-  `createdBy`  VARCHAR(36)  NULL,
-  `updatedBy`  VARCHAR(36)  NULL,
+  `createdBy` INT  NULL,
+  `updatedBy` INT  NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `translations_entity_key` (`entityType`, `entityId`, `locale`, `field`),
   KEY `translations_entity_idx` (`entityType`, `entityId`),
@@ -291,19 +291,19 @@ CREATE TABLE `translations` (
 
 DROP TABLE IF EXISTS `audit_logs`;
 CREATE TABLE `audit_logs` (
-  `id`         VARCHAR(36) NOT NULL,
-  `actorId`    VARCHAR(36) NULL,
+  `id`           INT          NOT NULL AUTO_INCREMENT,
+  `actorId` INT NULL,
   `action`     VARCHAR(64) NOT NULL,
   `resource`   VARCHAR(64) NOT NULL,
-  `resourceId` VARCHAR(36) NULL,
+  `resourceId` INT NULL,
   `payload`    JSON        NULL,
   `ip`         VARCHAR(64) NULL,
   `userAgent`  TEXT        NULL,
   `createdAt`  DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   `updatedAt`  DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
   `deletedAt`  DATETIME(3) NULL,
-  `createdBy`  VARCHAR(36) NULL,
-  `updatedBy`  VARCHAR(36) NULL,
+  `createdBy` INT NULL,
+  `updatedBy` INT NULL,
   PRIMARY KEY (`id`),
   KEY `audit_logs_resource_idx` (`resource`, `resourceId`),
   KEY `audit_logs_actorId_idx` (`actorId`),
@@ -314,15 +314,15 @@ CREATE TABLE `audit_logs` (
 
 DROP TABLE IF EXISTS `settings`;
 CREATE TABLE `settings` (
-  `id`        VARCHAR(36) NOT NULL,
+  `id`           INT          NOT NULL AUTO_INCREMENT,
   `key`       VARCHAR(191) NOT NULL,
   `value`     JSON        NOT NULL,
   `group`     VARCHAR(64) NOT NULL DEFAULT 'general',
   `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   `updatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
   `deletedAt` DATETIME(3) NULL,
-  `createdBy` VARCHAR(36) NULL,
-  `updatedBy` VARCHAR(36) NULL,
+  `createdBy` INT NULL,
+  `updatedBy` INT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `settings_key_key` (`key`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -333,7 +333,7 @@ CREATE TABLE `settings` (
 
 DROP TABLE IF EXISTS `news_articles`;
 CREATE TABLE `news_articles` (
-  `id`             VARCHAR(36)  NOT NULL,
+  `id`           INT          NOT NULL AUTO_INCREMENT,
   `locale`         VARCHAR(8)   NOT NULL DEFAULT 'fr',
   `slug`           VARCHAR(255) NOT NULL,
   `title`          VARCHAR(255) NOT NULL,
@@ -341,7 +341,7 @@ CREATE TABLE `news_articles` (
   `classification` VARCHAR(255) NULL,
   `sujet`          VARCHAR(255) NULL,
   `authorName`     VARCHAR(255) NULL,
-  `authorId`       VARCHAR(36)  NULL,
+  `authorId` INT  NULL,
   `date`           DATETIME(3)  NULL,
   `readTime`       VARCHAR(32)  NULL,
   `shortDesc`      TEXT         NULL,
@@ -353,8 +353,8 @@ CREATE TABLE `news_articles` (
   `createdAt`      DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   `updatedAt`      DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
   `deletedAt`      DATETIME(3)  NULL,
-  `createdBy`      VARCHAR(36)  NULL,
-  `updatedBy`      VARCHAR(36)  NULL,
+  `createdBy` INT  NULL,
+  `updatedBy` INT  NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `news_articles_slug_locale_key` (`slug`, `locale`),
   KEY `news_articles_status_date_idx` (`status`, `date`),
@@ -364,7 +364,7 @@ CREATE TABLE `news_articles` (
 
 DROP TABLE IF EXISTS `events`;
 CREATE TABLE `events` (
-  `id`          VARCHAR(36)  NOT NULL,
+  `id`           INT          NOT NULL AUTO_INCREMENT,
   `locale`      VARCHAR(8)   NOT NULL DEFAULT 'fr',
   `slug`        VARCHAR(255) NOT NULL,
   `title`       VARCHAR(255) NOT NULL,
@@ -381,8 +381,8 @@ CREATE TABLE `events` (
   `createdAt`   DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   `updatedAt`   DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
   `deletedAt`   DATETIME(3)  NULL,
-  `createdBy`   VARCHAR(36)  NULL,
-  `updatedBy`   VARCHAR(36)  NULL,
+  `createdBy` INT  NULL,
+  `updatedBy` INT  NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `events_slug_locale_key` (`slug`, `locale`),
   KEY `events_date_idx` (`date`),
@@ -391,7 +391,7 @@ CREATE TABLE `events` (
 
 DROP TABLE IF EXISTS `products`;
 CREATE TABLE `products` (
-  `id`           VARCHAR(36)  NOT NULL,
+  `id`           INT          NOT NULL AUTO_INCREMENT,
   `locale`       VARCHAR(8)   NOT NULL DEFAULT 'fr',
   `slug`         VARCHAR(255) NOT NULL,
   `name`         VARCHAR(255) NOT NULL,
@@ -417,8 +417,8 @@ CREATE TABLE `products` (
   `createdAt`    DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   `updatedAt`    DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
   `deletedAt`    DATETIME(3)  NULL,
-  `createdBy`    VARCHAR(36)  NULL,
-  `updatedBy`    VARCHAR(36)  NULL,
+  `createdBy` INT  NULL,
+  `updatedBy` INT  NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `products_slug_locale_key` (`slug`, `locale`),
   KEY `products_category_inStock_idx` (`category`, `inStock`),
@@ -431,7 +431,7 @@ CREATE TABLE `products` (
 
 DROP TABLE IF EXISTS `services`;
 CREATE TABLE `services` (
-  `id`        VARCHAR(36)  NOT NULL,
+  `id`           INT          NOT NULL AUTO_INCREMENT,
   `locale`    VARCHAR(8)   NOT NULL DEFAULT 'fr',
   `slug`      VARCHAR(255) NOT NULL,
   `title`     VARCHAR(255) NOT NULL,
@@ -446,8 +446,8 @@ CREATE TABLE `services` (
   `createdAt` DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   `updatedAt` DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
   `deletedAt` DATETIME(3)  NULL,
-  `createdBy` VARCHAR(36)  NULL,
-  `updatedBy` VARCHAR(36)  NULL,
+  `createdBy` INT  NULL,
+  `updatedBy` INT  NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `services_slug_locale_key` (`slug`, `locale`),
   KEY `services_status_idx` (`status`),
@@ -456,7 +456,7 @@ CREATE TABLE `services` (
 
 DROP TABLE IF EXISTS `partners`;
 CREATE TABLE `partners` (
-  `id`        VARCHAR(36)  NOT NULL,
+  `id`           INT          NOT NULL AUTO_INCREMENT,
   `locale`    VARCHAR(8)   NOT NULL DEFAULT 'fr',
   `name`      VARCHAR(255) NOT NULL,
   `logo`      VARCHAR(255) NULL,
@@ -468,8 +468,8 @@ CREATE TABLE `partners` (
   `createdAt` DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   `updatedAt` DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
   `deletedAt` DATETIME(3)  NULL,
-  `createdBy` VARCHAR(36)  NULL,
-  `updatedBy` VARCHAR(36)  NULL,
+  `createdBy` INT  NULL,
+  `updatedBy` INT  NULL,
   PRIMARY KEY (`id`),
   KEY `partners_locale_status_idx` (`locale`, `status`),
   KEY `partners_deletedAt_idx` (`deletedAt`)
@@ -477,7 +477,7 @@ CREATE TABLE `partners` (
 
 DROP TABLE IF EXISTS `careers`;
 CREATE TABLE `careers` (
-  `id`          VARCHAR(36)  NOT NULL,
+  `id`           INT          NOT NULL AUTO_INCREMENT,
   `locale`      VARCHAR(8)   NOT NULL DEFAULT 'fr',
   `slug`        VARCHAR(255) NOT NULL,
   `title`       VARCHAR(255) NOT NULL,
@@ -501,8 +501,8 @@ CREATE TABLE `careers` (
   `createdAt`   DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   `updatedAt`   DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
   `deletedAt`   DATETIME(3)  NULL,
-  `createdBy`   VARCHAR(36)  NULL,
-  `updatedBy`   VARCHAR(36)  NULL,
+  `createdBy` INT  NULL,
+  `updatedBy` INT  NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `careers_slug_locale_key` (`slug`, `locale`),
   KEY `careers_status_location_idx` (`status`, `location`),
@@ -511,7 +511,7 @@ CREATE TABLE `careers` (
 
 DROP TABLE IF EXISTS `solutions`;
 CREATE TABLE `solutions` (
-  `id`         VARCHAR(36)  NOT NULL,
+  `id`           INT          NOT NULL AUTO_INCREMENT,
   `locale`     VARCHAR(8)   NOT NULL DEFAULT 'fr',
   `slug`       VARCHAR(255) NOT NULL,
   `title`      VARCHAR(255) NOT NULL,
@@ -528,8 +528,8 @@ CREATE TABLE `solutions` (
   `createdAt`  DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   `updatedAt`  DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
   `deletedAt`  DATETIME(3)  NULL,
-  `createdBy`  VARCHAR(36)  NULL,
-  `updatedBy`  VARCHAR(36)  NULL,
+  `createdBy` INT  NULL,
+  `updatedBy` INT  NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `solutions_slug_locale_key` (`slug`, `locale`),
   KEY `solutions_status_idx` (`status`),
@@ -538,7 +538,7 @@ CREATE TABLE `solutions` (
 
 DROP TABLE IF EXISTS `hero_slides`;
 CREATE TABLE `hero_slides` (
-  `id`          VARCHAR(36)  NOT NULL,
+  `id`           INT          NOT NULL AUTO_INCREMENT,
   `locale`      VARCHAR(8)   NOT NULL DEFAULT 'fr',
   `title`       VARCHAR(255) NOT NULL,
   `subtitle`    VARCHAR(255) NULL,
@@ -552,8 +552,8 @@ CREATE TABLE `hero_slides` (
   `createdAt`   DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   `updatedAt`   DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
   `deletedAt`   DATETIME(3)  NULL,
-  `createdBy`   VARCHAR(36)  NULL,
-  `updatedBy`   VARCHAR(36)  NULL,
+  `createdBy` INT  NULL,
+  `updatedBy` INT  NULL,
   PRIMARY KEY (`id`),
   KEY `hero_slides_locale_status_sortOrder_idx` (`locale`, `status`, `sortOrder`),
   KEY `hero_slides_deletedAt_idx` (`deletedAt`)

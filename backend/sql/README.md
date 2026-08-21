@@ -13,6 +13,12 @@ Ce dossier contient le schéma MySQL et les données de démarrage du CMS
 > au schéma Prisma (`backend/prisma/schema.prisma`) : ne les renommez pas,
 > sinon le backend NestJS ne retrouvera plus ses données.
 
+> 🔢 **Identifiants entiers** : toutes les tables utilisent une clé primaire
+> `INT AUTO_INCREMENT` (1, 2, 3…) au lieu d'UUID. Les clés étrangères
+> (`roleId`, `userId`, `permissionId`, `entityId`, `actorId`, …) sont des
+> entiers. Pratique pour intégrer l'ID dans les codes générés
+> (ex. `SARI-WCMD-00042`).
+
 ---
 
 ## 1. Importer le schéma puis les données

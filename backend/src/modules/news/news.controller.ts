@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Patch } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Post, Patch } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Actor } from '../../common/decorators/actor.decorator';
 import { CrudResource } from '../../common/decorators/crud-resource.decorator';
@@ -30,7 +30,7 @@ export class NewsController extends BaseCrudController<NewsEntity> {
 
   @Patch(':id')
   override update(
-    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Param('id', new ParseIntPipe()) id: number,
     @Body() dto: UpdateNewsDto,
     @Actor() actor: ActorContext,
   ) {

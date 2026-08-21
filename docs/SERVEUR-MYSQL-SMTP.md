@@ -1,5 +1,9 @@
 # SARI CMS — Configurer MySQL, SMTP et créer les tables (procédure complète)
 
+> 🔢 **Identifiants entiers** : toutes les tables ont une clé primaire
+> `INT AUTO_INCREMENT` (pas d'UUID). Les codes (devis, commande, facture)
+> peuvent intégrer directement l'ID numérique — ex. `SARI-WCMD-00042`.
+
 Cette procédure couvre la mise en place du **backend NestJS** sur un serveur de
 base de données : configuration de **MySQL**, création des **tables** et des
 **données**, puis configuration **SMTP** pour les emails.

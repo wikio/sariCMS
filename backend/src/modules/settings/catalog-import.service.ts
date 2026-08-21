@@ -1,6 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { randomUUID } from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 import { COLLECTIONS, REPOSITORY_FACTORY } from '../../common/constants/tokens';
@@ -270,7 +269,6 @@ export class CatalogImportService {
       while (used.has(slug)) slug = `${base}-${i++}`;
       used.add(slug);
       await repo.create({
-        id: randomUUID(),
         ...map(row, slug),
       } as Partial<BaseEntity>);
       n += 1;
@@ -289,7 +287,6 @@ export class CatalogImportService {
       if (!value || typeof value !== 'object') continue;
       const slug = slugify(key) || key;
       await repo.create({
-        id: randomUUID(),
         locale,
         slug,
         kind: key === 'about' ? 'about' : 'legal',
@@ -324,7 +321,6 @@ export class CatalogImportService {
         ? String(row.type)
         : 'simple';
       await repo.create({
-        id: randomUUID(),
         locale,
         slug,
         kind: 'generic',
@@ -368,7 +364,6 @@ export class CatalogImportService {
     ];
     for (const block of blocks) {
       await repo.create({
-        id: randomUUID(),
         locale,
         name: block.name,
         location: block.location,
@@ -400,7 +395,7 @@ export class CatalogImportService {
     if (existing) {
       await repo.update(existing.id, payload as Partial<BaseEntity>);
     } else {
-      await repo.create({ id: randomUUID(), ...payload } as Partial<BaseEntity>);
+      await repo.create({ ...payload } as Partial<BaseEntity>);
     }
     return 1;
   }

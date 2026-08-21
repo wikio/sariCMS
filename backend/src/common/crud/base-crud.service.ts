@@ -17,7 +17,7 @@ import {
 import { queryDtoToOptions } from './query.util';
 
 export interface ActorContext {
-  id?: string;
+  id?: number;
   email?: string;
   ip?: string;
   userAgent?: string;
@@ -57,7 +57,7 @@ export abstract class BaseCrudService<T extends BaseEntity> {
     };
   }
 
-  async findOne(id: string, view: ViewMode = 'block', includeDeleted = false): Promise<unknown> {
+  async findOne(id: number, view: ViewMode = 'block', includeDeleted = false): Promise<unknown> {
     const entity = await this.requireById(id, includeDeleted);
     return this.toView(entity, view);
   }
@@ -67,7 +67,6 @@ export abstract class BaseCrudService<T extends BaseEntity> {
     const now = new Date();
     const payload = {
       ...this.beforeSave(dto, 'create'),
-      id: (dto.id as string) || randomUUID(),
       createdAt: now,
       updatedAt: now,
       deletedAt: null,
@@ -88,7 +87,7 @@ export abstract class BaseCrudService<T extends BaseEntity> {
     return this.toView(created, 'block');
   }
 
-  async update(id: string, dto: Partial<T>, actor?: ActorContext): Promise<unknown> {
+  async update(id: number, dto: Partial<T>, actor?: ActorContext): Promise<unknown> {
     const existing = await this.requireById(id);
     await this.assertUniques(dto, id);
     const payload = {
@@ -110,7 +109,7 @@ export abstract class BaseCrudService<T extends BaseEntity> {
     return this.toView(updated, 'block');
   }
 
-  async softDelete(id: string, actor?: ActorContext): Promise<unknown> {
+  async softDelete(id: number, actor?: ActorContext): Promise<unknown> {
     await this.requireById(id);
     const deleted = await this.repository.softDelete(id);
     await this.invalidateCache();
@@ -125,7 +124,7 @@ export abstract class BaseCrudService<T extends BaseEntity> {
     return this.toView(deleted, 'block');
   }
 
-  async restore(id: string, actor?: ActorContext): Promise<unknown> {
+  async restore(id: number, actor?: ActorContext): Promise<unknown> {
     const existing = await this.repository.findById(id, true);
     if (!existing) throw new NotFoundException(`${this.options.resource} not found`);
     if (!existing.deletedAt) {
@@ -144,7 +143,7 @@ export abstract class BaseCrudService<T extends BaseEntity> {
     return this.toView(restored, 'block');
   }
 
-  async requestPurge(id: string, actor?: ActorContext): Promise<{ confirm: string; expiresIn: number }> {
+  async requestPurge(id: number, actor?: ActorContext): Promise<{ confirm: string; expiresIn: number }> {
     await this.requireById(id, true);
     const token = randomUUID();
     const ttl = Number(process.env.PURGE_CONFIRM_TTL_SECONDS ?? 300);
@@ -160,7 +159,7 @@ export abstract class BaseCrudService<T extends BaseEntity> {
     return { confirm: token, expiresIn: ttl };
   }
 
-  async confirmPurge(id: string, token: string, actor?: ActorContext): Promise<{ deleted: true }> {
+  async confirmPurge(id: number, token: string, actor?: ActorContext): Promise<{ deleted: true }> {
     if (!token) {
       throw new BadRequestException('Confirmation token is required for permanent deletion');
     }
@@ -240,13 +239,13 @@ export abstract class BaseCrudService<T extends BaseEntity> {
     return clone;
   }
 
-  protected async requireById(id: string, includeDeleted = false): Promise<T> {
+  protected async requireById(id: number, includeDeleted = false): Promise<T> {
     const entity = await this.repository.findById(id, includeDeleted);
     if (!entity) throw new NotFoundException(`${this.options.resource} not found`);
     return entity;
   }
 
-  protected async assertUniques(dto: Partial<T>, excludeId?: string): Promise<void> {
+  protected async assertUniques(dto: Partial<T>, excludeId?: number): Promise<void> {
     const fields = this.options.uniqueFields ?? [];
     for (const field of fields) {
       const value = (dto as Record<string, unknown>)[field];

@@ -1,4 +1,4 @@
-import { Body, Controller, Param, ParseUUIDPipe, Post, Patch } from '@nestjs/common';
+import { Body, Controller, Param, ParseIntPipe, Post, Patch } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Actor } from '../../common/decorators/actor.decorator';
 import { CrudResource } from '../../common/decorators/crud-resource.decorator';
@@ -24,7 +24,7 @@ export class TestimonialsController extends BaseCrudController<TestimonialEntity
 
   @Patch(':id')
   override update(
-    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Param('id', new ParseIntPipe()) id: number,
     @Body() dto: UpdateTestimonialDto,
     @Actor() actor: ActorContext,
   ) {
