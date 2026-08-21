@@ -112,6 +112,11 @@ export class CreateCareerDto {
   @MaxLength(160)
   contact?: string;
 
+  @ApiPropertyOptional({ enum: ['required', 'optional', 'inherit'], default: 'inherit' })
+  @IsOptional()
+  @IsIn(['required', 'optional', 'inherit'])
+  applyAuth?: string;
+
   @ApiPropertyOptional({ enum: ['draft', 'published', 'archived', 'closed'] })
   @IsOptional()
   @IsIn(['draft', 'published', 'archived', 'closed'])

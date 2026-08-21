@@ -130,6 +130,11 @@ export const CMS_MODULES: CmsModule[] = [
       { key: 'locale', label: 'Langue', kind: 'radio', options: LOCALES, group: 'Poste' },
       { key: 'status', label: 'Statut', kind: 'radio', options: STATUS, group: 'Poste' },
       { key: 'type', label: 'Contrat', kind: 'select', taxonomy: 'careers.type', options: CONTRACTS, hint: 'Ajoutez un type à côté du sélecteur.', group: 'Poste' },
+      { key: 'applyAuth', label: 'Connexion pour postuler', kind: 'select', options: [
+        { value: 'inherit', label: 'Selon la configuration globale' },
+        { value: 'optional', label: 'Postuler sans connexion' },
+        { value: 'required', label: 'Connexion obligatoire' },
+      ], hint: 'Définit si le candidat doit être connecté pour postuler à cette offre.', group: 'Poste' },
       { key: 'location', label: 'Lieu', kind: 'text', placeholder: 'Alger, hybride…', group: 'Poste' },
       { key: 'salary', label: 'Rémunération', kind: 'price', placeholder: '80000', group: 'Poste' },
       { key: 'typeTravail', label: 'Rythme', kind: 'text', placeholder: 'Temps plein', group: 'Poste' },

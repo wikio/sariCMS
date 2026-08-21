@@ -110,6 +110,7 @@ export interface Career {
   workflow?: string[];
   benefits?: string[];
   contact?: string;
+  applyAuth?: 'required' | 'optional' | 'inherit';
 }
 
 export interface Service {

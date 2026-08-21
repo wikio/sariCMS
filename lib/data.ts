@@ -143,6 +143,7 @@ function mapCareer(row: Record<string, unknown>): Career {
     workflow: Array.isArray(row.workflow) ? (row.workflow as string[]) : undefined,
     benefits: Array.isArray(row.benefits) ? (row.benefits as string[]) : undefined,
     contact: row.contact ? String(row.contact) : undefined,
+    applyAuth: (row.applyAuth as Career['applyAuth']) || 'inherit',
     slug: row.slug ? String(row.slug) : undefined,
   };
 }

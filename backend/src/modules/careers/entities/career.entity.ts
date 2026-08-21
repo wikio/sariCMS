@@ -18,6 +18,7 @@ export interface CareerEntity extends BaseEntity {
   workflow?: string[] | unknown;
   benefits?: string[] | unknown;
   contact?: string | null;
+  applyAuth?: string | null;
   legacyId?: number | null;
   status: string;
   publishedAt?: Date | string | null;

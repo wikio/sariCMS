@@ -21,6 +21,7 @@ import CTAButton from '@/components/ui/CTAButton';
 import Badge from '@/components/shared/Badge';
 import CandidateJourney from '@/components/CandidateJourney';
 import { loadFlowFor, findResumeByToken, type FlowStep } from '@/lib/recruitment-flow';
+import { loadAdminSettings } from '@/lib/admin-settings';
 
 export default function JobDetailPage() {
   const params = useParams();
@@ -125,38 +126,36 @@ export default function JobDetailPage() {
     }
   };
 
-  const handleQuickApply = () => {
+  /**
+   * Résout si la connexion est requise pour postuler à cette offre :
+   * - 'required'   → connexion obligatoire
+   * - 'optional'   → postuler sans connexion
+   * - 'inherit'    → suit la configuration globale (requireAuthToApply)
+   */
+  const requiresAuth = () => {
+    const mode = job?.applyAuth || 'inherit';
+    if (mode === 'required') return true;
+    if (mode === 'optional') return false;
+    // inherit / non défini → configuration globale
+    try { return loadAdminSettings().requireAuthToApply; } catch { return false; }
+  };
+
+  /** Point d'entrée unique pour postuler (bouton bandeau + bouton sidebar). */
+  const startApply = () => {
     if (job && hasApplied(job.id)) {
       alert(t('alreadyApplied'));
       return;
     }
-    // Si l'offre possède un parcours de candidature, on ouvre le wizard.
-    if (flowSteps.length > 0) {
-      setShowApplicationForm(true);
-      return;
-    }
-    if (!isAuthenticated) {
+    if (requiresAuth() && !isAuthenticated) {
       localStorage.setItem('sari_pending_action', JSON.stringify({ type: 'apply', jobId: id }));
       router.push(`/${locale}/connexion?source=carriere`);
       return;
     }
-    if (job) {
-      addApplication({
-        jobId: job.id,
-        title: job.title,
-        image: job.image || '',
-        location: job.location,
-        salary: job.salary,
-        type: job.type,
-        fullName: user?.name || '',
-        email: user?.email || '',
-        phone: '',
-        motivation: ''
-      });
-      setAddedToCart(true);
-      setTimeout(() => setAddedToCart(false), 3000);
-    }
+    // Parcours de candidature (ou formulaire classique en fallback).
+    setShowApplicationForm(true);
   };
+
+  const handleQuickApply = startApply;
 
   if (!job) {
     return (
@@ -366,7 +365,7 @@ export default function JobDetailPage() {
                   <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">{t('applicationSentDesc')}</p>
                 </div>
               ) : !showApplicationForm ? (
-                <CTAButton onClick={() => setShowApplicationForm(true)} variant="primary" icon="send" fullWidth>
+                <CTAButton onClick={startApply} variant="primary" icon="send" fullWidth>
                   {flowSteps.length > 0 ? t('startJourney') : t('applyNow')}
                 </CTAButton>
               ) : flowSteps.length > 0 ? (

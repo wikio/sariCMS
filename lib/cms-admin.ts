@@ -36,7 +36,7 @@ export const WRITABLE_FIELDS: Record<string, string[]> = {
   careers: [
     'title', 'slug', 'locale', 'type', 'location', 'salary', 'shortDesc', 'fullDesc', 'image',
     'typeTravail', 'mission', 'objectifs', 'prerequis', 'experience', 'workflow', 'benefits',
-    'contact', 'status',
+    'contact', 'applyAuth', 'status',
   ],
   news: [
     'title', 'slug', 'locale', 'category', 'classification', 'sujet', 'authorName', 'date',

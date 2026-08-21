@@ -73,6 +73,12 @@ export default function AdminSettingsPage() {
           on={settings.security.siteCaptcha}
           onToggle={() => setSettings({ ...settings, security: { ...settings.security, siteCaptcha: !settings.security.siteCaptcha } })}
         />
+        <ToggleRow
+          label="Connexion requise pour postuler"
+          hint="Règle par défaut : si une offre est en mode « selon la configuration globale », ce réglage détermine si le candidat doit être connecté pour postuler."
+          on={settings.requireAuthToApply}
+          onToggle={() => setSettings({ ...settings, requireAuthToApply: !settings.requireAuthToApply })}
+        />
       </section>
 
       <section className="ad-card p-5 space-y-4">
