@@ -27,7 +27,7 @@
     "eshopSection": "المتجر",
     "shop": "المتجر",
     "shopStats": "إحصائيات متقدمة",
-    "payments": "المدفوعات",
+    "payments": "طرق الدفع",
     "coupons": "القسائم",
     "taxes": "الضرائب",
     "currencies": "العملات",
@@ -49,7 +49,8 @@
     "taxonomies": "التصنيفات",
     "configSection": "النظام",
     "translations": "الترجمات",
-    "settings": "الإعدادات"
+    "settings": "الإعدادات",
+    "paymentRecords": "المدفوعات"
   },
   "header": {
     "seeSite": "عرض الموقع",

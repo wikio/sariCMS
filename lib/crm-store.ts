@@ -111,6 +111,8 @@ export interface Quote {
   revisionHistory?: Array<{ at: string; note: string }>;
 }
 
+import { nextCodeFor } from '@/lib/codes';
+
 const ORDERS_KEY = 'sari_orders';
 const QUOTES_KEY = 'sari_quotes';
 
@@ -261,11 +263,23 @@ function normalizeItems(items: CommerceItem[] = []): CommerceItem[] {
 export function loadOrders(): Order[] {
   const stored = typeof window !== 'undefined' ? localStorage.getItem(ORDERS_KEY) : null;
   if (!stored) {
-    if (typeof window !== 'undefined') localStorage.setItem(ORDERS_KEY, JSON.stringify(DEFAULT_ORDERS));
-    return DEFAULT_ORDERS;
+    const seeded = backfillOrderCodes(DEFAULT_ORDERS);
+    if (typeof window !== 'undefined') localStorage.setItem(ORDERS_KEY, JSON.stringify(seeded));
+    return seeded;
   }
   const parsed = readJson<Order[]>(ORDERS_KEY, DEFAULT_ORDERS);
-  return parsed.map((o) => ({ ...o, total: Number(o.total) || 0, items: normalizeItems(o.items) }));
+  return backfillOrderCodes(parsed.map((o) => ({ ...o, total: Number(o.total) || 0, items: normalizeItems(o.items) })));
+}
+
+/** Attribue un code auto-généré aux commandes qui n'en ont pas encore. */
+function backfillOrderCodes(orders: Order[]): Order[] {
+  const codes = new Set(orders.map((o) => o.code).filter(Boolean) as string[]);
+  return orders.map((o) => {
+    if (o.code) return o;
+    const code = nextCodeFor('order', Array.from(codes));
+    codes.add(code);
+    return { ...o, code };
+  });
 }
 
 export function saveOrders(orders: Order[]) {
@@ -275,14 +289,26 @@ export function saveOrders(orders: Order[]) {
 export function loadQuotes(): Quote[] {
   const stored = typeof window !== 'undefined' ? localStorage.getItem(QUOTES_KEY) : null;
   if (!stored) {
-    if (typeof window !== 'undefined') localStorage.setItem(QUOTES_KEY, JSON.stringify(DEFAULT_QUOTES));
-    return DEFAULT_QUOTES;
+    const seeded = backfillQuoteReferences(DEFAULT_QUOTES);
+    if (typeof window !== 'undefined') localStorage.setItem(QUOTES_KEY, JSON.stringify(seeded));
+    return seeded;
   }
-  return readJson<Quote[]>(QUOTES_KEY, DEFAULT_QUOTES).map((q) => ({
+  return backfillQuoteReferences(readJson<Quote[]>(QUOTES_KEY, DEFAULT_QUOTES).map((q) => ({
     ...q,
     total: Number(q.total) || 0,
     items: normalizeItems(q.items),
-  }));
+  })));
+}
+
+/** Attribue une référence auto-générée aux devis qui n'en ont pas encore. */
+function backfillQuoteReferences(quotes: Quote[]): Quote[] {
+  const refs = new Set(quotes.map((q) => q.reference).filter(Boolean) as string[]);
+  return quotes.map((q) => {
+    if (q.reference) return q;
+    const reference = nextCodeFor('quote', Array.from(refs));
+    refs.add(reference);
+    return { ...q, reference };
+  });
 }
 
 export function saveQuotes(quotes: Quote[]) {

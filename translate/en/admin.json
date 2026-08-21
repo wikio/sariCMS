@@ -24,7 +24,7 @@
     "eshopSection": "E-SHOP",
     "shop": "Store",
     "shopStats": "Advanced stats",
-    "payments": "Payments",
+    "payments": "Payment methods",
     "coupons": "Coupons",
     "taxes": "Taxes",
     "currencies": "Currencies",
@@ -49,7 +49,8 @@
     "taxonomies": "Taxonomies",
     "configSection": "SYSTEM",
     "translations": "Translations",
-    "settings": "Settings"
+    "settings": "Settings",
+    "paymentRecords": "Payments"
   },
   "header": {
     "seeSite": "View Site",

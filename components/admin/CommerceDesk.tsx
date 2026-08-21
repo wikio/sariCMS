@@ -293,7 +293,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
             <tbody>
               {shown.map((row) => (
                 <tr key={row.id}>
-                  <td className="font-mono text-sm">{('code' in row && row.code) || `#${row.id}`}</td>
+                  <td className="font-mono text-sm">{('reference' in row && row.reference) || ('code' in row && row.code) || `#${row.id}`}</td>
                   <td><div className="font-bold">{row.client}</div><div className="text-xs" style={{ color: 'var(--ad-muted)' }}>{row.email}</div></td>
                   <td>{row.date}</td>
                   <td className="font-black whitespace-nowrap">{Number(row.total).toLocaleString()} DA</td>
@@ -328,7 +328,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
 
       <Drawer
         open={!!open}
-        title={`${title} #${open?.id || ''}`}
+        title={`${title} ${open ? (('reference' in open && open.reference) || ('code' in open && open.code) || `#${open.id}`) : ''}`}
         subtitle={open?.client}
         onClose={() => { setOpen(null); setHistoryOpen(false); }}
         width={720}

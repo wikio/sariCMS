@@ -54,5 +54,13 @@
   "total": "Total",
   "processing": "Processing...",
   "confirmPayment": "Confirm Payment",
-  "securePayment": "100% Secure Payment"
+  "securePayment": "100% Secure Payment",
+  "fillPaypalEmail": "Please enter your PayPal email",
+  "paymentDone": "Payment recorded",
+  "paymentValidated": "Your payment is validated. Thank you!",
+  "paymentPending": "Your payment is pending validation by our team.",
+  "noMethod": "No payment method available.",
+  "manualValidation": "This payment will be manually validated by our team.",
+  "codTitle": "Cash on delivery",
+  "codDesc": "Pay in cash upon delivery of your order."
 }

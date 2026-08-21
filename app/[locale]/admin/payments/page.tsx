@@ -1,8 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Eye, Pencil, Plus, Trash2 } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Eye, ListOrdered, Pencil, Plus, Trash2 } from 'lucide-react';
 import { formatIban, formatRib, isValidIban, loadPayments, savePayments, type PaymentMethod, type PaymentType } from '@/lib/shop-store';
+import { normalizeOrderPaymentType } from '@/lib/payments';
+import { loadOrders } from '@/lib/crm-store';
 import { useToast } from '@/components/admin/Toast';
 import Drawer from '@/components/admin/Drawer';
 import Toggle from '@/components/admin/Toggle';
@@ -28,8 +30,14 @@ export default function PaymentsPage() {
   const [error, setError] = useState('');
   const [q, setQ] = useState('');
   const [selected, setSelected] = useState<string[]>([]);
+  const [ordersByType, setOrdersByType] = useState<PaymentMethod | null>(null);
 
   useEffect(() => { setRows(loadPayments()); }, []);
+
+  const ordersFor = useMemo(() => {
+    if (!ordersByType) return [];
+    return loadOrders().filter((o) => normalizeOrderPaymentType(o.payment) === ordersByType.type);
+  }, [ordersByType]);
 
   const persist = (next: PaymentMethod[], toast = 'Modes de paiement enregistrés') => {
     setRows(next); savePayments(next); showToast(toast, 'success'); setDraft(null); setSelected([]);
@@ -73,6 +81,7 @@ export default function PaymentsPage() {
                 <td>{r.fees}{r.type === 'cod' ? ' DA' : ' %'}</td>
                 <td><span className={`ad-chip ${r.active ? 'ad-chip-ok' : 'ad-chip-mute'}`}>{r.active ? 'Actif' : 'Inactif'}</span></td>
                 <td className="text-right whitespace-nowrap">
+                  <button className="ad-btn ad-btn-ghost" title="Commandes par ce type" onClick={() => setOrdersByType(r)}><ListOrdered className="w-4 h-4" /> {ordersFor.length > 0 ? '' : 'Commandes'}</button>
                   <button className="ad-btn ad-btn-ghost" onClick={() => { setMode('consult'); setDraft({ ...r }); }}><Eye className="w-4 h-4" /></button>
                   <button className="ad-btn ad-btn-ghost" onClick={() => { setError(''); setMode('edit'); setDraft({ ...r }); }}><Pencil className="w-4 h-4" /></button>
                   <button className="ad-btn ad-btn-icon ad-btn-danger" onClick={() => persist(rows.filter((x) => x.id !== r.id), 'Supprimé')}><Trash2 className="w-4 h-4" /></button>
@@ -150,6 +159,34 @@ export default function PaymentsPage() {
             <Toggle on={draft.active} onChange={(active) => setDraft({ ...draft, active })} label="Actif" hint="Un mode inactif n’apparaît plus au checkout." disabled={mode === 'consult'} />
             {error && <p className="text-sm" style={{ color: 'var(--ad-danger)' }}>{error}</p>}
           </>
+        )}
+      </Drawer>
+
+      <Drawer
+        open={!!ordersByType}
+        title={`Commandes · ${ordersByType?.name || ''}`}
+        subtitle={`${ordersFor.length} commande(s) réglée(s) par ce mode`}
+        onClose={() => setOrdersByType(null)}
+        width={680}
+        footer={<button className="ad-btn ad-btn-ghost" onClick={() => setOrdersByType(null)}>Fermer</button>}
+      >
+        {ordersFor.length === 0 ? (
+          <div className="text-center py-12" style={{ color: 'var(--ad-muted)' }}>Aucune commande pour ce mode de paiement.</div>
+        ) : (
+          <table className="ad-table">
+            <thead><tr><th>N°</th><th>Client</th><th>Date</th><th>Total</th><th>Statut</th></tr></thead>
+            <tbody>
+              {ordersFor.map((o) => (
+                <tr key={o.id}>
+                  <td className="font-mono text-sm">{o.code || `#${o.id}`}</td>
+                  <td><div className="font-bold">{o.client}</div><div className="text-xs" style={{ color: 'var(--ad-muted)' }}>{o.email}</div></td>
+                  <td>{o.date}</td>
+                  <td className="font-black whitespace-nowrap">{Number(o.total).toLocaleString()} DA</td>
+                  <td><span className="ad-chip ad-chip-acc">{o.status}</span></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
       </Drawer>
     </div>

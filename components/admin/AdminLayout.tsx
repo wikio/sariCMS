@@ -75,6 +75,7 @@ function Shell({ children }: { children: ReactNode }) {
         { id: 'quotes', label: t('menu.quotes'), href: `/${locale}/admin/quotes` },
         { id: 'shop-stats', label: t('menu.shopStats'), href: `/${locale}/admin/shop-stats` },
         { id: 'payments', label: t('menu.payments'), href: `/${locale}/admin/payments` },
+        { id: 'payment-records', label: t('menu.paymentRecords'), href: `/${locale}/admin/payment-records` },
         { id: 'coupons', label: t('menu.coupons'), href: `/${locale}/admin/coupons` },
         { id: 'taxes', label: t('menu.taxes'), href: `/${locale}/admin/taxes` },
       ],
