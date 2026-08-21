@@ -23,23 +23,33 @@ Ce dossier contient le schéma MySQL et les données de démarrage du CMS
 # Schéma (crée la base sari_cms + les tables)
 mysql -u root -p < backend/sql/schema.mysql.sql
 
-# Données (contexte algérien)
-mysql -u root -p < backend/sql/seed.mysql.sql
-```
-
-Importer les deux en une fois :
-
-```bash
-mysql -u root -p < backend/sql/schema.mysql.sql
+# Données (contexte algérien) — sélectionner la base cible
 mysql -u root -p sari_cms < backend/sql/seed.mysql.sql
 ```
 
 ### Via phpMyAdmin (cPanel / hébergement mutualisé)
 
-1. Ouvrir **phpMyAdmin** → onglet **Importer**.
-2. Choisir `backend/sql/schema.mysql.sql` → **Exécuter**.
-3. Re-choisir `backend/sql/seed.mysql.sql` → **Exécuter** (la base `sari_cms`
-   est sélectionnée automatiquement par le script).
+1. Ouvrir **phpMyAdmin** → sélectionner la base cible (ex. `u830983108_sari_cms`).
+2. Onglet **Importer** → `backend/sql/schema.mysql.sql` → **Exécuter**.
+3. Re-choisir `backend/sql/seed.mysql.sql` → **Exécuter**.
+
+> ⚠️ Le fichier `seed.mysql.sql` ne contient **pas** de `USE` : il s'importe dans
+> la base actuellement sélectionnée (ou passée en argument au CLI). Aucune
+> modification nécessaire même si votre base porte un préfixe d'hébergeur.
+
+### « Avertissements » affichés par phpMyAdmin (normaux)
+
+Au premier import du schéma, phpMyAdmin affiche ~23 « avertissements ».
+Ce ne sont **pas des erreurs** : ce sont des **notes** d'information émises par
+les gardes `IF EXISTS` / `IF NOT EXISTS` :
+
+- `Note 1051 : Unknown table '...'` → 22 fois (les tables n'existaient pas
+  encore lors du premier `DROP TABLE IF EXISTS`).
+- `Note 1007 : Can't create database; database exists` → 1 fois (la base a
+  déjà été créée dans le panneau de l'hébergeur).
+
+Ces notes sont attendues, sans conséquence, et disparaissent au second import
+(les tables existent alors). Pour les visualiser : `SHOW WARNINGS;`
 
 ### Créer l'utilisateur applicatif (recommandé)
 

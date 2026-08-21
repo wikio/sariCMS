@@ -104,12 +104,17 @@ mysql -u sari -p sari_cms < backend/sql/seed.mysql.sql
 ### Vérification
 
 ```sql
-USE sari_cms;
+USE u830983108_sari_cms;           -- ← votre nom de base réel
 SHOW TABLES;                       -- 22 tables attendues
 SELECT COUNT(*) FROM products;     -- 18 (6 produits × 3 langues)
 SELECT COUNT(*) FROM users;        -- 5 comptes de démo
 SELECT COUNT(*) FROM permissions;  -- 100
 ```
+
+> **« Avertissements: 23 » au premier import = normal.** Ce sont des **notes**
+> (pas des erreurs) : `Unknown table` sur les 22 `DROP TABLE IF EXISTS` d'une
+> base vierge + `Can't create database; database exists` (base déjà créée dans
+> le panneau d'hébergement). Vérifier avec `SHOW WARNINGS;` — niveau « Note ».
 
 ---
 

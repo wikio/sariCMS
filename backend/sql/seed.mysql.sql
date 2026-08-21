@@ -2,10 +2,13 @@
 -- SARI CMS — Données de démarrage (contexte algérien)
 -- Généré par backend/sql/generate-seed.mjs — ne pas éditer à la main.
 -- Mot de passe de démo (tous les comptes) : ChangeMe_Sari2026!
+--
+-- Import : sélectionner d'abord la base cible, puis exécuter ce fichier.
+--   CLI        : mysql -u USER -p NOM_DE_LA_BASE < backend/sql/seed.mysql.sql
+--   phpMyAdmin : ouvrir la base puis Importer → seed.mysql.sql
 -- =============================================================================
 
 SET NAMES utf8mb4;
-USE `sari_cms`;
 
 -- ---------------------------------------------------------------------------
 -- Permissions
@@ -367,11 +370,11 @@ INSERT INTO `role_permissions` (`roleId`, `permissionId`) VALUES
 -- Utilisateurs
 -- ---------------------------------------------------------------------------
 INSERT INTO `users` (`id`, `email`, `passwordHash`, `firstName`, `lastName`, `phone`, `company`, `type`, `status`, `locale`, `roleId`, `address`, `wilaya`, `country`, `position`, `createdAt`, `updatedAt`) VALUES
-('d9678792-4ed1-548f-876d-0455618d08a2', 'admin@sarisysteme.com', '$2a$10$f0x.eBQ8xcuBUclnTrpyleFBSbJn2U4/xpImqRyUdNIVQdbfRJpXW', 'Karim', 'BENALI', '(+213) 23 52 42 72', 'SARI Système SARL', 'admin', 'active', 'fr', '556dab34-5897-571f-84e2-4066f200eb65', NULL, 'Alger', 'Algérie', 'Gérant', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
-('fa96732a-9d8f-5928-a475-bf81617ada91', 'gestion@sarisysteme.com', '$2a$10$f0x.eBQ8xcuBUclnTrpyleFBSbJn2U4/xpImqRyUdNIVQdbfRJpXW', 'Yasmine', 'CHERIF', '(+213) 550 12 34 56', 'SARI Système SARL', 'admin', 'active', 'fr', 'b3c44daa-a5bc-5814-a78c-9ad0d2db7876', NULL, 'Alger', 'Algérie', 'Responsable commerciale', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
-('8e9f4ed7-44cd-59ed-900f-33c5fc6ee3ad', 'client@clinique-elafia.dz', '$2a$10$f0x.eBQ8xcuBUclnTrpyleFBSbJn2U4/xpImqRyUdNIVQdbfRJpXW', 'Clinique', 'El Afia', '(+213) 21 63 45 78', 'Clinique El Afia', 'client', 'active', 'fr', NULL, 'Rue Didouche Mourad, Alger-Centre', 'Alger', 'Algérie', NULL, '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
-('98b1938b-84a8-5667-bec3-6c147a1cc171', 'contact@meditech.dz', '$2a$10$f0x.eBQ8xcuBUclnTrpyleFBSbJn2U4/xpImqRyUdNIVQdbfRJpXW', 'MediTech', 'Algérie', '(+213) 41 33 22 11', 'MediTech Algérie', 'partner', 'active', 'fr', NULL, NULL, 'Oran', 'Algérie', NULL, '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
-('889672d2-3be7-589d-96ff-e4170209aff5', 'mohamed.saidi@gmail.com', '$2a$10$f0x.eBQ8xcuBUclnTrpyleFBSbJn2U4/xpImqRyUdNIVQdbfRJpXW', 'Mohamed', 'SAIDI', '(+213) 661 22 33 44', NULL, 'candidate', 'pending', 'fr', NULL, NULL, 'Constantine', 'Algérie', 'Technicien biomédical', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000');
+('d9678792-4ed1-548f-876d-0455618d08a2', 'admin@sarisysteme.com', '$2a$10$VJQL7ydBEsAxJrvIPgBKRe9H/nFcbrjD.hHpdlpi4Qm4uu.Z9URoO', 'Karim', 'BENALI', '(+213) 23 52 42 72', 'SARI Système SARL', 'admin', 'active', 'fr', '556dab34-5897-571f-84e2-4066f200eb65', NULL, 'Alger', 'Algérie', 'Gérant', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+('fa96732a-9d8f-5928-a475-bf81617ada91', 'gestion@sarisysteme.com', '$2a$10$VJQL7ydBEsAxJrvIPgBKRe9H/nFcbrjD.hHpdlpi4Qm4uu.Z9URoO', 'Yasmine', 'CHERIF', '(+213) 550 12 34 56', 'SARI Système SARL', 'admin', 'active', 'fr', 'b3c44daa-a5bc-5814-a78c-9ad0d2db7876', NULL, 'Alger', 'Algérie', 'Responsable commerciale', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+('8e9f4ed7-44cd-59ed-900f-33c5fc6ee3ad', 'client@clinique-elafia.dz', '$2a$10$VJQL7ydBEsAxJrvIPgBKRe9H/nFcbrjD.hHpdlpi4Qm4uu.Z9URoO', 'Clinique', 'El Afia', '(+213) 21 63 45 78', 'Clinique El Afia', 'client', 'active', 'fr', NULL, 'Rue Didouche Mourad, Alger-Centre', 'Alger', 'Algérie', NULL, '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+('98b1938b-84a8-5667-bec3-6c147a1cc171', 'contact@meditech.dz', '$2a$10$VJQL7ydBEsAxJrvIPgBKRe9H/nFcbrjD.hHpdlpi4Qm4uu.Z9URoO', 'MediTech', 'Algérie', '(+213) 41 33 22 11', 'MediTech Algérie', 'partner', 'active', 'fr', NULL, NULL, 'Oran', 'Algérie', NULL, '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+('889672d2-3be7-589d-96ff-e4170209aff5', 'mohamed.saidi@gmail.com', '$2a$10$VJQL7ydBEsAxJrvIPgBKRe9H/nFcbrjD.hHpdlpi4Qm4uu.Z9URoO', 'Mohamed', 'SAIDI', '(+213) 661 22 33 44', NULL, 'candidate', 'pending', 'fr', NULL, NULL, 'Constantine', 'Algérie', 'Technicien biomédical', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000');
 
 -- ---------------------------------------------------------------------------
 -- Coordonnées (contact_info)

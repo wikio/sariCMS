@@ -683,10 +683,13 @@ push('-- =======================================================================
 push('-- SARI CMS — Données de démarrage (contexte algérien)');
 push('-- Généré par backend/sql/generate-seed.mjs — ne pas éditer à la main.');
 push('-- Mot de passe de démo (tous les comptes) : ' + DEMO_PASSWORD);
+push('--');
+push('-- Import : sélectionner d\'abord la base cible, puis exécuter ce fichier.');
+push('--   CLI        : mysql -u USER -p NOM_DE_LA_BASE < backend/sql/seed.mysql.sql');
+push('--   phpMyAdmin : ouvrir la base puis Importer → seed.mysql.sql');
 push('-- =============================================================================');
 push('');
 push('SET NAMES utf8mb4;');
-push('USE `sari_cms`;');
 push('');
 push('-- ---------------------------------------------------------------------------');
 push('-- Permissions');
