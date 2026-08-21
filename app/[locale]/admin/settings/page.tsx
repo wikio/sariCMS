@@ -9,17 +9,18 @@ import { useToast } from '@/components/admin/Toast';
 import GedPicker from '@/components/admin/GedPicker';
 
 type SectionId = 'general' | 'commerce' | 'security' | 'integrations' | 'seo';
-type TabId = 'general' | 'codes' | 'quotes' | 'invoicing' | 'security' | 'smtp' | 'database' | 'seo';
+type TabId = 'general' | 'products' | 'codes' | 'quotes' | 'invoicing' | 'security' | 'smtp' | 'database' | 'seo';
 
 interface TabDef { id: TabId; label: string }
 interface SectionDef { id: SectionId; label: string; tabs: TabDef[] }
 
 const SECTIONS: SectionDef[] = [
   { id: 'general', label: 'Général', tabs: [
-    { id: 'general', label: 'Langue & produits' },
-    { id: 'codes', label: 'Format des codes' },
+    { id: 'general', label: 'Identité & langue' },
   ] },
   { id: 'commerce', label: 'Commerce', tabs: [
+    { id: 'products', label: 'Produits & stock' },
+    { id: 'codes', label: 'Format des codes' },
     { id: 'quotes', label: 'Devis & commandes' },
     { id: 'invoicing', label: 'Facturation & ERP' },
   ] },
@@ -37,8 +38,9 @@ const SECTIONS: SectionDef[] = [
 
 // Index de recherche : onglet → mots-clés.
 const SEARCH_INDEX: Record<TabId, string> = {
-  general: 'langue format produit réapprovisionnement crop largeur hauteur code sku logo site vitrine identité',
-  codes: 'code format devis commande facture produit numéro année',
+  general: 'langue langue origine logo site vitrine identité société entreprise',
+  products: 'produit stock réapprovisionnement crop largeur hauteur catalogue rupture',
+  codes: 'code format devis commande facture produit numéro année sku',
   quotes: 'devis ligne validité commande pièce jointe transformer expiration',
   invoicing: 'facture facturation erp api clé url upload paiement',
   security: '2fa captcha connexion postuler double authentification sécurité accès',
@@ -153,7 +155,7 @@ export default function AdminSettingsPage() {
 
           {tab === 'general' && (
             <section className="ad-card p-5 space-y-4">
-              <h2 className="ad-section-title">Général</h2>
+              <h2 className="ad-section-title">Identité &amp; langue</h2>
               <div className="space-y-1.5">
                 <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Logo du site vitrine</span>
                 <SiteLogoField value={settings.siteLogo || ''} onChange={(v) => setSettings({ ...settings, siteLogo: v })} />
@@ -169,6 +171,12 @@ export default function AdminSettingsPage() {
                   <option value="ar">العربية</option>
                 </select>
               </label>
+            </section>
+          )}
+
+          {tab === 'products' && (
+            <section className="ad-card p-5 space-y-4">
+              <h2 className="ad-section-title">Produits &amp; stock</h2>
               <label className="space-y-1.5 block">
                 <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Message de réapprovisionnement</span>
                 <textarea className="ad-textarea" value={settings.restockMessage || ''} onChange={(e) => setSettings({ ...settings, restockMessage: e.target.value })} />
