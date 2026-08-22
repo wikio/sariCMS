@@ -2,13 +2,24 @@
 
 import { useEffect, useRef, useState } from 'react';
 import {
-  Check, Crop, Eraser, FlipHorizontal, FlipVertical, ImagePlus, Loader,
-  Maximize, Pencil, Redo2, RotateCcw, RotateCw, Save, SlidersHorizontal,
-  Sparkles, Type, Undo2, X, ZoomIn, ZoomOut,
+  Check, Circle, Crop, Eraser, FlipHorizontal, FlipVertical, ImagePlus, Loader,
+  Maximize, Minus, MoveUpRight, PaintBucket, Pencil, Pipette, Redo2, RotateCcw,
+  RotateCw, Save, SlidersHorizontal, Sparkles, Square, Type, Undo2, X, ZoomIn, ZoomOut,
 } from 'lucide-react';
 import { useToast } from '@/components/admin/Toast';
 
-type Tool = 'draw' | 'erase' | 'text' | 'crop';
+type Tool = 'draw' | 'erase' | 'text' | 'crop' | 'line' | 'arrow' | 'rect' | 'ellipse' | 'fill' | 'picker';
+
+const SHAPE_TOOLS: Tool[] = ['line', 'arrow', 'rect', 'ellipse'];
+
+function hexToRgb(hex: string): [number, number, number] {
+  const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex.trim());
+  return m ? [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)] : [0, 0, 0];
+}
+
+function rgbToHex(r: number, g: number, b: number): string {
+  return '#' + [r, g, b].map((v) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join('');
+}
 
 const PRESET_FILTERS: Array<{ key: string; label: string; filter: string }> = [
   { key: 'grayscale', label: 'N&B', filter: 'grayscale(1)' },
@@ -50,6 +61,7 @@ export default function ImageEditor({
   const [frame, setFrame] = useState({ w: 800, h: 600 });
   const [fit, setFit] = useState<'contain' | 'cover'>('contain');
   const [tolerance, setTolerance] = useState(40);
+  const [filled, setFilled] = useState(false);
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -60,6 +72,9 @@ export default function ImageEditor({
   const last = useRef<{ x: number; y: number } | null>(null);
   const cropStart = useRef<{ x: number; y: number } | null>(null);
   const cropSnapshot = useRef<string | null>(null);
+  const shapeStart = useRef<{ x: number; y: number } | null>(null);
+  const shapeSnapshot = useRef<string | null>(null);
+  const prevTool = useRef<Tool>('draw');
   const fileRef = useRef<HTMLInputElement>(null);
 
   const canvas = () => canvasRef.current as HTMLCanvasElement;
@@ -75,7 +90,7 @@ export default function ImageEditor({
     try {
       const dataUrl = canvas().toDataURL();
       undoStack.current.push(dataUrl);
-      if (undoStack.current.length > 30) undoStack.current.shift();
+      if (undoStack.current.length > 50) undoStack.current.shift();
       redoStack.current = [];
       syncUndo();
       return dataUrl;
@@ -304,7 +319,85 @@ export default function ImageEditor({
   };
 
   // -------------------------------------------------------------------------
-  // Pointeur (dessin / gomme / texte / crop)
+  // Formes, flèche, remplissage, pipette
+  // -------------------------------------------------------------------------
+  function drawShape(
+    g: CanvasRenderingContext2D,
+    s: { x: number; y: number },
+    e: { x: number; y: number },
+    kind: Tool,
+    fill: boolean,
+  ) {
+    g.save();
+    g.lineCap = 'round';
+    g.lineJoin = 'round';
+    g.lineWidth = size;
+    g.strokeStyle = color;
+    g.fillStyle = color;
+    if (kind === 'line' || kind === 'arrow') {
+      g.beginPath();
+      g.moveTo(s.x, s.y);
+      g.lineTo(e.x, e.y);
+      g.stroke();
+      if (kind === 'arrow') {
+        const angle = Math.atan2(e.y - s.y, e.x - s.x);
+        const len = Math.max(12, size * 2.5);
+        g.beginPath();
+        g.moveTo(e.x, e.y);
+        g.lineTo(e.x - len * Math.cos(angle - Math.PI / 6), e.y - len * Math.sin(angle - Math.PI / 6));
+        g.lineTo(e.x - len * Math.cos(angle + Math.PI / 6), e.y - len * Math.sin(angle + Math.PI / 6));
+        g.closePath();
+        g.fill();
+      }
+    } else {
+      const x = Math.min(s.x, e.x);
+      const y = Math.min(s.y, e.y);
+      const w = Math.abs(e.x - s.x);
+      const h = Math.abs(e.y - s.y);
+      g.beginPath();
+      if (kind === 'rect') g.rect(x, y, w, h);
+      else g.ellipse(x + w / 2, y + h / 2, Math.abs(w) / 2, Math.abs(h) / 2, 0, 0, Math.PI * 2);
+      if (fill) g.fill();
+      g.stroke();
+    }
+    g.restore();
+  }
+
+  /** Remplissage par inondation à partir d'un point (pot de peinture). */
+  function floodFillAt(x: number, y: number, hex: string, tolerance: number) {
+    const g = ctx();
+    const w = canvas().width;
+    const h = canvas().height;
+    const imageData = g.getImageData(0, 0, w, h);
+    const d = imageData.data;
+    const sx = Math.max(0, Math.min(w - 1, Math.round(x)));
+    const sy = Math.max(0, Math.min(h - 1, Math.round(y)));
+    const start = sy * w + sx;
+    const [tr, tg, tb] = hexToRgb(hex);
+    const sr = d[start * 4], sg = d[start * 4 + 1], sb = d[start * 4 + 2], sa = d[start * 4 + 3];
+    const tol = tolerance * tolerance * 4;
+    const match = (i: number) => {
+      const dr = d[i] - sr, dg = d[i + 1] - sg, db = d[i + 2] - sb, da = d[i + 3] - sa;
+      return dr * dr + dg * dg + db * db + da * da <= tol;
+    };
+    const visited = new Uint8Array(w * h);
+    const stack: number[] = [start];
+    visited[start] = 1;
+    while (stack.length) {
+      const p = stack.pop() as number;
+      const px = p % w;
+      const py = Math.floor(p / w);
+      d[p * 4] = tr; d[p * 4 + 1] = tg; d[p * 4 + 2] = tb; d[p * 4 + 3] = 255;
+      if (px > 0 && !visited[p - 1] && match((p - 1) * 4)) { visited[p - 1] = 1; stack.push(p - 1); }
+      if (px < w - 1 && !visited[p + 1] && match((p + 1) * 4)) { visited[p + 1] = 1; stack.push(p + 1); }
+      if (py > 0 && !visited[p - w] && match((p - w) * 4)) { visited[p - w] = 1; stack.push(p - w); }
+      if (py < h - 1 && !visited[p + w] && match((p + w) * 4)) { visited[p + w] = 1; stack.push(p + w); }
+    }
+    g.putImageData(imageData, 0, 0);
+  }
+
+  // -------------------------------------------------------------------------
+  // Pointeur (dessin / gomme / texte / crop / formes / remplissage / pipette)
   // -------------------------------------------------------------------------
   const toCanvas = (e: React.PointerEvent) => {
     const rect = canvas().getBoundingClientRect();
@@ -333,6 +426,24 @@ export default function ImageEditor({
     if (tool === 'crop') {
       cropStart.current = p;
       cropSnapshot.current = snapshot();
+      return;
+    }
+    if (tool === 'picker') {
+      const g = ctx();
+      const d = g.getImageData(Math.round(p.x), Math.round(p.y), 1, 1).data;
+      setColor(rgbToHex(d[0], d[1], d[2]));
+      setTool(prevTool.current === 'picker' ? 'draw' : prevTool.current);
+      showToast('Couleur prélevée', 'info');
+      return;
+    }
+    if (tool === 'fill') {
+      snapshot();
+      floodFillAt(p.x, p.y, color, tolerance);
+      return;
+    }
+    if (SHAPE_TOOLS.includes(tool)) {
+      shapeStart.current = p;
+      shapeSnapshot.current = snapshot();
       return;
     }
     drawing.current = true;
@@ -385,6 +496,12 @@ export default function ImageEditor({
         g.strokeRect(x, y, w, h);
         g.restore();
       });
+      return;
+    }
+    if (shapeStart.current && shapeSnapshot.current) {
+      drawDataUrl(shapeSnapshot.current).then(() => {
+        drawShape(ctx(), shapeStart.current as { x: number; y: number }, p, tool, filled);
+      });
     }
   };
 
@@ -409,6 +526,15 @@ export default function ImageEditor({
           copyFrom(tmp);
         });
       }
+      return;
+    }
+    if (shapeStart.current && shapeSnapshot.current) {
+      const p = toCanvas(e);
+      const s = shapeStart.current;
+      const snap = shapeSnapshot.current;
+      shapeStart.current = null;
+      shapeSnapshot.current = null;
+      drawDataUrl(snap).then(() => drawShape(ctx(), s, p, tool, filled));
     }
   };
 
@@ -439,11 +565,16 @@ export default function ImageEditor({
     }
   };
 
+  const selectTool = (t: Tool) => {
+    if (t === 'picker') prevTool.current = tool;
+    setTool(t);
+  };
+
   const toolBtn = (t: Tool, Icon: typeof Pencil, label: string) => (
     <button
       type="button"
       title={label}
-      onClick={() => setTool(t)}
+      onClick={() => selectTool(t)}
       className={`ad-btn ad-btn-icon ${tool === t ? 'ad-btn-primary' : 'ad-btn-ghost'}`}
     >
       <Icon className="w-4 h-4" />
@@ -485,7 +616,13 @@ export default function ImageEditor({
         <div className="w-14 border-r border-white/10 flex flex-col items-center gap-1 py-2 overflow-y-auto">
           {toolBtn('draw', Pencil, 'Dessiner')}
           {toolBtn('erase', Eraser, 'Gomme')}
+          {toolBtn('line', Minus, 'Ligne')}
+          {toolBtn('arrow', MoveUpRight, 'Flèche')}
+          {toolBtn('rect', Square, 'Rectangle')}
+          {toolBtn('ellipse', Circle, 'Ellipse')}
           {toolBtn('text', Type, 'Texte')}
+          {toolBtn('fill', PaintBucket, 'Remplir (pot de peinture)')}
+          {toolBtn('picker', Pipette, 'Pipette (prélever une couleur)')}
           {toolBtn('crop', Crop, 'Recadrer')}
           <div className="w-8 h-px bg-white/10 my-1" />
           <button type="button" title="Pivoter gauche" className="ad-btn ad-btn-icon ad-btn-ghost !text-white" onClick={() => rotate(-1)}>
@@ -574,6 +711,29 @@ export default function ImageEditor({
                     <Check className="w-4 h-4" /> {textPending ? 'Cliquez sur l’image pour placer' : 'Valider le texte'}
                   </button>
                 </div>
+              )}
+              {SHAPE_TOOLS.includes(tool) && (
+                <>
+                  {tool === 'rect' || tool === 'ellipse' ? (
+                    <label className="flex items-center gap-2">
+                      <span className="w-16 text-white/60">Remplissage</span>
+                      <button
+                        type="button"
+                        className={`ad-btn flex-1 text-xs ${filled ? 'ad-btn-primary' : 'ad-btn-ghost !text-white'}`}
+                        onClick={() => setFilled((v) => !v)}
+                      >
+                        {filled ? 'Rempli' : 'Contour'}
+                      </button>
+                    </label>
+                  ) : null}
+                  <p className="text-[11px] text-white/50">Glissez sur l’image pour tracer la forme.</p>
+                </>
+              )}
+              {tool === 'fill' && (
+                <p className="text-[11px] text-white/50">Cliquez sur une zone pour la remplir avec la couleur sélectionnée.</p>
+              )}
+              {tool === 'picker' && (
+                <p className="text-[11px] text-white/50">Cliquez sur un pixel pour prélever sa couleur.</p>
               )}
               {tool === 'crop' && (
                 <p className="text-[11px] text-white/50">Glissez sur l’image pour définir la zone à garder.</p>
