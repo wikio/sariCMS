@@ -50,7 +50,8 @@
     "configSection": "SYSTÈME",
     "translations": "Traductions",
     "settings": "Paramètres",
-    "paymentRecords": "Paiements"
+    "paymentRecords": "Paiements",
+    "visibility": "Visibilité vitrine"
   },
   "header": {
     "seeSite": "Voir le site",

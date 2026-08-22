@@ -23,6 +23,7 @@ import CandidateJourney from '@/components/CandidateJourney';
 import { loadFlowFor, findResumeByToken, type FlowStep } from '@/lib/recruitment-flow';
 import { loadAdminSettings } from '@/lib/admin-settings';
 import { maskPhone } from '@/lib/masks';
+import { useVisibility } from '@/lib/site-visibility';
 
 export default function JobDetailPage() {
   const params = useParams();
@@ -33,6 +34,8 @@ export default function JobDetailPage() {
   const searchParams = useSearchParams();
   const { user, isAuthenticated } = useAuth();
   const { addApplication, hasApplied } = useApplications();
+  const visibility = useVisibility();
+  const canApply = visibility['action.apply'] !== false;
 
   // Parcours de candidature
   const [flowSteps, setFlowSteps] = useState<FlowStep[]>([]);
@@ -242,11 +245,11 @@ export default function JobDetailPage() {
                 <CheckCircle className="w-5 h-5 text-green-400" />
                 <span className="font-bold">{t('alreadyApplied')}</span>
               </div>
-            ) : (
+            ) : canApply ? (
               <CTAButton onClick={handleQuickApply} variant="lime" icon="send">
                 {t('applyNow')}
               </CTAButton>
-            )}
+            ) : null}
           </div>
         </div>
       </div>
@@ -378,9 +381,15 @@ export default function JobDetailPage() {
                   <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">{t('applicationSentDesc')}</p>
                 </div>
               ) : !showApplicationForm ? (
-                <CTAButton onClick={startApply} variant="primary" icon="send" fullWidth>
-                  {flowSteps.length > 0 ? t('startJourney') : t('applyNow')}
-                </CTAButton>
+                canApply ? (
+                  <CTAButton onClick={startApply} variant="primary" icon="send" fullWidth>
+                    {flowSteps.length > 0 ? t('startJourney') : t('applyNow')}
+                  </CTAButton>
+                ) : (
+                  <div className="bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4 text-center rounded-lg text-sm text-gray-500 dark:text-gray-400">
+                    {t('applyDisabled') || 'Les candidatures sont actuellement fermées.'}
+                  </div>
+                )
               ) : flowSteps.length > 0 ? (
                 <CandidateJourney
                   steps={flowSteps}

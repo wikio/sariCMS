@@ -12,6 +12,7 @@ import {
 import { getProducts } from '@/lib/data';
 import { matchesEntity } from '@/lib/ids';
 import { useCart } from '@/contexts/CartContext';
+import { useVisibility } from '@/lib/site-visibility';
 import type { Product } from '@/types';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 
@@ -21,6 +22,7 @@ export default function ProductDetailPage() {
   const locale = useLocale();
   const t = useTranslations('pages.productDetail');
   const { addToCart } = useCart();
+  const visibility = useVisibility();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
@@ -239,7 +241,8 @@ export default function ProductDetailPage() {
             </div>
           )}
 
-          {/* Quantité + Ajouter au panier */}
+          {/* Quantité + Ajouter au panier (masquable depuis Admin → Visibilité) */}
+          {visibility['action.order'] !== false && (
           <div className="flex flex-col sm:flex-row gap-4 mb-8">
             <div className="flex items-center border-2 border-gray-300 dark:border-gray-700 rounded-lg overflow-hidden">
               <button
@@ -276,6 +279,7 @@ export default function ProductDetailPage() {
               )}
             </button>
           </div>
+          )}
 
           {/* PDF */}
           {product.catalogPdf && product.catalogPdf !== '#' && (

@@ -10,6 +10,7 @@ import SearchHeader from '@/components/layout/SearchHeader';
 import type { Config, Menu as MenuType } from '@/types';
 import { loadAdminSettings } from '@/lib/admin-settings';
 import { useCart } from '@/contexts/CartContext';
+import { useVisibility } from '@/lib/site-visibility';
 
 export default function Header({ config, menu }: { config: Config; menu: MenuType }) {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -32,7 +33,11 @@ export default function Header({ config, menu }: { config: Config; menu: MenuTyp
     return `/${locale}/${cleanPath}`;
   };
 
-  const navigation = menu.mainMenu || [];
+  const visibility = useVisibility();
+  const navigation = (menu.mainMenu || []).filter((item) => {
+    const key = `menu.${item.id || ''}`;
+    return item.id ? visibility[key] !== false : true;
+  });
 
   // Logo du site : le logo configuré dans Paramètres prime sur celui des données CMS.
   const [logo, setLogo] = useState<string>(config.meta?.logo || '');
@@ -97,6 +102,7 @@ export default function Header({ config, menu }: { config: Config; menu: MenuTyp
               <SearchHeader />
               
               {/* Bouton Panier */}
+              {visibility['button.cart'] !== false && (
               <Link href={getLinkHref('#cart')} className="relative p-2.5 text-sari-lime hover:text-white transition-all group" aria-label={`${t('cart')} (${cartCount})`}>
                 <div className="absolute inset-0 bg-sari-lime/0 group-hover:bg-sari-lime/20 transition-all"></div>
                 <ShoppingCart className="w-5 h-5 relative z-10" />
@@ -106,6 +112,7 @@ export default function Header({ config, menu }: { config: Config; menu: MenuTyp
                   </span>
                 )}
               </Link>
+              )}
 
               {/* Connexion / Utilisateur */}
               <div className="relative">

@@ -7,6 +7,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { Mail, Phone, MapPin, Compass, Shield, Send, Heart } from 'lucide-react';
 import type { Config, Menu as MenuType } from '@/types';
 import { loadAdminSettings } from '@/lib/admin-settings';
+import { useVisibility } from '@/lib/site-visibility';
 
 // ✅ Icônes SVG inline pour éviter les bugs Turbopack
 const FacebookIcon = () => (
@@ -28,8 +29,15 @@ export default function Footer({ config, menu }: { config: Config; menu: MenuTyp
   const tNav = useTranslations('common.nav');
   const tLegal = useTranslations('pages.legal');
 
-  const navigation = menu.footerMenu?.navigation || [];
-  const legal = menu.footerMenu?.legal || [];
+  const visibility = useVisibility();
+  const navigation = (menu.footerMenu?.navigation || []).filter((item) => {
+    const id = (item as { id?: string }).id;
+    return !id || visibility[`footer.${id}`] !== false;
+  });
+  const legal = (menu.footerMenu?.legal || []).filter((item) => {
+    const id = (item as { id?: string }).id;
+    return !id || visibility[`footer.${id}`] !== false;
+  });
 
   // Logo du site : le logo configuré dans Paramètres prime sur celui des données CMS.
   const [logo, setLogo] = useState<string>(config.meta?.logo || '');

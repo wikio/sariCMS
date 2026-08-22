@@ -1,6 +1,11 @@
+export const TAXONOMY_LOCALES = ['fr', 'en', 'ar'] as const;
+export type TaxonomyLocale = (typeof TAXONOMY_LOCALES)[number];
+
 export interface TaxonomyTerm {
   value: string;
   label: string;
+  /** Traductions du libellé par langue (fr / en / ar). */
+  translations?: Partial<Record<TaxonomyLocale, string>>;
 }
 
 export interface TaxonomyDef {
@@ -8,6 +13,12 @@ export interface TaxonomyDef {
   label: string;
   hint: string;
   defaults: TaxonomyTerm[];
+}
+
+/** Libellé d'un terme pour une langue donnée (fallback sur le libellé source). */
+export function termLabel(term: TaxonomyTerm, locale?: string): string {
+  const l = locale as TaxonomyLocale | undefined;
+  return (l && term.translations?.[l]) || term.label;
 }
 
 const STORAGE_KEY = 'sari_taxonomies';
@@ -96,11 +107,13 @@ function writeStore(store: Store) {
   window.dispatchEvent(new CustomEvent('sari-taxonomies'));
 }
 
-export function listTaxonomy(key: string): TaxonomyTerm[] {
+export function listTaxonomy(key: string, locale?: string): TaxonomyTerm[] {
   const def = TAXONOMY_DEFS.find((d) => d.key === key);
   const stored = readStore()[key];
-  if (stored?.length) return stored;
-  return def?.defaults ? [...def.defaults] : [];
+  const terms = stored?.length ? stored : def?.defaults ? [...def.defaults] : [];
+  if (!locale) return terms;
+  // Résout le libellé affiché selon la langue demandée (la valeur reste la clé).
+  return terms.map((t) => ({ ...t, label: termLabel(t, locale) }));
 }
 
 export function saveTaxonomy(key: string, terms: TaxonomyTerm[]) {

@@ -50,7 +50,8 @@
     "configSection": "النظام",
     "translations": "الترجمات",
     "settings": "الإعدادات",
-    "paymentRecords": "المدفوعات"
+    "paymentRecords": "المدفوعات",
+    "visibility": "إظهار واجهة المتجر"
   },
   "header": {
     "seeSite": "عرض الموقع",

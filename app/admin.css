@@ -450,6 +450,27 @@
   padding: 0;
 }
 
+/* Éditeur d'images : l'interface est toujours sombre — on force des boutons
+   et champs lisibles quel que soit le thème admin actif (sinon icônes
+   blanches sur fond clair = invisibles). */
+.im-editor .ad-btn-ghost,
+.im-editor .ad-btn-icon {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.16);
+}
+.im-editor .ad-btn-ghost:hover,
+.im-editor .ad-btn-icon:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+.im-editor .ad-input,
+.im-editor .ad-select,
+.im-editor .ad-textarea {
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
 .ad-input, .ad-select, .ad-textarea {
   width: 100%;
   height: 2.75rem;

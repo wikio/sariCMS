@@ -10,7 +10,7 @@ import {
   FileStack, Menu as MenuIcon, Compass, Scale, Settings, ShoppingCart,
   Users, UserCog, FileCheck, Globe, Sliders, ExternalLink, LogOut,
   Shield, Search, ChevronDown, ChevronLeft, Palette, BarChart3, ScrollText,
-  Tags, UserPlus, UserRound, Paintbrush, Banknote, MessageSquareText,
+  Tags, UserPlus, UserRound, Paintbrush, Banknote, MessageSquareText, Eye,
 } from 'lucide-react';
 import '@/app/admin.css';
 import { ToastProvider } from '@/components/admin/Toast';
@@ -101,6 +101,7 @@ function Shell({ children }: { children: ReactNode }) {
     { id: 'applications', icon: FileCheck, label: t('menu.applications'), href: `/${locale}/admin/applications` },
     { type: 'divider', label: t('menu.advancedSection') },
     { id: 'taxonomies', icon: Tags, label: t('menu.taxonomies'), href: `/${locale}/admin/taxonomies` },
+    { id: 'visibility', icon: Eye, label: t('menu.visibility'), href: `/${locale}/admin/visibility` },
     { id: 'currencies', icon: Banknote, label: t('menu.currencies'), href: `/${locale}/admin/currencies` },
     { id: 'messages', icon: MessageSquareText, label: t('menu.messages'), href: `/${locale}/admin/messages` },
     { id: 'users', icon: UserCog, label: t('menu.users'), href: `/${locale}/admin/users` },

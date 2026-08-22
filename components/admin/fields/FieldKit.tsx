@@ -96,7 +96,7 @@ export function renderField(
     case 'icon':
       return wrap(<IconPicker value={String(value || '')} onChange={onChange} />);
     case 'select':
-      return wrap(<TaxonomySelect spec={spec} value={String(value || '')} onChange={onChange} />);
+      return wrap(<TaxonomySelect spec={spec} locale={String(record.locale || 'fr')} value={String(value || '')} onChange={onChange} />);
     case 'radio':
       return wrap(
         <div className="flex flex-wrap gap-2">
@@ -171,7 +171,7 @@ export function renderField(
   }
 }
 
-function TaxonomySelect({ spec, value, onChange }: { spec: FieldSpec; value: string; onChange: (v: string) => void }) {
+function TaxonomySelect({ spec, value, onChange, locale }: { spec: FieldSpec; value: string; onChange: (v: string) => void; locale?: string }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState('');
   const [adding, setAdding] = useState(false);
@@ -193,14 +193,15 @@ function TaxonomySelect({ spec, value, onChange }: { spec: FieldSpec; value: str
   }, []);
 
   const options = useMemo(() => {
-    const tax = spec.taxonomy ? listTaxonomy(spec.taxonomy) : [];
+    // Les libellés sont résolus selon la langue de la fiche éditée.
+    const tax = spec.taxonomy ? listTaxonomy(spec.taxonomy, locale) : [];
     const base = [...(spec.options || [])];
     for (const t of tax) {
       if (!base.some((o) => o.value === t.value)) base.push(t);
     }
     return base;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [spec.options, spec.taxonomy, tick]);
+  }, [spec.options, spec.taxonomy, tick, locale]);
 
   const filtered = options.filter((o) => {
     const blob = `${o.label} ${o.value}`.toLowerCase();

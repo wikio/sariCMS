@@ -50,7 +50,8 @@
     "configSection": "SYSTEM",
     "translations": "Translations",
     "settings": "Settings",
-    "paymentRecords": "Payments"
+    "paymentRecords": "Payments",
+    "visibility": "Storefront visibility"
   },
   "header": {
     "seeSite": "View Site",

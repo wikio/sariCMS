@@ -2,9 +2,10 @@
 
 import { useEffect, useRef, useState } from 'react';
 import {
-  Check, Circle, Crop, Eraser, FlipHorizontal, FlipVertical, ImagePlus, Loader,
-  Maximize, Minus, MoveUpRight, PaintBucket, Pencil, Pipette, Redo2, RotateCcw,
-  RotateCw, Save, SlidersHorizontal, Sparkles, Square, Type, Undo2, X, ZoomIn, ZoomOut,
+  Check, Circle, ClipboardPaste, Copy, Crop, Eraser, FlipHorizontal, FlipVertical,
+  ImagePlus, Loader, Maximize, Minus, MoveUpRight, PaintBucket, Pencil, Pipette,
+  Redo2, RotateCcw, RotateCw, Save, SlidersHorizontal, Sparkles, Square, Type, Undo2,
+  X, ZoomIn, ZoomOut,
 } from 'lucide-react';
 import { useToast } from '@/components/admin/Toast';
 
@@ -539,6 +540,61 @@ export default function ImageEditor({
   };
 
   // -------------------------------------------------------------------------
+  // Copier / coller (presse-papiers)
+  // -------------------------------------------------------------------------
+  const copyToClipboard = async () => {
+    try {
+      const blob = await new Promise<Blob | null>((res) => canvas().toBlob(res, 'image/png'));
+      if (!blob) return;
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+      showToast('Image copiée dans le presse-papiers', 'success');
+    } catch {
+      showToast('Copie impossible (presse-papiers non autorisé)', 'error');
+    }
+  };
+
+  const pasteFromClipboard = async () => {
+    try {
+      const items = await navigator.clipboard.read();
+      for (const item of items) {
+        const type = item.types.find((t) => t.startsWith('image/'));
+        if (!type) continue;
+        const blob = await item.getType(type);
+        const url = URL.createObjectURL(blob);
+        const img = await loadImage(url, false);
+        URL.revokeObjectURL(url);
+        snapshot();
+        const c = canvas();
+        const scale = Math.min(1, Math.min(c.width / img.width, c.height / img.height) * 0.8);
+        const dw = img.width * scale;
+        const dh = img.height * scale;
+        ctx().drawImage(img, (c.width - dw) / 2, (c.height - dh) / 2, dw, dh);
+        showToast('Image collée', 'success');
+        break;
+      }
+    } catch {
+      showToast('Collage impossible (presse-papiers vide ou non autorisé)', 'error');
+    }
+  };
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') {
+        e.preventDefault();
+        copyToClipboard();
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') {
+        e.preventDefault();
+        pasteFromClipboard();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // -------------------------------------------------------------------------
   // Sauvegarde
   // -------------------------------------------------------------------------
   const save = async () => {
@@ -582,7 +638,7 @@ export default function ImageEditor({
   );
 
   return (
-    <div className="fixed inset-0 z-[120] flex flex-col bg-[#0b0b0f] text-white">
+    <div className="im-editor fixed inset-0 z-[120] flex flex-col bg-[#0b0b0f] text-white">
       {/* Barre supérieure */}
       <div className="flex items-center gap-2 px-3 py-2 border-b border-white/10 flex-wrap">
         <button type="button" className="ad-btn ad-btn-ghost !text-white" onClick={onClose}>
@@ -597,6 +653,13 @@ export default function ImageEditor({
         </button>
         <button type="button" className="ad-btn ad-btn-ghost !text-white" onClick={reset}>
           <RotateCcw className="w-4 h-4" /> Réinitialiser
+        </button>
+        <div className="h-5 w-px bg-white/15" />
+        <button type="button" className="ad-btn ad-btn-ghost !text-white" onClick={copyToClipboard}>
+          <Copy className="w-4 h-4" /> Copier
+        </button>
+        <button type="button" className="ad-btn ad-btn-ghost !text-white" onClick={pasteFromClipboard}>
+          <ClipboardPaste className="w-4 h-4" /> Coller
         </button>
         <div className="flex-1" />
         <span className="text-xs text-white/50 tabular-nums">{dims.w} × {dims.h} px</span>
