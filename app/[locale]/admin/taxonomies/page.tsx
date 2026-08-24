@@ -178,9 +178,14 @@ export default function TaxonomiesPage() {
             <button className="ad-btn ad-btn-ghost" onClick={() => setDraft(null)}>{tCommon('cancel')}</button>
             <button className="ad-btn ad-btn-primary" onClick={() => {
               if (!draft || !current || !draft.value.trim()) return;
+              const updatedTerm: TaxonomyTerm = {
+                value: draft.value.trim(),
+                label: draft.label.trim() || draft.value,
+                translations: draft.translations || {},
+              };
               const next = original
-                ? current.terms.map((term) => (term.value === original.value ? { value: draft.value.trim(), label: draft.label.trim() || draft.value } : term))
-                : [...current.terms, { value: draft.value.trim(), label: draft.label.trim() || draft.value }];
+                ? current.terms.map((term) => (term.value === original.value ? updatedTerm : term))
+                : [...current.terms, updatedTerm];
               persist(next);
             }}>{t('save')}</button>
           </>
