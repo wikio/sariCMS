@@ -28,8 +28,20 @@ export default function CmsList({ mod }: { mod: CmsModule }) {
   const STATUS_LABELS: Record<string, string> = {
     draft: t('statusDraft'), published: t('statusPublished'), archived: t('statusArchived'),
   };
-  const translateFilterOption = (o: string) => STATUS_LABELS[o] || (o === 'true' ? t('yes') : o === 'false' ? t('no') : o);
-  const FILTER_LABELS: Record<string, string> = { 'Statut': t('status'), 'Contrat': t('contract', { defaultMessage: 'Contrat' }), 'Catégorie': t('category'), 'Langue': t('language'), 'Stock': t('stock'), 'Publication': t('publication') };
+  const tEditor = useTranslations('admin.editor');
+  const translateFilterOption = (o: string) => {
+    if (STATUS_LABELS[o]) return STATUS_LABELS[o];
+    if (o === 'true') return t('yes');
+    if (o === 'false') return t('no');
+    // Try translating option values like 'Salon', 'CDI', etc.
+    const translationKey = `option_${o}`;
+    try {
+      const translated = tEditor(translationKey as any);
+      if (translated && translated !== translationKey) return translated;
+    } catch {}
+    return o;
+  };
+  const FILTER_LABELS: Record<string, string> = { 'Statut': t('status'), 'Contrat': t('contract', { defaultMessage: 'Contrat' }), 'Catégorie': t('category'), 'Langue': t('language'), 'Stock': t('stock'), 'Publication': t('publication'), 'Type': t('type', { defaultMessage: 'Type' }) };
   const translateFilterLabel = (label: string) => FILTER_LABELS[label] || label;
   const translatedSingular = (() => { const SINGULARS: Record<string, string> = { services: tTitles('singular_service'), products: tTitles('singular_product'), events: tTitles('singular_event'), news: tTitles('singular_news'), careers: tTitles('singular_career'), solutions: tTitles('singular_solution'), pages: tTitles('singular_page'), partners: tTitles('singular_partner'), testimonials: tTitles('singular_testimonial'), galleries: tTitles('singular_gallery'), legal: tTitles('singular_legal'), hero: tTitles('singular_hero'), contents: tTitles('singular_content') }; return SINGULARS[mod.key] || mod.singular; })();
   const { showToast } = useToast();

@@ -258,10 +258,24 @@ function TaxonomySelect({ spec, value, onChange, locale }: { spec: FieldSpec; va
     const blob = `${o.label} ${o.value}`.toLowerCase();
     return blob.includes(q.toLowerCase());
   });
-  const current = options.find((o) => o.value === value);
+  // Match by value OR by translated label (backward compat with data saved with translated values)
+  const current = options.find((o) => o.value === value) 
+    || options.find((o) => o.label === value);
+  
+  // Normalize: if value is a translated label (not canonical), auto-fix to canonical value
+  useEffect(() => {
+    if (!value || !options.length) return;
+    const matchedByValue = options.some((o) => o.value === value);
+    if (matchedByValue) return; // already canonical
+    const matchedByLabel = options.find((o) => o.label === value);
+    if (matchedByLabel) {
+      console.log(`TaxonomySelect: normalizing value "${value}" → "${matchedByLabel.value}"`);
+      onChange(matchedByLabel.value);
+    }
+  }, [value, options, onChange]);
   
   // Debug log
-  console.log('TaxonomySelect:', { value, current, options: options.map(o => o.value) });
+  console.log('TaxonomySelect:', { value, current, options: options.map(o => ({ v: o.value, l: o.label })) });
 
   const create = () => {
     const label = draft.trim();
@@ -315,7 +329,7 @@ function TaxonomySelect({ spec, value, onChange, locale }: { spec: FieldSpec; va
                 <button
                   key={o.value}
                   type="button"
-                  className={`ad-combo-item ${o.value === value ? 'is-on font-bold' : ''}`}
+                  className={`ad-combo-item ${(o.value === value || o.label === value) ? 'is-on font-bold' : ''}`}
                   onClick={() => { onChange(o.value); setOpen(false); setQ(''); }}
                 >
                   {o.label}
