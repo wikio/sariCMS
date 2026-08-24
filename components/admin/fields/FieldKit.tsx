@@ -240,19 +240,19 @@ function TaxonomySelect({ spec, value, onChange, locale }: { spec: FieldSpec; va
       const translationKey = `option_${opt.value}`;
       try {
         const translatedLabel = t(translationKey as any);
-        if (translatedLabel !== translationKey) {
+        if (translatedLabel && translatedLabel !== translationKey) {
           return { ...opt, label: translatedLabel };
         }
       } catch {}
       return opt;
     });
     
-    for (const t of tax) {
-      if (!translatedBase.some((o) => o.value === t.value)) translatedBase.push(t);
+    for (const taxItem of tax) {
+      if (!translatedBase.some((o) => o.value === taxItem.value)) translatedBase.push(taxItem);
     }
     return translatedBase;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [spec.options, spec.taxonomy, tick, locale]);
+  }, [spec.options, spec.taxonomy, tick, locale, t]);
 
   const filtered = options.filter((o) => {
     const blob = `${o.label} ${o.value}`.toLowerCase();
