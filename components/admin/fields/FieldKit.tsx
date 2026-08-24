@@ -501,6 +501,7 @@ export function ColorPicker({ value, onChange }: { value: string; onChange: (v: 
   const [inputValue, setInputValue] = useState(value || '');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [inputRect, setInputRect] = useState<DOMRect | null>(null);
 
   const PRESET_COLORS = [
     { name: 'sari-blue', value: '#1e40af' },
@@ -518,6 +519,13 @@ export function ColorPicker({ value, onChange }: { value: string; onChange: (v: 
   useEffect(() => {
     setInputValue(value || '');
   }, [value]);
+
+  useEffect(() => {
+    if (showSuggestions && inputRef.current) {
+      const rect = inputRef.current.getBoundingClientRect();
+      setInputRect(rect);
+    }
+  }, [showSuggestions]);
 
   const filteredColors = useMemo(() => {
     if (!inputValue.trim()) return PRESET_COLORS;
@@ -556,7 +564,7 @@ export function ColorPicker({ value, onChange }: { value: string; onChange: (v: 
   return (
     <div className="relative">
       <div className="flex gap-2">
-        <div className="flex-1 relative">
+        <div className="flex-1">
           <input
             ref={inputRef}
             type="text"
@@ -567,10 +575,24 @@ export function ColorPicker({ value, onChange }: { value: string; onChange: (v: 
             onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
             placeholder={t('colorPlaceholder') || 'sari-blue, #1e40af, red-500...'}
           />
-          {showSuggestions && filteredColors.length > 0 && (
+          {showSuggestions && filteredColors.length > 0 && inputRect && createPortal(
             <div 
-              className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto"
-              style={{ minWidth: '200px' }}
+              style={{
+                position: 'fixed',
+                top: `${inputRect.bottom + 4}px`,
+                ...(document.documentElement.dir === 'rtl' 
+                  ? { right: `${window.innerWidth - inputRect.right}px` }
+                  : { left: `${inputRect.left}px` }
+                ),
+                width: `${Math.max(inputRect.width, 200)}px`,
+                maxHeight: '240px',
+                overflowY: 'auto',
+                zIndex: 99999,
+                background: '#ffffff',
+                border: '1px solid #e5e7eb',
+                boxShadow: '0 12px 28px rgba(15, 23, 42, 0.16)',
+                borderRadius: '8px',
+              }}
             >
               {filteredColors.map((color) => (
                 <button
@@ -588,7 +610,8 @@ export function ColorPicker({ value, onChange }: { value: string; onChange: (v: 
                   <span className="text-xs text-gray-500 ml-auto">{color.value}</span>
                 </button>
               ))}
-            </div>
+            </div>,
+            document.body
           )}
         </div>
         <div className="flex items-center gap-2">
