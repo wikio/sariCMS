@@ -1312,7 +1312,8 @@
       "hintFullDesc": "محرر نصوص غني — عرض كامل",
       "auto": "تلقائي",
       "groupText": "النص",
-      "groupArticle": "المقال"
+      "groupArticle": "المقال",
+      "color": "اللون"
     },
     "drawer": {
       "dragToResize": "اسحب لتغيير الحجم · انقر للإغلاق",

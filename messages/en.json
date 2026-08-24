@@ -1312,7 +1312,8 @@
       "hintFullDesc": "Rich text editor — full width",
       "auto": "Auto",
       "groupText": "Text",
-      "groupArticle": "Article"
+      "groupArticle": "Article",
+      "color": "Color"
     },
     "drawer": {
       "dragToResize": "Drag to resize · click to close",

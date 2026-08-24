@@ -499,7 +499,15 @@ export function IconPicker({ value, onChange }: { value: string; onChange: (v: s
   const [q, setQ] = useState('');
   const [open, setOpen] = useState(false);
   const boxRef = useRef<HTMLDivElement>(null);
-  const hits = useMemo(() => searchLucideIcons(q, 60), [q]);
+  const [portalRect, setPortalRect] = useState<DOMRect | null>(null);
+  const hits = useMemo(() => searchLucideIcons(q, 500), [q]);
+
+  useEffect(() => {
+    if (open && boxRef.current) {
+      const rect = boxRef.current.getBoundingClientRect();
+      setPortalRect(rect);
+    }
+  }, [open]);
 
   useEffect(() => {
     const onDoc = (e: MouseEvent) => {
@@ -515,27 +523,43 @@ export function IconPicker({ value, onChange }: { value: string; onChange: (v: s
         <span className="ad-search-ico"><IconMark name={value} className="w-4 h-4" /></span>
         <input
           className="ad-input"
-          placeholder="Rechercher une icône Lucide…"
+          placeholder={t('searchIcon')}
           value={q}
           onFocus={() => setOpen(true)}
           onChange={(e) => { setQ(e.target.value); setOpen(true); }}
         />
       </div>
-      {open && (
-        <div className="ad-combo-list ad-scroll max-h-64 z-50">
+      {open && portalRect && createPortal(
+        <div
+          className="ad-combo-list ad-scroll"
+          style={{
+            position: 'fixed',
+            top: `${portalRect.bottom + 4}px`,
+            left: `${portalRect.left}px`,
+            width: `${portalRect.width}px`,
+            maxHeight: '320px',
+            zIndex: 99999,
+            background: '#ffffff',
+            border: '1px solid #e5e7eb',
+            boxShadow: '0 12px 28px rgba(15, 23, 42, 0.16)',
+            borderRadius: '8px',
+          }}
+        >
           {hits.length === 0 && <div className="ad-combo-item text-xs" style={{ color: 'var(--ad-muted)' }}>{t("noIconFound")}</div>}
           {hits.map((name) => (
             <button
               key={name}
               type="button"
               className={`ad-combo-item items-center gap-2 ${name === value ? 'is-on font-bold' : ''}`}
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => { onChange(name); setQ(''); setOpen(false); }}
             >
               <IconMark name={name} className="w-4 h-4 shrink-0" />
               <span className="truncate">{name}</span>
             </button>
           ))}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
