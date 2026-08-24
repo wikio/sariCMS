@@ -216,6 +216,20 @@ function TaxonomySelect({ spec, value, onChange, locale }: { spec: FieldSpec; va
     }
   }, [open]);
 
+  // Fermer la liste au scroll
+  useEffect(() => {
+    if (!open) return;
+    
+    const handleScroll = () => {
+      setOpen(false);
+    };
+    
+    window.addEventListener('scroll', handleScroll, true);
+    return () => {
+      window.removeEventListener('scroll', handleScroll, true);
+    };
+  }, [open]);
+
   const options = useMemo(() => {
     // Les libellés sont résolus selon la langue de la fiche éditée.
     const tax = spec.taxonomy ? listTaxonomy(spec.taxonomy, locale) : [];
@@ -264,11 +278,12 @@ function TaxonomySelect({ spec, value, onChange, locale }: { spec: FieldSpec; va
                 ),
                 width: `${comboRect.width}px`,
                 zIndex: 99999,
-                background: 'var(--ad-surface)',
-                border: '1px solid var(--ad-line)',
+                background: '#ffffff',
+                border: '1px solid #e5e7eb',
                 boxShadow: '0 12px 28px rgba(15, 23, 42, 0.16)',
                 maxHeight: '240px',
                 overflow: 'auto',
+                borderRadius: '8px',
               }}
             >
               <div className="p-2">
