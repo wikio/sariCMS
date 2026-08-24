@@ -520,11 +520,28 @@ export function ColorPicker({ value, onChange }: { value: string; onChange: (v: 
     setInputValue(value || '');
   }, [value]);
 
+  // Mettre à jour la position en temps réel pendant le scroll
   useEffect(() => {
-    if (showSuggestions && inputRef.current) {
-      const rect = inputRef.current.getBoundingClientRect();
-      setInputRect(rect);
-    }
+    if (!showSuggestions) return;
+
+    const updatePosition = () => {
+      if (inputRef.current) {
+        const rect = inputRef.current.getBoundingClientRect();
+        setInputRect(rect);
+      }
+    };
+
+    // Mise à jour initiale
+    updatePosition();
+
+    // Écouter les événements de scroll et resize
+    window.addEventListener('scroll', updatePosition, true);
+    window.addEventListener('resize', updatePosition);
+
+    return () => {
+      window.removeEventListener('scroll', updatePosition, true);
+      window.removeEventListener('resize', updatePosition);
+    };
   }, [showSuggestions]);
 
   const filteredColors = useMemo(() => {
@@ -633,6 +650,36 @@ export function ColorPicker({ value, onChange }: { value: string; onChange: (v: 
   );
 }
 
+// Fonction pour générer une couleur basée sur le nom de l'icône
+function getIconColor(name: string): string {
+  const colors = [
+    '#ef4444', // red
+    '#f97316', // orange
+    '#eab308', // yellow
+    '#84cc16', // lime
+    '#22c55e', // green
+    '#10b981', // emerald
+    '#14b8a6', // teal
+    '#06b6d4', // cyan
+    '#0ea5e9', // sky
+    '#3b82f6', // blue
+    '#6366f1', // indigo
+    '#8b5cf6', // violet
+    '#a855f7', // purple
+    '#d946ef', // fuchsia
+    '#ec4899', // pink
+    '#f43f5e', // rose
+  ];
+  
+  // Hash simple du nom pour attribuer une couleur cohérente
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  
+  return colors[Math.abs(hash) % colors.length];
+}
+
 export function IconPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const t = useTranslations('admin.editor');
   const [q, setQ] = useState('');
@@ -641,11 +688,28 @@ export function IconPicker({ value, onChange }: { value: string; onChange: (v: s
   const [portalRect, setPortalRect] = useState<DOMRect | null>(null);
   const hits = useMemo(() => searchLucideIcons(q, 500), [q]);
 
+  // Mettre à jour la position en temps réel pendant le scroll
   useEffect(() => {
-    if (open && boxRef.current) {
-      const rect = boxRef.current.getBoundingClientRect();
-      setPortalRect(rect);
-    }
+    if (!open) return;
+
+    const updatePosition = () => {
+      if (boxRef.current) {
+        const rect = boxRef.current.getBoundingClientRect();
+        setPortalRect(rect);
+      }
+    };
+
+    // Mise à jour initiale
+    updatePosition();
+
+    // Écouter les événements de scroll et resize
+    window.addEventListener('scroll', updatePosition, true);
+    window.addEventListener('resize', updatePosition);
+
+    return () => {
+      window.removeEventListener('scroll', updatePosition, true);
+      window.removeEventListener('resize', updatePosition);
+    };
   }, [open]);
 
   useEffect(() => {
@@ -696,7 +760,9 @@ export function IconPicker({ value, onChange }: { value: string; onChange: (v: s
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => { onChange(name); setQ(''); setOpen(false); }}
             >
-              <IconMark name={name} className="w-4 h-4 shrink-0" />
+              <span style={{ color: getIconColor(name) }} className="shrink-0">
+                <IconMark name={name} className="w-4 h-4" />
+              </span>
               <span className="truncate">{name}</span>
             </button>
           ))}
