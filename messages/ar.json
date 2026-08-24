@@ -2349,7 +2349,18 @@
       "noQuotes": "لا توجد عروض أسعار",
       "noQuotesDesc": "ستظهر عروض الأسعار الخاصة بك هنا.",
       "requestQuote": "طلب عرض سعر",
-      "viewCart": "عرض السلة"
+      "viewCart": "عرض السلة",
+      "productsTab": "المنتجات",
+      "overviewDesc": "نظرة عامة على نشاطك",
+      "totalOrders": "إجمالي الطلبات",
+      "totalQuotes": "إجمالي عروض الأسعار",
+      "browseCatalog": "تصفح الكتالوج",
+      "recentOrders": "الطلبات الأخيرة",
+      "quoteRequested": "تم طلب عرض سعر",
+      "messagesTitle": "الرسائل",
+      "admin": "المسؤول",
+      "you": "أنت",
+      "emptyThread": "لا توجد رسائل"
     },
     "eventDetail": {
       "notFound": "الفعالية غير موجودة",
@@ -2650,7 +2661,13 @@
       "total": "المجموع",
       "processing": "جاري المعالجة...",
       "confirmPayment": "تأكيد الدفع",
-      "securePayment": "دفع آمن 100%"
+      "securePayment": "دفع آمن 100%",
+      "codTitle": "الدفع عند الاستلام",
+      "codDesc": "ادفع نقداً عند استلام طلبك",
+      "manualValidation": "سيتم التحقق من هذا الدفع يدوياً من قبل فريقنا",
+      "paymentDone": "تم تسجيل الدفع",
+      "paymentPending": "دفعك قيد التحقق من قبل فريقنا.",
+      "paymentValidated": "تم التحقق من دفعك. شكراً لك!"
     },
     "productDetail": {
       "noProductsLoaded": "لم يتم تحميل أي منتج",
@@ -3642,6 +3659,34 @@
       "backHome": "العودة إلى الرئيسية",
       "previousPage": "الصفحة السابقة",
       "searchSite": "البحث في الموقع"
+    },
+    "quoteRequest": {
+      "title": "طلبات عروض الأسعار",
+      "newRequest": "طلب جديد",
+      "list": "القائمة",
+      "wizard": "المساعد",
+      "detail": "التفاصيل",
+      "reference": "المرجع",
+      "date": "التاريخ",
+      "status": "الحالة",
+      "total": "المجموع",
+      "actions": "الإجراءات",
+      "view": "عرض",
+      "noRequests": "لا توجد طلبات عروض أسعار",
+      "createFirst": "أنشئ أول طلب عرض سعر",
+      "projectInfo": "معلومات المشروع",
+      "projectName": "اسم المشروع",
+      "projectDesc": "وصف المشروع",
+      "products": "المنتجات",
+      "addProduct": "إضافة منتج",
+      "productName": "اسم المنتج",
+      "quantity": "الكمية",
+      "unitPrice": "سعر الوحدة",
+      "remove": "إزالة",
+      "notes": "ملاحظات إضافية",
+      "submit": "إرسال الطلب",
+      "cancel": "إلغاء",
+      "back": "رجوع"
     }
   }
 }

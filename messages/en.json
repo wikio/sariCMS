@@ -2349,7 +2349,18 @@
       "noQuotes": "No Quotes",
       "noQuotesDesc": "Your quotes will appear here.",
       "requestQuote": "Request a Quote",
-      "viewCart": "View cart"
+      "viewCart": "View cart",
+      "productsTab": "Products",
+      "overviewDesc": "Overview of your activity",
+      "totalOrders": "Total orders",
+      "totalQuotes": "Total quotes",
+      "browseCatalog": "Browse catalog",
+      "recentOrders": "Recent orders",
+      "quoteRequested": "Quote requested",
+      "messagesTitle": "Messages",
+      "admin": "Admin",
+      "you": "You",
+      "emptyThread": "No messages"
     },
     "eventDetail": {
       "notFound": "Event Not Found",
@@ -2650,7 +2661,13 @@
       "total": "Total",
       "processing": "Processing...",
       "confirmPayment": "Confirm Payment",
-      "securePayment": "100% Secure Payment"
+      "securePayment": "100% Secure Payment",
+      "codTitle": "Cash on delivery",
+      "codDesc": "Pay in cash when you receive your order",
+      "manualValidation": "This payment will be manually validated by our team",
+      "paymentDone": "Payment recorded",
+      "paymentPending": "Your payment is pending validation by our team.",
+      "paymentValidated": "Your payment is validated. Thank you!"
     },
     "productDetail": {
       "noProductsLoaded": "No products loaded",
@@ -3658,6 +3675,34 @@
       "backHome": "Back to home",
       "previousPage": "Previous page",
       "searchSite": "Search the site"
+    },
+    "quoteRequest": {
+      "title": "Quote requests",
+      "newRequest": "New request",
+      "list": "List",
+      "wizard": "Wizard",
+      "detail": "Detail",
+      "reference": "Reference",
+      "date": "Date",
+      "status": "Status",
+      "total": "Total",
+      "actions": "Actions",
+      "view": "View",
+      "noRequests": "No quote requests",
+      "createFirst": "Create your first quote request",
+      "projectInfo": "Project information",
+      "projectName": "Project name",
+      "projectDesc": "Project description",
+      "products": "Products",
+      "addProduct": "Add product",
+      "productName": "Product name",
+      "quantity": "Quantity",
+      "unitPrice": "Unit price",
+      "remove": "Remove",
+      "notes": "Additional notes",
+      "submit": "Submit request",
+      "cancel": "Cancel",
+      "back": "Back"
     }
   }
 }

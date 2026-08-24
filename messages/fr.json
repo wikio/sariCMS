@@ -2347,7 +2347,18 @@
       "noQuotes": "Aucun devis",
       "noQuotesDesc": "Vos devis apparaîtront ici.",
       "requestQuote": "Demander un devis",
-      "viewCart": "Voir le panier"
+      "viewCart": "Voir le panier",
+      "productsTab": "Produits",
+      "overviewDesc": "Vue d'ensemble de votre activité",
+      "totalOrders": "Total commandes",
+      "totalQuotes": "Total devis",
+      "browseCatalog": "Parcourir le catalogue",
+      "recentOrders": "Commandes récentes",
+      "quoteRequested": "Devis demandé",
+      "messagesTitle": "Messages",
+      "admin": "Admin",
+      "you": "Vous",
+      "emptyThread": "Aucun message"
     },
     "eventDetail": {
       "notFound": "Événement non trouvé",
@@ -2648,7 +2659,13 @@
       "total": "Total",
       "processing": "Traitement en cours...",
       "confirmPayment": "Confirmer le paiement",
-      "securePayment": "Paiement 100% sécurisé"
+      "securePayment": "Paiement 100% sécurisé",
+      "codTitle": "Paiement à la livraison",
+      "codDesc": "Réglez en espèces à la réception de votre commande",
+      "manualValidation": "Ce paiement sera validé manuellement par notre équipe",
+      "paymentDone": "Paiement enregistré",
+      "paymentPending": "Votre paiement est en attente de validation par notre équipe.",
+      "paymentValidated": "Votre paiement est validé. Merci !"
     },
     "productDetail": {
       "noProductsLoaded": "Aucun produit chargé",
@@ -3752,6 +3769,34 @@
       "backHome": "Retour à l'accueil",
       "previousPage": "Page précédente",
       "searchSite": "Rechercher sur le site"
+    },
+    "quoteRequest": {
+      "title": "Demandes de devis",
+      "newRequest": "Nouvelle demande",
+      "list": "Liste",
+      "wizard": "Assistant",
+      "detail": "Détail",
+      "reference": "Référence",
+      "date": "Date",
+      "status": "Statut",
+      "total": "Total",
+      "actions": "Actions",
+      "view": "Voir",
+      "noRequests": "Aucune demande de devis",
+      "createFirst": "Créez votre première demande de devis",
+      "projectInfo": "Informations sur le projet",
+      "projectName": "Nom du projet",
+      "projectDesc": "Description du projet",
+      "products": "Produits",
+      "addProduct": "Ajouter un produit",
+      "productName": "Nom du produit",
+      "quantity": "Quantité",
+      "unitPrice": "Prix unitaire",
+      "remove": "Supprimer",
+      "notes": "Notes supplémentaires",
+      "submit": "Soumettre la demande",
+      "cancel": "Annuler",
+      "back": "Retour"
     }
   }
 }
