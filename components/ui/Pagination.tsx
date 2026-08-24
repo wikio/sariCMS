@@ -13,7 +13,6 @@ interface PaginationProps {
 export default function Pagination({ currentPage, totalPages, onPageChange }: PaginationProps) {
   const t = useTranslations('components.ui.Pagination');
   const isRtl = useLocale() === 'ar';
-  const t = useTranslations('components.ui.Pagination');
 
   if (totalPages <= 1) return null;
 
