@@ -63,10 +63,44 @@ export default function TaxonomiesPage() {
 
   const current = useMemo(() => groups.find((g) => g.key === tab) || groups[0], [groups, tab]);
 
-  const persist = (terms: TaxonomyTerm[]) => {
+  const persist = async (terms: TaxonomyTerm[]) => {
     if (!current) return;
     saveTaxonomy(current.key, terms);
     refresh();
+    
+    // Sauvegarder les traductions dans les fichiers JSON
+    if (draft?.value) {
+      const translations: Record<string, string> = {};
+      
+      // Collecter toutes les traductions non vides
+      TAXONOMY_LOCALES.forEach((l) => {
+        const trans = draft.translations?.[l];
+        if (trans && trans.trim()) {
+          translations[l] = trans.trim();
+        }
+      });
+      
+      // Si on a des traductions, les sauvegarder dans les fichiers JSON
+      if (Object.keys(translations).length > 0) {
+        try {
+          const response = await fetch('/api/admin/taxonomies/translations', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              value: draft.value,
+              translations,
+            }),
+          });
+          
+          if (!response.ok) {
+            console.error('Erreur sauvegarde JSON:', await response.text());
+          }
+        } catch (error) {
+          console.error('Erreur API:', error);
+        }
+      }
+    }
+    
     showToast(t('saved'), 'success');
     setDraft(null);
   };
