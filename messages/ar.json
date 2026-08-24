@@ -1295,7 +1295,14 @@
       "category": "الفئة",
       "groupProgramme": "البرنامج",
       "session": "جلسة",
-      "sessionPlaceholder": "جلسة"
+      "sessionPlaceholder": "جلسة",
+      "kind": "النوع",
+      "subtype": "النوع الفرعي",
+      "subtitle": "العنوان الفرعي",
+      "media": "الوسائط",
+      "content": "المحتوى",
+      "slides": "الشرائح",
+      "sections": "الأقسام"
     },
     "drawer": {
       "dragToResize": "اسحب لتغيير الحجم · انقر للإغلاق",

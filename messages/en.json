@@ -1295,7 +1295,14 @@
       "category": "Category",
       "groupProgramme": "Program",
       "session": "Session",
-      "sessionPlaceholder": "Session"
+      "sessionPlaceholder": "Session",
+      "kind": "Type",
+      "subtype": "Layout",
+      "subtitle": "Subtitle",
+      "media": "Media",
+      "content": "Content",
+      "slides": "Slides",
+      "sections": "Sections"
     },
     "drawer": {
       "dragToResize": "Drag to resize · click to close",
