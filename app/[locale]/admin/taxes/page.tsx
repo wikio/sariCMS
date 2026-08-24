@@ -9,6 +9,7 @@ import Drawer from '@/components/admin/Drawer';
 import Toggle from '@/components/admin/Toggle';
 import TagInput from '@/components/admin/TagInput';
 import SearchField from '@/components/admin/SearchField';
+import { useTranslations } from 'next-intl';
 
 const empty = (): TaxRule => ({
   id: `t-${Date.now()}`, name: '', names: { fr: '', en: '', ar: '' }, labels: { fr: '', en: '', ar: '' },
@@ -17,6 +18,7 @@ const empty = (): TaxRule => ({
 
 export default function TaxesPage() {
   const { showToast } = useToast();
+  const t = useTranslations('admin.taxes');
   const [rows, setRows] = useState<TaxRule[]>([]);
   const [draft, setDraft] = useState<TaxRule | null>(null);
   const [mode, setMode] = useState<'edit' | 'consult'>('edit');
@@ -52,23 +54,23 @@ export default function TaxesPage() {
       <header className="flex items-end justify-between">
         <div>
           <div className="ad-breadcrumb">E-shop / Taxes</div>
-          <h1 className="text-3xl font-black">Taxes</h1>
+          <h1 className="text-3xl font-black">{t("title")}</h1>
         </div>
         <button className="ad-btn ad-btn-primary" onClick={() => { setMode('edit'); setDraft(empty()); }}><Plus className="w-4 h-4" /> Nouvelle taxe</button>
       </header>
       <div className="ad-card p-3 space-y-3">
-        <SearchField value={q} onChange={setQ} onSubmit={() => undefined} showSubmit placeholder="Rechercher une taxe, une zone ou une catégorie…" />
+        <SearchField value={q} onChange={setQ} onSubmit={() => undefined} showSubmit placeholder={t("searchPlaceholder")} />
         <div className="grid sm:grid-cols-3 gap-2">
         <input className="ad-input" placeholder="Zone" value={zone} onChange={(e) => setZone(e.target.value)} />
         <select className="ad-select" value={active} onChange={(e) => setActive(e.target.value)}>
           <option value="">Actif / inactif</option>
-          <option value="true">Active</option>
-          <option value="false">Inactive</option>
+          <option value="true">{t("activeTax")}</option>
+          <option value="false">{t("inactiveTax")}</option>
         </select>
         <select className="ad-select" value={included} onChange={(e) => setIncluded(e.target.value)}>
           <option value="">Incluse / ajoutée</option>
-          <option value="true">Incluse</option>
-          <option value="false">Ajoutée</option>
+          <option value="true">{t("included")}</option>
+          <option value="false">{t("added")}</option>
         </select>
         </div>
       </div>
@@ -81,7 +83,7 @@ export default function TaxesPage() {
       )}
       <div className="ad-card overflow-x-auto">
         <table className="ad-table">
-          <thead><tr><th></th><th>Nom</th><th>Taux</th><th>Zone</th><th>Cible</th><th>i18n</th><th>Statut</th><th></th></tr></thead>
+          <thead><tr><th></th><th>{t("name", { defaultMessage: "Nom" })}</th><th>{t("rate")}</th><th>{t("zone")}</th><th>{t("target")}</th><th>i18n</th><th>Statut</th><th></th></tr></thead>
           <tbody>
             {shown.map((t) => (
               <tr key={t.id}>
@@ -143,7 +145,7 @@ export default function TaxesPage() {
               <input className="ad-input" type="number" disabled={mode === 'consult'} value={draft.rate} onChange={(e) => setDraft({ ...draft, rate: Number(e.target.value) })} />
             </div>
             <label className="block space-y-1.5">
-              <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Zone</span>
+              <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>{t("zone")}</span>
               <input className="ad-input" disabled={mode === 'consult'} placeholder="DZ, Alger, Oran…" value={draft.zone} onChange={(e) => setDraft({ ...draft, zone: e.target.value })} />
               <p className="ad-field-hint">Pays / région / ville d’application. Plusieurs règles peuvent coexister.</p>
             </label>

@@ -6,6 +6,7 @@ import PixelGridLoader from '@/components/admin/PixelGridLoader';
 import { useToast } from '@/components/admin/Toast';
 import { cmsAdminList, cmsAdminUpdate } from '@/lib/cms-admin';
 import { CmsError } from '@/lib/cms';
+import { useTranslations } from 'next-intl';
 
 const ACTIONS = ['create', 'read', 'update', 'delete', 'admin'] as const;
 const RESOURCES = [
@@ -16,6 +17,7 @@ const RESOURCES = [
 
 export default function AdminPermissionsPage() {
   const { showToast } = useToast();
+  const t = useTranslations('admin.permissions');
   const [roles, setRoles] = useState<Array<Record<string, unknown>>>([]);
   const [perms, setPerms] = useState<Array<Record<string, unknown>>>([]);
   const [loading, setLoading] = useState(true);
@@ -63,7 +65,7 @@ export default function AdminPermissionsPage() {
   return (
     <div className="space-y-4">
       <div className="ad-rise">
-        <div className="text-[11px] uppercase tracking-[0.2em] font-bold" style={{ color: 'var(--ad-muted)' }}>RBAC</div>
+        <div className="text-[11px] uppercase tracking-[0.2em] font-bold" style={{ color: 'var(--ad-muted)' }}>{t("rbac")}</div>
         <h1 className="text-2xl font-black">Rôles & permissions</h1>
         <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>Matrice live branchée sur `/roles` et `/permissions`.</p>
       </div>
@@ -78,7 +80,7 @@ export default function AdminPermissionsPage() {
         <table className="ad-table">
           <thead>
             <tr>
-              <th>Ressource</th>
+              <th>{t("resource")}</th>
               {ACTIONS.map((a) => <th key={a} className="text-center">{a}</th>)}
             </tr>
           </thead>

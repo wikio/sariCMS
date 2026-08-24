@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import {
   DndContext, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent,
 } from '@dnd-kit/core';
@@ -23,6 +23,15 @@ type ViewMode = 'list' | 'cards';
 
 export default function CmsList({ mod }: { mod: CmsModule }) {
   const locale = useLocale();
+  const t = useTranslations('admin.common');
+  const tTitles = useTranslations('admin.titles');
+  const STATUS_LABELS: Record<string, string> = {
+    draft: t('statusDraft'), published: t('statusPublished'), archived: t('statusArchived'),
+  };
+  const translateFilterOption = (o: string) => STATUS_LABELS[o] || (o === 'true' ? t('yes') : o === 'false' ? t('no') : o);
+  const FILTER_LABELS: Record<string, string> = { 'Statut': t('status'), 'Contrat': t('contract', { defaultMessage: 'Contrat' }), 'Catégorie': t('category'), 'Langue': t('language'), 'Stock': t('stock'), 'Publication': t('publication') };
+  const translateFilterLabel = (label: string) => FILTER_LABELS[label] || label;
+  const translatedSingular = (() => { const SINGULARS: Record<string, string> = { services: tTitles('singular_service'), products: tTitles('singular_product'), events: tTitles('singular_event'), news: tTitles('singular_news'), careers: tTitles('singular_career'), solutions: tTitles('singular_solution'), pages: tTitles('singular_page'), partners: tTitles('singular_partner'), testimonials: tTitles('singular_testimonial'), galleries: tTitles('singular_gallery'), legal: tTitles('singular_legal'), hero: tTitles('singular_hero'), contents: tTitles('singular_content') }; return SINGULARS[mod.key] || mod.singular; })();
   const { showToast } = useToast();
   const [rows, setRows] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,7 +53,7 @@ export default function CmsList({ mod }: { mod: CmsModule }) {
       if (mod.orderField) query.sortBy = mod.orderField;
       setRows(await cmsAdminList(mod.resource, query));
     } catch (err) {
-      showToast(err instanceof CmsError ? err.message : 'Chargement impossible', 'error');
+      showToast(err instanceof CmsError ? err.message : t("loadError"), 'error');
     } finally {
       setLoading(false);
     }
@@ -75,11 +84,11 @@ export default function CmsList({ mod }: { mod: CmsModule }) {
   const canReorder = Boolean(mod.orderField) && !q.trim() && Object.values(filters).every((v) => !v);
 
   const remove = async (id: string) => {
-    if (!confirm('Envoyer en corbeille ?')) return;
+    if (!confirm(t("confirmTrash"))) return;
     try {
       await cmsAdminDelete(mod.resource, id);
       setRows((prev) => prev.filter((r) => r.id !== id));
-      showToast('En corbeille', 'success');
+      showToast(t("trashed"), 'success');
     } catch (err) {
       showToast(err instanceof CmsError ? err.message : 'Erreur', 'error');
     }
@@ -95,10 +104,10 @@ export default function CmsList({ mod }: { mod: CmsModule }) {
         status: 'draft',
         sku: mod.key === 'products' ? nextSku() : row.sku,
       });
-      showToast('Dupliqué', 'success');
+      showToast(t("duplicated"), 'success');
       setRows((prev) => [saved as Record<string, unknown>, ...prev]);
     } catch (err) {
-      showToast(err instanceof CmsError ? err.message : 'Duplication impossible', 'error');
+      showToast(err instanceof CmsError ? err.message : t("duplicateError"), 'error');
     }
   };
 
@@ -107,9 +116,9 @@ export default function CmsList({ mod }: { mod: CmsModule }) {
     setRows(next);
     try {
       await Promise.all(next.map((row, i) => cmsAdminUpdate(mod.resource, String(row.id), { [mod.orderField!]: i })));
-      showToast('Ordre enregistré', 'success');
+      showToast(t("orderSaved"), 'success');
     } catch (err) {
-      showToast(err instanceof CmsError ? err.message : 'Ordre non enregistré', 'error');
+      showToast(err instanceof CmsError ? err.message : t("orderError"), 'error');
     }
   };
 
@@ -133,11 +142,11 @@ export default function CmsList({ mod }: { mod: CmsModule }) {
   };
 
   const bulkDelete = async () => {
-    if (!selected.length || !confirm(`Corbeille pour ${selected.length} fiche(s) ?`)) return;
+    if (!selected.length || !confirm(t("bulkTrashConfirm", { count: selected.length }))) return;
     for (const id of selected) await cmsAdminDelete(mod.resource, id);
     setRows((prev) => prev.filter((r) => !selected.includes(String(r.id))));
     setSelected([]);
-    showToast('Sélection en corbeille', 'success');
+    showToast(t("bulkTrashed"), 'success');
   };
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
@@ -152,19 +161,19 @@ export default function CmsList({ mod }: { mod: CmsModule }) {
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-3 ad-rise">
         <div>
           <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] font-black" style={{ color: 'var(--ad-muted)' }}>
-            <Icon className="w-3.5 h-3.5" /> Catalogue
+            <Icon className="w-3.5 h-3.5" /> {t('catalogue')}
           </div>
-          <h1 className="text-3xl font-black tracking-tight">{mod.label}</h1>
-          <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>{shown.length} fiche(s)</p>
+          <h1 className="text-3xl font-black tracking-tight">{(() => { try { const r = tTitles(mod.key); return typeof r === 'string' ? r : mod.label; } catch { return mod.label; } })()}</h1>
+          <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>{t("recordCount", { count: shown.length })}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <div className="flex" style={{ border: '1px solid var(--ad-line)' }}>
             <button type="button" className={`ad-btn ad-btn-icon ${view === 'list' ? 'ad-btn-primary' : 'ad-btn-ghost'}`} onClick={() => setView('list')}><ListIcon className="w-4 h-4" /></button>
             <button type="button" className={`ad-btn ad-btn-icon ${view === 'cards' ? 'ad-btn-primary' : 'ad-btn-ghost'}`} onClick={() => setView('cards')}><LayoutGrid className="w-4 h-4" /></button>
           </div>
-          <button className="ad-btn ad-btn-ghost" onClick={exportCsv}><Download className="w-4 h-4" /> Export</button>
+          <button className="ad-btn ad-btn-ghost" onClick={exportCsv}><Download className="w-4 h-4" />{t("export")}</button>
           <Link href={`/${locale}/admin/${mod.path}/new`} className="ad-btn ad-btn-primary">
-            <Plus className="w-4 h-4" /> Nouveau {mod.singular}
+            <Plus className="w-4 h-4" /> {t("newItem", { singular: translatedSingular })}
           </Link>
         </div>
       </header>
@@ -175,43 +184,43 @@ export default function CmsList({ mod }: { mod: CmsModule }) {
           onChange={setDraft}
           onSubmit={() => setQ(draft)}
           showSubmit
-          placeholder={`Rechercher un ${mod.singular} (nom, SKU, catégorie…)…`}
+          placeholder={t("searchPlaceholder", { singular: translatedSingular })}
         />
         <div className="flex flex-col sm:flex-row flex-wrap gap-2">
           {mod.filterKeys.slice(0, 2).map((f) => (
             <select key={f.key} className="ad-select sm:w-48" value={filters[f.key] || ''} onChange={(e) => setFilters((p) => ({ ...p, [f.key]: e.target.value }))}>
-              <option value="">{f.label}</option>
+              <option value="">{translateFilterLabel(f.label)}</option>
               {(f.options || Array.from(new Set(rows.map((r) => String(r[f.key] ?? '')).filter(Boolean)))).map((o) => (
-                <option key={o} value={o}>{o === 'true' ? 'Oui' : o === 'false' ? 'Non' : o}</option>
+                <option key={o} value={o}>{translateFilterOption(o)}</option>
               ))}
             </select>
           ))}
           <button type="button" className={`ad-btn ${advanced ? 'ad-btn-primary' : 'ad-btn-ghost'}`} onClick={() => setAdvanced((v) => !v)}>
-            <Filter className="w-4 h-4" /> Filtres
+            <Filter className="w-4 h-4" /> {t('filters')}
           </button>
         </div>
         {advanced && (
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-2 mt-3 pt-3" style={{ borderTop: '1px solid var(--ad-line)' }}>
             {mod.filterKeys.map((f) => (
               <label key={f.key} className="space-y-1">
-                <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>{f.label}</span>
+                <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>{translateFilterLabel(f.label)}</span>
                 <select className="ad-select" value={filters[f.key] || ''} onChange={(e) => setFilters((p) => ({ ...p, [f.key]: e.target.value }))}>
-                  <option value="">Tous</option>
+                  <option value="">{t("all")}</option>
                   {(f.options || Array.from(new Set(rows.map((r) => String(r[f.key] ?? '')).filter(Boolean)))).map((o) => (
-                    <option key={o} value={o}>{o === 'true' ? 'Oui' : o === 'false' ? 'Non' : o}</option>
+                    <option key={o} value={o}>{translateFilterOption(o)}</option>
                   ))}
                 </select>
               </label>
             ))}
-            <div className="flex items-end"><button type="button" className="ad-btn ad-btn-ghost w-full" onClick={() => setFilters({})}>Réinitialiser</button></div>
+            <div className="flex items-end"><button type="button" className="ad-btn ad-btn-ghost w-full" onClick={() => setFilters({})}>{t('reset')}</button></div>
           </div>
         )}
       </div>
 
       {selected.length > 0 && (
         <div className="ad-card p-3 flex items-center gap-2">
-          <span className="text-sm font-bold">{selected.length} sélectionné(s)</span>
-          <button className="ad-btn ad-btn-danger" onClick={bulkDelete}><Trash2 className="w-4 h-4" /> Corbeille</button>
+          <span className="text-sm font-bold">{t("selected", { count: selected.length })}</span>
+          <button className="ad-btn ad-btn-danger" onClick={bulkDelete}><Trash2 className="w-4 h-4" />{t("trash")}</button>
         </div>
       )}
 
@@ -253,6 +262,7 @@ function ListTable({
   selected: string[];
   setSelected: (ids: string[]) => void;
 }) {
+  const t = useTranslations('admin.common');
   if (rows.length === 0) return <Empty mod={mod} />;
   const toggle = (id: string) => setSelected(selected.includes(id) ? selected.filter((x) => x !== id) : [...selected, id]);
   const body = (
@@ -261,10 +271,10 @@ function ListTable({
         <tr>
           <th><input type="checkbox" checked={selected.length === rows.length} onChange={(e) => setSelected(e.target.checked ? rows.map((r) => String(r.id)) : [])} /></th>
           {canReorder && <th className="w-10"></th>}
-          {mod.imageKey && <th>Visuel</th>}
-          <th onClick={() => onSort(mod.titleKey)}>Titre <SortMark active={sortKey === mod.titleKey} dir={sortDir} /></th>
+          {mod.imageKey && <th>{t("visual")}</th>}
+          <th onClick={() => onSort(mod.titleKey)}>{t("title")} <SortMark active={sortKey === mod.titleKey} dir={sortDir} /></th>
           <th onClick={() => onSort(mod.subtitleKey || 'slug')}>Meta <SortMark active={sortKey === (mod.subtitleKey || 'slug')} dir={sortDir} /></th>
-          <th onClick={() => onSort('status')}>Statut <SortMark active={sortKey === 'status'} dir={sortDir} /></th>
+          <th onClick={() => onSort('status')}>{t("status")} <SortMark active={sortKey === 'status'} dir={sortDir} /></th>
           <th></th>
         </tr>
       </thead>
@@ -290,8 +300,8 @@ function ListTable({
             <td><span className="ad-chip ad-chip-acc">{String(row.status || row[mod.badgeKey || ''] || '')}</span></td>
             <td className="text-right">
               <div className="flex justify-end gap-1">
-                <Link href={`/${locale}/admin/${mod.path}/${row.id}?consult=1`} className="ad-btn ad-btn-icon ad-btn-ghost" title="Consulter"><Eye className="w-4 h-4" /></Link>
-                <Link href={`/${locale}/admin/${mod.path}/${row.id}`} className="ad-btn ad-btn-ghost"><Pencil className="w-4 h-4" /> Éditer</Link>
+                <Link href={`/${locale}/admin/${mod.path}/${row.id}?consult=1`} className="ad-btn ad-btn-icon ad-btn-ghost" title={t("consult")}><Eye className="w-4 h-4" /></Link>
+                <Link href={`/${locale}/admin/${mod.path}/${row.id}`} className="ad-btn ad-btn-ghost"><Pencil className="w-4 h-4" /> {t("editBtn")}</Link>
                 <button className="ad-btn ad-btn-icon ad-btn-ghost" onClick={() => onDuplicate(row)}><Copy className="w-4 h-4" /></button>
                 <button className="ad-btn ad-btn-danger ad-btn-icon" onClick={() => onDelete(String(row.id))}><Trash2 className="w-4 h-4" /></button>
               </div>
@@ -324,6 +334,7 @@ function CardCanvas({
   sensors: ReturnType<typeof useSensors>;
   onDragEnd: (e: DragEndEvent) => void;
 }) {
+  const t = useTranslations('admin.common');
   if (rows.length === 0) return <Empty mod={mod} />;
   const cards = rows.map((row) => (
     <SortableCard key={String(row.id)} id={String(row.id)} disabled={!canReorder}>
@@ -352,7 +363,7 @@ function CardCanvas({
           )}
           <div className="flex gap-1 pt-2">
             <Link href={`/${locale}/admin/${mod.path}/${row.id}?consult=1`} className="ad-btn ad-btn-icon ad-btn-ghost"><Eye className="w-4 h-4" /></Link>
-            <Link href={`/${locale}/admin/${mod.path}/${row.id}`} className="ad-btn ad-btn-ghost"><Pencil className="w-4 h-4" /> Éditer</Link>
+            <Link href={`/${locale}/admin/${mod.path}/${row.id}`} className="ad-btn ad-btn-ghost"><Pencil className="w-4 h-4" /> {t("editBtn")}</Link>
             <button className="ad-btn ad-btn-icon ad-btn-ghost" onClick={() => onDuplicate(row)}><Copy className="w-4 h-4" /></button>
             <button className="ad-btn ad-btn-danger ad-btn-icon ml-auto" onClick={() => onDelete(String(row.id))}><Trash2 className="w-4 h-4" /></button>
           </div>
@@ -388,5 +399,6 @@ function SortableCard({ id, disabled, children }: { id: string; disabled?: boole
 }
 
 function Empty({ mod }: { mod: CmsModule }) {
-  return <div className="ad-card p-12 text-center" style={{ color: 'var(--ad-muted)' }}>Aucune fiche. Créez un {mod.singular} ou importez le catalogue.</div>;
+  const t = useTranslations('admin.common');
+  return <div className="ad-card p-12 text-center" style={{ color: 'var(--ad-muted)' }}>{t("noRecords", { singular: translatedSingular })}</div>;
 }

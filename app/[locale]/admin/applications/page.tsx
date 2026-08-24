@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import {
@@ -22,6 +22,7 @@ const SEED: Application[] = DEMO_APPLICATIONS as Application[];
 export default function AdminApplicationsPage() {
   const locale = useLocale();
   const { showToast } = useToast();
+  const t = useTranslations('admin.applications');
   const [rows, setRows] = useState<Application[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
   const [q, setQ] = useState('');
@@ -118,7 +119,7 @@ export default function AdminApplicationsPage() {
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-3 ad-rise">
         <div>
           <div className="text-[11px] uppercase tracking-[0.22em] font-black" style={{ color: 'var(--ad-muted)' }}>RH</div>
-          <h1 className="text-3xl font-black tracking-tight">Candidatures</h1>
+          <h1 className="text-3xl font-black tracking-tight">{t("title")}</h1>
           <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>{stats.total} candidature(s) · {stats.offers} offre(s)</p>
         </div>
         <div className="flex gap-2">
@@ -140,11 +141,11 @@ export default function AdminApplicationsPage() {
         <SearchField value={draft} onChange={setDraft} onSubmit={() => setQ(draft)} showSubmit placeholder="Candidat, e-mail, offre…" />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <select className="ad-select" value={status} onChange={(e) => setStatus(e.target.value)}>
-            <option value="">Tous les statuts</option>
+            <option value="">{t("allStatuses")}</option>
             {APP_STEPS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
           </select>
           <select className="ad-select" value={offerFilter} onChange={(e) => setOfferFilter(e.target.value)}>
-            <option value="">Toutes les offres</option>
+            <option value="">{t("allOffers")}</option>
             {offersList.map((o) => <option key={o.key} value={o.title}>{o.title} ({o.count})</option>)}
           </select>
         </div>
@@ -164,8 +165,8 @@ export default function AdminApplicationsPage() {
             {APP_STEPS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
           </select>
           <input className="ad-input flex-1 min-w-[180px]" placeholder="Note commune du recruteur…" value={bulkNote} onChange={(e) => setBulkNote(e.target.value)} />
-          <button className="ad-btn ad-btn-ghost" onClick={() => setNoteOf(selected, bulkNote)}>Appliquer la note</button>
-          <button className="ad-btn ad-btn-ghost" onClick={() => { setStatusOf(selected, 'interview'); }}>Activer (entretien)</button>
+          <button className="ad-btn ad-btn-ghost" onClick={() => setNoteOf(selected, bulkNote)}>{t("applyNote")}</button>
+          <button className="ad-btn ad-btn-ghost" onClick={() => { setStatusOf(selected, 'interview'); }}>{t("activateInterview")}</button>
           <button className="ad-btn ad-btn-danger" onClick={bulkRemove}><Trash2 className="w-4 h-4" /> Supprimer</button>
           <button className="ad-btn ad-btn-icon ad-btn-ghost ml-auto" onClick={() => setSelected([])}><X className="w-4 h-4" /></button>
         </div>
@@ -176,7 +177,7 @@ export default function AdminApplicationsPage() {
           <thead>
             <tr>
               <th className="w-8"><input type="checkbox" checked={selected.length === shown.length && shown.length > 0} onChange={(e) => setSelected(e.target.checked ? shown.map((r) => r.id) : [])} /></th>
-              <th>Candidat</th><th>Offre</th><th>Note</th><th>Date</th><th>Statut</th><th className="text-right">Actions</th>
+              <th>{t("candidate")}</th><th>{t("offer")}</th><th>{t("note")}</th><th>Date</th><th>Statut</th><th className="text-right">Actions</th>
             </tr>
           </thead>
           <tbody>

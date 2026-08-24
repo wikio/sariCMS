@@ -7,39 +7,27 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const locales = ['fr', 'en', 'ar'];
 
 locales.forEach(locale => {
-  const dir = path.join(__dirname, '..', 'translate', locale);
+  // Lire directement depuis messages/{locale}.json
+  const messagesFile = path.join(__dirname, '..', 'messages', `${locale}.json`);
   const outputFile = path.join(__dirname, '..', 'translate', `${locale}.json`);
   
-  if (!fs.existsSync(dir)) {
-    console.log(`⚠️ Dossier non trouvé : ${dir}`);
+  // S'assurer que le dossier translate existe
+  const translateDir = path.join(__dirname, '..', 'translate');
+  if (!fs.existsSync(translateDir)) {
+    fs.mkdirSync(translateDir, { recursive: true });
+  }
+  
+  if (!fs.existsSync(messagesFile)) {
+    console.log(`⚠️ Fichier non trouvé : ${messagesFile}`);
     return;
   }
 
-  const messages = {};
-
-  function processDirectory(currentPath, currentObj) {
-    const files = fs.readdirSync(currentPath);
-    files.forEach(file => {
-      const fullPath = path.join(currentPath, file);
-      const stat = fs.statSync(fullPath);
-      
-      if (stat.isDirectory()) {
-        currentObj[file] = {};
-        processDirectory(fullPath, currentObj[file]);
-      } else if (file.endsWith('.json')) {
-        const fileName = file.replace('.json', '');
-        try {
-          const content = JSON.parse(fs.readFileSync(fullPath, 'utf8'));
-          // Fusionne le contenu du fichier dans la clé correspondant au nom du fichier
-          currentObj[fileName] = { ...(currentObj[fileName] || {}), ...content };
-        } catch (e) {
-          console.error(`❌ Erreur de parsing ${fullPath}:`, e);
-        }
-      }
-    });
+  try {
+    // Copier directement le contenu de messages/{locale}.json vers translate/{locale}.json
+    const content = fs.readFileSync(messagesFile, 'utf8');
+    fs.writeFileSync(outputFile, content);
+    console.log(`✅ Traductions copiées avec succès : messages/${locale}.json -> translate/${locale}.json`);
+  } catch (e) {
+    console.error(`❌ Erreur lors de la copie ${messagesFile}:`, e);
   }
-
-  processDirectory(dir, messages);
-  fs.writeFileSync(outputFile, JSON.stringify(messages, null, 2));
-  console.log(`✅ Traductions fusionnées avec succès pour '${locale}' -> translate/${locale}.json`);
 });

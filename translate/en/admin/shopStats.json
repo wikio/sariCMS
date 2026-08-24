@@ -1,0 +1,11 @@
+{
+  "title": "Shop analytics",
+  "day": "Day",
+  "week": "Week",
+  "month": "Month",
+  "year": "Year",
+  "csvExport": "CSV Export",
+  "byPaymentMethod": "By payment method",
+  "finalized": "Finalized",
+  "taxesCollected": "Taxes collected"
+}

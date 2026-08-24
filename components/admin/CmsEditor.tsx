@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { ArrowLeft, ChevronDown, Copy, Eye, Save, Trash2 } from 'lucide-react';
 import PixelGridLoader from '@/components/admin/PixelGridLoader';
 import { renderField } from '@/components/admin/fields/FieldKit';
@@ -24,6 +24,74 @@ const LANGS = [
 
 export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
   const locale = useLocale();
+  const tEditor = useTranslations('admin.editor');
+  const tTitles = useTranslations('admin.titles');
+  const tFields = useTranslations('admin.careersFields');
+
+
+  // Translate option labels (e.g. Brouillon→Draft, Publié→Published)
+  const OPTION_LABEL_KEYS: Record<string, string> = {
+    'Brouillon': 'statusDraft', 'Publié': 'statusPublished', 'Archivé': 'statusArchived',
+    'Selon la configuration globale': 'applyInherit', 'Postuler sans connexion': 'applyOptional',
+    'Connexion obligatoire': 'applyRequired',
+  };
+  const translateOptionLabel = (label: string) => {
+    const key = OPTION_LABEL_KEYS[label];
+    if (!key) return label;
+    try { const r = tFields(key); return typeof r === 'string' ? r : label; } catch { return label; }
+  };
+
+
+  // Translate field options (e.g. status: Brouillon→Draft, Publié→Published)
+  const translatedFields = useMemo(() => mod.fields.map(f => {
+    if (!f.options || !Array.isArray(f.options)) return f;
+    return {
+      ...f,
+      options: f.options.map((opt: { value: string; label: string }) => ({
+        ...opt,
+        label: typeof opt.label === 'string' ? translateOptionLabel(opt.label) : opt.label,
+      })),
+    };
+  }), [mod.fields]);
+
+  // Resolve group name: try admin.careersFields.group{Key} first, then fallback
+  const GROUP_KEYS: Record<string, string> = { 
+    'Poste': 'groupPoste', 'Média': 'groupMedia', 'Mission': 'groupMission', 
+    'Profil': 'groupProfil', 'Identité': 'groupIdentité', 'Contenu': 'groupContenu', 
+    'Détails': 'groupDétails', 'Catalogue': 'groupCatalogue', 'Médias': 'groupMédias', 
+    'Technique': 'groupTechnique', 'Général': 'general',
+    'Auteur': 'groupAuthor', 'Citation': 'groupQuote', 'Fiche': 'groupCard',
+    'Informations': 'groupInfo', 'Coordonnées': 'groupContact',
+    'Programme': 'groupProgramme'
+  };
+  const groupName = (g: string) => {
+    const key = GROUP_KEYS[g];
+    if (!key) return g;
+    try { return tFields(key); } catch { try { return tEditor(key); } catch { return g; } }
+  };
+
+  // Resolve field label: try admin.careersFields.{key} first, then fallback to field.label
+  const fieldLabel = (field: { key: string; label: string }) => {
+    try { 
+      const translated = tFields(field.key);
+      // Check if translation actually resolved (not just returning the key path)
+      if (typeof translated === 'string' && translated !== field.key && !translated.startsWith('admin.careersFields.')) {
+        return translated;
+      }
+    } catch {}
+    
+    // Fallback: try to find translation in module-specific namespace
+    try {
+      const moduleKey = mod.key; // e.g., 'testimonials', 'partners'
+      const moduleTranslated = tFields(`${moduleKey}.${field.key}` as any);
+      if (typeof moduleTranslated === 'string' && !moduleTranslated.includes('.')) {
+        return moduleTranslated;
+      }
+    } catch {}
+    
+    return field.label;
+  };
+
   const router = useRouter();
   const params = useSearchParams();
   const consult = params.get('consult') === '1';
@@ -92,14 +160,14 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
   }, [id, mod.key, locale]);
 
   const groups = useMemo(() => {
-    const map = new Map<string, typeof mod.fields>();
-    for (const field of mod.fields) {
-      const g = field.group || 'Général';
+    const map = new Map<string, typeof translatedFields>();
+    for (const field of translatedFields) {
+      const g = groupName(field.group || '');
       if (!map.has(g)) map.set(g, []);
       map.get(g)!.push(field);
     }
     return Array.from(map.entries());
-  }, [mod.fields]);
+  }, [translatedFields]);
 
   const isDefault = tab === settings.defaultLocale;
 
@@ -212,20 +280,20 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
       <div className="flex flex-wrap items-center justify-between gap-3 ad-rise">
         <div>
           <button className="text-xs font-bold uppercase tracking-widest mb-1 flex items-center gap-1" style={{ color: 'var(--ad-muted)' }} onClick={() => router.push(`/${locale}/admin/${mod.path}`)}>
-            <ArrowLeft className="w-3 h-3" /> {mod.label}
+            <ArrowLeft className="w-3 h-3" /> {(() => { try { return tTitles(mod.key); } catch { return mod.label; } })()}
           </button>
           <h1 className="text-2xl font-black flex items-center gap-2">
             {iconName ? <IconMark name={iconName} className="w-6 h-6" /> : <Icon className="w-6 h-6" style={{ color: 'var(--ad-accent)' }} />}
-            {consult ? 'Consultation · ' : ''}{id === 'new' ? `Nouveau ${mod.singular}` : String(record[mod.titleKey] || 'Fiche')}
+            {consult ? tEditor('consultation') : ''}{id === 'new' ? tEditor('newItem', { singular: mod.singular }) : String(record[mod.titleKey] || tEditor('record'))}
           </h1>
         </div>
         <div className="flex flex-wrap gap-2">
           {record.id ? (
             <>
               <button className="ad-btn ad-btn-ghost" onClick={() => router.push(`/${locale}/admin/${mod.path}/${record.id}${consult ? '' : '?consult=1'}`)}>
-                <Eye className="w-4 h-4" /> {consult ? 'Éditer' : 'Consulter'}
+                <Eye className="w-4 h-4" /> {consult ? tEditor('editMode') : tEditor('consultMode')}
               </button>
-              {!consult && <button className="ad-btn ad-btn-ghost" onClick={duplicate}><Copy className="w-4 h-4" /> Dupliquer</button>}
+              {!consult && <button className="ad-btn ad-btn-ghost" onClick={duplicate}><Copy className="w-4 h-4" /> {tEditor('duplicate')}</button>}
               <button className="ad-btn ad-btn-danger" onClick={remove}><Trash2 className="w-4 h-4" /></button>
             </>
           ) : null}
@@ -242,7 +310,7 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
             const pct = transKeys.length ? Math.round((done / transKeys.length) * 100) : 100;
             return (
               <button key={lang.id} type="button" className={`ad-btn ${tab === lang.id ? 'ad-btn-primary' : 'ad-btn-ghost'}`} onClick={() => switchLang(lang.id)}>
-                {lang.label} {lang.id === settings.defaultLocale ? '· origine' : ''}
+                {lang.label} {lang.id === settings.defaultLocale ? tEditor('origin') : ''}
                 <span className="ad-chip ad-chip-acc">{pct}%</span>
               </button>
             );
@@ -262,7 +330,7 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
             setOpenGroups((p) => ({ ...p, [group]: true }));
             document.getElementById(`sec-${group}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
           }}>
-            {group}
+            {groupName(group)}
           </button>
         ))}
       </nav>
@@ -280,14 +348,14 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
         return (
           <section id={`sec-${group}`} key={group} className="ad-card p-5 ad-rise scroll-mt-28" style={{ animationDelay: `${i * 40}ms` }}>
             <button type="button" className="ad-section-title w-full justify-between" onClick={() => setOpenGroups((p) => ({ ...p, [group]: !open }))}>
-              {group} <ChevronDown className={`w-4 h-4 transition ${open ? '' : '-rotate-90'}`} />
+              {groupName(group)} <ChevronDown className={`w-4 h-4 transition ${open ? '' : '-rotate-90'}`} />
             </button>
             {open && (
               consult ? (
                 <div className={htmlHeavy ? 'space-y-4' : 'grid md:grid-cols-2 gap-4'}>
                   {fields.map((field) => (
                     <div key={field.key} className={field.wide || field.kind === 'html' || field.kind === 'process' ? 'md:col-span-2' : ''}>
-                      <div className="text-[11px] font-black uppercase tracking-widest mb-1" style={{ color: 'var(--ad-muted)' }}>{field.label}</div>
+                      <div className="text-[11px] font-black uppercase tracking-widest mb-1" style={{ color: 'var(--ad-muted)' }}>{fieldLabel(field)}</div>
                       <ConsultValue spec={field} value={valueOf(field.key)} />
                     </div>
                   ))}
@@ -299,7 +367,7 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
                     return (
                       <div key={`${tab}-${field.key}`} className="ad-compare">
                         <div>
-                          <div className="text-[11px] font-black uppercase tracking-widest mb-1" style={{ color: 'var(--ad-muted)' }}>{field.label} · {settings.defaultLocale.toUpperCase()}</div>
+                          <div className="text-[11px] font-black uppercase tracking-widest mb-1" style={{ color: 'var(--ad-muted)' }}>{fieldLabel(field)} · {settings.defaultLocale.toUpperCase()}</div>
                           <ConsultValue spec={field} value={record[field.key]} />
                         </div>
                         <div>
@@ -329,9 +397,9 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
                     >
                       {field.key === 'locale' ? (
                         <div className="space-y-1.5">
-                          <div className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>{field.label}</div>
+                          <div className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>{fieldLabel(field)}</div>
                           <ConsultValue spec={field} value={tab} />
-                          <p className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>Verrouillé sur l’onglet de langue actif.</p>
+                          <p className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>{tEditor('lockedOnActiveLang')}</p>
                         </div>
                       ) : renderField(field, valueOf(field.key), (v) => set(field.key, v), record, { origin: originOf(field.key), originLocale: settings.defaultLocale })}
                     </div>
@@ -345,9 +413,9 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
 
       {!consult && (
         <div className="fixed bottom-0 left-0 right-0 z-20 border-t px-5 py-3 flex justify-end gap-2" style={{ background: 'var(--ad-surface)', borderColor: 'var(--ad-line)' }}>
-          <button className="ad-btn ad-btn-ghost" onClick={() => router.push(`/${locale}/admin/${mod.path}`)}>Annuler</button>
-          {record.id && <button className="ad-btn ad-btn-ghost" onClick={() => router.push(`/${locale}/admin/${mod.path}/${record.id}?consult=1`)}><Eye className="w-4 h-4" /> Consulter</button>}
-          <button className="ad-btn ad-btn-primary" disabled={saving} onClick={save}><Save className="w-4 h-4" /> {saving ? '…' : 'Enregistrer'}</button>
+          <button className="ad-btn ad-btn-ghost" onClick={() => router.push(`/${locale}/admin/${mod.path}`)}>{tEditor('cancel')}</button>
+          {record.id && <button className="ad-btn ad-btn-ghost" onClick={() => router.push(`/${locale}/admin/${mod.path}/${record.id}?consult=1`)}><Eye className="w-4 h-4" /> {tEditor('consultMode')}</button>}
+          <button className="ad-btn ad-btn-primary" disabled={saving} onClick={save}><Save className="w-4 h-4" /> {saving ? '…' : tEditor('save')}</button>
         </div>
       )}
     </div>

@@ -10,6 +10,7 @@ import { getNews } from '@/lib/data';
 import { matchesEntity } from '@/lib/ids';
 import type { News } from '@/types';
 import Breadcrumb from '@/components/ui/Breadcrumb';
+import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
 
 export default function NewsDetailPage() {
   const params = useParams();
@@ -101,6 +102,7 @@ export default function NewsDetailPage() {
   }
 
   return (
+    <PageVisibilityGuard visibilityKey="module.news">
     <div className="pt-32 pb-24 min-h-screen">
       {/* Barre de progression */}
       <div className="fixed top-0 left-0 w-full h-1 bg-gray-200 dark:bg-gray-800 z-50">
@@ -311,12 +313,13 @@ export default function NewsDetailPage() {
                   <span key={i} className="px-3 py-2 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-sm hover:bg-sari-blue hover:text-white transition-colors cursor-pointer rounded-lg">
                     #{tag}
                   </span>
-                ))}
+                ))} 
               </div>
             </div>
           </div>
         </div>
       </div>
     </div>
+    </PageVisibilityGuard>
   );
 }

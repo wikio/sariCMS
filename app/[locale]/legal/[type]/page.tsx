@@ -7,6 +7,7 @@ import type { Locale } from '@/lib/i18n';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import Divider from '@/components/shared/Divider';
 import { FileText, Shield, FileCheck } from 'lucide-react';
+import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
 
 interface LegalPageProps {
   params: Promise<{ locale: Locale; type: string }>;
@@ -18,8 +19,8 @@ export async function generateMetadata({ params }: LegalPageProps) {
   const page = legal[type];
   
   return {
-    title: page?.title || 'Page non trouvée',
-    description: page?.title || 'Document légal',
+    title: page?.title || t('pageNotFound', { defaultMessage: 'Page non trouvée' }),
+    description: page?.title || t('legalDoc', { defaultMessage: 'Document légal' }),
   };
 }
 
@@ -46,6 +47,7 @@ export default async function LegalPage({ params }: LegalPageProps) {
   }
 
   return (
+    <PageVisibilityGuard visibilityKey={`page.${type}`}>
     <div className="pt-32 pb-24 min-h-screen page-enter">
       <div className="bg-sari-blue py-24 text-center text-white">
         <div className="container mx-auto px-6">
@@ -98,5 +100,6 @@ export default async function LegalPage({ params }: LegalPageProps) {
         </div>
       </div>
     </div>
+    </PageVisibilityGuard>
   );
 }

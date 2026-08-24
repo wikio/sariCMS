@@ -13,6 +13,7 @@ import { getEvents } from '@/lib/data';
 import { matchesEntity } from '@/lib/ids';
 import type { Event } from '@/types';
 import Breadcrumb from '@/components/ui/Breadcrumb';
+import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
 
 export default function EventDetailPage() {
   const params = useParams();
@@ -122,6 +123,7 @@ export default function EventDetailPage() {
   const NextIcon = isRtl ? ChevronLeft : ChevronRight;
 
   return (
+    <PageVisibilityGuard visibilityKey="module.events">
     <div className="pt-32 pb-24 min-h-screen">
       {/* Barre de progression */}
       <div className="fixed top-0 left-0 w-full h-1 bg-gray-200 dark:bg-gray-800 z-50">
@@ -423,5 +425,6 @@ export default function EventDetailPage() {
         </div>
       </div>
     </div>
+    </PageVisibilityGuard>
   );
 }

@@ -1,0 +1,12 @@
+{
+  "header": "En-tête",
+  "undo": "Rétablir",
+  "underline": "Souligné (Ctrl+U)",
+  "bulletList": "Liste à puces",
+  "numberedList": "Liste numérotée",
+  "alignLeft": "Aligner à gauche",
+  "alignRight": "Aligner à droite",
+  "insertLink": "Insérer un lien",
+  "insertImage": "Insérer une image",
+  "insertTable": "Insérer un tableau"
+}

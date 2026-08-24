@@ -1,7 +1,8 @@
 'use client';
 
 import { ReactNode, useEffect, useRef, useState } from 'react';
-import { useLocale } from 'next-intl';
+import { createPortal } from 'react-dom';
+import { useLocale, useTranslations } from 'next-intl';
 import { X } from 'lucide-react';
 
 export default function Drawer({
@@ -22,11 +23,15 @@ export default function Drawer({
   width?: number;
 }) {
   const locale = useLocale();
+  const t = useTranslations('admin.drawer');
   const rtl = locale === 'ar';
   const [shown, setShown] = useState(open);
   const [closing, setClosing] = useState(false);
   const [w, setW] = useState(width);
+  const [mounted, setMounted] = useState(false);
   const dragging = useRef(false);
+
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     if (open) {
@@ -34,11 +39,11 @@ export default function Drawer({
       setClosing(false);
     } else if (shown) {
       setClosing(true);
-      const t = window.setTimeout(() => {
+      const timer = window.setTimeout(() => {
         setShown(false);
         setClosing(false);
       }, 260);
-      return () => window.clearTimeout(t);
+      return () => window.clearTimeout(timer);
     }
   }, [open, shown]);
 
@@ -70,8 +75,8 @@ export default function Drawer({
 
   if (!shown) return null;
 
-  return (
-    <div className={`ad-drawer ${closing ? 'is-closing' : ''} ${rtl ? 'is-rtl' : ''}`} onClick={onClose}>
+  const drawer = (
+    <div className={`ad-drawer ${closing ? 'is-closing' : ''} ${rtl ? 'is-rtl' : ''}`} onClick={onClose} style={{ zIndex: 9998 }}>
       <aside
         className="ad-drawer-panel"
         style={{ width: `min(${w}px, 100%)` }}
@@ -82,15 +87,15 @@ export default function Drawer({
           className="ad-drawer-handle"
           onPointerDown={startDrag}
           onClick={onClose}
-          title="Glisser pour redimensionner · cliquer pour fermer"
-          aria-label="Glisser pour redimensionner ou fermer"
+          title={t('dragToResize')}
+          aria-label={t('dragToResize')}
         />
         <header className="flex items-start justify-between gap-3 mb-4">
           <div>
             <h3 className="text-xl font-black tracking-tight">{title}</h3>
             {subtitle && <p className="text-sm mt-1" style={{ color: 'var(--ad-muted)' }}>{subtitle}</p>}
           </div>
-          <button type="button" className="ad-btn ad-btn-icon ad-btn-ghost" onClick={onClose} aria-label="Fermer">
+          <button type="button" className="ad-btn ad-btn-icon ad-btn-ghost" onClick={onClose} aria-label={t('close')}>
             <X className="w-4 h-4" />
           </button>
         </header>
@@ -99,4 +104,9 @@ export default function Drawer({
       </aside>
     </div>
   );
+
+  // Render via Portal to escape parent stacking context
+  if (!mounted) return null;
+  const themeAttr = document.querySelector('[data-admin-theme]')?.getAttribute('data-admin-theme') || 'light';
+  return createPortal(<div data-admin-theme={themeAttr}>{drawer}</div>, document.body);
 }

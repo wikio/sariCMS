@@ -9,6 +9,7 @@ import { getNews } from '@/lib/data';
 import { buildSlugUrl } from '@/lib/slugify';
 import type { News } from '@/types';
 import Pagination from '@/components/ui/Pagination';
+import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
 
 export default function NewsPage() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -49,6 +50,7 @@ export default function NewsPage() {
   }
 
   return (
+    <PageVisibilityGuard visibilityKey="module.news">
     <div className="pt-44 pb-24 container mx-auto px-6 min-h-screen">
       <div className="text-center mb-16">
         <span className="text-sari-blue font-bold uppercase tracking-wider text-sm">
@@ -98,5 +100,6 @@ export default function NewsPage() {
         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
       )}
     </div>
+    </PageVisibilityGuard>
   );
 }

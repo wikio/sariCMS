@@ -15,8 +15,22 @@ import IconMark from '@/components/admin/IconMark';
 import ProcessFlow, { normalizeSteps } from '@/components/admin/ProcessFlow';
 import Toggle from '@/components/admin/Toggle';
 import { activeCurrencies, loadCurrencies, saveCurrencies, type Currency } from '@/lib/currencies';
+import { useTranslations } from 'next-intl';
 
 export function FieldShell({ spec, value, origin, originLocale, children }: { spec: FieldSpec; value?: unknown; origin?: unknown; originLocale?: string; children: React.ReactNode }) {
+  const t = useTranslations('admin.editor');
+  const tF = useTranslations('admin.careersFields');
+  const resolvedLabel = (() => { 
+    try { 
+      const translated = tF(spec.key);
+      // Check if translation actually resolved (not just returning the key path)
+      if (typeof translated === 'string' && translated !== spec.key && !translated.startsWith('admin.careersFields.')) {
+        return translated;
+      }
+    } catch {}
+    return spec.label; 
+  })();
+  const resolvedHint = (() => { const HINT_KEYS: Record<string,string> = { type: 'hintType', applyAuth: 'hintApplyAuth', icon: 'hintIcon' }; const k = HINT_KEYS[spec.key]; if (!k) return spec.hint; try { const r = tF(k); return typeof r === 'string' ? r : spec.hint; } catch { return spec.hint; } })();
   const len = typeof value === 'string' ? value.length : 0;
   const over = spec.maxLength != null && len > spec.maxLength;
   const originText = origin == null || origin === '' ? '' : typeof origin === 'string' ? origin : JSON.stringify(origin);
@@ -24,11 +38,11 @@ export function FieldShell({ spec, value, origin, originLocale, children }: { sp
     <div className={`space-y-1.5 ${spec.wide || spec.kind === 'html' || spec.kind === 'process' || spec.kind === 'price' ? 'md:col-span-2' : ''}`}>
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-[11px] font-black uppercase tracking-[0.14em]" style={{ color: 'var(--ad-muted)' }}>
-          {spec.label}
+          {resolvedLabel}
         </span>
         {spec.required
-          ? <span className="ad-chip ad-chip-warn">Obligatoire</span>
-          : <span className="ad-chip ad-chip-mute">Optionnel</span>}
+          ? <span className="ad-chip ad-chip-warn">{t("required")}</span>
+          : <span className="ad-chip ad-chip-mute">{t("optional")}</span>}
         {spec.maxLength != null && (
           <span className="ml-auto text-[10px] font-bold tabular-nums" style={{ color: over ? 'var(--ad-danger)' : 'var(--ad-muted)' }}>
             {len} / {spec.maxLength}
@@ -36,9 +50,9 @@ export function FieldShell({ spec, value, origin, originLocale, children }: { sp
         )}
       </div>
       {children}
-      {spec.hint && <p className="text-[11px] leading-snug" style={{ color: 'var(--ad-muted)' }}>{spec.hint}</p>}
+      {resolvedHint && <p className="text-[11px] leading-snug" style={{ color: 'var(--ad-muted)' }}>{resolvedHint}</p>}
       {originText && (
-        <p className="ad-origin">Origine ({(originLocale || 'défaut').toUpperCase()}) : {originText.replace(/<[^>]+>/g, ' ').slice(0, 280)}</p>
+        <p className="ad-origin">{t('origin')} ({(originLocale || 'défaut').toUpperCase()}) : {originText.replace(/<[^>]+>/g, ' ').slice(0, 280)}</p>
       )}
     </div>
   );
@@ -116,7 +130,7 @@ export function renderField(
       );
     case 'textarea':
       return wrap(
-        <textarea className="ad-textarea min-h-[90px]" placeholder={ph || 'Saisissez le texte…'} maxLength={spec.maxLength} value={String(value || '')} onChange={(e) => onChange(e.target.value)} />,
+        <textarea className="ad-textarea min-h-[90px]" placeholder={ph || (spec.placeholder || '')} maxLength={spec.maxLength} value={String(value || '')} onChange={(e) => onChange(e.target.value)} />,
       );
     case 'image':
       return wrap(<MediaPicker value={String(value || '')} onChange={onChange} />);
@@ -159,11 +173,11 @@ export function renderField(
         spec.prefix ? (
           <div className="ad-search">
             <span className="ad-search-ico text-xs font-bold">{spec.prefix}</span>
-            <input className="ad-input" placeholder={ph || `Saisir ${spec.label.toLowerCase()}…`} maxLength={spec.maxLength} value={String(value ?? '')} onChange={(e) => onChange(e.target.value)} />
+            <input className="ad-input" placeholder={ph || spec.placeholder || ''} maxLength={spec.maxLength} value={String(value ?? '')} onChange={(e) => onChange(e.target.value)} />
           </div>
         ) : (
           <div className="relative">
-            <input className={`ad-input ${spec.suffix ? 'pr-12' : ''}`} placeholder={ph || `Saisir ${spec.label.toLowerCase()}…`} maxLength={spec.maxLength} value={String(value ?? '')} onChange={(e) => onChange(e.target.value)} />
+            <input className={`ad-input ${spec.suffix ? 'pr-12' : ''}`} placeholder={ph || spec.placeholder || ''} maxLength={spec.maxLength} value={String(value ?? '')} onChange={(e) => onChange(e.target.value)} />
             {spec.suffix && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold" style={{ color: 'var(--ad-muted)' }}>{spec.suffix}</span>}
           </div>
         ),
@@ -172,6 +186,7 @@ export function renderField(
 }
 
 function TaxonomySelect({ spec, value, onChange, locale }: { spec: FieldSpec; value: string; onChange: (v: string) => void; locale?: string }) {
+  const t = useTranslations('admin.editor');
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState('');
   const [adding, setAdding] = useState(false);
@@ -225,7 +240,7 @@ function TaxonomySelect({ spec, value, onChange, locale }: { spec: FieldSpec; va
       <div className="flex gap-2" ref={box}>
         <div className={`ad-combo flex-1 ${open ? 'is-open' : ''}`}>
           <button type="button" className="ad-select text-left flex items-center justify-between" onClick={() => setOpen((v) => !v)}>
-            <span className={current ? '' : 'opacity-50'}>{current?.label || spec.placeholder || 'Sélectionner…'}</span>
+            <span className={current ? '' : 'opacity-50'}>{current?.label || spec.placeholder || t("select")}</span>
             <ChevronsUpDown className="w-4 h-4 opacity-50" />
           </button>
           {open && (
@@ -249,16 +264,16 @@ function TaxonomySelect({ spec, value, onChange, locale }: { spec: FieldSpec; va
                   {o.label}
                 </button>
               ))}
-              {filtered.length === 0 && <div className="px-3 py-2 text-xs" style={{ color: 'var(--ad-muted)' }}>Aucun résultat</div>}
+              {filtered.length === 0 && <div className="px-3 py-2 text-xs" style={{ color: 'var(--ad-muted)' }}>{t("noResults")}</div>}
             </div>
           )}
         </div>
         {spec.taxonomy && (
           adding ? (
             <div className="flex gap-1">
-              <input className="ad-input w-40" placeholder="Nouveau…" value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && create()} />
+              <input className="ad-input w-40" placeholder={t("newOption")} value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && create()} />
               <button type="button" className="ad-btn ad-btn-primary" onClick={create}>OK</button>
-              <button type="button" className="ad-btn ad-btn-ghost" onClick={() => { setAdding(false); setDraft(''); }}>Annuler</button>
+              <button type="button" className="ad-btn ad-btn-ghost" onClick={() => { setAdding(false); setDraft(''); }}>{t("cancel")}</button>
             </div>
           ) : (
             <button type="button" className="ad-btn ad-btn-ghost" onClick={() => setAdding(true)}>
@@ -277,6 +292,7 @@ function parsePrice(value: string) {
 }
 
 function PriceInner({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder?: string }) {
+  const t = useTranslations('admin.editor');
   const [list, setList] = useState<Currency[]>([]);
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState({ code: '', symbol: '', name: '' });
@@ -294,7 +310,7 @@ function PriceInner({ value, onChange, placeholder }: { value: string; onChange:
   const quote = /sur\s*devis/i.test(value) || suffix.toLowerCase() === 'sur devis';
   const setAmount = (next: string) => onChange(next.trim() ? `${next.trim()} ${curr.symbol}` : '');
   const setCurrency = (next: Currency) => onChange(amount ? `${amount} ${next.symbol}` : next.symbol);
-  const setQuote = () => onChange('Sur devis');
+  const setQuote = () => onChange(t("onQuote"));
 
   const create = () => {
     const code = draft.code.trim().toUpperCase();
@@ -309,14 +325,14 @@ function PriceInner({ value, onChange, placeholder }: { value: string; onChange:
   return (
     <div className="ad-price-split">
       <label className="ad-price-amount">
-        <span className="ad-price-kicker">Montant</span>
+        <span className="ad-price-kicker">{t("amount")}</span>
         <span className="ad-price-box">
           <Banknote className="ad-price-ico" aria-hidden />
           <input
             className="ad-input"
             value={quote ? '' : amount}
             onChange={(e) => setAmount(e.target.value.replace(/[^\d\s.,]/g, ''))}
-            placeholder={quote ? 'Sur devis' : (placeholder || '0')}
+            placeholder={quote ? t("onQuote") : (placeholder || '0')}
             inputMode="decimal"
             autoComplete="off"
             disabled={quote}
@@ -324,10 +340,10 @@ function PriceInner({ value, onChange, placeholder }: { value: string; onChange:
         </span>
       </label>
       <div className="ad-price-currency">
-        <span className="ad-price-kicker">Devise</span>
+        <span className="ad-price-kicker">{t("currency")}</span>
         <div className="ad-price-chips">
           <button type="button" className={`ad-price-chip ${quote ? 'is-on' : ''}`} onClick={setQuote}>
-            <b>Sur devis</b>
+            <b>{t("onQuote")}</b>
           </button>
           {list.map((c) => (
             <button
@@ -348,12 +364,12 @@ function PriceInner({ value, onChange, placeholder }: { value: string; onChange:
         {adding && (
           <div className="ad-card p-3 space-y-2 mt-2">
             <div className="grid grid-cols-3 gap-2">
-              <input className="ad-input" placeholder="Code" value={draft.code} onChange={(e) => setDraft({ ...draft, code: e.target.value })} />
+              <input className="ad-input" placeholder={t("code")} value={draft.code} onChange={(e) => setDraft({ ...draft, code: e.target.value })} />
               <input className="ad-input" placeholder="Symbole" value={draft.symbol} onChange={(e) => setDraft({ ...draft, symbol: e.target.value })} />
               <input className="ad-input" placeholder="Nom" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
             </div>
             <div className="flex gap-2 justify-end">
-              <button type="button" className="ad-btn ad-btn-ghost" onClick={() => { setAdding(false); setDraft({ code: '', symbol: '', name: '' }); }}>Annuler</button>
+              <button type="button" className="ad-btn ad-btn-ghost" onClick={() => { setAdding(false); setDraft({ code: '', symbol: '', name: '' }); }}>{t('cancel')}</button>
               <button type="button" className="ad-btn ad-btn-primary" onClick={create}>OK</button>
             </div>
           </div>
@@ -364,6 +380,7 @@ function PriceInner({ value, onChange, placeholder }: { value: string; onChange:
 }
 
 export function IconPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const t = useTranslations('admin.editor');
   const [q, setQ] = useState('');
   const [open, setOpen] = useState(false);
   const boxRef = useRef<HTMLDivElement>(null);
@@ -391,7 +408,7 @@ export function IconPicker({ value, onChange }: { value: string; onChange: (v: s
       </div>
       {open && (
         <div className="ad-combo-list ad-scroll max-h-64 z-50">
-          {hits.length === 0 && <div className="ad-combo-item text-xs" style={{ color: 'var(--ad-muted)' }}>Aucune icône trouvée</div>}
+          {hits.length === 0 && <div className="ad-combo-item text-xs" style={{ color: 'var(--ad-muted)' }}>{t("noIconFound")}</div>}
           {hits.map((name) => (
             <button
               key={name}
@@ -410,18 +427,19 @@ export function IconPicker({ value, onChange }: { value: string; onChange: (v: s
 }
 
 function ProcessEditor({ value, onChange }: { value: ReturnType<typeof normalizeSteps>; onChange: (v: unknown) => void }) {
+  const t = useTranslations('admin.editor');
   const set = (next: typeof value) => onChange(next);
   return (
     <div className="space-y-3">
       <ProcessFlow steps={value} />
       {value.map((step, i) => (
         <div key={step.id || i} className="grid md:grid-cols-[1fr_1fr_auto] gap-2">
-          <input className="ad-input" placeholder={`Étape ${i + 1}`} value={step.label} onChange={(e) => set(value.map((s, j) => (j === i ? { ...s, label: e.target.value } : s)))} />
-          <input className="ad-input" placeholder="Détail / responsable" value={step.detail || ''} onChange={(e) => set(value.map((s, j) => (j === i ? { ...s, detail: e.target.value } : s)))} />
+          <input className="ad-input" placeholder={t("stepN", { n: i + 1 })} value={step.label} onChange={(e) => set(value.map((s, j) => (j === i ? { ...s, label: e.target.value } : s)))} />
+          <input className="ad-input" placeholder={t("detailResponsible")} value={step.detail || ''} onChange={(e) => set(value.map((s, j) => (j === i ? { ...s, detail: e.target.value } : s)))} />
           <button type="button" className="ad-btn ad-btn-icon ad-btn-danger" onClick={() => set(value.filter((_, j) => j !== i))}><Trash2 className="w-4 h-4" /></button>
         </div>
       ))}
-      <button type="button" className="ad-btn ad-btn-ghost" onClick={() => set([...value, { id: `s-${Date.now()}`, label: `Étape ${value.length + 1}` }])}><Plus className="w-4 h-4" /> Étape</button>
+      <button type="button" className="ad-btn ad-btn-ghost" onClick={() => set([...value, { id: `s-${Date.now()}`, label: t("stepN", { n: value.length + 1 }) }])}><Plus className="w-4 h-4" /> {t("step")}</button>
     </div>
   );
 }
@@ -437,6 +455,7 @@ async function uploadOriginal(file: File, moduleName = 'ged') {
 }
 
 export function MediaPicker({ value, onChange, moduleName = 'ged' }: { value: string; onChange: (v: string) => void; moduleName?: string }) {
+  const t = useTranslations('admin.editor');
   const [busy, setBusy] = useState(false);
   const [ged, setGed] = useState(false);
   const upload = async (file: File) => {
@@ -451,12 +470,12 @@ export function MediaPicker({ value, onChange, moduleName = 'ged' }: { value: st
   return (
     <div className="space-y-2">
       <div className="flex gap-2">
-        <input className="ad-input" value={value} onChange={(e) => onChange(e.target.value)} placeholder="https://… ou /uploads/…" />
+        <input className="ad-input" value={value} onChange={(e) => onChange(e.target.value)} placeholder={t("urlPlaceholder")} />
         <label className="ad-btn ad-btn-ghost cursor-pointer">
-          <Upload className="w-4 h-4" /> {busy ? '…' : 'Fichier'}
+          <Upload className="w-4 h-4" /> {busy ? '…' : t("file")}
           <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])} />
         </label>
-        <button type="button" className="ad-btn ad-btn-ghost" onClick={() => setGed(true)}><FolderOpen className="w-4 h-4" /> GED</button>
+        <button type="button" className="ad-btn ad-btn-ghost" onClick={() => setGed(true)}><FolderOpen className="w-4 h-4" /> {t("ged")}</button>
       </div>
       {value && (
         <div className="min-h-24 p-2" style={{ border: '1px solid var(--ad-line)', background: 'var(--ad-surface-2)' }}>
@@ -469,6 +488,7 @@ export function MediaPicker({ value, onChange, moduleName = 'ged' }: { value: st
 }
 
 function GalleryEditor({ value, onChange }: { value: string[]; onChange: (v: string[]) => void }) {
+  const t = useTranslations('admin.editor');
   return (
     <div className="space-y-2">
       <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
@@ -486,7 +506,9 @@ function GalleryEditor({ value, onChange }: { value: string[]; onChange: (v: str
   );
 }
 
-function ListEditor({ value, onChange, placeholder = 'Élément' }: { value: string[]; onChange: (v: string[]) => void; placeholder?: string }) {
+function ListEditor({ value, onChange, placeholder }: { value: string[]; onChange: (v: string[]) => void; placeholder?: string }) {
+  const t = useTranslations('admin.editor');
+  const ph = placeholder || t('add');
   const move = (from: number, to: number) => {
     if (to < 0 || to >= value.length) return;
     const next = [...value];
@@ -503,12 +525,13 @@ function ListEditor({ value, onChange, placeholder = 'Élément' }: { value: str
           <button type="button" className="ad-btn ad-btn-icon ad-btn-danger" onClick={() => onChange(value.filter((_, j) => j !== i))}><Trash2 className="w-4 h-4" /></button>
         </div>
       ))}
-      <button type="button" className="ad-btn ad-btn-ghost" onClick={() => onChange([...value, ''])}><Plus className="w-4 h-4" /> Ajouter</button>
+      <button type="button" className="ad-btn ad-btn-ghost" onClick={() => onChange([...value, ''])}><Plus className="w-4 h-4" /> {t("add")}</button>
     </div>
   );
 }
 
 function FaqEditor({ value, onChange }: { value: Array<{ q: string; a: string }>; onChange: (v: Array<{ q: string; a: string }>) => void }) {
+  const t = useTranslations('admin.editor');
   const move = (from: number, to: number) => {
     if (to < 0 || to >= value.length) return;
     const next = [...value];
@@ -525,22 +548,23 @@ function FaqEditor({ value, onChange }: { value: Array<{ q: string; a: string }>
             <span className="text-[10px] font-black tracking-widest" style={{ color: 'var(--ad-muted)' }}>Q{i + 1}</span>
             <button type="button" className="ad-btn ad-btn-icon ad-btn-danger" onClick={() => onChange(value.filter((_, j) => j !== i))}><Trash2 className="w-3 h-3" /></button>
           </div>
-          <input className="ad-input" placeholder="Question" value={item.q} onChange={(e) => onChange(value.map((v, j) => (j === i ? { ...v, q: e.target.value } : v)))} />
+          <input className="ad-input" placeholder={t("question")} value={item.q} onChange={(e) => onChange(value.map((v, j) => (j === i ? { ...v, q: e.target.value } : v)))} />
           <textarea className="ad-textarea" placeholder="Réponse" value={item.a} onChange={(e) => onChange(value.map((v, j) => (j === i ? { ...v, a: e.target.value } : v)))} />
         </div>
       ))}
-      <button type="button" className="ad-btn ad-btn-ghost" onClick={() => onChange([...value, { q: '', a: '' }])}><Plus className="w-4 h-4" /> Question</button>
+      <button type="button" className="ad-btn ad-btn-ghost" onClick={() => onChange([...value, { q: '', a: '' }])}><Plus className="w-4 h-4" /> {t("question")}</button>
     </div>
   );
 }
 
 function SpecsEditor({ value, onChange }: { value: Record<string, string>; onChange: (v: Record<string, string>) => void }) {
+  const t = useTranslations('admin.editor');
   const entries = Object.entries(value);
   const set = (next: Array<[string, string]>) => onChange(Object.fromEntries(next.filter(([k]) => k)));
   return (
     <div id="specs" className="space-y-2 scroll-mt-28">
       {entries.length === 0 && (
-        <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>Aucune spécification. Ajoutez une ligne pour commencer.</p>
+        <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>{t("noSpecs")}</p>
       )}
       {entries.map(([k, v], i) => (
         <div key={i} className="grid grid-cols-2 gap-2">
@@ -576,6 +600,7 @@ function OptionsEditor({ value, onChange }: { value: Array<{ name: string; choic
 }
 
 function AgendaEditor({ value, onChange }: { value: unknown; onChange: (v: unknown) => void }) {
+  const t = useTranslations('admin.careersFields');
   const items = Array.isArray(value)
     ? value.map((it) => (typeof it === 'string' ? { time: '', title: it } : { time: String((it as { time?: string }).time || ''), title: String((it as { title?: string }).title || '') }))
     : [];
@@ -584,11 +609,11 @@ function AgendaEditor({ value, onChange }: { value: unknown; onChange: (v: unkno
       {items.map((it, i) => (
         <div key={i} className="grid grid-cols-[120px_1fr_auto] gap-2">
           <input className="ad-input" placeholder="09:00" value={it.time} onChange={(e) => onChange(items.map((x, j) => (j === i ? { ...x, time: e.target.value } : x)))} />
-          <input className="ad-input" placeholder="Session" value={it.title} onChange={(e) => onChange(items.map((x, j) => (j === i ? { ...x, title: e.target.value } : x)))} />
+          <input className="ad-input" placeholder={t('sessionPlaceholder')} value={it.title} onChange={(e) => onChange(items.map((x, j) => (j === i ? { ...x, title: e.target.value } : x)))} />
           <button type="button" className="ad-btn ad-btn-icon ad-btn-danger" onClick={() => onChange(items.filter((_, j) => j !== i))}><Trash2 className="w-4 h-4" /></button>
         </div>
       ))}
-      <button type="button" className="ad-btn ad-btn-ghost" onClick={() => onChange([...items, { time: '', title: '' }])}><Plus className="w-4 h-4" /> Session</button>
+      <button type="button" className="ad-btn ad-btn-ghost" onClick={() => onChange([...items, { time: '', title: '' }])}><Plus className="w-4 h-4" /> {t('session')}</button>
     </div>
   );
 }

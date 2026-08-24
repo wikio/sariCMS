@@ -7,11 +7,13 @@ import { persistAdminSession, readAdminAccess, readAdminUser, type AdminUser } f
 import { cmsAdminFetch, cmsAdminUpdate } from '@/lib/cms-admin';
 import { CmsError } from '@/lib/cms';
 import { useToast } from '@/components/admin/Toast';
+import { useTranslations } from 'next-intl';
 
 export default function ProfilePage() {
   const params = useSearchParams();
   const edit = params.get('edit') === '1';
   const { showToast } = useToast();
+  const t = useTranslations('admin.profile');
   const [user, setUser] = useState<AdminUser | null>(null);
   const [draft, setDraft] = useState({ firstName: '', lastName: '', email: '', phone: '' });
 
@@ -104,17 +106,17 @@ export default function ProfilePage() {
     }
   };
 
-  if (!user) return <div className="ad-card p-8">Aucun utilisateur connecté.</div>;
+  if (!user) return <div className="ad-card p-8">{t("noUser")}</div>;
 
   return (
     <div className="space-y-4 max-w-2xl">
       <header className="ad-rise">
-        <div className="text-[11px] uppercase tracking-[0.22em] font-black" style={{ color: 'var(--ad-muted)' }}>Compte</div>
+        <div className="text-[11px] uppercase tracking-[0.22em] font-black" style={{ color: 'var(--ad-muted)' }}>{t("account")}</div>
         <h1 className="text-3xl font-black">{edit ? 'Mettre à jour le profil' : 'Profil'}</h1>
       </header>
 
       <section className="ad-card p-5 space-y-3 ad-rise">
-        <h2 className="ad-section-title">Informations</h2>
+        <h2 className="ad-section-title">{t("informations", { defaultMessage: "Informations" })}</h2>
         {['firstName', 'lastName', 'email', 'phone'].map((key) => (
           <label key={key} className="block space-y-1.5">
             <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>{key}</span>
@@ -143,10 +145,10 @@ export default function ProfilePage() {
 
         {totpEnabled ? (
           <div className="space-y-3">
-            <p className="text-sm font-bold">Désactiver la 2FA</p>
+            <p className="text-sm font-bold">{t("disable2FA")}</p>
             <div className="flex flex-wrap gap-2 items-end">
               <label className="space-y-1.5">
-                <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Code TOTP actuel</span>
+                <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>{t("totpCode")}</span>
                 <input
                   className="ad-input w-40 text-center tracking-[0.4em] font-bold"
                   inputMode="numeric"
@@ -173,7 +175,7 @@ export default function ProfilePage() {
               </div>
               <div className="space-y-2 min-w-0">
                 <div>
-                  <div className="text-[11px] font-black uppercase tracking-widest mb-1" style={{ color: 'var(--ad-muted)' }}>Clé secrète</div>
+                  <div className="text-[11px] font-black uppercase tracking-widest mb-1" style={{ color: 'var(--ad-muted)' }}>{t("secretKey")}</div>
                   <code className="text-sm font-mono break-all" style={{ color: 'var(--ad-accent)' }}>{setup.secret}</code>
                 </div>
                 <div>

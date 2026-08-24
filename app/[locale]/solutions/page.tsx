@@ -9,6 +9,7 @@ import { getSolutionCategories } from '@/lib/data';
 import type { SolutionCategory } from '@/types';
 import SectionTitle from '@/components/ui/SectionTitle';
 import FAQ from '@/components/ui/FAQ';
+import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
 
 // ✅ Mapping pour résoudre dynamiquement les icônes et couleurs depuis le JSON
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -73,6 +74,7 @@ export default function SolutionsPage() {
   }
 
   return (
+    <PageVisibilityGuard visibilityKey="module.solutions">
     <div className="pt-32 pb-24 min-h-screen">
       {/* HERO PARALLAXE */}
       <div className="parallax-bg py-32 flex items-center justify-center text-center text-white relative" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1516549655169-df83a0774514?w=1920)' }}>
@@ -217,5 +219,6 @@ export default function SolutionsPage() {
         </div>
       </section>
     </div>
+    </PageVisibilityGuard>
   );
 }

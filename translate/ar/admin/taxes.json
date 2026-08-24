@@ -1,0 +1,11 @@
+{
+  "title": "الضرائب",
+  "searchPlaceholder": "البحث عن ضريبة أو منطقة أو فئة…",
+  "activeTax": "نشطة",
+  "inactiveTax": "غير نشطة",
+  "included": "مضمنة",
+  "added": "مضافة",
+  "rate": "المعدل",
+  "zone": "المنطقة",
+  "target": "الهدف"
+}

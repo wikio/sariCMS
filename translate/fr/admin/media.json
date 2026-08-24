@@ -1,0 +1,13 @@
+{
+  "title": "Médiathèque",
+  "ged": "GED",
+  "allModules": "Tous les modules",
+  "allCategories": "Toutes les catégories",
+  "allTypes": "Tous les types",
+  "images": "Images",
+  "documents": "Documents",
+  "noFiles": "Aucun fichier.",
+  "download": "Télécharger",
+  "editImage": "Éditer l'image",
+  "confirmDelete": "Supprimer définitivement ?"
+}

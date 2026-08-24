@@ -11,6 +11,7 @@ import FAQ from '@/components/ui/FAQ';
 import SectionTitle from '@/components/ui/SectionTitle';
 import Divider from '@/components/shared/Divider';
 import EmptyState from '@/components/ui/EmptyState';
+import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
 
 export default function ServicesPage() {
   const locale = useLocale();
@@ -42,6 +43,7 @@ export default function ServicesPage() {
   }
 
   return (
+    <PageVisibilityGuard visibilityKey="module.services">
     <div className="pt-32 page-enter">
       <div
         className="parallax-bg py-24 flex items-center justify-center text-center text-white relative"
@@ -100,5 +102,6 @@ export default function ServicesPage() {
         </div>
       </div>
     </div>
+    </PageVisibilityGuard>
   );
 }

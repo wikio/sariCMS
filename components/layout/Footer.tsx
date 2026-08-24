@@ -30,13 +30,45 @@ export default function Footer({ config, menu }: { config: Config; menu: MenuTyp
   const tLegal = useTranslations('pages.legal');
 
   const visibility = useVisibility();
+
+  // ✅ Mapping : id de lien → clé de visibilité page/module correspondante.
+  // Si la page ou le module cible est masqué, le lien du footer l'est aussi.
+  const PAGE_MODULE_KEYS: Record<string, string> = {
+    home: '',
+    about: 'page.about',
+    solutions: 'module.solutions',
+    services: 'module.services',
+    products: 'module.products',
+    events: 'module.events',
+    news: 'module.news',
+    careers: 'module.careers',
+    contact: 'module.contact',
+  };
+  const LEGAL_PAGE_KEYS: Record<string, string> = {
+    mentions: 'page.mentions',
+    privacy: 'page.privacy',
+    conditions: 'page.conditions',
+  };
+
   const navigation = (menu.footerMenu?.navigation || []).filter((item) => {
     const id = (item as { id?: string }).id;
-    return !id || visibility[`footer.${id}`] !== false;
+    if (!id) return true;
+    // 1) Vérifier la visibilité du lien footer lui-même
+    if (visibility[`footer.${id}`] === false) return false;
+    // 2) Vérifier si la page/module cible est masquée → masquer le lien aussi
+    const targetKey = PAGE_MODULE_KEYS[id];
+    if (targetKey && visibility[targetKey] === false) return false;
+    return true;
   });
   const legal = (menu.footerMenu?.legal || []).filter((item) => {
     const id = (item as { id?: string }).id;
-    return !id || visibility[`footer.${id}`] !== false;
+    if (!id) return true;
+    // 1) Vérifier la visibilité du lien footer lui-même
+    if (visibility[`footer.${id}`] === false) return false;
+    // 2) Vérifier si la page légale cible est masquée → masquer le lien aussi
+    const targetKey = LEGAL_PAGE_KEYS[id];
+    if (targetKey && visibility[targetKey] === false) return false;
+    return true;
   });
 
   // Logo du site : le logo configuré dans Paramètres prime sur celui des données CMS.
@@ -113,7 +145,8 @@ export default function Footer({ config, menu }: { config: Config; menu: MenuTyp
             </div>
           </div>
 
-          {/* Colonne 2 : Navigation */}
+          {/* Colonne 2 : Navigation (masquée si tous les liens sont masqués) */}
+          {navigation.length > 0 && (
           <div>
             <h4 className="text-lg font-bold mb-6 flex items-center gap-2">
               <Compass className="w-5 h-5 text-sari-blue" />
@@ -133,8 +166,10 @@ export default function Footer({ config, menu }: { config: Config; menu: MenuTyp
               ))}
             </ul>
           </div>
+          )}
 
-          {/* Colonne 3 : Légal + Sécurité */}
+          {/* Colonne 3 : Légal + Sécurité (masquée si tous les liens sont masqués) */}
+          {legal.length > 0 && (
           <div>
             <h4 className="text-lg font-bold mb-6 flex items-center gap-2">
               <Shield className="w-5 h-5 text-sari-blue" />
@@ -154,6 +189,7 @@ export default function Footer({ config, menu }: { config: Config; menu: MenuTyp
               ))}
             </ul>
           </div>
+          )}
 
           {/* Colonne 4 : Contact */}
           <div>

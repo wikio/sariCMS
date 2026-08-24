@@ -1,6 +1,7 @@
 'use client';
 
 import { Check } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 export type ProcessStep = {
   id?: string;
@@ -38,7 +39,8 @@ export default function ProcessFlow({
   current?: string;
 }) {
   if (!steps.length) {
-    return <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>Aucun processus défini.</p>;
+    const t = useTranslations('admin.editor');
+    return <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>{t('noProcess')}</p>;
   }
   const currentIndex = current
     ? steps.findIndex((s) => s.id === current || s.label === current)

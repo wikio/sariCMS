@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { RefreshCw } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 const CHARSET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
@@ -35,6 +36,7 @@ export default function ImageCaptcha({
   className?: string;
   dark?: boolean;
 }) {
+  const t = useTranslations('components.ImageCaptcha');
   const [code, setCode] = useState('');
   const [input, setInput] = useState('');
   const mounted = useRef(false);
@@ -130,7 +132,7 @@ export default function ImageCaptcha({
           placeholder="CODE"
           aria-label="Saisir le code affiché"
         />
-        <button type="button" className="ad-btn ad-btn-icon ad-btn-ghost shrink-0" onClick={generate} title="Rafraîchir">
+        <button type="button" className="ad-btn ad-btn-icon ad-btn-ghost shrink-0" onClick={generate} title={t("refresh")}>
           <RefreshCw className="w-4 h-4" />
         </button>
       </div>

@@ -15,6 +15,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useVisibility } from '@/lib/site-visibility';
 import type { Product } from '@/types';
 import Breadcrumb from '@/components/ui/Breadcrumb';
+import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -119,6 +120,7 @@ export default function ProductDetailPage() {
   };
 
   return (
+    <PageVisibilityGuard visibilityKey="module.products">
     <div className="pt-44 pb-24 container mx-auto px-6 min-h-screen page-enter">
       {addedToCart && (
         <div className="fixed top-24 right-4 bg-green-500 text-white px-6 py-3 shadow-lg z-50 animate-fade-in-up rounded-lg flex items-center gap-2">
@@ -341,5 +343,6 @@ export default function ProductDetailPage() {
         </div>
       </div>
     </div>
+    </PageVisibilityGuard>
   );
 }

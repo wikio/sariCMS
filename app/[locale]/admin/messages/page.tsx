@@ -14,19 +14,21 @@ import HtmlEditor from '@/components/admin/fields/HtmlEditor';
 import SearchField from '@/components/admin/SearchField';
 import MessageComposer from '@/components/admin/MessageComposer';
 import { renderTemplate, sendMail } from '@/lib/mail';
+import { useTranslations } from 'next-intl';
 
 const empty = (): NotifyMessage => ({
   id: `m-${Date.now()}`, name: '', trigger: 'stock_backorder', subject: '', body: '<p></p>', active: true, locale: 'fr',
 });
 
 export default function MessagesPage() {
+  const t = useTranslations('admin.messages');
   const [tab, setTab] = useState<'inbox' | 'templates'>('inbox');
   return (
     <div className="space-y-4">
       <header className="flex items-end justify-between">
         <div>
           <div className="ad-breadcrumb">Configuration avancée / Messagerie</div>
-          <h1 className="text-3xl font-black">Messagerie</h1>
+          <h1 className="text-3xl font-black">{t("title")}</h1>
         </div>
       </header>
       <div className="flex gap-2" style={{ borderBottom: '1px solid var(--ad-line)' }}>
@@ -139,7 +141,7 @@ function InboxTab() {
             <input
               className="ad-input flex-1"
               value={draft}
-              placeholder="Écrivez votre réponse…"
+              placeholder={t("writeResponse")}
               onChange={(e) => setDraft(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
             />
@@ -166,7 +168,7 @@ function InboxTab() {
         ) : (
           <table className="ad-table">
             <thead>
-              <tr><th>Contact</th><th>Sujet</th><th>Lié à</th><th>Dernier message</th><th></th></tr>
+              <tr><th>{t("contact")}</th><th>{t("subject")}</th><th>{t("linkedTo")}</th><th>{t("lastMessage")}</th><th></th></tr>
             </thead>
             <tbody>
               {shown.map((t) => {
@@ -225,15 +227,15 @@ function NewConversation({ onClose, onDone }: { onClose: () => void; onDone: () 
   return (
     <div className="ad-modal" onClick={onClose}>
       <div className="ad-modal-card space-y-3" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-xl font-black">Nouveau message</h2>
+        <h2 className="text-xl font-black">{t("newMessage")}</h2>
         <div className="grid grid-cols-2 gap-3">
           <input className="ad-input" placeholder="Email du destinataire" value={email} onChange={(e) => setEmail(e.target.value)} />
           <input className="ad-input" placeholder="Nom" value={name} onChange={(e) => setName(e.target.value)} />
         </div>
         <select className="ad-select" value={type} onChange={(e) => setType(e.target.value as typeof type)}>
-          <option value="client">Client</option>
-          <option value="candidate">Candidat</option>
-          <option value="partner">Partenaire</option>
+          <option value="client">{t("client")}</option>
+          <option value="candidate">{t("candidate")}</option>
+          <option value="partner">{t("partner")}</option>
         </select>
         <input className="ad-input" placeholder="Sujet" value={subject} onChange={(e) => setSubject(e.target.value)} />
         <textarea className="ad-textarea min-h-[140px]" placeholder="Message…" value={body} onChange={(e) => setBody(e.target.value)} autoFocus />

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import {
   Activity, Briefcase, Calendar, DownloadCloud, FileText, Layers, Newspaper,
   Package, ScrollText, Users, Wrench,
@@ -18,6 +18,7 @@ import { seedDemoWorkspace } from '@/lib/demo-seed';
 export default function AdminDashboardPage() {
   const locale = useLocale();
   const { showToast } = useToast();
+  const t = useTranslations('admin.dashboard');
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [connected, setConnected] = useState(false);
   const [driver, setDriver] = useState('');
@@ -64,7 +65,7 @@ export default function AdminDashboardPage() {
     { label: 'Solutions', value: counts.solutions || 0, icon: Layers, href: `/${locale}/admin/solutions` },
     { label: 'Offres', value: counts.careers || 0, icon: Briefcase, href: `/${locale}/admin/careers` },
     { label: 'Actualités', value: counts.news || 0, icon: Newspaper, href: `/${locale}/admin/news` },
-    { label: 'Événements', value: counts.events || 0, icon: Calendar, href: `/${locale}/admin/events` },
+    { label: t("events"), value: counts.events || 0, icon: Calendar, href: `/${locale}/admin/events` },
     { label: 'Pages', value: counts.pages || 0, icon: FileText, href: `/${locale}/admin/pages` },
     { label: 'Utilisateurs', value: counts.users || 0, icon: Users, href: `/${locale}/admin/users` },
   ];
@@ -76,10 +77,10 @@ export default function AdminDashboardPage() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 ad-rise">
         <div>
           <div className="text-[11px] uppercase tracking-[0.22em] font-bold" style={{ color: 'var(--ad-muted)' }}>SARI OS</div>
-          <h1 className="text-3xl font-black tracking-tight">Tableau de bord</h1>
+          <h1 className="text-3xl font-black tracking-tight">{t("title")}</h1>
         </div>
         <div className="flex gap-2 items-center">
-          <Link href={`/${locale}/admin/stats`} className="ad-btn ad-btn-ghost">Statistiques</Link>
+          <Link href={`/${locale}/admin/stats`} className="ad-btn ad-btn-ghost">{t("statistics")}</Link>
           <Link href={`/${locale}/admin/logs`} className="ad-btn ad-btn-ghost"><ScrollText className="w-4 h-4" /> Journaux</Link>
           <div className={`ad-chip ${connected ? 'ad-chip-ok' : 'ad-chip-warn'}`}>
             <Activity className="w-3 h-3" /> {connected ? `API ${driver || 'ok'}` : 'Hors ligne'}
@@ -106,7 +107,7 @@ export default function AdminDashboardPage() {
 
       <div className="grid lg:grid-cols-2 gap-4">
         <section className="ad-card p-5 ad-rise">
-          <h3 className="ad-section-title">Répartition du contenu</h3>
+          <h3 className="ad-section-title">{t("contentDistribution")}</h3>
           <BarChart items={tiles.slice(0, 6).map((t, i) => ({
             label: t.label,
             value: t.value,
@@ -116,17 +117,17 @@ export default function AdminDashboardPage() {
         <section className="ad-card p-5 ad-rise">
           <h3 className="ad-section-title">Commandes · {orderRevenue(orders).toLocaleString()} DA livrés</h3>
           <DonutChart items={[
-            { label: 'Livrées', value: orders.filter((o) => o.status === 'delivered').length, color: '#0f9f6e' },
+            { label: t("delivered"), value: orders.filter((o) => o.status === 'delivered').length, color: '#0f9f6e' },
             { label: 'En cours', value: orders.filter((o) => o.status === 'processing' || o.status === 'shipped').length, color: '#169EC9' },
             { label: 'Attente', value: orders.filter((o) => o.status === 'pending').length, color: '#EAB616' },
-            { label: 'Annulées', value: orders.filter((o) => o.status === 'cancelled').length, color: '#e11d48' },
+            { label: t("cancelled"), value: orders.filter((o) => o.status === 'cancelled').length, color: '#e11d48' },
           ]} />
         </section>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-4">
         <div className="ad-card p-5">
-          <h3 className="ad-section-title">Actions</h3>
+          <h3 className="ad-section-title">{t("actions")}</h3>
           <div className="space-y-1">
             {[
               [`/${locale}/admin/products/new`, 'Nouveau produit'],
@@ -163,12 +164,12 @@ export default function AdminDashboardPage() {
                 setSeeding(false);
               }
             }}>
-              {seeding ? 'Chargement…' : 'Charger le jeu de démo'}
+              {seeding ? 'Chargement…' : t("loadDemo")}
             </button>
           </div>
         </div>
         <div className="ad-card p-5">
-          <h3 className="ad-section-title">Activité récente</h3>
+          <h3 className="ad-section-title">{t("recentActivity")}</h3>
           <ul className="space-y-2 text-sm">
             {logs.map((log) => (
               <li key={String(log.id)} className="flex justify-between gap-2">

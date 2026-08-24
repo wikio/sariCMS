@@ -9,6 +9,7 @@ import {
 import { useToast } from '@/components/admin/Toast';
 import Drawer from '@/components/admin/Drawer';
 import SearchField from '@/components/admin/SearchField';
+import { useTranslations } from 'next-intl';
 
 const STATUSES: Array<{ value: '' | PaymentStatus; label: string }> = [
   { value: '', label: 'Tous les statuts' },
@@ -19,6 +20,7 @@ const STATUSES: Array<{ value: '' | PaymentStatus; label: string }> = [
 
 export default function PaymentRecordsPage() {
   const { showToast } = useToast();
+  const t = useTranslations('admin.paymentRecords');
   const [rows, setRows] = useState<PaymentRecord[]>([]);
   const [q, setQ] = useState('');
   const [status, setStatus] = useState<'' | PaymentStatus>('');
@@ -70,8 +72,8 @@ export default function PaymentRecordsPage() {
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <div className="ad-breadcrumb">E-shop / Paiements effectués</div>
-          <h1 className="text-3xl font-black">Paiements</h1>
-          <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>Journal des paiements effectués et validés sur la vitrine.</p>
+          <h1 className="text-3xl font-black">{t("title")}</h1>
+          <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>{t("subtitle")}</p>
         </div>
         <button
           type="button"
@@ -100,9 +102,9 @@ export default function PaymentRecordsPage() {
 
       <div className="ad-card overflow-x-auto">
         <table className="ad-table min-w-[760px]">
-          <thead><tr><th>Commande</th><th>Client</th><th>Méthode</th><th>Carte</th><th>Montant</th><th>Statut</th><th>Date</th><th></th></tr></thead>
+          <thead><tr><th>{t("order")}</th><th>{t("client")}</th><th>{t("method")}</th><th>{t("card")}</th><th>{t("amount")}</th><th>Statut</th><th>Date</th><th></th></tr></thead>
           <tbody>
-            {shown.length === 0 && <tr><td colSpan={8} className="text-center py-10" style={{ color: 'var(--ad-muted)' }}>Aucun paiement.</td></tr>}
+            {shown.length === 0 && <tr><td colSpan={8} className="text-center py-10" style={{ color: 'var(--ad-muted)' }}>{t("noPayments")}</td></tr>}
             {shown.map((p) => (
               <tr key={p.id}>
                 <td className="font-mono text-sm">{p.orderCode || (p.orderId ? `#${p.orderId}` : '—')}</td>
@@ -147,12 +149,12 @@ export default function PaymentRecordsPage() {
         {open && (
           <>
             <div className="grid grid-cols-2 gap-3 text-sm">
-              <div><span style={{ color: 'var(--ad-muted)' }}>Commande</span><div className="font-bold font-mono">{open.orderCode || (open.orderId ? `#${open.orderId}` : '—')}</div></div>
-              <div><span style={{ color: 'var(--ad-muted)' }}>Montant</span><div className="font-black">{Number(open.amount).toLocaleString()} DA</div></div>
-              <div><span style={{ color: 'var(--ad-muted)' }}>Client</span><div className="font-bold">{open.client}</div></div>
+              <div><span style={{ color: 'var(--ad-muted)' }}>{t("order")}</span><div className="font-bold font-mono">{open.orderCode || (open.orderId ? `#${open.orderId}` : '—')}</div></div>
+              <div><span style={{ color: 'var(--ad-muted)' }}>{t("amount")}</span><div className="font-black">{Number(open.amount).toLocaleString()} DA</div></div>
+              <div><span style={{ color: 'var(--ad-muted)' }}>{t("client")}</span><div className="font-bold">{open.client}</div></div>
               <div><span style={{ color: 'var(--ad-muted)' }}>Email</span><div>{open.email}</div></div>
-              <div><span style={{ color: 'var(--ad-muted)' }}>Méthode</span><div>{paymentTypeLabel(open.method)}</div></div>
-              <div><span style={{ color: 'var(--ad-muted)' }}>Carte</span><div className="font-mono">{open.cardMasked || '—'}</div></div>
+              <div><span style={{ color: 'var(--ad-muted)' }}>{t("method")}</span><div>{paymentTypeLabel(open.method)}</div></div>
+              <div><span style={{ color: 'var(--ad-muted)' }}>{t("card")}</span><div className="font-mono">{open.cardMasked || '—'}</div></div>
               <div className="col-span-2"><span style={{ color: 'var(--ad-muted)' }}>Date</span><div>{new Date(open.date).toLocaleString()}</div></div>
             </div>
 

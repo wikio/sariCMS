@@ -292,7 +292,7 @@ export default function DashboardPage() {
                       <ShoppingBag className="w-6 h-6" />
                       <span className="font-bold">{cart.length} {t('products')} · {cartTotal.toLocaleString()} DA</span>
                     </div>
-                    <Link href={`/${locale}/cart`} className="bg-white text-sari-blue px-4 py-2 font-semibold rounded-lg">Voir le panier</Link>
+                    <Link href={`/${locale}/cart`} className="bg-white text-sari-blue px-4 py-2 font-semibold rounded-lg">{t("viewCart", { defaultMessage: "Voir le panier" })}</Link>
                   </div>
                 )}
               </div>
@@ -422,7 +422,7 @@ export default function DashboardPage() {
                   {(isClient || isPartner) && (
                     <div>
                       <label className="block text-sm font-bold text-sari-dark dark:text-white mb-2">{t('company')}</label>
-                      <input type="text" placeholder="Société" className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none rounded-lg" />
+                      <input type="text" placeholder={t("company", { defaultMessage: "Société" })} className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none rounded-lg" />
                     </div>
                   )}
                 </div>

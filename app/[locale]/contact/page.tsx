@@ -13,6 +13,7 @@ import type { Config, Menu } from '@/types';
 import SocialLinks from '@/components/shared/SocialLinks';
 import ImageCaptcha from '@/components/ImageCaptcha';
 import { loadAdminSettings } from '@/lib/admin-settings';
+import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
 import { maskPhone } from '@/lib/masks';
 
 export default function ContactPage() {
@@ -138,10 +139,11 @@ export default function ContactPage() {
   };
 
   if (!config || !menu) {
-    return <div className="min-h-screen flex items-center justify-center">Chargement...</div>;
+    return <div className="min-h-screen flex items-center justify-center">{t("loading", { defaultMessage: "Chargement..." })}</div>;
   }
 
   return (
+    <PageVisibilityGuard visibilityKey="module.contact">
     <div className="pt-32 pb-24 min-h-screen page-enter">
       {/* Header parallaxe */}
       <div
@@ -602,5 +604,6 @@ export default function ContactPage() {
         </div>
       </div>
     </div>
+    </PageVisibilityGuard>
   );
 }

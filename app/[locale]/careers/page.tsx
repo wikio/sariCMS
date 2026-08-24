@@ -8,6 +8,7 @@ import { Briefcase, MapPin, Euro, ChevronLeft, ChevronRight, Users } from 'lucid
 import { getCareers } from '@/lib/data';
 import { slugify } from '@/lib/slugify'; // ✅ Import ajouté
 import type { Career } from '@/types';
+import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
 
 export default function CareersPage() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -51,6 +52,7 @@ export default function CareersPage() {
   }
 
   return (
+    <PageVisibilityGuard visibilityKey="module.careers">
     <div className="pt-32 pb-24 min-h-screen page-enter">
       <div
         className="parallax-bg py-24 flex items-center justify-center text-center text-white relative"
@@ -134,5 +136,6 @@ export default function CareersPage() {
         )}
       </div>
     </div>
+    </PageVisibilityGuard>
   );
 }

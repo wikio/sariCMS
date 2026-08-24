@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { FolderOpen, Upload, X } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 type GedFile = {
   name: string;
@@ -49,11 +51,15 @@ export default function GedPicker({
   onPick: (url: string) => void;
   onClose: () => void;
 }) {
+  const t = useTranslations('admin.gedPicker');
   const [files, setFiles] = useState<GedFile[]>([]);
   const [q, setQ] = useState('');
   const [moduleName, setModuleName] = useState('');
   const [category, setCategory] = useState('');
   const [busy, setBusy] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
 
   const load = async () => {
     try {
@@ -102,31 +108,31 @@ export default function GedPicker({
     });
   }, [files, q, moduleName, category]);
 
-  return (
-    <div className="ad-modal" onClick={onClose}>
+  const modal = (
+    <div className="ad-modal" onClick={onClose} style={{ zIndex: 9999 }}>
       <div className="ad-modal-card space-y-3" style={{ width: 'min(860px, 100%)' }} onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between gap-2">
-          <h3 className="font-black">Médiathèque GED</h3>
+          <h3 className="font-black">{t('title')}</h3>
           <div className="flex gap-2">
             <label className="ad-btn ad-btn-primary cursor-pointer">
-              <Upload className="w-4 h-4" /> {busy ? 'Import…' : 'Importer'}
+              <Upload className="w-4 h-4" /> {busy ? t('importing') : t('importBtn')}
               <input type="file" accept={accept} multiple className="hidden" onChange={(e) => {
                 Array.from(e.target.files || []).forEach(upload);
               }} />
             </label>
-            <button type="button" className="ad-btn ad-btn-icon ad-btn-ghost" onClick={onClose} aria-label="Fermer">
+            <button type="button" className="ad-btn ad-btn-icon ad-btn-ghost" onClick={onClose} aria-label={t('close')}>
               <X className="w-4 h-4" />
             </button>
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-          <input className="ad-input" placeholder="Rechercher un fichier…" value={q} onChange={(e) => setQ(e.target.value)} />
+          <input className="ad-input" placeholder={t('searchPlaceholder')} value={q} onChange={(e) => setQ(e.target.value)} />
           <select className="ad-select" value={moduleName} onChange={(e) => setModuleName(e.target.value)}>
-            <option value="">Tous les modules</option>
+            <option value="">{t('allModules')}</option>
             {modules.map((m) => <option key={m} value={m}>{m}</option>)}
           </select>
           <select className="ad-select" value={category} onChange={(e) => setCategory(e.target.value)}>
-            <option value="">Toutes les catégories</option>
+            <option value="">{t('allCategories')}</option>
             {categories.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
         </div>
@@ -141,10 +147,16 @@ export default function GedPicker({
               <div className="p-2 text-[11px] truncate font-mono">{f.name}</div>
             </button>
           ))}
-          {shown.length === 0 && <div className="col-span-full text-sm p-6 text-center" style={{ color: 'var(--ad-muted)' }}>Aucun fichier</div>}
+          {shown.length === 0 && <div className="col-span-full text-sm p-6 text-center" style={{ color: 'var(--ad-muted)' }}>{t('noFiles')}</div>}
         </div>
-        <div className="flex justify-end"><button type="button" className="ad-btn ad-btn-ghost" onClick={onClose}>Fermer</button></div>
+        <div className="flex justify-end"><button type="button" className="ad-btn ad-btn-ghost" onClick={onClose}>{t('close')}</button></div>
       </div>
     </div>
   );
+
+  // Render via Portal to escape parent stacking context (ad-rise transform)
+  if (!mounted) return null;
+  // Copy admin theme attribute so CSS variables are available in the portal
+  const themeAttr = document.querySelector('[data-admin-theme]')?.getAttribute('data-admin-theme') || 'light';
+  return createPortal(<div data-admin-theme={themeAttr}>{modal}</div>, document.body);
 }

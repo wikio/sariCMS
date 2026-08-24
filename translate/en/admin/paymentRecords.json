@@ -1,0 +1,11 @@
+{
+  "title": "Payments",
+  "subtitle": "Log of payments made and validated on the storefront.",
+  "order": "Order",
+  "client": "Client",
+  "method": "Method",
+  "card": "Card",
+  "amount": "Amount",
+  "noPayments": "No payments.",
+  "reject": "Reject"
+}

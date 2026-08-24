@@ -1,0 +1,11 @@
+{
+  "title": "Pilotage boutique",
+  "day": "Jour",
+  "week": "Semaine",
+  "month": "Mois",
+  "year": "Année",
+  "csvExport": "Export CSV",
+  "byPaymentMethod": "Par mode de paiement",
+  "finalized": "Finalisées",
+  "taxesCollected": "Taxes collectées"
+}

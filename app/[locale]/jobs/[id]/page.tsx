@@ -24,6 +24,7 @@ import { loadFlowFor, findResumeByToken, type FlowStep } from '@/lib/recruitment
 import { loadAdminSettings } from '@/lib/admin-settings';
 import { maskPhone } from '@/lib/masks';
 import { useVisibility } from '@/lib/site-visibility';
+import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
 
 export default function JobDetailPage() {
   const params = useParams();
@@ -196,6 +197,7 @@ export default function JobDetailPage() {
   const alreadyApplied = hasApplied(job.id);
 
   return (
+    <PageVisibilityGuard visibilityKey="module.careers">
     <div className="pt-32 pb-24 min-h-screen page-enter">
       <div className="fixed top-0 left-0 w-full h-1 bg-gray-200 dark:bg-gray-800 z-50">
         <div className="h-full bg-sari-blue transition-all duration-150" style={{ width: `${scrollProgress}%` }}></div>
@@ -387,7 +389,7 @@ export default function JobDetailPage() {
                   </CTAButton>
                 ) : (
                   <div className="bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4 text-center rounded-lg text-sm text-gray-500 dark:text-gray-400">
-                    {t('applyDisabled') || 'Les candidatures sont actuellement fermées.'}
+                    {t('applyDisabled') || t('applicationsClosed', { defaultMessage: 'Les candidatures sont actuellement fermées.' })}
                   </div>
                 )
               ) : flowSteps.length > 0 ? (
@@ -492,5 +494,6 @@ export default function JobDetailPage() {
         </div>
       </div>
     </div>
+    </PageVisibilityGuard>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { ChevronDown, ChevronRight, Download, FileJson, Folder, RefreshCw, Save, Search } from 'lucide-react';
 import PixelGridLoader from '@/components/admin/PixelGridLoader';
 import { useToast } from '@/components/admin/Toast';
@@ -17,6 +17,7 @@ interface TreeNode {
 export default function AdminTranslationEditorPage() {
   const locale = useLocale();
   const { showToast } = useToast();
+  const t = useTranslations('admin.translations');
   const [editLang, setEditLang] = useState(locale);
   const [tree, setTree] = useState<TreeNode[]>([]);
   const [node, setNode] = useState<TreeNode | null>(null);
@@ -110,7 +111,7 @@ export default function AdminTranslationEditorPage() {
       <div className="ad-card p-4 flex flex-wrap items-center justify-between gap-3 ad-rise">
         <div>
           <div className="text-[11px] uppercase tracking-[0.2em] font-bold" style={{ color: 'var(--ad-muted)' }}>i18n</div>
-          <h1 className="text-2xl font-black">Gestionnaire de traductions</h1>
+          <h1 className="text-2xl font-black">{t("title")}</h1>
           <p className="text-sm mt-1" style={{ color: 'var(--ad-muted)' }}>
             L’interface d’administration (menus, boutons, messages) est indépendante de la traduction du contenu vitrine.
             Ouvrez le fichier <code>admin.json</code> pour traduire le back-office.
@@ -125,14 +126,14 @@ export default function AdminTranslationEditorPage() {
       <div className="grid lg:grid-cols-4 gap-4 lg:h-[calc(100vh-230px)] lg:min-h-[420px]">
         <aside className="ad-card p-3 ad-rise ad-rise-2 h-full max-h-[70vh] lg:max-h-none min-h-0 min-w-0 overflow-y-auto overflow-x-auto ad-scroll">
           <div className="flex items-center justify-between mb-2 sticky top-0 z-10" style={{ background: 'var(--ad-surface)' }}>
-            <span className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--ad-muted)' }}>Arbre</span>
+            <span className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--ad-muted)' }}>{t("tree")}</span>
             <button onClick={loadTree}><RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /></button>
           </div>
           {tree.map((n) => renderNode(n))}
         </aside>
         <section className="lg:col-span-3 min-w-0 ad-card p-4 ad-rise ad-rise-3 h-full min-h-0 flex flex-col overflow-hidden">
           {!node ? (
-            <div className="h-full flex items-center justify-center" style={{ color: 'var(--ad-muted)' }}>Choisissez un fichier JSON</div>
+            <div className="h-full flex items-center justify-center" style={{ color: 'var(--ad-muted)' }}>{t("chooseFile")}</div>
           ) : loading ? (
             <PixelGridLoader compact label="i18n" />
           ) : (
@@ -149,7 +150,7 @@ export default function AdminTranslationEditorPage() {
               </div>
               <div className="relative mb-3 shrink-0">
                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--ad-muted)' }} />
-                <input className="ad-input pl-9" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filtrer une clé ou une valeur…" />
+                <input className="ad-input pl-9" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("filterPlaceholder")} />
               </div>
               <div className="space-y-2 flex-1 min-h-0 overflow-y-auto ad-scroll">
                 {shown.map(([key, value]) => (

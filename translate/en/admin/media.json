@@ -1,0 +1,13 @@
+{
+  "title": "Media library",
+  "ged": "DMS",
+  "allModules": "All modules",
+  "allCategories": "All categories",
+  "allTypes": "All types",
+  "images": "Images",
+  "documents": "Documents",
+  "noFiles": "No files.",
+  "download": "Download",
+  "editImage": "Edit image",
+  "confirmDelete": "Delete permanently?"
+}

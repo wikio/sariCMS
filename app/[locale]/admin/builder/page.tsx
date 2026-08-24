@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { Code, Eye, Plus, Save, Layers } from 'lucide-react';
 import { useToast } from '@/components/admin/Toast';
 import { PAGE_BUILDER_CSS, PAGE_TEMPLATES, builderKey } from '@/lib/page-templates';
@@ -24,6 +24,7 @@ export default function BuilderPage() {
   const { showToast } = useToast();
   const host = useRef<HTMLDivElement>(null);
   const editor = useRef<EditorLike | null>(null);
+  const t = useTranslations('admin.builder');
   const [lang, setLang] = useState(locale);
   const [slug, setSlug] = useState('home');
   const [ready, setReady] = useState(false);
@@ -138,7 +139,7 @@ export default function BuilderPage() {
       <header className="flex flex-wrap items-end justify-between gap-2 ad-rise">
         <div>
           <div className="ad-breadcrumb">Paramètres du site vitrine / Éditeur visuel</div>
-          <h1 className="text-3xl font-black">Éditeur de pages (GrapesJS)</h1>
+          <h1 className="text-3xl font-black">{t("title")}</h1>
           <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>
             Ajoutez des composants existants de la vitrine, configurez-les (double-clic pour éditer, style à droite) et enregistrez.
           </p>
@@ -178,7 +179,7 @@ export default function BuilderPage() {
               ))}
             </div>
           ))}
-          {filtered.length === 0 && <div className="text-sm py-4" style={{ color: 'var(--ad-muted)' }}>Aucun composant.</div>}
+          {filtered.length === 0 && <div className="text-sm py-4" style={{ color: 'var(--ad-muted)' }}>{t("noComponents")}</div>}
         </aside>
 
         <div className="min-w-0">

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { ArrowDown, ArrowLeft, ArrowUp, Download, FileText, GitCompare, Mail, Phone, Star } from 'lucide-react';
@@ -21,6 +21,7 @@ export default function CompareCandidatesPage() {
   const params = useSearchParams();
   const offerParam = params.get('offer') || '';
   const { showToast } = useToast();
+  const t = useTranslations('admin.applications');
   const [rows, setRows] = useState<Application[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
   const [offer, setOffer] = useState(offerParam);
@@ -122,7 +123,7 @@ export default function CompareCandidatesPage() {
         </div>
         <div className="flex gap-2">
           <select className="ad-select w-64" value={offer} onChange={(e) => setOffer(e.target.value)}>
-            <option value="">Toutes les offres</option>
+            <option value="">{t("allOffers")}</option>
             {offersList.map((o) => <option key={o.key} value={o.title}>{o.title} ({o.count})</option>)}
           </select>
           <button className="ad-btn ad-btn-primary" onClick={() => { exportApplicationsCsv(baseCandidates, offer || undefined); showToast('Export CSV généré', 'success'); }}>
@@ -140,7 +141,7 @@ export default function CompareCandidatesPage() {
       </div>
 
       {candidates.length === 0 ? (
-        <div className="ad-card p-12 text-center" style={{ color: 'var(--ad-muted)' }}>Aucun candidat pour cette offre.</div>
+        <div className="ad-card p-12 text-center" style={{ color: 'var(--ad-muted)' }}>{t("noCandidates")}</div>
       ) : (
         <div className="ad-card overflow-x-auto ad-rise ad-rise-2">
           <table className="ad-table min-w-[900px]">
@@ -148,14 +149,14 @@ export default function CompareCandidatesPage() {
               <tr>
                 <SortHeader label="Classement" k="rank" />
                 <SortHeader label="Candidat" k="candidate" />
-                <th>Contact</th>
+                <th>{t("contact")}</th>
                 <SortHeader label="Expérience" k="experience" />
-                <th>Motivation</th>
-                <th>Note</th>
-                <th>Commentaire</th>
+                <th>{t("motivation")}</th>
+                <th>{t("note")}</th>
+                <th>{t("comment")}</th>
                 <SortHeader label="Statut" k="status" />
                 <SortHeader label="Score" k="score" />
-                <th className="text-right">Documents</th>
+                <th className="text-right">{t("documents")}</th>
               </tr>
             </thead>
             <tbody>

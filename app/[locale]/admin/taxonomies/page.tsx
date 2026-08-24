@@ -8,9 +8,11 @@ import {
 } from '@/lib/taxonomies';
 import { useToast } from '@/components/admin/Toast';
 import Drawer from '@/components/admin/Drawer';
+import { useTranslations } from 'next-intl';
 
 export default function TaxonomiesPage() {
   const { showToast } = useToast();
+  const t = useTranslations('admin.taxonomies');
   const [groups, setGroups] = useState(allTaxonomies());
   const [tab, setTab] = useState(groups[0]?.key || 'products.category');
   const [locale, setLocale] = useState<TaxonomyLocale>('fr');
@@ -50,7 +52,7 @@ export default function TaxonomiesPage() {
     <div className="space-y-4">
       <header className="ad-rise">
         <div className="ad-breadcrumb">Configuration avancée / Taxonomies</div>
-        <h1 className="text-3xl font-black tracking-tight">Configuration des taxonomies</h1>
+        <h1 className="text-3xl font-black tracking-tight">{t("title")}</h1>
         <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>Un onglet par famille. Traduisez les libellés dans les trois langues.</p>
       </header>
       <div className="flex flex-wrap items-center gap-2">
@@ -85,7 +87,7 @@ export default function TaxonomiesPage() {
             <button className="ad-btn ad-btn-primary" onClick={() => { setMode('edit'); setOriginal(null); setDraft({ value: '', label: '' }); }}><Plus className="w-4 h-4" /> Ajouter</button>
           </div>
           <table className="ad-table">
-            <thead><tr><th>Valeur</th><th>Libellé ({locale.toUpperCase()})</th><th></th></tr></thead>
+            <thead><tr><th>{t("value")}</th><th>Libellé ({locale.toUpperCase()})</th><th></th></tr></thead>
             <tbody>
               {current.terms.map((t) => (
                 <tr key={t.value}>
@@ -123,7 +125,7 @@ export default function TaxonomiesPage() {
         {draft && (
           <>
             <label className="block space-y-1.5">
-              <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Valeur (clé interne)</span>
+              <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>{t("internalValue")}</span>
               <input className="ad-input" disabled={mode === 'consult'} value={draft.value} onChange={(e) => setDraft({ ...draft, value: e.target.value })} placeholder="slug-interne" />
             </label>
             <div className="space-y-2">

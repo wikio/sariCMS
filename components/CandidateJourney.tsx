@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AlertCircle, Check, ChevronLeft, ChevronRight, Send, ShieldCheck, Upload } from 'lucide-react';
 import ImageCaptcha from '@/components/ImageCaptcha';
+import { useTranslations } from 'next-intl';
 import {
   FlowStep, flowMaxScore, loadAnswers, loadProgress, saveAnswers, saveProgress,
   type FlowProgress,
@@ -23,6 +24,7 @@ export default function CandidateJourney({
   applicationId: number;
   onComplete?: (answers: Record<string, string>, score: number) => void;
 }) {
+  const t = useTranslations('components.CandidateJourney');
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>(() => loadAnswers(offerId, applicationId));
   const [progress, setProgress] = useState<FlowProgress[]>(() => loadProgress(offerId, applicationId));
@@ -147,7 +149,7 @@ export default function CandidateJourney({
       const finalScore = computeScore(answers);
       const p = markDone();
       commit(answers, p);
-      setEnded({ message: 'Votre réponse met fin à cette candidature. Merci pour votre temps.', score: finalScore });
+      setEnded({ message: t('endMessage'), score: finalScore });
       return;
     }
 
@@ -159,7 +161,7 @@ export default function CandidateJourney({
         const finalScore = computeScore(answers);
         const p = markDone();
         commit(answers, p);
-        setEnded({ message: rule.message || 'Candidature terminée.', score: finalScore });
+        setEnded({ message: rule.message || t('applicationEnded'), score: finalScore });
         return;
       }
     }
@@ -182,7 +184,7 @@ export default function CandidateJourney({
     if (index === steps.length - 1) {
       const finalScore = computeScore(answers);
       commit(answers, p);
-      setEnded({ message: 'Merci ! Votre candidature a bien été enregistrée.', score: finalScore });
+      setEnded({ message: t('applicationSaved'), score: finalScore });
       onComplete?.(answers, finalScore);
     } else {
       commit(answers, p);
@@ -203,7 +205,7 @@ export default function CandidateJourney({
     return (
       <div className="bg-white dark:bg-[#1a1a1a] p-10 border border-gray-200 dark:border-gray-800 shadow-xl rounded-xl text-center space-y-4">
         <Check className="w-14 h-14 text-green-500 mx-auto" />
-        <h3 className="text-2xl font-bold text-sari-dark dark:text-white">Candidature terminée</h3>
+        <h3 className="text-2xl font-bold text-sari-dark dark:text-white">{t("applicationEndedTitle")}</h3>
         <p className="text-gray-600 dark:text-gray-400">{ended.message}</p>
         {maxScore > 0 && (
           <div className="inline-block bg-sari-blue/10 text-sari-blue font-bold px-4 py-2 rounded-lg">
@@ -286,7 +288,7 @@ export default function CandidateJourney({
               </label>
               <input
                 className={inputCls(step.id)}
-                placeholder="Poste occupé, entreprise, durée…"
+                placeholder={t("experiencePlaceholder")}
                 value={answers[step.id] || ''}
                 onChange={(e) => setAnswer(step.id, e.target.value)}
               />
@@ -323,7 +325,7 @@ export default function CandidateJourney({
               <textarea
                 rows={4}
                 className={inputCls(step.id)}
-                placeholder="Votre réponse…"
+                placeholder={t("answerPlaceholder")}
                 maxLength={step.maxLength || undefined}
                 value={answers[step.id] || ''}
                 onChange={(e) => setAnswer(step.id, e.target.value)}
@@ -352,7 +354,7 @@ export default function CandidateJourney({
                   onChange={(e) => setAnswer(step.id, e.target.files?.[0]?.name || '')} />
                 <label htmlFor={`cv-${step.id}`} className="cursor-pointer block">
                   <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                  <p className="text-sm text-gray-500">{answers[step.id] || 'Déposer votre CV (PDF, DOCX)'}</p>
+                  <p className="text-sm text-gray-500">{answers[step.id] || t('uploadCV')}</p>
                 </label>
               </div>
               {fieldError(step.id)}
@@ -398,7 +400,7 @@ export default function CandidateJourney({
           </button>
           <button type="button" onClick={goNext}
             className="inline-flex items-center gap-2 bg-sari-blue text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-sari-blue/90 transition-colors">
-            {index === steps.length - 1 ? (<><Send className="w-4 h-4" /> Terminer</>) : (<>Suivant <ChevronRight className="w-4 h-4" /></>)}
+            {index === steps.length - 1 ? (<><Send className="w-4 h-4" /> {t("finish")}</>) : (<>{t("next")} <ChevronRight className="w-4 h-4" /></>)}
           </button>
         </div>
         <p className="text-xs text-gray-400 text-center">Votre progression est sauvegardée automatiquement — vous pouvez reprendre plus tard.</p>

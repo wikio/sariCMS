@@ -1,0 +1,16 @@
+{
+  "breadcrumb": "Advanced settings / Storefront visibility",
+  "title": "Storefront visibility",
+  "description": "Show or hide menus, pages, modules, sections, buttons and actions — {visible}/{total} active.",
+  "reset": "Reset",
+  "resetSuccess": "Visibility reset",
+  "searchPlaceholder": "Search an item…",
+  "itemsCount": "{count} item(s)",
+  "hideAll": "Hide all",
+  "showAll": "Show all",
+  "visible": "Visible",
+  "hidden": "Hidden",
+  "noResults": "No items match « {query} ».",
+  "groupShown": "{group} shown",
+  "groupHidden": "{group} hidden"
+}

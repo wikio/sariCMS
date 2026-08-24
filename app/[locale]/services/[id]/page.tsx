@@ -13,6 +13,7 @@ import Breadcrumb from '@/components/ui/Breadcrumb';
 import CTAButton from '@/components/ui/CTAButton';
 import FAQ from '@/components/ui/FAQ';
 import EmptyState from '@/components/ui/EmptyState';
+import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
 
 export default function ServiceDetailPage() {
   const params = useParams();
@@ -45,6 +46,7 @@ export default function ServiceDetailPage() {
   }
 
   return (
+    <PageVisibilityGuard visibilityKey="module.services">
     <div className="pt-32 pb-24 min-h-screen page-enter">
       <div className="bg-sari-blue py-24 text-center text-white relative overflow-hidden">
         <div className="absolute inset-0 grid-pattern-bg opacity-10"></div>
@@ -118,5 +120,6 @@ export default function ServiceDetailPage() {
         </div>
       </div>
     </div>
+    </PageVisibilityGuard>
   );
 }

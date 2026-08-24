@@ -194,18 +194,18 @@ function Shell({ children }: { children: ReactNode }) {
             <form className="flex-1 max-w-xl" onSubmit={(e) => { e.preventDefault(); router.push(`/${locale}/admin/search?q=${encodeURIComponent(q)}`); }}>
               <div className="ad-search">
                 <Search className="ad-search-ico w-4 h-4" />
-                <input className="ad-input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Recherche globale…" />
+                <input className="ad-input" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('common.globalSearch')} />
               </div>
             </form>
           </div>
           <div className="flex items-center gap-2">
             <div className="relative">
-              <button className="ad-btn ad-btn-ghost" onClick={() => setThemesOpen((v) => !v)}><Palette className="w-4 h-4" /> <span className="hidden sm:inline">Thème</span></button>
+              <button className="ad-btn ad-btn-ghost" onClick={() => setThemesOpen((v) => !v)}><Palette className="w-4 h-4" /> <span className="hidden sm:inline">{t('common.theme')}</span></button>
               {themesOpen && (
                 <div className="absolute right-0 mt-2 w-56 ad-card p-2 z-50">
                   {ADMIN_THEMES.map((th) => (
                     <button key={th.id} onClick={() => { setTheme(th.id); setThemesOpen(false); }} className={`w-full flex items-center gap-3 px-3 py-2 text-sm ${theme === th.id ? 'bg-[var(--ad-surface-2)] font-bold' : ''}`}>
-                      <span className="w-3.5 h-3.5" style={{ background: th.swatch }} />{th.label}
+                      <span className="w-3.5 h-3.5" style={{ background: th.swatch }} />{t(`themes.${th.labelKey}`)}
                     </button>
                   ))}
                 </div>
@@ -224,8 +224,8 @@ function Shell({ children }: { children: ReactNode }) {
               </button>
               {userOpen && (
                 <div className="absolute right-0 mt-2 w-56 ad-card p-2 z-50">
-                  <Link href={`/${locale}/admin/profile`} className="block px-3 py-2 text-sm hover:bg-[var(--ad-surface-2)]" onClick={() => setUserOpen(false)}>Afficher le profil</Link>
-                  <Link href={`/${locale}/admin/profile?edit=1`} className="block px-3 py-2 text-sm hover:bg-[var(--ad-surface-2)]" onClick={() => setUserOpen(false)}>Mettre à jour le profil</Link>
+                  <Link href={`/${locale}/admin/profile`} className="block px-3 py-2 text-sm hover:bg-[var(--ad-surface-2)]" onClick={() => setUserOpen(false)}>{t("profile.showProfile")}</Link>
+                  <Link href={`/${locale}/admin/profile?edit=1`} className="block px-3 py-2 text-sm hover:bg-[var(--ad-surface-2)]" onClick={() => setUserOpen(false)}>{t("profile.updateProfile")}</Link>
                   <button className="w-full text-left px-3 py-2 text-sm text-rose-500" onClick={() => { clearAdminSession(); router.push(`/${locale}`); }}>
                     <LogOut className="w-4 h-4 inline mr-2" />{t('header.logout')}
                   </button>

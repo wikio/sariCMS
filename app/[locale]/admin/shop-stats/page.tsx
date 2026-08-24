@@ -6,6 +6,7 @@ import { BarChart, DonutChart } from '@/components/admin/charts/MiniCharts';
 import { loadOrders, loadQuotes, quoteConversion, type Order } from '@/lib/crm-store';
 import { loadCouponUses, loadCoupons, loadTaxes, type Coupon } from '@/lib/shop-store';
 import { computeTotals } from '@/lib/commerce-math';
+import { useTranslations } from 'next-intl';
 
 type Period = 'day' | 'week' | 'month' | 'year';
 
@@ -32,6 +33,7 @@ function inRange(date: string, from: string, to: string) {
 }
 
 export default function ShopStatsPage() {
+  const t = useTranslations('admin.shopStats');
   const [period, setPeriod] = useState<Period>('month');
   const [from, setFrom] = useState('2026-01-01');
   const [to, setTo] = useState('2026-12-31');
@@ -69,9 +71,9 @@ export default function ShopStatsPage() {
   }, [delivered, period]);
 
   const byStatus = [
-    { label: 'Finalisées', value: delivered.length, color: '#C6DA34' },
+    { label: t("finalized"), value: delivered.length, color: '#C6DA34' },
     { label: 'En cours', value: progress.length, color: '#EBB518' },
-    { label: 'Annulées', value: cancelled.length, color: '#e11d48' },
+    { label: t("cancelled", { defaultMessage: "Annulées" }), value: cancelled.length, color: '#e11d48' },
   ];
 
   const byPay = useMemo(() => {
@@ -115,7 +117,7 @@ export default function ShopStatsPage() {
       ['metrique', 'valeur'].join(';'),
       ['CA livré', ca].join(';'),
       ['Marge', ca - costs].join(';'),
-      ['Taxes collectées', Math.round(taxCollected)].join(';'),
+      [t("taxesCollected"), Math.round(taxCollected)].join(';'),
       ['Remises coupons', discounted].join(';'),
       ['Taux conversion devis', `${Math.round(conv.rate * 100)}%`].join(';'),
       '',
@@ -134,16 +136,16 @@ export default function ShopStatsPage() {
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <div className="ad-breadcrumb">E-shop / Statistiques avancées</div>
-          <h1 className="text-3xl font-black">Pilotage boutique</h1>
+          <h1 className="text-3xl font-black">{t("title")}</h1>
         </div>
         <div className="flex flex-wrap gap-2">
           <input className="ad-input w-40" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
           <input className="ad-input w-40" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
           <select className="ad-select w-36" value={period} onChange={(e) => setPeriod(e.target.value as Period)}>
-            <option value="day">Jour</option>
-            <option value="week">Semaine</option>
-            <option value="month">Mois</option>
-            <option value="year">Année</option>
+            <option value="day">{t("day")}</option>
+            <option value="week">{t("week")}</option>
+            <option value="month">{t("month")}</option>
+            <option value="year">{t("year")}</option>
           </select>
           <button className="ad-btn ad-btn-ghost" onClick={exportCsv}><Download className="w-4 h-4" /> Export CSV</button>
         </div>
@@ -153,8 +155,8 @@ export default function ShopStatsPage() {
           [ca.toLocaleString() + ' DA', 'CA livré'],
           [(ca - costs).toLocaleString() + ' DA', 'Marge nette'],
           [progress.length, 'En cours'],
-          [cancelled.length, 'Annulées'],
-          [Math.round(taxCollected).toLocaleString() + ' DA', 'Taxes collectées'],
+          [cancelled.length, t("cancelled", { defaultMessage: "Annulées" })],
+          [Math.round(taxCollected).toLocaleString() + ' DA', t("taxesCollected")],
           [coupons.reduce((s, c) => s + c.revenue, 0).toLocaleString() + ' DA', 'CA coupons'],
         ].map(([v, l]) => (
           <div key={String(l)} className="ad-card p-4">
@@ -166,7 +168,7 @@ export default function ShopStatsPage() {
       <div className="grid lg:grid-cols-2 gap-3">
         <section className="ad-card p-5"><h2 className="ad-section-title">Évolution des ventes ({period})</h2><BarChart items={byTime} /></section>
         <section className="ad-card p-5"><h2 className="ad-section-title">Finalisées / en cours / annulées</h2><DonutChart items={byStatus} /></section>
-        <section className="ad-card p-5"><h2 className="ad-section-title">Par mode de paiement</h2><DonutChart items={byPay} /></section>
+        <section className="ad-card p-5"><h2 className="ad-section-title">{t("byPaymentMethod")}</h2><DonutChart items={byPay} /></section>
         <section className="ad-card p-5 space-y-2">
           <h2 className="ad-section-title">Devis → commandes</h2>
           <p className="text-sm">Taux de transformation : <strong>{Math.round(conv.rate * 100)} %</strong></p>

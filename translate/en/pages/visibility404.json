@@ -1,0 +1,9 @@
+{
+  "pageUnavailable": "Page unavailable",
+  "pageUnavailableDesc": "This page is currently unavailable. Please try again later or return to the homepage.",
+  "pageNotFound": "Page not found",
+  "pageNotFoundDesc": "The page you are looking for does not exist or has been moved. Check the URL or return to the homepage.",
+  "backHome": "Back to home",
+  "previousPage": "Previous page",
+  "searchSite": "Search the site"
+}

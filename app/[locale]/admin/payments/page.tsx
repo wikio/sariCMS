@@ -9,14 +9,15 @@ import { useToast } from '@/components/admin/Toast';
 import Drawer from '@/components/admin/Drawer';
 import Toggle from '@/components/admin/Toggle';
 import SearchField from '@/components/admin/SearchField';
+import { useTranslations } from 'next-intl';
 
 const TYPES: Array<{ value: PaymentType; label: string }> = [
   { value: 'card-intl', label: 'Carte internationale' },
   { value: 'cib', label: 'Carte CIB / locale' },
   { value: 'transfer', label: 'Virement bancaire' },
   { value: 'paypal', label: 'PayPal' },
-  { value: 'check', label: 'Chèque' },
-  { value: 'cod', label: 'Paiement à la livraison' },
+  { value: 'check', label: t("check") },
+  { value: 'cod', label: t("cashOnDelivery") },
   { value: 'other', label: 'Autre' },
 ];
 
@@ -24,6 +25,7 @@ const empty = (): PaymentMethod => ({ id: `p-${Date.now()}`, name: '', type: 'tr
 
 export default function PaymentsPage() {
   const { showToast } = useToast();
+  const t = useTranslations('admin.payments');
   const [rows, setRows] = useState<PaymentMethod[]>([]);
   const [draft, setDraft] = useState<PaymentMethod | null>(null);
   const [mode, setMode] = useState<'edit' | 'consult'>('edit');
@@ -57,7 +59,7 @@ export default function PaymentsPage() {
       <header className="flex items-end justify-between">
         <div>
           <div className="ad-breadcrumb">E-shop / Paiements</div>
-          <h1 className="text-3xl font-black">Modes de paiement</h1>
+          <h1 className="text-3xl font-black">{t("title")}</h1>
         </div>
         <button className="ad-btn ad-btn-primary" onClick={() => { setError(''); setMode('edit'); setDraft(empty()); }}><Plus className="w-4 h-4" /> Ajouter</button>
       </header>
@@ -71,7 +73,7 @@ export default function PaymentsPage() {
       )}
       <div className="ad-card overflow-x-auto">
         <table className="ad-table">
-          <thead><tr><th></th><th>Nom</th><th>Type</th><th>Frais</th><th>Statut</th><th></th></tr></thead>
+          <thead><tr><th></th><th>{t("name", { defaultMessage: "Nom" })}</th><th>{t("type", { defaultMessage: "Type" })}</th><th>{t("fees")}</th><th>Statut</th><th></th></tr></thead>
           <tbody>
             {shown.map((r) => (
               <tr key={r.id}>
@@ -111,22 +113,22 @@ export default function PaymentsPage() {
         {draft && (
           <>
             <label className="block space-y-1.5">
-              <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Nom</span>
+              <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>{t("name", { defaultMessage: "Nom" })}</span>
               <input className="ad-input" disabled={mode === 'consult'} value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
             </label>
             <label className="block space-y-1.5">
-              <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Type</span>
+              <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>{t("type", { defaultMessage: "Type" })}</span>
               <select className="ad-select" disabled={mode === 'consult'} value={draft.type} onChange={(e) => setDraft({ ...draft, type: e.target.value as PaymentType })}>
                 {TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
               </select>
             </label>
             <label className="block space-y-1.5">
-              <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Frais</span>
+              <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>{t("fees")}</span>
               <input className="ad-input" type="number" disabled={mode === 'consult'} value={draft.fees} onChange={(e) => setDraft({ ...draft, fees: Number(e.target.value) })} />
               <p className="ad-field-hint">{draft.type === 'cod' ? 'Montant forfaitaire en DA ajouté à la commande.' : 'Pourcentage de commission appliqué au paiement.'}</p>
             </label>
             <label className="block space-y-1.5">
-              <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Instructions client</span>
+              <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>{t("clientInstructions")}</span>
               <textarea className="ad-textarea" disabled={mode === 'consult'} value={draft.instructions} onChange={(e) => setDraft({ ...draft, instructions: e.target.value })} />
             </label>
             {draft.type === 'transfer' && (

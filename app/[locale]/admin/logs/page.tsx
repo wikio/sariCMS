@@ -5,6 +5,7 @@ import PixelGridLoader from '@/components/admin/PixelGridLoader';
 import SearchField from '@/components/admin/SearchField';
 import { cmsAdminFetch } from '@/lib/cms-admin';
 import { unwrapList } from '@/lib/cms';
+import { useTranslations } from 'next-intl';
 
 type LogRow = {
   id?: string;
@@ -17,6 +18,7 @@ type LogRow = {
 };
 
 export default function LogsPage() {
+  const t = useTranslations('admin.logs');
   const [rows, setRows] = useState<LogRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
@@ -46,15 +48,15 @@ export default function LogsPage() {
   return (
     <div className="space-y-4">
       <header className="ad-rise">
-        <div className="text-[11px] uppercase tracking-[0.22em] font-black" style={{ color: 'var(--ad-muted)' }}>Pilotage</div>
-        <h1 className="text-3xl font-black tracking-tight">Journaux</h1>
-        <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>Audit immuable des actions administrateur.</p>
+        <div className="text-[11px] uppercase tracking-[0.22em] font-black" style={{ color: 'var(--ad-muted)' }}>{t("breadcrumb")}</div>
+        <h1 className="text-3xl font-black tracking-tight">{t("title")}</h1>
+        <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>{t("subtitle")}</p>
       </header>
 
       <div className="ad-card p-3 flex flex-col lg:flex-row gap-2">
         <SearchField className="flex-1" value={q} onChange={setQ} placeholder="Action, ressource, acteur…" />
         <select className="ad-select lg:w-48" value={resource} onChange={(e) => setResource(e.target.value)}>
-          <option value="">Toutes les ressources</option>
+          <option value="">{t("allResources")}</option>
           {resources.map((r) => <option key={r} value={r}>{r}</option>)}
         </select>
       </div>
@@ -68,11 +70,11 @@ export default function LogsPage() {
           <table className="ad-table">
             <thead>
               <tr>
-                <th>Date</th>
-                <th>Action</th>
-                <th>Ressource</th>
-                <th>Cible</th>
-                <th>Acteur</th>
+                <th>{t("date")}</th>
+                <th>{t("action")}</th>
+                <th>{t("resource")}</th>
+                <th>{t("target")}</th>
+                <th>{t("actor")}</th>
               </tr>
             </thead>
             <tbody>
@@ -85,7 +87,7 @@ export default function LogsPage() {
                   <td className="text-sm" style={{ color: 'var(--ad-muted)' }}>{row.actorId || '—'}</td>
                 </tr>
               ))}
-              {shown.length === 0 && <tr><td colSpan={5} className="text-center py-10" style={{ color: 'var(--ad-muted)' }}>Aucune entrée</td></tr>}
+              {shown.length === 0 && <tr><td colSpan={5} className="text-center py-10" style={{ color: 'var(--ad-muted)' }}>{t("noEntries")}</td></tr>}
             </tbody>
           </table>
         </div>

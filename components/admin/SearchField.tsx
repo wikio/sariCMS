@@ -2,6 +2,7 @@
 
 import { FormEvent } from 'react';
 import { Search } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 export default function SearchField({
   value,
@@ -18,6 +19,8 @@ export default function SearchField({
   onSubmit?: () => void;
   showSubmit?: boolean;
 }) {
+  const t = useTranslations('admin.common');
+  
   const submit = (e?: FormEvent) => {
     e?.preventDefault();
     onSubmit?.();
@@ -38,9 +41,9 @@ export default function SearchField({
       {showSubmit && (
         <>
           <button type="submit" className="ad-btn ad-btn-primary shrink-0">
-            <Search className="w-4 h-4" /> Rechercher
+            <Search className="w-4 h-4" /> {t('searchBtn')}
           </button>
-          <p className="ad-search-hint">Vous pouvez aussi lancer la recherche avec la touche Entrée.</p>
+          <p className="ad-search-hint">{t('searchHint')}</p>
         </>
       )}
     </form>

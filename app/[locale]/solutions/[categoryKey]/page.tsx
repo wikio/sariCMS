@@ -11,6 +11,7 @@ import type { Product, SolutionCategory } from '@/types';
 import ProductCard from '@/components/cards/ProductCard';
 import FAQ from '@/components/ui/FAQ';
 import SectionTitle from '@/components/ui/SectionTitle';
+import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
 
 // ✅ Mapping pour résoudre dynamiquement les icônes et couleurs depuis le JSON
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -97,6 +98,7 @@ export default function SolutionCategoryPage() {
   const IconComponent = iconMap[cat.icon] || Package;
 
   return (
+    <PageVisibilityGuard visibilityKey="module.solutions">
     <div className="pt-32 pb-24 min-h-screen page-enter">
       {/* HERO */}
       <div className="parallax-bg py-32 flex items-center justify-center text-center text-white relative" style={{ backgroundImage: `url(${cat.image})` }}>
@@ -218,5 +220,6 @@ export default function SolutionCategoryPage() {
         )}
       </div>
     </div>
+    </PageVisibilityGuard>
   );
 }

@@ -21,6 +21,7 @@ export default function Header({ config, menu }: { config: Config; menu: MenuTyp
 
   const locale = useLocale();
   const t = useTranslations('components.layout.header');
+  const tNav = useTranslations('common.nav');
 
   // Nombre exact d'articles dans le panier (somme des quantités).
   const { items: cartItems } = useCart();
@@ -34,9 +35,29 @@ export default function Header({ config, menu }: { config: Config; menu: MenuTyp
   };
 
   const visibility = useVisibility();
+
+  // ✅ Mapping : id de menu → clé de visibilité page/module correspondante.
+  // Si la page ou le module cible est masqué, le lien du menu l'est aussi.
+  const PAGE_MODULE_KEYS: Record<string, string> = {
+    about: 'page.about',
+    solutions: 'module.solutions',
+    services: 'module.services',
+    products: 'module.products',
+    events: 'module.events',
+    news: 'module.news',
+    careers: 'module.careers',
+    contact: 'module.contact',
+  };
+
   const navigation = (menu.mainMenu || []).filter((item) => {
-    const key = `menu.${item.id || ''}`;
-    return item.id ? visibility[key] !== false : true;
+    if (!item.id) return true;
+    // 1) Vérifier la visibilité du menu lui-même
+    const menuKey = `menu.${item.id}`;
+    if (visibility[menuKey] === false) return false;
+    // 2) Vérifier si la page/module cible est masquée → masquer le lien aussi
+    const targetKey = PAGE_MODULE_KEYS[item.id];
+    if (targetKey && visibility[targetKey] === false) return false;
+    return true;
   });
 
   // Logo du site : le logo configuré dans Paramètres prime sur celui des données CMS.
@@ -54,7 +75,6 @@ export default function Header({ config, menu }: { config: Config; menu: MenuTyp
   const getNavText = (item: any) => {
     if (item.id) {
       try {
-        const tNav = useTranslations('common.nav');
         const translated = tNav(item.id);
         return translated.startsWith('common.nav.') ? item.label : translated;
       } catch {
@@ -134,7 +154,7 @@ export default function Header({ config, menu }: { config: Config; menu: MenuTyp
                             <User className="w-6 h-6" />
                           </div>
                           <div>
-                            <div className="font-bold">Utilisateur</div>
+                            <div className="font-bold">{t("user")}</div>
                             <div className="text-xs text-blue-100 capitalize">{getUserTypeLabel()}</div>
                           </div>
                         </div>

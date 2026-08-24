@@ -10,6 +10,7 @@ import Drawer from '@/components/admin/Drawer';
 import ImageEditor from '@/components/admin/ImageEditor';
 import { useToast } from '@/components/admin/Toast';
 import { CMS_MODULES } from '@/lib/cms-modules';
+import { useTranslations } from 'next-intl';
 
 type MediaItem = {
   file: string;
@@ -37,6 +38,7 @@ function fmtSize(bytes: number): string {
 
 export default function MediaPage() {
   const { showToast } = useToast();
+  const t = useTranslations('admin.media');
   const [files, setFiles] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [over, setOver] = useState(false);
@@ -129,8 +131,8 @@ export default function MediaPage() {
     <div className="space-y-4">
       <header className="flex flex-wrap items-end justify-between gap-3 ad-rise">
         <div>
-          <div className="text-[11px] uppercase tracking-[0.2em] font-black" style={{ color: 'var(--ad-muted)' }}>GED</div>
-          <h1 className="text-3xl font-black">Médiathèque</h1>
+          <div className="text-[11px] uppercase tracking-[0.2em] font-black" style={{ color: 'var(--ad-muted)' }}>{t("ged")}</div>
+          <h1 className="text-3xl font-black">{t("title")}</h1>
           <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>Gestion des fichiers : renommage, titre, description, catégorie, édition d’images.</p>
         </div>
         <label className="ad-btn ad-btn-primary cursor-pointer">
@@ -142,17 +144,17 @@ export default function MediaPage() {
       <div className="ad-card p-3 grid md:grid-cols-4 gap-2">
         <SearchField value={q} onChange={setQ} placeholder="Titre, nom, description…" />
         <select className="ad-select" value={moduleName} onChange={(e) => setModuleName(e.target.value)}>
-          <option value="">Tous les modules</option>
+          <option value="">{t("allModules")}</option>
           {modules.map((m) => <option key={m} value={m}>{m}</option>)}
         </select>
         <select className="ad-select" value={category} onChange={(e) => setCategory(e.target.value)}>
-          <option value="">Toutes les catégories</option>
+          <option value="">{t("allCategories")}</option>
           {categories.map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
         <select className="ad-select" value={kind} onChange={(e) => setKind(e.target.value)}>
-          <option value="">Tous les types</option>
-          <option value="image">Images</option>
-          <option value="file">Documents</option>
+          <option value="">{t("allTypes")}</option>
+          <option value="image">{t("images")}</option>
+          <option value="file">{t("documents")}</option>
         </select>
       </div>
 
@@ -210,7 +212,7 @@ export default function MediaPage() {
             </div>
           ))}
           {shown.length === 0 && (
-            <div className="col-span-full ad-card p-10 text-center" style={{ color: 'var(--ad-muted)' }}>Aucun fichier.</div>
+            <div className="col-span-full ad-card p-10 text-center" style={{ color: 'var(--ad-muted)' }}>{t("noFiles")}</div>
           )}
         </div>
       )}

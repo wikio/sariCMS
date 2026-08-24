@@ -675,11 +675,11 @@
 }
 .ad-combo.is-open,
 .ad-combo:focus-within {
-  z-index: 80;
+  z-index: 1000;
 }
 .ad-combo-list {
   position: absolute;
-  z-index: 90;
+  z-index: 1010;
   left: 0;
   right: 0;
   top: calc(100% + 2px);
