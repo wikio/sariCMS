@@ -977,7 +977,16 @@
       "quantityPlaceholder": "الكمية",
       "pricePlaceholder": "السعر (بدون ضريبة)",
       "discountPlaceholder": "0",
-      "couponPlaceholder": "مثال: SARI10 (اختياري)"
+      "couponPlaceholder": "مثال: SARI10 (اختياري)",
+      "inProgress": "قيد المعالجة",
+      "columnNumber": "رقم",
+      "columnClient": "العميل",
+      "columnDate": "التاريخ",
+      "columnTotalTTC": "المجموع (شامل الضريبة)",
+      "columnInvoice": "الفاتورة",
+      "columnStatus": "الحالة",
+      "uploadSalesInvoice": "تحميل فاتورة المبيعات",
+      "invoiceLinkRequirement": "يجب تأكيد الطلب ودفعه لربط الفاتورة."
     },
     "people": {
       "crm": "CRM",

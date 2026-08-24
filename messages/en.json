@@ -977,7 +977,16 @@
       "quantityPlaceholder": "Qty",
       "pricePlaceholder": "Price (excl. tax)",
       "discountPlaceholder": "0",
-      "couponPlaceholder": "e.g. SARI10 (optional)"
+      "couponPlaceholder": "e.g. SARI10 (optional)",
+      "inProgress": "In progress",
+      "columnNumber": "#",
+      "columnClient": "Client",
+      "columnDate": "Date",
+      "columnTotalTTC": "Total (incl. tax)",
+      "columnInvoice": "Invoice",
+      "columnStatus": "Status",
+      "uploadSalesInvoice": "Upload sales invoice",
+      "invoiceLinkRequirement": "Order must be confirmed and paid to link an invoice."
     },
     "people": {
       "crm": "CRM",

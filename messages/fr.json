@@ -977,7 +977,16 @@
       "quantityPlaceholder": "Qté",
       "pricePlaceholder": "Prix HT",
       "discountPlaceholder": "0",
-      "couponPlaceholder": "Ex. SARI10 (facultatif)"
+      "couponPlaceholder": "Ex. SARI10 (facultatif)",
+      "inProgress": "En cours",
+      "columnNumber": "N°",
+      "columnClient": "Client",
+      "columnDate": "Date",
+      "columnTotalTTC": "Total TTC",
+      "columnInvoice": "Facture",
+      "columnStatus": "Statut",
+      "uploadSalesInvoice": "Uploader la facture de vente",
+      "invoiceLinkRequirement": "La commande doit être confirmée et payée pour lier une facture."
     },
     "people": {
       "crm": "CRM",

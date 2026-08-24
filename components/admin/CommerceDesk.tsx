@@ -297,7 +297,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
       </header>
 
       <div className="grid grid-cols-3 gap-3">
-        {[[stats.total, title], [`${stats.amount.toLocaleString()} DA`, 'Montant'], [stats.pending, 'En cours']].map(([v, l]) => (
+        {[[stats.total, title], [`${stats.amount.toLocaleString()} DA`, t('amount')], [stats.pending, t('inProgress')]].map(([v, l]) => (
           <div key={String(l)} className="ad-card p-4">
             <div className="text-2xl font-black tabular-nums">{v}</div>
             <div className="text-xs" style={{ color: 'var(--ad-muted)' }}>{l}</div>
@@ -316,7 +316,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
       {view === 'list' ? (
         <div className="ad-card overflow-x-auto">
           <table className="ad-table">
-            <thead><tr><th>N°</th><th>Client</th><th>Date</th><th>Total TTC</th><th>Facture</th><th>Statut</th><th></th></tr></thead>
+            <thead><tr><th>{t('columnNumber')}</th><th>{t('columnClient')}</th><th>{t('columnDate')}</th><th>{t('columnTotalTTC')}</th><th>{t('columnInvoice')}</th><th>{t('columnStatus')}</th><th></th></tr></thead>
             <tbody>
               {shown.map((row) => (
                 <tr key={row.id}>
@@ -395,7 +395,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
             )}
 
             <div className="grid grid-cols-2 gap-3 text-sm">
-              <div><span style={{ color: 'var(--ad-muted)' }}>Client</span><div className="font-bold">{open.client}</div></div>
+              <div><span style={{ color: 'var(--ad-muted)' }}>{t('columnClient')}</span><div className="font-bold">{open.client}</div></div>
               <div>
                 <span style={{ color: 'var(--ad-muted)' }}>Fiche client</span>
                 <div><Link className="underline" href={`/${locale}/admin/clients`}>{open.email}</Link></div>
@@ -461,7 +461,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                     </div>
                     {open.invoice.url && (
                       <a className="underline inline-flex items-center gap-1" href={open.invoice.url} target="_blank" rel="noopener noreferrer">
-                        <Link2 className="w-3.5 h-3.5" /> {open.invoice.fileName || 'Voir la facture'}
+                        <Link2 className="w-3.5 h-3.5" /> {open.invoice.fileName || t('viewInvoice')}
                       </a>
                     )}
                     {!consult && (
@@ -484,13 +484,13 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                           <Link2 className="w-4 h-4" /> {invoiceBusy ? 'Récupération…' : 'Lier automatiquement via ERP'}
                         </button>
                         <label className="ad-btn ad-btn-ghost cursor-pointer">
-                          <Upload className="w-4 h-4" /> Uploader la facture de vente
+                          <Upload className="w-4 h-4" /> {t('uploadSalesInvoice')}
                           <input type="file" className="hidden" onChange={(e) => e.target.files?.[0]?.name && linkManualInvoice(e.target.files[0].name)} />
                         </label>
                       </div>
                     ) : (
                       <div style={{ color: 'var(--ad-muted)' }}>
-                        La commande doit être confirmée et payée pour lier une facture.
+                        {t('invoiceLinkRequirement')}
                         {!consult && (
                           <label className="ml-2 inline-flex items-center gap-1 cursor-pointer">
                             <input type="checkbox" checked={Boolean((open as Order).paid)} onChange={(e) => { const v = e.target.checked; persist(rows.map((r) => r.id === open.id ? ({ ...r, paid: v } as Row) : r)); setOpen({ ...open, paid: v } as Row); }} />
@@ -589,7 +589,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
               ))}
               <div className="flex justify-between"><span>Total taxes</span><strong>{money(totals.taxTotal)}</strong></div>
               <div className="flex justify-between text-base pt-2" style={{ borderTop: '1px solid var(--ad-line)' }}>
-                <span className="font-black">Total TTC</span>
+                <span className="font-black">{t('totalTTC')}</span>
                 <span className="font-black" style={{ color: 'var(--ad-accent)' }}>{money(totals.total)}</span>
               </div>
             </div>
