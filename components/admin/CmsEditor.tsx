@@ -380,7 +380,7 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
                               {locked && <p className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>Champ partagé, verrouillé.</p>}
                             </div>
                           ) : (
-                            renderField(field, valueOf(field.key), (v) => set(field.key, v), record)
+                            renderField(field, valueOf(field.key), (v) => set(field.key, v), record, { t: tEditor })
                           )}
                         </div>
                       </div>
@@ -401,7 +401,7 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
                           <ConsultValue spec={field} value={tab} />
                           <p className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>{tEditor('lockedOnActiveLang')}</p>
                         </div>
-                      ) : renderField(field, valueOf(field.key), (v) => set(field.key, v), record, { origin: originOf(field.key), originLocale: settings.defaultLocale })}
+                      ) : renderField(field, valueOf(field.key), (v) => set(field.key, v), record, { origin: originOf(field.key), originLocale: settings.defaultLocale, t: tEditor })}
                     </div>
                   ))}
                 </div>

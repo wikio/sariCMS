@@ -84,9 +84,10 @@ export function renderField(
   value: unknown,
   onChange: (v: unknown) => void,
   record: Record<string, unknown>,
-  extra: { origin?: unknown; originLocale?: string } = {},
+  extra: { origin?: unknown; originLocale?: string; t?: (key: string) => string } = {},
 ) {
   const ph = spec.placeholder || '';
+  const t = extra.t || ((key: string) => key); // Fallback: retourner la clé si pas de fonction de traduction
   const wrap = (node: React.ReactNode) => (
     <FieldShell spec={spec} value={value} origin={extra.origin} originLocale={extra.originLocale}>{node}</FieldShell>
   );
