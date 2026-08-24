@@ -246,6 +246,9 @@ function TaxonomySelect({ spec, value, onChange, locale }: { spec: FieldSpec; va
     return blob.includes(q.toLowerCase());
   });
   const current = options.find((o) => o.value === value);
+  
+  // Debug log
+  console.log('TaxonomySelect:', { value, current, options: options.map(o => o.value) });
 
   const create = () => {
     const label = draft.trim();
