@@ -1841,7 +1841,10 @@
         "block3Subtitle": "Supplies",
         "block3Title": "Certified Consumables",
         "block3Desc": "Gloves, masks, disinfectants, and everything you need for your daily practice, delivered quickly.",
-        "block3Cta": "View Catalog"
+        "block3Cta": "View Catalog",
+        "block1Link": "/solutions",
+        "block2Link": "/services",
+        "block3Link": "/products"
       },
       "CTASection": {
         "defaultTitle": "Ready to start your project?",
@@ -2192,7 +2195,9 @@
       "quality": "Quality",
       "qualityDesc": "Excellence in every detail",
       "commitment": "Commitment",
-      "commitmentDesc": "At the service of our clients"
+      "commitmentDesc": "At the service of our clients",
+      "home": "Home",
+      "about": "About"
     },
     "careers": {
       "heroTitle": "Join the SARI Team",
@@ -2494,7 +2499,9 @@
       "privacy": "Privacy",
       "cgv": "Terms & Conditions",
       "verification": "Authenticity Verification",
-      "legalDoc": "Legal document"
+      "legalDoc": "Legal document",
+      "mentions": "Legal notice",
+      "conditions": "Terms and conditions"
     },
     "login": {
       "personalSpace": "Personal Space",

@@ -1839,7 +1839,10 @@
         "block3Subtitle": "Fournitures",
         "block3Title": "Consommables certifiés",
         "block3Desc": "Gants, masques, désinfectants et tout le nécessaire pour votre pratique quotidienne, livrés rapidement.",
-        "block3Cta": "Voir le catalogue"
+        "block3Cta": "Voir le catalogue",
+        "block1Link": "/solutions",
+        "block2Link": "/services",
+        "block3Link": "/products"
       },
       "CTASection": {
         "defaultTitle": "Prêt à démarrer votre projet ?",
@@ -2190,7 +2193,9 @@
       "quality": "Qualité",
       "qualityDesc": "Excellence dans chaque détail",
       "commitment": "Engagement",
-      "commitmentDesc": "Au service de nos clients"
+      "commitmentDesc": "Au service de nos clients",
+      "home": "Accueil",
+      "about": "À propos"
     },
     "careers": {
       "heroTitle": "Rejoignez l'équipe SARI",
@@ -2492,7 +2497,9 @@
       "privacy": "Confidentialité",
       "cgv": "CGV",
       "verification": "Vérification d'authenticité",
-      "legalDoc": "Document légal"
+      "legalDoc": "Document légal",
+      "mentions": "Mentions légales",
+      "conditions": "Conditions générales"
     },
     "login": {
       "personalSpace": "Espace Personnel",
