@@ -111,7 +111,13 @@ export default function NewsDetailPage() {
 
       {/* Header avec image */}
       <div className="relative h-[500px] md:h-[600px] overflow-hidden">
-        <img src={item.image} alt={item.title} className="w-full h-full object-cover parallax-slow" />
+        {item.image ? (
+          <img src={item.image} alt={item.title} className="w-full h-full object-cover parallax-slow" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 text-gray-400">
+            <Calendar className="w-32 h-32" />
+          </div>
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-sari-dark via-sari-dark/60 to-transparent"></div>
         <div className="absolute inset-0 grid-pattern-bg opacity-10"></div>
         <div className="absolute bottom-0 left-0 right-0 container mx-auto px-6 pb-12">
@@ -225,7 +231,13 @@ export default function NewsDetailPage() {
                   {relatedNews.map(article => (
                     <Link key={article.id} href={`/${locale}/news/${article.id}-${encodeURIComponent(article.title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]/g, ''))}`} className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 card-hover overflow-hidden group rounded-xl">
                       <div className="aspect-video overflow-hidden">
-                        <img src={article.image} alt={article.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                        {article.image ? (
+                          <img src={article.image} alt={article.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 text-gray-400">
+                            <Calendar className="w-12 h-12" />
+                          </div>
+                        )}
                       </div>
                       <div className="p-6">
                         <div className="text-xs text-sari-blue font-bold uppercase mb-2">{article.category}</div>
@@ -263,7 +275,13 @@ export default function NewsDetailPage() {
               <div className="space-y-6">
                 {latestNews.map(post => (
                   <Link key={post.id} href={`/${locale}/news/${post.id}-${encodeURIComponent(post.title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]/g, ''))}`} className="flex gap-4 group">
-                    <img src={post.image} alt={post.title} className="w-20 h-20 object-cover flex-shrink-0 rounded-lg" />
+                    {post.image ? (
+                      <img src={post.image} alt={post.title} className="w-20 h-20 object-cover flex-shrink-0 rounded-lg" />
+                    ) : (
+                      <div className="w-20 h-20 flex-shrink-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800 text-gray-400 rounded-lg">
+                        <Calendar className="w-8 h-8" />
+                      </div>
+                    )}
                     <div className="flex-1">
                       <h4 className="font-bold text-sari-dark dark:text-white group-hover:text-sari-blue transition-colors line-clamp-2 text-sm">{post.title}</h4>
                       <div className="flex items-center gap-2 text-xs text-gray-500 mt-2">

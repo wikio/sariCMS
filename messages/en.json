@@ -2289,7 +2289,10 @@
       "captchaHelp": "Solve this operation to prove you are human",
       "captchaError": "Incorrect CAPTCHA answer. Please try again.",
       "captchaBlocked": "Too many attempts. Please refresh the page in 5 minutes.",
-      "loading": "Loading..."
+      "loading": "Loading...",
+      "quoteCtaText": "For a more detailed quote request (multiple products, custom specifications, etc.), please log in to your customer account.",
+      "quoteCtaLogin": "Log in",
+      "quoteCtaRegister": "Create an account"
     },
     "dashboard": {
       "overview": "Dashboard",
