@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Banknote, ChevronsUpDown, FolderOpen, GripVertical, Link2, Mail, Phone, Plus, Star, Trash2, Upload,
 } from 'lucide-react';
@@ -193,6 +194,7 @@ function TaxonomySelect({ spec, value, onChange, locale }: { spec: FieldSpec; va
   const [draft, setDraft] = useState('');
   const [tick, setTick] = useState(0);
   const box = useRef<HTMLDivElement>(null);
+  const [comboRect, setComboRect] = useState<DOMRect | null>(null);
 
   useEffect(() => {
     const onDoc = (e: MouseEvent) => {
@@ -206,6 +208,13 @@ function TaxonomySelect({ spec, value, onChange, locale }: { spec: FieldSpec; va
       window.removeEventListener('sari-taxonomies', onTax);
     };
   }, []);
+
+  useEffect(() => {
+    if (open && box.current) {
+      const rect = box.current.getBoundingClientRect();
+      setComboRect(rect);
+    }
+  }, [open]);
 
   const options = useMemo(() => {
     // Les libellés sont résolus selon la langue de la fiche éditée.
@@ -243,8 +252,17 @@ function TaxonomySelect({ spec, value, onChange, locale }: { spec: FieldSpec; va
             <span className={current ? '' : 'opacity-50'}>{current?.label || spec.placeholder || t("select")}</span>
             <ChevronsUpDown className="w-4 h-4 opacity-50" />
           </button>
-          {open && (
-            <div className="ad-combo-list">
+          {open && comboRect && createPortal(
+            <div 
+              className="ad-combo-list"
+              style={{
+                position: 'fixed',
+                top: `${comboRect.bottom + 4}px`,
+                left: `${comboRect.left}px`,
+                width: `${comboRect.width}px`,
+                zIndex: 99999,
+              }}
+            >
               <div className="p-2">
                 <input
                   autoFocus
@@ -265,7 +283,8 @@ function TaxonomySelect({ spec, value, onChange, locale }: { spec: FieldSpec; va
                 </button>
               ))}
               {filtered.length === 0 && <div className="px-3 py-2 text-xs" style={{ color: 'var(--ad-muted)' }}>{t("noResults")}</div>}
-            </div>
+            </div>,
+            document.body
           )}
         </div>
         {spec.taxonomy && (
