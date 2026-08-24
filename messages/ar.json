@@ -1302,7 +1302,14 @@
       "media": "الوسائط",
       "content": "المحتوى",
       "slides": "الشرائح",
-      "sections": "الأقسام"
+      "sections": "الأقسام",
+      "classification": "التصنيف",
+      "sujet": "الموضوع",
+      "authorName": "اسم المؤلف",
+      "readTime": "وقت القراءة",
+      "tags": "الوسوم",
+      "hintFullDesc": "محرر نصوص غني — عرض كامل",
+      "auto": "تلقائي"
     },
     "drawer": {
       "dragToResize": "اسحب لتغيير الحجم · انقر للإغلاق",

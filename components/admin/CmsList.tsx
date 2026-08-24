@@ -44,7 +44,7 @@ export default function CmsList({ mod }: { mod: CmsModule }) {
     } catch {}
     return o;
   };
-  const FILTER_LABELS: Record<string, string> = { 'Statut': t('status'), 'Contrat': t('contract', { defaultMessage: 'Contrat' }), 'Catégorie': t('category'), 'Langue': t('language'), 'Stock': t('stock'), 'Publication': t('publication'), 'Type': t('type', { defaultMessage: 'Type' }) };
+  const FILTER_LABELS: Record<string, string> = { 'Statut': t('status'), 'Contrat': t('contract', { defaultMessage: 'Contrat' }), 'Catégorie': t('category'), 'Langue': t('language'), 'Stock': t('stock'), 'Publication': t('publication'), 'Type': t('type', { defaultMessage: 'Type' }), 'Rubrique': t('rubric', { defaultMessage: 'Rubrique' }) };
   const translateFilterLabel = (label: string) => FILTER_LABELS[label] || label;
   const translatedSingular = (() => { const SINGULARS: Record<string, string> = { services: tTitles('singular_service'), products: tTitles('singular_product'), events: tTitles('singular_event'), news: tTitles('singular_news'), careers: tTitles('singular_career'), solutions: tTitles('singular_solution'), pages: tTitles('singular_page'), partners: tTitles('singular_partner'), testimonials: tTitles('singular_testimonial'), galleries: tTitles('singular_gallery'), legal: tTitles('singular_legal'), hero: tTitles('singular_hero'), contents: tTitles('singular_content') }; return SINGULARS[mod.key] || mod.singular; })();
   const { showToast } = useToast();

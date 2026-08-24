@@ -1302,7 +1302,14 @@
       "media": "Media",
       "content": "Content",
       "slides": "Slides",
-      "sections": "Sections"
+      "sections": "Sections",
+      "classification": "Classification",
+      "sujet": "Subject",
+      "authorName": "Author name",
+      "readTime": "Read time",
+      "tags": "Tags",
+      "hintFullDesc": "Rich text editor — full width",
+      "auto": "Auto"
     },
     "drawer": {
       "dragToResize": "Drag to resize · click to close",

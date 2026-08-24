@@ -47,7 +47,7 @@ export function FieldShell({ spec, value, origin, originLocale, children }: { sp
     } catch {}
     return spec.label; 
   })();
-  const resolvedHint = (() => { const HINT_KEYS: Record<string,string> = { type: 'hintType', applyAuth: 'hintApplyAuth', icon: 'hintIcon' }; const k = HINT_KEYS[spec.key]; if (!k) return spec.hint; try { const r = tF(k); return typeof r === 'string' ? r : spec.hint; } catch { return spec.hint; } })();
+  const resolvedHint = (() => { const HINT_KEYS: Record<string,string> = { type: 'hintType', applyAuth: 'hintApplyAuth', icon: 'hintIcon', fullDesc: 'hintFullDesc', fullContent: 'hintFullDesc' }; const k = HINT_KEYS[spec.key]; if (!k) return spec.hint; try { const r = tF(k); return typeof r === 'string' ? r : spec.hint; } catch { return spec.hint; } })();
   const len = typeof value === 'string' ? value.length : 0;
   const over = spec.maxLength != null && len > spec.maxLength;
   const originText = origin == null || origin === '' ? '' : typeof origin === 'string' ? origin : JSON.stringify(origin);
@@ -98,7 +98,7 @@ export function renderField(
         <div className="flex gap-2">
           <span className="ad-input !w-auto flex items-center text-xs" style={{ color: 'var(--ad-muted)' }}>/</span>
           <input className="ad-input font-mono" value={String(value || '')} placeholder={ph || 'url-de-la-fiche'} onChange={(e) => onChange(e.target.value)} />
-          <button type="button" className="ad-btn ad-btn-ghost" onClick={() => onChange(slugify(String(record[spec.slugFrom || 'title'] || record.name || '')))}>Auto</button>
+          <button type="button" className="ad-btn ad-btn-ghost" onClick={() => onChange(slugify(String(record[spec.slugFrom || 'title'] || record.name || '')))}>{t('auto')}</button>
         </div>,
       );
     case 'email':
