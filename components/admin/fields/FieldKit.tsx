@@ -267,7 +267,15 @@ function TaxonomySelect({ spec, value, onChange, locale }: { spec: FieldSpec; va
     });
     
     for (const taxItem of tax) {
-      if (!translatedBase.some((o) => o.value === taxItem.value)) translatedBase.push(taxItem);
+      if (!translatedBase.some((o) => o.value === taxItem.value)) {
+        // Traduire aussi les items de taxonomie via option_ keys
+        const taxTranslated = resolveOptionTranslation(messages, locale || 'fr', taxItem.value);
+        if (taxTranslated) {
+          translatedBase.push({ ...taxItem, label: taxTranslated });
+        } else {
+          translatedBase.push(taxItem);
+        }
+      }
     }
     return translatedBase;
     // eslint-disable-next-line react-hooks/exhaustive-deps
