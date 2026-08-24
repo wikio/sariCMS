@@ -508,7 +508,8 @@
       "statusArchived": "Archived",
       "language": "Language",
       "stock": "Stock",
-      "publication": "Publication"
+      "publication": "Publication",
+      "rubric": "Section"
     },
     "visibility": {
       "breadcrumb": "Advanced settings / Storefront visibility",
@@ -1309,7 +1310,9 @@
       "readTime": "Read time",
       "tags": "Tags",
       "hintFullDesc": "Rich text editor — full width",
-      "auto": "Auto"
+      "auto": "Auto",
+      "groupText": "Text",
+      "groupArticle": "Article"
     },
     "drawer": {
       "dragToResize": "Drag to resize · click to close",

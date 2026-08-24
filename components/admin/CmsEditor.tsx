@@ -62,7 +62,7 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
     'Technique': 'groupTechnique', 'Général': 'general',
     'Auteur': 'groupAuthor', 'Citation': 'groupQuote', 'Fiche': 'groupCard',
     'Informations': 'groupInfo', 'Coordonnées': 'groupContact',
-    'Programme': 'groupProgramme'
+    'Programme': 'groupProgramme', 'Texte': 'groupText', 'Article': 'groupArticle'
   };
   const groupName = (g: string) => {
     const key = GROUP_KEYS[g];

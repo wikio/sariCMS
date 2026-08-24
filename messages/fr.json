@@ -508,7 +508,8 @@
       "statusArchived": "Archivé",
       "language": "Langue",
       "stock": "Stock",
-      "publication": "Publication"
+      "publication": "Publication",
+      "rubric": "Rubrique"
     },
     "visibility": {
       "breadcrumb": "Configuration avancée / Visibilité vitrine",
@@ -1319,7 +1320,9 @@
       "sections": "Sections scroll",
       "groupProgramme": "Programme",
       "session": "Session",
-      "sessionPlaceholder": "Session"
+      "sessionPlaceholder": "Session",
+      "groupText": "Texte",
+      "groupArticle": "Article"
     },
     "drawer": {
       "dragToResize": "Glisser pour redimensionner · cliquer pour fermer",
