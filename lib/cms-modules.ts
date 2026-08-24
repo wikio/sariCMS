@@ -7,7 +7,7 @@ export type FieldKind =
   | 'text' | 'textarea' | 'html' | 'slug' | 'email' | 'phone' | 'url'
   | 'price' | 'number' | 'select' | 'radio' | 'toggle' | 'tags'
   | 'image' | 'gallery' | 'file' | 'faq' | 'list' | 'specs' | 'options' | 'agenda'
-  | 'slides' | 'sections' | 'rating' | 'icon' | 'process';
+  | 'slides' | 'sections' | 'rating' | 'icon' | 'color' | 'process';
 
 export type ListLayout = 'catalog' | 'magazine' | 'timeline' | 'mosaic' | 'quotes' | 'people' | 'slides' | 'docs';
 
@@ -240,7 +240,7 @@ export const CMS_MODULES: CmsModule[] = [
       { key: 'locale', label: 'Langue', kind: 'radio', options: LOCALES, group: 'Identité' },
       { key: 'status', label: 'Statut', kind: 'radio', options: STATUS, group: 'Identité' },
       { key: 'icon', label: 'Icône', kind: 'icon', options: ICONS, group: 'Identité' },
-      { key: 'color', label: 'Couleur', kind: 'text', group: 'Identité' },
+      { key: 'color', label: 'Couleur', kind: 'color', group: 'Identité' },
       { key: 'image', label: 'Visuel', kind: 'image', group: 'Média' },
       { key: 'shortDesc', label: 'Accroche', kind: 'textarea', wide: true, group: 'Contenu' },
       { key: 'fullDesc', label: 'Présentation', kind: 'html', wide: true, group: 'Contenu' },

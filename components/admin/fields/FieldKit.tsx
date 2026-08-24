@@ -127,6 +127,8 @@ export function renderField(
       return wrap(<PriceInner value={String(value || '')} onChange={onChange} placeholder={spec.placeholder || '0'} />);
     case 'icon':
       return wrap(<IconPicker value={String(value || '')} onChange={onChange} />);
+    case 'color':
+      return wrap(<ColorPicker value={String(value || '')} onChange={onChange} />);
     case 'select':
       return wrap(<TaxonomySelect spec={spec} locale={String(record.locale || 'fr')} value={String(value || '')} onChange={onChange} />);
     case 'radio':
@@ -494,6 +496,120 @@ function PriceInner({ value, onChange, placeholder }: { value: string; onChange:
   );
 }
 
+export function ColorPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const t = useTranslations('admin.editor');
+  const [inputValue, setInputValue] = useState(value || '');
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const PRESET_COLORS = [
+    { name: 'sari-blue', value: '#1e40af' },
+    { name: 'red-500', value: '#ef4444' },
+    { name: 'green-500', value: '#10b981' },
+    { name: 'purple-500', value: '#8b5cf6' },
+    { name: 'pink-500', value: '#ec4899' },
+    { name: 'orange-500', value: '#f97316' },
+    { name: 'indigo-500', value: '#6366f1' },
+    { name: 'teal-500', value: '#14b8a6' },
+    { name: 'cyan-500', value: '#06b6d4' },
+    { name: 'yellow-500', value: '#eab308' },
+  ];
+
+  useEffect(() => {
+    setInputValue(value || '');
+  }, [value]);
+
+  const filteredColors = useMemo(() => {
+    if (!inputValue.trim()) return PRESET_COLORS;
+    const search = inputValue.toLowerCase();
+    return PRESET_COLORS.filter(c => 
+      c.name.toLowerCase().includes(search) || 
+      c.value.toLowerCase().includes(search)
+    );
+  }, [inputValue]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setInputValue(newValue);
+    onChange(newValue);
+    setShowSuggestions(true);
+  };
+
+  const handleColorSelect = (colorName: string) => {
+    setInputValue(colorName);
+    onChange(colorName);
+    setShowSuggestions(false);
+    inputRef.current?.blur();
+  };
+
+  const handleNativeColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const hexValue = e.target.value;
+    setInputValue(hexValue);
+    onChange(hexValue);
+  };
+
+  const displayColor = useMemo(() => {
+    const preset = PRESET_COLORS.find(c => c.name === inputValue);
+    return preset ? preset.value : inputValue;
+  }, [inputValue]);
+
+  return (
+    <div className="relative">
+      <div className="flex gap-2">
+        <div className="flex-1 relative">
+          <input
+            ref={inputRef}
+            type="text"
+            className="ad-input"
+            value={inputValue}
+            onChange={handleInputChange}
+            onFocus={() => setShowSuggestions(true)}
+            onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+            placeholder={t('colorPlaceholder') || 'sari-blue, #1e40af, red-500...'}
+          />
+          {showSuggestions && filteredColors.length > 0 && (
+            <div 
+              className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto"
+              style={{ minWidth: '200px' }}
+            >
+              {filteredColors.map((color) => (
+                <button
+                  key={color.name}
+                  type="button"
+                  className="w-full px-3 py-2 text-left hover:bg-gray-50 flex items-center gap-2"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => handleColorSelect(color.name)}
+                >
+                  <div 
+                    className="w-6 h-6 rounded border border-gray-300 flex-shrink-0"
+                    style={{ backgroundColor: color.value }}
+                  />
+                  <span className="text-sm font-medium">{color.name}</span>
+                  <span className="text-xs text-gray-500 ml-auto">{color.value}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <div 
+            className="w-10 h-10 rounded border border-gray-300"
+            style={{ backgroundColor: displayColor || '#ffffff' }}
+            title={displayColor || 'No color'}
+          />
+          <input
+            type="color"
+            value={displayColor && displayColor.startsWith('#') ? displayColor : '#000000'}
+            onChange={handleNativeColorChange}
+            className="w-10 h-10 cursor-pointer border-0 p-0"
+            title={t('pickColor') || 'Pick a color'}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function IconPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const t = useTranslations('admin.editor');
   const [q, setQ] = useState('');
@@ -535,7 +651,10 @@ export function IconPicker({ value, onChange }: { value: string; onChange: (v: s
           style={{
             position: 'fixed',
             top: `${portalRect.bottom + 4}px`,
-            left: `${portalRect.left}px`,
+            ...(document.documentElement.dir === 'rtl' 
+              ? { right: `${window.innerWidth - portalRect.right}px` }
+              : { left: `${portalRect.left}px` }
+            ),
             width: `${portalRect.width}px`,
             maxHeight: '320px',
             zIndex: 99999,

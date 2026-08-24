@@ -1040,7 +1040,9 @@
       "option_Nouveau": "New",
       "option_Promo": "Sale",
       "option_Best-seller": "Best-seller",
-      "option_Sur commande": "On order"
+      "option_Sur commande": "On order",
+      "colorPlaceholder": "sari-blue, #1e40af, red-500...",
+      "pickColor": "Pick a color"
     },
     "htmlEditor": {
       "header": "Header",
