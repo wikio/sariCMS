@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { Eye, FileCheck2, History, LayoutGrid, Link2, List as ListIcon, MessageSquareText, Plus, Printer, Reply, Trash2, Upload } from 'lucide-react';
 import { isOrderPaid, loadOrders, loadQuotes, saveOrders, saveQuotes, type Order, type OrderInvoice, type Quote, type CommerceItem } from '@/lib/crm-store';
 import { loadCoupons, loadTaxes } from '@/lib/shop-store';
@@ -46,6 +46,7 @@ const QUOTE_STATUS = [
 
 export default function CommerceDesk({ kind }: { kind: Kind }) {
   const locale = useLocale();
+  const t = useTranslations('admin.commerce');
   const { showToast } = useToast();
   const [rows, setRows] = useState<Row[]>([]);
   const [q, setQ] = useState('');
@@ -59,8 +60,34 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
   const [messageTo, setMessageTo] = useState<Row | null>(null);
   const [respondTo, setRespondTo] = useState<Row | null>(null);
   const [invoiceBusy, setInvoiceBusy] = useState(false);
+  
+  // Traduction des statuts
+  const translateStatus = (statusValue: string) => {
+    const orderStatusMap: Record<string, string> = {
+      'pending': t('statusPending'),
+      'processing': t('statusProcessing'),
+      'shipped': t('statusShipped'),
+      'delivered': t('statusDelivered'),
+      'cancelled': t('statusCancelled'),
+    };
+    const quoteStatusMap: Record<string, string> = {
+      'draft': t('statusDraft'),
+      'submitted': t('statusSubmitted'),
+      'processing': t('statusProcessingQuote'),
+      'replied': t('statusReplied'),
+      'revision': t('statusRevision'),
+      'accepted': t('statusAccepted'),
+      'rejected': t('statusRejected'),
+      'transformed': t('statusTransformed'),
+      'expired': t('statusExpired'),
+      'cancelled': t('statusCancelledQuote'),
+    };
+    const statusMap = kind === 'orders' ? orderStatusMap : quoteStatusMap;
+    return statusMap[statusValue] || statusValue;
+  };
+  
   const statuses = kind === 'orders' ? ORDER_STATUS : QUOTE_STATUS;
-  const title = kind === 'orders' ? 'Commandes' : 'Devis';
+  const title = kind === 'orders' ? t('orders') : t('quotes');
   const taxes = loadTaxes();
   const coupons = loadCoupons();
 
@@ -102,7 +129,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
     const withTotal = { ...next, total: Math.round(totals.total) };
     persist(rows.map((r) => r.id === next.id ? withTotal : r));
     setOpen(withTotal);
-    showToast(`${title} enregistré(e)`, 'success');
+    showToast(t('saved', { title }), 'success');
   };
 
   const setStatusOf = (id: number, nextStatus: string) => {
@@ -127,7 +154,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
     const updated = next.find((r) => r.id === id);
     if (updated) setOpen(updated);
     setNote('');
-    showToast(orderId ? `Devis accepté → commande #${orderId} créée` : 'Statut mis à jour', 'success');
+    showToast(orderId ? t('quoteAcceptedOrderCreated', { id: orderId }) : t('statusUpdated'), 'success');
     if (updated) notifyByStatus(updated, effectiveStatus);
   };
 
@@ -185,7 +212,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
     };
     persist(rows.map((r) => (r.id === open.id ? ({ ...r, invoice } as Row) : r)));
     setOpen({ ...open, invoice } as Row);
-    showToast('Facture liée', 'success');
+    showToast(t('invoiceLinked'), 'success');
   };
 
   /** Récupère automatiquement la facture via l'API ERP. */
@@ -204,9 +231,9 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
       };
       persist(rows.map((r) => (r.id === order.id ? ({ ...r, invoice } as Row) : r)));
       setOpen({ ...open, invoice } as Row);
-      showToast('Facture liée via ERP', 'success');
+      showToast(t('invoiceLinkedErp'), 'success');
     } catch (err) {
-      showToast(err instanceof Error ? err.message : 'Liaison ERP impossible', 'error');
+      showToast(err instanceof Error ? err.message : t('erpLinkFailed'), 'error');
     } finally {
       setInvoiceBusy(false);
     }
@@ -279,10 +306,10 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
       </div>
 
       <div className="ad-card p-3 space-y-3">
-        <SearchField value={draft} onChange={setDraft} onSubmit={() => setQ(draft)} showSubmit placeholder="Rechercher un client, e-mail ou n°…" />
+        <SearchField value={draft} onChange={setDraft} onSubmit={() => setQ(draft)} showSubmit placeholder={t('searchPlaceholder')} />
         <select className="ad-select sm:w-56" value={status} onChange={(e) => setStatus(e.target.value)}>
-          <option value="">Tous les statuts</option>
-          {statuses.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+          <option value="">{t('allStatuses')}</option>
+          {statuses.map((s) => <option key={s.value} value={s.value}>{translateStatus(s.value)}</option>)}
         </select>
       </div>
 
@@ -356,14 +383,14 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
             <div className="flex flex-wrap gap-1">
               {statuses.map((s, i) => (
                 <button key={s.value} type="button" disabled={consult} className={`ad-btn ${open.status === s.value ? 'ad-btn-primary' : 'ad-btn-ghost'}`} onClick={() => setStatusOf(open.id, s.value)}>
-                  {i + 1}. {s.label}
+                  {i + 1}. {translateStatus(s.value)}
                 </button>
               ))}
             </div>
             {!consult && (
               <label className="block space-y-1.5">
                 <span className="field-label">Commentaire d'étape</span>
-                <input className="ad-input" placeholder="Indication : note visible dans l'historique lors du changement de statut…" value={note} onChange={(e) => setNote(e.target.value)} />
+                <input className="ad-input" placeholder={t('notePlaceholder')} value={note} onChange={(e) => setNote(e.target.value)} />
               </label>
             )}
 
@@ -409,7 +436,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                         persist(next);
                         const updated = next.find((r) => r.id === open.id);
                         if (updated) setOpen(updated);
-                        showToast(`Commande #${created.id} créée`, 'success');
+                        showToast(t('orderCreated', { id: created.id }), 'success');
                       }}>Convertir en commande</button>
                     )}
                   </div>
@@ -506,7 +533,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                       <span className="field-label">Article</span>
                       {consult
                         ? <div className="font-bold pt-1.5">{it.name}</div>
-                        : <input className="ad-input" placeholder="Nom de l'article…" value={it.name} onChange={(e) => patchItem(i, { name: e.target.value })} />}
+                        : <input className="ad-input" placeholder={t('itemNamePlaceholder')} value={it.name} onChange={(e) => patchItem(i, { name: e.target.value })} />}
                     </label>
                   </div>
                   <div className="col-span-2">
@@ -514,7 +541,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                       <span className="field-label">Quantité</span>
                       {consult
                         ? <div className="pt-1.5">× {it.quantity}</div>
-                        : <input className="ad-input" type="number" min={1} placeholder="Qté" value={it.quantity} onChange={(e) => patchItem(i, { quantity: Number(e.target.value) })} />}
+                        : <input className="ad-input" type="number" min={1} placeholder={t('quantityPlaceholder')} value={it.quantity} onChange={(e) => patchItem(i, { quantity: Number(e.target.value) })} />}
                     </label>
                   </div>
                   <div className="col-span-2">
@@ -522,7 +549,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                       <span className="field-label">Prix unit. HT (DA)</span>
                       {consult
                         ? <div className="pt-1.5">{it.price.toLocaleString()}</div>
-                        : <input className="ad-input" type="number" min={0} placeholder="Prix HT" value={it.price} onChange={(e) => patchItem(i, { price: Number(e.target.value) })} />}
+                        : <input className="ad-input" type="number" min={0} placeholder={t('pricePlaceholder')} value={it.price} onChange={(e) => patchItem(i, { price: Number(e.target.value) })} />}
                     </label>
                   </div>
                   <div className="col-span-2">
@@ -530,7 +557,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                       <span className="field-label">Remise %</span>
                       {consult
                         ? <div className="pt-1.5">-{it.discount || 0}%</div>
-                        : <input className="ad-input" type="number" min={0} max={100} placeholder="0" value={it.discount || 0} onChange={(e) => patchItem(i, { discount: Number(e.target.value) })} />}
+                        : <input className="ad-input" type="number" min={0} max={100} placeholder={t('discountPlaceholder')} value={it.discount || 0} onChange={(e) => patchItem(i, { discount: Number(e.target.value) })} />}
                     </label>
                   </div>
                   <div className="col-span-1 font-black text-right pb-1.5" title="Total de la ligne (remise déduite)">{((it.quantity * it.price) * (1 - (it.discount || 0) / 100)).toLocaleString()}</div>
@@ -604,7 +631,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
             const updated = next.find((r) => r.id === respondTo.id);
             if (updated) setOpen(updated);
             setRespondTo(null);
-            showToast('Réponse au devis envoyée', 'success');
+            showToast(t('quoteResponseSent'), 'success');
           }}
         />
       )}
