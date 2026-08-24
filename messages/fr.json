@@ -2486,7 +2486,8 @@
       "whyJoin2": "Équipe dynamique et bienveillante",
       "whyJoin3": "Formation continue",
       "whyJoin4": "Évolution de carrière",
-      "applicationsClosed": "Les candidatures sont actuellement fermées."
+      "applicationsClosed": "Les candidatures sont actuellement fermées.",
+      "startJourney": "Commencer le parcours"
     },
     "legal": {
       "pageNotFound": "Page non trouvée",
@@ -2704,7 +2705,9 @@
       "listView": "Vue liste",
       "noResults": "Aucun produit trouvé",
       "noResultsDesc": "Aucun produit ne correspond à vos critères de recherche.",
-      "resetFilters": "Réinitialiser les filtres"
+      "resetFilters": "Réinitialiser les filtres",
+      "product": "produit",
+      "found": "trouvé"
     },
     "register": {
       "title": "Créer un compte",

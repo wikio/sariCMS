@@ -2488,7 +2488,8 @@
       "whyJoin2": "Dynamic and caring team",
       "whyJoin3": "Continuous training",
       "whyJoin4": "Career development",
-      "applicationsClosed": "Applications are currently closed."
+      "applicationsClosed": "Applications are currently closed.",
+      "startJourney": "Start the journey"
     },
     "legal": {
       "pageNotFound": "Page not found",
@@ -2706,7 +2707,9 @@
       "listView": "List view",
       "noResults": "No products found",
       "noResultsDesc": "No products match your search criteria.",
-      "resetFilters": "Reset filters"
+      "resetFilters": "Reset filters",
+      "product": "product",
+      "found": "found"
     },
     "register": {
       "title": "Create an account",

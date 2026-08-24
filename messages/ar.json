@@ -2488,7 +2488,8 @@
       "whyJoin2": "فريق ديناميكي ومهتم",
       "whyJoin3": "تدريب مستمر",
       "whyJoin4": "تطور مهني",
-      "applicationsClosed": "التقديم مغلق حالياً."
+      "applicationsClosed": "التقديم مغلق حالياً.",
+      "startJourney": "ابدأ الرحلة"
     },
     "legal": {
       "pageNotFound": "الصفحة غير موجودة",
@@ -2706,7 +2707,9 @@
       "listView": "عرض قائمة",
       "noResults": "لم يتم العثور على منتجات",
       "noResultsDesc": "لا توجد منتجات تطابق معايير البحث.",
-      "resetFilters": "إعادة تعيين الفلاتر"
+      "resetFilters": "إعادة تعيين الفلاتر",
+      "product": "منتج",
+      "found": "تم العثور عليه"
     },
     "register": {
       "title": "إنشاء حساب",
