@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useLocale, useTranslations } from 'next-intl';
+import { useLocale, useMessages, useTranslations } from 'next-intl';
 import {
   DndContext, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent,
 } from '@dnd-kit/core';
@@ -28,16 +28,19 @@ export default function CmsList({ mod }: { mod: CmsModule }) {
   const STATUS_LABELS: Record<string, string> = {
     draft: t('statusDraft'), published: t('statusPublished'), archived: t('statusArchived'),
   };
-  const tEditor = useTranslations('admin.editor');
+  const messages = useMessages() as Record<string, any>;
   const translateFilterOption = (o: string) => {
     if (STATUS_LABELS[o]) return STATUS_LABELS[o];
     if (o === 'true') return t('yes');
     if (o === 'false') return t('no');
-    // Try translating option values like 'Salon', 'CDI', etc.
-    const translationKey = `option_${o}`;
+    // Lookup directly in messages to avoid MISSING_MESSAGE errors
     try {
-      const translated = tEditor(translationKey as any);
-      if (translated && translated !== translationKey) return translated;
+      const editor = messages?.admin?.editor;
+      const key = `option_${o}`;
+      if (editor && typeof editor === 'object' && key in editor) {
+        const translated = editor[key];
+        if (typeof translated === 'string' && translated.length > 0) return translated;
+      }
     } catch {}
     return o;
   };

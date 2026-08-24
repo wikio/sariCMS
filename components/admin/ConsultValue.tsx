@@ -1,6 +1,6 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useMessages, useTranslations } from 'next-intl';
 import type { FieldSpec } from '@/lib/cms-modules';
 import HtmlEditor from '@/components/admin/fields/HtmlEditor';
 import IconMark from '@/components/admin/IconMark';
@@ -33,25 +33,29 @@ function formatObject(value: unknown): string {
 export default function ConsultValue({ spec, value }: { spec: FieldSpec; value: unknown }) {
   const t = useTranslations('admin.editor');
   const tCommon = useTranslations('admin.common');
+  const messages = useMessages() as Record<string, any>;
   
   if (value == null || value === '') return <div className="text-sm" style={{ color: 'var(--ad-muted)' }}>—</div>;
 
-  // Traduire les valeurs select (CDI, Salon, etc.)
+  // Traduire les valeurs select (CDI, Salon, etc.) — silencieux si clé absente
   if (spec.kind === 'select') {
     const strValue = String(value);
     const option = spec.options?.find(o => o.value === strValue);
-    const label = option?.label || strValue;
+    const fallbackLabel = option?.label || strValue;
     
-    // Essayer de traduire via option_{value}
-    const translationKey = `option_${strValue}`;
+    // Lookup directly in messages to avoid MISSING_MESSAGE errors
     try {
-      const translated = t(translationKey as any);
-      if (translated && translated !== translationKey) {
-        return <div className="text-sm font-semibold break-words">{translated}</div>;
+      const editor = messages?.admin?.editor;
+      const key = `option_${strValue}`;
+      if (editor && typeof editor === 'object' && key in editor) {
+        const translated = editor[key];
+        if (typeof translated === 'string' && translated.length > 0) {
+          return <div className="text-sm font-semibold break-words">{translated}</div>;
+        }
       }
     } catch {}
     
-    return <div className="text-sm font-semibold break-words">{label}</div>;
+    return <div className="text-sm font-semibold break-words">{fallbackLabel}</div>;
   }
 
   if (spec.kind === 'html') {

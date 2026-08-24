@@ -16,7 +16,23 @@ import IconMark from '@/components/admin/IconMark';
 import ProcessFlow, { normalizeSteps } from '@/components/admin/ProcessFlow';
 import Toggle from '@/components/admin/Toggle';
 import { activeCurrencies, loadCurrencies, saveCurrencies, type Currency } from '@/lib/currencies';
-import { useTranslations } from 'next-intl';
+import { useMessages, useTranslations } from 'next-intl';
+
+/** Vérifie silencieusement si une clé de traduction existe dans un namespace */
+function resolveOptionTranslation(messages: Record<string, any>, locale: string, value: string): string | null {
+  const key = `option_${value}`;
+  // Navigate: messages.admin.editor.option_XXX
+  try {
+    const editor = messages?.admin?.editor;
+    if (editor && typeof editor === 'object' && key in editor) {
+      const val = editor[key];
+      if (typeof val === 'string' && val.length > 0) return val;
+    }
+  } catch {
+    // Silently ignore
+  }
+  return null;
+}
 
 export function FieldShell({ spec, value, origin, originLocale, children }: { spec: FieldSpec; value?: unknown; origin?: unknown; originLocale?: string; children: React.ReactNode }) {
   const t = useTranslations('admin.editor');
@@ -188,6 +204,7 @@ export function renderField(
 
 function TaxonomySelect({ spec, value, onChange, locale }: { spec: FieldSpec; value: string; onChange: (v: string) => void; locale?: string }) {
   const t = useTranslations('admin.editor');
+  const messages = useMessages() as Record<string, any>;
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState('');
   const [adding, setAdding] = useState(false);
@@ -240,15 +257,12 @@ function TaxonomySelect({ spec, value, onChange, locale }: { spec: FieldSpec; va
     const tax = spec.taxonomy ? listTaxonomy(spec.taxonomy, locale) : [];
     const base = [...(spec.options || [])];
     
-    // Traduire les options selon la locale
+    // Traduire les options selon la locale (silencieux si clé absente)
     const translatedBase = base.map((opt) => {
-      const translationKey = `option_${opt.value}`;
-      try {
-        const translatedLabel = t(translationKey as any);
-        if (translatedLabel && translatedLabel !== translationKey) {
-          return { ...opt, label: translatedLabel };
-        }
-      } catch {}
+      const translatedLabel = resolveOptionTranslation(messages, locale || 'fr', opt.value);
+      if (translatedLabel) {
+        return { ...opt, label: translatedLabel };
+      }
       return opt;
     });
     
@@ -257,7 +271,7 @@ function TaxonomySelect({ spec, value, onChange, locale }: { spec: FieldSpec; va
     }
     return translatedBase;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [spec.options, spec.taxonomy, tick, locale, t]);
+  }, [spec.options, spec.taxonomy, tick, locale, t, messages]);
 
   const filtered = options.filter((o) => {
     const blob = `${o.label} ${o.value}`.toLowerCase();
