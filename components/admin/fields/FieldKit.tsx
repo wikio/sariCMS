@@ -194,11 +194,16 @@ function TaxonomySelect({ spec, value, onChange, locale }: { spec: FieldSpec; va
   const [draft, setDraft] = useState('');
   const [tick, setTick] = useState(0);
   const box = useRef<HTMLDivElement>(null);
+  const portalRef = useRef<HTMLDivElement>(null);
   const [comboRect, setComboRect] = useState<DOMRect | null>(null);
 
   useEffect(() => {
     const onDoc = (e: MouseEvent) => {
-      if (!box.current?.contains(e.target as Node)) setOpen(false);
+      const target = e.target as Node;
+      // Ne pas fermer si le clic est dans le box OU dans le portal du dropdown
+      if (box.current?.contains(target)) return;
+      if (portalRef.current?.contains(target)) return;
+      setOpen(false);
     };
     const onTax = () => setTick((n) => n + 1);
     document.addEventListener('mousedown', onDoc);
@@ -298,6 +303,7 @@ function TaxonomySelect({ spec, value, onChange, locale }: { spec: FieldSpec; va
           </button>
           {open && comboRect && createPortal(
             <div 
+              ref={portalRef}
               className="ad-combo-list"
               style={{
                 position: 'fixed',
@@ -330,6 +336,7 @@ function TaxonomySelect({ spec, value, onChange, locale }: { spec: FieldSpec; va
                   key={o.value}
                   type="button"
                   className={`ad-combo-item ${(o.value === value || o.label === value) ? 'is-on font-bold' : ''}`}
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={() => { onChange(o.value); setOpen(false); setQ(''); }}
                 >
                   {o.label}
