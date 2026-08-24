@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import type { FieldSpec } from '@/lib/cms-modules';
 import HtmlEditor from '@/components/admin/fields/HtmlEditor';
 import IconMark from '@/components/admin/IconMark';
@@ -30,7 +31,28 @@ function formatObject(value: unknown): string {
 }
 
 export default function ConsultValue({ spec, value }: { spec: FieldSpec; value: unknown }) {
+  const t = useTranslations('admin.editor');
+  const tCommon = useTranslations('admin.common');
+  
   if (value == null || value === '') return <div className="text-sm" style={{ color: 'var(--ad-muted)' }}>—</div>;
+
+  // Traduire les valeurs select (CDI, Salon, etc.)
+  if (spec.kind === 'select') {
+    const strValue = String(value);
+    const option = spec.options?.find(o => o.value === strValue);
+    const label = option?.label || strValue;
+    
+    // Essayer de traduire via option_{value}
+    const translationKey = `option_${strValue}`;
+    try {
+      const translated = t(translationKey as any);
+      if (translated && translated !== translationKey) {
+        return <div className="text-sm font-semibold break-words">{translated}</div>;
+      }
+    } catch {}
+    
+    return <div className="text-sm font-semibold break-words">{label}</div>;
+  }
 
   if (spec.kind === 'html') {
     return <HtmlEditor value={String(value || '')} onChange={() => undefined} readOnly />;
@@ -139,7 +161,13 @@ export default function ConsultValue({ spec, value }: { spec: FieldSpec; value: 
     return <div className="text-sm font-black">{'★'.repeat(Number(value) || 0)}{'☆'.repeat(Math.max(0, 5 - Number(value || 0)))}</div>;
   }
   if (spec.kind === 'toggle') {
-    return <span className={`ad-chip ${value ? 'ad-chip-ok' : 'ad-chip-mute'}`}>{value ? 'Oui' : 'Non'}</span>;
+    return <span className={`ad-chip ${value ? 'ad-chip-ok' : 'ad-chip-mute'}`}>{value ? tCommon('yes') : tCommon('no')}</span>;
+  }
+  // Traduire les valeurs radio (options statiques comme langue, statut)
+  if (spec.kind === 'radio') {
+    const strValue = String(value);
+    const option = spec.options?.find(o => o.value === strValue);
+    return <div className="text-sm font-semibold break-words">{option?.label || strValue}</div>;
   }
   if (typeof value === 'object') {
     return <div className="text-sm">{formatObject(value)}</div>;
