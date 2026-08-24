@@ -43,7 +43,21 @@ export default function ConsultValue({ spec, value }: { spec: FieldSpec; value: 
     const option = spec.options?.find(o => o.value === strValue);
     const fallbackLabel = option?.label || strValue;
     
-    // Lookup directly in messages to avoid MISSING_MESSAGE errors
+    // 1. Essayer depuis les traductions de taxonomie (localStorage)
+    if (spec.taxonomy) {
+      try {
+        const { listTaxonomy } = require('@/lib/taxonomies');
+        const terms = listTaxonomy(spec.taxonomy);
+        const term = terms.find((t: any) => t.value === strValue);
+        if (term?.translations) {
+          const currentLocale = (messages as any)?._locale || 'fr';
+          const fromTax = term.translations[currentLocale];
+          if (fromTax) return <div className="text-sm font-semibold break-words">{fromTax}</div>;
+        }
+      } catch {}
+    }
+    
+    // 2. Fallback: lookup dans messages JSON (option_ keys)
     try {
       const editor = messages?.admin?.editor;
       const key = `option_${strValue}`;

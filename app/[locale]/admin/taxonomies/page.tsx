@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Eye, Globe, Plus, Pencil, Trash2 } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { Eye, Plus, Pencil, Trash2 } from 'lucide-react';
+import { useLocale, useTranslations } from 'next-intl';
 import {
   allTaxonomies, removeTaxonomyTerm, saveTaxonomy, TAXONOMY_LOCALES,
   termLabel, type TaxonomyLocale, type TaxonomyTerm,
@@ -14,24 +14,27 @@ export default function TaxonomiesPage() {
   const { showToast } = useToast();
   const t = useTranslations('admin.taxonomies');
   const tCommon = useTranslations('admin.common');
+  const adminLocale = useLocale() as TaxonomyLocale;
   const [groups, setGroups] = useState(allTaxonomies());
   const [tab, setTab] = useState(groups[0]?.key || 'products.category');
-  const [locale, setLocale] = useState<TaxonomyLocale>('fr');
   const [draft, setDraft] = useState<TaxonomyTerm | null>(null);
   const [original, setOriginal] = useState<TaxonomyTerm | null>(null);
   const [mode, setMode] = useState<'edit' | 'consult'>('edit');
 
-  /** Traduit un label d'onglet de taxonomie via les clés admin.taxonomies.tab_XXX */
+  // Utiliser la locale admin courante pour afficher les labels
+  const locale = adminLocale;
+
+  /** Traduit un label d'onglet via admin.taxonomies.tab_XXX_YYY */
   const tabLabel = (key: string) => {
-    const k = `tab_${key}` as any;
-    try { const r = t(k); if (typeof r === 'string' && r !== k && !r.startsWith('admin.')) return r; } catch {}
+    const k = `tab_${key.replace(/\./g, '_')}` as any;
+    try { const r = t(k); if (typeof r === 'string' && !r.startsWith('admin.') && r !== k) return r; } catch {}
     return key;
   };
 
-  /** Traduit un hint de taxonomie via les clés admin.taxonomies.hint_XXX */
+  /** Traduit un hint via admin.taxonomies.hint_XXX_YYY */
   const tabHint = (key: string) => {
-    const k = `hint_${key}` as any;
-    try { const r = t(k); if (typeof r === 'string' && r !== k && !r.startsWith('admin.')) return r; } catch {}
+    const k = `hint_${key.replace(/\./g, '_')}` as any;
+    try { const r = t(k); if (typeof r === 'string' && !r.startsWith('admin.') && r !== k) return r; } catch {}
     return '';
   };
 
@@ -79,28 +82,15 @@ export default function TaxonomiesPage() {
         <h1 className="text-3xl font-black tracking-tight">{t('title')}</h1>
         <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>{t('subtitle')}</p>
       </header>
+
       <div className="flex flex-wrap items-center gap-2">
         {groups.map((g) => (
           <button key={g.key} type="button" className={`ad-btn ${current?.key === g.key ? 'ad-btn-primary' : 'ad-btn-ghost'}`} onClick={() => setTab(g.key)}>
             {tabLabel(g.key)}
           </button>
         ))}
-        <span className="flex-1" />
-        <div className="flex items-center gap-1 ad-card px-2 py-1">
-          <Globe className="w-4 h-4" style={{ color: 'var(--ad-muted)' }} />
-          {TAXONOMY_LOCALES.map((l) => (
-            <button
-              key={l}
-              type="button"
-              onClick={() => setLocale(l)}
-              className={`px-2 py-1 rounded uppercase text-xs font-black ${locale === l ? 'text-white' : 'opacity-50 hover:opacity-100'}`}
-              style={{ background: locale === l ? 'var(--ad-accent)' : 'transparent' }}
-            >
-              {l}
-            </button>
-          ))}
-        </div>
       </div>
+
       {current && (
         <section className="ad-card p-4 space-y-3">
           <div className="flex items-center justify-between">
@@ -155,7 +145,7 @@ export default function TaxonomiesPage() {
             <button className="ad-btn ad-btn-primary" onClick={() => {
               if (!draft || !current || !draft.value.trim()) return;
               const next = original
-                ? current.terms.map((t) => (t.value === original.value ? { value: draft.value.trim(), label: draft.label.trim() || draft.value } : t))
+                ? current.terms.map((term) => (term.value === original.value ? { value: draft.value.trim(), label: draft.label.trim() || draft.value } : term))
                 : [...current.terms, { value: draft.value.trim(), label: draft.label.trim() || draft.value }];
               persist(next);
             }}>{t('save')}</button>
@@ -176,6 +166,7 @@ export default function TaxonomiesPage() {
                   </span>
                   <input
                     className="ad-input"
+                    dir={l === 'ar' ? 'rtl' : 'ltr'}
                     disabled={mode === 'consult'}
                     value={draft.translations?.[l] ?? ''}
                     onChange={(e) => setTranslation(l, e.target.value)}

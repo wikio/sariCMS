@@ -259,21 +259,34 @@ function TaxonomySelect({ spec, value, onChange, locale }: { spec: FieldSpec; va
     
     // Traduire les options selon la locale (silencieux si clé absente)
     const translatedBase = base.map((opt) => {
-      const translatedLabel = resolveOptionTranslation(messages, locale || 'fr', opt.value);
-      if (translatedLabel) {
-        return { ...opt, label: translatedLabel };
+      // 1. Essayer depuis les traductions de taxonomie (localStorage)
+      const taxTerm = tax.find(t => t.value === opt.value);
+      if (taxTerm?.translations) {
+        const l = (locale || 'fr') as 'fr' | 'en' | 'ar';
+        const fromTax = taxTerm.translations[l];
+        if (fromTax) return { ...opt, label: fromTax };
       }
+      // 2. Fallback: clés option_ dans messages JSON
+      const translatedLabel = resolveOptionTranslation(messages, locale || 'fr', opt.value);
+      if (translatedLabel) return { ...opt, label: translatedLabel };
       return opt;
     });
     
     for (const taxItem of tax) {
       if (!translatedBase.some((o) => o.value === taxItem.value)) {
-        // Traduire aussi les items de taxonomie via option_ keys
-        const taxTranslated = resolveOptionTranslation(messages, locale || 'fr', taxItem.value);
-        if (taxTranslated) {
-          translatedBase.push({ ...taxItem, label: taxTranslated });
+        // Utiliser les traductions localStorage de la taxonomie
+        const l = (locale || 'fr') as 'fr' | 'en' | 'ar';
+        const fromTax = taxItem.translations?.[l];
+        if (fromTax) {
+          translatedBase.push({ ...taxItem, label: fromTax });
         } else {
-          translatedBase.push(taxItem);
+          // Fallback: clés option_ dans messages JSON
+          const taxTranslated = resolveOptionTranslation(messages, locale || 'fr', taxItem.value);
+          if (taxTranslated) {
+            translatedBase.push({ ...taxItem, label: taxTranslated });
+          } else {
+            translatedBase.push(taxItem);
+          }
         }
       }
     }
