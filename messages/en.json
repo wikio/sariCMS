@@ -1315,7 +1315,18 @@
       "auto": "Auto",
       "groupText": "Text",
       "groupArticle": "Article",
-      "color": "Color"
+      "color": "Color",
+      "groupCatalogue": "Catalog",
+      "groupMédias": "Media",
+      "groupTechnique": "Technical",
+      "sku": "SKU",
+      "price": "Price",
+      "inStock": "In stock",
+      "deliveryTime": "Delivery time",
+      "gallery": "Gallery",
+      "catalogPdf": "PDF catalog",
+      "specs": "Specifications",
+      "options": "Options"
     },
     "drawer": {
       "dragToResize": "Drag to resize · click to close",

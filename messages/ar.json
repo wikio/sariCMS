@@ -1315,7 +1315,18 @@
       "auto": "تلقائي",
       "groupText": "النص",
       "groupArticle": "المقال",
-      "color": "اللون"
+      "color": "اللون",
+      "groupCatalogue": "الكتالوج",
+      "groupMédias": "الوسائط",
+      "groupTechnique": "تقني",
+      "sku": "رمز المنتج",
+      "price": "السعر",
+      "inStock": "متوفر",
+      "deliveryTime": "مدة التسليم",
+      "gallery": "معرض الصور",
+      "catalogPdf": "كتالوج PDF",
+      "specs": "المواصفات",
+      "options": "الخيارات"
     },
     "drawer": {
       "dragToResize": "اسحب لتغيير الحجم · انقر للإغلاق",
