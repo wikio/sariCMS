@@ -970,7 +970,8 @@
       "option_main": "Principal",
       "option_footer-nav": "Pied navigation",
       "option_footer-legal": "Pied légal",
-      "option_social": "Réseaux"
+      "option_social": "Réseaux",
+      "searchOptions": "Rechercher…"
     },
     "htmlEditor": {
       "header": "En-tête",

@@ -970,7 +970,8 @@
       "option_main": "رئيسي",
       "option_footer-nav": "تذييل التنقل",
       "option_footer-legal": "تذييل قانوني",
-      "option_social": "شبكات اجتماعية"
+      "option_social": "شبكات اجتماعية",
+      "searchOptions": "بحث…"
     },
     "htmlEditor": {
       "header": "رأس",

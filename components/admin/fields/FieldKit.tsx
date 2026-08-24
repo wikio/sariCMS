@@ -340,7 +340,7 @@ function TaxonomySelect({ spec, value, onChange, locale }: { spec: FieldSpec; va
                 <input
                   autoFocus
                   className="ad-input"
-                  placeholder="Rechercher…"
+                  placeholder={t('searchOptions')}
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
                 />
@@ -370,7 +370,7 @@ function TaxonomySelect({ spec, value, onChange, locale }: { spec: FieldSpec; va
             </div>
           ) : (
             <button type="button" className="ad-btn ad-btn-ghost" onClick={() => setAdding(true)}>
-              <Plus className="w-4 h-4" /> Nouveau
+              <Plus className="w-4 h-4" /> {t('newOption')}
             </button>
           )
         )}
