@@ -941,7 +941,20 @@
       "enterText": "أدخل النص…",
       "detailResponsible": "التفاصيل / المسؤول",
       "urlPlaceholder": "رابط أو رفع ملف",
-      "question": "سؤال"
+      "question": "سؤال",
+      "option_CDI": "عقد دائم",
+      "option_CDD": "عقد محدد المدة",
+      "option_Stage": "تدريب",
+      "option_Alternance": "تناوب",
+      "option_Freelance": "عمل حر",
+      "option_Intérim": "مؤقت",
+      "option_Salon": "معرض",
+      "option_Formation": "تكوين",
+      "option_Conférence": "مؤتمر",
+      "option_Webinar": "ندوة عبر الإنترنت",
+      "option_Atelier": "ورشة عمل",
+      "option_Lancement": "إطلاق",
+      "option_Portes Ouvertes": "أبواب مفتوحة"
     },
     "htmlEditor": {
       "header": "رأس",

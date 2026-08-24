@@ -234,10 +234,23 @@ function TaxonomySelect({ spec, value, onChange, locale }: { spec: FieldSpec; va
     // Les libellés sont résolus selon la langue de la fiche éditée.
     const tax = spec.taxonomy ? listTaxonomy(spec.taxonomy, locale) : [];
     const base = [...(spec.options || [])];
+    
+    // Traduire les options selon la locale
+    const translatedBase = base.map((opt) => {
+      const translationKey = `option_${opt.value}`;
+      try {
+        const translatedLabel = t(translationKey as any);
+        if (translatedLabel !== translationKey) {
+          return { ...opt, label: translatedLabel };
+        }
+      } catch {}
+      return opt;
+    });
+    
     for (const t of tax) {
-      if (!base.some((o) => o.value === t.value)) base.push(t);
+      if (!translatedBase.some((o) => o.value === t.value)) translatedBase.push(t);
     }
-    return base;
+    return translatedBase;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [spec.options, spec.taxonomy, tick, locale]);
 

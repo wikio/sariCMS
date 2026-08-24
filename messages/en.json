@@ -941,7 +941,20 @@
       "enterText": "Enter text…",
       "detailResponsible": "Detail / responsible",
       "urlPlaceholder": "URL or upload a file",
-      "question": "Question"
+      "question": "Question",
+      "option_CDI": "Permanent",
+      "option_CDD": "Fixed-term",
+      "option_Stage": "Internship",
+      "option_Alternance": "Apprenticeship",
+      "option_Freelance": "Freelance",
+      "option_Intérim": "Temporary",
+      "option_Salon": "Trade Show",
+      "option_Formation": "Training",
+      "option_Conférence": "Conference",
+      "option_Webinar": "Webinar",
+      "option_Atelier": "Workshop",
+      "option_Lancement": "Launch",
+      "option_Portes Ouvertes": "Open House"
     },
     "htmlEditor": {
       "header": "Header",

@@ -941,7 +941,20 @@
       "enterText": "Saisissez le texte…",
       "detailResponsible": "Détail / responsable",
       "urlPlaceholder": "URL ou téléverser un fichier",
-      "question": "Question"
+      "question": "Question",
+      "option_CDI": "CDI",
+      "option_CDD": "CDD",
+      "option_Stage": "Stage",
+      "option_Alternance": "Alternance",
+      "option_Freelance": "Freelance",
+      "option_Intérim": "Intérim",
+      "option_Salon": "Salon",
+      "option_Formation": "Formation",
+      "option_Conférence": "Conférence",
+      "option_Webinar": "Webinar",
+      "option_Atelier": "Atelier",
+      "option_Lancement": "Lancement",
+      "option_Portes Ouvertes": "Portes Ouvertes"
     },
     "htmlEditor": {
       "header": "En-tête",
