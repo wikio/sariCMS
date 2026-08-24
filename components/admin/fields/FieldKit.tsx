@@ -258,9 +258,17 @@ function TaxonomySelect({ spec, value, onChange, locale }: { spec: FieldSpec; va
               style={{
                 position: 'fixed',
                 top: `${comboRect.bottom + 4}px`,
-                left: `${comboRect.left}px`,
+                ...(document.documentElement.dir === 'rtl' 
+                  ? { right: `${window.innerWidth - comboRect.right}px` }
+                  : { left: `${comboRect.left}px` }
+                ),
                 width: `${comboRect.width}px`,
                 zIndex: 99999,
+                background: 'var(--ad-surface)',
+                border: '1px solid var(--ad-line)',
+                boxShadow: '0 12px 28px rgba(15, 23, 42, 0.16)',
+                maxHeight: '240px',
+                overflow: 'auto',
               }}
             >
               <div className="p-2">
