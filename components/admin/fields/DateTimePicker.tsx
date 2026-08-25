@@ -89,11 +89,6 @@ export default function DateTimePicker({
 
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
-        {label}
-        {required && <span className="text-red-500 ml-1">*</span>}
-      </label>
-      
       <div className="flex gap-2">
         {/* Champ date */}
         <div className="flex-1 relative">
