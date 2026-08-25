@@ -68,7 +68,11 @@ export interface Event {
   slug?: string;
   title: string;
   type: string;
+  category?: string;
   date: string;
+  startDate?: string;
+  endDate?: string;
+  targetAudience?: string;
   location: string;
   shortDesc: string;
   fullContent?: string;

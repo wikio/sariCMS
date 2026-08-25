@@ -15,6 +15,8 @@ import GedPicker from '@/components/admin/GedPicker';
 import IconMark from '@/components/admin/IconMark';
 import ProcessFlow, { normalizeSteps } from '@/components/admin/ProcessFlow';
 import Toggle from '@/components/admin/Toggle';
+import DateTimePicker from '@/components/admin/fields/DateTimePicker';
+import AutocompleteSelect from '@/components/admin/fields/AutocompleteSelect';
 import { activeCurrencies, loadCurrencies, saveCurrencies, type Currency } from '@/lib/currencies';
 import { useMessages, useTranslations } from 'next-intl';
 
@@ -129,6 +131,8 @@ export function renderField(
       return wrap(<IconPicker value={String(value || '')} onChange={onChange} />);
     case 'color':
       return wrap(<ColorPicker value={String(value || '')} onChange={onChange} />);
+    case 'datetime':
+      return wrap(<DateTimePicker value={String(value || '')} onChange={onChange} label={spec.label} includeTime={true} placeholder={spec.placeholder} required={spec.required} />);
     case 'select':
       return wrap(<TaxonomySelect spec={spec} locale={String(record.locale || 'fr')} value={String(value || '')} onChange={onChange} />);
     case 'radio':

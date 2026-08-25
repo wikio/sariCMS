@@ -7,7 +7,7 @@ export type FieldKind =
   | 'text' | 'textarea' | 'html' | 'slug' | 'email' | 'phone' | 'url'
   | 'price' | 'number' | 'select' | 'radio' | 'toggle' | 'tags'
   | 'image' | 'gallery' | 'file' | 'faq' | 'list' | 'specs' | 'options' | 'agenda'
-  | 'slides' | 'sections' | 'rating' | 'icon' | 'color' | 'process';
+  | 'slides' | 'sections' | 'rating' | 'icon' | 'color' | 'process' | 'datetime';
 
 export type ListLayout = 'catalog' | 'magazine' | 'timeline' | 'mosaic' | 'quotes' | 'people' | 'slides' | 'docs';
 
@@ -176,8 +176,8 @@ export const CMS_MODULES: CmsModule[] = [
   {
     key: 'events', resource: 'events', path: 'events', label: 'Événements', singular: 'événement',
     icon: Calendar, layout: 'timeline', titleKey: 'title', imageKey: 'image', subtitleKey: 'date', badgeKey: 'type',
-    searchKeys: ['title', 'location', 'type'],
-    filterKeys: [{ key: 'status', label: 'Statut', options: STATUS.map((s) => s.value) }, { key: 'type', label: 'Type' }],
+    searchKeys: ['title', 'location', 'type', 'category'],
+    filterKeys: [{ key: 'status', label: 'Statut', options: STATUS.map((s) => s.value) }, { key: 'type', label: 'Type' }, { key: 'category', label: 'Catégorie' }],
     defaults: { title: 'Nouvel événement', status: 'draft', locale: 'fr', agenda: [] },
     fields: [
       { key: 'title', label: 'Titre', kind: 'text', required: true, placeholder: 'Ex. Salon médical Alger', maxLength: 140, group: 'Événement', i18n: true },
@@ -185,7 +185,11 @@ export const CMS_MODULES: CmsModule[] = [
       { key: 'locale', label: 'Langue', kind: 'radio', options: LOCALES, group: 'Événement' },
       { key: 'status', label: 'Statut', kind: 'radio', options: STATUS, group: 'Événement' },
       { key: 'type', label: 'Type', kind: 'select', taxonomy: 'events.type', options: EVENT_TYPES, hint: 'Ajoutez un type si besoin.', group: 'Événement' },
-      { key: 'date', label: 'Date / période', kind: 'text', placeholder: '12–14 octobre 2026', group: 'Événement' },
+      { key: 'category', label: 'Catégorie', kind: 'select', taxonomy: 'events.category', hint: 'Catégorie de l\'événement (ex: Médical, Technologie, Formation). Gérée dans Taxonomies.', group: 'Événement' },
+      { key: 'targetAudience', label: 'Public cible', kind: 'textarea', placeholder: 'Ex: Professionnels de santé, Étudiants, Grand public...', hint: 'Décrivez le public visé par cet événement.', group: 'Événement', i18n: true },
+      { key: 'startDate', label: 'Date de début', kind: 'datetime', required: true, hint: 'Date et heure de début de l\'événement.', group: 'Dates' },
+      { key: 'endDate', label: 'Date de fin', kind: 'datetime', hint: 'Date et heure de fin (optionnel). Laissez vide si événement sur une seule journée.', group: 'Dates' },
+      { key: 'date', label: 'Date / période', kind: 'text', placeholder: '12–14 octobre 2026', hint: 'Texte libre pour affichage (ex: "12-14 octobre 2026").', group: 'Dates' },
       { key: 'location', label: 'Lieu', kind: 'text', placeholder: 'Hôtel El Aurassi, Alger', group: 'Événement' },
       { key: 'image', label: 'Visuel', kind: 'image', group: 'Média' },
       { key: 'shortDesc', label: 'Accroche', kind: 'textarea', wide: true, group: 'Contenu', i18n: true },

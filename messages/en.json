@@ -1382,7 +1382,10 @@
       "gallery": "Gallery",
       "catalogPdf": "PDF catalog",
       "specs": "Specifications",
-      "options": "Options"
+      "options": "Options",
+      "targetAudience": "Target audience",
+      "startDate": "Start date",
+      "endDate": "End date"
     },
     "drawer": {
       "dragToResize": "Drag to resize · click to close",
@@ -2415,7 +2418,8 @@
       "contactPrivate": "Contact us for a private event",
       "viewProgram": "View program",
       "breadcrumbHome": "Home",
-      "breadcrumbEvents": "Events"
+      "breadcrumbEvents": "Events",
+      "allTypes": "All types"
     },
     "genericContent": {
       "notFound": "Content not found",
@@ -2585,7 +2589,8 @@
       "backHome": "Back to Home",
       "blogNews": "Blog & News",
       "latestNews": "Latest News",
-      "readArticle": "Read Article"
+      "readArticle": "Read Article",
+      "allCategories": "All categories"
     },
     "newsDetail": {
       "articleNotFound": "Article Not Found",

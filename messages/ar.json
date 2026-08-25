@@ -1382,7 +1382,10 @@
       "gallery": "معرض الصور",
       "catalogPdf": "كتالوج PDF",
       "specs": "المواصفات",
-      "options": "الخيارات"
+      "options": "الخيارات",
+      "targetAudience": "الجمهور المستهدف",
+      "startDate": "تاريخ البدء",
+      "endDate": "تاريخ الانتهاء"
     },
     "drawer": {
       "dragToResize": "اسحب لتغيير الحجم · انقر للإغلاق",
@@ -2415,7 +2418,8 @@
       "contactPrivate": "اتصل بنا لفعالية خاصة",
       "viewProgram": "عرض البرنامج",
       "breadcrumbHome": "الرئيسية",
-      "breadcrumbEvents": "الفعاليات"
+      "breadcrumbEvents": "الفعاليات",
+      "allTypes": "جميع الأنواع"
     },
     "genericContent": {
       "notFound": "المحتوى غير موجود",
@@ -2585,7 +2589,8 @@
       "backHome": "العودة إلى الرئيسية",
       "blogNews": "المدونة والأخبار",
       "latestNews": "آخر الأخبار",
-      "readArticle": "اقرأ المقال"
+      "readArticle": "اقرأ المقال",
+      "allCategories": "جميع الفئات"
     },
     "newsDetail": {
       "articleNotFound": "المقال غير موجود",

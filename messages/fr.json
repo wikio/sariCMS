@@ -1380,7 +1380,10 @@
       "session": "Session",
       "sessionPlaceholder": "Session",
       "groupText": "Texte",
-      "groupArticle": "Article"
+      "groupArticle": "Article",
+      "targetAudience": "Public cible",
+      "startDate": "Date de début",
+      "endDate": "Date de fin"
     },
     "drawer": {
       "dragToResize": "Glisser pour redimensionner · cliquer pour fermer",
@@ -2413,7 +2416,8 @@
       "contactPrivate": "Nous contacter pour un événement privé",
       "viewProgram": "Voir le programme",
       "breadcrumbHome": "Accueil",
-      "breadcrumbEvents": "Événements"
+      "breadcrumbEvents": "Événements",
+      "allTypes": "Tous les types"
     },
     "genericContent": {
       "notFound": "Contenu non trouvé",
@@ -2583,7 +2587,8 @@
       "backHome": "Retour à l'accueil",
       "blogNews": "Blog & Actualités",
       "latestNews": "Dernières Nouvelles",
-      "readArticle": "Lire l'article"
+      "readArticle": "Lire l'article",
+      "allCategories": "Toutes les catégories"
     },
     "newsDetail": {
       "articleNotFound": "Article non trouvé",
