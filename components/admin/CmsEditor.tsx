@@ -118,6 +118,13 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
     (async () => {
       try {
         const row = await cmsAdminFetch<Record<string, unknown>>(`/${mod.resource}/${id}?view=block`);
+        
+        // Migration: copier date vers publicationDate si publicationDate est vide (pour news)
+        if (mod.key === 'news' && row.date && !row.publicationDate) {
+          row.publicationDate = row.date;
+          console.log('[CmsEditor] Migrated date to publicationDate:', row.publicationDate);
+        }
+        
         setRecord(row);
         setSlugLocked(Boolean(row.slug));
 
