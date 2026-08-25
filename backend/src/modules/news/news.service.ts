@@ -13,8 +13,8 @@ export class NewsService extends BaseCrudService<NewsEntity> {
   protected readonly options: CrudServiceOptions = {
     resource: 'news',
     searchFields: ['title', 'shortDesc', 'category', 'authorName', 'sujet'],
-    sortableFields: ['createdAt', 'updatedAt', 'date', 'title', 'publishedAt'],
-    listFields: ['id', 'slug', 'title', 'category', 'authorName', 'date', 'status', 'locale'],
+    sortableFields: ['createdAt', 'updatedAt', 'date', 'publicationDate', 'title', 'publishedAt'],
+    listFields: ['id', 'slug', 'title', 'category', 'authorName', 'date', 'publicationDate', 'status', 'locale'],
     cardFields: [
       'id',
       'slug',
@@ -24,6 +24,7 @@ export class NewsService extends BaseCrudService<NewsEntity> {
       'category',
       'authorName',
       'date',
+      'publicationDate',
       'readTime',
       'status',
     ],
@@ -49,9 +50,20 @@ export class NewsService extends BaseCrudService<NewsEntity> {
       out.locale = out.locale || 'fr';
       out.status = out.status || 'draft';
     }
+    
+    // Synchroniser publicationDate et date
+    // publicationDate est le champ principal (ISO-8601)
+    // date est gardé pour rétrocompatibilité
+    if (out.publicationDate && !out.date) {
+      out.date = out.publicationDate;
+    } else if (out.date && !out.publicationDate) {
+      out.publicationDate = out.date;
+    }
+    
     if (out.status === 'published' && !out.publishedAt && !existing?.publishedAt) {
       out.publishedAt = new Date().toISOString();
       out.date = out.date || out.publishedAt;
+      out.publicationDate = out.publicationDate || out.publishedAt;
     }
     return out;
   }

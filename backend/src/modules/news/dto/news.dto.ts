@@ -65,7 +65,7 @@ export class CreateNewsDto {
   @MaxLength(80)
   date?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Date de publication (ISO-8601)' })
   @IsOptional()
   @IsString()
   publicationDate?: string;
