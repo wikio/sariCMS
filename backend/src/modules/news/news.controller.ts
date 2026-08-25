@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Post, Patch } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Post, Patch, UsePipes, ValidationPipe } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Actor } from '../../common/decorators/actor.decorator';
 import { CrudResource } from '../../common/decorators/crud-resource.decorator';
@@ -29,6 +29,7 @@ export class NewsController extends BaseCrudController<NewsEntity> {
   }
 
   @Patch(':id')
+  @UsePipes(new ValidationPipe({ whitelist: false, forbidNonWhitelisted: false, transform: true }))
   override update(
     @Param('id', new ParseIntPipe()) id: number,
     @Body() dto: UpdateNewsDto,
