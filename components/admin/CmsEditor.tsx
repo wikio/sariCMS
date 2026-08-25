@@ -224,6 +224,13 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
     setSaving(true);
     try {
       const payload = { ...record, locale: record.locale || settings.defaultLocale };
+      
+      // Supprimer date du payload pour news (utiliser seulement publicationDate)
+      if (mod.key === 'news' && 'date' in payload) {
+        delete payload.date;
+        console.log('[CmsEditor.save] Removed date from payload, using only publicationDate');
+      }
+      
       if (mod.key === 'products') {
         if (!String(payload.slug || '').trim()) payload.slug = slugify(String(payload.name || ''));
         if (!String(payload.sku || '').trim()) payload.sku = nextSku(settings.codes.product);
