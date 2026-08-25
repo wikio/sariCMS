@@ -237,6 +237,7 @@ export const CMS_MODULES: CmsModule[] = [
     defaults: { name: 'Nouveau partenaire', status: 'published', locale: 'fr' },
     fields: [
       { key: 'name', label: 'Nom', kind: 'text', group: 'Fiche' },
+      { key: 'slug', label: 'Slug', kind: 'slug', slugFrom: 'name', group: 'Fiche' },
       { key: 'locale', label: 'Langue', kind: 'radio', options: LOCALES, group: 'Fiche' },
       { key: 'status', label: 'Statut', kind: 'radio', options: STATUS, group: 'Fiche' },
       { key: 'category', label: 'Catégorie', kind: 'select', taxonomy: 'partners.category', options: CATEGORIES, group: 'Fiche' },

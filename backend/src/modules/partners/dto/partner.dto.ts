@@ -18,6 +18,12 @@ export class CreatePartnerDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
+  @MaxLength(191)
+  slug?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
   @MaxLength(500)
   logo?: string;
 

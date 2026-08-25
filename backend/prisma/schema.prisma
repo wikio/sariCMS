@@ -479,6 +479,7 @@ model ServiceItem {
 model Partner {
   id    Int      @id @default(autoincrement())
   locale    String    @default("fr")
+  slug      String
   name      String
   logo      String?
   category  String?
@@ -494,6 +495,7 @@ model Partner {
   createdBy   Int?
   updatedBy   Int?
 
+  @@unique([slug, locale])
   @@index([locale, status])
   @@index([legacyId])
   @@index([parentId])
