@@ -29,7 +29,9 @@ export default function HtmlEditor({
   const [ged, setGed] = useState(false);
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        link: false, // Désactiver Link dans StarterKit pour éviter les doublons
+      }),
       Link.configure({ openOnClick: false }),
       Placeholder.configure({ placeholder }),
     ],
