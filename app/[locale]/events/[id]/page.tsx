@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { getEvents } from '@/lib/data';
 import { matchesEntity } from '@/lib/ids';
+import { extractLegacyId, findEventTranslation, buildMultilingualUrl } from '@/lib/translation-utils';
 import type { Event } from '@/types';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
@@ -34,7 +35,21 @@ export default function EventDetailPage() {
     const loadEvent = async () => {
       const events = await getEvents(locale);
       setAllEvents(events);
-      const found = events.find((e) => matchesEntity(e, id));
+      
+      // Essayer d'extraire le legacyId de l'URL
+      const legacyId = extractLegacyId(id);
+      
+      let found: Event | undefined;
+      if (legacyId) {
+        // Rechercher par legacyId d'abord
+        found = events.find((e) => e.legacyId === legacyId);
+      }
+      
+      // Fallback sur la recherche par id/slug si legacyId non trouvé
+      if (!found) {
+        found = events.find((e) => matchesEntity(e, id));
+      }
+      
       setEvent(found || null);
     };
     loadEvent();
@@ -277,7 +292,7 @@ export default function EventDetailPage() {
             {(prevEvent || nextEvent) && (
               <div className="grid md:grid-cols-2 gap-6 mb-8">
                 {prevEvent ? (
-                  <Link href={`/${locale}/evenements/${prevEvent.id}`} className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 p-6 hover:border-sari-blue transition-all group rounded-lg">
+                  <Link href={buildMultilingualUrl(`/${locale}/evenements`, prevEvent.legacyId || String(prevEvent.id), prevEvent.slug)} className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 p-6 hover:border-sari-blue transition-all group rounded-lg">
                     <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
                       <PrevIcon className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
                       {t('prevEvent')}
@@ -288,7 +303,7 @@ export default function EventDetailPage() {
                   </Link>
                 ) : <div></div>}
                 {nextEvent ? (
-                  <Link href={`/${locale}/evenements/${nextEvent.id}`} className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 p-6 hover:border-sari-blue transition-all group text-right rounded-lg">
+                  <Link href={buildMultilingualUrl(`/${locale}/evenements`, nextEvent.legacyId || String(nextEvent.id), nextEvent.slug)} className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 p-6 hover:border-sari-blue transition-all group text-right rounded-lg">
                     <div className="flex items-center justify-end gap-2 text-sm text-gray-500 mb-2">
                       {t('nextEvent')}
                       <NextIcon className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -309,7 +324,7 @@ export default function EventDetailPage() {
                 </h2>
                 <div className="grid md:grid-cols-3 gap-6">
                   {relatedEvents.map((ev) => (
-                    <Link key={ev.id} href={`/${locale}/evenements/${ev.id}`} className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 card-hover overflow-hidden group rounded-lg">
+                    <Link key={ev.id} href={buildMultilingualUrl(`/${locale}/evenements`, ev.legacyId || String(ev.id), ev.slug)} className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 card-hover overflow-hidden group rounded-lg">
                       <div className="aspect-video overflow-hidden relative">
                         <img src={ev.image} alt={ev.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                         <div className={`absolute top-4 left-4 ${typeColors[ev.type] || 'bg-sari-blue'} text-white px-3 py-1 text-xs font-bold uppercase rounded`}>
