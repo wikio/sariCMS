@@ -131,3 +131,38 @@ export function hasTime(date: string | Date | number): boolean {
 
   return dateObj.getHours() !== 0 || dateObj.getMinutes() !== 0;
 }
+
+/**
+ * Extrait les parties d'une date (jour, mois, année) formatées selon la locale
+ * @param date - Date à formater
+ * @param locale - Langue
+ */
+export function formatDateParts(
+  date: string | Date | number,
+  locale: Locale = 'fr'
+): { day: string; month: string; year: string } {
+  let dateObj: Date;
+  if (typeof date === 'string') {
+    dateObj = new Date(date);
+  } else if (typeof date === 'number') {
+    dateObj = new Date(date);
+  } else {
+    dateObj = date;
+  }
+
+  if (isNaN(dateObj.getTime())) {
+    return { day: '', month: '', year: '' };
+  }
+
+  const localeMap: Record<Locale, string> = {
+    fr: 'fr-FR',
+    en: 'en-US',
+    ar: 'ar-SA',
+  };
+
+  const day = dateObj.toLocaleDateString(localeMap[locale], { day: 'numeric' });
+  const month = dateObj.toLocaleDateString(localeMap[locale], { month: 'short' });
+  const year = dateObj.toLocaleDateString(localeMap[locale], { year: 'numeric' });
+
+  return { day, month, year };
+}

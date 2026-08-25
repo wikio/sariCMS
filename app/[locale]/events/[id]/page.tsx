@@ -12,6 +12,7 @@ import {
 import { getEvents } from '@/lib/data';
 import { matchesEntity } from '@/lib/ids';
 import { extractLegacyId, findEventTranslation, buildMultilingualUrl } from '@/lib/translation-utils';
+import { formatDate, formatDateRange, hasTime } from '@/lib/date-utils';
 import type { Event } from '@/types';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
@@ -68,9 +69,8 @@ export default function EventDetailPage() {
   }, []);
 
   useEffect(() => {
-    if (!event?.date) return;
-    const dateStr = event.date.split(' - ')[0].split(' ').slice(0, 3).join(' ');
-    const eventDate = new Date(dateStr);
+    if (!event?.startDate) return;
+    const eventDate = new Date(event.startDate);
     if (isNaN(eventDate.getTime())) return;
     const timer = setInterval(() => {
       const now = new Date();
@@ -87,7 +87,7 @@ export default function EventDetailPage() {
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, [event?.date]);
+  }, [event?.startDate]);
 
   const handleRegistration = (e: React.FormEvent) => {
     e.preventDefault();
@@ -166,7 +166,13 @@ export default function EventDetailPage() {
             <div className="flex flex-wrap items-center gap-6 text-gray-300">
               <div className="flex items-center gap-2">
                 <Calendar className="w-5 h-5 text-sari-lime" />
-                <span className="font-semibold">{event.date}</span>
+                <span className="font-semibold">
+                  {event.endDate && event.endDate !== event.startDate
+                    ? formatDateRange(event.startDate || event.date, event.endDate, locale as any)
+                    : formatDate(event.startDate || event.date, locale as any, { 
+                        includeTime: hasTime(event.startDate || event.date) 
+                      })}
+                </span>
               </div>
               <div className="flex items-center gap-2">
                 <MapPin className="w-5 h-5 text-sari-lime" />
@@ -272,7 +278,15 @@ export default function EventDetailPage() {
               </h2>
               <div className="grid md:grid-cols-2 gap-6">
                 {[
-                  { icon: Calendar, title: t('date'), value: event.date },
+                  { 
+                    icon: Calendar, 
+                    title: t('date'), 
+                    value: event.endDate && event.endDate !== event.startDate
+                      ? formatDateRange(event.startDate || event.date, event.endDate, locale as any)
+                      : formatDate(event.startDate || event.date, locale as any, { 
+                          includeTime: hasTime(event.startDate || event.date) 
+                        })
+                  },
                   { icon: MapPin, title: t('location'), value: event.location },
                   { icon: Tag, title: t('type'), value: event.type },
                   { icon: Users, title: t('audience'), value: t('audienceValue') },
@@ -342,7 +356,7 @@ export default function EventDetailPage() {
                         </h3>
                         <div className="flex items-center gap-2 text-sm text-gray-500">
                           <Calendar className="w-4 h-4" />
-                          <span>{ev.date}</span>
+                          <span>{formatDate(ev.startDate || ev.date, locale as any, { format: 'short' })}</span>
                         </div>
                       </div>
                     </Link>

@@ -163,9 +163,9 @@ export default function NewsDetailPage() {
               <div className="flex items-center gap-2">
                 <Calendar className="w-5 h-5 text-sari-blue" />
                 <span>
-                  {item.publicationDate 
-                    ? formatDate(item.publicationDate, locale as any, { includeTime: hasTime(item.publicationDate) })
-                    : item.date}
+                  {formatDate(item.publicationDate || item.date, locale as any, { 
+                    includeTime: hasTime(item.publicationDate || item.date) 
+                  })}
                 </span>
               </div>
               {item.readTime && (
@@ -311,9 +311,7 @@ export default function NewsDetailPage() {
                       <div className="flex items-center gap-2 text-xs text-gray-500 mt-2">
                         <Calendar className="w-3 h-3" />
                         <span>
-                          {post.publicationDate 
-                            ? formatDate(post.publicationDate, locale as any, { format: 'short' })
-                            : post.date}
+                          {formatDate(post.publicationDate || post.date, locale as any, { format: 'short' })}
                         </span>
                       </div>
                     </div>

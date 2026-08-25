@@ -11,7 +11,7 @@ import type { Event } from '@/types';
 import Pagination from '@/components/ui/Pagination';
 import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
 import ImageWithFallback from '@/components/ui/ImageWithFallback';
-import { formatDate } from '@/lib/date-utils';
+import { formatDate, formatDateParts } from '@/lib/date-utils';
 
 export default function EventsPage() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -118,10 +118,15 @@ export default function EventsPage() {
                 fallbackIcon="calendar"
                 placeholderSize="lg"
               />
-              <div className="absolute top-4 left-4 bg-sari-lime text-sari-dark px-3 py-2 font-bold text-center">
-                <div className="text-xl leading-none">{event.date.split(' ')[0]}</div>
-                <div className="text-xs">{event.date.split(' ')[1]}</div>
-              </div>
+              {(() => {
+                const dateParts = formatDateParts(event.startDate || event.date, locale as any);
+                return (
+                  <div className="absolute top-4 left-4 bg-sari-lime text-sari-dark px-3 py-2 font-bold text-center">
+                    <div className="text-xl leading-none">{dateParts.day}</div>
+                    <div className="text-xs">{dateParts.month}</div>
+                  </div>
+                );
+              })()}
               <button
                 onClick={() => {
                   setSelectedType(event.type);
