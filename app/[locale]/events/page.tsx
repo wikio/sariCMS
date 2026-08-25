@@ -6,14 +6,17 @@ import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { CalendarX, MapPin, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getEvents } from '@/lib/data';
-import { slugify } from '@/lib/slugify'; // ✅ 1. Ajout de l'import slugify
+import { slugify } from '@/lib/slugify';
 import type { Event } from '@/types';
 import Pagination from '@/components/ui/Pagination';
 import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
+import ImageWithFallback from '@/components/ui/ImageWithFallback';
+import { formatDate } from '@/lib/date-utils';
 
 export default function EventsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [events, setEvents] = useState<Event[]>([]);
+  const [selectedType, setSelectedType] = useState<string | null>(null);
   const itemsPerPage = 6;
   const locale = useLocale();
   const t = useTranslations('pages.events');
@@ -27,8 +30,16 @@ export default function EventsPage() {
     loadEvents();
   }, [locale]);
 
-  const totalPages = Math.ceil(events.length / itemsPerPage);
-  const currentItems = events.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  // Filtrer par type si sélectionné
+  const filteredEvents = selectedType
+    ? events.filter(event => event.type === selectedType)
+    : events;
+
+  const totalPages = Math.ceil(filteredEvents.length / itemsPerPage);
+  const currentItems = filteredEvents.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  // Obtenir la liste unique des types d'événements
+  const eventTypes = Array.from(new Set(events.map(event => event.type))).filter(Boolean);
 
   if (events.length === 0) {
     return (
@@ -60,30 +71,82 @@ export default function EventsPage() {
           {t('title')}
         </h1>
       </div>
+
+      {/* Filtres par type d'événement */}
+      {eventTypes.length > 0 && (
+        <div className="flex flex-wrap gap-2 justify-center mb-12">
+          <button
+            onClick={() => {
+              setSelectedType(null);
+              setCurrentPage(1);
+            }}
+            className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
+              selectedType === null
+                ? 'bg-sari-blue text-white'
+                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-sari-blue hover:text-white'
+            }`}
+          >
+            {t('allTypes', { defaultMessage: 'Tous les types' })}
+          </button>
+          {eventTypes.map(type => (
+            <button
+              key={type}
+              onClick={() => {
+                setSelectedType(type);
+                setCurrentPage(1);
+              }}
+              className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
+                selectedType === type
+                  ? 'bg-sari-blue text-white'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-sari-blue hover:text-white'
+              }`}
+            >
+              {type}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
         {currentItems.map((event) => (
           <div key={event.id} className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 card-hover overflow-hidden flex flex-col h-full group">
             <div className="relative">
-              <img src={event.image} alt={event.title} className="w-full h-48 object-cover transition-transform duration-500 group-hover:scale-105" />
+              <ImageWithFallback
+                src={event.image}
+                alt={event.title}
+                className="w-full h-48 object-cover transition-transform duration-500 group-hover:scale-105"
+                fallbackIcon="calendar"
+                placeholderSize="lg"
+              />
               <div className="absolute top-4 left-4 bg-sari-lime text-sari-dark px-3 py-2 font-bold text-center">
                 <div className="text-xl leading-none">{event.date.split(' ')[0]}</div>
                 <div className="text-xs">{event.date.split(' ')[1]}</div>
               </div>
-              <div className="absolute top-4 right-4 bg-sari-dark/80 text-white px-3 py-1 text-xs font-bold uppercase backdrop-blur-sm">{event.type}</div>
+              <button
+                onClick={() => {
+                  setSelectedType(event.type);
+                  setCurrentPage(1);
+                }}
+                className="absolute top-4 right-4 bg-sari-dark/80 text-white px-3 py-1 text-xs font-bold uppercase backdrop-blur-sm hover:bg-sari-dark transition-colors cursor-pointer"
+              >
+                {event.type}
+              </button>
             </div>
             <div className="p-6 flex flex-col flex-grow">
               <h3 className="text-xl font-bold text-sari-dark dark:text-white mb-3 group-hover:text-sari-blue transition-colors line-clamp-2">
                 {event.title}
               </h3>
-              <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm mb-4">
+              <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm mb-2">
                 <MapPin className="w-4 h-4 flex-shrink-0" />
                 <span className="line-clamp-1">{event.location}</span>
+              </div>
+              <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-xs mb-4">
+                <span>{formatDate(event.date, locale as any, { format: 'medium' })}</span>
               </div>
               <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-2 mb-6 flex-grow">
                 {event.shortDesc}
               </p>
               
-              {/* ✅ 2. Modification du lien pour inclure le slug et utiliser le dossier "events" */}
               <Link 
                 href={`/${locale}/events/${event.id}-${slugify(event.title)}`} 
                 className="text-sari-blue font-semibold hover:underline mt-auto inline-flex items-center gap-2"
