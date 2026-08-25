@@ -65,6 +65,7 @@ export interface Product {
 
 export interface Event {
   id: number | string;
+  locale?: string; // Langue du contenu (fr, en, ar)
   legacyId?: string; // ID unique pour toutes les versions linguistiques
   slug?: string;
   title: string;
@@ -93,6 +94,7 @@ export interface Author {
 
 export interface News {
   id: number | string;
+  locale?: string; // Langue du contenu (fr, en, ar)
   legacyId?: string; // ID unique pour toutes les versions linguistiques
   slug?: string;
   title: string;

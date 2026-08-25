@@ -14,6 +14,7 @@ import type { News } from '@/types';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
 import ImageWithFallback from '@/components/ui/ImageWithFallback';
+import LanguageIndicator from '@/components/ui/LanguageIndicator';
 
 export default function NewsDetailPage() {
   const params = useParams();
@@ -118,6 +119,9 @@ export default function NewsDetailPage() {
 
   return (
     <PageVisibilityGuard visibilityKey="module.news">
+    {/* Indicateur de langue si contenu non traduit */}
+    {item?.locale && <LanguageIndicator contentLocale={item.locale} requestedLocale={locale} />}
+    
     <div className="pt-32 pb-24 min-h-screen">
       {/* Barre de progression */}
       <div className="fixed top-0 left-0 w-full h-1 bg-gray-200 dark:bg-gray-800 z-50">

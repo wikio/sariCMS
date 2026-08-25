@@ -90,6 +90,7 @@ function mapProduct(row: Record<string, unknown>): Product {
 function mapNews(row: Record<string, unknown>): News {
   return {
     id: asPublicId(row),
+    locale: row.locale ? String(row.locale) : 'fr',
     title: String(row.title ?? ''),
     category: String(row.category ?? ''),
     date: String(row.date ?? row.publishedAt ?? ''),
@@ -102,6 +103,7 @@ function mapNews(row: Record<string, unknown>): News {
     sujet: row.sujet ? String(row.sujet) : undefined,
     classification: row.classification ? String(row.classification) : undefined,
     slug: row.slug ? String(row.slug) : undefined,
+    legacyId: row.legacyId ? String(row.legacyId) : undefined,
   };
 }
 
@@ -113,6 +115,7 @@ function mapEvent(row: Record<string, unknown>): Event {
     : undefined;
   return {
     id: asPublicId(row),
+    locale: row.locale ? String(row.locale) : 'fr',
     title: String(row.title ?? ''),
     type: String(row.type ?? ''),
     date: String(row.date ?? ''),
@@ -122,6 +125,7 @@ function mapEvent(row: Record<string, unknown>): Event {
     image: String(row.image ?? ''),
     agenda,
     slug: row.slug ? String(row.slug) : undefined,
+    legacyId: row.legacyId ? String(row.legacyId) : undefined,
   };
 }
 
@@ -343,14 +347,30 @@ export async function getProducts(locale: string): Promise<Product[]> {
 export async function getNews(locale: string): Promise<News[]> {
   return fromCmsOrJson(locale, 'news', [], async () => {
     const rows = await cmsPublicList<Record<string, unknown>>('news', locale);
-    return rows.length ? rows.map(mapNews) : null;
+    
+    // Si pas de résultats et locale != 'fr', essayer avec le français (fallback)
+    if (rows.length === 0 && locale !== 'fr') {
+      console.warn(`[getNews] Aucun article trouvé pour locale=${locale}, fallback sur fr`);
+      const frRows = await cmsPublicList<Record<string, unknown>>('news', 'fr');
+      return frRows.length ? frRows.map(mapNews) : [];
+    }
+    
+    return rows.length ? rows.map(mapNews) : [];
   });
 }
 
 export async function getEvents(locale: string): Promise<Event[]> {
   return fromCmsOrJson(locale, 'events', [], async () => {
     const rows = await cmsPublicList<Record<string, unknown>>('events', locale);
-    return rows.length ? rows.map(mapEvent) : null;
+    
+    // Si pas de résultats et locale != 'fr', essayer avec le français (fallback)
+    if (rows.length === 0 && locale !== 'fr') {
+      console.warn(`[getEvents] Aucun événement trouvé pour locale=${locale}, fallback sur fr`);
+      const frRows = await cmsPublicList<Record<string, unknown>>('events', 'fr');
+      return frRows.length ? frRows.map(mapEvent) : [];
+    }
+    
+    return rows.length ? rows.map(mapEvent) : [];
   });
 }
 
@@ -484,8 +504,18 @@ export async function getEventById(locale: string, id: number | string): Promise
 }
 
 export async function getNewsById(locale: string, id: number | string): Promise<News | null> {
-  const remote = await cmsPublicOne<Record<string, unknown>>('news', String(id), locale);
+  // Essayer d'abord dans la langue demandée
+  let remote = await cmsPublicOne<Record<string, unknown>>('news', String(id), locale);
+  
+  // Fallback sur le français si non trouvé et locale != 'fr'
+  if (!remote && locale !== 'fr') {
+    console.warn(`[getNewsById] Article ${id} non trouvé pour locale=${locale}, fallback sur fr`);
+    remote = await cmsPublicOne<Record<string, unknown>>('news', String(id), 'fr');
+  }
+  
   if (remote) return mapNews(remote);
+  
+  // Fallback sur la recherche locale
   const news = await getNews(locale);
   return news.find((n) => matchesEntity(n, id)) || null;
 }
