@@ -53,19 +53,35 @@ export default function DateTimePicker({
     }
   }, [value, includeTime]);
 
-  // Combine date et time en ISO string
+  // Combine date et time en ISO string complet (ISO-8601 avec fuseau horaire)
   const handleChange = (newDate: string, newTime: string) => {
     if (!newDate) {
       onChange('');
       return;
     }
 
-    if (includeTime && newTime) {
-      const isoString = `${newDate}T${newTime}:00`;
+    try {
+      let dateObj: Date;
+      
+      if (includeTime && newTime) {
+        // Combiner date et heure
+        dateObj = new Date(`${newDate}T${newTime}:00`);
+      } else {
+        // Date uniquement, heure à minuit
+        dateObj = new Date(`${newDate}T00:00:00`);
+      }
+      
+      // Vérifier que la date est valide
+      if (isNaN(dateObj.getTime())) {
+        console.error('Date invalide:', newDate, newTime);
+        return;
+      }
+      
+      // Convertir en ISO-8601 complet avec fuseau horaire
+      const isoString = dateObj.toISOString();
       onChange(isoString);
-    } else {
-      const isoString = `${newDate}T00:00:00`;
-      onChange(isoString);
+    } catch (error) {
+      console.error('Erreur de conversion de date:', error);
     }
   };
 
