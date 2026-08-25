@@ -190,6 +190,9 @@ model Testimonial {
   image     String?
   rating    Int       @default(5)
   sortOrder Int       @default(0)
+  legacyId  String?
+  parentId  Int?
+  isDefault Boolean   @default(false)
   status    String    @default("published")
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -198,6 +201,8 @@ model Testimonial {
   updatedBy   Int?
 
   @@index([locale, status])
+  @@index([legacyId])
+  @@index([parentId])
   @@index([deletedAt])
   @@map("testimonials")
 }
@@ -419,6 +424,9 @@ model Product {
   specs        Json?
   options      Json?
   catalogPdf   String?
+  legacyId     String?
+  parentId     Int?
+  isDefault    Boolean   @default(false)
   status       String    @default("draft")
   publishedAt  DateTime?
   createdAt    DateTime  @default(now())
@@ -429,6 +437,8 @@ model Product {
 
   @@unique([slug, locale])
   @@index([category, inStock])
+  @@index([legacyId])
+  @@index([parentId])
   @@index([deletedAt])
   @@map("products")
 }
@@ -448,7 +458,9 @@ model ServiceItem {
   features  Json?
   faq       Json?
   sortOrder Int       @default(0)
-  legacyId  Int?
+  legacyId  String?
+  parentId  Int?
+  isDefault Boolean   @default(false)
   status    String    @default("draft")
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -458,6 +470,8 @@ model ServiceItem {
 
   @@unique([slug, locale])
   @@index([status])
+  @@index([legacyId])
+  @@index([parentId])
   @@index([deletedAt])
   @@map("services")
 }
@@ -470,7 +484,9 @@ model Partner {
   category  String?
   website   String?
   sortOrder Int       @default(0)
-  legacyId  Int?
+  legacyId  String?
+  parentId  Int?
+  isDefault Boolean   @default(false)
   status    String    @default("draft")
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -479,6 +495,8 @@ model Partner {
   updatedBy   Int?
 
   @@index([locale, status])
+  @@index([legacyId])
+  @@index([parentId])
   @@index([deletedAt])
   @@map("partners")
 }
@@ -502,7 +520,9 @@ model Career {
   workflow    Json?
   benefits    Json?
   contact     String?
-  legacyId    Int?
+  legacyId    String?
+  parentId    Int?
+  isDefault   Boolean   @default(false)
   status      String    @default("draft")
   publishedAt DateTime?
   createdAt   DateTime  @default(now())
@@ -513,6 +533,8 @@ model Career {
 
   @@unique([slug, locale])
   @@index([status, location])
+  @@index([legacyId])
+  @@index([parentId])
   @@index([deletedAt])
   @@map("careers")
 }
@@ -531,6 +553,9 @@ model SolutionCategory {
   features   Json?
   faq        Json?
   sortOrder  Int       @default(0)
+  legacyId   String?
+  parentId   Int?
+  isDefault  Boolean   @default(false)
   status     String    @default("draft")
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
@@ -540,6 +565,8 @@ model SolutionCategory {
 
   @@unique([slug, locale])
   @@index([status])
+  @@index([legacyId])
+  @@index([parentId])
   @@index([deletedAt])
   @@map("solutions")
 }

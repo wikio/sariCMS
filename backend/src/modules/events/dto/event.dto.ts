@@ -36,11 +36,28 @@ export class CreateEventDto {
   @MaxLength(80)
   type?: string;
 
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  category?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  targetAudience?: string;
+
   @ApiPropertyOptional({ description: 'Date libre (ISO ou libellé vitrine)' })
   @IsOptional()
   @IsString()
   @MaxLength(80)
   date?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsDateString()
+  startDate?: string;
 
   @ApiPropertyOptional()
   @IsOptional()

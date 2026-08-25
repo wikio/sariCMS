@@ -68,6 +68,11 @@ export class CreateNewsDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
+  publicationDate?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
   @MaxLength(20)
   readTime?: string;
 
