@@ -225,10 +225,10 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
     try {
       const payload = { ...record, locale: record.locale || settings.defaultLocale };
       
-      // Supprimer date du payload pour news (utiliser seulement publicationDate)
-      if (mod.key === 'news' && 'date' in payload) {
+      // Supprimer date du payload pour news et events (utiliser seulement publicationDate/startDate)
+      if ((mod.key === 'news' || mod.key === 'events') && 'date' in payload) {
         delete payload.date;
-        console.log('[CmsEditor.save] Removed date from payload, using only publicationDate');
+        console.log(`[CmsEditor.save] Removed date from payload for ${mod.key}, using only publicationDate/startDate`);
       }
       
       // Convertir publicationDate en objet Date si c'est une chaîne
