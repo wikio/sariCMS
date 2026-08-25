@@ -1384,7 +1384,8 @@
       "targetAudience": "Public cible",
       "startDate": "Date de début",
       "endDate": "Date de fin",
-      "publicationDate": "Date de publication"
+      "publicationDate": "Date de publication",
+      "hintFullDesc": "Éditeur riche — section pleine largeur."
     },
     "drawer": {
       "dragToResize": "Glisser pour redimensionner · cliquer pour fermer",
