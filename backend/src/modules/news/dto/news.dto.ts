@@ -111,7 +111,6 @@ export class CreateNewsDto {
 export class UpdateNewsDto extends PartialType(CreateNewsDto) {
   @ApiPropertyOptional({ description: 'Date de publication (ISO-8601)' })
   @IsOptional()
-  @IsDateString()
-  @Type(() => String)
+  @IsString()
   publicationDate?: string;
 }
