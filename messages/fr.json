@@ -1383,7 +1383,8 @@
       "groupArticle": "Article",
       "targetAudience": "Public cible",
       "startDate": "Date de début",
-      "endDate": "Date de fin"
+      "endDate": "Date de fin",
+      "publicationDate": "Date de publication"
     },
     "drawer": {
       "dragToResize": "Glisser pour redimensionner · cliquer pour fermer",

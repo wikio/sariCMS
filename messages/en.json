@@ -1385,7 +1385,8 @@
       "options": "Options",
       "targetAudience": "Target audience",
       "startDate": "Start date",
-      "endDate": "End date"
+      "endDate": "End date",
+      "publicationDate": "Publication date"
     },
     "drawer": {
       "dragToResize": "Drag to resize · click to close",

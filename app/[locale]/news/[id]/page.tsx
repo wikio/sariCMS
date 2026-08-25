@@ -8,6 +8,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { Calendar, Clock, ChevronLeft, ChevronRight, Mail, CheckCircle } from 'lucide-react';
 import { getNews } from '@/lib/data';
 import { matchesEntity } from '@/lib/ids';
+import { extractLegacyId, findNewsTranslation, buildMultilingualUrl } from '@/lib/translation-utils';
 import type { News } from '@/types';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
@@ -37,13 +38,25 @@ export default function NewsDetailPage() {
     const loadArticle = async () => {
       const news = await getNews(locale);
       
-      const found = news.find((n) => matchesEntity(n, idString) || matchesEntity(n, rawIdParam));
+      // Essayer d'extraire le legacyId de l'URL
+      const legacyId = extractLegacyId(rawIdParam);
+      
+      let found: News | undefined;
+      if (legacyId) {
+        // Rechercher par legacyId d'abord
+        found = news.find((n) => n.legacyId === legacyId);
+      }
+      
+      // Fallback sur la recherche par id/slug si legacyId non trouvé
+      if (!found) {
+        found = news.find((n) => matchesEntity(n, idString) || matchesEntity(n, rawIdParam));
+      }
       
       if (found) {
         setItem(found);
-        const related = news.filter(n => n.id !== found.id && n.category === found.category).slice(0, 3);
-        const latest = news.filter(n => n.id !== found.id).slice(0, 5);
-        const currentIndex = news.findIndex(n => n.id === found.id);
+        const related = news.filter(n => n.id !== found!.id && n.category === found!.category).slice(0, 3);
+        const latest = news.filter(n => n.id !== found!.id).slice(0, 5);
+        const currentIndex = news.findIndex(n => n.id === found!.id);
         
         setRelatedNews(related);
         setLatestNews(latest);
@@ -54,7 +67,7 @@ export default function NewsDetailPage() {
       }
     };
     
-    if (idString) {
+    if (idString || rawIdParam) {
       loadArticle();
     }
   }, [idString, rawIdParam, locale]);
@@ -200,7 +213,7 @@ export default function NewsDetailPage() {
             {(prevArticle || nextArticle) && (
               <div className="grid md:grid-cols-2 gap-6 mb-8">
                 {prevArticle ? (
-                  <Link href={`/${locale}/news/${prevArticle.id}-${encodeURIComponent(prevArticle.title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]/g, ''))}`} className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 p-6 hover:border-sari-blue transition-all group rounded-xl">
+                  <Link href={buildMultilingualUrl(`/${locale}/news`, prevArticle.legacyId || String(prevArticle.id), prevArticle.slug)} className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 p-6 hover:border-sari-blue transition-all group rounded-xl">
                     <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
                       {locale === 'ar' ? <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" /> : <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />}
                       {t('previousArticle')}
@@ -211,7 +224,7 @@ export default function NewsDetailPage() {
                   </Link>
                 ) : <div></div>}
                 {nextArticle ? (
-                  <Link href={`/${locale}/news/${nextArticle.id}-${encodeURIComponent(nextArticle.title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]/g, ''))}`} className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 p-6 hover:border-sari-blue transition-all group text-right rounded-xl">
+                  <Link href={buildMultilingualUrl(`/${locale}/news`, nextArticle.legacyId || String(nextArticle.id), nextArticle.slug)} className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 p-6 hover:border-sari-blue transition-all group text-right rounded-xl">
                     <div className="flex items-center justify-end gap-2 text-sm text-gray-500 mb-2">
                       {t('nextArticle')}
                       {locale === 'ar' ? <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> : <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />}
@@ -229,7 +242,7 @@ export default function NewsDetailPage() {
                 <h2 className="text-3xl font-bold text-sari-dark dark:text-white mb-8">{t('relatedArticles')}</h2>
                 <div className="grid md:grid-cols-3 gap-6">
                   {relatedNews.map(article => (
-                    <Link key={article.id} href={`/${locale}/news/${article.id}-${encodeURIComponent(article.title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]/g, ''))}`} className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 card-hover overflow-hidden group rounded-xl">
+                    <Link key={article.id} href={buildMultilingualUrl(`/${locale}/news`, article.legacyId || String(article.id), article.slug)} className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 card-hover overflow-hidden group rounded-xl">
                       <div className="aspect-video overflow-hidden">
                         {article.image ? (
                           <img src={article.image} alt={article.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
@@ -274,7 +287,7 @@ export default function NewsDetailPage() {
               </h3>
               <div className="space-y-6">
                 {latestNews.map(post => (
-                  <Link key={post.id} href={`/${locale}/news/${post.id}-${encodeURIComponent(post.title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]/g, ''))}`} className="flex gap-4 group">
+                  <Link key={post.id} href={buildMultilingualUrl(`/${locale}/news`, post.legacyId || String(post.id), post.slug)} className="flex gap-4 group">
                     {post.image ? (
                       <img src={post.image} alt={post.title} className="w-20 h-20 object-cover flex-shrink-0 rounded-lg" />
                     ) : (

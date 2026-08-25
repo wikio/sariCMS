@@ -1385,7 +1385,8 @@
       "options": "الخيارات",
       "targetAudience": "الجمهور المستهدف",
       "startDate": "تاريخ البدء",
-      "endDate": "تاريخ الانتهاء"
+      "endDate": "تاريخ الانتهاء",
+      "publicationDate": "تاريخ النشر"
     },
     "drawer": {
       "dragToResize": "اسحب لتغيير الحجم · انقر للإغلاق",

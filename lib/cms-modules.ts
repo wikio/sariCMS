@@ -1,6 +1,6 @@
 import {
   Package, Wrench, Briefcase, Newspaper, Calendar, MessageCircle, Handshake,
-  Layers, Image as ImageIcon, FileText, Images, Mail, FolderOpen, Scale, Menu,
+  Layers, Image as ImageIcon, FileText, Images, Mail, FolderOpen, Scale, Menu, User,
 } from 'lucide-react';
 
 export type FieldKind =
@@ -164,8 +164,8 @@ export const CMS_MODULES: CmsModule[] = [
       { key: 'category', label: 'Rubrique', kind: 'select', taxonomy: 'news.category', options: ['Innovation', 'Produits', 'Santé', 'Formation', 'Corporate'].map((v) => ({ value: v, label: v })), hint: 'Gérée dans Taxonomies.', group: 'Article' },
       { key: 'classification', label: 'Classification', kind: 'text', group: 'Article' },
       { key: 'sujet', label: 'Sujet', kind: 'text', group: 'Article' },
-      { key: 'authorName', label: 'Auteur', kind: 'text', group: 'Article' },
-      { key: 'date', label: 'Date', kind: 'text', group: 'Article' },
+      { key: 'authorName', label: 'Auteur', kind: 'text', group: 'Article', hint: 'Nom de l\'auteur de l\'article.' },
+      { key: 'publicationDate', label: 'Date de publication', kind: 'datetime', required: true, hint: 'Date et heure de publication de l\'article.', group: 'Article' },
       { key: 'readTime', label: 'Temps de lecture', kind: 'text', suffix: 'min', group: 'Article' },
       { key: 'image', label: 'Une', kind: 'image', group: 'Média' },
       { key: 'tags', label: 'Tags', kind: 'tags', wide: true, group: 'Média' },
@@ -194,6 +194,20 @@ export const CMS_MODULES: CmsModule[] = [
       { key: 'shortDesc', label: 'Accroche', kind: 'textarea', wide: true, group: 'Contenu', i18n: true },
       { key: 'fullContent', label: 'Présentation', kind: 'html', wide: true, group: 'Contenu', i18n: true },
       { key: 'agenda', label: 'Programme', kind: 'agenda', wide: true, group: 'Programme' },
+    ],
+  },
+  {
+    key: 'authors', resource: 'authors', path: 'authors', label: 'Auteurs', singular: 'auteur',
+    icon: User, layout: 'people', titleKey: 'name', imageKey: 'photo', subtitleKey: 'role',
+    searchKeys: ['name', 'email', 'role'],
+    filterKeys: [],
+    defaults: { name: 'Nouvel auteur', bio: '', role: '' },
+    fields: [
+      { key: 'name', label: 'Nom complet', kind: 'text', required: true, placeholder: 'Ex: Dr. Martin Dupont', maxLength: 120, group: 'Identité' },
+      { key: 'email', label: 'Email', kind: 'email', placeholder: 'auteur@exemple.com', group: 'Identité' },
+      { key: 'role', label: 'Fonction / Rôle', kind: 'text', placeholder: 'Ex: Journaliste médical, Expert en cardiologie', group: 'Identité' },
+      { key: 'photo', label: 'Photo', kind: 'image', group: 'Média' },
+      { key: 'bio', label: 'Biographie', kind: 'textarea', wide: true, placeholder: 'Présentez l\'auteur en quelques lignes...', group: 'Contenu' },
     ],
   },
   {

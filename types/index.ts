@@ -81,6 +81,16 @@ export interface Event {
   agenda?: string[];
 }
 
+export interface Author {
+  id: number | string;
+  name: string;
+  email?: string;
+  bio?: string;
+  photo?: string;
+  role?: string;
+  articlesCount?: number;
+}
+
 export interface News {
   id: number | string;
   legacyId?: string; // ID unique pour toutes les versions linguistiques
@@ -88,6 +98,7 @@ export interface News {
   title: string;
   category: string;
   date: string;
+  publicationDate?: string;
   author?: string;
   shortDesc: string;
   fullContent?: string;
