@@ -337,6 +337,7 @@ model NewsArticle {
   authorName     String?
   authorId    Int?
   date           DateTime?
+  publicationDate DateTime?
   readTime       String?
   shortDesc      String?   @db.Text
   fullContent    String?   @db.Text
@@ -344,6 +345,9 @@ model NewsArticle {
   tags           Json?
   status         String    @default("draft")
   publishedAt    DateTime?
+  legacyId       String?
+  parentId       Int?
+  isDefault      Boolean   @default(false)
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   deletedAt      DateTime?
@@ -353,6 +357,8 @@ model NewsArticle {
   @@unique([slug, locale])
   @@index([status, date])
   @@index([authorId])
+  @@index([legacyId])
+  @@index([parentId])
   @@index([deletedAt])
   @@map("news_articles")
 }
@@ -363,6 +369,8 @@ model EventItem {
   slug        String
   title       String
   type        String?
+  category    String?
+  targetAudience String?
   date        DateTime?
   endDate     DateTime?
   location    String?
@@ -372,6 +380,9 @@ model EventItem {
   agenda      Json?
   status      String    @default("draft")
   publishedAt DateTime?
+  legacyId    String?
+  parentId    Int?
+  isDefault   Boolean   @default(false)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
@@ -380,6 +391,8 @@ model EventItem {
 
   @@unique([slug, locale])
   @@index([date])
+  @@index([legacyId])
+  @@index([parentId])
   @@index([deletedAt])
   @@map("events")
 }
