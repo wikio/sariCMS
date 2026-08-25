@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import {
   IsArray,
   IsDateString,
@@ -69,6 +70,7 @@ export class CreateNewsDto {
   @ApiPropertyOptional({ description: 'Date de publication (ISO-8601)' })
   @IsOptional()
   @IsDateString()
+  @Type(() => String)
   publicationDate?: string;
 
   @ApiPropertyOptional()
