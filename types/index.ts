@@ -65,6 +65,7 @@ export interface Product {
 
 export interface Event {
   id: number | string;
+  legacyId?: string; // ID unique pour toutes les versions linguistiques
   slug?: string;
   title: string;
   type: string;
@@ -82,6 +83,7 @@ export interface Event {
 
 export interface News {
   id: number | string;
+  legacyId?: string; // ID unique pour toutes les versions linguistiques
   slug?: string;
   title: string;
   category: string;
