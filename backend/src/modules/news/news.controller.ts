@@ -29,12 +29,12 @@ export class NewsController extends BaseCrudController<NewsEntity> {
   }
 
   @Patch(':id')
-  @UsePipes(new ValidationPipe({ whitelist: false, forbidNonWhitelisted: false, transform: true }))
   override update(
     @Param('id', new ParseIntPipe()) id: number,
-    @Body() dto: UpdateNewsDto,
+    @Body() body: any,
     @Actor() actor: ActorContext,
   ) {
-    return this.service.update(id, dto as unknown as Partial<NewsEntity>, actor);
+    console.log('[NewsController.update] Raw body received:', JSON.stringify(body, null, 2));
+    return this.service.update(id, body as Partial<NewsEntity>, actor);
   }
 }
