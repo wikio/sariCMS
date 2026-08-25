@@ -221,6 +221,7 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
         if (!String(payload.slug || '').trim()) payload.slug = slugify(String(payload.name || ''));
         if (!String(payload.sku || '').trim()) payload.sku = nextSku(settings.codes.product);
       }
+      console.log('[CmsEditor.save] Payload being sent:', JSON.stringify(payload, null, 2));
       const saved = id === 'new' || !record.id
         ? await cmsAdminCreate(mod.resource, payload)
         : await cmsAdminUpdate(mod.resource, String(record.id), payload);

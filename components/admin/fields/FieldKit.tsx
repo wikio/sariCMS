@@ -132,7 +132,17 @@ export function renderField(
     case 'color':
       return wrap(<ColorPicker value={String(value || '')} onChange={onChange} />);
     case 'datetime':
-      return wrap(<DateTimePicker value={String(value || '')} onChange={onChange} label={spec.label} includeTime={true} placeholder={spec.placeholder} required={spec.required} />);
+      return wrap(<DateTimePicker 
+        value={String(value || '')} 
+        onChange={(newValue) => {
+          console.log('[FieldKit.datetime] onChange called:', { key: spec.key, value: newValue });
+          onChange(newValue);
+        }} 
+        label={spec.label} 
+        includeTime={true} 
+        placeholder={spec.placeholder} 
+        required={spec.required} 
+      />);
     case 'select':
       return wrap(<TaxonomySelect spec={spec} locale={String(record.locale || 'fr')} value={String(value || '')} onChange={onChange} />);
     case 'radio':
