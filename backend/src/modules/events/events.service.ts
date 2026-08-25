@@ -13,9 +13,9 @@ export class EventsService extends BaseCrudService<EventEntity> {
   protected readonly options: CrudServiceOptions = {
     resource: 'events',
     searchFields: ['title', 'location', 'type', 'shortDesc'],
-    sortableFields: ['date', 'createdAt', 'updatedAt', 'title'],
-    listFields: ['id', 'slug', 'title', 'type', 'date', 'location', 'status'],
-    cardFields: ['id', 'slug', 'title', 'type', 'date', 'location', 'shortDesc', 'image', 'status'],
+    sortableFields: ['startDate', 'endDate', 'date', 'createdAt', 'updatedAt', 'title'],
+    listFields: ['id', 'slug', 'title', 'type', 'startDate', 'endDate', 'date', 'location', 'status'],
+    cardFields: ['id', 'slug', 'title', 'type', 'startDate', 'endDate', 'date', 'location', 'shortDesc', 'image', 'status'],
   };
 
   constructor(
@@ -34,6 +34,16 @@ export class EventsService extends BaseCrudService<EventEntity> {
       out.locale = out.locale || 'fr';
       out.status = out.status || 'draft';
     }
+    
+    // Synchroniser date et startDate
+    // startDate est le champ principal (ISO-8601)
+    // date est gardé pour rétrocompatibilité (était censé contenir du texte libre mais ne pouvait pas)
+    if (out.startDate && !out.date) {
+      out.date = out.startDate;
+    } else if (out.date && !out.startDate) {
+      out.startDate = out.date;
+    }
+    
     return out;
   }
 

@@ -48,18 +48,21 @@ export class CreateEventDto {
   @MaxLength(200)
   targetAudience?: string;
 
-  @ApiPropertyOptional({ description: 'Date libre (ISO ou libellé vitrine)' })
+  @ApiPropertyOptional({ 
+    description: 'DEPRECATED: Utilisez startDate à la place. Gardé pour rétrocompatibilité.',
+    deprecated: true 
+  })
   @IsOptional()
   @IsString()
   @MaxLength(80)
   date?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Date et heure de début (ISO-8601)' })
   @IsOptional()
   @IsDateString()
   startDate?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Date et heure de fin (ISO-8601)' })
   @IsOptional()
   @IsDateString()
   endDate?: string;
