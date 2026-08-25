@@ -377,6 +377,7 @@ model EventItem {
   category    String?
   targetAudience String?
   date        DateTime?
+  startDate   DateTime?
   endDate     DateTime?
   location    String?
   shortDesc   String?   @db.Text
@@ -396,6 +397,7 @@ model EventItem {
 
   @@unique([slug, locale])
   @@index([date])
+  @@index([startDate])
   @@index([legacyId])
   @@index([parentId])
   @@index([deletedAt])

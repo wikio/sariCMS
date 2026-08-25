@@ -31,9 +31,10 @@ export class EventsController extends BaseCrudController<EventEntity> {
   @Patch(':id')
   override update(
     @Param('id', new ParseIntPipe()) id: number,
-    @Body() dto: UpdateEventDto,
+    @Body() body: any,
     @Actor() actor: ActorContext,
   ) {
-    return this.service.update(id, dto as unknown as Partial<EventEntity>, actor);
+    console.log('[EventsController.update] Raw body received:', JSON.stringify(body, null, 2));
+    return this.service.update(id, body as Partial<EventEntity>, actor);
   }
 }
