@@ -39,11 +39,11 @@ export const WRITABLE_FIELDS: Record<string, string[]> = {
     'contact', 'applyAuth', 'status',
   ],
   news: [
-    'title', 'slug', 'locale', 'category', 'classification', 'sujet', 'authorName', 'date',
+    'title', 'slug', 'locale', 'category', 'classification', 'sujet', 'authorName', 'date', 'publicationDate',
     'readTime', 'shortDesc', 'fullContent', 'image', 'tags', 'status',
   ],
   events: [
-    'title', 'slug', 'locale', 'type', 'date', 'endDate', 'location', 'shortDesc', 'fullContent',
+    'title', 'slug', 'locale', 'type', 'date', 'startDate', 'endDate', 'location', 'shortDesc', 'fullContent',
     'image', 'agenda', 'status',
   ],
   testimonials: ['name', 'locale', 'role', 'clinic', 'text', 'image', 'rating', 'sortOrder', 'status'],

@@ -231,6 +231,12 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
         console.log('[CmsEditor.save] Removed date from payload, using only publicationDate');
       }
       
+      // Convertir publicationDate en objet Date si c'est une chaîne
+      if (mod.key === 'news' && payload.publicationDate && typeof payload.publicationDate === 'string') {
+        payload.publicationDate = new Date(payload.publicationDate);
+        console.log('[CmsEditor.save] Converted publicationDate to Date object:', payload.publicationDate);
+      }
+      
       if (mod.key === 'products') {
         if (!String(payload.slug || '').trim()) payload.slug = slugify(String(payload.name || ''));
         if (!String(payload.sku || '').trim()) payload.sku = nextSku(settings.codes.product);
