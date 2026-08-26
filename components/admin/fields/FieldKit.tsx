@@ -742,11 +742,21 @@ export function IconPicker({ value, onChange }: { value: string; onChange: (v: s
           className="ad-input"
           placeholder={t('searchIcon')}
           value={q}
-          onFocus={() => setOpen(true)}
-          onChange={(e) => { setQ(e.target.value); setOpen(true); }}
+          onFocus={() => {
+            console.log('[IconPicker] onFocus called, opening dropdown');
+            setOpen(true);
+          }}
+          onChange={(e) => { 
+            console.log('[IconPicker] onChange called:', e.target.value);
+            setQ(e.target.value); 
+            setOpen(true); 
+          }}
         />
       </div>
-      {open && portalRect && createPortal(
+      {open && portalRect && (() => {
+        console.log('[IconPicker] Rendering dropdown with portalRect:', portalRect);
+        console.log('[IconPicker] Hits count:', hits.length);
+        return createPortal(
         <div
           className="ad-combo-list ad-scroll"
           style={{
@@ -772,7 +782,12 @@ export function IconPicker({ value, onChange }: { value: string; onChange: (v: s
               type="button"
               className={`ad-combo-item items-center gap-2 ${name === value ? 'is-on font-bold' : ''}`}
               onMouseDown={(e) => e.preventDefault()}
-              onClick={() => { onChange(name); setQ(''); setOpen(false); }}
+              onClick={() => { 
+                console.log('[IconPicker] Icon selected:', name);
+                onChange(name); 
+                setQ(''); 
+                setOpen(false); 
+              }}
             >
               <span style={{ color: getIconColor(name) }} className="shrink-0">
                 <IconMark name={name} className="w-4 h-4" />
@@ -782,7 +797,8 @@ export function IconPicker({ value, onChange }: { value: string; onChange: (v: s
           ))}
         </div>,
         document.body
-      )}
+      );
+      })()}
     </div>
   );
 }
