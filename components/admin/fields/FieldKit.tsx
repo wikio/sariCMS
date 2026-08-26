@@ -852,7 +852,12 @@ export function MediaPicker({ value, onChange, moduleName = 'ged', recordId, rec
         <input className="ad-input" value={value} onChange={(e) => onChange(e.target.value)} placeholder={t("urlPlaceholder")} />
         <label className="ad-btn ad-btn-ghost cursor-pointer">
           <Upload className="w-4 h-4" /> {busy ? '…' : t("file")}
-          <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])} />
+          <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+            if (e.target.files?.[0]) {
+              upload(e.target.files[0]);
+              e.target.value = ''; // Reset input to allow re-upload
+            }
+          }} />
         </label>
         <button type="button" className="ad-btn ad-btn-ghost" onClick={() => setGed(true)}><FolderOpen className="w-4 h-4" /> {t("ged")}</button>
       </div>

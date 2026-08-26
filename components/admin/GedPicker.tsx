@@ -28,10 +28,17 @@ function normalize(raw: unknown): GedFile | null {
   const url = String(row.url || (row.file ? `/uploads/${row.file}` : ''));
   if (!url) return null;
   const name = fileName(row);
+  
+  // Extraire le chemin du fichier depuis l'URL si file n'est pas fourni
+  let filePath = row.file ? String(row.file) : undefined;
+  if (!filePath && url.startsWith('/uploads/')) {
+    filePath = url.replace('/uploads/', '');
+  }
+  
   return {
     name: name || url.split('/').pop() || url,
     url,
-    file: row.file ? String(row.file) : undefined,
+    file: filePath,
     originalName: row.originalName ? String(row.originalName) : undefined,
     label: row.label ? String(row.label) : undefined,
     title: row.title ? String(row.title) : undefined,
@@ -61,15 +68,20 @@ export default function GedPicker({
   const [renamingFile, setRenamingFile] = useState<GedFile | null>(null);
   const [newName, setNewName] = useState('');
   const [replacingFile, setReplacingFile] = useState<GedFile | null>(null);
+  const [cacheBuster, setCacheBuster] = useState(Date.now());
 
   useEffect(() => { setMounted(true); }, []);
 
   const load = async () => {
     try {
-      const res = await fetch('/api/admin/upload');
+      const res = await fetch(`/api/admin/upload?t=${Date.now()}`);
+      if (!res.ok) throw new Error('Failed to load files');
       const json = await res.json();
-      setFiles((json.files || []).map(normalize).filter(Boolean) as GedFile[]);
-    } catch {
+      const normalized = (json.files || []).map(normalize).filter(Boolean) as GedFile[];
+      setFiles(normalized);
+      setCacheBuster(Date.now()); // Update cache buster to refresh images
+    } catch (e) {
+      console.error('[GedPicker] load error:', e);
       setFiles([]);
     }
   };
@@ -90,11 +102,15 @@ export default function GedPicker({
       body.append('module', 'ged');
       body.append('label', file.name);
       const res = await fetch('/api/admin/upload', { method: 'POST', body });
+      if (!res.ok) throw new Error('Upload failed');
       const json = await res.json();
       if (json.url) {
         onPick(json.url);
-        load(); // Recharger la liste
+        await load(); // Recharger la liste et attendre
       }
+    } catch (e) {
+      console.error('[GedPicker] upload error:', e);
+      alert('Erreur lors de l\'upload du fichier');
     } finally {
       setBusy(false);
     }
@@ -103,12 +119,21 @@ export default function GedPicker({
   const deleteFile = async (file: GedFile) => {
     if (!confirm(`Supprimer le fichier "${file.name}" ?`)) return;
     try {
-      const res = await fetch(`/api/admin/upload?file=${encodeURIComponent(file.file || '')}`, { method: 'DELETE' });
-      if (res.ok) {
-        load(); // Recharger la liste
+      const fileParam = file.file || file.url.replace('/uploads/', '');
+      if (!fileParam) {
+        console.error('[GedPicker] No file path for deletion');
+        alert('Impossible de déterminer le chemin du fichier');
+        return;
       }
+      const res = await fetch(`/api/admin/upload?file=${encodeURIComponent(fileParam)}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        throw new Error(json.error || 'Delete failed');
+      }
+      await load(); // Recharger la liste et attendre
     } catch (error) {
-      console.error('Failed to delete file:', error);
+      console.error('[GedPicker] delete error:', error);
+      alert('Erreur lors de la suppression du fichier');
     }
   };
 
@@ -120,21 +145,23 @@ export default function GedPicker({
   const renameFile = async () => {
     if (!renamingFile || !newName.trim()) return;
     try {
-      const oldFile = renamingFile.file || '';
+      const oldFile = renamingFile.file || renamingFile.url.replace('/uploads/', '');
+      if (!oldFile) throw new Error('No file path');
       const ext = oldFile.split('.').pop() || '';
-      const newFileName = `${newName.trim()}.${ext}`;
+      const dir = oldFile.includes('/') ? oldFile.split('/').slice(0, -1).join('/') + '/' : '';
+      const newFileName = `${dir}${newName.trim()}.${ext}`;
       const res = await fetch('/api/admin/upload', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ oldFile, newFile: newFileName }),
       });
-      if (res.ok) {
-        setRenamingFile(null);
-        setNewName('');
-        load(); // Recharger la liste
-      }
+      if (!res.ok) throw new Error('Rename failed');
+      setRenamingFile(null);
+      setNewName('');
+      await load();
     } catch (error) {
-      console.error('Failed to rename file:', error);
+      console.error('[GedPicker] rename error:', error);
+      alert('Erreur lors du renommage du fichier');
     }
   };
 
@@ -142,8 +169,12 @@ export default function GedPicker({
     if (!replacingFile) return;
     setBusy(true);
     try {
+      const fileParam = replacingFile.file || replacingFile.url.replace('/uploads/', '');
+      if (!fileParam) throw new Error('No file path for replacement');
+      
       // Supprimer l'ancien fichier
-      await fetch(`/api/admin/upload?file=${encodeURIComponent(replacingFile.file || '')}`, { method: 'DELETE' });
+      const delRes = await fetch(`/api/admin/upload?file=${encodeURIComponent(fileParam)}`, { method: 'DELETE' });
+      if (!delRes.ok) throw new Error('Failed to delete old file');
       
       // Upload le nouveau fichier avec le même nom
       const body = new FormData();
@@ -152,11 +183,15 @@ export default function GedPicker({
       body.append('label', replacingFile.label || file.name);
       body.append('slug', replacingFile.name.replace(/\.[^/.]+$/, ''));
       const res = await fetch('/api/admin/upload', { method: 'POST', body });
+      if (!res.ok) throw new Error('Failed to upload replacement file');
       const json = await res.json();
       if (json.url) {
         setReplacingFile(null);
-        load(); // Recharger la liste
+        await load(); // Recharger la liste et attendre
       }
+    } catch (error) {
+      console.error('[GedPicker] replace error:', error);
+      alert('Erreur lors du remplacement du fichier');
     } finally {
       setBusy(false);
     }
@@ -184,8 +219,12 @@ export default function GedPicker({
           <div className="flex gap-2">
             <label className="ad-btn ad-btn-primary cursor-pointer">
               <Upload className="w-4 h-4" /> {busy ? t('importing') : t('importBtn')}
-              <input type="file" accept={accept} multiple className="hidden" onChange={(e) => {
-                Array.from(e.target.files || []).forEach(upload);
+              <input type="file" accept={accept} multiple className="hidden" onChange={async (e) => {
+                const fileList = Array.from(e.target.files || []);
+                e.target.value = ''; // Reset input to allow re-upload
+                for (const f of fileList) {
+                  await upload(f);
+                }
               }} />
             </label>
             <button type="button" className="ad-btn ad-btn-icon ad-btn-ghost" onClick={onClose} aria-label={t('close')}>
@@ -209,7 +248,18 @@ export default function GedPicker({
             <div key={f.url} className="ad-card overflow-hidden text-left relative group">
               <button type="button" className="w-full" onClick={() => onPick(f.url)}>
                 {f.url.match(/\.(png|jpe?g|webp|gif|svg)$/i) ? (
-                  <img src={f.url} alt="" className="h-24 w-full object-contain bg-[var(--ad-surface-2)]" />
+                  <img 
+                    src={`${f.url}?v=${cacheBuster}`} 
+                    alt="" 
+                    className="h-24 w-full object-contain bg-[var(--ad-surface-2)]"
+                    onError={(e) => {
+                      // Fallback to URL without cache buster if it fails
+                      const img = e.currentTarget;
+                      if (img.src.includes('?v=')) {
+                        img.src = f.url;
+                      }
+                    }}
+                  />
                 ) : (
                   <div className="h-24 flex items-center justify-center"><FolderOpen className="w-6 h-6" /></div>
                 )}
@@ -280,7 +330,12 @@ export default function GedPicker({
                   type="file"
                   accept={accept}
                   className="hidden"
-                  onChange={(e) => e.target.files?.[0] && replaceFile(e.target.files[0])}
+                  onChange={(e) => {
+                    if (e.target.files?.[0]) {
+                      replaceFile(e.target.files[0]);
+                      e.target.value = ''; // Reset input to allow re-upload
+                    }
+                  }}
                 />
               </label>
               <button type="button" className="ad-btn ad-btn-ghost" onClick={() => setReplacingFile(null)}>

@@ -89,9 +89,9 @@ export default function AdminComponentEditorPage() {
   const handleSave = () => {
     try {
       localStorage.setItem(`sari_component_${locale}_${componentType}`, JSON.stringify(componentData));
-      showToast(t('componentEditor.saveSuccess', 'Composant sauvegardé !'), 'success');
+      showToast(t('componentEditor.saveSuccess') || 'Composant sauvegardé !', 'success');
     } catch (err) {
-      showToast(t('componentEditor.saveError', 'Erreur'), 'error');
+      showToast(t('componentEditor.saveError') || 'Erreur', 'error');
     }
   };
 
@@ -102,7 +102,7 @@ export default function AdminComponentEditorPage() {
     const a = document.createElement('a');
     a.href = url; a.download = `${componentType}_${locale}.json`; a.click();
     URL.revokeObjectURL(url);
-    showToast(t('componentEditor.exportSuccess', 'Fichier JSON exporté !'), 'success');
+    showToast(t('componentEditor.exportSuccess') || 'Fichier JSON exporté !', 'success');
   };
 
   if (loading || !componentData) {
@@ -134,7 +134,7 @@ export default function AdminComponentEditorPage() {
                   activeTab === tab.id ? 'text-sari-blue border-b-2 border-sari-blue' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
                 }`}
               >
-                <Icon className="w-4 h-4" /> {t(`componentEditor.${tab.id}`, tab.label)}
+                <Icon className="w-4 h-4" /> {t(`componentEditor.${tab.id}`) || tab.label}
               </button>
             );
           })}

@@ -306,6 +306,7 @@ export default function NewsDetailPage() {
                       fallbackIcon="calendar"
                       placeholderSize="sm"
                     />
+                    ) : null}
                     <div className="flex-1">
                       <h4 className="font-bold text-sari-dark dark:text-white group-hover:text-sari-blue transition-colors line-clamp-2 text-sm">{post.title}</h4>
                       <div className="flex items-center gap-2 text-xs text-gray-500 mt-2">
