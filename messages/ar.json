@@ -1280,7 +1280,13 @@
       "searchPlaceholder": "البحث عن ملف…",
       "allModules": "جميع الوحدات",
       "allCategories": "جميع الفئات",
-      "noFiles": "لا توجد ملفات"
+      "noFiles": "لا توجد ملفات",
+      "rename": "إعادة تسمية",
+      "replace": "استبدال",
+      "delete": "حذف",
+      "renameFile": "إعادة تسمية الملف",
+      "replaceFile": "استبدال {name}",
+      "selectFile": "اختر ملف"
     },
     "messageComposer": {
       "clientMessage": "رسالة للعميل",

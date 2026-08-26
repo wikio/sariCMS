@@ -1280,7 +1280,13 @@
       "searchPlaceholder": "Rechercher un fichier…",
       "allModules": "Tous les modules",
       "allCategories": "Toutes les catégories",
-      "noFiles": "Aucun fichier"
+      "noFiles": "Aucun fichier",
+      "rename": "Renommer",
+      "replace": "Remplacer",
+      "delete": "Supprimer",
+      "renameFile": "Renommer le fichier",
+      "replaceFile": "Remplacer {name}",
+      "selectFile": "Sélectionner un fichier"
     },
     "messageComposer": {
       "clientMessage": "Message au client",
