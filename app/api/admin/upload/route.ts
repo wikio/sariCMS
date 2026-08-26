@@ -38,7 +38,7 @@ function getModuleDir(module: string): string {
 
 /**
  * GET /api/admin/upload
- * Liste tous les fichiers uploadés
+ * Liste tous les fichiers uploadés (racine + sous-dossiers)
  */
 export async function GET() {
   try {
@@ -48,14 +48,18 @@ export async function GET() {
 
     const files: any[] = [];
     
-    // Parcourir tous les sous-dossiers (modules)
-    const modules = await readdir(UPLOAD_DIR);
-    for (const module of modules) {
-      const moduleDir = path.join(UPLOAD_DIR, module);
-      const stats = await stat(moduleDir);
+    // Parcourir tous les éléments (fichiers et dossiers)
+    const items = await readdir(UPLOAD_DIR);
+    for (const item of items) {
+      if (item.startsWith('.')) continue;
+      
+      const itemPath = path.join(UPLOAD_DIR, item);
+      const stats = await stat(itemPath);
       
       if (stats.isDirectory()) {
-        const moduleFiles = await readdir(moduleDir);
+        // C'est un sous-dossier (module)
+        const module = item;
+        const moduleFiles = await readdir(itemPath);
         for (const file of moduleFiles) {
           if (file.startsWith('.')) continue;
           
@@ -75,6 +79,25 @@ export async function GET() {
             createdAt: new Date().toISOString(),
           });
         }
+      } else if (stats.isFile()) {
+        // C'est un fichier à la racine (ancien format)
+        const parts = item.split('_');
+        const module = parts[0] || 'ged';
+        const id = parts[1] || '';
+        const nameWithExt = parts.slice(2).join('_');
+        const name = nameWithExt.replace(/\.[^/.]+$/, '');
+        
+        files.push({
+          name: name || item,
+          url: `/uploads/${item}`,
+          file: item,
+          originalName: item,
+          label: name || item,
+          module: module,
+          id,
+          createdAt: new Date().toISOString(),
+          isLegacy: true, // Marquer comme ancien fichier
+        });
       }
     }
 
