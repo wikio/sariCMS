@@ -12,6 +12,7 @@ import ProductCard from '@/components/cards/ProductCard';
 import FAQ from '@/components/ui/FAQ';
 import SectionTitle from '@/components/ui/SectionTitle';
 import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
+import IconMark from '@/components/admin/IconMark';
 
 // ✅ Mapping pour résoudre dynamiquement les icônes et couleurs depuis le JSON
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -101,7 +102,13 @@ export default function SolutionCategoryPage() {
     <PageVisibilityGuard visibilityKey="module.solutions">
     <div className="pt-32 pb-24 min-h-screen page-enter">
       {/* HERO */}
-      <div className="parallax-bg py-32 flex items-center justify-center text-center text-white relative" style={{ backgroundImage: `url(${cat.image})` }}>
+      <div 
+        className="parallax-bg py-32 flex items-center justify-center text-center text-white relative" 
+        style={{ 
+          backgroundImage: cat.image ? `url(${cat.image})` : 'none',
+          backgroundColor: cat.image ? undefined : '#1e293b'
+        }}
+      >
         <div className="absolute inset-0 bg-sari-dark/80"></div>
         <div className="absolute inset-0 grid-pattern-bg opacity-10"></div>
         <div className="relative z-10 container mx-auto px-6">
@@ -110,7 +117,7 @@ export default function SolutionCategoryPage() {
             {t('backToSolutions')}
           </Link>
           <div className={`w-24 h-24 ${colors.bg}/20 rounded-2xl flex items-center justify-center mx-auto mb-6 border-2 ${colors.border}`}>
-            <IconComponent className={`w-12 h-12 ${colors.text}`} />
+            <IconMark name={cat.icon} className={`w-12 h-12`} style={{ color: `var(--${cat.color || 'sari-blue'})` }} />
           </div>
           <h1 className="text-5xl md:text-6xl font-bold mb-4 leading-tight">{cat.title}</h1>
           <p className="text-xl text-gray-300 max-w-2xl mx-auto">{cat.shortDesc}</p>
@@ -205,11 +212,10 @@ export default function SolutionCategoryPage() {
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               {otherCategories.map((other) => {
                 const otherColors = colorMap[other.color] || colorMap['sari-blue'];
-                const OtherIcon = iconMap[other.icon] || Package;
                 return (
                   <Link key={other.id} href={`/${locale}/solutions/${other.id}`} className="bg-gray-50 dark:bg-[#111111] p-6 border border-gray-200 dark:border-gray-800 rounded-xl hover:shadow-lg hover:border-sari-blue transition-all group text-center block">
                     <div className={`w-14 h-14 ${otherColors.bg}/10 rounded-lg flex items-center justify-center mx-auto mb-4 group-hover:${otherColors.bg} transition-colors`}>
-                      <OtherIcon className={`w-7 h-7 ${otherColors.text} group-hover:text-white transition-colors`} />
+                      <IconMark name={other.icon} className={`w-7 h-7 ${otherColors.text} group-hover:text-white transition-colors`} />
                     </div>
                     <h3 className="font-bold text-sari-dark dark:text-white group-hover:text-sari-blue transition-colors">{other.title}</h3>
                   </Link>
