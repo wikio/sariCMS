@@ -185,6 +185,13 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
       const overlay = overlays[tab] || {};
       return overlay[key] ?? '';
     }
+    // Pour les champs image avec "Remplacer dans cette traduction"
+    if (!isDefault && field?.kind === 'image') {
+      const overlay = overlays[tab] || {};
+      if (overlay[`${key}Keep`] === 'replace') {
+        return overlay[key] ?? '';
+      }
+    }
     return record?.[key];
   };
 
@@ -403,7 +410,10 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
                             <div className="space-y-2">
                               <ConsultValue spec={field} value={record[field.key]} />
                               {field.kind === 'image' && (
-                                <button className="ad-btn ad-btn-ghost" onClick={() => set(field.key + 'Keep', 'replace')}>Remplacer dans cette traduction</button>
+                                <button className="ad-btn ad-btn-ghost" onClick={() => {
+                                  set(field.key + 'Keep', 'replace');
+                                  set(field.key, ''); // Initialiser à vide pour permettre l'upload d'une nouvelle image
+                                }}>Remplacer dans cette traduction</button>
                               )}
                               {locked && <p className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>Champ partagé, verrouillé.</p>}
                             </div>
