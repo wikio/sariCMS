@@ -86,7 +86,7 @@ export function renderField(
   value: unknown,
   onChange: (v: unknown) => void,
   record: Record<string, unknown>,
-  extra: { origin?: unknown; originLocale?: string; t?: (key: string) => string } = {},
+  extra: { origin?: unknown; originLocale?: string; t?: (key: string) => string; moduleKey?: string } = {},
 ) {
   const ph = spec.placeholder || '';
   const t = extra.t || ((key: string) => key); // Fallback: retourner la clé si pas de fonction de traduction
@@ -167,7 +167,7 @@ export function renderField(
         <textarea className="ad-textarea min-h-[90px]" placeholder={ph || (spec.placeholder || '')} maxLength={spec.maxLength} value={String(value || '')} onChange={(e) => onChange(e.target.value)} />,
       );
     case 'image':
-      return wrap(<MediaPicker value={String(value || '')} onChange={onChange} />);
+      return wrap(<MediaPicker value={String(value || '')} onChange={onChange} moduleName={extra.moduleKey || spec.key} recordId={record.id} recordSlug={record.slug as string} />);
     case 'file':
       return wrap(<FilePicker value={String(value || '')} onChange={onChange} />);
     case 'gallery':
@@ -821,24 +821,26 @@ function ProcessEditor({ value, onChange }: { value: ReturnType<typeof normalize
   );
 }
 
-async function uploadOriginal(file: File, moduleName = 'ged') {
+async function uploadOriginal(file: File, moduleName = 'ged', id?: string | number, slug?: string) {
   const body = new FormData();
   body.append('file', file);
   body.append('module', moduleName);
   body.append('label', file.name);
+  if (id) body.append('id', String(id));
+  if (slug) body.append('slug', slug);
   const res = await fetch('/api/admin/upload', { method: 'POST', body });
   const json = await res.json();
   return json.url as string | undefined;
 }
 
-export function MediaPicker({ value, onChange, moduleName = 'ged' }: { value: string; onChange: (v: string) => void; moduleName?: string }) {
+export function MediaPicker({ value, onChange, moduleName = 'ged', recordId, recordSlug }: { value: string; onChange: (v: string) => void; moduleName?: string; recordId?: string | number; recordSlug?: string }) {
   const t = useTranslations('admin.editor');
   const [busy, setBusy] = useState(false);
   const [ged, setGed] = useState(false);
   const upload = async (file: File) => {
     setBusy(true);
     try {
-      const url = await uploadOriginal(file, moduleName);
+      const url = await uploadOriginal(file, moduleName, recordId, recordSlug);
       if (url) onChange(url);
     } finally {
       setBusy(false);
