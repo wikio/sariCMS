@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir, readdir, unlink, rename } from 'fs/promises';
+import { writeFile, mkdir, readdir, unlink, rename, stat } from 'fs/promises';
 import { existsSync } from 'fs';
 import path from 'path';
 
@@ -29,6 +29,14 @@ function generateFileName(module: string, id: string | number, slug: string, ori
 }
 
 /**
+ * Obtient le chemin du dossier pour un module
+ * Ex: /public/uploads/solution/, /public/uploads/product/, etc.
+ */
+function getModuleDir(module: string): string {
+  return path.join(UPLOAD_DIR, module);
+}
+
+/**
  * GET /api/admin/upload
  * Liste tous les fichiers uploadés
  */
@@ -38,29 +46,39 @@ export async function GET() {
       await mkdir(UPLOAD_DIR, { recursive: true });
     }
 
-    const files = await readdir(UPLOAD_DIR);
-    const fileList = files
-      .filter(f => !f.startsWith('.'))
-      .map(f => {
-        const parts = f.split('_');
-        const module = parts[0] || 'unknown';
-        const id = parts[1] || '';
-        const nameWithExt = parts.slice(2).join('_');
-        const name = nameWithExt.replace(/\.[^/.]+$/, '');
-        
-        return {
-          name: name || f,
-          url: `/uploads/${f}`,
-          file: f,
-          originalName: f,
-          label: name || f,
-          module,
-          id,
-          createdAt: new Date().toISOString(),
-        };
-      });
+    const files: any[] = [];
+    
+    // Parcourir tous les sous-dossiers (modules)
+    const modules = await readdir(UPLOAD_DIR);
+    for (const module of modules) {
+      const moduleDir = path.join(UPLOAD_DIR, module);
+      const stats = await stat(moduleDir);
+      
+      if (stats.isDirectory()) {
+        const moduleFiles = await readdir(moduleDir);
+        for (const file of moduleFiles) {
+          if (file.startsWith('.')) continue;
+          
+          const parts = file.split('_');
+          const id = parts[1] || '';
+          const nameWithExt = parts.slice(2).join('_');
+          const name = nameWithExt.replace(/\.[^/.]+$/, '');
+          
+          files.push({
+            name: name || file,
+            url: `/uploads/${module}/${file}`,
+            file: `${module}/${file}`,
+            originalName: file,
+            label: name || file,
+            module,
+            id,
+            createdAt: new Date().toISOString(),
+          });
+        }
+      }
+    }
 
-    return NextResponse.json({ files: fileList });
+    return NextResponse.json({ files });
   } catch (error) {
     console.error('[Upload API] GET error:', error);
     return NextResponse.json({ error: 'Failed to list files' }, { status: 500 });
@@ -77,32 +95,33 @@ export async function POST(request: NextRequest) {
     const file = formData.get('file') as File;
     const module = formData.get('module') as string || 'ged';
     const id = formData.get('id') as string || Date.now().toString();
-    const slug = formData.get('slug') as string || uuidv4().substring(0, 8);
+    const slug = formData.get('slug') as string || generateUniqueId();
     const label = formData.get('label') as string;
 
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
-    // Créer le dossier uploads s'il n'existe pas
-    if (!existsSync(UPLOAD_DIR)) {
-      await mkdir(UPLOAD_DIR, { recursive: true });
+    // Créer le dossier du module s'il n'existe pas
+    const moduleDir = getModuleDir(module);
+    if (!existsSync(moduleDir)) {
+      await mkdir(moduleDir, { recursive: true });
     }
 
     // Générer le nom de fichier
     const fileName = generateFileName(module, id, slug, file.name);
-    const filePath = path.join(UPLOAD_DIR, fileName);
+    const filePath = path.join(moduleDir, fileName);
 
     // Lire et sauvegarder le fichier
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
     await writeFile(filePath, buffer);
 
-    const url = `/uploads/${fileName}`;
+    const url = `/uploads/${module}/${fileName}`;
 
     return NextResponse.json({
       url,
-      file: fileName,
+      file: `${module}/${fileName}`,
       originalName: file.name,
       label: label || fileName,
       module,
@@ -127,6 +146,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'No file specified' }, { status: 400 });
     }
 
+    // Le fichier peut être module/filename ou juste filename
     const filePath = path.join(UPLOAD_DIR, file);
 
     if (!existsSync(filePath)) {
@@ -155,6 +175,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Missing oldFile or newFile' }, { status: 400 });
     }
 
+    // Les fichiers peuvent être module/filename ou juste filename
     const oldPath = path.join(UPLOAD_DIR, oldFile);
     const newPath = path.join(UPLOAD_DIR, newFile);
 
@@ -168,11 +189,15 @@ export async function PATCH(request: NextRequest) {
 
     await rename(oldPath, newPath);
 
+    // Extraire le module du chemin
+    const module = oldFile.split('/')[0] || 'ged';
+    const newFileName = newFile.split('/').pop() || newFile;
+
     return NextResponse.json({
       success: true,
       oldFile,
       newFile,
-      url: `/uploads/${newFile}`,
+      url: `/uploads/${module}/${newFileName}`,
     });
   } catch (error) {
     console.error('[Upload API] PATCH error:', error);

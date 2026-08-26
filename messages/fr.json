@@ -1286,7 +1286,9 @@
       "delete": "Supprimer",
       "renameFile": "Renommer le fichier",
       "replaceFile": "Remplacer {name}",
-      "selectFile": "Sélectionner un fichier"
+      "selectFile": "Sélectionner un fichier",
+      "save": "Enregistrer",
+      "cancel": "Annuler"
     },
     "messageComposer": {
       "clientMessage": "Message au client",
