@@ -231,6 +231,13 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
         console.log(`[CmsEditor.save] Removed date from payload for ${mod.key}, using only publicationDate/startDate`);
       }
       
+      // S'assurer que icon et color sont toujours envoyés pour solutions (même s'ils sont vides)
+      if (mod.key === 'solutions') {
+        if (!('icon' in payload)) payload.icon = null;
+        if (!('color' in payload)) payload.color = null;
+        console.log('[CmsEditor.save] Ensured icon and color are in payload for solutions');
+      }
+      
       // Convertir publicationDate en objet Date si c'est une chaîne
       if (mod.key === 'news' && payload.publicationDate && typeof payload.publicationDate === 'string') {
         payload.publicationDate = new Date(payload.publicationDate);
