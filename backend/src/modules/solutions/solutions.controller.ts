@@ -25,9 +25,10 @@ export class SolutionsController extends BaseCrudController<SolutionEntity> {
   @Patch(':id')
   override update(
     @Param('id', new ParseIntPipe()) id: number,
-    @Body() dto: UpdateSolutionDto,
+    @Body() body: any,
     @Actor() actor: ActorContext,
   ) {
-    return this.service.update(id, dto as unknown as Partial<SolutionEntity>, actor);
+    console.log('[SolutionsController.update] Raw body received:', JSON.stringify(body, null, 2));
+    return this.service.update(id, body as Partial<SolutionEntity>, actor);
   }
 }
