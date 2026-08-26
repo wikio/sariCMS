@@ -781,12 +781,12 @@ export function IconPicker({ value, onChange }: { value: string; onChange: (v: s
               key={name}
               type="button"
               className={`ad-combo-item items-center gap-2 ${name === value ? 'is-on font-bold' : ''}`}
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => { 
+              onMouseDown={(e) => {
+                e.preventDefault();
                 console.log('[IconPicker] Icon selected:', name);
                 onChange(name); 
                 setQ(''); 
-                setOpen(false); 
+                setOpen(false);
               }}
             >
               <span style={{ color: getIconColor(name) }} className="shrink-0">
