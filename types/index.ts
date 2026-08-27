@@ -137,6 +137,8 @@ export interface Service {
   slug?: string;
   title: string;
   icon: string;
+  color?: string;
+  image?: string;
   shortDesc: string;
   fullDesc?: string;
   features?: string[];

@@ -101,7 +101,7 @@ export const CMS_MODULES: CmsModule[] = [
   },
   {
     key: 'services', resource: 'services', path: 'services', label: 'Services', singular: 'service',
-    icon: Wrench, layout: 'mosaic', titleKey: 'title', subtitleKey: 'icon', badgeKey: 'status',
+    icon: Wrench, layout: 'mosaic', titleKey: 'title', imageKey: 'image', subtitleKey: 'icon', badgeKey: 'status',
     searchKeys: ['title', 'shortDesc'],
     filterKeys: [{ key: 'status', label: 'Statut', options: STATUS.map((s) => s.value) }],
     orderField: 'sortOrder',
@@ -112,10 +112,12 @@ export const CMS_MODULES: CmsModule[] = [
       { key: 'locale', label: 'Langue', kind: 'radio', options: LOCALES, group: 'Identité' },
       { key: 'status', label: 'Statut', kind: 'radio', options: STATUS, group: 'Identité' },
       { key: 'icon', label: 'Icône Lucide', kind: 'icon', options: ICONS, hint: 'Recherchez le nom Lucide, l’icône s’affiche à côté.', group: 'Identité' },
+      { key: 'color', label: 'Couleur', kind: 'color', group: 'Identité' },
+      { key: 'image', label: 'Visuel', kind: 'image', group: 'Média', i18n: true },
       { key: 'shortDesc', label: 'Accroche', kind: 'textarea', wide: true, group: 'Contenu', i18n: true },
       { key: 'fullDesc', label: 'Présentation', kind: 'html', wide: true, group: 'Contenu', i18n: true },
-      { key: 'features', label: 'Engagements', kind: 'list', wide: true, group: 'Détails' },
-      { key: 'faq', label: 'FAQ', kind: 'faq', wide: true, group: 'Détails' },
+      { key: 'features', label: 'Engagements', kind: 'list', wide: true, group: 'Détails', i18n: true },
+      { key: 'faq', label: 'FAQ', kind: 'faq', wide: true, group: 'Détails', i18n: true },
     ],
   },
   {

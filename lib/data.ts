@@ -158,6 +158,8 @@ function mapService(row: Record<string, unknown>): Service {
     id: asPublicId(row),
     title: String(row.title ?? ''),
     icon: String(row.icon ?? ''),
+    color: row.color ? String(row.color) : undefined,
+    image: row.image ? String(row.image) : undefined,
     shortDesc: String(row.shortDesc ?? ''),
     fullDesc: row.fullDesc ? String(row.fullDesc) : undefined,
     features: Array.isArray(row.features) ? (row.features as string[]) : undefined,
@@ -412,7 +414,16 @@ export async function getCareers(locale: string): Promise<Career[]> {
 export async function getServices(locale: string): Promise<Service[]> {
   return fromCmsOrJson(locale, 'services', [], async () => {
     const rows = await cmsPublicList<Record<string, unknown>>('services', locale);
-    return rows.length ? rows.map(mapService) : null;
+    if (!rows.length) return null;
+    
+    // Appliquer les traductions depuis localStorage pour chaque service
+    const translatedRows = rows.map(row => 
+      applyFicheTranslation(row, 'services', locale, [
+        'title', 'shortDesc', 'fullDesc', 'features', 'faq', 'image'
+      ])
+    );
+    
+    return translatedRows.map(mapService);
   });
 }
 
