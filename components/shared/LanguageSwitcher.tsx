@@ -45,8 +45,19 @@ export default function LanguageSwitcher() {
       const pathWithoutLocale = pathname.replace(`/${locale}/`, '');
       const pathParts = pathWithoutLocale.split('/');
       
-      // Ressources qui ont des slugs traduisibles
-      const translatableResources = ['solutions', 'services', 'products', 'news', 'events'];
+      // Ressources qui ont des slugs traduisibles (tous les modules avec i18n: true sur slug)
+      const translatableResources = [
+        'solutions',    // Solutions
+        'services',     // Services
+        'products',     // Produits
+        'news',         // Actualités
+        'events',       // Événements
+        'careers',      // Carrières
+        'partners',     // Partenaires
+        'pages',        // Pages
+        'legal',        // Pages légales
+        'gallery',      // Galerie
+      ];
       
       // Vérifier si le premier segment est une ressource traduisible
       if (pathParts.length >= 2 && translatableResources.includes(pathParts[0])) {
