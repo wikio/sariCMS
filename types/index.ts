@@ -226,6 +226,7 @@ export interface HeroSlide {
 
 export interface SolutionCategory {
   id: string;
+  slug?: string;
   title: string;
   shortDesc: string;
   fullDesc?: string;

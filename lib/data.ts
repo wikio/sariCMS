@@ -203,7 +203,8 @@ function mapHero(row: Record<string, unknown>): HeroSlide {
 
 function mapSolution(row: Record<string, unknown>): SolutionCategory {
   return {
-    id: String(row.slug ?? row.id ?? ''),
+    id: String(row.id ?? ''),
+    slug: row.slug ? String(row.slug) : undefined,
     title: String(row.title ?? ''),
     shortDesc: String(row.shortDesc ?? ''),
     fullDesc: row.fullDesc ? String(row.fullDesc) : undefined,
@@ -419,7 +420,7 @@ export async function getServices(locale: string): Promise<Service[]> {
     // Appliquer les traductions depuis localStorage pour chaque service
     const translatedRows = rows.map(row => 
       applyFicheTranslation(row, 'services', locale, [
-        'title', 'shortDesc', 'fullDesc', 'features', 'faq', 'image'
+        'title', 'slug', 'icon', 'color', 'shortDesc', 'fullDesc', 'features', 'faq', 'image'
       ])
     );
     
@@ -513,7 +514,7 @@ export async function getSolutionCategories(locale: string): Promise<SolutionCat
     // Appliquer les traductions depuis localStorage pour chaque catégorie
     const translatedRows = rows.map(row => 
       applyFicheTranslation(row, 'solutions', locale, [
-        'title', 'shortDesc', 'fullDesc', 'features', 'faq', 'image'
+        'title', 'slug', 'icon', 'color', 'shortDesc', 'fullDesc', 'features', 'faq', 'image'
       ])
     );
     
