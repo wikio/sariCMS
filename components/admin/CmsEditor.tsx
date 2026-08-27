@@ -261,6 +261,16 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
     try {
       const payload = { ...record, locale: record.locale || settings.defaultLocale };
       
+      // Générer automatiquement le slug s'il est vide (version par défaut)
+      const slugField = mod.fields.find((f) => f.kind === 'slug');
+      if (slugField && !String(payload[slugField.key] || '').trim()) {
+        const sourceField = slugField.slugFrom || 'title';
+        const sourceValue = String(payload[sourceField] || payload.name || '');
+        if (sourceValue.trim()) {
+          payload[slugField.key] = slugify(sourceValue);
+        }
+      }
+      
       // Supprimer date du payload pour news et events (utiliser seulement publicationDate/startDate)
       if ((mod.key === 'news' || mod.key === 'events') && 'date' in payload) {
         delete payload.date;
@@ -291,6 +301,16 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
       const newId = String((saved as { id?: string }).id || record.id);
       if (newId) {
         for (const [lang, fields] of Object.entries(overlays)) {
+          // Générer automatiquement le slug dans les traductions s'il est vide
+          const slugField = mod.fields.find((f) => f.kind === 'slug');
+          if (slugField && !String(fields[slugField.key] || '').trim()) {
+            const sourceField = slugField.slugFrom || 'title';
+            const sourceValue = String(fields[sourceField] || '');
+            if (sourceValue.trim()) {
+              fields[slugField.key] = slugify(sourceValue);
+            }
+          }
+          
           saveFicheLocale(mod.resource, newId, lang, fields);
         }
       }
@@ -447,7 +467,7 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
                               {locked && <p className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>Champ partagé, verrouillé.</p>}
                             </div>
                           ) : (
-                            renderField(field, valueOf(field.key), (v) => set(field.key, v), record, { t: tEditor, moduleKey: mod.singular || mod.key })
+                            renderField(field, valueOf(field.key), (v) => set(field.key, v), record, { t: tEditor, moduleKey: mod.singular || mod.key, valueOf })
                           )}
                         </div>
                       </div>
@@ -468,7 +488,7 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
                           <ConsultValue spec={field} value={tab} />
                           <p className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>{tEditor('lockedOnActiveLang')}</p>
                         </div>
-                      ) : renderField(field, valueOf(field.key), (v) => set(field.key, v), record, { origin: originOf(field.key), originLocale: settings.defaultLocale, t: tEditor, moduleKey: mod.singular || mod.key })}
+                      ) : renderField(field, valueOf(field.key), (v) => set(field.key, v), record, { origin: originOf(field.key), originLocale: settings.defaultLocale, t: tEditor, moduleKey: mod.singular || mod.key, valueOf })}
                     </div>
                   ))}
                 </div>

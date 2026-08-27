@@ -86,7 +86,7 @@ export function renderField(
   value: unknown,
   onChange: (v: unknown) => void,
   record: Record<string, unknown>,
-  extra: { origin?: unknown; originLocale?: string; t?: (key: string) => string; moduleKey?: string } = {},
+  extra: { origin?: unknown; originLocale?: string; t?: (key: string) => string; moduleKey?: string; valueOf?: (key: string) => unknown } = {},
 ) {
   const ph = spec.placeholder || '';
   const t = extra.t || ((key: string) => key); // Fallback: retourner la clé si pas de fonction de traduction
@@ -96,14 +96,20 @@ export function renderField(
   switch (spec.kind) {
     case 'html':
       return wrap(<HtmlEditor value={String(value || '')} onChange={onChange} placeholder={ph || 'Rédigez le contenu détaillé…'} />);
-    case 'slug':
+    case 'slug': {
+      // Utiliser valueOf pour récupérer le titre traduit, sinon fallback sur record
+      const titleValue = extra.valueOf 
+        ? String(extra.valueOf(spec.slugFrom || 'title') || extra.valueOf('name') || '')
+        : String(record[spec.slugFrom || 'title'] || record.name || '');
+      
       return wrap(
         <div className="flex gap-2">
           <span className="ad-input !w-auto flex items-center text-xs" style={{ color: 'var(--ad-muted)' }}>/</span>
           <input className="ad-input font-mono" value={String(value || '')} placeholder={ph || 'url-de-la-fiche'} onChange={(e) => onChange(e.target.value)} />
-          <button type="button" className="ad-btn ad-btn-ghost" onClick={() => onChange(slugify(String(record[spec.slugFrom || 'title'] || record.name || '')))}>{t('auto')}</button>
+          <button type="button" className="ad-btn ad-btn-ghost" onClick={() => onChange(slugify(titleValue))}>{t('auto')}</button>
         </div>,
       );
+    }
     case 'email':
       return wrap(
         <div className="ad-search">
