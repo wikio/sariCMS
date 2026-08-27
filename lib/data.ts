@@ -16,6 +16,7 @@ import type {
   SolutionCategory,
 } from '@/types';
 import { cmsPublicList, cmsPublicOne, cmsFetch } from '@/lib/cms';
+import { loadFicheLocale } from '@/lib/fiche-i18n';
 import { asPublicId, matchesEntity } from '@/lib/ids';
 
 const dataCache = new Map<string, unknown>();
@@ -211,6 +212,33 @@ function mapSolution(row: Record<string, unknown>): SolutionCategory {
     features: Array.isArray(row.features) ? (row.features as string[]) : undefined,
     faq: Array.isArray(row.faq) ? (row.faq as SolutionCategory['faq']) : undefined,
   };
+}
+
+/**
+ * Applique les traductions depuis localStorage (fiche i18n) sur les données CMS.
+ * Les champs traduisibles sont remplacés par leur version traduite si disponible.
+ */
+function applyFicheTranslation<T extends Record<string, unknown>>(
+  row: T,
+  resource: string,
+  locale: string,
+  translatableFields: string[],
+): T {
+  if (locale === 'fr') return row; // Pas de traduction pour la langue par défaut
+  const id = String(row.id ?? '');
+  if (!id) return row;
+  
+  const fiche = loadFicheLocale(resource, id, locale);
+  if (Object.keys(fiche).length === 0) return row;
+  
+  const merged = { ...row };
+  for (const field of translatableFields) {
+    if (fiche[field] !== undefined && fiche[field] !== '') {
+      (merged as Record<string, unknown>)[field] = fiche[field];
+    }
+  }
+  
+  return merged;
 }
 
 /**
@@ -469,7 +497,16 @@ export async function getVerificationCodes(locale: string): Promise<Verification
 export async function getSolutionCategories(locale: string): Promise<SolutionCategory[]> {
   return fromCmsOrJson(locale, 'solution-categories', [], async () => {
     const rows = await cmsPublicList<Record<string, unknown>>('solutions', locale);
-    return rows.length ? rows.map(mapSolution) : null;
+    if (!rows.length) return null;
+    
+    // Appliquer les traductions depuis localStorage pour chaque catégorie
+    const translatedRows = rows.map(row => 
+      applyFicheTranslation(row, 'solutions', locale, [
+        'title', 'shortDesc', 'fullDesc', 'features', 'faq', 'image'
+      ])
+    );
+    
+    return translatedRows.map(mapSolution);
   });
 }
 
