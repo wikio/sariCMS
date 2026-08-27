@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { ChevronRight, ChevronLeft } from 'lucide-react';
 import { getServices } from '@/lib/data';
+import { loadFicheLocale } from '@/lib/fiche-i18n';
 import ServiceCard from '@/components/cards/ServiceCard';
 import FAQ from '@/components/ui/FAQ';
 import SectionTitle from '@/components/ui/SectionTitle';
@@ -21,7 +22,29 @@ export default function ServicesPage() {
   useEffect(() => {
     const loadServices = async () => {
       const data = await getServices(locale);
-      setServices(data);
+      
+      // Appliquer les traductions pour les icônes et couleurs
+      const translatedServices = data.map(service => {
+        if (locale === 'fr') return service;
+        
+        // Charger les traductions depuis localStorage
+        const fiche = loadFicheLocale('services', String(service.id), locale);
+        
+        return {
+          ...service,
+          // Fallback sur la version française si pas de traduction
+          icon: (fiche.icon as string) || service.icon,
+          color: (fiche.color as string) || service.color,
+          image: (fiche.image as string) || service.image,
+          title: (fiche.title as string) || service.title,
+          shortDesc: (fiche.shortDesc as string) || service.shortDesc,
+          fullDesc: (fiche.fullDesc as string) || service.fullDesc,
+          features: (fiche.features as string[]) || service.features,
+          faq: (fiche.faq as Array<{ q: string; a: string }>) || service.faq,
+        };
+      });
+      
+      setServices(translatedServices);
     };
     loadServices();
   }, [locale]);

@@ -7,6 +7,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight, Package, Check } from 'lucide-react';
 import { getProducts, getSolutionCategories } from '@/lib/data';
+import { loadFicheLocale } from '@/lib/fiche-i18n';
 import type { Product, SolutionCategory } from '@/types';
 import ProductCard from '@/components/cards/ProductCard';
 import FAQ from '@/components/ui/FAQ';
@@ -53,13 +54,39 @@ export default function SolutionCategoryPage() {
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
-      const [productsData, categoriesData] = await Promise.all([
-        getProducts(locale),
-        getSolutionCategories(locale),
-      ]);
-      setProducts(productsData);
-      setCategories(categoriesData);
-      setLoading(false);
+      try {
+        const [productsData, categoriesData] = await Promise.all([
+          getProducts(locale),
+          getSolutionCategories(locale),
+        ]);
+        
+        // Appliquer les traductions pour les icônes et couleurs
+        const translatedCategories = categoriesData.map(cat => {
+          if (locale === 'fr') return cat;
+          
+          // Charger les traductions depuis localStorage
+          const fiche = loadFicheLocale('solutions', String(cat.id), locale);
+          
+          return {
+            ...cat,
+            // Fallback sur la version française si pas de traduction
+            icon: (fiche.icon as string) || cat.icon,
+            color: (fiche.color as string) || cat.color,
+            title: (fiche.title as string) || cat.title,
+            shortDesc: (fiche.shortDesc as string) || cat.shortDesc,
+            fullDesc: (fiche.fullDesc as string) || cat.fullDesc,
+            features: (fiche.features as string[]) || cat.features,
+            faq: (fiche.faq as Array<{ q: string; a: string }>) || cat.faq,
+          };
+        });
+        
+        setProducts(productsData);
+        setCategories(translatedCategories);
+      } catch (error) {
+        console.error('Error loading data:', error);
+      } finally {
+        setLoading(false);
+      }
     };
     loadData();
   }, [locale]);
