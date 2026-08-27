@@ -14,8 +14,8 @@ export class ServicesService extends BaseCrudService<ServiceEntity> {
     resource: 'services',
     searchFields: ['title', 'shortDesc', 'icon'],
     sortableFields: ['createdAt', 'updatedAt', 'title', 'sortOrder'],
-    listFields: ['id', 'slug', 'title', 'icon', 'status', 'locale', 'sortOrder'],
-    cardFields: ['id', 'slug', 'title', 'icon', 'shortDesc', 'status', 'locale'],
+    listFields: ['id', 'slug', 'title', 'icon', 'color', 'image', 'status', 'locale', 'sortOrder'],
+    cardFields: ['id', 'slug', 'title', 'icon', 'color', 'image', 'shortDesc', 'status', 'locale'],
   };
 
   constructor(

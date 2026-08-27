@@ -10,6 +10,8 @@ export interface ServiceEntity extends BaseEntity {
   slug: string;
   title: string;
   icon?: string | null;
+  color?: string | null;
+  image?: string | null;
   shortDesc?: string | null;
   fullDesc?: string | null;
   features?: string[] | unknown;

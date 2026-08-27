@@ -455,6 +455,8 @@ model ServiceItem {
   slug      String
   title     String
   icon      String?
+  color     String?
+  image     String?
   shortDesc String?   @db.Text
   fullDesc  String?   @db.Text
   features  Json?
