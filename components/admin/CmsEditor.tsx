@@ -181,10 +181,19 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
   const valueOf = (key: string) => {
     const field = mod.fields.find((f) => f.key === key);
     const translatable = field ? isTranslatableField(field.kind, field.i18n) : false;
+    
     if (!isDefault && translatable) {
       const overlay = overlays[tab] || {};
-      return overlay[key] ?? '';
+      const overlayValue = overlay[key];
+      
+      // Pour les slugs, icônes et couleurs, fallback sur la version par défaut si pas de traduction
+      if (field?.kind === 'slug' || field?.kind === 'icon' || field?.kind === 'color') {
+        return overlayValue ?? record?.[key] ?? '';
+      }
+      
+      return overlayValue ?? '';
     }
+    
     // Pour les champs image en traduction
     if (!isDefault && field?.kind === 'image') {
       const overlay = overlays[tab] || {};
@@ -195,6 +204,7 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
       // Sinon, retourner l'image originale (pas de remplacement)
       return record?.[key];
     }
+    
     return record?.[key];
   };
 
@@ -210,10 +220,22 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
     const isKeepKey = key.endsWith('Keep');
     // Pour les champs image en traduction, TOUJOURS stocker dans overlays pour ne pas écraser l'original
     const isImageInTranslation = !isDefault && field?.kind === 'image';
+    
     if (!isDefault && (translatable || isKeepKey || isImageInTranslation)) {
-      setOverlays((prev) => ({ ...prev, [tab]: { ...(prev[tab] || {}), [key]: value } }));
+      setOverlays((prev) => {
+        const newOverlays = { ...prev, [tab]: { ...(prev[tab] || {}), [key]: value } };
+        
+        // Générer automatiquement le slug dans la traduction si on modifie le champ source
+        const slugField = mod.fields.find((f) => f.kind === 'slug');
+        if (slugField && !slugLocked && slugField.slugFrom === key) {
+          newOverlays[tab]![slugField.key] = slugify(String(value || ''));
+        }
+        
+        return newOverlays;
+      });
       return;
     }
+    
     setRecord((prev) => {
       const next = { ...(prev || {}), [key]: value };
       const slugField = mod.fields.find((f) => f.kind === 'slug');

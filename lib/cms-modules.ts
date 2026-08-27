@@ -81,7 +81,7 @@ export const CMS_MODULES: CmsModule[] = [
     defaults: { name: 'Nouveau produit', status: 'draft', inStock: true, stockQty: 10, stockFinal: false, locale: 'fr', gallery: [], features: [], specs: {}, options: [] },
     fields: [
       { key: 'name', label: 'Nom commercial', kind: 'text', required: true, placeholder: 'Ex. Échographe Portable Pro X1', hint: 'Nom affiché sur la vitrine.', maxLength: 120, group: 'Identité', i18n: true },
-      { key: 'slug', label: 'Slug URL', kind: 'slug', slugFrom: 'name', hint: 'Généré depuis le titre, modifiable.', group: 'Identité' },
+      { key: 'slug', label: 'Slug URL', kind: 'slug', slugFrom: 'name', hint: 'Généré depuis le titre, modifiable.', group: 'Identité' , i18n: true },
       { key: 'locale', label: 'Langue', kind: 'radio', options: LOCALES, group: 'Identité' },
       { key: 'status', label: 'Publication', kind: 'radio', options: STATUS, group: 'Identité' },
       { key: 'category', label: 'Catégorie', kind: 'select', taxonomy: 'products.category', options: CATEGORIES, hint: 'Gérée dans Taxonomies. Vous pouvez en créer une ici.', group: 'Catalogue' },
@@ -128,7 +128,7 @@ export const CMS_MODULES: CmsModule[] = [
     defaults: { title: 'Nouvelle offre', status: 'draft', locale: 'fr', type: 'CDI', objectifs: [], prerequis: [], workflow: [], benefits: [] },
     fields: [
       { key: 'title', label: 'Intitulé du poste', kind: 'text', required: true, placeholder: 'Ex. Ingénieur biomédical', maxLength: 140, group: 'Poste', i18n: true },
-      { key: 'slug', label: 'Slug', kind: 'slug', slugFrom: 'title', group: 'Poste' },
+      { key: 'slug', label: 'Slug', kind: 'slug', slugFrom: 'title', group: 'Poste' , i18n: true },
       { key: 'locale', label: 'Langue', kind: 'radio', options: LOCALES, group: 'Poste' },
       { key: 'status', label: 'Statut', kind: 'radio', options: STATUS, group: 'Poste' },
       { key: 'type', label: 'Contrat', kind: 'select', taxonomy: 'careers.type', options: CONTRACTS, hint: 'Ajoutez un type à côté du sélecteur.', group: 'Poste' },
@@ -160,7 +160,7 @@ export const CMS_MODULES: CmsModule[] = [
     defaults: { title: 'Nouvel article', status: 'draft', locale: 'fr', tags: [] },
     fields: [
       { key: 'title', label: 'Titre', kind: 'text', required: true, placeholder: 'Ex. Nouvelle sonde cardiaque', maxLength: 160, group: 'Article', i18n: true },
-      { key: 'slug', label: 'Slug', kind: 'slug', slugFrom: 'title', group: 'Article' },
+      { key: 'slug', label: 'Slug', kind: 'slug', slugFrom: 'title', group: 'Article' , i18n: true },
       { key: 'locale', label: 'Langue', kind: 'radio', options: LOCALES, group: 'Article' },
       { key: 'status', label: 'Statut', kind: 'radio', options: STATUS, group: 'Article' },
       { key: 'category', label: 'Rubrique', kind: 'select', taxonomy: 'news.category', options: ['Innovation', 'Produits', 'Santé', 'Formation', 'Corporate'].map((v) => ({ value: v, label: v })), hint: 'Gérée dans Taxonomies.', group: 'Article' },
@@ -183,7 +183,7 @@ export const CMS_MODULES: CmsModule[] = [
     defaults: { title: 'Nouvel événement', status: 'draft', locale: 'fr', agenda: [] },
     fields: [
       { key: 'title', label: 'Titre', kind: 'text', required: true, placeholder: 'Ex. Salon médical Alger', maxLength: 140, group: 'Événement', i18n: true },
-      { key: 'slug', label: 'Slug', kind: 'slug', slugFrom: 'title', group: 'Événement' },
+      { key: 'slug', label: 'Slug', kind: 'slug', slugFrom: 'title', group: 'Événement' , i18n: true },
       { key: 'locale', label: 'Langue', kind: 'radio', options: LOCALES, group: 'Événement' },
       { key: 'status', label: 'Statut', kind: 'radio', options: STATUS, group: 'Événement' },
       { key: 'type', label: 'Type', kind: 'select', taxonomy: 'events.type', options: EVENT_TYPES, hint: 'Ajoutez un type si besoin.', group: 'Événement' },
@@ -239,7 +239,7 @@ export const CMS_MODULES: CmsModule[] = [
     defaults: { name: 'Nouveau partenaire', status: 'published', locale: 'fr' },
     fields: [
       { key: 'name', label: 'Nom', kind: 'text', group: 'Fiche' },
-      { key: 'slug', label: 'Slug', kind: 'slug', slugFrom: 'name', group: 'Fiche' },
+      { key: 'slug', label: 'Slug', kind: 'slug', slugFrom: 'name', group: 'Fiche' , i18n: true },
       { key: 'locale', label: 'Langue', kind: 'radio', options: LOCALES, group: 'Fiche' },
       { key: 'status', label: 'Statut', kind: 'radio', options: STATUS, group: 'Fiche' },
       { key: 'category', label: 'Catégorie', kind: 'select', taxonomy: 'partners.category', options: CATEGORIES, group: 'Fiche' },
@@ -294,7 +294,7 @@ export const CMS_MODULES: CmsModule[] = [
     defaults: { title: 'Nouvelle page', slug: 'nouvelle-page', kind: 'generic', subtype: 'simple', status: 'draft', locale: 'fr', slides: [], sections: [] },
     fields: [
       { key: 'title', label: 'Titre', kind: 'text', group: 'Page' },
-      { key: 'slug', label: 'Slug', kind: 'slug', slugFrom: 'title', group: 'Page' },
+      { key: 'slug', label: 'Slug', kind: 'slug', slugFrom: 'title', group: 'Page' , i18n: true },
       { key: 'locale', label: 'Langue', kind: 'radio', options: LOCALES, group: 'Page' },
       { key: 'status', label: 'Statut', kind: 'radio', options: STATUS, group: 'Page' },
       { key: 'kind', label: 'Famille', kind: 'select', options: [{ value: 'generic', label: 'Générique' }, { value: 'legal', label: 'Légal' }, { value: 'about', label: 'À propos' }], group: 'Page' },
@@ -316,7 +316,7 @@ export const CMS_MODULES: CmsModule[] = [
     defaults: { title: 'Page légale', slug: 'mentions', kind: 'legal', subtype: 'simple', status: 'draft', locale: 'fr' },
     fields: [
       { key: 'title', label: 'Titre', kind: 'text', group: 'Légal' },
-      { key: 'slug', label: 'Slug', kind: 'slug', slugFrom: 'title', group: 'Légal' },
+      { key: 'slug', label: 'Slug', kind: 'slug', slugFrom: 'title', group: 'Légal' , i18n: true },
       { key: 'locale', label: 'Langue', kind: 'radio', options: LOCALES, group: 'Légal' },
       { key: 'status', label: 'Statut', kind: 'radio', options: STATUS, group: 'Légal' },
       { key: 'content', label: 'Texte juridique', kind: 'html', wide: true, group: 'Contenu' },
@@ -331,7 +331,7 @@ export const CMS_MODULES: CmsModule[] = [
     defaults: { title: 'Nouvelle galerie', slug: 'galerie', kind: 'generic', subtype: 'gallery', status: 'draft', locale: 'fr', media: [] },
     fields: [
       { key: 'title', label: 'Titre', kind: 'text', group: 'Galerie' },
-      { key: 'slug', label: 'Slug', kind: 'slug', slugFrom: 'title', group: 'Galerie' },
+      { key: 'slug', label: 'Slug', kind: 'slug', slugFrom: 'title', group: 'Galerie' , i18n: true },
       { key: 'locale', label: 'Langue', kind: 'radio', options: LOCALES, group: 'Galerie' },
       { key: 'status', label: 'Statut', kind: 'radio', options: STATUS, group: 'Galerie' },
       { key: 'media', label: 'Images', kind: 'gallery', wide: true, group: 'Médias' },
