@@ -929,14 +929,14 @@ function FaqEditor({ value, onChange }: { value: Array<{ q: string; a: string }>
         <div key={i} className="ad-card p-3 space-y-2">
           <div className="flex items-center justify-between">
             <button type="button" onClick={() => move(i, i - 1)} className="opacity-40"><GripVertical className="w-4 h-4" /></button>
-            <span className="text-[10px] font-black tracking-widest" style={{ color: 'var(--ad-muted)' }}>Q{i + 1}</span>
+            <span className="text-[10px] font-black tracking-widest" style={{ color: 'var(--ad-muted)' }}>{t('questionN', { n: i + 1 })}</span>
             <button type="button" className="ad-btn ad-btn-icon ad-btn-danger" onClick={() => onChange(value.filter((_, j) => j !== i))}><Trash2 className="w-3 h-3" /></button>
           </div>
           <input className="ad-input" placeholder={t("question")} value={item.q} onChange={(e) => onChange(value.map((v, j) => (j === i ? { ...v, q: e.target.value } : v)))} />
-          <textarea className="ad-textarea" placeholder="Réponse" value={item.a} onChange={(e) => onChange(value.map((v, j) => (j === i ? { ...v, a: e.target.value } : v)))} />
+          <textarea className="ad-textarea" placeholder={t("answer")} value={item.a} onChange={(e) => onChange(value.map((v, j) => (j === i ? { ...v, a: e.target.value } : v)))} />
         </div>
       ))}
-      <button type="button" className="ad-btn ad-btn-ghost" onClick={() => onChange([...value, { q: '', a: '' }])}><Plus className="w-4 h-4" /> {t("question")}</button>
+      <button type="button" className="ad-btn ad-btn-ghost" onClick={() => onChange([...value, { q: '', a: '' }])}><Plus className="w-4 h-4" /> {t("addQuestion")}</button>
     </div>
   );
 }

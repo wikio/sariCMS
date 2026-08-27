@@ -203,7 +203,11 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
   const set = (key: string, value: unknown) => {
     const field = mod.fields.find((f) => f.key === key);
     const translatable = field ? isTranslatableField(field.kind, field.i18n) : false;
-    if (!isDefault && translatable) {
+    // Toujours mettre les clés *Keep dans overlays (pour "Remplacer dans cette traduction")
+    const isKeepKey = key.endsWith('Keep');
+    // Pour les champs image en mode "replace", mettre la valeur dans overlays
+    const isImageReplace = !isDefault && field?.kind === 'image' && overlays[tab]?.[`${key}Keep`] === 'replace';
+    if (!isDefault && (translatable || isKeepKey || isImageReplace)) {
       setOverlays((prev) => ({ ...prev, [tab]: { ...(prev[tab] || {}), [key]: value } }));
       return;
     }
@@ -418,7 +422,7 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
                               {locked && <p className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>Champ partagé, verrouillé.</p>}
                             </div>
                           ) : (
-                            renderField(field, valueOf(field.key), (v) => set(field.key, v), record, { t: tEditor, moduleKey: mod.key })
+                            renderField(field, valueOf(field.key), (v) => set(field.key, v), record, { t: tEditor, moduleKey: mod.singular || mod.key })
                           )}
                         </div>
                       </div>
@@ -439,7 +443,7 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
                           <ConsultValue spec={field} value={tab} />
                           <p className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>{tEditor('lockedOnActiveLang')}</p>
                         </div>
-                      ) : renderField(field, valueOf(field.key), (v) => set(field.key, v), record, { origin: originOf(field.key), originLocale: settings.defaultLocale, t: tEditor, moduleKey: mod.key })}
+                      ) : renderField(field, valueOf(field.key), (v) => set(field.key, v), record, { origin: originOf(field.key), originLocale: settings.defaultLocale, t: tEditor, moduleKey: mod.singular || mod.key })}
                     </div>
                   ))}
                 </div>

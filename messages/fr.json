@@ -1098,7 +1098,10 @@
       "option_Best-seller": "Best-seller",
       "option_Sur commande": "Sur commande",
       "colorPlaceholder": "sari-blue, #1e40af, red-500...",
-      "pickColor": "Choisir une couleur"
+      "pickColor": "Choisir une couleur",
+      "answer": "Réponse",
+      "addQuestion": "Ajouter une question",
+      "questionN": "Question {n}"
     },
     "htmlEditor": {
       "header": "En-tête",

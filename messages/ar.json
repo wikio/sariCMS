@@ -1098,7 +1098,10 @@
       "option_Best-seller": "الأكثر مبيعاً",
       "option_Sur commande": "عند الطلب",
       "colorPlaceholder": "sari-blue، #1e40af، red-500...",
-      "pickColor": "اختر لوناً"
+      "pickColor": "اختر لوناً",
+      "answer": "الإجابة",
+      "addQuestion": "إضافة سؤال",
+      "questionN": "سؤال {n}"
     },
     "htmlEditor": {
       "header": "رأس",
