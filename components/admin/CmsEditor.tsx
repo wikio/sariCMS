@@ -185,12 +185,15 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
       const overlay = overlays[tab] || {};
       return overlay[key] ?? '';
     }
-    // Pour les champs image avec "Remplacer dans cette traduction"
+    // Pour les champs image en traduction
     if (!isDefault && field?.kind === 'image') {
       const overlay = overlays[tab] || {};
+      // Si on est en mode "replace", retourner la valeur de l'overlay (même vide)
       if (overlay[`${key}Keep`] === 'replace') {
         return overlay[key] ?? '';
       }
+      // Sinon, retourner l'image originale (pas de remplacement)
+      return record?.[key];
     }
     return record?.[key];
   };
@@ -205,9 +208,9 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
     const translatable = field ? isTranslatableField(field.kind, field.i18n) : false;
     // Toujours mettre les clés *Keep dans overlays (pour "Remplacer dans cette traduction")
     const isKeepKey = key.endsWith('Keep');
-    // Pour les champs image en mode "replace", mettre la valeur dans overlays
-    const isImageReplace = !isDefault && field?.kind === 'image' && overlays[tab]?.[`${key}Keep`] === 'replace';
-    if (!isDefault && (translatable || isKeepKey || isImageReplace)) {
+    // Pour les champs image en traduction, TOUJOURS stocker dans overlays pour ne pas écraser l'original
+    const isImageInTranslation = !isDefault && field?.kind === 'image';
+    if (!isDefault && (translatable || isKeepKey || isImageInTranslation)) {
       setOverlays((prev) => ({ ...prev, [tab]: { ...(prev[tab] || {}), [key]: value } }));
       return;
     }
