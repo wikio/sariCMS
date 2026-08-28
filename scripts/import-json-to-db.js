@@ -70,52 +70,15 @@ async function importSolutions() {
   
   const frData = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'fr', 'solution-categories.json'), 'utf-8'));
   
-  // Récupérer les solutions existantes
-  const existing = await apiCall('/solutions?limit=100', 'GET');
-  console.log('Structure réponse:', Object.keys(existing));
-  
-  // Extraire la liste selon la structure de réponse
-  let existingList = [];
-  if (existing.data && Array.isArray(existing.data)) {
-    existingList = existing.data;
-  } else if (Array.isArray(existing)) {
-    existingList = existing;
-  } else if (existing.items && Array.isArray(existing.items)) {
-    existingList = existing.items;
-  }
-  
-  console.log(`Nombre de solutions existantes: ${existingList.length}`);
-  
   for (const item of frData) {
     console.log(`  → ${item.title}`);
     
-    // Vérifier si la solution existe déjà
-    const existingItem = existingList.find(e => e.slug === item.id && e.locale === 'fr');
-    
     let id;
+    let created = false;
     
-    if (existingItem) {
-      // Mettre à jour la solution existante
-      console.log(`    Solution existante trouvée (ID: ${existingItem.id}), mise à jour...`);
-      await apiCall(`/solutions/${existingItem.id}`, 'PATCH', {
-        title: item.title,
-        slug: item.id,
-        icon: item.icon,
-        color: item.color,
-        image: item.image,
-        shortDesc: item.shortDesc,
-        fullDesc: item.fullDesc,
-        features: item.features || [],
-        faq: item.faq || [],
-        productIds: item.productIds || [],
-        status: 'published',
-      });
-      id = existingItem.id;
-      console.log(`    ✓ FR mis à jour (ID: ${id})`);
-    } else {
-      // Créer la nouvelle solution
-      console.log(`    Solution non trouvée, création...`);
-      const created = await apiCall('/solutions', 'POST', {
+    // Essayer de créer d'abord
+    try {
+      const result = await apiCall('/solutions', 'POST', {
         title: item.title,
         slug: item.id,
         icon: item.icon,
@@ -130,8 +93,42 @@ async function importSolutions() {
         locale: 'fr',
       });
       
-      id = created.id || created.data?.id;
+      id = result.id || result.data?.id;
       console.log(`    ✓ FR créé (ID: ${id})`);
+      created = true;
+    } catch (error) {
+      // Si erreur de contrainte unique, chercher et mettre à jour
+      if (error.message.includes('Unique constraint failed')) {
+        console.log(`    Solution existe déjà, recherche par slug...`);
+        
+        // Chercher la solution par slug
+        const searchResult = await apiCall(`/solutions?slug=${item.id}&locale=fr`, 'GET');
+        const existingList = searchResult.data || searchResult;
+        const existingItem = Array.isArray(existingList) ? existingList[0] : null;
+        
+        if (existingItem) {
+          // Mettre à jour
+          await apiCall(`/solutions/${existingItem.id}`, 'PATCH', {
+            title: item.title,
+            icon: item.icon,
+            color: item.color,
+            image: item.image,
+            shortDesc: item.shortDesc,
+            fullDesc: item.fullDesc,
+            features: item.features || [],
+            faq: item.faq || [],
+            productIds: item.productIds || [],
+            status: 'published',
+          });
+          id = existingItem.id;
+          console.log(`    ✓ FR mis à jour (ID: ${id})`);
+        } else {
+          console.log(`    ⚠ Impossible de trouver la solution existante, skip`);
+          continue;
+        }
+      } else {
+        throw error;
+      }
     }
     
     // Importer les traductions
@@ -167,53 +164,16 @@ async function importServices() {
   
   const frData = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'fr', 'services.json'), 'utf-8'));
   
-  // Récupérer les services existants
-  const existing = await apiCall('/services?limit=100', 'GET');
-  console.log('Structure réponse:', Object.keys(existing));
-  
-  // Extraire la liste selon la structure de réponse
-  let existingList = [];
-  if (existing.data && Array.isArray(existing.data)) {
-    existingList = existing.data;
-  } else if (Array.isArray(existing)) {
-    existingList = existing;
-  } else if (existing.items && Array.isArray(existing.items)) {
-    existingList = existing.items;
-  }
-  
-  console.log(`Nombre de services existants: ${existingList.length}`);
-  
   for (const item of frData) {
     console.log(`  → ${item.title}`);
     
     const slug = item.slug || item.id;
-    
-    // Vérifier si le service existe déjà
-    const existingItem = existingList.find(e => e.slug === slug && e.locale === 'fr');
-    
     let id;
+    let created = false;
     
-    if (existingItem) {
-      // Mettre à jour le service existant
-      console.log(`    Service existant trouvé (ID: ${existingItem.id}), mise à jour...`);
-      await apiCall(`/services/${existingItem.id}`, 'PATCH', {
-        title: item.title,
-        slug: slug,
-        icon: item.icon,
-        color: item.color,
-        image: item.image,
-        shortDesc: item.shortDesc,
-        fullDesc: item.fullDesc,
-        features: item.features || [],
-        faq: item.faq || [],
-        status: 'published',
-      });
-      id = existingItem.id;
-      console.log(`    ✓ FR mis à jour (ID: ${id})`);
-    } else {
-      // Créer le nouveau service
-      console.log(`    Service non trouvé, création...`);
-      const created = await apiCall('/services', 'POST', {
+    // Essayer de créer d'abord
+    try {
+      const result = await apiCall('/services', 'POST', {
         title: item.title,
         slug: slug,
         icon: item.icon,
@@ -227,8 +187,41 @@ async function importServices() {
         locale: 'fr',
       });
       
-      id = created.id || created.data?.id;
+      id = result.id || result.data?.id;
       console.log(`    ✓ FR créé (ID: ${id})`);
+      created = true;
+    } catch (error) {
+      // Si erreur de contrainte unique, chercher et mettre à jour
+      if (error.message.includes('Unique constraint failed')) {
+        console.log(`    Service existe déjà, recherche par slug...`);
+        
+        // Chercher le service par slug
+        const searchResult = await apiCall(`/services?slug=${slug}&locale=fr`, 'GET');
+        const existingList = searchResult.data || searchResult;
+        const existingItem = Array.isArray(existingList) ? existingList[0] : null;
+        
+        if (existingItem) {
+          // Mettre à jour
+          await apiCall(`/services/${existingItem.id}`, 'PATCH', {
+            title: item.title,
+            icon: item.icon,
+            color: item.color,
+            image: item.image,
+            shortDesc: item.shortDesc,
+            fullDesc: item.fullDesc,
+            features: item.features || [],
+            faq: item.faq || [],
+            status: 'published',
+          });
+          id = existingItem.id;
+          console.log(`    ✓ FR mis à jour (ID: ${id})`);
+        } else {
+          console.log(`    ⚠ Impossible de trouver le service existant, skip`);
+          continue;
+        }
+      } else {
+        throw error;
+      }
     }
     
     for (const lang of ['en', 'ar']) {
