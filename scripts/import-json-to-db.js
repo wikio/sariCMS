@@ -10,12 +10,36 @@ const path = require('path');
 const API_BASE = 'http://localhost:3001/api/v1';
 const DATA_DIR = path.join(__dirname, '..', 'data');
 
+// Configuration - à modifier selon votre environnement
+const ADMIN_EMAIL = 'admin@sarisysteme.com';
+const ADMIN_PASSWORD = 'admin123'; // Changez ceci
+
+let authToken = null;
+
+async function login() {
+  console.log('🔐 Authentification...');
+  const response = await fetch(`${API_BASE}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: ADMIN_EMAIL, password: ADMIN_PASSWORD }),
+  });
+  
+  if (!response.ok) {
+    throw new Error(`Login failed: ${response.status}`);
+  }
+  
+  const data = await response.json();
+  authToken = data.accessToken || data.token;
+  console.log('✓ Authentifié\n');
+}
+
 async function apiCall(endpoint, method = 'GET', body = null) {
   const url = `${API_BASE}${endpoint}`;
   const options = {
     method,
     headers: {
       'Content-Type': 'application/json',
+      ...(authToken && { 'Authorization': `Bearer ${authToken}` }),
     },
   };
   
@@ -42,7 +66,7 @@ async function importSolutions() {
     console.log(`  → ${item.title}`);
     
     // Créer la version française
-    const created = await apiCall('/public/solutions', 'POST', {
+    const created = await apiCall('/solutions', 'POST', {
       title: item.title,
       slug: item.id,
       icon: item.icon,
@@ -63,11 +87,12 @@ async function importSolutions() {
     // Importer les traductions
     for (const lang of ['en', 'ar']) {
       try {
+    await login();
         const langData = JSON.parse(fs.readFileSync(path.join(DATA_DIR, lang, 'solution-categories.json'), 'utf-8'));
         const translated = langData.find(d => d.id === item.id);
         
         if (translated) {
-          await apiCall(`/public/solutions/${id}/translate`, 'POST', {
+          await apiCall(`/solutions/${id}/translate`, 'POST', {
             locale: lang,
             title: translated.title,
             slug: translated.id,
@@ -96,7 +121,7 @@ async function importServices() {
   for (const item of frData) {
     console.log(`  → ${item.title}`);
     
-    const created = await apiCall('/public/services', 'POST', {
+    const created = await apiCall('/services', 'POST', {
       title: item.title,
       slug: item.slug || item.id,
       icon: item.icon,
@@ -115,11 +140,12 @@ async function importServices() {
     
     for (const lang of ['en', 'ar']) {
       try {
+    await login();
         const langData = JSON.parse(fs.readFileSync(path.join(DATA_DIR, lang, 'services.json'), 'utf-8'));
         const translated = langData.find(d => (d.slug || d.id) === (item.slug || item.id));
         
         if (translated) {
-          await apiCall(`/public/services/${id}/translate`, 'POST', {
+          await apiCall(`/services/${id}/translate`, 'POST', {
             locale: lang,
             title: translated.title,
             slug: translated.slug || translated.id,
@@ -146,6 +172,7 @@ async function main() {
   console.log(`🌐 API: ${API_BASE}`);
   
   try {
+    await login();
     await importSolutions();
     await importServices();
     

@@ -32,7 +32,7 @@ export const WRITABLE_FIELDS: Record<string, string[]> = {
     'image', 'gallery', 'inStock', 'stockQty', 'stockFinal', 'currency', 'deliveryTime', 'features', 'specs', 'options',
     'catalogPdf', 'status', 'sortOrder',
   ],
-  services: ['title', 'slug', 'locale', 'icon', 'shortDesc', 'fullDesc', 'features', 'faq', 'sortOrder', 'status'],
+  services: ['title', 'slug', 'locale', 'icon', 'color', 'image', 'shortDesc', 'fullDesc', 'features', 'faq', 'sortOrder', 'status'],
   careers: [
     'title', 'slug', 'locale', 'type', 'location', 'salary', 'shortDesc', 'fullDesc', 'image',
     'typeTravail', 'mission', 'objectifs', 'prerequis', 'experience', 'workflow', 'benefits',
