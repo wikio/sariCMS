@@ -70,17 +70,59 @@ async function importSolutions() {
   
   const frData = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'fr', 'solution-categories.json'), 'utf-8'));
   
+  // D'abord, récupérer toutes les solutions existantes pour mapper les slugs aux IDs
+  const allSolutions = await apiCall('/solutions', 'GET');
+  const solutionsList = allSolutions.data || allSolutions || [];
+  const slugToIdMap = {};
+  
+  if (Array.isArray(solutionsList)) {
+    solutionsList.forEach(s => {
+      if (s.slug && s.locale === 'fr') {
+        slugToIdMap[s.slug] = s.id;
+      }
+    });
+  }
+  
+  console.log(`  ${Object.keys(slugToIdMap).length} solutions existantes trouvées`);
+  
   for (const item of frData) {
     console.log(`  → ${item.title}`);
     
-    let id;
-    let created = false;
+    let id = slugToIdMap[item.id];
     
-    // Essayer de créer d'abord
-    try {
-      const result = await apiCall('/solutions', 'POST', {
+    // Si pas trouvé dans la liste, essayer de créer
+    if (!id) {
+      try {
+        const result = await apiCall('/solutions', 'POST', {
+          title: item.title,
+          slug: item.id,
+          icon: item.icon,
+          color: item.color,
+          image: item.image,
+          shortDesc: item.shortDesc,
+          fullDesc: item.fullDesc,
+          features: item.features || [],
+          faq: item.faq || [],
+          productIds: item.productIds || [],
+          status: 'published',
+          locale: 'fr',
+        });
+        
+        id = result.id || result.data?.id;
+        console.log(`    ✓ FR créé (ID: ${id})`);
+      } catch (error) {
+        // Si erreur de contrainte unique, l'élément existe mais n'était pas dans la liste
+        if (error.message.includes('Unique constraint failed')) {
+          console.log(`    ⚠ Solution existe déjà mais ID non trouvé, skip`);
+          continue;
+        } else {
+          throw error;
+        }
+      }
+    } else {
+      // Mettre à jour la solution existante
+      await apiCall(`/solutions/${id}`, 'PATCH', {
         title: item.title,
-        slug: item.id,
         icon: item.icon,
         color: item.color,
         image: item.image,
@@ -90,45 +132,8 @@ async function importSolutions() {
         faq: item.faq || [],
         productIds: item.productIds || [],
         status: 'published',
-        locale: 'fr',
       });
-      
-      id = result.id || result.data?.id;
-      console.log(`    ✓ FR créé (ID: ${id})`);
-      created = true;
-    } catch (error) {
-      // Si erreur de contrainte unique, chercher et mettre à jour
-      if (error.message.includes('Unique constraint failed')) {
-        console.log(`    Solution existe déjà, recherche par slug...`);
-        
-        // Chercher la solution par slug
-        const searchResult = await apiCall(`/solutions?slug=${item.id}&locale=fr`, 'GET');
-        const existingList = searchResult.data || searchResult;
-        const existingItem = Array.isArray(existingList) ? existingList[0] : null;
-        
-        if (existingItem) {
-          // Mettre à jour
-          await apiCall(`/solutions/${existingItem.id}`, 'PATCH', {
-            title: item.title,
-            icon: item.icon,
-            color: item.color,
-            image: item.image,
-            shortDesc: item.shortDesc,
-            fullDesc: item.fullDesc,
-            features: item.features || [],
-            faq: item.faq || [],
-            productIds: item.productIds || [],
-            status: 'published',
-          });
-          id = existingItem.id;
-          console.log(`    ✓ FR mis à jour (ID: ${id})`);
-        } else {
-          console.log(`    ⚠ Impossible de trouver la solution existante, skip`);
-          continue;
-        }
-      } else {
-        throw error;
-      }
+      console.log(`    ✓ FR mis à jour (ID: ${id})`);
     }
     
     // Importer les traductions
@@ -164,18 +169,59 @@ async function importServices() {
   
   const frData = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'fr', 'services.json'), 'utf-8'));
   
+  // D'abord, récupérer tous les services existants pour mapper les slugs aux IDs
+  const allServices = await apiCall('/services', 'GET');
+  const servicesList = allServices.data || allServices || [];
+  const slugToIdMap = {};
+  
+  if (Array.isArray(servicesList)) {
+    servicesList.forEach(s => {
+      if (s.slug && s.locale === 'fr') {
+        slugToIdMap[s.slug] = s.id;
+      }
+    });
+  }
+  
+  console.log(`  ${Object.keys(slugToIdMap).length} services existants trouvés`);
+  
   for (const item of frData) {
     console.log(`  → ${item.title}`);
     
     const slug = item.slug || item.id;
-    let id;
-    let created = false;
+    let id = slugToIdMap[slug];
     
-    // Essayer de créer d'abord
-    try {
-      const result = await apiCall('/services', 'POST', {
+    // Si pas trouvé dans la liste, essayer de créer
+    if (!id) {
+      try {
+        const result = await apiCall('/services', 'POST', {
+          title: item.title,
+          slug: slug,
+          icon: item.icon,
+          color: item.color,
+          image: item.image,
+          shortDesc: item.shortDesc,
+          fullDesc: item.fullDesc,
+          features: item.features || [],
+          faq: item.faq || [],
+          status: 'published',
+          locale: 'fr',
+        });
+        
+        id = result.id || result.data?.id;
+        console.log(`    ✓ FR créé (ID: ${id})`);
+      } catch (error) {
+        // Si erreur de contrainte unique, l'élément existe mais n'était pas dans la liste
+        if (error.message.includes('Unique constraint failed')) {
+          console.log(`    ⚠ Service existe déjà mais ID non trouvé, skip`);
+          continue;
+        } else {
+          throw error;
+        }
+      }
+    } else {
+      // Mettre à jour le service existant
+      await apiCall(`/services/${id}`, 'PATCH', {
         title: item.title,
-        slug: slug,
         icon: item.icon,
         color: item.color,
         image: item.image,
@@ -184,44 +230,8 @@ async function importServices() {
         features: item.features || [],
         faq: item.faq || [],
         status: 'published',
-        locale: 'fr',
       });
-      
-      id = result.id || result.data?.id;
-      console.log(`    ✓ FR créé (ID: ${id})`);
-      created = true;
-    } catch (error) {
-      // Si erreur de contrainte unique, chercher et mettre à jour
-      if (error.message.includes('Unique constraint failed')) {
-        console.log(`    Service existe déjà, recherche par slug...`);
-        
-        // Chercher le service par slug
-        const searchResult = await apiCall(`/services?slug=${slug}&locale=fr`, 'GET');
-        const existingList = searchResult.data || searchResult;
-        const existingItem = Array.isArray(existingList) ? existingList[0] : null;
-        
-        if (existingItem) {
-          // Mettre à jour
-          await apiCall(`/services/${existingItem.id}`, 'PATCH', {
-            title: item.title,
-            icon: item.icon,
-            color: item.color,
-            image: item.image,
-            shortDesc: item.shortDesc,
-            fullDesc: item.fullDesc,
-            features: item.features || [],
-            faq: item.faq || [],
-            status: 'published',
-          });
-          id = existingItem.id;
-          console.log(`    ✓ FR mis à jour (ID: ${id})`);
-        } else {
-          console.log(`    ⚠ Impossible de trouver le service existant, skip`);
-          continue;
-        }
-      } else {
-        throw error;
-      }
+      console.log(`    ✓ FR mis à jour (ID: ${id})`);
     }
     
     for (const lang of ['en', 'ar']) {
