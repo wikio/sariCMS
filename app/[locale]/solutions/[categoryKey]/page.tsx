@@ -60,28 +60,8 @@ export default function SolutionCategoryPage() {
           getSolutionCategories(locale),
         ]);
         
-        // Appliquer les traductions pour les icônes et couleurs
-        const translatedCategories = categoriesData.map(cat => {
-          if (locale === 'fr') return cat;
-          
-          // Charger les traductions depuis localStorage
-          const fiche = loadFicheLocale('solutions', String(cat.id), locale);
-          
-          return {
-            ...cat,
-            // Fallback sur la version française si pas de traduction
-            icon: (fiche.icon as string) || cat.icon,
-            color: (fiche.color as string) || cat.color,
-            title: (fiche.title as string) || cat.title,
-            shortDesc: (fiche.shortDesc as string) || cat.shortDesc,
-            fullDesc: (fiche.fullDesc as string) || cat.fullDesc,
-            features: (fiche.features as string[]) || cat.features,
-            faq: (fiche.faq as Array<{ q: string; a: string }>) || cat.faq,
-          };
-        });
-        
         setProducts(productsData);
-        setCategories(translatedCategories);
+        setCategories(categoriesData);
       } catch (error) {
         console.error('Error loading data:', error);
       } finally {
@@ -91,8 +71,8 @@ export default function SolutionCategoryPage() {
     loadData();
   }, [locale]);
 
-  // ✅ Recherche de la catégorie par son ID dans le tableau chargé
-  const cat = categories.find(c => c.id === key);
+  // ✅ Recherche de la catégorie par son slug (ou ID en fallback)
+  const cat = categories.find(c => (c.slug || c.id) === key);
   
   // Si la catégorie n'existe pas dans le JSON, on affiche un état "Non trouvé"
   if (!loading && !cat) {
@@ -240,7 +220,7 @@ export default function SolutionCategoryPage() {
               {otherCategories.map((other) => {
                 const otherColors = colorMap[other.color] || colorMap['sari-blue'];
                 return (
-                  <Link key={other.id} href={`/${locale}/solutions/${other.id}`} className="bg-gray-50 dark:bg-[#111111] p-6 border border-gray-200 dark:border-gray-800 rounded-xl hover:shadow-lg hover:border-sari-blue transition-all group text-center block">
+                  <Link key={other.id} href={`/${locale}/solutions/${other.slug || other.id}`} className="bg-gray-50 dark:bg-[#111111] p-6 border border-gray-200 dark:border-gray-800 rounded-xl hover:shadow-lg hover:border-sari-blue transition-all group text-center block">
                     <div className={`w-14 h-14 ${otherColors.bg}/10 rounded-lg flex items-center justify-center mx-auto mb-4 group-hover:${otherColors.bg} transition-colors`}>
                       <IconMark name={other.icon} className={`w-7 h-7 ${otherColors.text} group-hover:text-white transition-colors`} />
                     </div>
