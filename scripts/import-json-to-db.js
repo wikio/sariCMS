@@ -72,20 +72,31 @@ async function importSolutions() {
   
   // Récupérer les solutions existantes
   const existing = await apiCall('/solutions?limit=100', 'GET');
-  const existingList = existing.data || existing;
+  console.log('Structure réponse:', Object.keys(existing));
+  
+  // Extraire la liste selon la structure de réponse
+  let existingList = [];
+  if (existing.data && Array.isArray(existing.data)) {
+    existingList = existing.data;
+  } else if (Array.isArray(existing)) {
+    existingList = existing;
+  } else if (existing.items && Array.isArray(existing.items)) {
+    existingList = existing.items;
+  }
+  
+  console.log(`Nombre de solutions existantes: ${existingList.length}`);
   
   for (const item of frData) {
     console.log(`  → ${item.title}`);
     
     // Vérifier si la solution existe déjà
-    const existingItem = Array.isArray(existingList) 
-      ? existingList.find(e => e.slug === item.id && e.locale === 'fr')
-      : null;
+    const existingItem = existingList.find(e => e.slug === item.id && e.locale === 'fr');
     
     let id;
     
     if (existingItem) {
       // Mettre à jour la solution existante
+      console.log(`    Solution existante trouvée (ID: ${existingItem.id}), mise à jour...`);
       await apiCall(`/solutions/${existingItem.id}`, 'PATCH', {
         title: item.title,
         slug: item.id,
@@ -103,6 +114,7 @@ async function importSolutions() {
       console.log(`    ✓ FR mis à jour (ID: ${id})`);
     } else {
       // Créer la nouvelle solution
+      console.log(`    Solution non trouvée, création...`);
       const created = await apiCall('/solutions', 'POST', {
         title: item.title,
         slug: item.id,
@@ -157,7 +169,19 @@ async function importServices() {
   
   // Récupérer les services existants
   const existing = await apiCall('/services?limit=100', 'GET');
-  const existingList = existing.data || existing;
+  console.log('Structure réponse:', Object.keys(existing));
+  
+  // Extraire la liste selon la structure de réponse
+  let existingList = [];
+  if (existing.data && Array.isArray(existing.data)) {
+    existingList = existing.data;
+  } else if (Array.isArray(existing)) {
+    existingList = existing;
+  } else if (existing.items && Array.isArray(existing.items)) {
+    existingList = existing.items;
+  }
+  
+  console.log(`Nombre de services existants: ${existingList.length}`);
   
   for (const item of frData) {
     console.log(`  → ${item.title}`);
@@ -165,14 +189,13 @@ async function importServices() {
     const slug = item.slug || item.id;
     
     // Vérifier si le service existe déjà
-    const existingItem = Array.isArray(existingList) 
-      ? existingList.find(e => e.slug === slug && e.locale === 'fr')
-      : null;
+    const existingItem = existingList.find(e => e.slug === slug && e.locale === 'fr');
     
     let id;
     
     if (existingItem) {
       // Mettre à jour le service existant
+      console.log(`    Service existant trouvé (ID: ${existingItem.id}), mise à jour...`);
       await apiCall(`/services/${existingItem.id}`, 'PATCH', {
         title: item.title,
         slug: slug,
@@ -189,6 +212,7 @@ async function importServices() {
       console.log(`    ✓ FR mis à jour (ID: ${id})`);
     } else {
       // Créer le nouveau service
+      console.log(`    Service non trouvé, création...`);
       const created = await apiCall('/services', 'POST', {
         title: item.title,
         slug: slug,
