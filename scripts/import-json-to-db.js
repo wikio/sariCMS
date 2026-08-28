@@ -70,27 +70,57 @@ async function importSolutions() {
   
   const frData = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'fr', 'solution-categories.json'), 'utf-8'));
   
+  // Récupérer les solutions existantes
+  const existing = await apiCall('/solutions?limit=1000', 'GET');
+  const existingList = existing.data || existing;
+  
   for (const item of frData) {
     console.log(`  → ${item.title}`);
     
-    // Créer la version française
-    const created = await apiCall('/solutions', 'POST', {
-      title: item.title,
-      slug: item.id,
-      icon: item.icon,
-      color: item.color,
-      image: item.image,
-      shortDesc: item.shortDesc,
-      fullDesc: item.fullDesc,
-      features: item.features || [],
-      faq: item.faq || [],
-      productIds: item.productIds || [],
-      status: 'published',
-      locale: 'fr',
-    });
+    // Vérifier si la solution existe déjà
+    const existingItem = Array.isArray(existingList) 
+      ? existingList.find(e => e.slug === item.id && e.locale === 'fr')
+      : null;
     
-    const id = created.id || created.data?.id;
-    console.log(`    ✓ FR créé (ID: ${id})`);
+    let id;
+    
+    if (existingItem) {
+      // Mettre à jour la solution existante
+      await apiCall(`/solutions/${existingItem.id}`, 'PATCH', {
+        title: item.title,
+        slug: item.id,
+        icon: item.icon,
+        color: item.color,
+        image: item.image,
+        shortDesc: item.shortDesc,
+        fullDesc: item.fullDesc,
+        features: item.features || [],
+        faq: item.faq || [],
+        productIds: item.productIds || [],
+        status: 'published',
+      });
+      id = existingItem.id;
+      console.log(`    ✓ FR mis à jour (ID: ${id})`);
+    } else {
+      // Créer la nouvelle solution
+      const created = await apiCall('/solutions', 'POST', {
+        title: item.title,
+        slug: item.id,
+        icon: item.icon,
+        color: item.color,
+        image: item.image,
+        shortDesc: item.shortDesc,
+        fullDesc: item.fullDesc,
+        features: item.features || [],
+        faq: item.faq || [],
+        productIds: item.productIds || [],
+        status: 'published',
+        locale: 'fr',
+      });
+      
+      id = created.id || created.data?.id;
+      console.log(`    ✓ FR créé (ID: ${id})`);
+    }
     
     // Importer les traductions
     for (const lang of ['en', 'ar']) {
@@ -125,25 +155,57 @@ async function importServices() {
   
   const frData = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'fr', 'services.json'), 'utf-8'));
   
+  // Récupérer les services existants
+  const existing = await apiCall('/services?limit=1000', 'GET');
+  const existingList = existing.data || existing;
+  
   for (const item of frData) {
     console.log(`  → ${item.title}`);
     
-    const created = await apiCall('/services', 'POST', {
-      title: item.title,
-      slug: item.slug || item.id,
-      icon: item.icon,
-      color: item.color,
-      image: item.image,
-      shortDesc: item.shortDesc,
-      fullDesc: item.fullDesc,
-      features: item.features || [],
-      faq: item.faq || [],
-      status: 'published',
-      locale: 'fr',
-    });
+    const slug = item.slug || item.id;
     
-    const id = created.id || created.data?.id;
-    console.log(`    ✓ FR créé (ID: ${id})`);
+    // Vérifier si le service existe déjà
+    const existingItem = Array.isArray(existingList) 
+      ? existingList.find(e => e.slug === slug && e.locale === 'fr')
+      : null;
+    
+    let id;
+    
+    if (existingItem) {
+      // Mettre à jour le service existant
+      await apiCall(`/services/${existingItem.id}`, 'PATCH', {
+        title: item.title,
+        slug: slug,
+        icon: item.icon,
+        color: item.color,
+        image: item.image,
+        shortDesc: item.shortDesc,
+        fullDesc: item.fullDesc,
+        features: item.features || [],
+        faq: item.faq || [],
+        status: 'published',
+      });
+      id = existingItem.id;
+      console.log(`    ✓ FR mis à jour (ID: ${id})`);
+    } else {
+      // Créer le nouveau service
+      const created = await apiCall('/services', 'POST', {
+        title: item.title,
+        slug: slug,
+        icon: item.icon,
+        color: item.color,
+        image: item.image,
+        shortDesc: item.shortDesc,
+        fullDesc: item.fullDesc,
+        features: item.features || [],
+        faq: item.faq || [],
+        status: 'published',
+        locale: 'fr',
+      });
+      
+      id = created.id || created.data?.id;
+      console.log(`    ✓ FR créé (ID: ${id})`);
+    }
     
     for (const lang of ['en', 'ar']) {
       try {
