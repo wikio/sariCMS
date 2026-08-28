@@ -11,8 +11,8 @@ const API_BASE = 'http://localhost:3001/api/v1';
 const DATA_DIR = path.join(__dirname, '..', 'data');
 
 // Configuration - à modifier selon votre environnement
-const ADMIN_EMAIL = 'admin@sarisysteme.com';
-const ADMIN_PASSWORD = 'admin123'; // Changez ceci
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@sarisysteme.com';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'ChangeMe_Sari2026!';
 
 let authToken = null;
 
