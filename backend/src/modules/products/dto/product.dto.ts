@@ -4,10 +4,10 @@ import {
   IsArray,
   IsBoolean,
   IsIn,
+  IsNumber,
   IsObject,
   IsOptional,
   IsString,
-  Matches,
   MaxLength,
   MinLength,
   ValidateNested,
@@ -35,7 +35,6 @@ export class CreateProductDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  @Matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
   @MaxLength(180)
   slug?: string;
 
@@ -93,6 +92,23 @@ export class CreateProductDto {
 
   @ApiPropertyOptional()
   @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  stockQty?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  stockFinal?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(8)
+  currency?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
   @MaxLength(80)
   deliveryTime?: string;
@@ -125,6 +141,10 @@ export class CreateProductDto {
   @IsOptional()
   @IsIn(['draft', 'published', 'archived'])
   status?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  sortOrder?: number;
 }
 
 export class UpdateProductDto extends PartialType(CreateProductDto) {}

@@ -1,163 +1,110 @@
-// app/[locale]/admin/page.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
-import { Shield, LogIn, ArrowLeft, AlertCircle, Lock } from 'lucide-react';
-import AdminLanguageSwitcher from '@/components/admin/AdminLanguageSwitcher';
+import { ArrowLeft, Lock, LogIn, Shield } from 'lucide-react';
+import PixelGridLoader from '@/components/admin/PixelGridLoader';
+import ImageCaptcha from '@/components/ImageCaptcha';
+import { cmsFetch, CmsError } from '@/lib/cms';
+import { hasAdminSession, persistAdminSession } from '@/lib/admin-session';
+import { loadAdminSettings } from '@/lib/admin-settings';
 
 export default function AdminLoginPage() {
   const router = useRouter();
   const locale = useLocale();
   const t = useTranslations('admin.login');
-
+  const [email, setEmail] = useState('admin@sarisysteme.com');
   const [password, setPassword] = useState('');
+  const [totpCode, setTotpCode] = useState('');
+  const [challengeToken, setChallengeToken] = useState('');
   const [error, setError] = useState('');
-  const [attempts, setAttempts] = useState(0);
+  const [loading, setLoading] = useState(false);
   const [blocked, setBlocked] = useState(false);
-
-  const ADMIN_PASSWORD = 'SARI@admin2024!';
-  const MAX_ATTEMPTS = 3;
-  const BLOCK_DURATION = 15 * 60 * 1000;
+  const [security, setSecurity] = useState({ admin2fa: false, adminCaptcha: true, siteCaptcha: true });
+  const [captchaOk, setCaptchaOk] = useState(false);
 
   useEffect(() => {
-    const auth = localStorage.getItem('sari_admin_auth');
-    const authTime = localStorage.getItem('sari_admin_time');
-
-    if (auth === 'true' && authTime) {
-      const elapsed = Date.now() - parseInt(authTime);
-      if (elapsed < 2 * 60 * 60 * 1000) {
-        router.replace(`/${locale}/admin/dashboard`);
-        return;
-      }
-    }
-
-    const blockTime = localStorage.getItem('sari_admin_blocked');
-    if (blockTime) {
-      const elapsed = Date.now() - parseInt(blockTime);
-      if (elapsed < BLOCK_DURATION) {
-        setBlocked(true);
-        setTimeout(() => {
-          localStorage.removeItem('sari_admin_blocked');
-          setBlocked(false);
-          setAttempts(0);
-        }, BLOCK_DURATION - elapsed);
-      }
-    }
+    if (hasAdminSession()) router.replace(`/${locale}/admin/dashboard`);
   }, [router, locale]);
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
+  useEffect(() => {
+    const s = loadAdminSettings();
+    setSecurity(s.security);
+  }, []);
 
-    if (blocked) {
-      setError(t('tooManyAttempts'));
+  const accept = (result: { accessToken?: string; refreshToken?: string; user?: never; requires2fa?: boolean; challengeToken?: string }) => {
+    if (result.requires2fa && result.challengeToken) {
+      setChallengeToken(result.challengeToken);
       return;
     }
+    if (!result.accessToken || !result.user) {
+      setError(t('wrongPassword'));
+      return;
+    }
+    persistAdminSession(result as never);
+    router.push(`/${locale}/admin/dashboard`);
+  };
 
-    if (password === ADMIN_PASSWORD) {
-      localStorage.setItem('sari_admin_auth', 'true');
-      localStorage.setItem('sari_admin_time', Date.now().toString());
-      localStorage.removeItem('sari_admin_blocked');
-      localStorage.removeItem('sari_admin_attempts');
-      router.push(`/${locale}/admin/dashboard`);
-    } else {
-      const newAttempts = attempts + 1;
-      setAttempts(newAttempts);
-      localStorage.setItem('sari_admin_attempts', newAttempts.toString());
-
-      if (newAttempts >= MAX_ATTEMPTS) {
-        localStorage.setItem('sari_admin_blocked', Date.now().toString());
-        setBlocked(true);
-        setError(t('tooManyAttempts'));
-      } else {
-        setError(`${t('wrongPassword')} ${MAX_ATTEMPTS - newAttempts} ${t('attemptsLeft')}`);
-      }
-      setPassword('');
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    if (security.adminCaptcha && !captchaOk) {
+      setError('Veuillez saisir le code CAPTCHA correctement.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const path = challengeToken ? '/auth/2fa/challenge' : '/auth/login';
+      const json = challengeToken
+        ? { challengeToken, code: totpCode }
+        : { email, password, ...(totpCode ? { totpCode } : {}) };
+      accept(await cmsFetch(path, { method: 'POST', json, timeoutMs: 8000 }));
+    } catch (err) {
+      setError(err instanceof CmsError ? (err.status === 401 ? t('wrongPassword') : err.message) : t('apiUnreachable'));
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative">
-      <div className="absolute inset-0 grid-pattern-bg opacity-5"></div>
-
-      {/* Sélecteur de langue en haut à droite */}
-      <div className="absolute top-6 right-6 z-10">
-        <AdminLanguageSwitcher />
-      </div>
-
-      <div className="bg-white dark:bg-[#1a1a1a] p-8 rounded-2xl shadow-2xl w-full max-w-md relative z-10 border border-gray-200 dark:border-gray-800">
+    <div className="min-h-screen flex items-center justify-center p-6 relative">
+      <div className="absolute inset-0 ad-grid-bg opacity-80" />
+      <div className="ad-card relative z-10 w-full max-w-md p-8 ad-rise overflow-hidden">
+        <div className="absolute inset-x-0 top-0 h-1" style={{ background: 'linear-gradient(90deg, var(--ad-accent), var(--ad-accent-2), var(--ad-warn))' }} />
         <div className="text-center mb-8">
-          <div className="w-20 h-20 bg-gradient-to-br from-sari-blue to-sari-dark rounded-full flex items-center justify-center mx-auto mb-4 shadow-xl">
-            <Shield className="w-10 h-10 text-white" />
+          <div className="mx-auto mb-4 w-16 h-16 rounded-3xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, var(--ad-accent), #0d7a9e)' }}>
+            <Shield className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-sari-dark dark:text-white">
-            {t('title')}
-          </h1>
-          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
-            {t('subtitle')}
-          </p>
+          <h1 className="text-2xl font-black">{t('title')}</h1>
+          <p className="text-sm mt-1" style={{ color: 'var(--ad-muted)' }}>{t('subtitle')}</p>
+          {security.admin2fa && (
+            <div className="mt-3 inline-flex items-center gap-2 text-xs ad-chip ad-chip-ok"><Lock className="w-3 h-3" /> Double authentification (2FA) requise</div>
+          )}
         </div>
-
-        {error && (
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-700 p-3 rounded-lg mb-4 text-sm text-red-600 dark:text-red-400 flex items-start gap-2">
-            <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-            <span>{error}</span>
-          </div>
-        )}
-
+        {error && <div className="mb-4 text-sm ad-chip ad-chip-warn w-full justify-start py-2 px-3">{error}</div>}
         {blocked ? (
-          <div className="text-center py-8">
-            <Lock className="w-16 h-16 text-red-500 mx-auto mb-4" />
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
-              {t('accessBlocked')}
-            </p>
-            <p className="text-sm text-gray-500">
-              {t('tryLater')}
-            </p>
-          </div>
+          <div className="text-center py-8"><Lock className="w-10 h-10 mx-auto mb-2" /><p>{t('accessBlocked')}</p></div>
+        ) : loading ? (
+          <PixelGridLoader compact label="Auth" />
         ) : (
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label className="block text-sm font-bold text-sari-dark dark:text-white mb-2">
-                {t('passwordLabel')}
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder={t('passwordPlaceholder')}
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white rounded-lg focus:border-sari-blue outline-none"
-                autoFocus
-                disabled={blocked}
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={blocked || !password}
-              className="w-full btn-primary text-white py-3 font-semibold rounded-lg flex items-center justify-center gap-2 disabled:opacity-50"
-            >
-              <LogIn className="w-5 h-5" />
-              {t('submit')}
+          <form onSubmit={onSubmit} className="space-y-3">
+            <input className="ad-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t('emailPlaceholder')} />
+            <input className="ad-input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t('passwordPlaceholder')} disabled={!!challengeToken} />
+            {(challengeToken || totpCode) && (
+              <input className="ad-input text-center tracking-[0.4em]" value={totpCode} onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="000000" />
+            )}
+            {security.adminCaptcha && (
+              <ImageCaptcha onChange={setCaptchaOk} />
+            )}
+            <button className="ad-btn ad-btn-primary w-full py-3" disabled={!email || (!challengeToken && !password)}>
+              <LogIn className="w-4 h-4" /> {challengeToken ? t('verifyTotp') : t('submit')}
             </button>
           </form>
         )}
-
-        <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-800 text-center">
-          <button
-            onClick={() => router.push(`/${locale}`)}
-            className="text-sm text-gray-500 hover:text-sari-blue inline-flex items-center gap-1"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            {t('backToSite')}
-          </button>
-        </div>
-
-        <div className="mt-4 text-center">
-          <p className="text-xs text-gray-400">
-            🔒 {t('phase1')}
-          </p>
-        </div>
+        <button onClick={() => router.push(`/${locale}`)} className="mt-6 text-sm flex items-center gap-1 mx-auto" style={{ color: 'var(--ad-muted)' }}>
+          <ArrowLeft className="w-4 h-4" /> {t('backToSite')}
+        </button>
       </div>
     </div>
   );

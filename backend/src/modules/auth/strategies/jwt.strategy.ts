@@ -9,7 +9,7 @@ import { UserEntity } from '../../users/entities/user.entity';
 import { AuthService } from '../auth.service';
 
 export interface JwtPayload {
-  sub: string;
+  sub: string | number;
   email: string;
   typ?: 'access' | 'refresh' | '2fa';
 }
@@ -32,7 +32,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (payload.typ && payload.typ !== 'access') {
       throw new UnauthorizedException('Invalid token type');
     }
-    const user = await this.users.findById(payload.sub);
+    const user = await this.users.findById(Number(payload.sub));
     if (!user || user.status !== 'active') {
       throw new UnauthorizedException('Account is not active');
     }

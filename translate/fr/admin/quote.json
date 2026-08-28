@@ -1,0 +1,14 @@
+{
+  "article": "Article",
+  "qty": "Qté",
+  "unitPrice": "Prix unit. (DA)",
+  "totalHT": "Total HT",
+  "globalDiscount": "Remise globale (DA)",
+  "shippingFees": "Frais de livraison (DA)",
+  "globalDiscountLabel": "Remise globale",
+  "totalTaxes": "Total taxes (TVA)",
+  "shipping": "Livraison",
+  "totalTTC": "Total TTC",
+  "chooseFile": "Choisir un fichier",
+  "commentPlaceholder": "Rédigez le commentaire accompagnant le devis…"
+}

@@ -1,0 +1,11 @@
+{
+  "title": "تحليلات المتجر",
+  "day": "يوم",
+  "week": "أسبوع",
+  "month": "شهر",
+  "year": "سنة",
+  "csvExport": "تصدير CSV",
+  "byPaymentMethod": "حسب طريقة الدفع",
+  "finalized": "منتهية",
+  "taxesCollected": "الضرائب المحصلة"
+}

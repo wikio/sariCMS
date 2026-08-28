@@ -59,10 +59,12 @@
     "Alerts for new job offers",
     "Direct communication with HR"
   ],
-  "title":"Connexion",
-  "remember":"Remember me",
-  "loginButton":"Connect",
-  "email":"Email address",
-  "loginError":"Error on Email ou password",
-  "loggingIn":"Connexion in progress..."
+  "title": "Connexion",
+  "remember": "Remember me",
+  "loginButton": "Connect",
+  "email": "Email address",
+  "loginError": "Error on Email ou password",
+  "loggingIn": "Connexion in progress...",
+  "captchaError": "Please enter the correct CAPTCHA code.",
+  "demoHint": "Demo: client@sari.dz / partner@sari.dz / candidate@sari.dz · password demo123"
 }

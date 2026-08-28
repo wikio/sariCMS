@@ -12,10 +12,10 @@ export class PublicMenusController {
 
   @Get()
   @ApiOperation({ summary: 'Menus publiés' })
-  list(@Query() query: QueryDto) {
+  list(@Query() query: QueryDto, @Query('locale') locale?: string) {
     return this.menus.findAll({
       ...query,
-      filter: { ...(query.filter ?? {}), status: 'published' },
+      filter: { ...(query.filter ?? {}), ...(locale ? { locale } : {}), status: 'published' },
     });
   }
 

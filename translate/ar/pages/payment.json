@@ -54,5 +54,13 @@
   "total": "المجموع",
   "processing": "جاري المعالجة...",
   "confirmPayment": "تأكيد الدفع",
-  "securePayment": "دفع آمن 100%"
+  "securePayment": "دفع آمن 100%",
+  "fillPaypalEmail": "يرجى إدخال بريد PayPal",
+  "paymentDone": "تم تسجيل الدفع",
+  "paymentValidated": "تم التحقق من دفعتك. شكرًا!",
+  "paymentPending": "دفعتك قيد التحقق من قبل فريقنا.",
+  "noMethod": "لا توجد طريقة دفع متاحة.",
+  "manualValidation": "سيتم التحقق من هذا الدفع يدويًا من قبل فريقنا.",
+  "codTitle": "الدفع عند الاستلام",
+  "codDesc": "ادفع نقدًا عند استلام طلبك."
 }

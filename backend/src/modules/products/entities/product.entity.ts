@@ -17,6 +17,9 @@ export interface ProductEntity extends BaseEntity {
   image?: string | null;
   gallery?: string[] | unknown;
   inStock: boolean;
+  stockQty?: number | null;
+  stockFinal?: boolean | null;
+  currency?: string | null;
   deliveryTime?: string | null;
   features?: string[] | unknown;
   specs?: Record<string, string> | unknown;

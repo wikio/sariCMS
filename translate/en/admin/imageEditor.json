@@ -1,0 +1,14 @@
+{
+  "sepia": "Sepia",
+  "arrow": "Arrow",
+  "eyedropper": "Eyedropper (pick a color)",
+  "displayZoom": "Display zoom",
+  "activeTool": "Active tool",
+  "color": "Color",
+  "thickness": "Thickness",
+  "insertText": "Text to insert…",
+  "fill": "Fill",
+  "fillHelp": "Click an area to fill it with the selected color.",
+  "eyedropperHelp": "Click a pixel to pick its color.",
+  "tolerance": "Tolerance"
+}

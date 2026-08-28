@@ -1,0 +1,12 @@
+{
+  "header": "Header",
+  "undo": "Undo",
+  "underline": "Underline (Ctrl+U)",
+  "bulletList": "Bullet list",
+  "numberedList": "Numbered list",
+  "alignLeft": "Align left",
+  "alignRight": "Align right",
+  "insertLink": "Insert link",
+  "insertImage": "Insert image",
+  "insertTable": "Insert table"
+}

@@ -1,0 +1,13 @@
+{
+  "breadcrumb": "Operations",
+  "title": "Logs",
+  "subtitle": "Immutable audit of administrator actions.",
+  "allResources": "All resources",
+  "date": "Date",
+  "action": "Action",
+  "resource": "Resource",
+  "target": "Target",
+  "actor": "Actor",
+  "noEntries": "No entries",
+  "apiError": "Audit log unavailable. Check the API and audit permission."
+}

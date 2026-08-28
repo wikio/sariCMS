@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { 
@@ -12,12 +12,19 @@ import {
   FileText, Mail
 } from 'lucide-react';
 import { getCareers } from '@/lib/data';
+import { matchesEntity } from '@/lib/ids';
 import { useAuth } from '@/contexts/AuthContext';
 import { useApplications } from '@/contexts/ApplicationsContext';
 import type { Career } from '@/types';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import CTAButton from '@/components/ui/CTAButton';
 import Badge from '@/components/shared/Badge';
+import CandidateJourney from '@/components/CandidateJourney';
+import { loadFlowFor, findResumeByToken, type FlowStep } from '@/lib/recruitment-flow';
+import { loadAdminSettings } from '@/lib/admin-settings';
+import { maskPhone } from '@/lib/masks';
+import { useVisibility } from '@/lib/site-visibility';
+import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
 
 export default function JobDetailPage() {
   const params = useParams();
@@ -25,8 +32,16 @@ export default function JobDetailPage() {
   const locale = useLocale();
   const t = useTranslations('pages.jobs');
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, isAuthenticated } = useAuth();
   const { addApplication, hasApplied } = useApplications();
+  const visibility = useVisibility();
+  const canApply = visibility['action.apply'] !== false;
+
+  // Parcours de candidature
+  const [flowSteps, setFlowSteps] = useState<FlowStep[]>([]);
+  const [journeyAppId, setJourneyAppId] = useState<number>(0);
+  const [journeyOfferId, setJourneyOfferId] = useState<string>('');
 
   const [job, setJob] = useState<Career | null>(null);
   const [relatedJobs, setRelatedJobs] = useState<Career[]>([]);
@@ -39,11 +54,14 @@ export default function JobDetailPage() {
   const [appFormData, setAppFormData] = useState({
     name: '', email: '', phone: '', linkedin: '', experience: '', motivation: '', cvName: '', acceptTerms: false
   });
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const loadJob = async () => {
       const careers = await getCareers(locale);
-      const found = careers.find(j => j.id === parseInt(id));
+      // L'URL est au format `<id>-<slug>` : on isole l'id numérique de tête.
+      const idString = id.split('-')[0];
+      const found = careers.find(j => matchesEntity(j, idString) || matchesEntity(j, id));
       setJob(found || null);
       
       if (found) {
@@ -68,8 +86,42 @@ export default function JobDetailPage() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Charge le parcours candidat + gère la reprise.
+  useEffect(() => {
+    if (!job) return;
+    const steps = loadFlowFor(job.id);
+    setFlowSteps(steps);
+
+    const resumeToken = searchParams.get('resume');
+    if (resumeToken) {
+      const found = findResumeByToken(resumeToken);
+      if (found) {
+        setJourneyOfferId(found.offerId);
+        setJourneyAppId(found.applicationId);
+        setShowApplicationForm(true);
+        return;
+      }
+    }
+    // Nouvelle candidature : id local + offre résolue par legacyId.
+    if (steps.length) {
+      setJourneyAppId(Date.now());
+      setJourneyOfferId(String(job.id));
+    }
+  }, [job, searchParams]);
+
   const handleApplication = (e: React.FormEvent) => {
     e.preventDefault();
+    // Validation côté client (champs requis + formats).
+    const errs: Record<string, string> = {};
+    if (!appFormData.name.trim()) errs.name = 'Le nom complet est requis.';
+    if (!appFormData.email.trim()) errs.email = 'L’adresse e-mail est requise.';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(appFormData.email.trim())) errs.email = 'Adresse e-mail invalide.';
+    if (appFormData.phone.trim() && !/^[+\d][\d\s().-]{6,}$/.test(appFormData.phone.trim())) errs.phone = 'Numéro de téléphone invalide.';
+    if (!appFormData.motivation.trim()) errs.motivation = 'Votre motivation est requise.';
+    if (!appFormData.acceptTerms) errs.acceptTerms = 'Vous devez accepter les conditions.';
+    if (Object.keys(errs).length > 0) { setFormErrors(errs); return; }
+    setFormErrors({});
+
     if (job) {
       addApplication({
         jobId: job.id,
@@ -91,33 +143,36 @@ export default function JobDetailPage() {
     }
   };
 
-  const handleQuickApply = () => {
-    if (!isAuthenticated) {
-      localStorage.setItem('sari_pending_action', JSON.stringify({ type: 'apply', jobId: parseInt(id) }));
-      router.push(`/${locale}/connexion?source=carriere`);
-      return;
-    }
+  /**
+   * Résout si la connexion est requise pour postuler à cette offre :
+   * - 'required'   → connexion obligatoire
+   * - 'optional'   → postuler sans connexion
+   * - 'inherit'    → suit la configuration globale (requireAuthToApply)
+   */
+  const requiresAuth = () => {
+    const mode = job?.applyAuth || 'inherit';
+    if (mode === 'required') return true;
+    if (mode === 'optional') return false;
+    // inherit / non défini → configuration globale
+    try { return loadAdminSettings().requireAuthToApply; } catch { return false; }
+  };
+
+  /** Point d'entrée unique pour postuler (bouton bandeau + bouton sidebar). */
+  const startApply = () => {
     if (job && hasApplied(job.id)) {
       alert(t('alreadyApplied'));
       return;
     }
-    if (job) {
-      addApplication({
-        jobId: job.id,
-        title: job.title,
-        image: job.image || '',
-        location: job.location,
-        salary: job.salary,
-        type: job.type,
-        fullName: user?.name || '',
-        email: user?.email || '',
-        phone: '',
-        motivation: ''
-      });
-      setAddedToCart(true);
-      setTimeout(() => setAddedToCart(false), 3000);
+    if (requiresAuth() && !isAuthenticated) {
+      localStorage.setItem('sari_pending_action', JSON.stringify({ type: 'apply', jobId: id }));
+      router.push(`/${locale}/connexion?source=carriere`);
+      return;
     }
+    // Parcours de candidature (ou formulaire classique en fallback).
+    setShowApplicationForm(true);
   };
+
+  const handleQuickApply = startApply;
 
   if (!job) {
     return (
@@ -142,6 +197,7 @@ export default function JobDetailPage() {
   const alreadyApplied = hasApplied(job.id);
 
   return (
+    <PageVisibilityGuard visibilityKey="module.careers">
     <div className="pt-32 pb-24 min-h-screen page-enter">
       <div className="fixed top-0 left-0 w-full h-1 bg-gray-200 dark:bg-gray-800 z-50">
         <div className="h-full bg-sari-blue transition-all duration-150" style={{ width: `${scrollProgress}%` }}></div>
@@ -191,11 +247,11 @@ export default function JobDetailPage() {
                 <CheckCircle className="w-5 h-5 text-green-400" />
                 <span className="font-bold">{t('alreadyApplied')}</span>
               </div>
-            ) : (
+            ) : canApply ? (
               <CTAButton onClick={handleQuickApply} variant="lime" icon="send">
                 {t('applyNow')}
               </CTAButton>
-            )}
+            ) : null}
           </div>
         </div>
       </div>
@@ -327,29 +383,68 @@ export default function JobDetailPage() {
                   <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">{t('applicationSentDesc')}</p>
                 </div>
               ) : !showApplicationForm ? (
-                <CTAButton onClick={() => setShowApplicationForm(true)} variant="primary" icon="send" fullWidth>
-                  {t('applyNow')}
-                </CTAButton>
+                canApply ? (
+                  <CTAButton onClick={startApply} variant="primary" icon="send" fullWidth>
+                    {flowSteps.length > 0 ? t('startJourney') : t('applyNow')}
+                  </CTAButton>
+                ) : (
+                  <div className="bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4 text-center rounded-lg text-sm text-gray-500 dark:text-gray-400">
+                    {t('applyDisabled') || t('applicationsClosed', { defaultMessage: 'Les candidatures sont actuellement fermées.' })}
+                  </div>
+                )
+              ) : flowSteps.length > 0 ? (
+                <CandidateJourney
+                  steps={flowSteps}
+                  offerId={journeyOfferId || String(job.id)}
+                  applicationId={journeyAppId || Date.now()}
+                  onComplete={() => {
+                    setApplicationSubmitted(true);
+                    setAddedToCart(true);
+                    setTimeout(() => setAddedToCart(false), 3000);
+                  }}
+                />
               ) : (
-                <form onSubmit={handleApplication} className="space-y-4">
-                  <input type="text" required placeholder={t('fullName')} value={appFormData.name} onChange={(e) => setAppFormData({...appFormData, name: e.target.value})} className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none rounded-lg" />
-                  <input type="email" required placeholder={t('email')} value={appFormData.email} onChange={(e) => setAppFormData({...appFormData, email: e.target.value})} className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none rounded-lg" />
-                  <input type="tel" placeholder={t('phone')} value={appFormData.phone} onChange={(e) => setAppFormData({...appFormData, phone: e.target.value})} className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none rounded-lg" />
-                  <input type="text" placeholder={t('linkedin')} value={appFormData.linkedin} onChange={(e) => setAppFormData({...appFormData, linkedin: e.target.value})} className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none rounded-lg" />
-                  <input type="text" placeholder={t('yearsExp')} value={appFormData.experience} onChange={(e) => setAppFormData({...appFormData, experience: e.target.value})} className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none rounded-lg" />
+                <form onSubmit={handleApplication} noValidate className="space-y-4">
+                  <div>
+                    <input type="text" placeholder={t('fullName')} value={appFormData.name}
+                      onChange={(e) => { setAppFormData({ ...appFormData, name: e.target.value }); setFormErrors((p) => { const { name: _n, ...r } = p; return r; }); }}
+                      className={`w-full px-4 py-3 border rounded-lg outline-none transition-colors dark:bg-[#111111] dark:text-white ${formErrors.name ? 'border-red-500 focus:border-red-500' : 'border-gray-300 dark:border-gray-700 focus:border-sari-blue'}`} />
+                    {formErrors.name && <p className="text-xs text-red-500 mt-1">{formErrors.name}</p>}
+                  </div>
+                  <div>
+                    <input type="email" placeholder={t('email')} value={appFormData.email}
+                      onChange={(e) => { setAppFormData({ ...appFormData, email: e.target.value }); setFormErrors((p) => { const { email: _n, ...r } = p; return r; }); }}
+                      className={`w-full px-4 py-3 border rounded-lg outline-none transition-colors dark:bg-[#111111] dark:text-white ${formErrors.email ? 'border-red-500 focus:border-red-500' : 'border-gray-300 dark:border-gray-700 focus:border-sari-blue'}`} />
+                    {formErrors.email && <p className="text-xs text-red-500 mt-1">{formErrors.email}</p>}
+                  </div>
+                  <div>
+                    <input type="tel" placeholder={t('phone')} value={appFormData.phone}
+                      onChange={(e) => { setAppFormData({ ...appFormData, phone: maskPhone(e.target.value) }); setFormErrors((p) => { const { phone: _n, ...r } = p; return r; }); }}
+                      className={`w-full px-4 py-3 border rounded-lg outline-none transition-colors dark:bg-[#111111] dark:text-white ${formErrors.phone ? 'border-red-500 focus:border-red-500' : 'border-gray-300 dark:border-gray-700 focus:border-sari-blue'}`} />
+                    {formErrors.phone && <p className="text-xs text-red-500 mt-1">{formErrors.phone}</p>}
+                  </div>
+                  <input type="text" placeholder={t('linkedin')} value={appFormData.linkedin} onChange={(e) => setAppFormData({ ...appFormData, linkedin: e.target.value })} className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none rounded-lg" />
+                  <input type="text" placeholder={t('yearsExp')} value={appFormData.experience} onChange={(e) => setAppFormData({ ...appFormData, experience: e.target.value })} className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none rounded-lg" />
                   <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 p-4 text-center hover:border-sari-blue transition-colors rounded-lg">
-                    <input type="file" id="cv-upload" accept=".pdf,.doc,.docx" onChange={(e) => { if (e.target.files && e.target.files[0]) setAppFormData({...appFormData, cvName: e.target.files[0].name}); }} className="hidden" />
+                    <input type="file" id="cv-upload" accept=".pdf,.doc,.docx" onChange={(e) => { if (e.target.files && e.target.files[0]) setAppFormData({ ...appFormData, cvName: e.target.files[0].name }); }} className="hidden" />
                     <label htmlFor="cv-upload" className="cursor-pointer">
                       <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                       <p className="text-sm text-gray-500">{appFormData.cvName || t('uploadCv')}</p>
                       <p className="text-xs text-gray-400 mt-1">{t('cvFormats')}</p>
                     </label>
                   </div>
-                  <textarea rows={4} required placeholder={t('motivation')} value={appFormData.motivation} onChange={(e) => setAppFormData({...appFormData, motivation: e.target.value})} className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none resize-none rounded-lg"></textarea>
-                  <div className="flex items-start gap-2">
-                    <input type="checkbox" id="accept-terms" required checked={appFormData.acceptTerms} onChange={(e) => setAppFormData({...appFormData, acceptTerms: e.target.checked})} className="w-4 h-4 mt-1" />
-                    <label htmlFor="accept-terms" className="text-xs text-gray-600 dark:text-gray-400">{t('acceptTerms')}</label>
+                  <div>
+                    <textarea rows={4} placeholder={t('motivation')} value={appFormData.motivation}
+                      onChange={(e) => { setAppFormData({ ...appFormData, motivation: e.target.value }); setFormErrors((p) => { const { motivation: _n, ...r } = p; return r; }); }}
+                      className={`w-full px-4 py-3 border rounded-lg outline-none resize-none transition-colors dark:bg-[#111111] dark:text-white ${formErrors.motivation ? 'border-red-500 focus:border-red-500' : 'border-gray-300 dark:border-gray-700 focus:border-sari-blue'}`}></textarea>
+                    {formErrors.motivation && <p className="text-xs text-red-500 mt-1">{formErrors.motivation}</p>}
                   </div>
+                  <div className="flex items-start gap-2">
+                    <input type="checkbox" id="accept-terms" checked={appFormData.acceptTerms}
+                      onChange={(e) => { setAppFormData({ ...appFormData, acceptTerms: e.target.checked }); setFormErrors((p) => { const { acceptTerms: _n, ...r } = p; return r; }); }} className="w-4 h-4 mt-1" />
+                    <label htmlFor="accept-terms" className={`text-xs ${formErrors.acceptTerms ? 'text-red-500' : 'text-gray-600 dark:text-gray-400'}`}>{t('acceptTerms')}</label>
+                  </div>
+                  {formErrors.acceptTerms && <p className="text-xs text-red-500">{formErrors.acceptTerms}</p>}
                   <CTAButton type="submit" variant="primary" fullWidth>{t('sendApplication')}</CTAButton>
                   <button type="button" onClick={() => setShowApplicationForm(false)} className="w-full text-gray-500 hover:text-sari-dark dark:hover:text-white text-sm">{t('cancel')}</button>
                 </form>
@@ -399,5 +494,6 @@ export default function JobDetailPage() {
         </div>
       </div>
     </div>
+    </PageVisibilityGuard>
   );
 }

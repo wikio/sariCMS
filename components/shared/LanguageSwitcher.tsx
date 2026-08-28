@@ -3,8 +3,9 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { useRouter, usePathname } from 'next/navigation'; // ✅ Importé depuis next/navigation
+import { useRouter, usePathname } from 'next/navigation';
 import { Globe, Check, ChevronDown } from 'lucide-react';
+import { translateSlug } from '@/lib/fiche-i18n';
 
 export default function LanguageSwitcher() {
   const [isOpen, setIsOpen] = useState(false);
@@ -35,13 +36,44 @@ export default function LanguageSwitcher() {
   }, []);
 
   const handleLanguageChange = (newLocale: string) => {
-    // ✅ Logique robuste pour construire le nouveau chemin sans dépendre de next-intl/router
     let newPathname = pathname;
     
     if (pathname === '/') {
       newPathname = `/${newLocale}`;
     } else if (pathname.startsWith(`/${locale}/`)) {
-      newPathname = pathname.replace(`/${locale}/`, `/${newLocale}/`);
+      // Extraire le chemin après la locale
+      const pathWithoutLocale = pathname.replace(`/${locale}/`, '');
+      const pathParts = pathWithoutLocale.split('/');
+      
+      // Ressources qui ont des slugs traduisibles (tous les modules avec i18n: true sur slug)
+      const translatableResources = [
+        'solutions',    // Solutions
+        'services',     // Services
+        'products',     // Produits
+        'news',         // Actualités
+        'events',       // Événements
+        'careers',      // Carrières
+        'partners',     // Partenaires
+        'pages',        // Pages
+        'legal',        // Pages légales
+        'gallery',      // Galerie
+      ];
+      
+      // Vérifier si le premier segment est une ressource traduisible
+      if (pathParts.length >= 2 && translatableResources.includes(pathParts[0])) {
+        const resource = pathParts[0];
+        const currentSlug = pathParts[1];
+        
+        // Traduire le slug
+        const translatedSlug = translateSlug(resource, currentSlug, locale, newLocale);
+        
+        // Reconstruire le chemin avec le slug traduit
+        pathParts[1] = translatedSlug;
+        newPathname = `/${newLocale}/${pathParts.join('/')}`;
+      } else {
+        // Pas de slug à traduire, juste remplacer la locale
+        newPathname = pathname.replace(`/${locale}/`, `/${newLocale}/`);
+      }
     } else if (pathname === `/${locale}`) {
       newPathname = `/${newLocale}`;
     } else {

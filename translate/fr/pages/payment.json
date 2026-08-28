@@ -54,5 +54,13 @@
   "total": "Total",
   "processing": "Traitement en cours...",
   "confirmPayment": "Confirmer le paiement",
-  "securePayment": "Paiement 100% sécurisé"
+  "securePayment": "Paiement 100% sécurisé",
+  "fillPaypalEmail": "Veuillez saisir l'email PayPal",
+  "paymentDone": "Paiement enregistré",
+  "paymentValidated": "Votre paiement est validé. Merci !",
+  "paymentPending": "Votre paiement est en attente de validation par notre équipe.",
+  "noMethod": "Aucun mode de paiement disponible.",
+  "manualValidation": "Ce paiement sera validé manuellement par notre équipe.",
+  "codTitle": "Paiement à la livraison",
+  "codDesc": "Réglez en espèces à la réception de votre commande."
 }

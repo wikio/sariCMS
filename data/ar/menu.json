@@ -104,21 +104,73 @@
   ],
   "footerMenu": {
     "navigation": [
-      { "id": "home", "label": "الرئيسية", "href": "/" },
-      { "id": "about", "label": "من نحن", "href": "/about" },
-      { "id": "solutions", "label": "الحلول", "href": "/solutions" },
-      { "id": "services", "label": "الخدمات", "href": "/services" },
-      { "id": "products", "label": "المنتجات", "href": "/products" },
-      { "id": "events", "label": "الفعاليات", "href": "/events" },
-      { "id": "news", "label": "الأخبار", "href": "/news" },
-      { "id": "careers", "label": "الوظائف", "href": "/careers" },
-      { "id": "contact", "label": "اتصل بنا", "href": "/contact" }
+      {
+        "id": "home",
+        "label": "الرئيسية",
+        "href": "/"
+      },
+      {
+        "id": "about",
+        "label": "من نحن",
+        "href": "/about"
+      },
+      {
+        "id": "solutions",
+        "label": "الحلول",
+        "href": "/solutions"
+      },
+      {
+        "id": "services",
+        "label": "الخدمات",
+        "href": "/services"
+      },
+      {
+        "id": "products",
+        "label": "المنتجات",
+        "href": "/products"
+      },
+      {
+        "id": "events",
+        "label": "الفعاليات",
+        "href": "/events"
+      },
+      {
+        "id": "news",
+        "label": "الأخبار",
+        "href": "/news"
+      },
+      {
+        "id": "careers",
+        "label": "الوظائف",
+        "href": "/careers"
+      },
+      {
+        "id": "contact",
+        "label": "اتصل بنا",
+        "href": "/contact"
+      }
     ],
     "legal": [
-      { "id": "mentions", "label": "الإشعار القانوني", "href": "/legal/legalNotice" },
-      { "id": "privacy", "label": "سياسة الخصوصية", "href": "/legal/privacy" },
-      { "id": "conditions", "label": "الشروط والأحكام", "href": "/legal/conditions" },
-      { "id": "verification", "label": "التحقق", "href": "/verification" }
+      {
+        "id": "mentions",
+        "label": "الإشعار القانوني",
+        "href": "/legal/mentions"
+      },
+      {
+        "id": "privacy",
+        "label": "سياسة الخصوصية",
+        "href": "/legal/privacy"
+      },
+      {
+        "id": "conditions",
+        "label": "الشروط والأحكام",
+        "href": "/legal/conditions"
+      },
+      {
+        "id": "verification",
+        "label": "التحقق",
+        "href": "/verification"
+      }
     ]
   },
   "socialLinks": {

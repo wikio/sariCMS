@@ -26,7 +26,7 @@ export class TranslationsService extends BaseCrudService<TranslationEntity> {
     this.repository = repository;
   }
 
-  async forEntity(entityType: string, entityId: string) {
+  async forEntity(entityType: string, entityId: number) {
     return this.repository.findMany({
       page: 1,
       limit: 100,

@@ -112,6 +112,11 @@ async function seedJson() {
   await store.write(COLLECTIONS.news, []);
   await store.write(COLLECTIONS.events, []);
   await store.write(COLLECTIONS.products, []);
+  await store.write(COLLECTIONS.services, []);
+  await store.write(COLLECTIONS.partners, []);
+  await store.write(COLLECTIONS.careers, []);
+  await store.write(COLLECTIONS.solutions, []);
+  await store.write(COLLECTIONS.hero, []);
 
   const marker = path.join(dir, '.seeded');
   fs.writeFileSync(marker, now());

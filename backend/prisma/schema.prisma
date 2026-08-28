@@ -20,7 +20,7 @@ datasource db {
 // ---------------------------------------------------------------------------
 
 model User {
-  id           String    @id @default(uuid())
+  id    Int      @id @default(autoincrement())
   email        String    @unique
   passwordHash String
   firstName    String    @default("")
@@ -31,7 +31,7 @@ model User {
   type         String    @default("client") // admin | client | partner | candidate
   status       String    @default("pending") // active | blocked | pending
   locale       String    @default("fr")
-  roleId       String?
+  roleId    Int?
   role         Role?     @relation(fields: [roleId], references: [id])
   totpEnabled  Boolean   @default(false)
   totpSecret   String?
@@ -48,8 +48,8 @@ model User {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   deletedAt    DateTime?
-  createdBy    String?
-  updatedBy    String?
+  createdBy   Int?
+  updatedBy   Int?
 
   refreshTokens RefreshToken[]
   auditLogs     AuditLog[]     @relation("ActorLogs")
@@ -61,23 +61,28 @@ model User {
 }
 
 model RefreshToken {
-  id        String    @id @default(uuid())
-  userId    String
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tokenHash String
-  expiresAt DateTime
-  revokedAt DateTime?
-  createdAt DateTime  @default(now())
-  userAgent String?   @db.Text
-  ip        String?
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash  String
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  deletedAt  DateTime?
+  createdBy  Int?
+  updatedBy  Int?
+  userAgent  String?  @db.Text
+  ip         String?
 
   @@index([userId])
   @@index([expiresAt])
+  @@index([deletedAt])
   @@map("refresh_tokens")
 }
 
 model Role {
-  id          String           @id @default(uuid())
+  id    Int      @id @default(autoincrement())
   name        String
   slug        String           @unique
   description   String?          @db.Text
@@ -86,8 +91,8 @@ model Role {
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
   deletedAt   DateTime?
-  createdBy   String?
-  updatedBy   String?
+  createdBy   Int?
+  updatedBy   Int?
   users       User[]
   permissions RolePermission[]
 
@@ -96,15 +101,15 @@ model Role {
 }
 
 model Permission {
-  id          String           @id @default(uuid())
+  id    Int      @id @default(autoincrement())
   resource    String
   action      String
   description String?          @db.Text
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
   deletedAt   DateTime?
-  createdBy   String?
-  updatedBy   String?
+  createdBy   Int?
+  updatedBy   Int?
   roles       RolePermission[]
 
   @@unique([resource, action])
@@ -112,8 +117,8 @@ model Permission {
 }
 
 model RolePermission {
-  roleId       String
-  permissionId String
+  roleId    Int
+  permissionId    Int
   role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
   permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
 
@@ -126,7 +131,7 @@ model RolePermission {
 // ---------------------------------------------------------------------------
 
 model Page {
-  id          String    @id @default(uuid())
+  id    Int      @id @default(autoincrement())
   slug        String
   locale      String    @default("fr")
   kind        String // legal | about | generic
@@ -146,8 +151,8 @@ model Page {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
-  createdBy   String?
-  updatedBy   String?
+  createdBy   Int?
+  updatedBy   Int?
 
   @@unique([slug, locale])
   @@index([kind, subtype])
@@ -157,7 +162,7 @@ model Page {
 }
 
 model Faq {
-  id        String    @id @default(uuid())
+  id    Int      @id @default(autoincrement())
   locale    String    @default("fr")
   question  String    @db.Text
   answer    String    @db.Text
@@ -167,8 +172,8 @@ model Faq {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
-  createdBy String?
-  updatedBy String?
+  createdBy   Int?
+  updatedBy   Int?
 
   @@index([locale, category])
   @@index([deletedAt])
@@ -176,7 +181,7 @@ model Faq {
 }
 
 model Testimonial {
-  id        String    @id @default(uuid())
+  id    Int      @id @default(autoincrement())
   locale    String    @default("fr")
   name      String
   role      String?
@@ -185,20 +190,25 @@ model Testimonial {
   image     String?
   rating    Int       @default(5)
   sortOrder Int       @default(0)
+  legacyId  String?
+  parentId  Int?
+  isDefault Boolean   @default(false)
   status    String    @default("published")
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
-  createdBy String?
-  updatedBy String?
+  createdBy   Int?
+  updatedBy   Int?
 
   @@index([locale, status])
+  @@index([legacyId])
+  @@index([parentId])
   @@index([deletedAt])
   @@map("testimonials")
 }
 
 model Menu {
-  id        String    @id @default(uuid())
+  id    Int      @id @default(autoincrement())
   locale    String    @default("fr")
   name      String
   location  String // main | footer-nav | footer-legal | social
@@ -207,8 +217,8 @@ model Menu {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
-  createdBy String?
-  updatedBy String?
+  createdBy   Int?
+  updatedBy   Int?
 
   @@unique([location, locale])
   @@index([deletedAt])
@@ -216,7 +226,7 @@ model Menu {
 }
 
 model ContactInfo {
-  id        String    @id @default(uuid())
+  id    Int      @id @default(autoincrement())
   locale    String    @default("fr")
   company   String?
   tagline   String?
@@ -231,15 +241,15 @@ model ContactInfo {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
-  createdBy String?
-  updatedBy String?
+  createdBy   Int?
+  updatedBy   Int?
 
   @@unique([locale])
   @@map("contact_info")
 }
 
 model ContactMessage {
-  id        String    @id @default(uuid())
+  id    Int      @id @default(autoincrement())
   name      String
   email     String
   phone     String?
@@ -250,8 +260,8 @@ model ContactMessage {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
-  createdBy String?
-  updatedBy String?
+  createdBy   Int?
+  updatedBy   Int?
 
   @@index([status])
   @@index([deletedAt])
@@ -263,17 +273,17 @@ model ContactMessage {
 // ---------------------------------------------------------------------------
 
 model Translation {
-  id         String    @id @default(uuid())
+  id    Int      @id @default(autoincrement())
   entityType String
-  entityId   String
+  entityId    Int
   locale     String
   field      String
   value      String    @db.Text
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
   deletedAt  DateTime?
-  createdBy  String?
-  updatedBy  String?
+  createdBy   Int?
+  updatedBy   Int?
 
   @@unique([entityType, entityId, locale, field])
   @@index([entityType, entityId])
@@ -282,20 +292,20 @@ model Translation {
 }
 
 model AuditLog {
-  id         String   @id @default(uuid())
-  actorId    String?
+  id    Int      @id @default(autoincrement())
+  actorId    Int?
   actor      User?    @relation("ActorLogs", fields: [actorId], references: [id])
   action     String
   resource   String
-  resourceId String?
+  resourceId    Int?
   payload    Json?
   ip         String?
   userAgent  String?  @db.Text
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   deletedAt  DateTime?
-  createdBy  String?
-  updatedBy  String?
+  createdBy   Int?
+  updatedBy   Int?
 
   @@index([resource, resourceId])
   @@index([actorId])
@@ -304,15 +314,15 @@ model AuditLog {
 }
 
 model Setting {
-  id        String    @id @default(uuid())
+  id    Int      @id @default(autoincrement())
   key       String    @unique
   value     Json
   group     String    @default("general")
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
-  createdBy String?
-  updatedBy String?
+  createdBy   Int?
+  updatedBy   Int?
 
   @@map("settings")
 }
@@ -322,7 +332,7 @@ model Setting {
 // ---------------------------------------------------------------------------
 
 model NewsArticle {
-  id             String    @id @default(uuid())
+  id    Int      @id @default(autoincrement())
   locale         String    @default("fr")
   slug           String
   title          String
@@ -330,8 +340,9 @@ model NewsArticle {
   classification String?
   sujet          String?
   authorName     String?
-  authorId       String?
+  authorId    Int?
   date           DateTime?
+  publicationDate DateTime?
   readTime       String?
   shortDesc      String?   @db.Text
   fullContent    String?   @db.Text
@@ -339,26 +350,34 @@ model NewsArticle {
   tags           Json?
   status         String    @default("draft")
   publishedAt    DateTime?
+  legacyId       String?
+  parentId       Int?
+  isDefault      Boolean   @default(false)
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   deletedAt      DateTime?
-  createdBy      String?
-  updatedBy      String?
+  createdBy   Int?
+  updatedBy   Int?
 
   @@unique([slug, locale])
   @@index([status, date])
   @@index([authorId])
+  @@index([legacyId])
+  @@index([parentId])
   @@index([deletedAt])
   @@map("news_articles")
 }
 
 model EventItem {
-  id          String    @id @default(uuid())
+  id    Int      @id @default(autoincrement())
   locale      String    @default("fr")
   slug        String
   title       String
   type        String?
+  category    String?
+  targetAudience String?
   date        DateTime?
+  startDate   DateTime?
   endDate     DateTime?
   location    String?
   shortDesc   String?   @db.Text
@@ -367,20 +386,26 @@ model EventItem {
   agenda      Json?
   status      String    @default("draft")
   publishedAt DateTime?
+  legacyId    String?
+  parentId    Int?
+  isDefault   Boolean   @default(false)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
-  createdBy   String?
-  updatedBy   String?
+  createdBy   Int?
+  updatedBy   Int?
 
   @@unique([slug, locale])
   @@index([date])
+  @@index([startDate])
+  @@index([legacyId])
+  @@index([parentId])
   @@index([deletedAt])
   @@map("events")
 }
 
 model Product {
-  id           String    @id @default(uuid())
+  id    Int      @id @default(autoincrement())
   locale       String    @default("fr")
   slug         String
   name         String
@@ -392,21 +417,185 @@ model Product {
   image        String?
   gallery      Json?
   inStock      Boolean   @default(true)
+  stockQty     Int?
+  stockFinal   Boolean   @default(false)
+  currency     String?
+  sortOrder    Int       @default(0)
   deliveryTime String?
   features     Json?
   specs        Json?
   options      Json?
   catalogPdf   String?
+  legacyId     String?
+  parentId     Int?
+  isDefault    Boolean   @default(false)
   status       String    @default("draft")
   publishedAt  DateTime?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   deletedAt    DateTime?
-  createdBy    String?
-  updatedBy    String?
+  createdBy   Int?
+  updatedBy   Int?
 
   @@unique([slug, locale])
   @@index([category, inStock])
+  @@index([legacyId])
+  @@index([parentId])
   @@index([deletedAt])
   @@map("products")
+}
+
+// ---------------------------------------------------------------------------
+// Catalogue — group 3 (services, partners, careers, solutions, hero)
+// ---------------------------------------------------------------------------
+
+model ServiceItem {
+  id    Int      @id @default(autoincrement())
+  locale    String    @default("fr")
+  slug      String
+  title     String
+  icon      String?
+  color     String?
+  image     String?
+  shortDesc String?   @db.Text
+  fullDesc  String?   @db.Text
+  features  Json?
+  faq       Json?
+  sortOrder Int       @default(0)
+  legacyId  String?
+  parentId  Int?
+  isDefault Boolean   @default(false)
+  status    String    @default("draft")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  createdBy   Int?
+  updatedBy   Int?
+
+  @@unique([slug, locale])
+  @@index([status])
+  @@index([legacyId])
+  @@index([parentId])
+  @@index([deletedAt])
+  @@map("services")
+}
+
+model Partner {
+  id    Int      @id @default(autoincrement())
+  locale    String    @default("fr")
+  slug      String
+  name      String
+  logo      String?
+  category  String?
+  website   String?
+  sortOrder Int       @default(0)
+  legacyId  String?
+  parentId  Int?
+  isDefault Boolean   @default(false)
+  status    String    @default("draft")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  createdBy   Int?
+  updatedBy   Int?
+
+  @@unique([slug, locale])
+  @@index([locale, status])
+  @@index([legacyId])
+  @@index([parentId])
+  @@index([deletedAt])
+  @@map("partners")
+}
+
+model Career {
+  id    Int      @id @default(autoincrement())
+  locale      String    @default("fr")
+  slug        String
+  title       String
+  type        String?
+  location    String?
+  salary      String?
+  shortDesc   String?   @db.Text
+  fullDesc    String?   @db.Text
+  image       String?
+  typeTravail String?
+  mission     String?   @db.Text
+  objectifs   Json?
+  prerequis   Json?
+  experience  String?
+  workflow    Json?
+  benefits    Json?
+  contact     String?
+  legacyId    String?
+  parentId    Int?
+  isDefault   Boolean   @default(false)
+  status      String    @default("draft")
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  createdBy   Int?
+  updatedBy   Int?
+
+  @@unique([slug, locale])
+  @@index([status, location])
+  @@index([legacyId])
+  @@index([parentId])
+  @@index([deletedAt])
+  @@map("careers")
+}
+
+model SolutionCategory {
+  id    Int      @id @default(autoincrement())
+  locale     String    @default("fr")
+  slug       String
+  title      String
+  shortDesc  String?   @db.Text
+  fullDesc   String?   @db.Text
+  icon       String?
+  image      String?
+  color      String?
+  productIds Json?
+  features   Json?
+  faq        Json?
+  sortOrder  Int       @default(0)
+  legacyId   String?
+  parentId   Int?
+  isDefault  Boolean   @default(false)
+  status     String    @default("draft")
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
+  createdBy   Int?
+  updatedBy   Int?
+
+  @@unique([slug, locale])
+  @@index([status])
+  @@index([legacyId])
+  @@index([parentId])
+  @@index([deletedAt])
+  @@map("solutions")
+}
+
+model HeroSlide {
+  id    Int      @id @default(autoincrement())
+  locale      String    @default("fr")
+  title       String
+  subtitle    String?
+  description String?   @db.Text
+  image       String?
+  cta         String?
+  ctaLink     String?
+  sortOrder   Int       @default(0)
+  legacyId    Int?
+  status      String    @default("draft")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  createdBy   Int?
+  updatedBy   Int?
+
+  @@index([locale, status, sortOrder])
+  @@index([deletedAt])
+  @@map("hero_slides")
 }

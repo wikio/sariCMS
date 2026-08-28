@@ -36,11 +36,17 @@ export default function ProductCard({ product, variant = 'standard', onClick }: 
         className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 p-4 rounded-lg hover:shadow-md transition-all cursor-pointer flex gap-4 group"
       >
         <div className="w-24 h-24 rounded-lg flex-shrink-0 overflow-hidden bg-gray-100 dark:bg-gray-800">
-          <img
-            src={product.image}
-            alt={product.name}
-            className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500"
-          />
+          {product.image ? (
+            <img
+              src={product.image}
+              alt={product.name}
+              className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-gray-400">
+              <Package className="w-8 h-8" />
+            </div>
+          )}
         </div>
         <div className="flex-1 min-w-0">
           <span className="inline-block px-2 py-0.5 bg-sari-blue/10 text-sari-blue text-xs font-semibold rounded mb-1">
@@ -67,11 +73,17 @@ export default function ProductCard({ product, variant = 'standard', onClick }: 
         className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 overflow-hidden card-hover group flex flex-col h-full"
       >
         <div className="aspect-square overflow-hidden relative">
-          <img
-            src={product.image}
-            alt={product.name}
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-          />
+          {product.image ? (
+            <img
+              src={product.image}
+              alt={product.name}
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 text-gray-400">
+              <Package className="w-16 h-16" />
+            </div>
+          )}
           <div className="absolute top-4 right-4">
             <span className="bg-sari-lime text-sari-dark px-2 py-1 text-xs font-bold rounded">
               {product.price}
@@ -115,11 +127,17 @@ export default function ProductCard({ product, variant = 'standard', onClick }: 
     >
       {/* Image */}
       <div className="aspect-[4/3] mb-4 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
-        <img
-          src={product.image}
-          alt={product.name}
-          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-        />
+        {product.image ? (
+          <img
+            src={product.image}
+            alt={product.name}
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-gray-400">
+            <Package className="w-16 h-16" />
+          </div>
+        )}
       </div>
 
       {/* Badge catégorie */}

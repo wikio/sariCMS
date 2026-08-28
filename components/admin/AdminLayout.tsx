@@ -1,248 +1,251 @@
-// components/admin/AdminLayout.tsx
 'use client';
 
-import { useState, useEffect, ReactNode } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
-import { useLocale, useTranslations } from 'next-intl';
+import { ReactNode, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import { useLocale, useTranslations } from 'next-intl';
 import {
   LayoutDashboard, FileText, Package, Wrench, Briefcase, Newspaper,
   Calendar, Layers, MessageCircle, Handshake, Image as ImageIcon,
   FileStack, Menu as MenuIcon, Compass, Scale, Settings, ShoppingCart,
   Users, UserCog, FileCheck, Globe, Sliders, ExternalLink, LogOut,
-  Database, Shield
+  Shield, Search, ChevronDown, ChevronLeft, Palette, BarChart3, ScrollText,
+  Tags, UserPlus, UserRound, Paintbrush, Banknote, MessageSquareText, Eye,
 } from 'lucide-react';
-import AdminLanguageSwitcher from '@/components/admin/AdminLanguageSwitcher';
+import '@/app/admin.css';
 import { ToastProvider } from '@/components/admin/Toast';
+import AdminLanguageSwitcher from '@/components/admin/AdminLanguageSwitcher';
+import { AdminThemeProvider, ADMIN_THEMES, useAdminTheme } from '@/components/admin/AdminTheme';
+import { clearAdminSession, hasAdminSession, readAdminUser } from '@/lib/admin-session';
+import { unreadForAdmin } from '@/lib/messages';
 
-interface MenuItem {
+interface Child { id: string; label: string; href: string }
+interface Item {
   id?: string;
-  type?: 'divider';
+  type?: 'divider' | 'group';
   icon?: React.ElementType;
   label: string;
   href?: string;
+  children?: Child[];
 }
 
-export default function AdminLayout({ children, title = 'Administration' }: { children: ReactNode; title?: string }) {
+function Shell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const locale = useLocale();
   const t = useTranslations('admin');
   const isRTL = locale === 'ar';
+  const { theme, setTheme } = useAdminTheme();
+  const [open, setOpen] = useState(true);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [themesOpen, setThemesOpen] = useState(false);
+  const [userOpen, setUserOpen] = useState(false);
+  const [expanded, setExpanded] = useState<string>('products');
+  // Initialisé à null puis chargé côté client (évite le mismatch d'hydratation
+  // entre le rendu serveur et le localStorage du navigateur).
+  const [user, setUser] = useState<ReturnType<typeof readAdminUser>>(null);
+  const [q, setQ] = useState('');
+  const [unread, setUnread] = useState(0);
+  const isLogin = pathname === `/${locale}/admin` || pathname === `/${locale}/admin/`;
 
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
-
-  // ✅ Détection de la page de login (pas de sidebar)
-  const isLoginPage = pathname === `/${locale}/admin` || pathname === `/${locale}/admin/`;
-
-  // Vérification de l'authentification (sauf sur la page login)
   useEffect(() => {
-    if (isLoginPage) return;
+    const refresh = () => setUnread(unreadForAdmin());
+    refresh();
+    window.addEventListener('sari-threads-changed', refresh);
+    return () => window.removeEventListener('sari-threads-changed', refresh);
+  }, []);
 
-    const auth = localStorage.getItem('sari_admin_auth');
-    const authTime = localStorage.getItem('sari_admin_time');
+  useEffect(() => {
+    setUser(readAdminUser());
+    if (!isLogin && !hasAdminSession()) router.push(`/${locale}/admin`);
+  }, [pathname, locale, isLogin, router]);
 
-    if (auth !== 'true' || !authTime) {
-      router.push(`/${locale}/admin`);
-      return;
-    }
-
-    const elapsed = Date.now() - parseInt(authTime);
-    if (elapsed > 2 * 60 * 60 * 1000) {
-      localStorage.removeItem('sari_admin_auth');
-      localStorage.removeItem('sari_admin_time');
-      router.push(`/${locale}/admin`);
-    }
-  }, [router, pathname, locale, isLoginPage]);
-
-  const handleLogout = () => {
-    localStorage.removeItem('sari_admin_auth');
-    localStorage.removeItem('sari_admin_time');
-    router.push(`/${locale}`);
-  };
-
-  // ✅ Menu admin complet
-  const menuItems: MenuItem[] = [
+  const closeMobile = () => setMobileOpen(false);
+  const menu: Item[] = useMemo(() => [
+    { type: 'divider', label: t('menu.pilotageSection') },
     { id: 'dashboard', icon: LayoutDashboard, label: t('menu.dashboard'), href: `/${locale}/admin/dashboard` },
-    { type: 'divider', label: t('menu.contentSection') },
-    { id: 'pages', icon: FileText, label: t('menu.pages'), href: `/${locale}/admin/pages` },
-    { id: 'products', icon: Package, label: t('menu.products'), href: `/${locale}/admin/data/products` },
-    { id: 'services', icon: Wrench, label: t('menu.services'), href: `/${locale}/admin/data/services` },
-    { id: 'careers', icon: Briefcase, label: t('menu.careers'), href: `/${locale}/admin/data/careers` },
-    { id: 'news', icon: Newspaper, label: t('menu.news'), href: `/${locale}/admin/data/news` },
-    { id: 'events', icon: Calendar, label: t('menu.events'), href: `/${locale}/admin/data/events` },
-    { id: 'solutions', icon: Layers, label: t('menu.solutions'), href: `/${locale}/admin/data/solution-categories` },
-    { id: 'testimonials', icon: MessageCircle, label: t('menu.testimonials'), href: `/${locale}/admin/data/testimonials` },
-    { id: 'partners', icon: Handshake, label: t('menu.partners'), href: `/${locale}/admin/data/partners` },
-    { type: 'divider', label: t('menu.siteSection') },
-    { id: 'hero', icon: ImageIcon, label: t('menu.hero'), href: `/${locale}/admin/data/hero` },
-    { id: 'genericContent', icon: FileStack, label: t('menu.genericContent'), href: `/${locale}/admin/data/genericContent` },
-    { id: 'menu', icon: MenuIcon, label: t('menu.menuNav'), href: `/${locale}/admin/data/menu` },
-    { id: 'navigation', icon: Compass, label: t('menu.navigation'), href: `/${locale}/admin/data/navigation` },
-    { id: 'legal', icon: Scale, label: t('menu.legal'), href: `/${locale}/admin/data/legal` },
-    { id: 'config', icon: Settings, label: t('menu.config'), href: `/${locale}/admin/config` },
+    { id: 'stats', icon: BarChart3, label: t('menu.stats'), href: `/${locale}/admin/stats` },
+    { id: 'logs', icon: ScrollText, label: t('menu.logs'), href: `/${locale}/admin/logs` },
     { type: 'divider', label: t('menu.eshopSection') },
-    { id: 'orders', icon: ShoppingCart, label: t('menu.orders'), href: `/${locale}/admin/orders` },
-    { id: 'quotes', icon: FileText, label: t('menu.quotes'), href: `/${locale}/admin/quotes` },
+    {
+      id: 'eshop', type: 'group', icon: ShoppingCart, label: t('menu.shop'),
+      children: [
+        { id: 'products', label: t('menu.products'), href: `/${locale}/admin/products` },
+        { id: 'orders', label: t('menu.orders'), href: `/${locale}/admin/orders` },
+        { id: 'quotes', label: t('menu.quotes'), href: `/${locale}/admin/quotes` },
+        { id: 'shop-stats', label: t('menu.shopStats'), href: `/${locale}/admin/shop-stats` },
+        { id: 'payments', label: t('menu.payments'), href: `/${locale}/admin/payments` },
+        { id: 'payment-records', label: t('menu.paymentRecords'), href: `/${locale}/admin/payment-records` },
+        { id: 'coupons', label: t('menu.coupons'), href: `/${locale}/admin/coupons` },
+        { id: 'taxes', label: t('menu.taxes'), href: `/${locale}/admin/taxes` },
+      ],
+    },
+    { type: 'divider', label: t('menu.contentSection') },
+    { id: 'services', icon: Wrench, label: t('menu.services'), href: `/${locale}/admin/services` },
+    { id: 'solutions', icon: Layers, label: t('menu.solutions'), href: `/${locale}/admin/solutions` },
+    { id: 'news', icon: Newspaper, label: t('menu.news'), href: `/${locale}/admin/news` },
+    { id: 'events', icon: Calendar, label: t('menu.events'), href: `/${locale}/admin/events` },
+    { id: 'careers', icon: Briefcase, label: t('menu.careers'), href: `/${locale}/admin/careers` },
+    { id: 'testimonials', icon: MessageCircle, label: t('menu.testimonials'), href: `/${locale}/admin/testimonials` },
+    { id: 'partners', icon: Handshake, label: t('menu.partners'), href: `/${locale}/admin/partners` },
+    { id: 'pages', icon: FileText, label: t('menu.pages'), href: `/${locale}/admin/pages` },
+    { type: 'divider', label: t('menu.siteSection') },
+    { id: 'menu', icon: MenuIcon, label: t('menu.menuNav'), href: `/${locale}/admin/menus` },
+    { id: 'hero', icon: ImageIcon, label: t('menu.hero'), href: `/${locale}/admin/hero` },
+    { id: 'galleries', icon: FileStack, label: t('menu.galleries'), href: `/${locale}/admin/galleries` },
+    { id: 'media', icon: Compass, label: t('menu.media'), href: `/${locale}/admin/media` },
+    { id: 'legal', icon: Scale, label: t('menu.legal'), href: `/${locale}/admin/legal` },
+    { type: 'divider', label: t('menu.crmSection') },
     { id: 'clients', icon: Users, label: t('menu.clients'), href: `/${locale}/admin/clients` },
-    { type: 'divider', label: t('menu.usersSection') },
-    { id: 'users', icon: UserCog, label: t('menu.users'), href: `/${locale}/admin/users` },
+    { id: 'partners-accounts', icon: UserPlus, label: t('menu.partnersAccounts'), href: `/${locale}/admin/partners-accounts` },
     { id: 'applications', icon: FileCheck, label: t('menu.applications'), href: `/${locale}/admin/applications` },
-    { type: 'divider', label: t('menu.configSection') },
+    { type: 'divider', label: t('menu.advancedSection') },
+    { id: 'taxonomies', icon: Tags, label: t('menu.taxonomies'), href: `/${locale}/admin/taxonomies` },
+    { id: 'visibility', icon: Eye, label: t('menu.visibility'), href: `/${locale}/admin/visibility` },
+    { id: 'currencies', icon: Banknote, label: t('menu.currencies'), href: `/${locale}/admin/currencies` },
+    { id: 'messages', icon: MessageSquareText, label: t('menu.messages'), href: `/${locale}/admin/messages` },
+    { id: 'users', icon: UserCog, label: t('menu.users'), href: `/${locale}/admin/users` },
+    { id: 'permissions', icon: Shield, label: t('menu.permissions'), href: `/${locale}/admin/permissions` },
     { id: 'translations', icon: Globe, label: t('menu.translations'), href: `/${locale}/admin/translations` },
+    { id: 'emails', icon: Settings, label: t('menu.emails'), href: `/${locale}/admin/emails` },
+    { type: 'divider', label: t('menu.vitrineSection') },
+    { id: 'builder', icon: Paintbrush, label: t('menu.builder'), href: `/${locale}/admin/builder` },
     { id: 'settings', icon: Sliders, label: t('menu.settings'), href: `/${locale}/admin/settings` },
-  ];
+    { id: 'profile', icon: UserRound, label: t('menu.profile'), href: `/${locale}/admin/profile` },
+  ], [locale, t]);
 
-  const getActiveId = () => {
-    if (pathname.includes('/admin/dashboard')) return 'dashboard';
-    if (pathname.includes('/admin/data/')) return pathname.split('/admin/data/')[1];
-    if (pathname.includes('/admin/config')) return 'config';
-    if (pathname.includes('/admin/applications')) return 'applications';
-    if (pathname.includes('/admin/orders')) return 'orders';
-    if (pathname.includes('/admin/quotes')) return 'quotes';
-    if (pathname.includes('/admin/clients')) return 'clients';
-    if (pathname.includes('/admin/users')) return 'users';
-    if (pathname.includes('/admin/pages')) return 'pages';
-    if (pathname.includes('/admin/translations')) return 'translations';
-    if (pathname.includes('/admin/settings')) return 'settings';
-    return null;
-  };
+  const active = pathname.includes('/admin/profile') ? 'profile'
+    : pathname.includes('/admin/search') ? 'search'
+    : pathname.includes('/admin/products') ? 'products'
+    : pathname.includes('/admin/shop-stats') ? 'shop-stats'
+    : menu.find((m) => m.href && pathname.includes(m.href.replace(`/${locale}`, '')))?.id
+      || menu.find((m) => m.children?.some((c) => pathname.includes(c.href.replace(`/${locale}`, ''))))?.id
+      || null;
 
-  const activeId = getActiveId();
-
-  // ✅ Si on est sur la page de login, on n'affiche PAS la sidebar
-  if (isLoginPage) {
+  if (isLogin) {
     return (
-      <ToastProvider>
-        <div dir={locale === 'ar' ? 'rtl' : 'ltr'} className="min-h-screen bg-gradient-to-br from-sari-dark via-gray-900 to-sari-dark">
-          {children}
-        </div>
-      </ToastProvider>
+      <div data-admin-theme={theme} dir={isRTL ? 'rtl' : 'ltr'} className="ad-app min-h-screen relative overflow-hidden">
+        <div className="ad-grid-bg absolute inset-0 opacity-70" />
+        <div className="absolute top-5 right-5 z-10 flex gap-2"><AdminLanguageSwitcher /></div>
+        {children}
+      </div>
     );
   }
 
-  // ✅ Sinon, on affiche l'interface admin complète avec sidebar
   return (
-    <ToastProvider>
-      <div dir={isRTL ? 'rtl' : 'ltr'} className="min-h-screen bg-gray-100 dark:bg-[#0a0a0a] flex">
-        {/* Sidebar */}
-        <aside 
-          className={`${sidebarOpen ? 'w-64' : 'w-16'} bg-sari-dark text-white transition-all duration-300 flex flex-col fixed h-full z-40 shadow-2xl ${isRTL ? 'right-0' : 'left-0'}`}
-        >
-          <div className="p-4 border-b border-white/10 flex items-center gap-3">
-            <div className="w-9 h-9 bg-sari-lime rounded-lg flex items-center justify-center flex-shrink-0 shadow-lg">
-              <Shield className="w-5 h-5 text-sari-dark" />
-            </div>
-            {sidebarOpen && (
-              <div>
-                <div className="font-bold text-sm">SARI Admin</div>
-                <div className="text-xs text-gray-400">{t('header.version')}</div>
-              </div>
-            )}
+    <div data-admin-theme={theme} dir={isRTL ? 'rtl' : 'ltr'} className="ad-app">
+      <aside className={`ad-sidebar ${open ? 'w-[272px]' : 'w-[76px]'} fixed inset-y-0 z-40 flex flex-col transition-all duration-300 ${isRTL ? 'right-0' : 'left-0'} ${mobileOpen ? 'is-open' : 'is-closed'}`} style={{ background: 'var(--ad-sidebar)', color: 'var(--ad-sidebar-ink)' }}>
+        <div className="h-[72px] px-4 flex items-center gap-3 border-b border-white/10">
+          <div className="w-10 h-10 flex items-center justify-center" style={{ background: 'var(--ad-accent-2)', color: 'var(--ad-accent-2-ink)', borderRadius: 10 }}>
+            <Shield className="w-5 h-5" />
           </div>
-
-          <nav className="flex-1 overflow-y-auto py-4 custom-scrollbar">
-            {menuItems.map((item, idx) => {
-              if (item.type === 'divider') {
-                return sidebarOpen ? (
-                  <div key={idx} className="px-4 py-2 text-xs text-gray-500 uppercase tracking-wider mt-4">
-                    {item.label}
-                  </div>
-                ) : <div key={idx} className="border-t border-white/10 my-2 mx-2"></div>;
-              }
-
-              const Icon = item.icon;
-              const isActive = activeId === item.id;
-
+          {open && <div className="leading-tight"><div className="font-black tracking-tight">SARI OS</div><div className="text-[10px] uppercase tracking-[0.18em] opacity-60">Admin · Studio</div></div>}
+        </div>
+        <nav className="flex-1 overflow-y-auto ad-scroll py-3" onClick={closeMobile}>
+          {menu.map((item, i) => {
+            if (item.type === 'divider') {
+              return open ? <div key={i} className="px-5 pt-4 pb-1 text-[10px] uppercase tracking-[0.18em] opacity-40">{item.label}</div> : <div key={i} className="mx-3 my-2 border-t border-white/10" />;
+            }
+            const Icon = item.icon;
+            const childOn = item.children?.some((c) => pathname.includes(c.href.replace(`/${locale}`, '')));
+            const on = active === item.id || childOn || (item.href ? pathname.includes(item.href.replace(`/${locale}`, '')) : false);
+            if (item.type === 'group' && item.children) {
+              const shown = (expanded === item.id || childOn) && open;
               return (
-                <Link
-                  key={item.id}
-                  href={item.href || '#'}
-                  className={`flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg transition-all text-sm mb-0.5 ${
-                    isActive ? 'bg-sari-blue text-white shadow-lg' : 'text-gray-400 hover:bg-white/10 hover:text-white'
-                  }`}
-                >
-                  {Icon && <Icon className="w-4 h-4 flex-shrink-0" />}
-                  {sidebarOpen && <span className="truncate">{item.label}</span>}
-                </Link>
+                <div key={item.id}>
+                  <button type="button" onClick={() => setExpanded((v) => v === item.id ? '' : item.id || '')} className={`mx-2 mb-0.5 w-[calc(100%-1rem)] flex items-center gap-3 px-3 py-2.5 text-sm ${on ? 'bg-white/12 text-white' : 'opacity-70 hover:opacity-100 hover:bg-white/6'}`} style={on ? { boxShadow: 'inset 3px 0 0 var(--ad-accent)' } : undefined}>
+                    {Icon && <Icon className="w-4 h-4 shrink-0" />}
+                    {open && <span className="truncate flex-1 text-start">{item.label}</span>}
+                    {open && <ChevronDown className={`w-3.5 h-3.5 ${shown ? '' : (isRTL ? 'rotate-90' : '-rotate-90')}`} />}
+                  </button>
+                  {shown && item.children.map((ch) => {
+                    const chOn = pathname.includes(ch.href.replace(`/${locale}`, ''));
+                    return (
+                      <Link key={ch.id} href={ch.href} className={`mx-2 mb-0.5 flex items-center ps-10 pe-3 py-2 text-xs ${chOn ? 'bg-white/12' : 'opacity-70 hover:opacity-100 hover:bg-white/6'}`}>
+                        {ch.label}
+                      </Link>
+                    );
+                  })}
+                </div>
               );
-            })}
-          </nav>
-
-          <div className="p-4 border-t border-white/10 space-y-2">
-            <Link href={`/${locale}`} className="flex items-center gap-3 text-gray-400 hover:text-white text-sm w-full">
-              <ExternalLink className="w-4 h-4" />
-              {sidebarOpen && <span>{t('header.seeSite')}</span>}
-            </Link>
-            <button onClick={handleLogout} className="flex items-center gap-3 text-red-400 hover:text-red-300 text-sm w-full">
-              <LogOut className="w-4 h-4" />
-              {sidebarOpen && <span>{t('header.logout')}</span>}
-            </button>
-          </div>
-        </aside>
-
-        {/* Main Content */}
-        <main className={`flex-1 transition-all duration-300 ${isRTL ? (sidebarOpen ? 'mr-64' : 'mr-16') : (sidebarOpen ? 'ml-64' : 'ml-16')}`}>
-          <header className="bg-white dark:bg-[#1a1a1a] border-b border-gray-200 dark:border-gray-800 px-6 py-3 flex items-center justify-between sticky top-0 z-30 shadow-sm">
-            <div className="flex items-center gap-4">
-              <button 
-                onClick={() => setSidebarOpen(!sidebarOpen)} 
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-              >
-                <MenuIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-              </button>
-              <h1 className="text-lg font-bold text-sari-dark dark:text-white">{title}</h1>
-            </div>
-            <div className="flex items-center gap-3">
-              <AdminLanguageSwitcher />
-              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-orange-100 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400 rounded-full text-xs font-semibold">
-                <Database className="w-3 h-3" />
-                {t('header.jsonLocalMode')}
-              </div>
-              <div className="relative">
-                <button 
-                  onClick={() => setShowProfileMenu(!showProfileMenu)}
-                  className="flex items-center gap-2 p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
-                >
-                  <div className="w-8 h-8 bg-gradient-to-br from-sari-blue to-sari-dark rounded-full flex items-center justify-center text-white text-sm font-bold">
-                    A
-                  </div>
-                  <span className="hidden md:inline text-sm font-medium text-sari-dark dark:text-white">
-                    {t('header.admin')}
-                  </span>
-                </button>
-                {showProfileMenu && (
-                  <>
-                    <div className="fixed inset-0 z-40" onClick={() => setShowProfileMenu(false)}></div>
-                    <div className={`absolute ${isRTL ? 'left-0' : 'right-0'} mt-2 w-56 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 shadow-2xl z-50 rounded-lg overflow-hidden`}>
-                      <div className="p-4 border-b border-gray-200 dark:border-gray-800">
-                        <div className="font-bold text-sari-dark dark:text-white">
-                          {t('header.administrator')}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          {t('header.adminEmail')}
-                        </div>
-                      </div>
-                      <div className="p-2">
-                        <Link href={`/${locale}/admin/config`} onClick={() => setShowProfileMenu(false)} className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded text-sm">
-                          <Settings className="w-4 h-4" /> {t('header.settings')}
-                        </Link>
-                        <button onClick={handleLogout} className="w-full flex items-center gap-2 px-3 py-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 rounded text-sm">
-                          <LogOut className="w-4 h-4" /> {t('header.logout')}
-                        </button>
-                      </div>
-                    </div>
-                  </>
+            }
+            return (
+              <Link key={item.id} href={item.href || '#'} className={`mx-2 mb-0.5 flex items-center gap-3 px-3 py-2.5 text-sm transition-all ${on ? 'bg-white/12' : 'opacity-70 hover:opacity-100 hover:bg-white/6'}`}>
+                {Icon && <Icon className="w-4 h-4 shrink-0" />}
+                {open && <span className="truncate flex-1">{item.label}</span>}
+                {item.id === 'messages' && unread > 0 && (
+                  <span className="shrink-0 text-[10px] font-black px-1.5 py-0.5 rounded-full" style={{ background: 'var(--ad-accent)', color: 'var(--ad-accent-ink, #fff)' }}>{unread}</span>
                 )}
+              </Link>
+            );
+          })}
+        </nav>
+        <div className="p-3 border-t border-white/10 space-y-1">
+          <Link href={`/${locale}`} className="flex items-center gap-3 px-3 py-2 text-sm opacity-70 hover:opacity-100"><ExternalLink className="w-4 h-4" /> {open && t('header.seeSite')}</Link>
+        </div>
+      </aside>
+
+      {mobileOpen && <div className="ad-backdrop" onClick={closeMobile} />}
+      <div className={`ad-main min-h-screen transition-all duration-300 ${isRTL ? (open ? 'mr-[272px]' : 'mr-[76px]') : (open ? 'ml-[272px]' : 'ml-[76px]')}`}>
+        <header className="sticky top-0 z-30 h-[72px] px-5 flex items-center justify-between backdrop-blur-xl border-b" style={{ background: 'color-mix(in srgb, var(--ad-surface) 82%, transparent)', borderColor: 'var(--ad-line)' }}>
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <button className="ad-burger ad-btn ad-btn-icon ad-btn-ghost" onClick={() => setMobileOpen((v) => !v)} aria-label="Menu"><MenuIcon className="w-5 h-5" /></button>
+            <button className="ad-collapse-btn ad-btn ad-btn-icon ad-btn-ghost" onClick={() => setOpen((v) => !v)}><ChevronLeft className={`w-4 h-4 transition ${open ? '' : 'rotate-180'}`} /></button>
+            <form className="flex-1 max-w-xl" onSubmit={(e) => { e.preventDefault(); router.push(`/${locale}/admin/search?q=${encodeURIComponent(q)}`); }}>
+              <div className="ad-search">
+                <Search className="ad-search-ico w-4 h-4" />
+                <input className="ad-input" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('common.globalSearch')} />
               </div>
-            </div>
-          </header>
-          <div className="p-6">
-            {children}
+            </form>
           </div>
-        </main>
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <button className="ad-btn ad-btn-ghost" onClick={() => setThemesOpen((v) => !v)}><Palette className="w-4 h-4" /> <span className="hidden sm:inline">{t('common.theme')}</span></button>
+              {themesOpen && (
+                <div className="absolute right-0 mt-2 w-56 ad-card p-2 z-50">
+                  {ADMIN_THEMES.map((th) => (
+                    <button key={th.id} onClick={() => { setTheme(th.id); setThemesOpen(false); }} className={`w-full flex items-center gap-3 px-3 py-2 text-sm ${theme === th.id ? 'bg-[var(--ad-surface-2)] font-bold' : ''}`}>
+                      <span className="w-3.5 h-3.5" style={{ background: th.swatch }} />{t(`themes.${th.labelKey}`)}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <AdminLanguageSwitcher />
+            <div className="relative pl-2">
+              <button type="button" className="flex items-center gap-2" onClick={() => setUserOpen((v) => !v)}>
+                <div className="w-9 h-9 flex items-center justify-center text-white text-xs font-black" style={{ background: 'linear-gradient(135deg, var(--ad-accent), #0d7a9e)', borderRadius: 2 }}>
+                  {(user?.firstName || user?.email || 'A').slice(0, 1).toUpperCase()}
+                </div>
+                <div className="hidden md:block leading-tight text-left">
+                  <div className="text-sm font-bold">{user?.firstName || t('header.admin')}</div>
+                  <div className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>{user?.email || t('header.adminEmail')}</div>
+                </div>
+              </button>
+              {userOpen && (
+                <div className="absolute right-0 mt-2 w-56 ad-card p-2 z-50">
+                  <Link href={`/${locale}/admin/profile`} className="block px-3 py-2 text-sm hover:bg-[var(--ad-surface-2)]" onClick={() => setUserOpen(false)}>{t("profile.showProfile")}</Link>
+                  <Link href={`/${locale}/admin/profile?edit=1`} className="block px-3 py-2 text-sm hover:bg-[var(--ad-surface-2)]" onClick={() => setUserOpen(false)}>{t("profile.updateProfile")}</Link>
+                  <button className="w-full text-left px-3 py-2 text-sm text-rose-500" onClick={() => { clearAdminSession(); router.push(`/${locale}`); }}>
+                    <LogOut className="w-4 h-4 inline mr-2" />{t('header.logout')}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </header>
+        <main className="p-5 md:p-7">{children}</main>
       </div>
-    </ToastProvider>
+    </div>
+  );
+}
+
+export default function AdminLayout({ children }: { children: ReactNode; title?: string }) {
+  return (
+    <AdminThemeProvider>
+      <ToastProvider>
+        <Shell>{children}</Shell>
+      </ToastProvider>
+    </AdminThemeProvider>
   );
 }

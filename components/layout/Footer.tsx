@@ -1,10 +1,13 @@
 // components/layout/Footer.tsx
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { Mail, Phone, MapPin, Compass, Shield, Send, Heart } from 'lucide-react';
 import type { Config, Menu as MenuType } from '@/types';
+import { loadAdminSettings } from '@/lib/admin-settings';
+import { useVisibility } from '@/lib/site-visibility';
 
 // ✅ Icônes SVG inline pour éviter les bugs Turbopack
 const FacebookIcon = () => (
@@ -23,15 +26,81 @@ const YoutubeIcon = () => (
 export default function Footer({ config, menu }: { config: Config; menu: MenuType }) {
   const locale = useLocale();
   const t = useTranslations('components.layout.Footer');
+  const tNav = useTranslations('common.nav');
+  const tLegal = useTranslations('pages.legal');
 
-  const navigation = menu.footerMenu?.navigation || [];
-  const legal = menu.footerMenu?.legal || [];
+  const visibility = useVisibility();
+
+  // ✅ Mapping : id de lien → clé de visibilité page/module correspondante.
+  // Si la page ou le module cible est masqué, le lien du footer l'est aussi.
+  const PAGE_MODULE_KEYS: Record<string, string> = {
+    home: '',
+    about: 'page.about',
+    solutions: 'module.solutions',
+    services: 'module.services',
+    products: 'module.products',
+    events: 'module.events',
+    news: 'module.news',
+    careers: 'module.careers',
+    contact: 'module.contact',
+  };
+  const LEGAL_PAGE_KEYS: Record<string, string> = {
+    mentions: 'page.mentions',
+    privacy: 'page.privacy',
+    conditions: 'page.conditions',
+  };
+
+  const navigation = (menu.footerMenu?.navigation || []).filter((item) => {
+    const id = (item as { id?: string }).id;
+    if (!id) return true;
+    // 1) Vérifier la visibilité du lien footer lui-même
+    if (visibility[`footer.${id}`] === false) return false;
+    // 2) Vérifier si la page/module cible est masquée → masquer le lien aussi
+    const targetKey = PAGE_MODULE_KEYS[id];
+    if (targetKey && visibility[targetKey] === false) return false;
+    return true;
+  });
+  const legal = (menu.footerMenu?.legal || []).filter((item) => {
+    const id = (item as { id?: string }).id;
+    if (!id) return true;
+    // 1) Vérifier la visibilité du lien footer lui-même
+    if (visibility[`footer.${id}`] === false) return false;
+    // 2) Vérifier si la page légale cible est masquée → masquer le lien aussi
+    const targetKey = LEGAL_PAGE_KEYS[id];
+    if (targetKey && visibility[targetKey] === false) return false;
+    return true;
+  });
+
+  // Logo du site : le logo configuré dans Paramètres prime sur celui des données CMS.
+  const [logo, setLogo] = useState<string>(config.meta?.logo || '');
+  useEffect(() => {
+    try { setLogo(loadAdminSettings().siteLogo || config.meta?.logo || ''); } catch { /* */ }
+  }, [config]);
 
   // ✅ Fonction utilitaire pour nettoyer et formater les liens avec la locale
   const getLinkHref = (href: string) => {
     // Supprime les '#' ou '/' au début pour éviter les doubles slashes ou les mots collés
     const cleanPath = href.replace(/^[#\/]+/, '');
     return `/${locale}/${cleanPath}`;
+  };
+
+  // Traduit un libellé de menu :
+  //  - navigation → common.nav
+  //  - légal      → pages.legal puis Footer
+  //  sinon conserve le libellé fourni (données CMS déjà localisées).
+  const getNavLabel = (item: { id?: string; label: string }) => {
+    if (!item.id) return item.label;
+    const viaNav = tNav(item.id as never);
+    if (viaNav && viaNav !== item.id) return viaNav;
+    return item.label;
+  };
+  const getLegalLabel = (item: { id?: string; label: string }) => {
+    if (!item.id) return item.label;
+    const viaLegal = tLegal(item.id as never);
+    if (viaLegal && viaLegal !== item.id) return viaLegal;
+    const viaFooter = t(item.id as never);
+    if (viaFooter && viaFooter !== item.id) return viaFooter;
+    return item.label;
   };
 
   return (
@@ -44,9 +113,10 @@ export default function Footer({ config, menu }: { config: Config; menu: MenuTyp
           {/* Colonne 1 : À propos */}
           <div>
             <img
-              src={config.meta?.logo || ''}
+              src={logo}
               alt={config.meta?.companyName || 'Logo'}
               className="h-12 mb-6 brightness-0 invert"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
             />
             <p className="text-gray-400 text-sm mb-6">
               {config.meta?.description || ''}
@@ -75,7 +145,8 @@ export default function Footer({ config, menu }: { config: Config; menu: MenuTyp
             </div>
           </div>
 
-          {/* Colonne 2 : Navigation */}
+          {/* Colonne 2 : Navigation (masquée si tous les liens sont masqués) */}
+          {navigation.length > 0 && (
           <div>
             <h4 className="text-lg font-bold mb-6 flex items-center gap-2">
               <Compass className="w-5 h-5 text-sari-blue" />
@@ -89,14 +160,16 @@ export default function Footer({ config, menu }: { config: Config; menu: MenuTyp
                     className="hover:text-sari-lime transition-colors inline-flex items-center gap-2 group"
                   >
                     <span className="w-0 group-hover:w-2 h-0.5 bg-sari-lime transition-all"></span>
-                    {item.label}
+                    {getNavLabel(item)}
                   </Link>
                 </li>
               ))}
             </ul>
           </div>
+          )}
 
-          {/* Colonne 3 : Légal + Sécurité */}
+          {/* Colonne 3 : Légal + Sécurité (masquée si tous les liens sont masqués) */}
+          {legal.length > 0 && (
           <div>
             <h4 className="text-lg font-bold mb-6 flex items-center gap-2">
               <Shield className="w-5 h-5 text-sari-blue" />
@@ -110,12 +183,13 @@ export default function Footer({ config, menu }: { config: Config; menu: MenuTyp
                     className="hover:text-sari-lime transition-colors inline-flex items-center gap-2 group"
                   >
                     <span className="w-0 group-hover:w-2 h-0.5 bg-sari-lime transition-all"></span>
-                    {item.label}
+                    {getLegalLabel(item)}
                   </Link>
                 </li>
               ))}
             </ul>
           </div>
+          )}
 
           {/* Colonne 4 : Contact */}
           <div>

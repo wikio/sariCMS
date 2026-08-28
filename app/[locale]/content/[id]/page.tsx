@@ -1,4 +1,4 @@
-// app/[locale]/contenu/[id]/page.tsx
+// app/[locale]/content/[id]/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { ChevronLeft, ChevronRight, FileText, Download, Play, Image as ImageIcon } from 'lucide-react';
 import { getGenericContent } from '@/lib/data';
+import { matchesEntity } from '@/lib/ids';
 import type { GenericContent } from '@/types';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import CTAButton from '@/components/ui/CTAButton';
@@ -29,7 +30,7 @@ export default function GenericContentDetailPage() {
     const loadContent = async () => {
       setLoading(true);
       const data = await getGenericContent(locale);
-      const found = data.find((c) => c.id === parseInt(id));
+      const found = data.find((c) => matchesEntity(c, id));
       setContent(found || null);
       setLoading(false);
     };

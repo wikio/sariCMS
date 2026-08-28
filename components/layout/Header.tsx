@@ -8,6 +8,9 @@ import { Menu, X, Phone, Mail, ShoppingCart, User, LogOut, LayoutDashboard, Pack
 import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
 import SearchHeader from '@/components/layout/SearchHeader';
 import type { Config, Menu as MenuType } from '@/types';
+import { loadAdminSettings } from '@/lib/admin-settings';
+import { useCart } from '@/contexts/CartContext';
+import { useVisibility } from '@/lib/site-visibility';
 
 export default function Header({ config, menu }: { config: Config; menu: MenuType }) {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -18,6 +21,11 @@ export default function Header({ config, menu }: { config: Config; menu: MenuTyp
 
   const locale = useLocale();
   const t = useTranslations('components.layout.header');
+  const tNav = useTranslations('common.nav');
+
+  // Nombre exact d'articles dans le panier (somme des quantités).
+  const { items: cartItems } = useCart();
+  const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   // ✅ Fonction robuste pour générer les liens avec la locale
   const getLinkHref = (href: string) => {
@@ -26,7 +34,37 @@ export default function Header({ config, menu }: { config: Config; menu: MenuTyp
     return `/${locale}/${cleanPath}`;
   };
 
-  const navigation = menu.mainMenu || [];
+  const visibility = useVisibility();
+
+  // ✅ Mapping : id de menu → clé de visibilité page/module correspondante.
+  // Si la page ou le module cible est masqué, le lien du menu l'est aussi.
+  const PAGE_MODULE_KEYS: Record<string, string> = {
+    about: 'page.about',
+    solutions: 'module.solutions',
+    services: 'module.services',
+    products: 'module.products',
+    events: 'module.events',
+    news: 'module.news',
+    careers: 'module.careers',
+    contact: 'module.contact',
+  };
+
+  const navigation = (menu.mainMenu || []).filter((item) => {
+    if (!item.id) return true;
+    // 1) Vérifier la visibilité du menu lui-même
+    const menuKey = `menu.${item.id}`;
+    if (visibility[menuKey] === false) return false;
+    // 2) Vérifier si la page/module cible est masquée → masquer le lien aussi
+    const targetKey = PAGE_MODULE_KEYS[item.id];
+    if (targetKey && visibility[targetKey] === false) return false;
+    return true;
+  });
+
+  // Logo du site : le logo configuré dans Paramètres prime sur celui des données CMS.
+  const [logo, setLogo] = useState<string>(config.meta?.logo || '');
+  useEffect(() => {
+    try { setLogo(loadAdminSettings().siteLogo || config.meta?.logo || ''); } catch { /* */ }
+  }, [config]);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
@@ -37,7 +75,6 @@ export default function Header({ config, menu }: { config: Config; menu: MenuTyp
   const getNavText = (item: any) => {
     if (item.id) {
       try {
-        const tNav = useTranslations('common.nav');
         const translated = tNav(item.id);
         return translated.startsWith('common.nav.') ? item.label : translated;
       } catch {
@@ -85,11 +122,17 @@ export default function Header({ config, menu }: { config: Config; menu: MenuTyp
               <SearchHeader />
               
               {/* Bouton Panier */}
-              <Link href={getLinkHref('#cart')} className="relative p-2.5 text-sari-lime hover:text-white transition-all group" aria-label={t('cart')}>
+              {visibility['button.cart'] !== false && (
+              <Link href={getLinkHref('#cart')} className="relative p-2.5 text-sari-lime hover:text-white transition-all group" aria-label={`${t('cart')} (${cartCount})`}>
                 <div className="absolute inset-0 bg-sari-lime/0 group-hover:bg-sari-lime/20 transition-all"></div>
                 <ShoppingCart className="w-5 h-5 relative z-10" />
-                {/* Ajoutez votre logique de compteur de panier ici si nécessaire */}
+                {cartCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 z-20 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[11px] font-bold flex items-center justify-center shadow">
+                    {cartCount}
+                  </span>
+                )}
               </Link>
+              )}
 
               {/* Connexion / Utilisateur */}
               <div className="relative">
@@ -111,7 +154,7 @@ export default function Header({ config, menu }: { config: Config; menu: MenuTyp
                             <User className="w-6 h-6" />
                           </div>
                           <div>
-                            <div className="font-bold">Utilisateur</div>
+                            <div className="font-bold">{t("user")}</div>
                             <div className="text-xs text-blue-100 capitalize">{getUserTypeLabel()}</div>
                           </div>
                         </div>
@@ -147,7 +190,7 @@ export default function Header({ config, menu }: { config: Config; menu: MenuTyp
         <div className="container mx-auto px-6">
           <div className="flex items-center justify-between h-16 lg:h-20">
             <Link href={getLinkHref('#home')} className="flex items-center gap-3 group flex-shrink-0">
-              <img src={config.meta?.logo || ''} alt={config.meta?.companyName} className="h-12 w-auto transition-transform duration-500 group-hover:scale-110" />
+              <img src={logo} alt={config.meta?.companyName} className="h-12 w-auto transition-transform duration-500 group-hover:scale-110" />
               <div className="hidden md:block">
                 <h1 className="font-bold text-xl lg:text-2xl text-sari-dark dark:text-white leading-tight">{config.meta?.companyName || 'SARI Système'}</h1>
                 <p className="text-xs text-gray-500 dark:text-gray-400 -mt-1">{config.meta?.tagline || 'Équipements Médicaux'}</p>

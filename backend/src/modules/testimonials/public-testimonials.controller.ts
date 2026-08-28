@@ -2,6 +2,7 @@ import { Controller, Get, Query } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Public } from '../../common/decorators/public.decorator';
 import { QueryDto } from '../../common/crud/dto/query.dto';
+import { publishedQuery } from '../../common/crud/query.util';
 import { TestimonialsService } from './testimonials.service';
 
 @ApiTags('public')
@@ -12,10 +13,7 @@ export class PublicTestimonialsController {
 
   @Get()
   @ApiOperation({ summary: 'Témoignages publiés' })
-  list(@Query() query: QueryDto) {
-    return this.testimonials.findAll({
-      ...query,
-      filter: { ...(query.filter ?? {}), status: 'published' },
-    });
+  list(@Query() query: QueryDto, @Query('locale') locale?: string) {
+    return this.testimonials.findAll(publishedQuery(query, locale ? { locale } : {}));
   }
 }

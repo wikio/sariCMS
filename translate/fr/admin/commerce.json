@@ -1,0 +1,12 @@
+{
+  "preparing": "Préparation",
+  "shipped": "Expédiée",
+  "answered": "Répondu",
+  "revisionRequested": "Révision demandée",
+  "convertedToOrder": "Transformé en commande",
+  "autoExpired": "Expiré automatiquement",
+  "allStatuses": "Tous les statuts",
+  "client": "Client",
+  "totalTTC": "Total TTC",
+  "invoice": "Facture"
+}

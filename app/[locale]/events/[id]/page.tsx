@@ -10,8 +10,14 @@ import {
   CheckCircle, ChevronLeft, ChevronRight, Bell
 } from 'lucide-react';
 import { getEvents } from '@/lib/data';
+import { matchesEntity } from '@/lib/ids';
+import { extractLegacyId, findEventTranslation, buildMultilingualUrl } from '@/lib/translation-utils';
+import { formatDate, formatDateRange, hasTime } from '@/lib/date-utils';
 import type { Event } from '@/types';
 import Breadcrumb from '@/components/ui/Breadcrumb';
+import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
+import ImageWithFallback from '@/components/ui/ImageWithFallback';
+import LanguageIndicator from '@/components/ui/LanguageIndicator';
 
 export default function EventDetailPage() {
   const params = useParams();
@@ -32,7 +38,21 @@ export default function EventDetailPage() {
     const loadEvent = async () => {
       const events = await getEvents(locale);
       setAllEvents(events);
-      const found = events.find((e) => e.id === parseInt(id));
+      
+      // Essayer d'extraire le legacyId de l'URL
+      const legacyId = extractLegacyId(id);
+      
+      let found: Event | undefined;
+      if (legacyId) {
+        // Rechercher par legacyId d'abord
+        found = events.find((e) => e.legacyId === legacyId);
+      }
+      
+      // Fallback sur la recherche par id/slug si legacyId non trouvé
+      if (!found) {
+        found = events.find((e) => matchesEntity(e, id));
+      }
+      
       setEvent(found || null);
     };
     loadEvent();
@@ -49,9 +69,8 @@ export default function EventDetailPage() {
   }, []);
 
   useEffect(() => {
-    if (!event?.date) return;
-    const dateStr = event.date.split(' - ')[0].split(' ').slice(0, 3).join(' ');
-    const eventDate = new Date(dateStr);
+    if (!event?.startDate) return;
+    const eventDate = new Date(event.startDate);
     if (isNaN(eventDate.getTime())) return;
     const timer = setInterval(() => {
       const now = new Date();
@@ -68,7 +87,7 @@ export default function EventDetailPage() {
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, [event?.date]);
+  }, [event?.startDate]);
 
   const handleRegistration = (e: React.FormEvent) => {
     e.preventDefault();
@@ -121,6 +140,10 @@ export default function EventDetailPage() {
   const NextIcon = isRtl ? ChevronLeft : ChevronRight;
 
   return (
+    <PageVisibilityGuard visibilityKey="module.events">
+    {/* Indicateur de langue si contenu non traduit */}
+    {event?.locale && <LanguageIndicator contentLocale={event.locale} requestedLocale={locale} />}
+    
     <div className="pt-32 pb-24 min-h-screen">
       {/* Barre de progression */}
       <div className="fixed top-0 left-0 w-full h-1 bg-gray-200 dark:bg-gray-800 z-50">
@@ -143,7 +166,13 @@ export default function EventDetailPage() {
             <div className="flex flex-wrap items-center gap-6 text-gray-300">
               <div className="flex items-center gap-2">
                 <Calendar className="w-5 h-5 text-sari-lime" />
-                <span className="font-semibold">{event.date}</span>
+                <span className="font-semibold">
+                  {event.endDate && event.endDate !== event.startDate
+                    ? formatDateRange(event.startDate || event.date, event.endDate, locale as any)
+                    : formatDate(event.startDate || event.date, locale as any, { 
+                        includeTime: hasTime(event.startDate || event.date) 
+                      })}
+                </span>
               </div>
               <div className="flex items-center gap-2">
                 <MapPin className="w-5 h-5 text-sari-lime" />
@@ -249,7 +278,15 @@ export default function EventDetailPage() {
               </h2>
               <div className="grid md:grid-cols-2 gap-6">
                 {[
-                  { icon: Calendar, title: t('date'), value: event.date },
+                  { 
+                    icon: Calendar, 
+                    title: t('date'), 
+                    value: event.endDate && event.endDate !== event.startDate
+                      ? formatDateRange(event.startDate || event.date, event.endDate, locale as any)
+                      : formatDate(event.startDate || event.date, locale as any, { 
+                          includeTime: hasTime(event.startDate || event.date) 
+                        })
+                  },
                   { icon: MapPin, title: t('location'), value: event.location },
                   { icon: Tag, title: t('type'), value: event.type },
                   { icon: Users, title: t('audience'), value: t('audienceValue') },
@@ -274,7 +311,7 @@ export default function EventDetailPage() {
             {(prevEvent || nextEvent) && (
               <div className="grid md:grid-cols-2 gap-6 mb-8">
                 {prevEvent ? (
-                  <Link href={`/${locale}/evenements/${prevEvent.id}`} className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 p-6 hover:border-sari-blue transition-all group rounded-lg">
+                  <Link href={buildMultilingualUrl(`/${locale}/evenements`, prevEvent.legacyId || String(prevEvent.id), prevEvent.slug)} className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 p-6 hover:border-sari-blue transition-all group rounded-lg">
                     <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
                       <PrevIcon className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
                       {t('prevEvent')}
@@ -285,7 +322,7 @@ export default function EventDetailPage() {
                   </Link>
                 ) : <div></div>}
                 {nextEvent ? (
-                  <Link href={`/${locale}/evenements/${nextEvent.id}`} className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 p-6 hover:border-sari-blue transition-all group text-right rounded-lg">
+                  <Link href={buildMultilingualUrl(`/${locale}/evenements`, nextEvent.legacyId || String(nextEvent.id), nextEvent.slug)} className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 p-6 hover:border-sari-blue transition-all group text-right rounded-lg">
                     <div className="flex items-center justify-end gap-2 text-sm text-gray-500 mb-2">
                       {t('nextEvent')}
                       <NextIcon className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -306,7 +343,7 @@ export default function EventDetailPage() {
                 </h2>
                 <div className="grid md:grid-cols-3 gap-6">
                   {relatedEvents.map((ev) => (
-                    <Link key={ev.id} href={`/${locale}/evenements/${ev.id}`} className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 card-hover overflow-hidden group rounded-lg">
+                    <Link key={ev.id} href={buildMultilingualUrl(`/${locale}/evenements`, ev.legacyId || String(ev.id), ev.slug)} className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 card-hover overflow-hidden group rounded-lg">
                       <div className="aspect-video overflow-hidden relative">
                         <img src={ev.image} alt={ev.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                         <div className={`absolute top-4 left-4 ${typeColors[ev.type] || 'bg-sari-blue'} text-white px-3 py-1 text-xs font-bold uppercase rounded`}>
@@ -319,7 +356,7 @@ export default function EventDetailPage() {
                         </h3>
                         <div className="flex items-center gap-2 text-sm text-gray-500">
                           <Calendar className="w-4 h-4" />
-                          <span>{ev.date}</span>
+                          <span>{formatDate(ev.startDate || ev.date, locale as any, { format: 'short' })}</span>
                         </div>
                       </div>
                     </Link>
@@ -422,5 +459,6 @@ export default function EventDetailPage() {
         </div>
       </div>
     </div>
+    </PageVisibilityGuard>
   );
 }

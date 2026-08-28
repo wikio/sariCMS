@@ -9,31 +9,8 @@ import { getSolutionCategories } from '@/lib/data';
 import type { SolutionCategory } from '@/types';
 import SectionTitle from '@/components/ui/SectionTitle';
 import FAQ from '@/components/ui/FAQ';
-
-// ✅ Mapping pour résoudre dynamiquement les icônes et couleurs depuis le JSON
-const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-  'stethoscope': require('lucide-react').Stethoscope,
-  'heart-pulse': require('lucide-react').HeartPulse,
-  'scan': require('lucide-react').Scan,
-  'syringe': require('lucide-react').Syringe,
-  'baby': require('lucide-react').Baby,
-  'activity': require('lucide-react').Activity,
-  'monitor': require('lucide-react').Monitor,
-  'flask-conical': require('lucide-react').FlaskConical,
-  'accessibility': require('lucide-react').Accessibility,
-};
-
-const colorMap: Record<string, { bg: string; text: string; border: string }> = {
-  'sari-blue': { bg: 'bg-sari-blue', text: 'text-sari-blue', border: 'border-sari-blue' },
-  'red-500': { bg: 'bg-red-500', text: 'text-red-500', border: 'border-red-500' },
-  'purple-500': { bg: 'bg-purple-500', text: 'text-purple-500', border: 'border-purple-500' },
-  'green-500': { bg: 'bg-green-500', text: 'text-green-500', border: 'border-green-500' },
-  'pink-500': { bg: 'bg-pink-500', text: 'text-pink-500', border: 'border-pink-500' },
-  'orange-500': { bg: 'bg-orange-500', text: 'text-orange-500', border: 'border-orange-500' },
-  'indigo-500': { bg: 'bg-indigo-500', text: 'text-indigo-500', border: 'border-indigo-500' },
-  'teal-500': { bg: 'bg-teal-500', text: 'text-teal-500', border: 'border-teal-500' },
-  'cyan-500': { bg: 'bg-cyan-500', text: 'text-cyan-500', border: 'border-cyan-500' },
-};
+import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
+import IconMark from '@/components/admin/IconMark';
 
 export default function SolutionsPage() {
   const locale = useLocale();
@@ -73,6 +50,7 @@ export default function SolutionsPage() {
   }
 
   return (
+    <PageVisibilityGuard visibilityKey="module.solutions">
     <div className="pt-32 pb-24 min-h-screen">
       {/* HERO PARALLAXE */}
       <div className="parallax-bg py-32 flex items-center justify-center text-center text-white relative" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1516549655169-df83a0774514?w=1920)' }}>
@@ -127,24 +105,21 @@ export default function SolutionsPage() {
             </div>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {categories.map((cat, i) => {
-                const colors = colorMap[cat.color] || colorMap['sari-blue'];
-                const IconComponent = iconMap[cat.icon] || Package;
-                
                 return (
                   <Link
                     key={cat.id}
-                    href={`/${locale}/solutions/${cat.id}`}
+                    href={`/${locale}/solutions/${cat.slug || cat.id}`}
                     className="bg-white dark:bg-[#1a1a1a] p-8 border border-gray-200 dark:border-gray-800 rounded-xl hover:shadow-2xl transition-all group overflow-hidden relative block"
                   >
                     <div className="absolute top-4 right-4 text-6xl font-black text-gray-100 dark:text-gray-800 group-hover:text-sari-blue/10 transition-colors">
                       {String(i + 1).padStart(2, '0')}
                     </div>
-                    <div className={`w-16 h-16 ${colors.bg}/10 rounded-xl flex items-center justify-center mb-6 group-hover:${colors.bg} group-hover:scale-110 transition-all`}>
-                      <IconComponent className={`w-8 h-8 ${colors.text} group-hover:text-white transition-colors`} />
+                    <div className="w-16 h-16 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-all" style={{ backgroundColor: `var(--${cat.color || 'sari-blue'})20` }}>
+                      <IconMark name={cat.icon} className="w-8 h-8 transition-colors" style={{ color: `var(--${cat.color || 'sari-blue'})` }} />
                     </div>
                     <h3 className="text-2xl font-bold text-sari-dark dark:text-white mb-3 relative">{cat.title}</h3>
                     <p className="text-gray-600 dark:text-gray-400 mb-6 relative line-clamp-3">{cat.shortDesc}</p>
-                    <span className="text-sari-blue font-semibold inline-flex items-center gap-2 group-hover:gap-3 transition-all relative">
+                    <span className="font-semibold inline-flex items-center gap-2 group-hover:gap-3 transition-all relative" style={{ color: `var(--${cat.color || 'sari-blue'})` }}>
                       {t('categories.items.diagnostic.cta', { defaultMessage: 'Découvrir' })}
                       {isRtl ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                     </span>
@@ -217,5 +192,6 @@ export default function SolutionsPage() {
         </div>
       </section>
     </div>
+    </PageVisibilityGuard>
   );
 }

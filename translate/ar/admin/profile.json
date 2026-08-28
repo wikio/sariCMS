@@ -1,0 +1,14 @@
+{
+  "noUser": "لا يوجد مستخدم متصل.",
+  "account": "الحساب",
+  "twoFactor": "المصادقة الثنائية (2FA)",
+  "enabled": "مفعلة",
+  "disabled": "معطلة",
+  "disable2FA": "تعطيل 2FA",
+  "totpCode": "رمز TOTP الحالي",
+  "secretKey": "المفتاح السري",
+  "twoFactorEnabled": "يتطلب تسجيل الدخول الآن رمز TOTP مكون من 6 أرقام.",
+  "twoFactorDesc": "فعّل المصادقة الثنائية لتأمين حسابك.",
+  "showProfile": "عرض الملف الشخصي",
+  "updateProfile": "تحديث الملف الشخصي"
+}
