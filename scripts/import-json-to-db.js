@@ -29,8 +29,16 @@ async function login() {
   }
   
   const data = await response.json();
-  authToken = data.accessToken || data.token;
-  console.log('✓ Authentifié\n');
+  console.log('Réponse login:', JSON.stringify(data, null, 2).substring(0, 200));
+  
+  // Essayer différents formats de réponse
+  authToken = data.accessToken || data.token || data.access_token;
+  
+  if (!authToken) {
+    throw new Error('Token not found in login response. Keys: ' + Object.keys(data).join(', '));
+  }
+  
+  console.log('✓ Authentifié (token: ' + authToken.substring(0, 20) + '...)\n');
 }
 
 async function apiCall(endpoint, method = 'GET', body = null) {
@@ -87,7 +95,6 @@ async function importSolutions() {
     // Importer les traductions
     for (const lang of ['en', 'ar']) {
       try {
-    await login();
         const langData = JSON.parse(fs.readFileSync(path.join(DATA_DIR, lang, 'solution-categories.json'), 'utf-8'));
         const translated = langData.find(d => d.id === item.id);
         
@@ -140,7 +147,6 @@ async function importServices() {
     
     for (const lang of ['en', 'ar']) {
       try {
-    await login();
         const langData = JSON.parse(fs.readFileSync(path.join(DATA_DIR, lang, 'services.json'), 'utf-8'));
         const translated = langData.find(d => (d.slug || d.id) === (item.slug || item.id));
         
