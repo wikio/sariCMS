@@ -71,7 +71,7 @@ async function importSolutions() {
   const frData = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'fr', 'solution-categories.json'), 'utf-8'));
   
   // Récupérer les solutions existantes
-  const existing = await apiCall('/solutions?limit=1000', 'GET');
+  const existing = await apiCall('/solutions?limit=100', 'GET');
   const existingList = existing.data || existing;
   
   for (const item of frData) {
@@ -156,7 +156,7 @@ async function importServices() {
   const frData = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'fr', 'services.json'), 'utf-8'));
   
   // Récupérer les services existants
-  const existing = await apiCall('/services?limit=1000', 'GET');
+  const existing = await apiCall('/services?limit=100', 'GET');
   const existingList = existing.data || existing;
   
   for (const item of frData) {
