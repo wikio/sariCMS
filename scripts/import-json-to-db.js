@@ -29,16 +29,16 @@ async function login() {
   }
   
   const data = await response.json();
-  console.log('Réponse login:', JSON.stringify(data, null, 2).substring(0, 200));
   
-  // Essayer différents formats de réponse
-  authToken = data.accessToken || data.token || data.access_token;
+  // Extraire le token de la structure imbriquée { success: true, data: { accessToken: "..." } }
+  authToken = data.data?.accessToken || data.accessToken || data.token || data.access_token;
   
   if (!authToken) {
-    throw new Error('Token not found in login response. Keys: ' + Object.keys(data).join(', '));
+    console.error('Structure de réponse:', JSON.stringify(data, null, 2));
+    throw new Error('Token not found in login response');
   }
   
-  console.log('✓ Authentifié (token: ' + authToken.substring(0, 20) + '...)\n');
+  console.log('✓ Authentifié\n');
 }
 
 async function apiCall(endpoint, method = 'GET', body = null) {
