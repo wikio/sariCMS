@@ -27,6 +27,10 @@
     "subtitle": "Our Categories",
     "title": "Explore our solutions by domain",
     "description": "Each category brings together the best equipment to meet the specific needs of your practice",
+    "cta": "Discover",
+    "empty": "No published solutions yet.",
+    "emptyDesc": "Solutions added from the admin panel will appear here.",
+    "productsCount": "linked products",
     "items": {
       "diagnostic": {
         "icon": "stethoscope",

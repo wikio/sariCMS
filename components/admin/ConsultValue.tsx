@@ -1,7 +1,10 @@
 'use client';
 
-import { useMessages, useTranslations } from 'next-intl';
+import { useEffect, useState } from 'react';
+import { useLocale, useMessages, useTranslations } from 'next-intl';
 import type { FieldSpec } from '@/lib/cms-modules';
+import { getProducts } from '@/lib/data';
+import { resolveColor } from '@/lib/colors';
 import HtmlEditor from '@/components/admin/fields/HtmlEditor';
 import IconMark from '@/components/admin/IconMark';
 import ProcessFlow, { normalizeSteps } from '@/components/admin/ProcessFlow';
@@ -78,12 +81,29 @@ export default function ConsultValue({ spec, value }: { spec: FieldSpec; value: 
   if (spec.kind === 'icon') {
     return <IconMark name={String(value)} className="w-6 h-6" showLabel />;
   }
+  if (spec.kind === 'color') {
+    const token = String(value);
+    return (
+      <div className="flex items-center gap-2 text-sm font-semibold">
+        <span
+          className="w-6 h-6 rounded"
+          style={{ backgroundColor: resolveColor(token), border: '1px solid var(--ad-line)' }}
+        />
+        <span className="font-mono">{token}</span>
+      </div>
+    );
+  }
   if (spec.kind === 'image' || spec.kind === 'file') {
     const src = String(value);
     if (src.match(/\.(png|jpe?g|webp|gif|svg)$/i)) {
       return <img src={src} alt="" className="max-h-40 object-contain" />;
     }
     return <a className="underline text-sm" href={src} target="_blank" rel="noreferrer">{src}</a>;
+  }
+  if (spec.kind === 'products') {
+    const ids = Array.isArray(value) ? value.map((id) => String(id)) : [];
+    if (!ids.length) return <div className="text-sm" style={{ color: 'var(--ad-muted)' }}>—</div>;
+    return <ProductIdsPreview ids={ids} />;
   }
   if (spec.kind === 'gallery') {
     const items = asList(value).filter((src) => src.startsWith('/') || src.startsWith('http'));
@@ -191,4 +211,43 @@ export default function ConsultValue({ spec, value }: { spec: FieldSpec; value: 
     return <div className="text-sm">{formatObject(value)}</div>;
   }
   return <div className="text-sm font-semibold break-words">{String(value)}</div>;
+}
+
+/**
+ * Aperçu en lecture seule des produits liés (champ `productIds`).
+ * Les IDs sont résolus vers leur nom ; ceux qui n'existent plus restent
+ * affichés sous forme de puce `#id` pour ne rien masquer à l'utilisateur.
+ */
+function ProductIdsPreview({ ids }: { ids: string[] }) {
+  const locale = useLocale();
+  const [products, setProducts] = useState<Array<{ id: string; name: string; image?: string }>>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    getProducts(locale)
+      .then((rows) => {
+        if (cancelled) return;
+        setProducts(rows.map((p) => ({ id: String(p.id), name: p.name, image: p.image })));
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [locale]);
+
+  const byId = new Map(products.map((p) => [p.id, p]));
+
+  return (
+    <ul className="flex flex-wrap gap-2">
+      {ids.map((id) => {
+        const product = byId.get(id);
+        return (
+          <li key={id} className="ad-chip ad-chip-acc inline-flex items-center gap-2">
+            {product?.image ? <img src={product.image} alt="" className="w-4 h-4 rounded object-cover" /> : null}
+            {product ? product.name : `#${id}`}
+          </li>
+        );
+      })}
+    </ul>
+  );
 }

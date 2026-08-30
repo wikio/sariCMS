@@ -36,5 +36,11 @@
   "enterText": "Enter text…",
   "detailResponsible": "Detail / responsible",
   "urlPlaceholder": "URL or upload a file",
-  "question": "Question"
+  "question": "Question",
+  "searchProduct": "Search for a product…",
+  "noProductFound": "No product found",
+  "loading": "Loading…",
+  "selectedCount": "{count} product(s) selected",
+  "clearAll": "Clear all",
+  "colorPlaceholder": "sari-blue, #169EC9, red-500…"
 }

@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { ChevronRight, CheckCircle, Package } from 'lucide-react';
 import IconMark from '@/components/admin/IconMark';
+import { resolveColor, withAlpha } from '@/lib/colors';
 import type { Service } from '@/types';
 
 interface ServiceCardProps {
@@ -25,7 +26,10 @@ export default function ServiceCard({ service, variant = 'standard', onClick }: 
   };
 
   const serviceUrl = `/${locale}/services/${service.slug || service.id}`;
-  const color = service.color || 'sari-blue';
+  // Le jeton stocké ('sari-blue', 'red-500', '#0f766e'…) est résolu en couleur
+  // réelle : les variables CSS --sari-* n'existent pas dans la feuille de style.
+  const accent = resolveColor(service.color);
+  const accentSoft = withAlpha(service.color, 0.12);
 
   // === Variante COMPACT ===
   if (variant === 'compact') {
@@ -40,8 +44,8 @@ export default function ServiceCard({ service, variant = 'standard', onClick }: 
             <img src={service.image} alt={service.title} className="w-full h-full object-cover" />
           </div>
         ) : (
-          <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform" style={{ backgroundColor: `var(--${color}, var(--sari-blue))20` }}>
-            <IconMark name={service.icon} className="w-6 h-6 transition-colors" style={{ color: `var(--${color}, var(--sari-blue))` }} />
+          <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform" style={{ backgroundColor: accentSoft }}>
+            <IconMark name={service.icon} className="w-6 h-6 transition-colors" style={{ color: accent }} />
           </div>
         )}
         <div className="flex-1">
@@ -69,8 +73,8 @@ export default function ServiceCard({ service, variant = 'standard', onClick }: 
           <img src={service.image} alt={service.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
         </div>
       ) : (
-        <div className="w-14 h-14 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform rounded-lg" style={{ backgroundColor: `var(--${color}, var(--sari-blue))20` }}>
-          <IconMark name={service.icon} className="w-7 h-7 transition-colors" style={{ color: `var(--${color}, var(--sari-blue))` }} />
+        <div className="w-14 h-14 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform rounded-lg" style={{ backgroundColor: accentSoft }}>
+          <IconMark name={service.icon} className="w-7 h-7 transition-colors" style={{ color: accent }} />
         </div>
       )}
       <h3 className="text-xl font-bold text-sari-dark dark:text-white mb-3 group-hover:text-sari-blue transition-colors">
@@ -81,13 +85,13 @@ export default function ServiceCard({ service, variant = 'standard', onClick }: 
       </p>
       {service.features && service.features.length > 0 && (
         <div className="mb-4">
-          <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded" style={{ backgroundColor: `var(--${color}, var(--sari-blue))20`, color: `var(--${color}, var(--sari-blue))` }}>
+          <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded" style={{ backgroundColor: accentSoft, color: accent }}>
             <CheckCircle className="w-3 h-3" />
             {service.features.length} {t('advantages')}
           </span>
         </div>
       )}
-      <span className="font-semibold inline-flex items-center gap-2 group-hover:gap-3 transition-all" style={{ color: `var(--${color}, var(--sari-blue))` }}>
+      <span className="font-semibold inline-flex items-center gap-2 group-hover:gap-3 transition-all" style={{ color: accent }}>
         {t('learnMore')}
         <ChevronRight className="w-4 h-4" />
       </span>

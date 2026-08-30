@@ -1097,11 +1097,16 @@
       "option_Promo": "تخفيض",
       "option_Best-seller": "الأكثر مبيعاً",
       "option_Sur commande": "عند الطلب",
-      "colorPlaceholder": "sari-blue، #1e40af، red-500...",
+      "colorPlaceholder": "sari-blue, #169EC9, red-500…",
       "pickColor": "اختر لوناً",
       "answer": "الإجابة",
       "addQuestion": "إضافة سؤال",
-      "questionN": "سؤال {n}"
+      "questionN": "سؤال {n}",
+      "searchProduct": "ابحث عن منتج…",
+      "noProductFound": "لم يتم العثور على منتج",
+      "loading": "جارٍ التحميل…",
+      "selectedCount": "{count} منتج/منتجات محددة",
+      "clearAll": "إزالة الكل"
     },
     "htmlEditor": {
       "header": "رأس",
@@ -1449,6 +1454,161 @@
       "hintCatalogPdf": "رفع، نظام المستندات، عرض وتحميل.",
       "hintShortDesc": "280 حرف كحد أقصى.",
       "hintFullDesc": "محرر غني — قسم بعرض كامل."
+    },
+    "fields": {
+      "_groups": {
+        "Identité": "الهوية",
+        "Contenu": "المحتوى",
+        "Détails": "التفاصيل",
+        "Média": "الوسائط",
+        "Médias": "الوسائط",
+        "Catalogue": "الكتالوج",
+        "Technique": "تقني",
+        "Mission": "المهمة",
+        "Poste": "المنصب",
+        "Profil": "الملف الشخصي",
+        "Article": "المقال",
+        "Texte": "النص",
+        "Dates": "التواريخ",
+        "Programme": "البرنامج",
+        "Événement": "الفعالية",
+        "Auteur": "المؤلف",
+        "Citation": "الاقتباس",
+        "Fiche": "البطاقة",
+        "Slide": "الشريحة",
+        "Blocs": "الكتل",
+        "Page": "الصفحة",
+        "Légal": "قانوني",
+        "Galerie": "المعرض",
+        "Menu": "القائمة",
+        "Informations": "المعلومات",
+        "Coordonnées": "بيانات الاتصال",
+        "Général": "عام"
+      },
+      "title": "العنوان",
+      "name": "الاسم",
+      "slug": "الرابط",
+      "locale": "اللغة",
+      "status": "الحالة",
+      "category": "الفئة",
+      "icon": "الأيقونة",
+      "color": "اللون",
+      "image": "الصورة",
+      "gallery": "المعرض",
+      "logo": "الشعار",
+      "photo": "الصورة",
+      "media": "الوسائط",
+      "shortDesc": "المقدمة",
+      "fullDesc": "الوصف",
+      "fullContent": "المحتوى",
+      "content": "المحتوى",
+      "description": "النص",
+      "subtitle": "العنوان الفرعي",
+      "features": "المزايا",
+      "faq": "الأسئلة الشائعة",
+      "specs": "المواصفات",
+      "options": "الخيارات / المتغيرات",
+      "tags": "الوسوم",
+      "productIds": "المنتجات المرتبطة",
+      "price": "السعر",
+      "sku": "رمز المنتج",
+      "inStock": "متوفر",
+      "deliveryTime": "مدة التسليم",
+      "catalogPdf": "ملف المواصفات PDF",
+      "type": "النوع",
+      "kind": "العائلة",
+      "subtype": "التخطيط",
+      "location": "المكان",
+      "date": "التاريخ",
+      "publicationDate": "تاريخ النشر",
+      "startDate": "تاريخ البداية",
+      "endDate": "تاريخ النهاية",
+      "readTime": "مدة القراءة",
+      "authorName": "المؤلف",
+      "classification": "التصنيف",
+      "sujet": "الموضوع",
+      "agenda": "البرنامج",
+      "targetAudience": "الجمهور المستهدف",
+      "slides": "الشرائح",
+      "sections": "أقسام التمرير",
+      "rating": "التقييم",
+      "role": "الوظيفة",
+      "clinic": "المؤسسة",
+      "text": "الاقتباس",
+      "website": "الموقع الإلكتروني",
+      "email": "البريد الإلكتروني",
+      "bio": "السيرة الذاتية",
+      "cta": "نص الزر",
+      "ctaLink": "رابط الزر",
+      "sortOrder": "ترتيب العرض",
+      "products": {
+        "name": "الاسم التجاري",
+        "slug": "رابط URL",
+        "status": "النشر",
+        "image": "الصورة الرئيسية",
+        "fullDesc": "الوصف التفصيلي",
+        "features": "النقاط المميزة",
+        "inStock": "المخزون"
+      },
+      "services": {
+        "title": "العنوان",
+        "icon": "أيقونة Lucide",
+        "fullDesc": "العرض",
+        "features": "الالتزامات"
+      },
+      "careers": {
+        "title": "عنوان المنصب",
+        "image": "الصورة",
+        "type": "العقد",
+        "location": "المكان",
+        "salary": "الأجر",
+        "typeTravail": "نمط العمل",
+        "contact": "جهة اتصال الموارد البشرية",
+        "mission": "المهمة",
+        "objectifs": "الأهداف",
+        "prerequis": "المتطلبات",
+        "experience": "الخبرة",
+        "workflow": "مسار التوظيف",
+        "benefits": "المزايا",
+        "applyAuth": "تسجيل الدخول للتقديم"
+      },
+      "news": {
+        "image": "صورة الغلاف",
+        "shortDesc": "المقدمة",
+        "fullContent": "نص المقال",
+        "category": "القسم"
+      },
+      "events": {
+        "location": "الموقع",
+        "fullContent": "العرض"
+      },
+      "authors": {
+        "name": "الاسم الكامل",
+        "role": "الوظيفة / الدور"
+      },
+      "testimonials": {
+        "name": "الاسم",
+        "role": "الوظيفة"
+      },
+      "solutions": {
+        "title": "العنوان",
+        "icon": "الأيقونة",
+        "features": "المزايا",
+        "image": "الصورة",
+        "fullDesc": "العرض",
+        "productIds": "المنتجات المرتبطة"
+      },
+      "hero": {
+        "image": "صورة بملء الشاشة",
+        "description": "النص"
+      },
+      "pages": {
+        "content": "محتوى HTML",
+        "media": "الصور"
+      },
+      "legal": {
+        "content": "النص القانوني"
+      }
     }
   },
   "common": {
@@ -3362,7 +3522,11 @@
               "معدات مساعدة على التنقل"
             ]
           }
-        }
+        },
+        "cta": "اكتشف",
+        "empty": "لا توجد حلول منشورة حالياً.",
+        "emptyDesc": "ستظهر هنا الحلول المضافة من لوحة الإدارة.",
+        "productsCount": "منتجات مرتبطة"
       },
       "process": {
         "subtitle": "طريقتنا",

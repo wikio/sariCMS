@@ -1097,11 +1097,16 @@
       "option_Promo": "Sale",
       "option_Best-seller": "Best-seller",
       "option_Sur commande": "On order",
-      "colorPlaceholder": "sari-blue, #1e40af, red-500...",
+      "colorPlaceholder": "sari-blue, #169EC9, red-500…",
       "pickColor": "Pick a color",
       "answer": "Answer",
       "addQuestion": "Add question",
-      "questionN": "Question {n}"
+      "questionN": "Question {n}",
+      "searchProduct": "Search for a product…",
+      "noProductFound": "No product found",
+      "loading": "Loading…",
+      "selectedCount": "{count} product(s) selected",
+      "clearAll": "Clear all"
     },
     "htmlEditor": {
       "header": "Header",
@@ -1449,6 +1454,161 @@
       "hintCatalogPdf": "Upload, DMS, view and download.",
       "hintShortDesc": "Max 280 characters.",
       "hintFullDesc": "Rich editor — full width section."
+    },
+    "fields": {
+      "_groups": {
+        "Identité": "Identity",
+        "Contenu": "Content",
+        "Détails": "Details",
+        "Média": "Media",
+        "Médias": "Media",
+        "Catalogue": "Catalog",
+        "Technique": "Technical",
+        "Mission": "Mission",
+        "Poste": "Position",
+        "Profil": "Profile",
+        "Article": "Article",
+        "Texte": "Text",
+        "Dates": "Dates",
+        "Programme": "Agenda",
+        "Événement": "Event",
+        "Auteur": "Author",
+        "Citation": "Quote",
+        "Fiche": "Details",
+        "Slide": "Slide",
+        "Blocs": "Blocks",
+        "Page": "Page",
+        "Légal": "Legal",
+        "Galerie": "Gallery",
+        "Menu": "Menu",
+        "Informations": "Information",
+        "Coordonnées": "Contact details",
+        "Général": "General"
+      },
+      "title": "Title",
+      "name": "Name",
+      "slug": "Slug",
+      "locale": "Language",
+      "status": "Status",
+      "category": "Category",
+      "icon": "Icon",
+      "color": "Color",
+      "image": "Image",
+      "gallery": "Gallery",
+      "logo": "Logo",
+      "photo": "Photo",
+      "media": "Media",
+      "shortDesc": "Hook",
+      "fullDesc": "Description",
+      "fullContent": "Content",
+      "content": "Content",
+      "description": "Text",
+      "subtitle": "Subtitle",
+      "features": "Highlights",
+      "faq": "FAQ",
+      "specs": "Specifications",
+      "options": "Options / variants",
+      "tags": "Tags",
+      "productIds": "Linked products",
+      "price": "Price",
+      "sku": "Product code",
+      "inStock": "In stock",
+      "deliveryTime": "Delivery time",
+      "catalogPdf": "Technical sheet PDF",
+      "type": "Type",
+      "kind": "Family",
+      "subtype": "Layout",
+      "location": "Location",
+      "date": "Date",
+      "publicationDate": "Publication date",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "readTime": "Reading time",
+      "authorName": "Author",
+      "classification": "Classification",
+      "sujet": "Topic",
+      "agenda": "Agenda",
+      "targetAudience": "Target audience",
+      "slides": "Slides",
+      "sections": "Scroll sections",
+      "rating": "Rating",
+      "role": "Role",
+      "clinic": "Institution",
+      "text": "Quote",
+      "website": "Website",
+      "email": "Email",
+      "bio": "Biography",
+      "cta": "CTA label",
+      "ctaLink": "CTA link",
+      "sortOrder": "Display order",
+      "products": {
+        "name": "Commercial name",
+        "slug": "URL slug",
+        "status": "Publication",
+        "image": "Main image",
+        "fullDesc": "Detailed description",
+        "features": "Key points",
+        "inStock": "Stock"
+      },
+      "services": {
+        "title": "Name",
+        "icon": "Lucide icon",
+        "fullDesc": "Overview",
+        "features": "Commitments"
+      },
+      "careers": {
+        "title": "Job title",
+        "image": "Portrait",
+        "type": "Contract",
+        "location": "Location",
+        "salary": "Salary",
+        "typeTravail": "Work pace",
+        "contact": "HR contact",
+        "mission": "Mission",
+        "objectifs": "Objectives",
+        "prerequis": "Prerequisites",
+        "experience": "Experience",
+        "workflow": "Recruitment process",
+        "benefits": "Benefits",
+        "applyAuth": "Login to apply"
+      },
+      "news": {
+        "image": "Cover",
+        "shortDesc": "Standfirst",
+        "fullContent": "Article body",
+        "category": "Section"
+      },
+      "events": {
+        "location": "Venue",
+        "fullContent": "Overview"
+      },
+      "authors": {
+        "name": "Full name",
+        "role": "Role"
+      },
+      "testimonials": {
+        "name": "Name",
+        "role": "Role"
+      },
+      "solutions": {
+        "title": "Title",
+        "icon": "Icon",
+        "features": "Highlights",
+        "image": "Image",
+        "fullDesc": "Overview",
+        "productIds": "Linked products"
+      },
+      "hero": {
+        "image": "Full-screen image",
+        "description": "Text"
+      },
+      "pages": {
+        "content": "HTML content",
+        "media": "Images"
+      },
+      "legal": {
+        "content": "Legal text"
+      }
     }
   },
   "common": {
@@ -3378,7 +3538,11 @@
               "Mobility aids"
             ]
           }
-        }
+        },
+        "cta": "Discover",
+        "empty": "No published solutions yet.",
+        "emptyDesc": "Solutions added from the admin panel will appear here.",
+        "productsCount": "linked products"
       },
       "process": {
         "subtitle": "Our Method",

@@ -225,7 +225,11 @@ export interface HeroSlide {
 }
 
 export interface SolutionCategory {
-  id: string;
+  id: number | string;
+  /** Langue de la fiche (fr, en, ar) */
+  locale?: string;
+  /** Identifiant partagé par toutes les versions linguistiques d'une même solution */
+  legacyId?: string;
   slug?: string;
   title: string;
   shortDesc: string;
@@ -236,6 +240,7 @@ export interface SolutionCategory {
   productIds: Array<number | string>;
   features?: string[];
   faq?: Array<{ q: string; a: string }>;
+  sortOrder?: number;
 }
 
 export interface Navigation {

@@ -44,7 +44,6 @@ export class NewsService extends BaseCrudService<NewsEntity> {
     op: 'create' | 'update',
     existing?: NewsEntity,
   ): Partial<NewsEntity> {
-    console.log('[NewsService.beforeSave] Input DTO:', JSON.stringify(dto, null, 2));
     
     const out = { ...dto };
     if (!out.slug && out.title) out.slug = slugify(String(out.title));
@@ -68,7 +67,6 @@ export class NewsService extends BaseCrudService<NewsEntity> {
       out.publicationDate = out.publicationDate || out.publishedAt;
     }
     
-    console.log('[NewsService.beforeSave] Output DTO:', JSON.stringify(out, null, 2));
     return out;
   }
 

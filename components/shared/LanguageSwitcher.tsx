@@ -6,11 +6,33 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useRouter, usePathname } from 'next/navigation';
 import { Globe, Check, ChevronDown } from 'lucide-react';
 import { translateSlug } from '@/lib/fiche-i18n';
+import { entityRouteKey, findByRouteKey, matchTranslation, routeId } from '@/lib/entity-url';
+import { getSolutionCategories, getSolutionTranslations } from '@/lib/data';
+
+/**
+ * Ressources dont le segment d'URL est un couple `id-slug` traduisible.
+ * La valeur est le nom de la ressource CMS utilisée pour retrouver la
+ * traduction du slug (clé `resource:id` du store fiche-i18n).
+ */
+const TRANSLATABLE_RESOURCES: Record<string, string> = {
+  solutions: 'solutions',
+  services: 'services',
+  products: 'products',
+  news: 'news',
+  events: 'events',
+  jobs: 'careers',
+  careers: 'careers',
+  partners: 'partners',
+  pages: 'pages',
+  legal: 'pages',
+  content: 'pages',
+};
 
 export default function LanguageSwitcher() {
   const [isOpen, setIsOpen] = useState(false);
+  const [switching, setSwitching] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  
+
   const locale = useLocale();
   const pathname = usePathname();
   const router = useRouter();
@@ -35,53 +57,86 @@ export default function LanguageSwitcher() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleLanguageChange = (newLocale: string) => {
-    let newPathname = pathname;
-    
-    if (pathname === '/') {
-      newPathname = `/${newLocale}`;
-    } else if (pathname.startsWith(`/${locale}/`)) {
-      // Extraire le chemin après la locale
-      const pathWithoutLocale = pathname.replace(`/${locale}/`, '');
-      const pathParts = pathWithoutLocale.split('/');
-      
-      // Ressources qui ont des slugs traduisibles (tous les modules avec i18n: true sur slug)
-      const translatableResources = [
-        'solutions',    // Solutions
-        'services',     // Services
-        'products',     // Produits
-        'news',         // Actualités
-        'events',       // Événements
-        'careers',      // Carrières
-        'partners',     // Partenaires
-        'pages',        // Pages
-        'legal',        // Pages légales
-        'gallery',      // Galerie
-      ];
-      
-      // Vérifier si le premier segment est une ressource traduisible
-      if (pathParts.length >= 2 && translatableResources.includes(pathParts[0])) {
-        const resource = pathParts[0];
-        const currentSlug = pathParts[1];
-        
-        // Traduire le slug
-        const translatedSlug = translateSlug(resource, currentSlug, locale, newLocale);
-        
-        // Reconstruire le chemin avec le slug traduit
-        pathParts[1] = translatedSlug;
-        newPathname = `/${newLocale}/${pathParts.join('/')}`;
-      } else {
-        // Pas de slug à traduire, juste remplacer la locale
-        newPathname = pathname.replace(`/${locale}/`, `/${newLocale}/`);
+  /**
+   * Traduit le segment `id-slug` d'une fiche vers la langue cible.
+   * 1. Endpoint `/translations` : fiches sœurs reliées par `legacyId` (CMS).
+   * 2. Données de la langue cible (rapprochement legacyId puis id).
+   * 3. À défaut, traduction du slug stockée dans la fiche i18n.
+   * 4. En dernier recours on garde l'ID : la page sait toujours le résoudre.
+   */
+  const translateEntitySegment = async (
+    resource: string,
+    segment: string,
+    targetLocale: string,
+  ): Promise<string> => {
+    const id = routeId(segment);
+
+    if (resource === 'solutions') {
+      // 1) Source de vérité : les versions linguistiques déclarées par l'API
+      try {
+        const byLocale = await getSolutionTranslations(segment);
+        const sibling = byLocale[targetLocale];
+        if (sibling) return entityRouteKey(sibling);
+      } catch {
+        /* endpoint absent ou hors ligne → on continue */
       }
-    } else if (pathname === `/${locale}`) {
-      newPathname = `/${newLocale}`;
-    } else {
-      newPathname = `/${newLocale}${pathname}`;
+
+      // 2) Repli : comparaison des listes des deux langues
+      try {
+        const [current, target] = await Promise.all([
+          getSolutionCategories(locale),
+          getSolutionCategories(targetLocale),
+        ]);
+        const source = findByRouteKey(current, segment);
+        const match = matchTranslation(source, target)
+          || target.find((item) => String(item.id) === id);
+        if (match) return entityRouteKey(match);
+      } catch {
+        /* API indisponible → on passe au plan B */
+      }
     }
 
-    router.push(newPathname);
-    setIsOpen(false);
+    // 2) Slug traduit enregistré dans la fiche i18n
+    const translated = translateSlug(resource, segment, locale, targetLocale, id);
+    if (translated && translated !== segment) {
+      return /^\d+$/.test(id) ? `${id}-${translated}` : translated;
+    }
+
+    // 3) Fallback : ID seul (toujours résoluble), sinon segment inchangé
+    return /^\d+$/.test(id) ? id : segment;
+  };
+
+  const handleLanguageChange = async (newLocale: string) => {
+    if (newLocale === locale) {
+      setIsOpen(false);
+      return;
+    }
+
+    setSwitching(true);
+    try {
+      let newPathname = pathname;
+
+      if (pathname === '/' || pathname === `/${locale}`) {
+        newPathname = `/${newLocale}`;
+      } else if (pathname.startsWith(`/${locale}/`)) {
+        const pathWithoutLocale = pathname.slice(`/${locale}/`.length);
+        const pathParts = pathWithoutLocale.split('/');
+        const resource = TRANSLATABLE_RESOURCES[pathParts[0]];
+
+        if (resource && pathParts.length >= 2 && pathParts[1]) {
+          pathParts[1] = await translateEntitySegment(resource, pathParts[1], newLocale);
+        }
+
+        newPathname = `/${newLocale}/${pathParts.join('/')}`;
+      } else {
+        newPathname = `/${newLocale}${pathname}`;
+      }
+
+      router.push(newPathname);
+    } finally {
+      setSwitching(false);
+      setIsOpen(false);
+    }
   };
 
   return (
@@ -91,17 +146,19 @@ export default function LanguageSwitcher() {
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 px-2 py-1.5 text-gray-300 hover:text-sari-lime transition-colors bg-transparent border-0 cursor-pointer"
         aria-label={t('changeLanguage') || 'Changer de langue'}
+        aria-expanded={isOpen}
+        disabled={switching}
       >
         <Globe className="w-4 h-4 text-sari-lime" />
         <span className="text-sm font-semibold uppercase">{currentLang.code}</span>
         <ChevronDown className={`w-3 h-3 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
-      
+
       {isOpen && (
         <>
           {/* Overlay pour fermer en cliquant à l'extérieur */}
           <div className="fixed inset-0 z-[55]" onClick={() => setIsOpen(false)}></div>
-          
+
           {/* Menu déroulant */}
           <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 shadow-2xl z-[100] overflow-hidden rounded-lg">
             {languages.map(l => (

@@ -7,7 +7,9 @@ export type FieldKind =
   | 'text' | 'textarea' | 'html' | 'slug' | 'email' | 'phone' | 'url'
   | 'price' | 'number' | 'select' | 'radio' | 'toggle' | 'tags'
   | 'image' | 'gallery' | 'file' | 'faq' | 'list' | 'specs' | 'options' | 'agenda'
-  | 'slides' | 'sections' | 'rating' | 'icon' | 'color' | 'process' | 'datetime';
+  | 'slides' | 'sections' | 'rating' | 'icon' | 'color' | 'process' | 'datetime'
+  /** Sélection multiple de produits par autocomplétion (module Solutions). */
+  | 'products';
 
 export type ListLayout = 'catalog' | 'magazine' | 'timeline' | 'mosaic' | 'quotes' | 'people' | 'slides' | 'docs';
 

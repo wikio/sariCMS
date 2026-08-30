@@ -34,8 +34,40 @@ export class SolutionsService extends BaseCrudService<SolutionEntity> {
       out.locale = out.locale || 'fr';
       out.status = out.status || 'draft';
       if (out.sortOrder === undefined) out.sortOrder = 0;
+      // Chaque solution reçoit un legacyId : c'est la clé qui relie les
+      // versions FR/EN/AR entre elles. Fournir explicitement le legacyId d'une
+      // fiche existante crée sa traduction ; sinon on démarre un nouveau groupe.
+      if (!out.legacyId) out.legacyId = `sol-${Date.now().toString(36)}`;
     }
     return out;
+  }
+
+  /**
+   * Renvoie les versions traduites d'une solution (même `legacyId`),
+   * indexées par langue. Utilisé par le sélecteur de langue de la vitrine
+   * pour construire l'URL équivalente : `fr/solutions/1-slug-fr`
+   * → `ar/solutions/12-slug-ar`.
+   */
+  async findTranslations(idOrSlug: string) {
+    const numericId = Number(idOrSlug);
+    const source =
+      (Number.isFinite(numericId) && /^\d+$/.test(String(idOrSlug))
+        ? await this.repository.findById(numericId)
+        : null) ?? (await this.repository.findOne({ slug: idOrSlug }));
+    if (!source) return [];
+
+    const legacyId = source.legacyId ? String(source.legacyId) : '';
+    if (!legacyId) return [this.toView(source, 'block')];
+
+    const { data } = await this.repository.findMany({
+      filters: [
+        { field: 'legacyId', op: 'eq', value: legacyId },
+        { field: 'status', op: 'eq', value: 'published' },
+      ],
+      limit: 20,
+    });
+
+    return data.map((row) => this.toView(row, 'block'));
   }
 
   async findPublished(idOrSlug: string, locale?: string) {

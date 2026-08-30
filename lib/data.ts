@@ -15,9 +15,10 @@ import type {
   HeroSlide,
   SolutionCategory,
 } from '@/types';
-import { cmsPublicList, cmsPublicOne, cmsFetch } from '@/lib/cms';
+import { cmsPublicList, cmsPublicOne, cmsPublicTranslations, cmsFetch } from '@/lib/cms';
 import { loadFicheLocale } from '@/lib/fiche-i18n';
 import { asPublicId, matchesEntity } from '@/lib/ids';
+import { findByRouteKey } from '@/lib/entity-url';
 
 const dataCache = new Map<string, unknown>();
 
@@ -202,18 +203,50 @@ function mapHero(row: Record<string, unknown>): HeroSlide {
 }
 
 function mapSolution(row: Record<string, unknown>): SolutionCategory {
+  // productIds peut arriver en JSON string depuis MySQL/Prisma (colonne Json).
+  let productIds: Array<string | number> = [];
+  if (Array.isArray(row.productIds)) {
+    productIds = row.productIds as Array<string | number>;
+  } else if (typeof row.productIds === 'string' && row.productIds.trim()) {
+    try {
+      const parsed = JSON.parse(row.productIds);
+      if (Array.isArray(parsed)) productIds = parsed;
+    } catch {
+      productIds = row.productIds
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+    }
+  }
+
+  const parseJsonArray = <T,>(value: unknown): T[] | undefined => {
+    if (Array.isArray(value)) return value as T[];
+    if (typeof value === 'string' && value.trim()) {
+      try {
+        const parsed = JSON.parse(value);
+        if (Array.isArray(parsed)) return parsed as T[];
+      } catch {
+        /* valeur non JSON — ignorée */
+      }
+    }
+    return undefined;
+  };
+
   return {
-    id: String(row.id ?? ''),
+    id: asPublicId(row),
+    locale: row.locale ? String(row.locale) : undefined,
+    legacyId: row.legacyId ? String(row.legacyId) : undefined,
     slug: row.slug ? String(row.slug) : undefined,
     title: String(row.title ?? ''),
     shortDesc: String(row.shortDesc ?? ''),
     fullDesc: row.fullDesc ? String(row.fullDesc) : undefined,
     icon: String(row.icon ?? ''),
     image: String(row.image ?? ''),
-    color: String(row.color ?? 'sari-blue'),
-    productIds: Array.isArray(row.productIds) ? (row.productIds as Array<string | number>) : [],
-    features: Array.isArray(row.features) ? (row.features as string[]) : undefined,
-    faq: Array.isArray(row.faq) ? (row.faq as SolutionCategory['faq']) : undefined,
+    color: String(row.color || 'sari-blue'),
+    productIds,
+    features: parseJsonArray<string>(row.features),
+    faq: parseJsonArray<{ q: string; a: string }>(row.faq),
+    sortOrder: typeof row.sortOrder === 'number' ? row.sortOrder : undefined,
   };
 }
 
@@ -506,20 +539,70 @@ export async function getVerificationCodes(locale: string): Promise<Verification
   return loadData<VerificationCode[]>(locale, 'verification-codes', []);
 }
 
+/** Champs d'une solution qui peuvent être traduits fiche par fiche. */
+const SOLUTION_TRANSLATABLE_FIELDS = [
+  'title',
+  'slug',
+  'icon',
+  'color',
+  'shortDesc',
+  'fullDesc',
+  'features',
+  'faq',
+  'image',
+];
+
 export async function getSolutionCategories(locale: string): Promise<SolutionCategory[]> {
   return fromCmsOrJson(locale, 'solution-categories', [], async () => {
-    const rows = await cmsPublicList<Record<string, unknown>>('solutions', locale);
+    let rows = await cmsPublicList<Record<string, unknown>>('solutions', locale);
+
+    // Fallback FR : une solution non encore traduite doit rester accessible,
+    // ses champs traduits seront appliqués depuis la fiche i18n ci-dessous.
+    if (!rows.length && locale !== 'fr') {
+      rows = await cmsPublicList<Record<string, unknown>>('solutions', 'fr');
+    }
     if (!rows.length) return null;
-    
-    // Appliquer les traductions depuis localStorage pour chaque catégorie
-    const translatedRows = rows.map(row => 
-      applyFicheTranslation(row, 'solutions', locale, [
-        'title', 'slug', 'icon', 'color', 'shortDesc', 'fullDesc', 'features', 'faq', 'image'
-      ])
+
+    // Appliquer les traductions (fiches i18n) pour chaque catégorie
+    const translatedRows = rows.map((row) =>
+      applyFicheTranslation(row, 'solutions', locale, SOLUTION_TRANSLATABLE_FIELDS),
     );
-    
-    return translatedRows.map(mapSolution);
+
+    const mapped = translatedRows.map(mapSolution);
+    mapped.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+    return mapped;
   });
+}
+
+/**
+ * Résout une solution depuis un segment d'URL `id-slug` (ou juste `id`/`slug`).
+ * Voir `lib/entity-url.ts` pour la construction des URLs.
+ */
+export async function getSolutionByKey(
+  locale: string,
+  key: string,
+): Promise<SolutionCategory | null> {
+  const categories = await getSolutionCategories(locale);
+  return findByRouteKey(categories, key);
+}
+
+/**
+ * Versions linguistiques d'une solution, indexées par langue.
+ *
+ * Source de vérité : l'API (`/public/solutions/{key}/translations`), qui relie
+ * les fiches par `legacyId`. En cas d'indisponibilité, on retombe sur les
+ * données locales de la langue cible (rapprochement par legacyId puis par id).
+ */
+export async function getSolutionTranslations(
+  key: string,
+): Promise<Record<string, SolutionCategory>> {
+  const rows = await cmsPublicTranslations<Record<string, unknown>>('solutions', key);
+  const out: Record<string, SolutionCategory> = {};
+  for (const row of rows) {
+    const mapped = mapSolution(row);
+    if (mapped.locale) out[mapped.locale] = mapped;
+  }
+  return out;
 }
 
 export function clearCache(): void {
