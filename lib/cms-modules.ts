@@ -265,6 +265,7 @@ export const CMS_MODULES: CmsModule[] = [
       { key: 'shortDesc', label: 'Accroche', kind: 'textarea', wide: true, group: 'Contenu' },
       { key: 'fullDesc', label: 'Présentation', kind: 'html', wide: true, group: 'Contenu' },
       { key: 'features', label: 'Atouts', kind: 'list', wide: true, group: 'Détails' },
+      { key: 'productIds', label: 'Produits associés', kind: 'products', wide: true, group: 'Détails' },
       { key: 'faq', label: 'FAQ', kind: 'faq', wide: true, group: 'Détails' },
     ],
   },

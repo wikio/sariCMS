@@ -15,31 +15,6 @@ import SectionTitle from '@/components/ui/SectionTitle';
 import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
 import IconMark from '@/components/admin/IconMark';
 
-// ✅ Mapping pour résoudre dynamiquement les icônes et couleurs depuis le JSON
-const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-  'stethoscope': require('lucide-react').Stethoscope,
-  'heart-pulse': require('lucide-react').HeartPulse,
-  'scan': require('lucide-react').Scan,
-  'syringe': require('lucide-react').Syringe,
-  'baby': require('lucide-react').Baby,
-  'activity': require('lucide-react').Activity,
-  'monitor': require('lucide-react').Monitor,
-  'flask-conical': require('lucide-react').FlaskConical,
-  'accessibility': require('lucide-react').Accessibility,
-};
-
-const colorMap: Record<string, { bg: string; text: string; border: string }> = {
-  'sari-blue': { bg: 'bg-sari-blue', text: 'text-sari-blue', border: 'border-sari-blue' },
-  'red-500': { bg: 'bg-red-500', text: 'text-red-500', border: 'border-red-500' },
-  'purple-500': { bg: 'bg-purple-500', text: 'text-purple-500', border: 'border-purple-500' },
-  'green-500': { bg: 'bg-green-500', text: 'text-green-500', border: 'border-green-500' },
-  'pink-500': { bg: 'bg-pink-500', text: 'text-pink-500', border: 'border-pink-500' },
-  'orange-500': { bg: 'bg-orange-500', text: 'text-orange-500', border: 'border-orange-500' },
-  'indigo-500': { bg: 'bg-indigo-500', text: 'text-indigo-500', border: 'border-indigo-500' },
-  'teal-500': { bg: 'bg-teal-500', text: 'text-teal-500', border: 'border-teal-500' },
-  'cyan-500': { bg: 'bg-cyan-500', text: 'text-cyan-500', border: 'border-cyan-500' },
-};
-
 export default function SolutionCategoryPage() {
   const params = useParams();
   const locale = useLocale();
@@ -99,11 +74,11 @@ export default function SolutionCategoryPage() {
   }
 
   const catProducts = products.filter(p => cat.productIds.includes(p.id));
-  const otherCategories = categories.filter(c => c.id !== key).slice(0, 4);
+  const otherCategories = categories.filter(c => (c.slug || c.id) !== key).slice(0, 4);
   
-  // ✅ Récupération dynamique des couleurs et icônes via le mapping
-  const colors = colorMap[cat.color] || colorMap['sari-blue'];
-  const IconComponent = iconMap[cat.icon] || Package;
+  // ✅ Utilisation directe des couleurs depuis la BD
+  const colorValue = cat.color || 'sari-blue';
+  const colorVar = `var(--${colorValue})`;
 
   return (
     <PageVisibilityGuard visibilityKey="module.solutions">
@@ -123,8 +98,8 @@ export default function SolutionCategoryPage() {
             {isRtl ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
             {t('backToSolutions')}
           </Link>
-          <div className={`w-24 h-24 ${colors.bg}/20 rounded-2xl flex items-center justify-center mx-auto mb-6 border-2 ${colors.border}`}>
-            <IconMark name={cat.icon} className={`w-12 h-12`} style={{ color: `var(--${cat.color || 'sari-blue'})` }} />
+          <div className="w-24 h-24 rounded-2xl flex items-center justify-center mx-auto mb-6 border-2" style={{ backgroundColor: `${colorVar}20`, borderColor: colorVar }}>
+            <IconMark name={cat.icon} className="w-12 h-12" style={{ color: colorVar }} />
           </div>
           <h1 className="text-5xl md:text-6xl font-bold mb-4 leading-tight">{cat.title}</h1>
           <p className="text-xl text-gray-300 max-w-2xl mx-auto">{cat.shortDesc}</p>
@@ -176,8 +151,8 @@ export default function SolutionCategoryPage() {
                 const featureText = typeof feature === 'string' ? feature : (feature as any).text;
                 return (
                   <div key={i} className="bg-white dark:bg-[#1a1a1a] p-6 border border-gray-200 dark:border-gray-800 rounded-xl flex items-start gap-4 hover:shadow-lg transition-all">
-                    <div className={`w-12 h-12 ${colors.bg}/10 rounded-lg flex items-center justify-center flex-shrink-0`}>
-                      <Check className={`w-6 h-6 ${colors.text}`} />
+                    <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${colorVar}10` }}>
+                      <Check className="w-6 h-6" style={{ color: colorVar }} />
                     </div>
                     <p className="text-gray-700 dark:text-gray-300 font-medium">{featureText}</p>
                   </div>
@@ -198,7 +173,7 @@ export default function SolutionCategoryPage() {
         )}
 
         {/* CTA */}
-        <section className={`${colors.bg} text-white p-12 md:p-16 rounded-2xl text-center mb-20`}>
+        <section className="text-white p-12 md:p-16 rounded-2xl text-center mb-20" style={{ backgroundColor: colorVar }}>
           <h2 className="text-4xl md:text-5xl font-bold mb-6">{t('cta.title')}</h2>
           <p className="text-xl text-blue-100 mb-12 max-w-3xl mx-auto">{t('cta.description')}</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -218,11 +193,11 @@ export default function SolutionCategoryPage() {
             <SectionTitle title={t('related.title')} />
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               {otherCategories.map((other) => {
-                const otherColors = colorMap[other.color] || colorMap['sari-blue'];
+                const otherColorVar = `var(--${other.color || 'sari-blue'})`;
                 return (
                   <Link key={other.id} href={`/${locale}/solutions/${other.slug || other.id}`} className="bg-gray-50 dark:bg-[#111111] p-6 border border-gray-200 dark:border-gray-800 rounded-xl hover:shadow-lg hover:border-sari-blue transition-all group text-center block">
-                    <div className={`w-14 h-14 ${otherColors.bg}/10 rounded-lg flex items-center justify-center mx-auto mb-4 group-hover:${otherColors.bg} transition-colors`}>
-                      <IconMark name={other.icon} className={`w-7 h-7 ${otherColors.text} group-hover:text-white transition-colors`} />
+                    <div className="w-14 h-14 rounded-lg flex items-center justify-center mx-auto mb-4 transition-colors" style={{ backgroundColor: `${otherColorVar}10` }}>
+                      <IconMark name={other.icon} className="w-7 h-7 group-hover:text-white transition-colors" style={{ color: otherColorVar }} />
                     </div>
                     <h3 className="font-bold text-sari-dark dark:text-white group-hover:text-sari-blue transition-colors">{other.title}</h3>
                   </Link>

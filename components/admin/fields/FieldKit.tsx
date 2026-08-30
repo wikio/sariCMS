@@ -17,6 +17,7 @@ import ProcessFlow, { normalizeSteps } from '@/components/admin/ProcessFlow';
 import Toggle from '@/components/admin/Toggle';
 import DateTimePicker from '@/components/admin/fields/DateTimePicker';
 import AutocompleteSelect from '@/components/admin/fields/AutocompleteSelect';
+import ProductMultiSelect from '@/components/admin/fields/ProductMultiSelect';
 import { activeCurrencies, loadCurrencies, saveCurrencies, type Currency } from '@/lib/currencies';
 import { useMessages, useTranslations } from 'next-intl';
 
@@ -195,6 +196,8 @@ export function renderField(
     case 'slides':
     case 'sections':
       return wrap(<BlocksEditor value={asBlocks(value)} onChange={onChange} />);
+    case 'products':
+      return wrap(<ProductMultiSelect value={Array.isArray(value) ? value : []} onChange={onChange} />);
     case 'rating':
       return wrap(
         <div className="flex gap-1">
