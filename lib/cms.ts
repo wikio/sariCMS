@@ -60,6 +60,8 @@ export interface CmsRequestOptions extends Omit<RequestInit, 'body'> {
   token?: string | null;
   json?: unknown;
   timeoutMs?: number;
+  /** Corps brut, utilisé lorsque `json` n'est pas fourni (upload de fichier…). */
+  body?: BodyInit | null;
 }
 
 export async function cmsFetch<T = unknown>(path: string, options: CmsRequestOptions = {}): Promise<T> {

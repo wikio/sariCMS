@@ -79,8 +79,11 @@ export default function VerificationPage() {
   useEffect(() => {
     if (result && resultRef.current) {
       setTimeout(() => {
+        // Le composant a pu être démonté pendant le délai : on revérifie.
+        const node = resultRef.current;
+        if (!node) return;
         const headerOffset = 120;
-        const elementPosition = resultRef.current.getBoundingClientRect().top;
+        const elementPosition = node.getBoundingClientRect().top;
         const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
         window.scrollTo({
           top: offsetPosition,

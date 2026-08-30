@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { ShoppingCart, Trash2, Plus, Minus, CreditCard, Shield, CheckCircle, LogIn, FileText } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { useOrders } from '@/contexts/OrdersContext';
+import { useOrders, type Order, type OrderItem } from '@/contexts/OrdersContext';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 
 export default function CartPage() {
@@ -31,8 +31,19 @@ export default function CartPage() {
   const grandTotal = totalAmount + taxAmount;
 
   const createOrderAndRedirect = (options: { isQuote?: boolean; customerName?: string; customerEmail?: string; customerPhone?: string; customerCompany?: string } = {}) => {
+    // Le panier tolère des ids/prix textuels et une catégorie absente ; une
+    // commande exige des champs stricts. On normalise à la conversion.
+    const orderItems: OrderItem[] = cart.map((item) => ({
+      id: Number(item.id),
+      name: item.name,
+      price: String(item.price),
+      quantity: item.quantity,
+      image: item.image,
+      category: item.category || '',
+    }));
+
     const orderData = {
-      items: cart,
+      items: orderItems,
       totalAmount,
       taxAmount,
       grandTotal,
@@ -44,7 +55,7 @@ export default function CartPage() {
       customerType: isAuthenticated ? user?.type || 'guest' : 'guest',
       isGuest: !isAuthenticated,
       isQuote: options.isQuote || false,
-      status: (options.isQuote ? 'quote_requested' : 'pending') as const,
+      status: (options.isQuote ? 'quote_requested' : 'pending') as Order['status'],
     };
     const order = addOrder(orderData);
     clearCart();

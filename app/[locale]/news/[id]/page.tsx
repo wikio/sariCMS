@@ -189,7 +189,7 @@ export default function NewsDetailPage() {
         <div className="grid lg:grid-cols-3 gap-12">
           <div className="lg:col-span-2">
             <article className="bg-white dark:bg-[#1a1a1a] p-8 md:p-12 border border-gray-200 dark:border-gray-800 shadow-xl mb-8 rounded-xl">
-              <div className="prose dark:prose-invert max-w-none text-gray-600 dark:text-gray-400 text-lg leading-relaxed mb-12" dangerouslySetInnerHTML={{ __html: item.fullContent }}></div>
+              <div className="prose dark:prose-invert max-w-none text-gray-600 dark:text-gray-400 text-lg leading-relaxed mb-12" dangerouslySetInnerHTML={{ __html: item.fullContent || '' }}></div>
               
               {item.tags && item.tags.length > 0 && (
                 <div className="border-t border-gray-200 dark:border-gray-800 pt-8 mb-8">

@@ -45,6 +45,10 @@ export interface Menu {
 export interface Product {
   id: number | string;
   slug?: string;
+  /** Langue de la fiche (utile quand chaque langue a sa propre ligne en base). */
+  locale?: string;
+  /** Identifiant partagé par les versions FR/EN/AR d'un même produit. */
+  legacyId?: string;
   name: string;
   category: string;
   price: string;

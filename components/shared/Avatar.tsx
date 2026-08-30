@@ -17,7 +17,7 @@ export default function Avatar({
   alt = '',
   name = '',
   size = 'medium',
-  status = null,
+  status = undefined,
   showBorder = false
 }: AvatarProps) {
   const [imageError, setImageError] = useState(false);

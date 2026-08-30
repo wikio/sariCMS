@@ -392,12 +392,12 @@ export default function AdminCrud({
                   <td className="font-semibold">{titleOf(row, cfg)}</td>
                   {cfg.inlineFields.filter((f) => f !== cfg.titleField).map((f) => (
                     <td key={f}>
-                      {inline?.id === row.id && inline.field === f ? (
+                      {inline && inline.id === row.id && inline.field === f ? (
                         <input
                           autoFocus
                           className="ad-input py-1"
                           value={inline.value}
-                          onChange={(e) => setInline({ ...inline, value: e.target.value })}
+                          onChange={(e) => setInline({ id: String(row.id), field: f, value: e.target.value })}
                           onBlur={persistInline}
                           onKeyDown={(e) => e.key === 'Enter' && persistInline()}
                         />
@@ -478,6 +478,7 @@ function SmartGrid({
   onDelete: (id: string) => void;
   onDrop: (id: string) => void;
   setDragId: (id: string | null) => void;
+  onInline?: (row: Record<string, unknown>, field: string) => void;
   inline: { id: string; field: string; value: string } | null;
   setInline: (v: { id: string; field: string; value: string } | null) => void;
   persistInline: () => void;
@@ -505,8 +506,8 @@ function SmartGrid({
         <div className="p-4 space-y-2">
           <div className="flex items-start justify-between gap-2">
             <div>
-              {inline?.id === row.id && inline.field === cfg.titleField ? (
-                <input className="ad-input py-1" value={inline.value} onChange={(e) => setInline({ ...inline, value: e.target.value })} onBlur={persistInline} autoFocus />
+              {inline && inline.id === row.id && inline.field === cfg.titleField ? (
+                <input className="ad-input py-1" value={inline.value} onChange={(e) => setInline({ id: String(row.id), field: cfg.titleField, value: e.target.value })} onBlur={persistInline} autoFocus />
               ) : (
                 <h3 className="font-bold leading-snug cursor-text" onClick={() => setInline({ id: String(row.id), field: cfg.titleField, value: title })}>{title}</h3>
               )}

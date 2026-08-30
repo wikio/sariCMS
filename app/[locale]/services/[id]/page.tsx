@@ -74,7 +74,7 @@ export default function ServiceDetailPage() {
               </h2>
               <div
                 className="prose dark:prose-invert max-w-none text-gray-600 dark:text-gray-400 text-lg leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: service.fullDesc }}
+                dangerouslySetInnerHTML={{ __html: service.fullDesc || '' }}
               />
             </div>
 

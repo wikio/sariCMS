@@ -225,7 +225,7 @@ export default function EventDetailPage() {
                 {t('aboutTitle')}
               </h2>
               <div className="prose dark:prose-invert max-w-none text-gray-600 dark:text-gray-400 text-lg leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: event.fullContent }} />
+                dangerouslySetInnerHTML={{ __html: event.fullContent || '' }} />
             </div>
 
             {/* Programme */}

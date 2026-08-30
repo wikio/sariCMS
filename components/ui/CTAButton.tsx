@@ -70,7 +70,7 @@ export default function CTAButton({
   href,
   variant = 'primary',
   size = 'medium',
-  icon = null,
+  icon = undefined,
   disabled = false,
   fullWidth = false,
   type = 'button',

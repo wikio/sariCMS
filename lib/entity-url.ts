@@ -176,3 +176,48 @@ export function translateRouteKey<T extends RoutableEntity>(
 
   return raw;
 }
+
+/**
+ * Sélectionne, dans une liste, les entités désignées par une liste d'ids.
+ *
+ * Les ids saisis dans l'admin (`productIds` d'une solution, par exemple)
+ * pointent vers les fiches de la langue de saisie. Quand chaque langue possède
+ * sa propre ligne en base, ces ids n'existent pas tels quels dans la langue
+ * consultée : on rattrape alors la correspondance via `legacyId`.
+ *
+ * @param items    fiches disponibles dans la langue affichée
+ * @param ids      identifiants enregistrés sur la fiche parente
+ * @param allItems fiches toutes langues confondues (facultatif) servant à
+ *                 retrouver le `legacyId` d'un id d'une autre langue
+ */
+export function selectByIds<T extends RoutableEntity>(
+  items: T[],
+  ids: Array<string | number> | undefined | null,
+  allItems?: T[],
+): T[] {
+  if (!Array.isArray(items) || !Array.isArray(ids) || !ids.length) return [];
+  const wanted = new Set(ids.map((id) => String(id)));
+
+  // 1) Correspondance directe par id (cas courant : ids partagés entre langues)
+  const direct = items.filter((item) => wanted.has(entityId(item)));
+  if (direct.length === wanted.size) return direct;
+
+  // 2) Rattrapage par legacyId pour les ids restants
+  const pool = allItems && allItems.length ? allItems : items;
+  const legacyWanted = new Set<string>();
+  for (const id of wanted) {
+    const source = pool.find((item) => entityId(item) === id);
+    if (source?.legacyId != null) legacyWanted.add(String(source.legacyId));
+  }
+  if (!legacyWanted.size) return direct;
+
+  const found = new Set(direct.map((item) => entityId(item)));
+  const extra = items.filter(
+    (item) =>
+      !found.has(entityId(item)) &&
+      item.legacyId != null &&
+      legacyWanted.has(String(item.legacyId)),
+  );
+
+  return [...direct, ...extra];
+}

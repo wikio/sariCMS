@@ -413,7 +413,7 @@ function SortableCard({ id, disabled, children }: { id: string; disabled?: boole
   );
 }
 
-function Empty({ mod }: { mod: CmsModule }) {
+function Empty({ mod, singular }: { mod: CmsModule; singular?: string }) {
   const t = useTranslations('admin.common');
-  return <div className="ad-card p-12 text-center" style={{ color: 'var(--ad-muted)' }}>{t("noRecords", { singular: translatedSingular })}</div>;
+  return <div className="ad-card p-12 text-center" style={{ color: 'var(--ad-muted)' }}>{t("noRecords", { singular: singular || mod.singular })}</div>;
 }

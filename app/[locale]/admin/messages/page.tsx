@@ -53,6 +53,7 @@ export default function MessagesPage() {
 /* ============================ Conversations ============================ */
 
 function InboxTab() {
+  const t = useTranslations('admin.messages');
   const { showToast } = useToast();
   const [threads, setThreads] = useState<Thread[]>([]);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -204,6 +205,7 @@ function InboxTab() {
 }
 
 function NewConversation({ onClose, onDone }: { onClose: () => void; onDone: () => void }) {
+  const t = useTranslations('admin.messages');
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [type, setType] = useState<'client' | 'candidate' | 'partner'>('client');

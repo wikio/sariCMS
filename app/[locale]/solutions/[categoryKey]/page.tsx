@@ -7,7 +7,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight, Package, Check } from 'lucide-react';
 import { getProducts, getSolutionCategories } from '@/lib/data';
-import { entityUrl, findByRouteKey } from '@/lib/entity-url';
+import { entityUrl, findByRouteKey, selectByIds } from '@/lib/entity-url';
 import { readableTextOn, resolveColor, withAlpha } from '@/lib/colors';
 import type { Product, SolutionCategory } from '@/types';
 import ProductCard from '@/components/cards/ProductCard';
@@ -25,6 +25,10 @@ export default function SolutionCategoryPage() {
   const key = decodeURIComponent(String(params.categoryKey || ''));
 
   const [products, setProducts] = useState<Product[]>([]);
+  // Catalogue de la langue par défaut : sert de repère pour retrouver, via
+  // legacyId, les produits liés lorsqu'ils portent d'autres ids dans la
+  // langue consultée.
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<SolutionCategory[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -33,13 +37,15 @@ export default function SolutionCategoryPage() {
     const loadData = async () => {
       setLoading(true);
       try {
-        const [productsData, categoriesData] = await Promise.all([
+        const [productsData, categoriesData, defaultProducts] = await Promise.all([
           getProducts(locale),
           getSolutionCategories(locale),
+          locale === 'fr' ? Promise.resolve([]) : getProducts('fr').catch(() => []),
         ]);
 
         if (!cancelled) {
           setProducts(productsData);
+          setAllProducts([...productsData, ...defaultProducts]);
           setCategories(categoriesData);
         }
       } catch (error) {
@@ -82,10 +88,10 @@ export default function SolutionCategoryPage() {
     );
   }
 
-  // ✅ Produits associés — la comparaison est faite en chaîne car les IDs
-  //    peuvent être numériques (JSON) ou textuels (API).
-  const linkedIds = new Set((cat.productIds || []).map((id) => String(id)));
-  const catProducts = products.filter((p) => linkedIds.has(String(p.id)));
+  // ✅ Produits associés. Comparaison en chaîne (un id peut être numérique ou
+  //    textuel selon la source) et rattrapage par legacyId lorsque la langue
+  //    consultée possède ses propres fiches produits.
+  const catProducts = selectByIds(products, cat.productIds, allProducts);
 
   const otherCategories = categories.filter((c) => String(c.id) !== String(cat.id)).slice(0, 4);
 

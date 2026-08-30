@@ -72,6 +72,8 @@ async function fromCmsOrJson<T>(
 function mapProduct(row: Record<string, unknown>): Product {
   return {
     id: asPublicId(row),
+    locale: row.locale ? String(row.locale) : undefined,
+    legacyId: row.legacyId ? String(row.legacyId) : undefined,
     name: String(row.name ?? ''),
     category: String(row.category ?? ''),
     price: String(row.price ?? ''),

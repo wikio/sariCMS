@@ -16,8 +16,8 @@ const TYPES: Array<{ value: PaymentType; label: string }> = [
   { value: 'cib', label: 'Carte CIB / locale' },
   { value: 'transfer', label: 'Virement bancaire' },
   { value: 'paypal', label: 'PayPal' },
-  { value: 'check', label: t("check") },
-  { value: 'cod', label: t("cashOnDelivery") },
+  { value: 'check', label: 'Chèque' },
+  { value: 'cod', label: 'Paiement à la livraison' },
   { value: 'other', label: 'Autre' },
 ];
 
