@@ -121,6 +121,7 @@ DROP TABLE IF EXISTS `role_permissions`;
 CREATE TABLE `role_permissions` (
   `roleId`       INT NOT NULL,
   `permissionId` INT NOT NULL,
+  PRIMARY KEY (`roleId`, `permissionId`),
   CONSTRAINT `role_permissions_roleId_fkey` FOREIGN KEY (`roleId`) REFERENCES `roles` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `role_permissions_permissionId_fkey` FOREIGN KEY (`permissionId`) REFERENCES `permissions` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

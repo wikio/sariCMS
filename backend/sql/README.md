@@ -9,8 +9,16 @@ Ce dossier contient le schéma MySQL et les données de démarrage du CMS
 | `generate-schema.mjs`      | **Génère** `schema.mysql.sql` depuis `prisma/schema.prisma`     |
 | `seed.mysql.sql`           | Données de démarrage (contexte algérien, FR / EN / AR)         |
 | `generate-seed.mjs`        | Générateur du seed (reproductible, IDs déterministes)          |
+| `auth-only.mysql.sql`      | **Comptes, rôles et permissions seuls** — sans catalogue        |
+| `extract-auth.mjs`         | Extrait `auth-only.mysql.sql` depuis le seed                    |
 | `migrate-data.mysql.sql`   | **Reprise** des jeux `data/{fr,en,ar}/*.json` — 291 lignes      |
 | `migrate-data.mjs`         | Générateur de la reprise (dates converties, `legacyId` posés)   |
+| `setup-env.mjs`            | Crée `backend/.env` (pilote MySQL + secrets JWT aléatoires)     |
+| `test-auth-sql.mjs`        | Vérifie hachages, types de comptes et rejeu de `auth-only`      |
+
+> ⚠️ **`schema.mysql.sql` ne crée aucun compte.** Il ne pose que les tables :
+> la table `users` reste vide, et l'administration est inaccessible tant que
+> l'un des deux fichiers de données n'a pas été importé — voir §1.
 
 > `schema.mysql.sql` et `migrate-data.mysql.sql` sont **générés** : corrigez le
 > script, pas le `.sql`. Le schéma écrit à la main avait fini par diverger de
@@ -31,15 +39,38 @@ Ce dossier contient le schéma MySQL et les données de démarrage du CMS
 
 ## 1. Importer le schéma puis les données
 
+### Quel fichier de données importer ?
+
+Deux jeux de contenu existent, et ils **ne se combinent pas** : leurs
+identifiants se recouvrent (services 1…15 pour le seed, 1…4 puis 1001…
+pour la reprise). Importer les deux mélangerait deux catalogues sur les mêmes
+lignes. Choisissez selon l'usage :
+
+| Objectif | À importer |
+| -------- | ---------- |
+| **Découvrir le CMS** avec un contenu de démonstration complet | `schema` → `seed` |
+| **Reprendre le contenu réel du site** (fichiers `data/`) | `schema` → `auth-only` → `migrate-data` |
+
+`auth-only.mysql.sql` contient exactement la partie authentification du seed
+(100 permissions, 4 rôles, 5 comptes), sans son catalogue : c'est ce qui permet
+de se connecter tout en gardant le contenu de `migrate-data`.
+
 ### Via la ligne de commande `mysql`
 
 ```bash
-# Schéma (crée la base sari_cms + les tables)
+# 1. Schéma (crée la base sari_cms + les tables — aucun compte)
 mysql -u root -p < backend/sql/schema.mysql.sql
 
-# Données (contexte algérien) — sélectionner la base cible
+# 2a. Parcours « démonstration » : contenu algérien complet + comptes
 mysql -u root -p sari_cms < backend/sql/seed.mysql.sql
+
+# 2b. Parcours « contenu réel » : comptes seuls, puis reprise des JSON
+mysql -u root -p sari_cms < backend/sql/auth-only.mysql.sql
+mysql -u root -p sari_cms < backend/sql/migrate-data.mysql.sql
 ```
+
+> Sans l'étape 2, `SELECT * FROM users` ne renvoie rien et aucune connexion
+> n'est possible : le schéma seul ne crée pas de compte.
 
 ### Via phpMyAdmin (cPanel / hébergement mutualisé)
 
@@ -82,11 +113,38 @@ FLUSH PRIVILEGES;
 
 ## 2. Brancher le backend sur MySQL
 
-Dans `backend/.env` :
+> ⚠️ **`backend/.env` n'existe pas après un clone** : il est ignoré par git, le
+> dépôt ne fournit que `backend/.env.example`. Et cet exemple propose
+> `DB_DRIVER=json` — recopié tel quel, l'API lit les fichiers de
+> `storage/json` et **ignore complètement votre base MySQL**, même remplie.
+> C'est la cause la plus fréquente d'un « la connexion ne marche pas »
+> alors que les comptes sont bien en base.
+
+### Génération assistée (recommandé)
+
+```bash
+# Base locale
+node backend/sql/setup-env.mjs --user root --password SECRET --database sari_cms
+
+# Hébergeur distant
+node backend/sql/setup-env.mjs \
+  --host 31.170.160.167 --user u830983108_sari_cms \
+  --password SECRET --database u830983108_sari_cms
+```
+
+Le script part de `.env.example`, bascule `DB_DRIVER` sur `mysql`, encode les
+identifiants dans l'URL (un mot de passe contenant `@` ou `:` casserait l'URL
+sinon) et remplace les deux secrets JWT — l'exemple contient
+`change-me-…`, refusé en production. Ajoutez `--force` pour écraser un `.env`
+existant (une sauvegarde `.env.bak` est conservée).
+
+### Ou manuellement, dans `backend/.env` :
 
 ```dotenv
 DB_DRIVER=mysql
 DATABASE_URL="mysql://sari:VOTRE_MOT_DE_PASSE_FORT@127.0.0.1:3306/sari_cms"
+JWT_ACCESS_SECRET=…48 octets aléatoires…
+JWT_REFRESH_SECRET=…48 octets aléatoires…
 ```
 
 Puis (une seule fois, pour générer le client Prisma) :
@@ -168,10 +226,44 @@ ChangeMe_Sari2026!
 | `contact@meditech.dz`      | —               | partner   |
 | `mohamed.saidi@gmail.com`  | —               | candidate |
 
+Ces comptes couvrent les **quatre types acceptés par l'API**
+(`admin | client | partner | candidate`, voir
+`src/modules/users/entities/user.entity.ts`). Le tableau de bord de la vitrine
+teste ce champ (`user.type === 'partner'`) : n'y mettez pas les libellés
+traduits des fichiers `data/` (« partenaire », « شريك »), qui ne servent qu'à
+l'affichage.
+
 Pour régénérer un hash (si vous changez le mot de passe) :
 
 ```bash
 node -e "console.log(require('bcryptjs').hashSync('NouveauMotDePasse', 10))"
+```
+
+Vérifier que les hachages en base correspondent bien aux mots de passe
+annoncés, et que le fichier se rejoue sans doublon :
+
+```bash
+node backend/sql/test-auth-sql.mjs
+```
+
+---
+
+## 3 bis. Dépannage : « impossible de se connecter »
+
+| Symptôme | Cause probable | Correction |
+| -------- | -------------- | ---------- |
+| `SELECT * FROM users` ne renvoie rien | Seul `schema.mysql.sql` a été importé — il ne crée aucun compte | Importer `auth-only.mysql.sql` (ou `seed.mysql.sql`) |
+| Les comptes sont en base mais la connexion échoue | `backend/.env` absent, ou resté sur `DB_DRIVER=json` : l'API lit `storage/json` au lieu de MySQL | `node backend/sql/setup-env.mjs …` |
+| `DB_DRIVER=mysql` mais l'API lit toujours les fichiers | Client Prisma non généré | `cd backend && npx prisma generate` |
+| `Account is not active` | Le compte existe avec `status = 'pending'` (cas de `mohamed.saidi@gmail.com`) | `UPDATE users SET status = 'active' WHERE email = '…';` |
+| `Invalid credentials` sur un compte existant | Mot de passe ou hachage incorrect | `node backend/sql/test-auth-sql.mjs` |
+
+Diagnostic rapide :
+
+```sql
+SELECT id, email, type, status, roleId FROM users;
+SELECT COUNT(*) FROM permissions;   -- attendu : 100
+SELECT COUNT(*) FROM role_permissions;  -- attendu : 237
 ```
 
 ---

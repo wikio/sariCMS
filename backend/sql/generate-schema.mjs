@@ -159,8 +159,20 @@ function parseModels() {
 
     const uniques = [...body.matchAll(/@@unique\(\[([^\]]+)\]\)/g)].map((u) => cols(u[1]));
     const indexes = [...body.matchAll(/@@index\(\[([^\]]+)\]\)/g)].map((i) => cols(i[1]));
+    // Clé primaire composite : `@@id([roleId, permissionId])`. Sans elle, la
+    // table de liaison n'avait aucune contrainte d'unicité et un réimport du
+    // seed dupliquait toutes les associations rôle ↔ permission.
+    const compoundId = body.match(/@@id\(\[([^\]]+)\]\)/);
 
-    models.push({ name, table, fields, relations, uniques, indexes });
+    models.push({
+      name,
+      table,
+      fields,
+      relations,
+      uniques,
+      indexes,
+      compoundId: compoundId ? cols(compoundId[1]) : null,
+    });
   }
   return models;
 }
@@ -178,7 +190,7 @@ function pad(list, key) {
 }
 
 function renderTable(model) {
-  const { table, fields, uniques, indexes, relations } = model;
+  const { table, fields, uniques, indexes, relations, compoundId } = model;
   const wName = pad(fields, 'name') + 2;
   const wType = pad(fields, 'type');
   const lines = [];
@@ -196,6 +208,9 @@ function renderTable(model) {
 
   const idField = fields.find((f) => f.isId);
   if (idField) lines.push(`  PRIMARY KEY (\`${idField.name}\`)`);
+  else if (compoundId) {
+    lines.push(`  PRIMARY KEY (${compoundId.map((c) => `\`${c}\``).join(', ')})`);
+  }
 
   for (const f of fields.filter((x) => x.unique && !x.isId)) {
     lines.push(`  UNIQUE KEY \`${table}_${f.name}_key\` (\`${f.name}\`)`);
