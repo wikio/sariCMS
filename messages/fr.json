@@ -89,7 +89,10 @@
       "attemptsLeft": "tentative(s) restante(s).",
       "accessBlocked": "Accès temporairement bloqué",
       "tryLater": "Réessayez dans quelques minutes.",
-      "phase1": "Mode Phase 1 - Authentification locale"
+      "phase1": "Mode Phase 1 - Authentification locale",
+      "emailPlaceholder": "vous@exemple.com",
+      "apiUnreachable": "L'API est injoignable. Vérifiez qu'elle est démarrée.",
+      "verifyTotp": "Vérifier le code"
     },
     "dataManager": {
       "title": "Titre",
@@ -398,7 +401,8 @@
       "experience": "Expérience",
       "motivation": "Motivation",
       "comment": "Commentaire",
-      "documents": "Documents"
+      "documents": "Documents",
+      "contact": "Contact"
     },
     "permissions": {
       "title": "Rôles & permissions",
@@ -765,7 +769,9 @@
       "check": "Chèque",
       "cashOnDelivery": "Paiement à la livraison",
       "fees": "Frais",
-      "clientInstructions": "Instructions client"
+      "clientInstructions": "Instructions client",
+      "name": "Nom",
+      "type": "Type"
     },
     "taxes": {
       "title": "Taxes",
@@ -776,14 +782,16 @@
       "added": "Ajoutée",
       "rate": "Taux",
       "zone": "Zone",
-      "target": "Cible"
+      "target": "Cible",
+      "name": "Nom"
     },
     "currencies": {
       "title": "Devises",
       "registeredCurrencies": "Devises enregistrées",
       "code": "Code",
       "symbol": "Symbole",
-      "rateToDZD": "Taux vers DZD"
+      "rateToDZD": "Taux vers DZD",
+      "name": "Nom"
     },
     "shopStats": {
       "title": "Pilotage boutique",
@@ -794,7 +802,8 @@
       "csvExport": "Export CSV",
       "byPaymentMethod": "Par mode de paiement",
       "finalized": "Finalisées",
-      "taxesCollected": "Taxes collectées"
+      "taxesCollected": "Taxes collectées",
+      "cancelled": "Annulées"
     },
     "stats": {
       "breadcrumb": "Pilotage",
@@ -849,7 +858,8 @@
       "twoFactorEnabled": "La connexion exige désormais un code TOTP à 6 chiffres.",
       "twoFactorDesc": "Activez la 2FA pour sécuriser votre compte avec une appli d'authentification.",
       "showProfile": "Afficher le profil",
-      "updateProfile": "Mettre à jour le profil"
+      "updateProfile": "Mettre à jour le profil",
+      "informations": "Informations"
     },
     "builder": {
       "title": "Éditeur de pages (GrapesJS)",
@@ -1401,7 +1411,11 @@
       "startDate": "Date de début",
       "endDate": "Date de fin",
       "publicationDate": "Date de publication",
-      "hintFullDesc": "Éditeur riche — section pleine largeur."
+      "hintFullDesc": "Éditeur riche — section pleine largeur.",
+      "auto": "Auto",
+      "groupCatalogue": "Catalogue",
+      "groupMédias": "Médias",
+      "groupTechnique": "Technique"
     },
     "drawer": {
       "dragToResize": "Glisser pour redimensionner · cliquer pour fermer",
@@ -1608,6 +1622,21 @@
       "legal": {
         "content": "Texte juridique"
       }
+    },
+    "imageUploader": {
+      "dropHere": "Déposez une image ici",
+      "orUrl": "ou collez une URL",
+      "formats": "JPG, PNG, WebP ou SVG — 5 Mo maximum",
+      "preview": "Aperçu",
+      "remove": "Retirer l'image",
+      "invalidType": "Format de fichier non pris en charge",
+      "tooLarge": "Fichier trop volumineux"
+    },
+    "configEditor": {
+      "title": "Éditeur de configuration",
+      "saveSuccess": "Configuration enregistrée",
+      "saveError": "Échec de l'enregistrement",
+      "exportSuccess": "Configuration exportée"
     }
   },
   "common": {
@@ -1988,7 +2017,16 @@
         "message": "Désolé, la page que vous recherchez n'existe pas ou a été déplacée.",
         "whatToDo": "Que souhaitez-vous faire ?",
         "backHome": "Retour à l'accueil",
-        "contactUs": "Nous contacter"
+        "contactUs": "Nous contacter",
+        "description": "La page que vous cherchez n'existe pas ou a été déplacée.",
+        "backToHome": "Retour à l'accueil",
+        "goBack": "Page précédente",
+        "suggestions": "Ces pages peuvent vous intéresser",
+        "browseProducts": "Parcourir le catalogue",
+        "ourServices": "Nos services",
+        "ourSolutions": "Nos solutions",
+        "needHelp": "Besoin d'aide ?",
+        "contactSupport": "Contacter le support"
       },
       "SearchHeader": {
         "title": "Que recherchez-vous ?",
@@ -2000,6 +2038,9 @@
         "tipOr": "= OU",
         "tipAnd": "= ET",
         "tipExample": "Ex: échographe, tensiomètre"
+      },
+      "FloatingApplicationsButton": {
+        "viewApplications": "Voir mes candidatures"
       }
     },
     "sections": {
@@ -2171,7 +2212,8 @@
       },
       "Pagination": {
         "previousPage": "Page précédente",
-        "nextPage": "Page suivante"
+        "nextPage": "Page suivante",
+        "pageInfo": "Page {current} sur {total}"
       },
       "ProductFilters": {},
       "SearchBar": {
@@ -2537,7 +2579,17 @@
       "messagesTitle": "Messages",
       "admin": "Admin",
       "you": "Vous",
-      "emptyThread": "Aucun message"
+      "emptyThread": "Aucun message",
+      "productsDesc": "Parcourez le catalogue et ajoutez des articles à votre panier.",
+      "addToCart": "Ajouter au panier",
+      "noProducts": "Aucun produit ne correspond à votre recherche",
+      "noMessagesYet": "Aucun message pour le moment",
+      "typeMessage": "Écrivez votre message…",
+      "sendMessage": "Envoyer",
+      "referrals": "Parrainages",
+      "revenue": "Chiffre d’affaires",
+      "back": "Retour",
+      "from": "De"
     },
     "eventDetail": {
       "notFound": "Événement non trouvé",
@@ -2678,7 +2730,8 @@
       "whyJoin3": "Formation continue",
       "whyJoin4": "Évolution de carrière",
       "applicationsClosed": "Les candidatures sont actuellement fermées.",
-      "startJourney": "Commencer le parcours"
+      "startJourney": "Commencer le parcours",
+      "applyDisabled": "Les candidatures sont closes pour cette offre."
     },
     "legal": {
       "pageNotFound": "Page non trouvée",
@@ -2752,7 +2805,16 @@
         "Gérez votre CV et documents",
         "Alertes pour les nouvelles offres",
         "Communication directe avec les RH"
-      ]
+      ],
+      "title": "Connexion",
+      "email": "Adresse e-mail",
+      "remember": "Se souvenir de moi",
+      "loginButton": "Se connecter",
+      "loggingIn": "Connexion en cours…",
+      "loginError": "Identifiants incorrects",
+      "captchaError": "Veuillez valider le captcha",
+      "createAccount": "Créer un compte",
+      "demoHint": "Compte de démonstration"
     },
     "news": {
       "noNewsTitle": "Aucune actualité pour le moment",
@@ -2846,7 +2908,9 @@
       "manualValidation": "Ce paiement sera validé manuellement par notre équipe",
       "paymentDone": "Paiement enregistré",
       "paymentPending": "Votre paiement est en attente de validation par notre équipe.",
-      "paymentValidated": "Votre paiement est validé. Merci !"
+      "paymentValidated": "Votre paiement est validé. Merci !",
+      "noMethod": "Aucun moyen de paiement disponible",
+      "fillPaypalEmail": "Renseignez votre e-mail PayPal"
     },
     "productDetail": {
       "noProductsLoaded": "Aucun produit chargé",
@@ -2982,7 +3046,11 @@
       "tipsTitle": "💡 Astuces de recherche :",
       "tipOr": "= Recherche OU (plusieurs termes)",
       "tipAnd": "= Recherche ET (tous les termes)",
-      "tipExample": "Exemple : \"échographe, tensiomètre\" OU \"lit + électrique\""
+      "tipExample": "Exemple : \"échographe, tensiomètre\" OU \"lit + électrique\"",
+      "home": "Accueil",
+      "loading": "Recherche en cours…",
+      "startSearching": "Lancez une recherche",
+      "startSearchingDesc": "Saisissez un mot-clé pour trouver un produit, un service ou une actualité."
     },
     "serviceDetail": {
       "notFound": "Service non trouvé",
@@ -3037,7 +3105,8 @@
       },
       "products": {
         "subtitle": "Notre sélection",
-        "title": "Nos Équipements"
+        "title": "Nos Équipements",
+        "viewAll": "Voir tous les produits"
       },
       "features": {
         "subtitle": "Nos avantages",
@@ -3981,7 +4050,65 @@
       "notes": "Notes supplémentaires",
       "submit": "Soumettre la demande",
       "cancel": "Annuler",
-      "back": "Retour"
+      "back": "Retour",
+      "subtitle": "Suivez vos demandes de devis et leur avancement.",
+      "noRequestsDesc": "Créez une demande pour recevoir une proposition chiffrée.",
+      "lines": "ligne(s)",
+      "nature": "Nature",
+      "natureOther": "Précisez la nature",
+      "duplicate": "Dupliquer",
+      "duplicatedFrom": "Dupliquée depuis",
+      "edit": "Modifier",
+      "note": "Note",
+      "notePlaceholder": "Précisions utiles au chiffrage (délais, contraintes, site…)",
+      "history": "Historique",
+      "stepProducts": "Produits",
+      "stepProductsDesc": "Choisissez dans le catalogue ou décrivez un article sur mesure.",
+      "stepDetails": "Détails",
+      "stepContact": "Contact",
+      "stepRecap": "Récapitulatif",
+      "next": "Suivant",
+      "previous": "Précédent",
+      "send": "Envoyer la demande",
+      "saveDraft": "Enregistrer le brouillon",
+      "savedAsDraft": "Brouillon enregistré",
+      "submitted": "Demande envoyée",
+      "catalog": "Catalogue",
+      "searchCatalog": "Rechercher un produit…",
+      "noResults": "Aucun produit trouvé",
+      "product": "Produit",
+      "special": "Article sur mesure",
+      "addSpecial": "Ajouter un article sur mesure",
+      "description": "Description",
+      "unit": "Unité",
+      "lineTotal": "Total ligne",
+      "subtotal": "Sous-total",
+      "taxes": "TVA",
+      "discount": "Remise",
+      "totalTtc": "Total TTC",
+      "email": "E-mail",
+      "phone": "Téléphone",
+      "address": "Adresse",
+      "country": "Pays",
+      "delivery": "Livraison",
+      "desiredDate": "Date souhaitée",
+      "attachFile": "Joindre un fichier",
+      "downloadFile": "Télécharger la pièce jointe",
+      "downloadPdf": "Télécharger le PDF",
+      "accept": "Accepter",
+      "refuse": "Refuser",
+      "requestRevision": "Demander une révision",
+      "revisionAsked": "Révision demandée",
+      "response": "Réponse",
+      "errNameRequired": "Le nom est obligatoire",
+      "errEmail": "Adresse e-mail invalide",
+      "errPhone": "Numéro de téléphone invalide",
+      "errNature": "Indiquez la nature de la demande",
+      "errNatureOther": "Précisez la nature",
+      "errNoLines": "Ajoutez au moins un article",
+      "errQty": "Quantité invalide",
+      "errLineLimit": "Nombre maximal d’articles atteint",
+      "errAttachment": "Pièce jointe refusée (format ou taille)"
     }
   }
 }

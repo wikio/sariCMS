@@ -89,7 +89,10 @@
       "attemptsLeft": "attempt(s) remaining.",
       "accessBlocked": "Access temporarily blocked",
       "tryLater": "Try again in a few minutes.",
-      "phase1": "Phase 1 Mode - Local Authentication"
+      "phase1": "Phase 1 Mode - Local Authentication",
+      "emailPlaceholder": "you@example.com",
+      "apiUnreachable": "The API is unreachable. Check that it is running.",
+      "verifyTotp": "Verify code"
     },
     "dataManager": {
       "title": "Title",
@@ -398,7 +401,8 @@
       "experience": "Experience",
       "motivation": "Motivation",
       "comment": "Comment",
-      "documents": "Documents"
+      "documents": "Documents",
+      "contact": "Contact"
     },
     "permissions": {
       "title": "Roles & permissions",
@@ -765,7 +769,9 @@
       "check": "Check",
       "cashOnDelivery": "Cash on delivery",
       "fees": "Fees",
-      "clientInstructions": "Client instructions"
+      "clientInstructions": "Client instructions",
+      "name": "Name",
+      "type": "Type"
     },
     "taxes": {
       "title": "Taxes",
@@ -776,14 +782,16 @@
       "added": "Added",
       "rate": "Rate",
       "zone": "Zone",
-      "target": "Target"
+      "target": "Target",
+      "name": "Name"
     },
     "currencies": {
       "title": "Currencies",
       "registeredCurrencies": "Registered currencies",
       "code": "Code",
       "symbol": "Symbol",
-      "rateToDZD": "Rate to DZD"
+      "rateToDZD": "Rate to DZD",
+      "name": "Name"
     },
     "shopStats": {
       "title": "Shop analytics",
@@ -794,7 +802,8 @@
       "csvExport": "CSV Export",
       "byPaymentMethod": "By payment method",
       "finalized": "Finalized",
-      "taxesCollected": "Taxes collected"
+      "taxesCollected": "Taxes collected",
+      "cancelled": "Cancelled"
     },
     "stats": {
       "breadcrumb": "Operations",
@@ -849,7 +858,8 @@
       "twoFactorEnabled": "Login now requires a 6-digit TOTP code.",
       "twoFactorDesc": "Enable 2FA to secure your account with an authenticator app.",
       "showProfile": "Show profile",
-      "updateProfile": "Update profile"
+      "updateProfile": "Update profile",
+      "informations": "Information"
     },
     "builder": {
       "title": "Page builder (GrapesJS)",
@@ -1402,7 +1412,10 @@
       "targetAudience": "Target audience",
       "startDate": "Start date",
       "endDate": "End date",
-      "publicationDate": "Publication date"
+      "publicationDate": "Publication date",
+      "cta": "CTA label",
+      "ctaLink": "CTA link",
+      "description": "Text"
     },
     "drawer": {
       "dragToResize": "Drag to resize · click to close",
@@ -1609,6 +1622,21 @@
       "legal": {
         "content": "Legal text"
       }
+    },
+    "imageUploader": {
+      "dropHere": "Drop an image here",
+      "orUrl": "or paste a URL",
+      "formats": "JPG, PNG, WebP or SVG — 5 MB max",
+      "preview": "Preview",
+      "remove": "Remove image",
+      "invalidType": "Unsupported file format",
+      "tooLarge": "File too large"
+    },
+    "configEditor": {
+      "title": "Configuration editor",
+      "saveSuccess": "Configuration saved",
+      "saveError": "Save failed",
+      "exportSuccess": "Configuration exported"
     }
   },
   "common": {
@@ -1989,7 +2017,16 @@
         "message": "Sorry, the page you are looking for does not exist or has been moved.",
         "whatToDo": "What would you like to do?",
         "backHome": "Back to Home",
-        "contactUs": "Contact Us"
+        "contactUs": "Contact Us",
+        "description": "The page you are looking for does not exist or has been moved.",
+        "backToHome": "Back to home",
+        "goBack": "Go back",
+        "suggestions": "You may be looking for",
+        "browseProducts": "Browse the catalogue",
+        "ourServices": "Our services",
+        "ourSolutions": "Our solutions",
+        "needHelp": "Need help?",
+        "contactSupport": "Contact support"
       },
       "SearchHeader": {
         "title": "What are you looking for?",
@@ -2001,6 +2038,9 @@
         "tipOr": "= OR",
         "tipAnd": "= AND",
         "tipExample": "Ex: ultrasound, blood pressure"
+      },
+      "FloatingApplicationsButton": {
+        "viewApplications": "View my applications"
       }
     },
     "sections": {
@@ -2172,7 +2212,8 @@
       },
       "Pagination": {
         "previousPage": "Previous page",
-        "nextPage": "Next page"
+        "nextPage": "Next page",
+        "pageInfo": "Page {current} of {total}"
       },
       "ProductFilters": {},
       "SearchBar": {
@@ -2538,7 +2579,17 @@
       "messagesTitle": "Messages",
       "admin": "Admin",
       "you": "You",
-      "emptyThread": "No messages"
+      "emptyThread": "No messages",
+      "productsDesc": "Browse the catalogue and add items to your cart.",
+      "addToCart": "Add to cart",
+      "noProducts": "No product matches your search",
+      "noMessagesYet": "No messages yet",
+      "typeMessage": "Type your message…",
+      "sendMessage": "Send",
+      "referrals": "Referrals",
+      "revenue": "Revenue",
+      "back": "Back",
+      "from": "From"
     },
     "eventDetail": {
       "notFound": "Event Not Found",
@@ -2679,7 +2730,8 @@
       "whyJoin3": "Continuous training",
       "whyJoin4": "Career development",
       "applicationsClosed": "Applications are currently closed.",
-      "startJourney": "Start the journey"
+      "startJourney": "Start the journey",
+      "applyDisabled": "Applications are closed for this position."
     },
     "legal": {
       "pageNotFound": "Page not found",
@@ -2753,7 +2805,16 @@
         "Manage your CV and documents",
         "Alerts for new job offers",
         "Direct communication with HR"
-      ]
+      ],
+      "title": "Sign in",
+      "email": "Email address",
+      "remember": "Remember me",
+      "loginButton": "Sign in",
+      "loggingIn": "Signing in…",
+      "loginError": "Incorrect credentials",
+      "captchaError": "Please complete the captcha",
+      "createAccount": "Create an account",
+      "demoHint": "Demo account"
     },
     "news": {
       "noNewsTitle": "No news at the moment",
@@ -2847,7 +2908,9 @@
       "manualValidation": "This payment will be manually validated by our team",
       "paymentDone": "Payment recorded",
       "paymentPending": "Your payment is pending validation by our team.",
-      "paymentValidated": "Your payment is validated. Thank you!"
+      "paymentValidated": "Your payment is validated. Thank you!",
+      "noMethod": "No payment method available",
+      "fillPaypalEmail": "Enter your PayPal email"
     },
     "productDetail": {
       "noProductsLoaded": "No products loaded",
@@ -2983,7 +3046,11 @@
       "tipsTitle": "💡 Search tips:",
       "tipOr": "= OR search (multiple terms)",
       "tipAnd": "= AND search (all terms)",
-      "tipExample": "Example: \"ultrasound, blood pressure\" OR \"bed + electric\""
+      "tipExample": "Example: \"ultrasound, blood pressure\" OR \"bed + electric\"",
+      "home": "Home",
+      "loading": "Searching…",
+      "startSearching": "Start searching",
+      "startSearchingDesc": "Enter a keyword to find a product, a service or a news item."
     },
     "serviceDetail": {
       "notFound": "Service Not Found",
@@ -3038,7 +3105,8 @@
       },
       "products": {
         "subtitle": "Our selection",
-        "title": "Our Equipment"
+        "title": "Our Equipment",
+        "viewAll": "View all products"
       },
       "features": {
         "subtitle": "Our advantages",
@@ -3101,6 +3169,10 @@
             {
               "q": "Are blood pressure monitors medically certified?",
               "a": "Yes, all our monitors are Class IIa medical devices, CE certified with ESH protocol validation."
+            },
+            {
+              "q": "Do you provide training on how to use the equipment?",
+              "a": "Yes, a basic training session is included with every purchase. Advanced training is available as an option."
             }
           ]
         },
@@ -3128,6 +3200,14 @@
             {
               "icon": "clock",
               "text": "24/48/72h ECG Holters"
+            },
+            {
+              "icon": "shield-check",
+              "text": "Medical CE compliance"
+            },
+            {
+              "icon": "headphones",
+              "text": "24/7 technical support"
             }
           ],
           "faq": [
@@ -3163,12 +3243,24 @@
             {
               "icon": "monitor",
               "text": "PACS/RIS solutions"
+            },
+            {
+              "icon": "shield-check",
+              "text": "HDS compliance"
+            },
+            {
+              "icon": "wrench",
+              "text": "Preventive maintenance"
             }
           ],
           "faq": [
             {
               "q": "Do you offer CT scanners?",
               "a": "Yes, from entry-level 16-slice to high-end 128-slice, with installation and training included."
+            },
+            {
+              "q": "Are the MRI scanners suitable for all patients?",
+              "a": "Yes, our MRI scanners suit every patient profile, including children and people with claustrophobia (open MRI available)."
             }
           ]
         },
@@ -3197,12 +3289,24 @@
             {
               "icon": "bed",
               "text": "Electric operating tables"
+            },
+            {
+              "icon": "shield-check",
+              "text": "Certified sterilisation"
+            },
+            {
+              "icon": "wrench",
+              "text": "Maintenance and after-sales service"
             }
           ],
           "faq": [
             {
               "q": "Are your autoclaves class B?",
               "a": "Yes, all compliant with EN 13060 standards with vacuum drying cycle."
+            },
+            {
+              "q": "Are the surgical lights LED?",
+              "a": "Yes, all our surgical lights are LED with a 50,000-hour lifespan, a CRI above 95 and intensity up to 150,000 lux."
             }
           ]
         },
@@ -3230,12 +3334,24 @@
             {
               "icon": "heart-pulse",
               "text": "Neonatal monitors"
+            },
+            {
+              "icon": "heart-pulse",
+              "text": "Neonatal monitors"
+            },
+            {
+              "icon": "shield-check",
+              "text": "Child-friendly equipment"
             }
           ],
           "faq": [
             {
               "q": "Are incubators suitable for premature babies?",
               "a": "Yes, from 28 weeks of gestation with precise temperature, humidity and oxygen control."
+            },
+            {
+              "q": "How accurate are the scales?",
+              "a": "Our paediatric scales are accurate to 5 g, with a hold function for restless babies and a tare function for nappies."
             }
           ]
         },
@@ -3264,12 +3380,24 @@
             {
               "icon": "clock",
               "text": "24/7 guaranteed support"
+            },
+            {
+              "icon": "syringe",
+              "text": "Syringe pumps"
+            },
+            {
+              "icon": "clock",
+              "text": "Guaranteed 24/7 support"
             }
           ],
           "faq": [
             {
               "q": "Are defibrillators automatic?",
               "a": "Yes, we offer semi-automatic and fully automatic AEDs with voice guidance."
+            },
+            {
+              "q": "Do the emergency trolleys come fully equipped?",
+              "a": "Yes, our trolleys ship with everything required: defibrillator, monitor, suction unit, oxygen and emergency drugs."
             }
           ]
         },
@@ -3295,12 +3423,24 @@
             {
               "icon": "lock",
               "text": "HDS cybersecurity"
+            },
+            {
+              "icon": "database",
+              "text": "Health data hosting"
+            },
+            {
+              "icon": "smartphone",
+              "text": "Mobile applications"
             }
           ],
           "faq": [
             {
               "q": "Are your EMR solutions HDS compliant?",
               "a": "Yes, all HDS certified and GDPR compliant."
+            },
+            {
+              "q": "Do you offer telemedicine solutions?",
+              "a": "Yes, we provide complete teleconsultation, tele-expertise and remote monitoring solutions with secure HD video conferencing."
             }
           ]
         },
@@ -3326,12 +3466,24 @@
             {
               "icon": "rotate-3d",
               "text": "Centrifuges"
+            },
+            {
+              "icon": "thermometer",
+              "text": "Ovens and incubators"
+            },
+            {
+              "icon": "droplets",
+              "text": "Reagents and consumables"
             }
           ],
           "faq": [
             {
               "q": "What types of analyzers do you offer?",
               "a": "Hematology, biochemistry, immunology and coagulation analyzers."
+            },
+            {
+              "q": "Are reagents included?",
+              "a": "Starter reagents are included with every analyser. We then offer supply contracts at preferential rates."
             }
           ]
         },
@@ -3359,12 +3511,24 @@
             {
               "icon": "dumbbell",
               "text": "Exercise equipment"
+            },
+            {
+              "icon": "footprints",
+              "text": "Gait training platforms"
+            },
+            {
+              "icon": "shield-check",
+              "text": "CE-certified equipment"
             }
           ],
           "faq": [
             {
               "q": "Do you offer neurological rehabilitation equipment?",
               "a": "Yes, including virtual reality systems and exoskeletons."
+            },
+            {
+              "q": "Are the electrotherapy units multifunctional?",
+              "a": "Yes, our units combine TENS, EMS, ultrasound and therapeutic laser in a single compact device."
             }
           ]
         }
@@ -3886,7 +4050,65 @@
       "notes": "Additional notes",
       "submit": "Submit request",
       "cancel": "Cancel",
-      "back": "Back"
+      "back": "Back",
+      "subtitle": "Track your quote requests and their progress.",
+      "noRequestsDesc": "Create a request to receive a priced proposal.",
+      "lines": "line(s)",
+      "nature": "Nature",
+      "natureOther": "Specify the nature",
+      "duplicate": "Duplicate",
+      "duplicatedFrom": "Duplicated from",
+      "edit": "Edit",
+      "note": "Note",
+      "notePlaceholder": "Details useful for pricing (deadlines, constraints, site…)",
+      "history": "History",
+      "stepProducts": "Products",
+      "stepProductsDesc": "Pick from the catalogue or describe a custom item.",
+      "stepDetails": "Details",
+      "stepContact": "Contact",
+      "stepRecap": "Summary",
+      "next": "Next",
+      "previous": "Previous",
+      "send": "Send request",
+      "saveDraft": "Save draft",
+      "savedAsDraft": "Draft saved",
+      "submitted": "Request sent",
+      "catalog": "Catalogue",
+      "searchCatalog": "Search for a product…",
+      "noResults": "No product found",
+      "product": "Product",
+      "special": "Custom item",
+      "addSpecial": "Add a custom item",
+      "description": "Description",
+      "unit": "Unit",
+      "lineTotal": "Line total",
+      "subtotal": "Subtotal",
+      "taxes": "VAT",
+      "discount": "Discount",
+      "totalTtc": "Total incl. VAT",
+      "email": "Email",
+      "phone": "Phone",
+      "address": "Address",
+      "country": "Country",
+      "delivery": "Delivery",
+      "desiredDate": "Desired date",
+      "attachFile": "Attach a file",
+      "downloadFile": "Download attachment",
+      "downloadPdf": "Download PDF",
+      "accept": "Accept",
+      "refuse": "Decline",
+      "requestRevision": "Request a revision",
+      "revisionAsked": "Revision requested",
+      "response": "Response",
+      "errNameRequired": "Name is required",
+      "errEmail": "Invalid email address",
+      "errPhone": "Invalid phone number",
+      "errNature": "Specify the nature of the request",
+      "errNatureOther": "Please specify the nature",
+      "errNoLines": "Add at least one item",
+      "errQty": "Invalid quantity",
+      "errLineLimit": "Maximum number of items reached",
+      "errAttachment": "Attachment rejected (format or size)"
     }
   }
 }
