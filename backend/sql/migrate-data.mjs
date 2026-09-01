@@ -144,6 +144,50 @@ function sqlValue(v) {
   return quote(String(v));
 }
 
+/**
+ * Colonnes de type JSON, relevées dans `prisma/schema.prisma`.
+ *
+ * MySQL valide le contenu d'une colonne JSON : une chaîne nue comme
+ * `https://…` n'est pas un document JSON et déclenche l'erreur 4025
+ * (« CONSTRAINT `pages.media` failed »). Or certains champs sont
+ * volontairement polymorphes — `media` vaut une chaîne pour une page simple
+ * et un tableau pour une galerie, et la vitrine gère les deux formes. On ne
+ * peut donc pas « corriger » la donnée : c'est l'écriture SQL qui doit
+ * encoder toute valeur en JSON, scalaires compris (`"https://…"`).
+ *
+ * La liste est dérivée du schéma plutôt qu'écrite en dur : ajouter une
+ * colonne JSON dans Prisma la couvre automatiquement.
+ */
+function jsonColumnsFromPrisma() {
+  const schemaPath = resolve(HERE, '../prisma/schema.prisma');
+  const source = readFileSync(schemaPath, 'utf8');
+  const map = new Map();
+  for (const model of source.matchAll(/^model\s+(\w+)\s*\{([\s\S]*?)^\}/gm)) {
+    const [, name, body] = model;
+    const table = (body.match(/@@map\("([^"]+)"\)/) || [, name])[1];
+    const columns = new Set();
+    for (const line of body.split('\n')) {
+      const m = line.trim().match(/^(\w+)\s+Json\b/);
+      if (m) columns.add(m[1]);
+    }
+    if (columns.size) map.set(table, columns);
+  }
+  return map;
+}
+
+const JSON_COLUMNS = jsonColumnsFromPrisma();
+
+/** Valeur destinée à une colonne JSON : toujours un document JSON valide. */
+function sqlJson(v) {
+  if (v === null || v === undefined || v === '') return 'NULL';
+  return quote(JSON.stringify(v));
+}
+
+/** Aiguille vers l'encodage JSON quand la colonne l'exige. */
+function cellValue(table, column, v) {
+  return JSON_COLUMNS.get(table)?.has(column) ? sqlJson(v) : sqlValue(v);
+}
+
 /** Chaîne littérale MySQL, antislashs et guillemets neutralisés. */
 function quote(text) {
   return `'${String(text)
@@ -501,7 +545,7 @@ function renderTable(table) {
 
   const cols = table.columns.map((c) => `\`${c}\``).join(', ');
   const lines = table.rows.map(
-    (row) => `  (${table.columns.map((c) => sqlValue(row[c])).join(', ')})`,
+    (row) => `  (${table.columns.map((c) => cellValue(table.name, c, row[c])).join(', ')})`,
   );
 
   // Réécriture des colonnes en cas de reprise : l'import reste rejouable.
@@ -524,6 +568,40 @@ const truncateBlock = TRUNCATE
       .map((t) => `TRUNCATE TABLE \`${t.name}\`;`)
       .join('\n')}\n\n`
   : '';
+
+/**
+ * Garde-fou : toute valeur destinée à une colonne JSON doit être un document
+ * JSON valide. MySQL le vérifie et refuse l'insertion sinon (erreur 4025
+ * « CONSTRAINT `pages.media` failed »), alors que la syntaxe SQL, elle, reste
+ * correcte — une validation purement syntaxique laisse donc passer le défaut
+ * jusqu'à l'import, chez le client.
+ */
+function assertJsonColumns() {
+  const problems = [];
+  for (const table of tables) {
+    const jsonCols = JSON_COLUMNS.get(table.name);
+    if (!jsonCols) continue;
+    for (const row of table.rows) {
+      for (const column of table.columns) {
+        if (!jsonCols.has(column)) continue;
+        const raw = row[column];
+        if (raw === null || raw === undefined || raw === '') continue;
+        try {
+          JSON.parse(sqlJson(raw).slice(1, -1).replace(/''/g, "'"));
+        } catch {
+          problems.push(`${table.name}.${column} (id ${row.id})`);
+        }
+      }
+    }
+  }
+  if (problems.length) {
+    console.error(`❌ ${problems.length} valeur(s) invalide(s) pour une colonne JSON :`);
+    for (const p of problems.slice(0, 10)) console.error(`   ${p}`);
+    process.exit(1);
+  }
+}
+
+assertJsonColumns();
 
 const total = tables.reduce((n, t) => n + t.rows.length, 0);
 
