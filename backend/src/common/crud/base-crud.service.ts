@@ -66,7 +66,7 @@ export abstract class BaseCrudService<T extends BaseEntity> {
     await this.assertUniques(dto);
     const now = new Date();
     const payload = {
-      ...this.beforeSave(dto, 'create'),
+      ...this.withLegacyId(this.beforeSave(dto, 'create')),
       createdAt: now,
       updatedAt: now,
       deletedAt: null,
@@ -200,6 +200,87 @@ export abstract class BaseCrudService<T extends BaseEntity> {
     return this.findAll({ ...query, onlyDeleted: true, includeDeleted: true });
   }
 
+  /**
+   * Retrouve une fiche publiée par son id, son slug, ou le segment `id-slug`
+   * utilisé dans les URLs de la vitrine (`/fr/news/1-nouvelle-gamme`).
+   *
+   * Le slug complet est essayé en premier : il est le plus spécifique, et un
+   * slug commençant par des chiffres resterait sinon inaccessible.
+   */
+  async findPublishedEntity(idOrSlug: string, locale?: string): Promise<T | null> {
+    const key = decodeURIComponent(String(idOrSlug || '')).trim();
+    if (!key) return null;
+
+    const bySlug = await this.repository.findOne(
+      locale ? { slug: key, locale } : { slug: key },
+    );
+    if (bySlug) return bySlug;
+
+    // Segment `12-mon-slug` : l'id préfixe, le slug suit (cf. lib/entity-url).
+    const head = key.split('-')[0];
+    const numeric = /^\d+$/.test(key) ? key : /^\d+$/.test(head) ? head : '';
+    if (numeric) {
+      const byId = await this.repository.findById(Number(numeric));
+      // L'id seul ignore la langue demandée : c'est voulu, il sert de porte
+      // d'entrée quand le slug traduit est inconnu de l'appelant.
+      if (byId) return byId;
+    }
+
+    // Dernier recours : la partie slug du segment (URL dont l'id a changé).
+    if (numeric && key.length > numeric.length + 1) {
+      const tail = key.slice(numeric.length + 1);
+      const byTail = await this.repository.findOne(
+        locale ? { slug: tail, locale } : { slug: tail },
+      );
+      if (byTail) return byTail;
+    }
+    return null;
+  }
+
+  /**
+   * Fiche publiée exposée à la vitrine, ou `null` si elle n'est pas visible.
+   *
+   * Accepte l'id, le slug ou le segment `id-slug` des URLs publiques.
+   */
+  async findPublished(idOrSlug: string, locale?: string): Promise<unknown | null> {
+    const entity = await this.findPublishedEntity(idOrSlug, locale);
+    if (!entity || entity.status !== 'published') return null;
+    if (locale && entity.locale && entity.locale !== locale) return null;
+    return this.toView(entity, 'block');
+  }
+
+  /**
+   * Versions linguistiques d'une fiche, reliées par `legacyId`.
+   *
+   * C'est ce qui permet au sélecteur de langue de la vitrine de rediriger vers
+   * la bonne fiche : `/fr/news/1-slug-fr` → `/ar/news/3-slug-ar`. Sans cela, on
+   * garderait l'id de la langue d'origine, qui désigne une autre fiche (ou
+   * rien) dans la langue cible.
+   *
+   * Une fiche sans `legacyId` n'a pas de groupe de traductions : elle se
+   * renvoie elle-même, ce qui laisse l'appelant retomber sur son repli.
+   */
+  async findTranslations(idOrSlug: string): Promise<unknown[]> {
+    const source = await this.findPublishedEntity(idOrSlug);
+    if (!source) return [];
+
+    const legacyId = source.legacyId != null ? String(source.legacyId) : '';
+    if (!legacyId) return [this.toView(source, 'block')];
+
+    const { data } = await this.repository.findMany({
+      filters: [
+        { field: 'legacyId', op: 'eq', value: legacyId },
+        { field: 'status', op: 'eq', value: 'published' },
+      ],
+      limit: 20,
+    });
+
+    // La fiche source peut être un brouillon : on la garde pour que l'appelant
+    // dispose toujours d'au moins un résultat.
+    const rows = data.length ? data : [source];
+    return rows.map((row) => this.toView(row, 'block'));
+  }
+
   protected toView(entity: T, view: ViewMode): unknown {
     const clone = this.sanitize(entity);
     if (view === 'block') return clone;
@@ -225,6 +306,24 @@ export abstract class BaseCrudService<T extends BaseEntity> {
 
   protected beforeSave(dto: Partial<T>, _op: 'create' | 'update', _existing?: T): Partial<T> {
     return { ...dto };
+  }
+
+  /**
+   * Garantit un `legacyId` à la création : c'est la clé qui relie les versions
+   * FR / EN / AR d'une même fiche.
+   *
+   * Fournir explicitement le `legacyId` d'une fiche existante crée sa
+   * traduction ; sinon un nouveau groupe démarre. Les modules qui gèrent déjà
+   * leur `legacyId` dans `beforeSave` ne sont pas affectés, la valeur présente
+   * étant conservée.
+   */
+  protected withLegacyId(dto: Partial<T>): Partial<T> {
+    if (dto.legacyId) return dto;
+    const prefix = this.options.resource.slice(0, 4).replace(/[^a-z0-9]/gi, '') || 'ent';
+    return {
+      ...dto,
+      legacyId: `${prefix}-${Date.now().toString(36)}-${randomUUID().slice(0, 6)}`,
+    };
   }
 
   protected safeAuditPayload(data: unknown): Record<string, unknown> | undefined {

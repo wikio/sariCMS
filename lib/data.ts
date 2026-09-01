@@ -607,6 +607,74 @@ export async function getSolutionTranslations(
   return out;
 }
 
+/**
+ * Versions linguistiques d'une fiche, quel que soit le module.
+ *
+ * Interroge `/public/{resource}/{key}/translations`, qui relie les fiches par
+ * `legacyId`. Le résultat est indexé par langue, sous une forme minimale
+ * (`id` / `slug` / `legacyId` / `locale`) suffisante pour reconstruire l'URL —
+ * inutile de connaître la forme complète de chaque module.
+ *
+ * Renvoie un objet vide si l'API est indisponible : l'appelant retombe alors
+ * sur ses propres données locales.
+ */
+export async function getEntityTranslations(
+  resource: string,
+  key: string,
+): Promise<Record<string, { id: string; slug?: string; legacyId?: string; locale?: string }>> {
+  const rows = await cmsPublicTranslations<Record<string, unknown>>(resource, key);
+  const out: Record<string, { id: string; slug?: string; legacyId?: string; locale?: string }> = {};
+  for (const row of rows) {
+    const locale = row.locale ? String(row.locale) : '';
+    if (!locale) continue;
+    out[locale] = {
+      id: String(asPublicId(row)),
+      slug: row.slug ? String(row.slug) : undefined,
+      legacyId: row.legacyId ? String(row.legacyId) : undefined,
+      locale,
+    };
+  }
+  return out;
+}
+
+/**
+ * Liste d'un module dans une langue donnée, sous forme d'entités routables.
+ *
+ * Sert de repli au sélecteur de langue quand l'endpoint `/translations` est
+ * indisponible : on compare alors les listes des deux langues (legacyId, puis
+ * id). Une seule fonction évite d'aiguiller vers `getNews`, `getEvents`, etc.
+ */
+export async function getRoutableList(
+  resource: string,
+  locale: string,
+): Promise<Array<{ id: string; slug?: string; legacyId?: string; locale?: string; title?: string; name?: string }>> {
+  const loaders: Record<string, (l: string) => Promise<unknown[]>> = {
+    news: getNews,
+    events: getEvents,
+    services: getServices,
+    products: getProducts,
+    careers: getCareers,
+    partners: getPartners,
+    solutions: getSolutionCategories,
+    pages: getGenericContent,
+  };
+  const loader = loaders[resource];
+  if (!loader) return [];
+  try {
+    const rows = (await loader(locale)) as Array<Record<string, unknown>>;
+    return rows.map((row) => ({
+      id: String(row.id ?? ''),
+      slug: row.slug ? String(row.slug) : undefined,
+      legacyId: row.legacyId ? String(row.legacyId) : undefined,
+      locale: row.locale ? String(row.locale) : undefined,
+      title: row.title ? String(row.title) : undefined,
+      name: row.name ? String(row.name) : undefined,
+    }));
+  } catch {
+    return [];
+  }
+}
+
 export function clearCache(): void {
   dataCache.clear();
 }

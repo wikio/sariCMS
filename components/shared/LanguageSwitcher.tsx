@@ -7,7 +7,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { Globe, Check, ChevronDown } from 'lucide-react';
 import { translateSlug } from '@/lib/fiche-i18n';
 import { entityRouteKey, findByRouteKey, matchTranslation, routeId } from '@/lib/entity-url';
-import { getSolutionCategories, getSolutionTranslations } from '@/lib/data';
+import { getEntityTranslations, getRoutableList } from '@/lib/data';
 
 /**
  * Ressources dont le segment d'URL est un couple `id-slug` traduisible.
@@ -23,9 +23,10 @@ const TRANSLATABLE_RESOURCES: Record<string, string> = {
   jobs: 'careers',
   careers: 'careers',
   partners: 'partners',
-  pages: 'pages',
-  legal: 'pages',
   content: 'pages',
+  // `legal` est volontairement absent : /legal/{type} porte un type fixe
+  // (mentions-legales, cgv…) identique dans toutes les langues, pas un id de
+  // fiche. Le traduire produirait une URL inexistante.
 };
 
 export default function LanguageSwitcher() {
@@ -59,8 +60,13 @@ export default function LanguageSwitcher() {
 
   /**
    * Traduit le segment `id-slug` d'une fiche vers la langue cible.
+   *
+   * Le point essentiel : chaque langue possède sa propre fiche, avec son propre
+   * id. Conserver l'id d'origine mènerait à une fiche différente (ou à une 404)
+   * dans la langue cible — c'est le défaut que cette fonction corrige.
+   *
    * 1. Endpoint `/translations` : fiches sœurs reliées par `legacyId` (CMS).
-   * 2. Données de la langue cible (rapprochement legacyId puis id).
+   * 2. Comparaison des listes des deux langues (legacyId, puis id).
    * 3. À défaut, traduction du slug stockée dans la fiche i18n.
    * 4. En dernier recours on garde l'ID : la page sait toujours le résoudre.
    */
@@ -71,38 +77,39 @@ export default function LanguageSwitcher() {
   ): Promise<string> => {
     const id = routeId(segment);
 
-    if (resource === 'solutions') {
-      // 1) Source de vérité : les versions linguistiques déclarées par l'API
-      try {
-        const byLocale = await getSolutionTranslations(segment);
-        const sibling = byLocale[targetLocale];
-        if (sibling) return entityRouteKey(sibling);
-      } catch {
-        /* endpoint absent ou hors ligne → on continue */
-      }
-
-      // 2) Repli : comparaison des listes des deux langues
-      try {
-        const [current, target] = await Promise.all([
-          getSolutionCategories(locale),
-          getSolutionCategories(targetLocale),
-        ]);
-        const source = findByRouteKey(current, segment);
-        const match = matchTranslation(source, target)
-          || target.find((item) => String(item.id) === id);
-        if (match) return entityRouteKey(match);
-      } catch {
-        /* API indisponible → on passe au plan B */
-      }
+    // 1) Source de vérité : les versions linguistiques déclarées par l'API.
+    try {
+      const byLocale = await getEntityTranslations(resource, segment);
+      const sibling = byLocale[targetLocale];
+      if (sibling) return entityRouteKey(sibling);
+    } catch {
+      /* endpoint absent ou hors ligne → on continue */
     }
 
-    // 2) Slug traduit enregistré dans la fiche i18n
+    // 2) Repli : rapprochement des listes des deux langues.
+    try {
+      const [current, target] = await Promise.all([
+        getRoutableList(resource, locale),
+        getRoutableList(resource, targetLocale),
+      ]);
+      if (target.length) {
+        const source = findByRouteKey(current, segment);
+        const match =
+          matchTranslation(source, target) ||
+          target.find((item) => String(item.id) === id);
+        if (match) return entityRouteKey(match);
+      }
+    } catch {
+      /* API indisponible → on passe au plan B */
+    }
+
+    // 3) Slug traduit enregistré dans la fiche i18n
     const translated = translateSlug(resource, segment, locale, targetLocale, id);
     if (translated && translated !== segment) {
       return /^\d+$/.test(id) ? `${id}-${translated}` : translated;
     }
 
-    // 3) Fallback : ID seul (toujours résoluble), sinon segment inchangé
+    // 4) Fallback : ID seul (toujours résoluble), sinon segment inchangé
     return /^\d+$/.test(id) ? id : segment;
   };
 

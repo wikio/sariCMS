@@ -42,40 +42,4 @@ export class SolutionsService extends BaseCrudService<SolutionEntity> {
     return out;
   }
 
-  /**
-   * Renvoie les versions traduites d'une solution (même `legacyId`),
-   * indexées par langue. Utilisé par le sélecteur de langue de la vitrine
-   * pour construire l'URL équivalente : `fr/solutions/1-slug-fr`
-   * → `ar/solutions/12-slug-ar`.
-   */
-  async findTranslations(idOrSlug: string) {
-    const numericId = Number(idOrSlug);
-    const source =
-      (Number.isFinite(numericId) && /^\d+$/.test(String(idOrSlug))
-        ? await this.repository.findById(numericId)
-        : null) ?? (await this.repository.findOne({ slug: idOrSlug }));
-    if (!source) return [];
-
-    const legacyId = source.legacyId ? String(source.legacyId) : '';
-    if (!legacyId) return [this.toView(source, 'block')];
-
-    const { data } = await this.repository.findMany({
-      filters: [
-        { field: 'legacyId', op: 'eq', value: legacyId },
-        { field: 'status', op: 'eq', value: 'published' },
-      ],
-      limit: 20,
-    });
-
-    return data.map((row) => this.toView(row, 'block'));
-  }
-
-  async findPublished(idOrSlug: string, locale?: string) {
-    const bySlug = await this.repository.findOne(locale ? { slug: idOrSlug, locale } : { slug: idOrSlug });
-    const numericId = Number(idOrSlug);
-    const entity = bySlug ?? (Number.isFinite(numericId) && /^\d+$/.test(String(idOrSlug)) ? await this.repository.findById(numericId) : null);
-    if (!entity || entity.status !== 'published') return null;
-    if (locale && entity.locale && entity.locale !== locale) return null;
-    return this.toView(entity, 'block');
-  }
 }
