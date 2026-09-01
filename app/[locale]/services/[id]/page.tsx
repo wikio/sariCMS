@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { Check, Send, AlertCircle } from 'lucide-react';
 import { getServices } from '@/lib/data';
-import { matchesEntity } from '@/lib/ids';
+import { entityRouteKey, findByRouteKey, routeId } from '@/lib/entity-url';
 import type { Service } from '@/types';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import CTAButton from '@/components/ui/CTAButton';
@@ -26,7 +26,21 @@ export default function ServiceDetailPage() {
   useEffect(() => {
     const loadService = async () => {
       const services = await getServices(locale);
-      const found = services.find((s) => matchesEntity(s, id));
+      // Même résolveur que les solutions : id, slug complet, partie slug, puis
+      // legacyId. `matchesEntity` ignorait le legacyId, donc une URL portant
+      // l'id d'une autre langue ne trouvait rien.
+      const found = findByRouteKey(services, id);
+      console.info(
+        `[services/detail] segment « ${id} » en ${locale}` +
+          `\n  id extrait : ${routeId(id)} — ${services.length} fiches chargées` +
+          `\n  fiches : ${services
+            .map((s) => `${s.id}${s.legacyId ? `(legacy ${s.legacyId})` : ''}`)
+            .join(', ')}` +
+          (found
+            ? `\n  ✅ trouvée : id=${found.id} legacyId=${found.legacyId ?? '(aucun)'}` +
+              ` — URL canonique « ${entityRouteKey(found)} »`
+            : `\n  ❌ AUCUNE fiche ne correspond → écran « service introuvable ».`),
+      );
       setService(found || null);
     };
     loadService();

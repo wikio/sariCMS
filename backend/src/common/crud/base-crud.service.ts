@@ -281,6 +281,19 @@ export abstract class BaseCrudService<T extends BaseEntity> {
     return rows.map((row) => this.toView(row, 'block'));
   }
 
+  /**
+   * Champs toujours exposés, quelle que soit la vue.
+   *
+   * `legacyId` relie les versions linguistiques d'une même fiche et `locale`
+   * indique laquelle on tient. Les vues « list » / « card » les filtraient :
+   * la vitrine recevait donc des listes sans legacyId, et le sélecteur de
+   * langue ne pouvait plus rapprocher la fiche FR de son équivalent AR/EN —
+   * il retombait sur l'id courant, qui désigne une autre fiche dans la langue
+   * cible. Ces deux clés sont de la plomberie de routage, jamais des données
+   * sensibles : on les conserve systématiquement.
+   */
+  private static readonly ROUTING_FIELDS = ['id', 'legacyId', 'locale', 'slug'];
+
   protected toView(entity: T, view: ViewMode): unknown {
     const clone = this.sanitize(entity);
     if (view === 'block') return clone;
@@ -290,8 +303,8 @@ export abstract class BaseCrudService<T extends BaseEntity> {
         : this.options.listFields;
     if (!fields?.length) return clone;
     const picked: Record<string, unknown> = {};
-    for (const field of fields) {
-      if (field in clone) picked[field] = clone[field];
+    for (const field of [...BaseCrudService.ROUTING_FIELDS, ...fields]) {
+      if (field in clone && !(field in picked)) picked[field] = clone[field];
     }
     return picked;
   }

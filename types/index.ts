@@ -138,6 +138,10 @@ export interface Career {
 
 export interface Service {
   id: number | string;
+  /** Langue de la fiche (fr, en, ar) */
+  locale?: string;
+  /** Identifiant partagé par toutes les versions linguistiques d'un même service */
+  legacyId?: string;
   slug?: string;
   title: string;
   icon: string;

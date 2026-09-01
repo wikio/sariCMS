@@ -76,14 +76,27 @@ export default function LanguageSwitcher() {
     targetLocale: string,
   ): Promise<string> => {
     const id = routeId(segment);
+    const tag = `[i18n-switch] ${resource} « ${segment} » ${locale} → ${targetLocale}`;
 
     // 1) Source de vérité : les versions linguistiques déclarées par l'API.
     try {
       const byLocale = await getEntityTranslations(resource, segment);
+      const langs = Object.keys(byLocale);
       const sibling = byLocale[targetLocale];
-      if (sibling) return entityRouteKey(sibling);
-    } catch {
-      /* endpoint absent ou hors ligne → on continue */
+      if (sibling) {
+        const out = entityRouteKey(sibling);
+        console.info(
+          `${tag}\n  ✅ étape 1 — endpoint /translations : langues ${JSON.stringify(langs)}` +
+            `\n     id ${id} → ${sibling.id}, segment « ${out} »`,
+        );
+        return out;
+      }
+      console.warn(
+        `${tag}\n  ⚠️ étape 1 — /translations ne connaît pas « ${targetLocale} »` +
+          ` (langues trouvées : ${langs.length ? JSON.stringify(langs) : 'aucune'})`,
+      );
+    } catch (err) {
+      console.warn(`${tag}\n  ⚠️ étape 1 — endpoint injoignable :`, err);
     }
 
     // 2) Repli : rapprochement des listes des deux langues.
@@ -97,20 +110,44 @@ export default function LanguageSwitcher() {
         const match =
           matchTranslation(source, target) ||
           target.find((item) => String(item.id) === id);
-        if (match) return entityRouteKey(match);
+        if (match) {
+          const out = entityRouteKey(match);
+          const how = source?.legacyId && match.legacyId === source.legacyId ? 'legacyId' : 'id';
+          console.info(
+            `${tag}\n  ✅ étape 2 — rapprochement des listes par ${how}` +
+              ` (${current.length} ${locale} / ${target.length} ${targetLocale})` +
+              `\n     id ${id} → ${match.id}, segment « ${out} »`,
+          );
+          return out;
+        }
+        console.warn(
+          `${tag}\n  ⚠️ étape 2 — aucune correspondance dans les ${target.length} fiches ${targetLocale}.` +
+            `\n     Fiche source : ${source ? `id=${source.id} legacyId=${source.legacyId ?? '(aucun)'}` : 'introuvable'}` +
+            `\n     👉 les fiches ne partagent probablement pas de legacyId.`,
+        );
+      } else {
+        console.warn(`${tag}\n  ⚠️ étape 2 — aucune fiche ${targetLocale} chargée.`);
       }
-    } catch {
-      /* API indisponible → on passe au plan B */
+    } catch (err) {
+      console.warn(`${tag}\n  ⚠️ étape 2 — chargement des listes impossible :`, err);
     }
 
     // 3) Slug traduit enregistré dans la fiche i18n
     const translated = translateSlug(resource, segment, locale, targetLocale, id);
     if (translated && translated !== segment) {
-      return /^\d+$/.test(id) ? `${id}-${translated}` : translated;
+      const out = /^\d+$/.test(id) ? `${id}-${translated}` : translated;
+      console.info(`${tag}\n  ✅ étape 3 — slug traduit (fiche i18n locale) : « ${out} »`);
+      return out;
     }
 
     // 4) Fallback : ID seul (toujours résoluble), sinon segment inchangé
-    return /^\d+$/.test(id) ? id : segment;
+    const out = /^\d+$/.test(id) ? id : segment;
+    console.warn(
+      `${tag}\n  ❌ étape 4 — aucune traduction trouvée, repli sur « ${out} ».` +
+        `\n     La page cible affichera la fiche ${id} — c'est le symptôme` +
+        ` « l'id ne suit pas la langue ».`,
+    );
+    return out;
   };
 
   const handleLanguageChange = async (newLocale: string) => {

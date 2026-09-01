@@ -159,6 +159,10 @@ function mapCareer(row: Record<string, unknown>): Career {
 function mapService(row: Record<string, unknown>): Service {
   return {
     id: asPublicId(row),
+    // locale + legacyId : indispensables au changement de langue, qui relie
+    // les versions d'une même fiche par leur legacyId.
+    locale: row.locale ? String(row.locale) : undefined,
+    legacyId: row.legacyId ? String(row.legacyId) : undefined,
     title: String(row.title ?? ''),
     icon: String(row.icon ?? ''),
     color: row.color ? String(row.color) : undefined,

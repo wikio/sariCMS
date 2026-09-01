@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { ChevronRight, CheckCircle, Package } from 'lucide-react';
 import IconMark from '@/components/admin/IconMark';
 import { resolveColor, withAlpha } from '@/lib/colors';
+import { entityUrl } from '@/lib/entity-url';
 import type { Service } from '@/types';
 
 interface ServiceCardProps {
@@ -25,7 +26,11 @@ export default function ServiceCard({ service, variant = 'standard', onClick }: 
     }
   };
 
-  const serviceUrl = `/${locale}/services/${service.slug || service.id}`;
+  // URL « id-slug » homogène dans les trois langues. L'ancienne forme
+  // `slug || id` produisait /fr/services/1 (pas de slug en FR) mais
+  // /en/services/mon-slug (slug sans id) : deux formats incompatibles, et un
+  // id seul ne dit pas au sélecteur de langue quelle fiche cible.
+  const serviceUrl = entityUrl(locale, 'services', service);
   // Le jeton stocké ('sari-blue', 'red-500', '#0f766e'…) est résolu en couleur
   // réelle : les variables CSS --sari-* n'existent pas dans la feuille de style.
   const accent = resolveColor(service.color);

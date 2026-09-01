@@ -198,7 +198,27 @@ describe('BaseCrudService', () => {
     const block = (await service.findOne(created.id, 'block')) as Record<string, unknown>;
     expect(card.title).toBe('V');
     expect(block.id).toBe(created.id);
-    expect(Object.keys(card).sort()).toEqual(['createdAt', 'id', 'status', 'title'].sort());
+    // `legacyId` s'ajoute aux champs projetés : c'est une clé de routage
+    // conservée dans toutes les vues pour que le sélecteur de langue puisse
+    // relier les versions linguistiques d'une même fiche.
+    expect(Object.keys(card).sort()).toEqual(
+      ['createdAt', 'id', 'legacyId', 'status', 'title'].sort(),
+    );
+  });
+
+  it('conserve les clés de routage (legacyId, locale) dans les vues list/card', async () => {
+    const created = (await service.create({
+      title: 'Traduisible',
+      status: 'ok',
+      legacyId: 'grp-1',
+      locale: 'fr',
+    } as Partial<Item>)) as Item;
+
+    const card = (await service.findOne(created.id, 'card')) as Record<string, unknown>;
+    // Sans ces clés, la vitrine ne peut pas retrouver la fiche équivalente
+    // dans la langue cible et retombe sur l'id courant (mauvaise fiche/404).
+    expect(card.legacyId).toBe('grp-1');
+    expect(card.locale).toBe('fr');
   });
 
   it('autocompletes on allowed fields only', async () => {

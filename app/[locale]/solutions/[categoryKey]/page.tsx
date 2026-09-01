@@ -64,6 +64,22 @@ export default function SolutionCategoryPage() {
   //    et l'URL française `3-slug-fr` pointent bien sur la même fiche).
   const cat = findByRouteKey(categories, key);
 
+  useEffect(() => {
+    if (loading) return;
+    console.info(
+      `[solutions/detail] segment « ${key} » en ${locale}` +
+        `\n  ${categories.length} catégories chargées : ${categories
+          .map((c) => `${c.id}${c.legacyId ? `(legacy ${c.legacyId})` : ''}`)
+          .join(', ')}` +
+        (cat
+          ? `\n  ✅ trouvée : id=${cat.id} legacyId=${cat.legacyId ?? '(aucun)'}` +
+            ` — URL canonique « ${entityUrl(locale, 'solutions', cat)} »`
+          : `\n  ❌ AUCUNE catégorie ne correspond → écran « solution introuvable ».` +
+            `\n     Si le segment vient d'un changement de langue, la fiche cible` +
+            ` n'a pas été résolue (voir les logs [i18n-switch]).`),
+    );
+  }, [loading, key, locale, categories, cat]);
+
   // Si la solution n'existe pas, on affiche un état "Non trouvé"
   if (!loading && !cat) {
     return (
