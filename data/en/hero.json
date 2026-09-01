@@ -1,38 +1,38 @@
 [
   {
     "id": 1,
-    "title": "Équipements Médicaux de Pointe",
-    "subtitle": "Distribution et installation d'équipements médicaux avancés",
-    "description": "Nous vous accompagnons dans le choix et l'installation de vos équipements médicaux avec un service personnalisé et une expertise reconnue.",
+    "title": "Cutting-Edge Medical Equipment",
+    "subtitle": "Distribution and installation of advanced medical equipment",
+    "description": "We support you in selecting and installing your medical equipment, with personalised service and recognised expertise.",
     "image": "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=1920",
-    "cta": "Découvrir nos solutions",
+    "cta": "Explore our solutions",
     "ctaLink": "/solutions"
   },
   {
     "id": 2,
-    "title": "Consommables Médicaux Certifiés",
-    "subtitle": "Une gamme complète pour professionnels de santé",
-    "description": "Gants, masques, désinfectants et tout le nécessaire pour votre pratique quotidienne, livrés rapidement.",
+    "title": "Certified Medical Consumables",
+    "subtitle": "A complete range for healthcare professionals",
+    "description": "Gloves, masks, disinfectants and everything you need for daily practice, delivered quickly.",
     "image": "https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=1920",
-    "cta": "Voir le catalogue",
+    "cta": "Browse the catalogue",
     "ctaLink": "/products"
   },
   {
     "id": 3,
-    "title": "Maintenance & Support 24/7",
-    "subtitle": "Service après-vente réactif et expertise technique",
-    "description": "Notre équipe technique intervient rapidement pour assurer le bon fonctionnement de vos équipements critiques.",
+    "title": "24/7 Maintenance & Support",
+    "subtitle": "Responsive after-sales service and technical expertise",
+    "description": "Our technical team responds quickly to keep your critical equipment running.",
     "image": "https://images.unsplash.com/photo-1551076805-e1869033e561?w=1920",
-    "cta": "Nous contacter",
+    "cta": "Contact us",
     "ctaLink": "/contact"
   },
   {
     "id": 4,
-    "title": "Innovation & Technologie",
-    "subtitle": "Les dernières avancées médicales à votre portée",
-    "description": "Restez à la pointe de la technologie avec nos équipements de dernière génération et nos formations continues.",
+    "title": "Innovation & Technology",
+    "subtitle": "The latest medical advances within your reach",
+    "description": "Stay at the cutting edge with our latest-generation equipment and ongoing training.",
     "image": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1920",
-    "cta": "Nos innovations",
+    "cta": "Our innovations",
     "ctaLink": "/news"
   }
 ]
