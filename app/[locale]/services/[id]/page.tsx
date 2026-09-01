@@ -14,6 +14,8 @@ import CTAButton from '@/components/ui/CTAButton';
 import FAQ from '@/components/ui/FAQ';
 import EmptyState from '@/components/ui/EmptyState';
 import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
+import IconMark from '@/components/admin/IconMark';
+import { resolveColor } from '@/lib/colors';
 
 export default function ServiceDetailPage() {
   const params = useParams();
@@ -59,17 +61,28 @@ export default function ServiceDetailPage() {
     );
   }
 
+  // Couleur de la fiche, résolue depuis le jeton stocké en base
+  // ('sari-blue', 'orange-500', '#0f766e'…).
+  const accent = resolveColor(service.color);
+
   return (
     <PageVisibilityGuard visibilityKey="module.services">
     <div className="pt-32 pb-24 min-h-screen page-enter">
-      <div className="bg-sari-blue py-24 text-center text-white relative overflow-hidden">
+      {/* Bandeau aux couleurs de la fiche : l'icône et la couleur viennent de
+          la base (champs `icon` et `color`), comme sur les cartes et le module
+          Solutions. Auparavant un emoji 🏥 et un bleu figés donnaient le même
+          en-tête aux quatre services. */}
+      <div
+        className="py-24 text-center text-white relative overflow-hidden"
+        style={{ backgroundColor: accent }}
+      >
         <div className="absolute inset-0 grid-pattern-bg opacity-10"></div>
         <div className="container mx-auto px-6 relative">
           <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6">
-            <span className="text-4xl">🏥</span>
+            <IconMark name={service.icon} fallback="wrench" className="w-10 h-10" color="#ffffff" />
           </div>
           <h1 className="text-5xl font-bold mb-4">{service.title}</h1>
-          <p className="text-xl text-blue-100 max-w-2xl mx-auto">{service.shortDesc}</p>
+          <p className="text-xl max-w-2xl mx-auto text-white/80">{service.shortDesc}</p>
         </div>
       </div>
 

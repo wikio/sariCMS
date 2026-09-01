@@ -16,12 +16,14 @@ import { useVisibility } from '@/lib/site-visibility';
 import type { Product } from '@/types';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
+import { useCurrency } from '@/lib/use-currency';
 
 export default function ProductDetailPage() {
   const params = useParams();
   const id = params.id as string;
   const locale = useLocale();
   const t = useTranslations('pages.productDetail');
+  const { withSymbol } = useCurrency();
   const { addToCart } = useCart();
   const visibility = useVisibility();
 
@@ -199,7 +201,7 @@ export default function ProductDetailPage() {
             {product.name}
           </h1>
           <div className="flex items-center gap-4 mb-6">
-            <span className="text-3xl font-bold text-sari-lime">{product.price}</span>
+            <span className="text-3xl font-bold text-sari-lime">{withSymbol(product.price)}</span>
             {product.inStock ? (
               <span className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-sm font-semibold flex items-center gap-1 rounded-full">
                 <Check className="w-4 h-4" />

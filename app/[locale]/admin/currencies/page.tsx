@@ -1,8 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Eye, Pencil, Plus, Trash2 } from 'lucide-react';
-import { loadCurrencies, saveCurrencies, type Currency } from '@/lib/currencies';
+import { Check, Eye, Pencil, Plus, Star, Trash2 } from 'lucide-react';
+import {
+  defaultCurrency,
+  loadCurrencies,
+  saveCurrencies,
+  setDefaultCurrency,
+  type Currency,
+} from '@/lib/currencies';
 import { useToast } from '@/components/admin/Toast';
 import Drawer from '@/components/admin/Drawer';
 import Toggle from '@/components/admin/Toggle';
@@ -23,6 +29,11 @@ export default function CurrenciesPage() {
     setRows(next); saveCurrencies(next); showToast(toast, 'success'); setDraft(null); setSelected([]);
   };
 
+  // Devise réellement appliquée : si la ligne marquée par défaut a été
+  // désactivée, `defaultCurrency` retombe sur la première devise active. La
+  // table doit signaler celle qui sert vraiment, pas celle qui porte le drapeau.
+  const applied = rows.length ? defaultCurrency(rows) : null;
+
   return (
     <div className="space-y-4">
       <header className="flex items-end justify-between">
@@ -30,6 +41,11 @@ export default function CurrenciesPage() {
           <div className="ad-breadcrumb">Configuration avancée / Devises</div>
           <h1 className="text-3xl font-black">{t("title")}</h1>
           <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>Code, symbole, nom et taux de change par rapport au dinar (DZD = 1).</p>
+          {applied && (
+            <p className="text-sm mt-1" style={{ color: 'var(--ad-muted)' }}>
+              {t('appliedNotice', { name: applied.name, symbol: applied.symbol })}
+            </p>
+          )}
         </div>
         <button className="ad-btn ad-btn-primary" onClick={() => { setMode('edit'); setDraft(empty()); }}><Plus className="w-4 h-4" /> Ajouter</button>
       </header>
@@ -42,7 +58,7 @@ export default function CurrenciesPage() {
       )}
       <div className="ad-card overflow-x-auto">
         <table className="ad-table">
-          <thead><tr><th></th><th>{t("code")}</th><th>{t("symbol")}</th><th>{t("name", { defaultMessage: "Nom" })}</th><th>Taux / DZD</th><th>Statut</th><th></th></tr></thead>
+          <thead><tr><th></th><th>{t("code")}</th><th>{t("symbol")}</th><th>{t("name", { defaultMessage: "Nom" })}</th><th>Taux / DZD</th><th>Statut</th><th>{t("isDefault")}</th><th></th></tr></thead>
           <tbody>
             {rows.map((c) => (
               <tr key={c.id}>
@@ -52,6 +68,22 @@ export default function CurrenciesPage() {
                 <td>{c.name}</td>
                 <td>{c.rate}</td>
                 <td><span className={`ad-chip ${c.active ? 'ad-chip-ok' : 'ad-chip-mute'}`}>{c.active ? 'Active' : 'Inactive'}</span></td>
+                <td>
+                  {applied?.id === c.id ? (
+                    <span className="ad-chip ad-chip-ok inline-flex items-center gap-1" title={t('isDefaultHint')}>
+                      <Check className="w-3.5 h-3.5" /> {t('isDefault')}
+                    </span>
+                  ) : (
+                    <button
+                      className="ad-btn ad-btn-ghost"
+                      title={c.active ? t('setDefault') : t('setDefaultInactive')}
+                      disabled={!c.active}
+                      onClick={() => persist(setDefaultCurrency(rows, c.id), t('defaultChanged', { code: c.code }))}
+                    >
+                      <Star className="w-4 h-4" />
+                    </button>
+                  )}
+                </td>
                 <td className="text-right">
                   <button className="ad-btn ad-btn-ghost" onClick={() => { setMode('consult'); setDraft({ ...c }); }}><Eye className="w-4 h-4" /></button>
                   <button className="ad-btn ad-btn-ghost" onClick={() => { setMode('edit'); setDraft({ ...c }); }}><Pencil className="w-4 h-4" /></button>
@@ -71,7 +103,12 @@ export default function CurrenciesPage() {
             <button className="ad-btn ad-btn-ghost" onClick={() => setDraft(null)}>Annuler</button>
             <button className="ad-btn ad-btn-primary" onClick={() => {
               if (!draft?.code.trim()) return;
-              persist(rows.some((r) => r.id === draft.id) ? rows.map((r) => r.id === draft.id ? { ...draft, code: draft.code.toUpperCase() } : r) : [{ ...draft, code: draft.code.toUpperCase() }, ...rows]);
+              const saved = { ...draft, code: draft.code.toUpperCase() };
+              const next = rows.some((r) => r.id === saved.id)
+                ? rows.map((r) => (r.id === saved.id ? saved : r))
+                : [saved, ...rows];
+              // Une seule devise par défaut : cocher celle-ci décoche les autres.
+              persist(saved.isDefault ? setDefaultCurrency(next, saved.id) : next);
             }}>Enregistrer</button>
           </>
         )}
@@ -87,6 +124,15 @@ export default function CurrenciesPage() {
               <p className="ad-field-hint">1 unité de cette devise = ce nombre de dinars.</p>
             </label>
             <Toggle on={draft.active} onChange={(active) => setDraft({ ...draft, active })} label="Active" disabled={mode === 'consult'} />
+            <label className="block space-y-1.5">
+              <Toggle
+                on={!!draft.isDefault}
+                onChange={(isDefault) => setDraft({ ...draft, isDefault, active: isDefault ? true : draft.active })}
+                label={t('isDefault')}
+                disabled={mode === 'consult'}
+              />
+              <p className="ad-field-hint">{t('isDefaultHint')}</p>
+            </label>
           </>
         )}
       </Drawer>

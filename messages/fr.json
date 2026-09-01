@@ -791,7 +791,13 @@
       "code": "Code",
       "symbol": "Symbole",
       "rateToDZD": "Taux vers DZD",
-      "name": "Nom"
+      "name": "Nom",
+      "isDefault": "Par défaut",
+      "isDefaultHint": "Devise utilisée pour tous les montants du site et de l’administration.",
+      "setDefault": "Définir comme devise par défaut",
+      "setDefaultInactive": "Activez la devise pour pouvoir la définir par défaut",
+      "defaultChanged": "Devise par défaut : {code}",
+      "appliedNotice": "Montants affichés en {name} ({symbol})."
     },
     "shopStats": {
       "title": "Pilotage boutique",

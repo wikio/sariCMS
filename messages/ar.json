@@ -791,7 +791,13 @@
       "code": "الرمز",
       "symbol": "الرمز",
       "rateToDZD": "السعر مقابل DZD",
-      "name": "الاسم"
+      "name": "الاسم",
+      "isDefault": "الافتراضية",
+      "isDefaultHint": "العملة المستخدمة لجميع المبالغ في الموقع ولوحة الإدارة.",
+      "setDefault": "تعيينها كعملة افتراضية",
+      "setDefaultInactive": "فعّل العملة قبل تعيينها كعملة افتراضية",
+      "defaultChanged": "العملة الافتراضية: {code}",
+      "appliedNotice": "تُعرض المبالغ بـ {name} ({symbol})."
     },
     "shopStats": {
       "title": "تحليلات المتجر",

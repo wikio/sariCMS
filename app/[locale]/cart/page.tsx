@@ -10,12 +10,14 @@ import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrders, type Order, type OrderItem } from '@/contexts/OrdersContext';
 import Breadcrumb from '@/components/ui/Breadcrumb';
+import { useCurrency } from '@/lib/use-currency';
 
 export default function CartPage() {
   const locale = useLocale();
   const t = useTranslations('pages.cart');
   const router = useRouter();
   
+  const { format: formatMoney, withSymbol } = useCurrency();
   const { items: cart, removeFromCart, updateQuantity, clearCart } = useCart();
   const { isAuthenticated, user } = useAuth();
   const { addOrder } = useOrders();
@@ -148,7 +150,7 @@ export default function CartPage() {
                 <div className="flex-1">
                   <h3 className="font-bold text-sari-dark dark:text-white mb-2">{item.name}</h3>
                   <div className="text-sm text-gray-500 dark:text-gray-400 mb-2">{item.category}</div>
-                  <div className="text-lg font-bold text-sari-lime">{item.price}</div>
+                  <div className="text-lg font-bold text-sari-lime">{withSymbol(item.price)}</div>
                 </div>
                 <div className="flex items-center gap-2">
                   <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="w-8 h-8 border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 rounded">-</button>
@@ -167,15 +169,15 @@ export default function CartPage() {
               <div className="space-y-3 mb-6">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600 dark:text-gray-400">{t('subtotal')} :</span>
-                  <span className="font-semibold text-sari-dark dark:text-white">{totalAmount.toFixed(2)} €</span>
+                  <span className="font-semibold text-sari-dark dark:text-white">{formatMoney(totalAmount, { decimals: 2 })}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600 dark:text-gray-400">{t('tax')} :</span>
-                  <span className="font-semibold text-sari-dark dark:text-white">{taxAmount.toFixed(2)} €</span>
+                  <span className="font-semibold text-sari-dark dark:text-white">{formatMoney(taxAmount, { decimals: 2 })}</span>
                 </div>
                 <div className="flex justify-between text-lg pt-3 border-t border-gray-200 dark:border-gray-800">
                   <span className="font-bold text-sari-dark dark:text-white">{t('total')} :</span>
-                  <span className="font-bold text-sari-lime">{grandTotal.toFixed(2)} €</span>
+                  <span className="font-bold text-sari-lime">{formatMoney(grandTotal, { decimals: 2 })}</span>
                 </div>
               </div>
               <button onClick={handleCheckout} className="w-full btn-primary text-white py-3 font-semibold shadow-lg flex items-center justify-center gap-2 rounded-lg">

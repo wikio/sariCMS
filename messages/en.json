@@ -791,7 +791,13 @@
       "code": "Code",
       "symbol": "Symbol",
       "rateToDZD": "Rate to DZD",
-      "name": "Name"
+      "name": "Name",
+      "isDefault": "Default",
+      "isDefaultHint": "Currency used for every amount across the site and the admin.",
+      "setDefault": "Set as default currency",
+      "setDefaultInactive": "Activate the currency before making it the default",
+      "defaultChanged": "Default currency: {code}",
+      "appliedNotice": "Amounts are displayed in {name} ({symbol})."
     },
     "shopStats": {
       "title": "Shop analytics",

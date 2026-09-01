@@ -11,6 +11,8 @@ import Toggle from '@/components/admin/Toggle';
 import SearchField from '@/components/admin/SearchField';
 import { useTranslations } from 'next-intl';
 import DateText from '@/components/shared/DateText';
+import { money } from '@/lib/commerce-math';
+import { useCurrency } from '@/lib/use-currency';
 
 const TYPES: Array<{ value: PaymentType; label: string }> = [
   { value: 'card-intl', label: 'Carte internationale' },
@@ -25,6 +27,7 @@ const TYPES: Array<{ value: PaymentType; label: string }> = [
 const empty = (): PaymentMethod => ({ id: `p-${Date.now()}`, name: '', type: 'transfer', active: true, fees: 0, instructions: '' });
 
 export default function PaymentsPage() {
+  const { symbol } = useCurrency();
   const { showToast } = useToast();
   const t = useTranslations('admin.payments');
   const [rows, setRows] = useState<PaymentMethod[]>([]);
@@ -81,7 +84,7 @@ export default function PaymentsPage() {
                 <td><input type="checkbox" checked={selected.includes(r.id)} onChange={(e) => setSelected((s) => e.target.checked ? [...s, r.id] : s.filter((x) => x !== r.id))} /></td>
                 <td className="font-bold">{r.name}</td>
                 <td>{TYPES.find((t) => t.value === r.type)?.label}</td>
-                <td>{r.fees}{r.type === 'cod' ? ' DA' : ' %'}</td>
+                <td>{r.fees}{r.type === 'cod' ? ` ${symbol}` : ' %'}</td>
                 <td><span className={`ad-chip ${r.active ? 'ad-chip-ok' : 'ad-chip-mute'}`}>{r.active ? 'Actif' : 'Inactif'}</span></td>
                 <td className="text-right whitespace-nowrap">
                   <button className="ad-btn ad-btn-ghost" title="Commandes par ce type" onClick={() => setOrdersByType(r)}><ListOrdered className="w-4 h-4" /> {ordersFor.length > 0 ? '' : 'Commandes'}</button>
@@ -184,7 +187,7 @@ export default function PaymentsPage() {
                   <td className="font-mono text-sm">{o.code || `#${o.id}`}</td>
                   <td><div className="font-bold">{o.client}</div><div className="text-xs" style={{ color: 'var(--ad-muted)' }}>{o.email}</div></td>
                   <td><DateText value={o.date} dateOnly /></td>
-                  <td className="font-black whitespace-nowrap">{Number(o.total).toLocaleString()} DA</td>
+                  <td className="font-black whitespace-nowrap">{money(Number(o.total))}</td>
                   <td><span className="ad-chip ad-chip-acc">{o.status}</span></td>
                 </tr>
               ))}

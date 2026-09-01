@@ -15,6 +15,7 @@ import { unwrapList, CmsError } from '@/lib/cms';
 import { loadOrders, orderRevenue } from '@/lib/crm-store';
 import { seedDemoWorkspace } from '@/lib/demo-seed';
 import DateText from '@/components/shared/DateText';
+import { money } from '@/lib/commerce-math';
 
 export default function AdminDashboardPage() {
   const locale = useLocale();
@@ -116,7 +117,7 @@ export default function AdminDashboardPage() {
           }))} />
         </section>
         <section className="ad-card p-5 ad-rise">
-          <h3 className="ad-section-title">Commandes · {orderRevenue(orders).toLocaleString()} DA livrés</h3>
+          <h3 className="ad-section-title">Commandes · {money(orderRevenue(orders))} livrés</h3>
           <DonutChart items={[
             { label: t("delivered"), value: orders.filter((o) => o.status === 'delivered').length, color: '#0f9f6e' },
             { label: 'En cours', value: orders.filter((o) => o.status === 'processing' || o.status === 'shipped').length, color: '#169EC9' },

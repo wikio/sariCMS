@@ -10,6 +10,7 @@ import Toggle from '@/components/admin/Toggle';
 import TagInput from '@/components/admin/TagInput';
 import SearchField from '@/components/admin/SearchField';
 import DateText from '@/components/shared/DateText';
+import { money } from '@/lib/commerce-math';
 
 const empty = (): Coupon => ({
   id: `c-${Date.now()}`, code: generateCouponCode(), type: 'percent', amount: 10,
@@ -119,9 +120,9 @@ export default function CouponsPage() {
                 <tr key={c.id}>
                   <td><input type="checkbox" checked={selected.includes(c.id)} onChange={(e) => setSelected((s) => e.target.checked ? [...s, c.id] : s.filter((x) => x !== c.id))} /></td>
                   <td className="font-mono font-bold">{c.code}</td>
-                  <td>{c.type === 'percent' ? `${c.amount} %` : `${c.amount} DA`}</td>
+                  <td>{c.type === 'percent' ? `${c.amount} %` : money(c.amount)}</td>
                   <td>{c.used}/{c.limitGlobal || '∞'}</td>
-                  <td>{c.revenue.toLocaleString()} DA</td>
+                  <td>{money(c.revenue)}</td>
                   <td><span className={`ad-chip ${chip(status)}`}>{status}</span></td>
                   <td className="text-right whitespace-nowrap">
                     <button className="ad-btn ad-btn-ghost" onClick={() => { setMode('consult'); setDraft({ ...c }); }}><Eye className="w-4 h-4" /></button>
@@ -218,7 +219,7 @@ export default function CouponsPage() {
                 <thead><tr><th>Commande</th><th>Client</th><th>Date</th><th>Remise</th></tr></thead>
                 <tbody>
                   {uses.filter((u) => u.couponId === draft.id || u.code === draft.code).map((u) => (
-                    <tr key={u.id}><td>#{u.orderId}</td><td>{u.client}</td><td><DateText value={u.date} dateOnly /></td><td>{u.discount.toLocaleString()} DA</td></tr>
+                    <tr key={u.id}><td>#{u.orderId}</td><td>{u.client}</td><td><DateText value={u.date} dateOnly /></td><td>{money(u.discount)}</td></tr>
                   ))}
                   {uses.filter((u) => u.couponId === draft.id || u.code === draft.code).length === 0 && (
                     <tr><td colSpan={4} style={{ color: 'var(--ad-muted)' }}>Aucune utilisation encore.</td></tr>

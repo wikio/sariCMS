@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { FileText, ListOrdered, Plus, Trash2, Upload } from 'lucide-react';
 import type { Quote, QuoteResponse, QuoteResponseLine } from '@/lib/crm-store';
 import HtmlEditor from '@/components/admin/fields/HtmlEditor';
+import { money } from '@/lib/commerce-math';
 
 /**
  * Composeur de réponse à une demande de devis (côté Admin).
@@ -46,7 +47,7 @@ export default function QuoteResponseComposer({
     return { subtotal, taxTotal, total };
   }, [lines, globalDiscount, deliveryFee]);
 
-  const money = (n: number) => `${Math.round(n).toLocaleString()} DA`;
+
 
   const save = () => {
     if (mode === 'detailed') {

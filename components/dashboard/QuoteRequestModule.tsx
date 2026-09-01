@@ -19,6 +19,7 @@ import {
 } from '@/lib/quote-requests';
 import { loadAdminSettings } from '@/lib/admin-settings';
 import DateText from '@/components/shared/DateText';
+import { useCurrency } from '@/lib/use-currency';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_RE = /^[+\d][\d\s().-]{6,}$/;
@@ -108,6 +109,7 @@ export default function QuoteRequestModule({ user, locale }: { user: User; local
 
 function QuoteWizard({ user, locale, onCancel, onDone }: { user: User; locale: string; onCancel: () => void; onDone: () => void }) {
   const t = useTranslations('pages.quoteRequest');
+  const { withSymbol } = useCurrency();
   const [step, setStep] = useState(1);
 
   // Produits
@@ -291,7 +293,7 @@ function QuoteWizard({ user, locale, onCancel, onDone }: { user: User; locale: s
                       {p.image ? <img src={p.image} alt="" className="w-9 h-9 object-cover rounded" /> : <Package className="w-9 h-9 text-gray-400" />}
                       <span className="flex-1 min-w-0">
                         <span className="block text-sm font-semibold text-sari-dark dark:text-white truncate">{p.name}</span>
-                        <span className="block text-xs text-gray-500">{p.category} · {p.price}</span>
+                        <span className="block text-xs text-gray-500">{p.category} · {withSymbol(p.price)}</span>
                       </span>
                       <Plus className="w-4 h-4 text-sari-blue shrink-0" />
                     </button>

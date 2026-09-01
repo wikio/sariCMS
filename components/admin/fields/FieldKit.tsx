@@ -18,7 +18,7 @@ import Toggle from '@/components/admin/Toggle';
 import DateTimePicker from '@/components/admin/fields/DateTimePicker';
 import AutocompleteSelect from '@/components/admin/fields/AutocompleteSelect';
 import ProductMultiSelect from '@/components/admin/fields/ProductMultiSelect';
-import { activeCurrencies, loadCurrencies, saveCurrencies, type Currency } from '@/lib/currencies';
+import { activeCurrencies, defaultCurrency, FALLBACK_CURRENCY, loadCurrencies, saveCurrencies, type Currency } from '@/lib/currencies';
 import { useAdminLabels } from '@/lib/admin-labels';
 import { COLOR_PRESETS, resolveColor } from '@/lib/colors';
 import { useMessages, useTranslations } from 'next-intl';
@@ -433,9 +433,11 @@ function PriceInner({ value, onChange, placeholder }: { value: string; onChange:
     return () => window.removeEventListener('sari-currencies', on);
   }, []);
   const { amount, suffix } = parsePrice(value);
+  // À défaut de devise reconnue dans la valeur saisie, on propose celle
+  // configurée par défaut (page Devises) plutôt que la première de la liste.
   const curr = list.find((c) => suffix === c.symbol || suffix === c.code || suffix.includes(c.symbol) || suffix.includes(c.code))
-    || list[0]
-    || { code: 'DZD', symbol: 'DA', name: 'Dinar algérien', id: 'dzd', rate: 1, active: true };
+    || (list.length ? defaultCurrency(list) : null)
+    || FALLBACK_CURRENCY;
 
   const quote = /sur\s*devis/i.test(value) || suffix.toLowerCase() === 'sur devis';
   const setAmount = (next: string) => onChange(next.trim() ? `${next.trim()} ${curr.symbol}` : '');
