@@ -14,6 +14,7 @@ import { cmsAdminFetch, cmsHealth, cmsImportCatalog, cmsStatus } from '@/lib/cms
 import { unwrapList, CmsError } from '@/lib/cms';
 import { loadOrders, orderRevenue } from '@/lib/crm-store';
 import { seedDemoWorkspace } from '@/lib/demo-seed';
+import DateText from '@/components/shared/DateText';
 
 export default function AdminDashboardPage() {
   const locale = useLocale();
@@ -174,7 +175,7 @@ export default function AdminDashboardPage() {
             {logs.map((log) => (
               <li key={String(log.id)} className="flex justify-between gap-2">
                 <span><b>{log.action}</b> · {log.resource}</span>
-                <span style={{ color: 'var(--ad-muted)' }}>{log.createdAt ? new Date(log.createdAt).toLocaleTimeString() : ''}</span>
+                <span style={{ color: 'var(--ad-muted)' }}><DateText value={log.createdAt} timeOnly fallback="" /></span>
               </li>
             ))}
             {logs.length === 0 && <li style={{ color: 'var(--ad-muted)' }}>Aucune activité pour l’instant.</li>}

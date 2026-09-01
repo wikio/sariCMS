@@ -10,6 +10,7 @@ import { CmsError } from '@/lib/cms';
 import { loadOrders, loadQuotes, orderRevenue } from '@/lib/crm-store';
 import GeoBadge from '@/components/admin/GeoBadge';
 import MessageComposer from '@/components/admin/MessageComposer';
+import DateText from '@/components/shared/DateText';
 
 type Person = Record<string, unknown> & {
   id?: string;
@@ -272,7 +273,7 @@ function ClientStats({ email }: { email: string }) {
       <div className="space-y-1">
         {orders.slice(0, 4).map((o) => (
           <div key={o.id} className="flex items-center justify-between border-b border-[var(--ad-line)] pb-1">
-            <span>#{o.id} <span style={{ color: 'var(--ad-muted)' }}>{o.date}</span></span>
+            <span>#{o.id} <span style={{ color: 'var(--ad-muted)' }}><DateText value={o.date} dateOnly /></span></span>
             <span className={`ad-chip ${o.status === 'delivered' ? 'ad-chip-ok' : o.status === 'cancelled' ? 'ad-chip-warn' : 'ad-chip-acc'}`}>{o.status}</span>
             <span className="font-bold tabular-nums">{Number(o.total || 0).toLocaleString()} DA</span>
           </div>

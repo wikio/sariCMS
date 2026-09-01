@@ -18,6 +18,7 @@ import {
   quoteStatusColor, quoteStatusLabel,
 } from '@/lib/quote-requests';
 import { loadAdminSettings } from '@/lib/admin-settings';
+import DateText from '@/components/shared/DateText';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_RE = /^[+\d][\d\s().-]{6,}$/;
@@ -78,7 +79,7 @@ export default function QuoteRequestModule({ user, locale }: { user: User; local
             <div key={q.id} className="bg-white dark:bg-[#1a1a1a] p-6 border border-gray-200 dark:border-gray-800 shadow-xl rounded-xl">
               <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
                 <div>
-                  <div className="font-mono text-xs text-gray-400">{q.reference || `#${q.id}`} · {new Date(q.date).toLocaleDateString()}</div>
+                  <div className="font-mono text-xs text-gray-400">{q.reference || `#${q.id}`} · <DateText value={q.date} dateOnly /></div>
                   <div className="font-bold text-sari-dark dark:text-white">{q.items.length} {t('lines')}</div>
                 </div>
                 <span className={`px-3 py-1 text-xs font-bold rounded-full ${quoteStatusColor(q.status)}`}>{quoteStatusLabel(q.status)}</span>
@@ -572,7 +573,7 @@ function QuoteDetail({ quote, locale, onBack, onRefresh }: { quote: Quote; local
             <ul className="space-y-1 text-sm text-gray-500">
               {quote.history!.map((h, i) => (
                 <li key={i} className="flex gap-2">
-                  <span className="text-gray-400">{new Date(h.at).toLocaleString()}</span>
+                  <span className="text-gray-400"><DateText value={h.at} /></span>
                   <span className="font-semibold">{quoteStatusLabel(h.status as Quote['status'])}</span>
                   {h.note && <span>· {h.note}</span>}
                 </li>

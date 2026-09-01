@@ -9,7 +9,7 @@ import { Calendar, Clock, ChevronLeft, ChevronRight, Mail, CheckCircle } from 'l
 import { getNews } from '@/lib/data';
 import { matchesEntity } from '@/lib/ids';
 import { extractLegacyId, findNewsTranslation, buildMultilingualUrl } from '@/lib/translation-utils';
-import { formatDate, hasTime } from '@/lib/date-utils';
+import { useDateUtils } from '@/lib/use-date-format';
 import type { News } from '@/types';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
@@ -19,6 +19,7 @@ import LanguageIndicator from '@/components/ui/LanguageIndicator';
 export default function NewsDetailPage() {
   const params = useParams();
   const locale = useLocale();
+  const { formatDate, hasTime } = useDateUtils();
   const t = useTranslations('pages.newsDetail');
 
   // ✅ CORRECTION : On cible explicitement la clé 'id' de l'objet params

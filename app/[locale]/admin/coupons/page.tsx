@@ -9,6 +9,7 @@ import Drawer from '@/components/admin/Drawer';
 import Toggle from '@/components/admin/Toggle';
 import TagInput from '@/components/admin/TagInput';
 import SearchField from '@/components/admin/SearchField';
+import DateText from '@/components/shared/DateText';
 
 const empty = (): Coupon => ({
   id: `c-${Date.now()}`, code: generateCouponCode(), type: 'percent', amount: 10,
@@ -217,7 +218,7 @@ export default function CouponsPage() {
                 <thead><tr><th>Commande</th><th>Client</th><th>Date</th><th>Remise</th></tr></thead>
                 <tbody>
                   {uses.filter((u) => u.couponId === draft.id || u.code === draft.code).map((u) => (
-                    <tr key={u.id}><td>#{u.orderId}</td><td>{u.client}</td><td>{u.date}</td><td>{u.discount.toLocaleString()} DA</td></tr>
+                    <tr key={u.id}><td>#{u.orderId}</td><td>{u.client}</td><td><DateText value={u.date} dateOnly /></td><td>{u.discount.toLocaleString()} DA</td></tr>
                   ))}
                   {uses.filter((u) => u.couponId === draft.id || u.code === draft.code).length === 0 && (
                     <tr><td colSpan={4} style={{ color: 'var(--ad-muted)' }}>Aucune utilisation encore.</td></tr>

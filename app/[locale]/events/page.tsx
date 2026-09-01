@@ -11,7 +11,7 @@ import type { Event } from '@/types';
 import Pagination from '@/components/ui/Pagination';
 import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
 import ImageWithFallback from '@/components/ui/ImageWithFallback';
-import { formatDate, formatDateParts } from '@/lib/date-utils';
+import { useDateUtils } from '@/lib/use-date-format';
 
 export default function EventsPage() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -19,6 +19,7 @@ export default function EventsPage() {
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const itemsPerPage = 6;
   const locale = useLocale();
+  const { formatDate, formatDateParts } = useDateUtils();
   const t = useTranslations('pages.events');
   const isRtl = locale === 'ar';
 

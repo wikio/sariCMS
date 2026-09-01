@@ -5,6 +5,7 @@ import { useLocale, useMessages, useTranslations } from 'next-intl';
 import type { FieldSpec } from '@/lib/cms-modules';
 import { getProducts } from '@/lib/data';
 import { resolveColor } from '@/lib/colors';
+import { useDateFormat } from '@/lib/use-date-format';
 import HtmlEditor from '@/components/admin/fields/HtmlEditor';
 import IconMark from '@/components/admin/IconMark';
 import ProcessFlow, { normalizeSteps } from '@/components/admin/ProcessFlow';
@@ -77,6 +78,11 @@ export default function ConsultValue({ spec, value }: { spec: FieldSpec; value: 
 
   if (spec.kind === 'html') {
     return <HtmlEditor value={String(value || '')} onChange={() => undefined} readOnly />;
+  }
+  if (spec.kind === 'datetime') {
+    // Sans ce cas, la valeur brute (« 2026-09-19T09:00:00.000Z ») tombait
+    // dans le rendu générique et s'affichait telle quelle.
+    return <DateValue value={value} />;
   }
   if (spec.kind === 'icon') {
     return <IconMark name={String(value)} className="w-6 h-6" showLabel />;
@@ -250,4 +256,10 @@ function ProductIdsPreview({ ids }: { ids: string[] }) {
       })}
     </ul>
   );
+}
+
+/** Date mise en forme selon le format choisi dans les paramètres. */
+function DateValue({ value }: { value: unknown }) {
+  const { format } = useDateFormat();
+  return <div className="text-sm font-semibold">{format(value, { fallback: '—' })}</div>;
 }

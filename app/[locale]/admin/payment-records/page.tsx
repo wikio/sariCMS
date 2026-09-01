@@ -10,6 +10,7 @@ import { useToast } from '@/components/admin/Toast';
 import Drawer from '@/components/admin/Drawer';
 import SearchField from '@/components/admin/SearchField';
 import { useTranslations } from 'next-intl';
+import DateText from '@/components/shared/DateText';
 
 const STATUSES: Array<{ value: '' | PaymentStatus; label: string }> = [
   { value: '', label: 'Tous les statuts' },
@@ -117,7 +118,7 @@ export default function PaymentRecordsPage() {
                     {paymentStatusLabel(p.status)}
                   </span>
                 </td>
-                <td className="text-sm">{new Date(p.date).toLocaleString()}</td>
+                <td className="text-sm"><DateText value={p.date} /></td>
                 <td className="text-right whitespace-nowrap">
                   <button className="ad-btn ad-btn-ghost" onClick={() => { setConsult(true); setOpen(p); setNote(''); }}><Eye className="w-4 h-4" /> Voir</button>
                   {p.status === 'pending' && (
@@ -155,7 +156,7 @@ export default function PaymentRecordsPage() {
               <div><span style={{ color: 'var(--ad-muted)' }}>Email</span><div>{open.email}</div></div>
               <div><span style={{ color: 'var(--ad-muted)' }}>{t("method")}</span><div>{paymentTypeLabel(open.method)}</div></div>
               <div><span style={{ color: 'var(--ad-muted)' }}>{t("card")}</span><div className="font-mono">{open.cardMasked || '—'}</div></div>
-              <div className="col-span-2"><span style={{ color: 'var(--ad-muted)' }}>Date</span><div>{new Date(open.date).toLocaleString()}</div></div>
+              <div className="col-span-2"><span style={{ color: 'var(--ad-muted)' }}>Date</span><div><DateText value={open.date} /></div></div>
             </div>
 
             {open.note && (

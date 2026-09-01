@@ -20,6 +20,7 @@ import { getConfig } from '@/lib/data';
 import { orderPdfHtml, printHtml, quotePdfHtml } from '@/lib/pdf-templates';
 import { nextCodeFor } from '@/lib/codes';
 import { fetchInvoiceFromErp } from '@/lib/erp';
+import DateText from '@/components/shared/DateText';
 
 type Kind = 'orders' | 'quotes';
 type Row = (Order | Quote) & { history?: Array<{ status: string; at: string; note?: string }>; phone?: string; company?: string; coupon?: string; quoteId?: number; orderId?: number; zone?: string; ip?: string; address?: string };
@@ -322,7 +323,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                 <tr key={row.id}>
                   <td className="font-mono text-sm">{('reference' in row && row.reference) || ('code' in row && row.code) || `#${row.id}`}</td>
                   <td><div className="font-bold">{row.client}</div><div className="text-xs" style={{ color: 'var(--ad-muted)' }}>{row.email}</div></td>
-                  <td>{row.date}</td>
+                  <td><DateText value={row.date} dateOnly /></td>
                   <td className="font-black whitespace-nowrap">{Number(row.total).toLocaleString()} DA</td>
                   <td>{'invoice' in row && row.invoice ? <span className="ad-chip ad-chip-ok">{row.invoice.number}</span> : <span style={{ color: 'var(--ad-muted)' }}>—</span>}</td>
                   <td><span className={`ad-chip ${row.status === 'delivered' || row.status === 'accepted' ? 'ad-chip-ok' : row.status === 'cancelled' || row.status === 'rejected' ? 'ad-chip-mute' : 'ad-chip-warn'}`}>{row.status}</span></td>
@@ -402,7 +403,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
               </div>
               <div><span style={{ color: 'var(--ad-muted)' }}>Téléphone</span><div>{open.phone || '—'}</div></div>
               <div><span style={{ color: 'var(--ad-muted)' }}>Société</span><div>{open.company || '—'}</div></div>
-              <div><span style={{ color: 'var(--ad-muted)' }}>Date</span><div className="font-bold">{open.date}</div></div>
+              <div><span style={{ color: 'var(--ad-muted)' }}>Date</span><div className="font-bold"><DateText value={open.date} dateOnly /></div></div>
               <div><span style={{ color: 'var(--ad-muted)' }}>Paiement</span><div>{('payment' in open && open.payment) || '—'}</div></div>
               <div className="col-span-2"><span style={{ color: 'var(--ad-muted)' }}>Adresse</span><div>{open.address || '—'}</div></div>
               <div className="col-span-2">
@@ -512,7 +513,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                 {related.length === 0 && <li style={{ color: 'var(--ad-muted)' }}>Aucun autre document.</li>}
                 {related.map((r) => (
                   <li key={r.id} className="flex justify-between">
-                    <button className="underline" onClick={() => setOpen(r)}>#{r.id} · {r.date} · {r.status}</button>
+                    <button className="underline" onClick={() => setOpen(r)}>#{r.id} · <DateText value={r.date} dateOnly /> · {r.status}</button>
                     <strong>{Number(r.total).toLocaleString()} DA</strong>
                   </li>
                 ))}

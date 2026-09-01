@@ -16,6 +16,7 @@ import {
   groupByOffer, loadApplications, loadOffers, offerById, saveApplications, type Offer,
 } from '@/lib/recruitment';
 import { loadFlow, loadProgress, resumeUrl, type FlowProgress } from '@/lib/recruitment-flow';
+import DateText from '@/components/shared/DateText';
 
 const SEED: Application[] = DEMO_APPLICATIONS as Application[];
 
@@ -196,7 +197,7 @@ export default function AdminApplicationsPage() {
                     <td onClick={() => setExpanded(isOpen ? null : row.id)}>
                       <StarRating value={row.rating || 0} onChange={(v) => setRatingOf([row.id], v)} />
                     </td>
-                    <td onClick={() => setExpanded(isOpen ? null : row.id)}>{row.date}</td>
+                    <td onClick={() => setExpanded(isOpen ? null : row.id)}><DateText value={row.date} dateOnly /></td>
                     <td onClick={(e) => e.stopPropagation()}>
                       <select className="ad-select !w-auto !h-8 text-xs" value={row.status} onChange={(e) => setStatusOf([row.id], e.target.value)}>
                         {APP_STEPS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
@@ -351,7 +352,7 @@ function FlowProgression({ offer, app }: { offer: Offer; app: Application }) {
                 {done ? <Check className="w-3 h-3" /> : i + 1}
               </span>
               <span className={done ? '' : 'opacity-60'}>{step.title}</span>
-              {p?.at && <span className="text-[10px] ml-auto" style={{ color: 'var(--ad-muted)' }}>{new Date(p.at).toLocaleDateString()}</span>}
+              {p?.at && <span className="text-[10px] ml-auto" style={{ color: 'var(--ad-muted)' }}><DateText value={p.at} dateOnly /></span>}
             </li>
           );
         })}

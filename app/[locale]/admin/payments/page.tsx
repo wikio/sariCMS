@@ -10,6 +10,7 @@ import Drawer from '@/components/admin/Drawer';
 import Toggle from '@/components/admin/Toggle';
 import SearchField from '@/components/admin/SearchField';
 import { useTranslations } from 'next-intl';
+import DateText from '@/components/shared/DateText';
 
 const TYPES: Array<{ value: PaymentType; label: string }> = [
   { value: 'card-intl', label: 'Carte internationale' },
@@ -182,7 +183,7 @@ export default function PaymentsPage() {
                 <tr key={o.id}>
                   <td className="font-mono text-sm">{o.code || `#${o.id}`}</td>
                   <td><div className="font-bold">{o.client}</div><div className="text-xs" style={{ color: 'var(--ad-muted)' }}>{o.email}</div></td>
-                  <td>{o.date}</td>
+                  <td><DateText value={o.date} dateOnly /></td>
                   <td className="font-black whitespace-nowrap">{Number(o.total).toLocaleString()} DA</td>
                   <td><span className="ad-chip ad-chip-acc">{o.status}</span></td>
                 </tr>

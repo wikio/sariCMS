@@ -11,7 +11,7 @@ import type { News } from '@/types';
 import Pagination from '@/components/ui/Pagination';
 import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
 import ImageWithFallback from '@/components/ui/ImageWithFallback';
-import { formatDate } from '@/lib/date-utils';
+import { useDateUtils } from '@/lib/use-date-format';
 
 export default function NewsPage() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -19,6 +19,7 @@ export default function NewsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const itemsPerPage = 6;
   const locale = useLocale();
+  const { formatDate } = useDateUtils();
   const t = useTranslations('pages.news');
   const isRtl = locale === 'ar';
 

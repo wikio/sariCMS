@@ -19,6 +19,7 @@ import type { Product } from '@/types';
 import QuoteRequestModule from '@/components/dashboard/QuoteRequestModule';
 import MessagesModule from '@/components/dashboard/MessagesModule';
 import { unreadForUser } from '@/lib/messages';
+import DateText from '@/components/shared/DateText';
 
 export default function DashboardPage() {
   const locale = useLocale();
@@ -217,7 +218,7 @@ export default function DashboardPage() {
                             <Package className="w-5 h-5 text-sari-blue" />
                             <div>
                               <div className="font-semibold text-sari-dark dark:text-white">#{o.id}</div>
-                              <div className="text-xs text-gray-500">{new Date(o.createdAt).toLocaleDateString()}</div>
+                              <div className="text-xs text-gray-500"><DateText value={o.createdAt} dateOnly /></div>
                             </div>
                           </div>
                           <div className="flex items-center gap-3">
@@ -327,7 +328,7 @@ export default function DashboardPage() {
                               <span className="flex items-center gap-1"><Euro className="w-4 h-4" /> {app.salary}</span>
                               <span className="flex items-center gap-1"><Briefcase className="w-4 h-4" /> {app.type}</span>
                             </div>
-                            <div className="text-xs text-gray-500 dark:text-gray-400 mb-4">{t('appliedOn')} {new Date(app.appliedAt).toLocaleDateString()}</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400 mb-4">{t('appliedOn')} <DateText value={app.appliedAt} dateOnly /></div>
                             <div className="flex gap-2">
                               <Link href={`/${locale}/jobs/${app.jobId}`} className="text-sari-blue font-semibold hover:underline text-sm">{t('viewOffer')}</Link>
                               <button onClick={() => removeApplication(app.id)} className="text-red-500 hover:underline text-sm">{t('withdraw')}</button>
@@ -361,7 +362,7 @@ export default function DashboardPage() {
                         <div className="flex items-start justify-between mb-4">
                           <div>
                             <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">{t('orderNumber')} #{order.id}</div>
-                            <div className="text-xs text-gray-400 dark:text-gray-500">{new Date(order.createdAt).toLocaleDateString()}</div>
+                            <div className="text-xs text-gray-400 dark:text-gray-500"><DateText value={order.createdAt} dateOnly /></div>
                           </div>
                           {getStatusBadge(order.status)}
                         </div>

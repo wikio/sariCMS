@@ -18,6 +18,7 @@ import type { CmsModule } from '@/lib/cms-modules';
 import { CmsError } from '@/lib/cms';
 import { nextSku } from '@/lib/admin-settings';
 import { slugify } from '@/lib/slugify';
+import DateText from '@/components/shared/DateText';
 
 type ViewMode = 'list' | 'cards';
 
@@ -278,6 +279,11 @@ function ListTable({
   setSelected: (ids: string[]) => void;
 }) {
   const t = useTranslations('admin.common');
+  // La colonne « sous-titre » peut pointer un champ date (ex. les événements) :
+  // elle suit alors le format configuré au lieu d'afficher la valeur brute.
+  const subtitleIsDate = mod.fields.some(
+    (f) => f.key === mod.subtitleKey && f.kind === 'datetime',
+  );
   if (rows.length === 0) return <Empty mod={mod} />;
   const toggle = (id: string) => setSelected(selected.includes(id) ? selected.filter((x) => x !== id) : [...selected, id]);
   const body = (
@@ -311,7 +317,11 @@ function ListTable({
                 {String(row[mod.titleKey] || '—')}
               </span>
             </td>
-            <td className="text-sm" style={{ color: 'var(--ad-muted)' }}>{String(row[mod.subtitleKey || 'slug'] || '')}</td>
+            <td className="text-sm" style={{ color: 'var(--ad-muted)' }}>
+              {subtitleIsDate
+                ? <DateText value={row[mod.subtitleKey!]} fallback="" />
+                : String(row[mod.subtitleKey || 'slug'] || '')}
+            </td>
             <td><span className="ad-chip ad-chip-acc">{String(row.status || row[mod.badgeKey || ''] || '')}</span></td>
             <td className="text-right">
               <div className="flex justify-end gap-1">
