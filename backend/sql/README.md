@@ -3,11 +3,19 @@
 Ce dossier contient le schéma MySQL et les données de démarrage du CMS
 **SARI Système SARL** (distribution d'équipements médicaux, Algérie).
 
-| Fichier                 | Rôle                                                        |
-| ----------------------- | ----------------------------------------------------------- |
-| `schema.mysql.sql`      | Structure : base `sari_cms`, 22 tables, index, clés étrangères |
-| `seed.mysql.sql`        | Données de démarrage (contexte algérien, FR / EN / AR)      |
-| `generate-seed.mjs`     | Générateur du seed (reproductible, IDs déterministes)       |
+| Fichier                    | Rôle                                                           |
+| -------------------------- | -------------------------------------------------------------- |
+| `schema.mysql.sql`         | Structure : base `sari_cms`, 22 tables, index, clés étrangères |
+| `generate-schema.mjs`      | **Génère** `schema.mysql.sql` depuis `prisma/schema.prisma`     |
+| `seed.mysql.sql`           | Données de démarrage (contexte algérien, FR / EN / AR)         |
+| `generate-seed.mjs`        | Générateur du seed (reproductible, IDs déterministes)          |
+| `migrate-data.mysql.sql`   | **Reprise** des jeux `data/{fr,en,ar}/*.json` — 291 lignes      |
+| `migrate-data.mjs`         | Générateur de la reprise (dates converties, `legacyId` posés)   |
+
+> `schema.mysql.sql` et `migrate-data.mysql.sql` sont **générés** : corrigez le
+> script, pas le `.sql`. Le schéma écrit à la main avait fini par diverger de
+> Prisma (colonnes `legacyId`, `parentId`, `isDefault`, `color`, `image`
+> manquantes sur huit tables) ; le dériver automatiquement évite cette dérive.
 
 > Les noms de tables (`@@map`) et de colonnes correspondent **exactement**
 > au schéma Prisma (`backend/prisma/schema.prisma`) : ne les renommez pas,
@@ -95,6 +103,55 @@ npm run start:dev
 
 ---
 
+## 2 bis. Reprendre les données des fichiers JSON
+
+Les jeux `data/{fr,en,ar}/*.json` (contenu actuel du site) se transposent en
+MySQL avec :
+
+```bash
+cd backend
+node sql/migrate-data.mjs                    # écrit migrate-data.mysql.sql
+mysql -u root -p sari_cms < sql/migrate-data.mysql.sql
+```
+
+Import direct, sans passer par un fichier :
+
+```bash
+node sql/migrate-data.mjs --execute \
+  --url "mysql://sari:MOT_DE_PASSE@127.0.0.1:3306/sari_cms"
+```
+
+Options : `--truncate` (vide les tables avant l'import), `--out CHEMIN`
+(autre destination que le fichier par défaut).
+
+### Ce que la reprise garantit
+
+| Point | Traitement |
+| ----- | ---------- |
+| **Ids en collision** | Les JSON réutilisent l'id 1 en fr, en et ar. Le français conserve ses ids, l'anglais est décalé de +1000, l'arabe de +2000. Les URLs françaises déjà indexées restent valides. |
+| **Lien entre langues** | Les trois versions d'une fiche partagent un `legacyId` (`svc-1`, `news-3`…). C'est lui qui permet au sélecteur de langue de retrouver l'id de la fiche dans la langue cible ; sans lui le site garde l'id courant, qui désigne une autre fiche. |
+| **Dates littérales** | « 15 Janvier 2024 », « 15 يناير 2024 » ou la plage « 15-18 Mars 2024 » deviennent des `DATETIME`. Une plage alimente `startDate` **et** `endDate`. Le libellé d'origine reste affiché par la vitrine. |
+| **Rejouable** | `ON DUPLICATE KEY UPDATE` : réimporter met à jour au lieu d'échouer. |
+
+Volume repris : **291 lignes** sur 10 tables — services (12), solutions (27),
+produits (45), actualités (45), événements (45), carrières (45), partenaires
+(18), témoignages (12), carrousel (12), pages (30).
+
+### Slugs et legacyId dans les fichiers JSON
+
+La reprise attend un `slug` et un `legacyId` sur chaque fiche. Le script qui
+les pose dans `data/` se lance depuis la racine du dépôt :
+
+```bash
+node scripts/add-slugs.mjs --dry-run   # aperçu
+node scripts/add-slugs.mjs             # écriture
+```
+
+Les slugs arabes restent en alphabet arabe (`بيع-المعدات`) : les navigateurs
+les encodent de façon transparente et le référencement local y gagne.
+
+---
+
 ## 3. Comptes de démonstration
 
 Mot de passe **identique pour tous les comptes** (à changer immédiatement) :
@@ -139,11 +196,14 @@ node -e "console.log(require('bcryptjs').hashSync('NouveauMotDePasse', 10))"
 
 ---
 
-## 5. Régénérer le seed
-
-Toute modification du contenu se fait dans `generate-seed.mjs`, puis :
+## 5. Régénérer les fichiers SQL
 
 ```bash
 cd backend
-node sql/generate-seed.mjs   # régénère seed.mysql.sql
+node sql/generate-schema.mjs   # schema.mysql.sql, depuis prisma/schema.prisma
+node sql/generate-seed.mjs     # seed.mysql.sql (contenu de démonstration)
+node sql/migrate-data.mjs      # migrate-data.mysql.sql (reprise des JSON)
 ```
+
+Après toute modification de `prisma/schema.prisma`, régénérez le schéma :
+c'est ce qui garantit que le SQL et le modèle Prisma ne divergent plus.

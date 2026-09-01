@@ -1,6 +1,8 @@
 [
   {
     "id": 1,
+    "slug": "biomedical-technician-m-f",
+    "legacyId": "job-1",
     "title": "Biomedical Technician M/F",
     "type": "CDI",
     "location": "Lyon (69)",
@@ -28,6 +30,8 @@
   },
   {
     "id": 2,
+    "slug": "b2b-sales-executive",
+    "legacyId": "job-2",
     "title": "B2B Sales Executive",
     "type": "CDI",
     "location": "Paris",
@@ -55,6 +59,8 @@
   },
   {
     "id": 3,
+    "slug": "logistics-manager",
+    "legacyId": "job-3",
     "title": "Logistics Manager",
     "type": "CDI",
     "location": "Lyon (69)",
@@ -82,6 +88,8 @@
   },
   {
     "id": 4,
+    "slug": "administrative-assistant",
+    "legacyId": "job-4",
     "title": "Administrative Assistant",
     "type": "CDD",
     "location": "Lyon (69)",
@@ -108,6 +116,8 @@
   },
   {
     "id": 5,
+    "slug": "imaging-application-engineer",
+    "legacyId": "job-5",
     "title": "Imaging Application Engineer",
     "type": "CDI",
     "location": "Marseille (13)",
@@ -135,6 +145,8 @@
   },
   {
     "id": 6,
+    "slug": "medical-facility-cleaner",
+    "legacyId": "job-6",
     "title": "Medical Facility Cleaner",
     "type": "CDI",
     "location": "Lyon (69)",
@@ -161,6 +173,8 @@
   },
   {
     "id": 7,
+    "slug": "digital-marketing-intern",
+    "legacyId": "job-7",
     "title": "Digital Marketing Intern",
     "type": "Stage",
     "location": "Lyon (69)",
@@ -187,6 +201,8 @@
   },
   {
     "id": 8,
+    "slug": "warehouse-forklift-operator",
+    "legacyId": "job-8",
     "title": "Warehouse Forklift Operator",
     "type": "CDI",
     "location": "Lyon (69)",
@@ -214,6 +230,8 @@
   },
   {
     "id": 9,
+    "slug": "accounts-payable-clerk",
+    "legacyId": "job-9",
     "title": "Accounts Payable Clerk",
     "type": "CDI",
     "location": "Lyon (69)",
@@ -241,6 +259,8 @@
   },
   {
     "id": 10,
+    "slug": "regulatory-quality-affairs-manager",
+    "legacyId": "job-10",
     "title": "Regulatory & Quality Affairs Manager",
     "type": "CDI",
     "location": "Lyon (69)",
@@ -268,6 +288,8 @@
   },
   {
     "id": 11,
+    "slug": "full-stack-web-developer",
+    "legacyId": "job-11",
     "title": "Full Stack Web Developer",
     "type": "CDI",
     "location": "Lyon (69) / Remote",
@@ -295,6 +317,8 @@
   },
   {
     "id": 12,
+    "slug": "senior-account-manager",
+    "legacyId": "job-12",
     "title": "Senior Account Manager",
     "type": "CDI",
     "location": "Bordeaux (33)",
@@ -322,6 +346,8 @@
   },
   {
     "id": 13,
+    "slug": "apprentice-biomedical-technician",
+    "legacyId": "job-13",
     "title": "Apprentice Biomedical Technician",
     "type": "Alternance",
     "location": "Lyon (69)",
@@ -349,6 +375,8 @@
   },
   {
     "id": 14,
+    "slug": "regional-agency-director",
+    "legacyId": "job-14",
     "title": "Regional Agency Director",
     "type": "CDI",
     "location": "Nantes (44)",
@@ -376,6 +404,8 @@
   },
   {
     "id": 15,
+    "slug": "community-manager",
+    "legacyId": "job-15",
     "title": "Community Manager",
     "type": "CDD",
     "location": "Lyon (69)",

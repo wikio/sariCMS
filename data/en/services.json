@@ -1,6 +1,8 @@
 [
   {
     "id": 1,
+    "slug": "equipment-sales",
+    "legacyId": "svc-1",
     "title": "Equipment Sales",
     "icon": "shopping-cart",
     "shortDesc": "Wide range of new and refurbished medical equipment",
@@ -19,11 +21,27 @@
       {
         "q": "What are the delivery lead times?",
         "a": "Lead times vary from 24 hours for consumables to 4-6 weeks for heavy equipment made to order."
+      },
+      {
+        "q": "Is your equipment approved for the Algerian market?",
+        "a": "Yes. Every device ships with CE certification and ISO 13485 marking, and we provide the technical file required by the national pharmaceutical products agency to register medical devices."
+      },
+      {
+        "q": "Do you handle customs clearance and freight?",
+        "a": "We manage the full import chain: bank domiciliation, clearance at the port of Algiers or Oran, and delivery to your facility. You deal with a single point of contact."
+      },
+      {
+        "q": "What payment terms do you offer?",
+        "a": "We accept bank transfer, documentary letter of credit and, for public institutions, payment against an administrative purchase order. Instalments are available on heavy equipment."
       }
-    ]
+    ],
+    "color": "sari-blue",
+    "image": "https://images.unsplash.com/photo-1516574187841-cb9cc2ca948b?w=1920"
   },
   {
     "id": 2,
+    "slug": "installation-training",
+    "legacyId": "svc-2",
     "title": "Installation & Training",
     "icon": "users",
     "shortDesc": "On-site installation and staff training",
@@ -42,11 +60,27 @@
       {
         "q": "Can we train new employees later on?",
         "a": "Abolutely, we offer additional training sessions upon quote."
+      },
+      {
+        "q": "Is the training delivered in Arabic?",
+        "a": "Our trainers work in Arabic, French or English depending on your team’s preference. Written material is handed over in all three languages."
+      },
+      {
+        "q": "How long does commissioning a technical unit take?",
+        "a": "Allow one to two days for a single device, and three to five days for a complete unit including connection, calibration and measurement validation."
+      },
+      {
+        "q": "Do participants receive a certificate?",
+        "a": "Each participant receives a personal certificate listing the modules completed — a useful document during inspections and accreditation procedures."
       }
-    ]
+    ],
+    "color": "green-500",
+    "image": "https://images.unsplash.com/photo-1581056771107-24ca5f033842?w=1920"
   },
   {
     "id": 3,
+    "slug": "maintenance-after-sales-service",
+    "legacyId": "svc-3",
     "title": "Maintenance & After-Sales Service",
     "icon": "wrench",
     "shortDesc": "Maintenance contracts and after-sales service",
@@ -65,11 +99,27 @@
       {
         "q": "Do you service all brands?",
         "a": "We are authorized for major brands and can service most equipment on the market."
+      },
+      {
+        "q": "How fast do you respond to a breakdown?",
+        "a": "Under a premium contract a technician arrives within 24 hours in Algiers and 48 hours elsewhere in the country. Remote diagnosis starts as soon as you call so the right part is brought along."
+      },
+      {
+        "q": "Do you keep spare parts in stock?",
+        "a": "Our Algiers warehouse holds wear parts for the ranges we distribute. Device-specific parts are ordered from the manufacturer within seven to ten working days."
+      },
+      {
+        "q": "Do you provide replacement equipment during downtime?",
+        "a": "Premium contracts include the loan of an equivalent device whenever a repair exceeds 72 hours, so your activity is never interrupted."
       }
-    ]
+    ],
+    "color": "orange-500",
+    "image": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=1920"
   },
   {
     "id": 4,
+    "slug": "supply-of-consumables",
+    "legacyId": "svc-4",
     "title": "Supply of Consumables",
     "icon": "package",
     "shortDesc": "Regular supply of consumables for hospitals and clinics",
@@ -88,7 +138,21 @@
       {
         "q": "Can we get samples?",
         "a": "Yes, we provide samples to test quality before committing."
+      },
+      {
+        "q": "Do you offer automatic replenishment?",
+        "a": "We set a delivery schedule based on your actual consumption, with an alert before you run out. You can adjust quantities at any time."
+      },
+      {
+        "q": "How is the cold chain guaranteed?",
+        "a": "Temperature-sensitive products travel in refrigerated containers fitted with a data logger; the record is attached to the delivery note and archived for three years."
+      },
+      {
+        "q": "Do you deliver to the southern wilayas?",
+        "a": "Yes, we cover the whole country including Tamanrasset, Adrar and Illizi. Lead times there are two to four days longer depending on the road link."
       }
-    ]
+    ],
+    "color": "purple-500",
+    "image": "https://images.unsplash.com/photo-1583912268183-a34d41fe464a?w=1920"
   }
 ]

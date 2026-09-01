@@ -1,6 +1,8 @@
 [
   {
     "id": 1,
+    "slug": "vente-equipements",
+    "legacyId": "svc-1",
     "title": "Vente d'Équipements",
     "icon": "shopping-cart",
     "shortDesc": "Large gamme d'équipements médicaux neufs et reconditionnés",
@@ -19,11 +21,27 @@
       {
         "q": "Quels sont les délais de livraison ?",
         "a": "Les délais varient de 24h pour les consommables à 4-6 semaines pour les équipements lourds sur commande."
+      },
+      {
+        "q": "Vos équipements sont-ils homologués pour le marché algérien ?",
+        "a": "Oui. Chaque appareil est livré avec sa certification CE et son marquage ISO 13485, et nous fournissons le dossier technique exigé par l'Agence nationale des produits pharmaceutiques pour l'enregistrement des dispositifs médicaux."
+      },
+      {
+        "q": "Gérez-vous les formalités douanières et le transit ?",
+        "a": "Nous prenons en charge l'importation de bout en bout : domiciliation bancaire, dédouanement au port d'Alger ou d'Oran, et acheminement jusqu'à votre établissement. Vous ne traitez qu'un seul interlocuteur."
+      },
+      {
+        "q": "Quelles facilités de paiement proposez-vous ?",
+        "a": "Nous acceptons le virement bancaire, la lettre de crédit documentaire et, pour les structures publiques, le paiement sur bon de commande administratif. Un échelonnement est possible sur les équipements lourds."
       }
-    ]
+    ],
+    "color": "sari-blue",
+    "image": "https://images.unsplash.com/photo-1516574187841-cb9cc2ca948b?w=1920"
   },
   {
     "id": 2,
+    "slug": "installation-formation",
+    "legacyId": "svc-2",
     "title": "Installation & Formation",
     "icon": "users",
     "shortDesc": "Installation sur site et formation du personnel",
@@ -42,11 +60,27 @@
       {
         "q": "Pouvons-nous former de nouveaux arrivants plus tard ?",
         "a": "Absolument, nous proposons des sessions de formation additionnelles sur devis."
+      },
+      {
+        "q": "La formation est-elle dispensée en arabe ?",
+        "a": "Nos formateurs interviennent en arabe, en français ou en anglais selon la préférence de votre équipe. Les supports écrits sont remis dans les trois langues."
+      },
+      {
+        "q": "Combien de temps dure la mise en service d'un plateau technique ?",
+        "a": "Comptez une à deux journées pour un appareil isolé, et de trois à cinq jours pour un plateau complet incluant le raccordement, l'étalonnage et la validation des mesures."
+      },
+      {
+        "q": "Délivrez-vous une attestation aux participants ?",
+        "a": "Chaque participant reçoit une attestation nominative précisant les modules suivis, document utile lors des inspections et des démarches d'accréditation."
       }
-    ]
+    ],
+    "color": "green-500",
+    "image": "https://images.unsplash.com/photo-1581056771107-24ca5f033842?w=1920"
   },
   {
     "id": 3,
+    "slug": "maintenance-sav",
+    "legacyId": "svc-3",
     "title": "Maintenance & SAV",
     "icon": "wrench",
     "shortDesc": "Contrats de maintenance et service après-vente",
@@ -65,11 +99,27 @@
       {
         "q": "Intervenez-vous sur toutes les marques ?",
         "a": "Nous sommes agréés sur les principales marques et pouvons intervenir sur la plupart des équipements du marché."
+      },
+      {
+        "q": "Quel est votre délai d'intervention en cas de panne ?",
+        "a": "Sous contrat premium, un technicien intervient sous 24 heures à Alger et sous 48 heures dans le reste du pays. Un diagnostic à distance est lancé dès l'appel afin d'apporter la bonne pièce."
+      },
+      {
+        "q": "Disposez-vous des pièces détachées en stock ?",
+        "a": "Notre magasin d’Alger conserve les pièces d’usure des gammes que nous distribuons. Les pièces spécifiques sont commandées auprès du fabricant sous sept à dix jours ouvrés."
+      },
+      {
+        "q": "Fournissez-vous un équipement de remplacement pendant l'immobilisation ?",
+        "a": "Les contrats premium incluent le prêt d'un appareil équivalent dès lors que la réparation dépasse 72 heures, afin que votre activité ne s'interrompe pas."
       }
-    ]
+    ],
+    "color": "orange-500",
+    "image": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=1920"
   },
   {
     "id": 4,
+    "slug": "fourniture-de-consommables",
+    "legacyId": "svc-4",
     "title": "Fourniture de Consommables",
     "icon": "package",
     "shortDesc": "Fourniture régulière de consommables pour hôpitaux et cliniques",
@@ -88,7 +138,21 @@
       {
         "q": "Pouvons-nous avoir des échantillons ?",
         "a": "Oui, nous fournissons des échantillons pour tester la qualité avant un engagement."
+      },
+      {
+        "q": "Assurez-vous un réapprovisionnement automatique ?",
+        "a": "Nous établissons un calendrier de livraison fondé sur votre consommation réelle, avec alerte avant rupture. Vous gardez la main pour ajuster les quantités à tout moment."
+      },
+      {
+        "q": "Comment garantissez-vous la chaîne du froid ?",
+        "a": "Les produits thermosensibles voyagent en conteneurs réfrigérés avec enregistreur de température ; le relevé est joint au bon de livraison et archivé pendant trois ans."
+      },
+      {
+        "q": "Livrez-vous dans les wilayas du Sud ?",
+        "a": "Oui, nous desservons l'ensemble du territoire, y compris Tamanrasset, Adrar et Illizi. Les délais y sont majorés de deux à quatre jours selon la liaison routière."
       }
-    ]
+    ],
+    "color": "purple-500",
+    "image": "https://images.unsplash.com/photo-1583912268183-a34d41fe464a?w=1920"
   }
 ]

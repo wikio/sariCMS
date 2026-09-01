@@ -1,6 +1,8 @@
 [
   {
     "id": 1,
+    "slug": "salon-medical-international-2024",
+    "legacyId": "evt-1",
     "title": "Salon Médical International 2024",
     "date": "15-18 Mars 2024",
     "location": "Paris Expo",
@@ -15,6 +17,8 @@
   },
   {
     "id": 2,
+    "slug": "webinar-nouvelles-technologies-imagerie",
+    "legacyId": "evt-2",
     "title": "Webinar: Nouvelles Technologies d'Imagerie",
     "date": "22 Février 2024",
     "location": "En ligne",
@@ -29,6 +33,8 @@
   },
   {
     "id": 3,
+    "slug": "journee-portes-ouvertes-sari",
+    "legacyId": "evt-3",
     "title": "Journée Portes Ouvertes SARI",
     "date": "10 Avril 2024",
     "location": "Siège Lyon",
@@ -43,6 +49,8 @@
   },
   {
     "id": 4,
+    "slug": "formation-maintenance-des-autoclaves",
+    "legacyId": "evt-4",
     "title": "Formation : Maintenance des Autoclaves",
     "date": "5 Mai 2024",
     "location": "Centre de Formation Lyon",
@@ -57,6 +65,8 @@
   },
   {
     "id": 5,
+    "slug": "conference-ia-en-radiologie",
+    "legacyId": "evt-5",
     "title": "Conférence : L'IA en Radiologie",
     "date": "12 Juin 2024",
     "location": "Hôtel Dieu, Lyon",
@@ -71,6 +81,8 @@
   },
   {
     "id": 6,
+    "slug": "salon-regional-de-la-sante",
+    "legacyId": "evt-6",
     "title": "Salon Régional de la Santé",
     "date": "20-22 Septembre 2024",
     "location": "Eurexpo Lyon",
@@ -85,6 +97,8 @@
   },
   {
     "id": 7,
+    "slug": "atelier-gestion-des-stocks-de-consommables",
+    "legacyId": "evt-7",
     "title": "Atelier : Gestion des stocks de consommables",
     "date": "15 Octobre 2024",
     "location": "En ligne",
@@ -99,6 +113,8 @@
   },
   {
     "id": 8,
+    "slug": "lancement-produit-echographe-x2",
+    "legacyId": "evt-8",
     "title": "Lancement Produit : Échographe X2",
     "date": "5 Novembre 2024",
     "location": "Siège Lyon",
@@ -113,6 +129,8 @@
   },
   {
     "id": 9,
+    "slug": "webinar-normes-hygiene-2024",
+    "legacyId": "evt-9",
     "title": "Webinar : Normes d'hygiène 2024",
     "date": "20 Novembre 2024",
     "location": "En ligne",
@@ -127,6 +145,8 @@
   },
   {
     "id": 10,
+    "slug": "forum-de-emploi-sante",
+    "legacyId": "evt-10",
     "title": "Forum de l'Emploi Santé",
     "date": "15 Janvier 2025",
     "location": "Paris",
@@ -141,6 +161,8 @@
   },
   {
     "id": 11,
+    "slug": "formation-utilisation-du-defibrillateur",
+    "legacyId": "evt-11",
     "title": "Formation : Utilisation du Défibrillateur",
     "date": "10 Février 2025",
     "location": "Marseille",
@@ -155,6 +177,8 @@
   },
   {
     "id": 12,
+    "slug": "seminaire-partenaires-annuel",
+    "legacyId": "evt-12",
     "title": "Séminaire Partenaires Annuel",
     "date": "20 Mars 2025",
     "location": "Annecy",
@@ -169,6 +193,8 @@
   },
   {
     "id": 13,
+    "slug": "demonstration-lit-electrique-premium",
+    "legacyId": "evt-13",
     "title": "Démonstration : Lit Électrique Premium",
     "date": "5 Avril 2025",
     "location": "Showroom Lyon",
@@ -183,6 +209,8 @@
   },
   {
     "id": 14,
+    "slug": "conference-telemedecine-et-ruralite",
+    "legacyId": "evt-14",
     "title": "Conférence : Télémédecine et Ruralité",
     "date": "15 Mai 2025",
     "location": "Clermont-Ferrand",
@@ -197,6 +225,8 @@
   },
   {
     "id": 15,
+    "slug": "salon-infirmier-national",
+    "legacyId": "evt-15",
     "title": "Salon Infirmier National",
     "date": "10-12 Octobre 2025",
     "location": "Paris",
