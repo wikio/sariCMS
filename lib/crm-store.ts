@@ -113,8 +113,8 @@ export interface Quote {
 
 import { nextCodeFor } from '@/lib/codes';
 
-const ORDERS_KEY = 'sari_orders';
-const QUOTES_KEY = 'sari_quotes';
+export const ORDERS_KEY = 'sari_orders';
+export const QUOTES_KEY = 'sari_quotes';
 
 const DEFAULT_ORDERS: Order[] = [
   {
@@ -284,6 +284,8 @@ function backfillOrderCodes(orders: Order[]): Order[] {
 
 export function saveOrders(orders: Order[]) {
   localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
+  // Réplication vers la base (asynchrone, sans bloquer l'appelant).
+  void import('@/lib/crm-sync').then((m) => m.pushCollection('orders', orders)).catch(() => {});
 }
 
 export function loadQuotes(): Quote[] {
@@ -313,6 +315,7 @@ function backfillQuoteReferences(quotes: Quote[]): Quote[] {
 
 export function saveQuotes(quotes: Quote[]) {
   localStorage.setItem(QUOTES_KEY, JSON.stringify(quotes));
+  void import('@/lib/crm-sync').then((m) => m.pushCollection('quotes', quotes)).catch(() => {});
 }
 
 export function orderRevenue(orders: Order[]) {

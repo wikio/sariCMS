@@ -7,7 +7,7 @@ import { ArrowLeft, Lock, LogIn, Shield } from 'lucide-react';
 import PixelGridLoader from '@/components/admin/PixelGridLoader';
 import ImageCaptcha from '@/components/ImageCaptcha';
 import { cmsFetch, CmsError } from '@/lib/cms';
-import { hasAdminSession, persistAdminSession } from '@/lib/admin-session';
+import { clearAdminSession, hasAdminAccess, persistAdminSession } from '@/lib/admin-session';
 import { loadAdminSettings } from '@/lib/admin-settings';
 
 export default function AdminLoginPage() {
@@ -25,7 +25,9 @@ export default function AdminLoginPage() {
   const [captchaOk, setCaptchaOk] = useState(false);
 
   useEffect(() => {
-    if (hasAdminSession()) router.replace(`/${locale}/admin/dashboard`);
+    // hasAdminAccess() (et non hasAdminSession()) : une session de client ou
+    // de partenaire ne doit pas ouvrir le back-office.
+    if (hasAdminAccess()) router.replace(`/${locale}/admin/dashboard`);
   }, [router, locale]);
 
   useEffect(() => {
@@ -40,6 +42,14 @@ export default function AdminLoginPage() {
     }
     if (!result.accessToken || !result.user) {
       setError(t('wrongPassword'));
+      return;
+    }
+    // Les identifiants sont valides, mais /auth/login authentifie aussi les
+    // clients, partenaires et candidats : refuser ici l'accès au back-office.
+    const type = (result.user as { type?: string }).type;
+    if (type !== 'admin') {
+      clearAdminSession();
+      setError(t('notAdmin'));
       return;
     }
     persistAdminSession(result as never);

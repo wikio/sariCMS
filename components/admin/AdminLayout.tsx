@@ -16,7 +16,7 @@ import '@/app/admin.css';
 import { ToastProvider } from '@/components/admin/Toast';
 import AdminLanguageSwitcher from '@/components/admin/AdminLanguageSwitcher';
 import { AdminThemeProvider, ADMIN_THEMES, useAdminTheme } from '@/components/admin/AdminTheme';
-import { clearAdminSession, hasAdminSession, readAdminUser } from '@/lib/admin-session';
+import { clearAdminSession, hasAdminSession, isAdminUser, readAdminUser } from '@/lib/admin-session';
 import { unreadForAdmin } from '@/lib/messages';
 
 interface Child { id: string; label: string; href: string }
@@ -55,9 +55,40 @@ function Shell({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('sari-threads-changed', refresh);
   }, []);
 
+  // Commandes, devis et candidatures sont désormais stockés en base : on
+  // rapatrie l'état du serveur à l'ouverture du back-office pour que les
+  // écrans (qui lisent le cache local) affichent les données partagées et
+  // non celles du seul navigateur courant.
   useEffect(() => {
-    setUser(readAdminUser());
-    if (!isLogin && !hasAdminSession()) router.push(`/${locale}/admin`);
+    if (isLogin || !hasAdminSession()) return;
+    let cancelled = false;
+    import('@/lib/crm-sync')
+      .then((m) => m.pullAll())
+      .then(() => {
+        if (cancelled) return;
+        // Réveille les écrans déjà montés qui écoutent ces événements.
+        window.dispatchEvent(new Event('sari-threads-changed'));
+        window.dispatchEvent(new Event('sari-payments-changed'));
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [isLogin]);
+
+  useEffect(() => {
+    const current = readAdminUser();
+    setUser(current);
+    if (isLogin) return;
+    if (!hasAdminSession()) {
+      router.push(`/${locale}/admin`);
+      return;
+    }
+    // Un compte client / partenaire / candidat possède un token valide
+    // (même endpoint /auth/login) mais n'a rien à faire dans le back-office :
+    // on ferme la session et on le renvoie vers son espace personnel.
+    if (current && !isAdminUser(current)) {
+      clearAdminSession();
+      router.replace(`/${locale}/dashboard`);
+    }
   }, [pathname, locale, isLogin, router]);
 
   const closeMobile = () => setMobileOpen(false);

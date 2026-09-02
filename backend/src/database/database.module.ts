@@ -2,6 +2,7 @@ import { Global, Logger, Module, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import mongoose from 'mongoose';
 import {
+  APPLICATION_REPOSITORY,
   AUDIT_LOG_REPOSITORY,
   COLLECTIONS,
   CONTACT_INFO_REPOSITORY,
@@ -13,10 +14,12 @@ import {
   MENU_REPOSITORY,
   NEWS_REPOSITORY,
   PAGE_REPOSITORY,
+  ORDER_REPOSITORY,
   PARTNER_REPOSITORY,
   PERMISSION_REPOSITORY,
   PRISMA_MODEL_BY_COLLECTION,
   PRODUCT_REPOSITORY,
+  QUOTE_REPOSITORY,
   REFRESH_TOKEN_REPOSITORY,
   REPOSITORY_FACTORY,
   ROLE_REPOSITORY,
@@ -56,6 +59,9 @@ const TOKEN_BY_COLLECTION: Record<string, symbol> = {
   [COLLECTIONS.careers]: CAREER_REPOSITORY,
   [COLLECTIONS.solutions]: SOLUTION_REPOSITORY,
   [COLLECTIONS.hero]: HERO_REPOSITORY,
+  [COLLECTIONS.orders]: ORDER_REPOSITORY,
+  [COLLECTIONS.quotes]: QUOTE_REPOSITORY,
+  [COLLECTIONS.applications]: APPLICATION_REPOSITORY,
 };
 
 const genericSchema = new mongoose.Schema(

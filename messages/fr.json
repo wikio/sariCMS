@@ -92,7 +92,8 @@
       "phase1": "Mode Phase 1 - Authentification locale",
       "emailPlaceholder": "vous@exemple.com",
       "apiUnreachable": "L'API est injoignable. Vérifiez qu'elle est démarrée.",
-      "verifyTotp": "Vérifier le code"
+      "verifyTotp": "Vérifier le code",
+      "notAdmin": "Ce compte n'est pas un compte administrateur. Utilisez votre espace personnel."
     },
     "dataManager": {
       "title": "Titre",
@@ -407,7 +408,27 @@
     "permissions": {
       "title": "Rôles & permissions",
       "rbac": "RBAC",
-      "resource": "Ressource"
+      "resource": "Ressource",
+      "subtitle": "Cochez les permissions accordées à chaque rôle. Chaque clic est enregistré immédiatement.",
+      "newRole": "Nouveau rôle",
+      "roleName": "Nom du rôle",
+      "roleSlug": "Identifiant (slug)",
+      "roleDescription": "Description",
+      "create": "Créer",
+      "cancel": "Annuler",
+      "delete": "Supprimer",
+      "deleteConfirm": "Supprimer ce rôle ? Les utilisateurs concernés perdront leurs droits.",
+      "systemRole": "Rôle système : non modifiable",
+      "saved": "Permissions mises à jour",
+      "created": "Rôle créé",
+      "deleted": "Rôle supprimé",
+      "loadError": "Impossible de charger les rôles",
+      "saveError": "Enregistrement impossible",
+      "selectAll": "Tout cocher",
+      "clearAll": "Tout décocher",
+      "permissionCount": "{count} permission(s)",
+      "noRole": "Aucun rôle. Créez-en un pour commencer.",
+      "nameRequired": "Le nom et l'identifiant sont obligatoires."
     },
     "common": {
       "add": "Ajouter",

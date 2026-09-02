@@ -17,6 +17,8 @@ import {
   newItemDraft,
 } from '@/lib/cms-admin';
 import { CmsError } from '@/lib/cms';
+import { userRecordHref } from '@/lib/user-links';
+import Link from 'next/link';
 
 export type CrudVariant =
   | 'catalog'
@@ -418,7 +420,7 @@ export default function AdminCrud({
           </table>
         </div>
       ) : (
-        <SmartGrid cfg={cfg} rows={filtered} onEdit={setEditing} onDelete={remove} onDrop={onDrop} setDragId={setDragId} onInline={(row, field) => setInline({ id: String(row.id), field, value: String(row[field] ?? '') })} inline={inline} persistInline={persistInline} setInline={setInline} />
+        <SmartGrid cfg={cfg} locale={locale} rows={filtered} onEdit={setEditing} onDelete={remove} onDrop={onDrop} setDragId={setDragId} onInline={(row, field) => setInline({ id: String(row.id), field, value: String(row[field] ?? '') })} inline={inline} persistInline={persistInline} setInline={setInline} />
       )}
 
       {editing && (
@@ -470,9 +472,10 @@ function coerce(value: string) {
 }
 
 function SmartGrid({
-  cfg, rows, onEdit, onDelete, onDrop, setDragId, inline, setInline, persistInline,
+  cfg, rows, onEdit, onDelete, onDrop, setDragId, inline, setInline, persistInline, locale,
 }: {
   cfg: ModuleCrudConfig;
+  locale: string;
   rows: Record<string, unknown>[];
   onEdit: (r: Record<string, unknown>) => void;
   onDelete: (id: string) => void;
@@ -574,7 +577,7 @@ function SmartGrid({
               <div className="font-bold truncate">{String(row.firstName || '')} {String(row.lastName || '')}</div>
               <div className="text-xs truncate" style={{ color: 'var(--ad-muted)' }}>{String(row.email)}</div>
             </div>
-            <span className="ad-chip ad-chip-acc">{String(row.type)}</span>
+            <TypeChip locale={locale} type={row.type} email={row.email} />
             <button className="ad-btn ad-btn-icon ad-btn-ghost" onClick={() => onEdit(row)}><Pencil className="w-4 h-4" /></button>
           </article>
         ))}
@@ -591,5 +594,30 @@ function SmartGrid({
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * Badge de type de compte, cliquable vers la vue métier correspondante.
+ *
+ * Clients, partenaires et candidats ne sont pas des tables distinctes : ce sont
+ * des lignes de `users` avec un `type` différent. Le badge mène donc à la liste
+ * métier filtrée sur l'email du compte (unique en base). Le type `admin`
+ * renvoie vers Rôles & permissions.
+ */
+function TypeChip({ locale, type, email }: { locale: string; type: unknown; email: unknown }) {
+  const label = String(type ?? '—');
+  const href = userRecordHref(locale, type, email);
+  if (!href) return <span className="ad-chip ad-chip-acc">{label}</span>;
+  return (
+    <Link
+      href={href}
+      className="ad-chip ad-chip-acc hover:underline"
+      title={`Voir la fiche ${label}`}
+      onClick={(e) => e.stopPropagation()}
+    >
+      {label}
+      <Eye className="w-3 h-3 ml-1 inline-block" />
+    </Link>
   );
 }

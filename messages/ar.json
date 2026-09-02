@@ -92,7 +92,8 @@
       "phase1": "وضع المرحلة 1 - المصادقة المحلية",
       "emailPlaceholder": "you@example.com",
       "apiUnreachable": "تعذر الوصول إلى الواجهة البرمجية. تأكد من أنها قيد التشغيل.",
-      "verifyTotp": "تحقق من الرمز"
+      "verifyTotp": "تحقق من الرمز",
+      "notAdmin": "هذا الحساب ليس حساب مسؤول. يرجى استخدام مساحتك الشخصية."
     },
     "dataManager": {
       "title": "العنوان",
@@ -407,7 +408,27 @@
     "permissions": {
       "title": "الأدوار والصلاحيات",
       "rbac": "RBAC",
-      "resource": "المورد"
+      "resource": "المورد",
+      "subtitle": "حدد الصلاحيات الممنوحة لكل دور. يتم حفظ كل نقرة فوراً.",
+      "newRole": "دور جديد",
+      "roleName": "اسم الدور",
+      "roleSlug": "المعرف",
+      "roleDescription": "الوصف",
+      "create": "إنشاء",
+      "cancel": "إلغاء",
+      "delete": "حذف",
+      "deleteConfirm": "حذف هذا الدور؟ سيفقد المستخدمون المعنيون صلاحياتهم.",
+      "systemRole": "دور نظامي: غير قابل للتعديل",
+      "saved": "تم تحديث الصلاحيات",
+      "created": "تم إنشاء الدور",
+      "deleted": "تم حذف الدور",
+      "loadError": "تعذر تحميل الأدوار",
+      "saveError": "تعذر الحفظ",
+      "selectAll": "تحديد الكل",
+      "clearAll": "إلغاء الكل",
+      "permissionCount": "{count} صلاحية",
+      "noRole": "لا يوجد دور. أنشئ واحداً للبدء.",
+      "nameRequired": "الاسم والمعرف مطلوبان."
     },
     "common": {
       "add": "إضافة",

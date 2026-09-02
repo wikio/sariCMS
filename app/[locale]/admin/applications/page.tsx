@@ -44,7 +44,12 @@ export default function AdminApplicationsPage() {
 
   useEffect(() => {
     const stored = loadApplications();
-    if (stored && stored.length >= SEED.length) setRows(stored);
+    // Les candidatures viennent désormais de la base (AdminLayout les a
+    // rapatriées au montage). On ne retombe sur le jeu de démonstration que si
+    // le stock est réellement vide : comparer à la taille du jeu de démo
+    // écrasait des candidatures réelles dès qu'il y en avait moins de dix,
+    // et les répliquait en base.
+    if (stored && stored.length > 0) setRows(stored);
     else { setRows(SEED); saveApplications(SEED); }
     loadOffers(locale).then(setOffers);
   }, [locale]);

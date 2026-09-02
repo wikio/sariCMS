@@ -92,7 +92,8 @@
       "phase1": "Phase 1 Mode - Local Authentication",
       "emailPlaceholder": "you@example.com",
       "apiUnreachable": "The API is unreachable. Check that it is running.",
-      "verifyTotp": "Verify code"
+      "verifyTotp": "Verify code",
+      "notAdmin": "This account is not an administrator account. Please use your personal dashboard."
     },
     "dataManager": {
       "title": "Title",
@@ -407,7 +408,27 @@
     "permissions": {
       "title": "Roles & permissions",
       "rbac": "RBAC",
-      "resource": "Resource"
+      "resource": "Resource",
+      "subtitle": "Tick the permissions granted to each role. Every click is saved immediately.",
+      "newRole": "New role",
+      "roleName": "Role name",
+      "roleSlug": "Identifier (slug)",
+      "roleDescription": "Description",
+      "create": "Create",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "deleteConfirm": "Delete this role? Affected users will lose their rights.",
+      "systemRole": "System role: cannot be modified",
+      "saved": "Permissions updated",
+      "created": "Role created",
+      "deleted": "Role deleted",
+      "loadError": "Unable to load roles",
+      "saveError": "Unable to save",
+      "selectAll": "Select all",
+      "clearAll": "Clear all",
+      "permissionCount": "{count} permission(s)",
+      "noRole": "No role yet. Create one to get started.",
+      "nameRequired": "Name and identifier are required."
     },
     "common": {
       "add": "Add",

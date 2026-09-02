@@ -39,6 +39,11 @@ function sqlType(prismaType, attrs) {
   if (/@db\.Text/.test(attrs)) return 'TEXT';
   const varchar = attrs.match(/@db\.VarChar\((\d+)\)/);
   if (varchar) return `VARCHAR(${varchar[1]})`;
+  // @db.Decimal(precision, scale) : sans cela tout Decimal retombait sur
+  // DECIMAL(10,2), soit un plafond de 99 999 999,99 — trop bas pour des
+  // montants en DZD sur une commande B2B.
+  const decimal = attrs.match(/@db\.Decimal\((\d+)\s*,\s*(\d+)\)/);
+  if (decimal) return `DECIMAL(${decimal[1]}, ${decimal[2]})`;
   switch (base) {
     case 'String':
       return 'VARCHAR(255)';

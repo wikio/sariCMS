@@ -19,6 +19,7 @@ import type { Product } from '@/types';
 import QuoteRequestModule from '@/components/dashboard/QuoteRequestModule';
 import MessagesModule from '@/components/dashboard/MessagesModule';
 import { unreadForUser } from '@/lib/messages';
+import { isBackOfficeUser } from '@/lib/admin-session';
 import DateText from '@/components/shared/DateText';
 import { useCurrency } from '@/lib/use-currency';
 
@@ -46,8 +47,14 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!isAuthenticated) {
       router.push(`/${locale}/connexion`);
+      return;
     }
-  }, [isAuthenticated, locale, router]);
+    // L'espace personnel est réservé aux clients, partenaires et candidats :
+    // un administrateur dispose du back-office et est redirigé vers celui-ci.
+    if (isBackOfficeUser(user?.type)) {
+      router.replace(`/${locale}/admin/dashboard`);
+    }
+  }, [isAuthenticated, locale, router, user?.type]);
 
   useEffect(() => {
     if (user?.type === 'client' || user?.type === 'partner') {
@@ -55,7 +62,9 @@ export default function DashboardPage() {
     }
   }, [locale, user?.type]);
 
-  if (!user) return null;
+  // Pas de rendu pendant la redirection : évite que l'espace client
+  // n'apparaisse une fraction de seconde à un administrateur.
+  if (!user || isBackOfficeUser(user.type)) return null;
 
   const isCandidate = user.type === 'candidate';
   const isPartner = user.type === 'partner';

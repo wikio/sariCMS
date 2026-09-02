@@ -15,7 +15,7 @@ export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const t = useTranslations('pages.login');
-  const { login } = useAuth();
+  const { login, user } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -58,7 +58,17 @@ export default function LoginPage() {
           return;
         }
       }
-      router.push(`/${locale}/dashboard`);
+      // Un administrateur qui se connecte par le formulaire public est
+      // envoyé directement au back-office : le dashboard le rejetterait.
+      // On relit localStorage (écrit par login()) plutôt que l'état `user`
+      // du contexte, qui n'est pas encore rafraîchi dans cette closure.
+      let signedInType: string | undefined = user?.type;
+      try {
+        const raw = localStorage.getItem('sari_user');
+        if (raw) signedInType = (JSON.parse(raw) as { type?: string }).type;
+      } catch { /* valeur du contexte conservée */ }
+      const target = signedInType === 'admin' ? 'admin/dashboard' : 'dashboard';
+      router.push(`/${locale}/${target}`);
     } else {
       setError(t('loginError', { defaultMessage: 'Email ou mot de passe incorrect' }));
     }

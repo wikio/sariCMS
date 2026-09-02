@@ -30,6 +30,9 @@ import { ServicesModule } from './modules/services/services.module';
 import { PartnersModule } from './modules/partners/partners.module';
 import { CareersModule } from './modules/careers/careers.module';
 import { SolutionsModule } from './modules/solutions/solutions.module';
+import { OrdersModule } from './modules/orders/orders.module';
+import { QuotesModule } from './modules/quotes/quotes.module';
+import { ApplicationsModule } from './modules/applications/applications.module';
 import { HeroModule } from './modules/hero/hero.module';
 import { HealthModule } from './modules/health/health.module';
 import { SettingsModule } from './modules/settings/settings.module';
@@ -85,6 +88,9 @@ import { MailModule } from './modules/mail/mail.module';
     PartnersModule,
     CareersModule,
     SolutionsModule,
+    OrdersModule,
+    QuotesModule,
+    ApplicationsModule,
     HeroModule,
     HealthModule,
     SettingsModule,
