@@ -489,9 +489,15 @@
   width: 100%;
   min-width: 0;
 }
+/*
+  Propriétés logiques (`inset-inline-start`, `padding-inline-start`) plutôt que
+  `left` / `padding-left` : en arabe le champ passe en RTL, et une icône ancrée
+  à gauche se superposait au texte saisi comme au placeholder, qui commencent
+  alors à droite. Les propriétés logiques suivent le sens d'écriture.
+*/
 .ad-search-ico {
   position: absolute;
-  left: 0.85rem;
+  inset-inline-start: 0.85rem;
   top: 50%;
   transform: translateY(-50%);
   pointer-events: none;
@@ -500,7 +506,7 @@
 }
 .ad-search > .ad-input,
 .ad-input.ad-input-icon {
-  padding-left: 2.65rem;
+  padding-inline-start: 2.65rem;
 }
 .ad-textarea {
   height: auto;
@@ -798,9 +804,10 @@
   position: relative;
   display: block;
 }
+/* Propriétés logiques : remplacent la surcharge [dir="rtl"] qui suivait. */
 .ad-price-ico {
   position: absolute;
-  left: 0.85rem;
+  inset-inline-start: 0.85rem;
   top: 50%;
   width: 1rem;
   height: 1rem;
@@ -810,17 +817,10 @@
   z-index: 1;
 }
 .ad-price-box .ad-input {
-  padding-left: 2.65rem;
+  padding-inline-start: 2.65rem;
+  padding-inline-end: 0.8rem;
   font-variant-numeric: tabular-nums;
   font-weight: 650;
-}
-[dir="rtl"] .ad-price-ico {
-  left: auto;
-  right: 0.85rem;
-}
-[dir="rtl"] .ad-price-box .ad-input {
-  padding-left: 0.8rem;
-  padding-right: 2.65rem;
 }
 .ad-price-chips {
   display: flex;

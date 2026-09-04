@@ -49,7 +49,19 @@ export default function AuthorPicker({ value, onChange, onNameChange }: AuthorPi
   const load = async () => {
     try {
       setLoading(true);
-      const rows = await cmsAdminList<AuthorRow>('authors', { limit: 200, locale });
+      // L'API plafonne `limit` à 100 et attend la langue dans `filter`
+      // (comme CmsList), pas en paramètre à plat. On pagine jusqu'à
+      // épuisement pour ne pas tronquer silencieusement la liste.
+      const rows: AuthorRow[] = [];
+      for (let page = 1; page <= 20; page += 1) {
+        const chunk = await cmsAdminList<AuthorRow>('authors', {
+          limit: '100',
+          page: String(page),
+          filter: JSON.stringify({ locale }),
+        });
+        rows.push(...chunk);
+        if (chunk.length < 100) break;
+      }
       setAuthors(rows);
     } catch (err) {
       console.error('[AuthorPicker] chargement impossible :', err);
@@ -174,13 +186,16 @@ export default function AuthorPicker({ value, onChange, onNameChange }: AuthorPi
               </div>
             </div>
           ) : (
-            <div className="relative">
-              <Search
-                className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
-                style={{ color: 'var(--ad-muted)' }}
-              />
+            /*
+              `ad-search` place l'icône et réserve le retrait correspondant sur
+              l'input, en tenant compte du sens d'écriture : en arabe l'icône
+              passe à droite. Un positionnement figé (left-3 / pl-9) collait
+              l'icône au texte saisi en RTL.
+            */
+            <div className="ad-search">
+              <Search className="ad-search-ico w-4 h-4" />
               <input
-                className="ad-input w-full pl-9"
+                className="ad-input w-full"
                 placeholder={loading ? t('loading') : t('placeholder')}
                 value={search}
                 onChange={(e) => {
@@ -209,7 +224,7 @@ export default function AuthorPicker({ value, onChange, onNameChange }: AuthorPi
                       key={String(a.id)}
                       type="button"
                       onClick={() => choose(a)}
-                      className="w-full text-left px-3 py-2 flex items-center justify-between gap-2 hover:opacity-80"
+                      className="w-full text-start px-3 py-2 flex items-center justify-between gap-2 hover:opacity-80"
                       style={{ background: isSel ? 'var(--ad-bg)' : 'transparent' }}
                     >
                       <span className="min-w-0">

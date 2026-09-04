@@ -17,7 +17,8 @@
  * Usage : node scripts/test-authors.mjs
  */
 
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
+import path from 'node:path';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -214,6 +215,42 @@ console.log('\n3. Reprise SQL (migrate-data.mysql.sql)');
   const byId = new Map(authorRows.map((a) => [a.id, a]));
   const mismatched = newsRows.filter((n) => byId.get(n.authorId)?.locale !== n.locale);
   check('l’auteur lié est dans la langue de l’article', mismatched.length === 0, `${mismatched.length} écart(s)`);
+}
+
+// ---------------------------------------------------------------------------
+// Garde-fou : l'API rejette `limit > 100` (ValidationPipe, QueryDto.@Max(100)).
+// Un appel codé en dur à 200 renvoyait une 400 et le champ auteur restait vide.
+// On vérifie que plus aucun appel du front ne dépasse ce plafond.
+// ---------------------------------------------------------------------------
+{
+  const roots = ['components', 'lib', 'app'];
+  const files = [];
+  const walk = (dir) => {
+    if (!existsSync(dir)) return;
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, e.name);
+      if (e.isDirectory()) walk(full);
+      else if (/\.(ts|tsx)$/.test(e.name)) files.push(full);
+    }
+  };
+  roots.forEach(walk);
+
+  const offenders = [];
+  for (const f of files) {
+    const src = readFileSync(f, 'utf8');
+    // limit: 200 / limit: '200' / limit=200 dans une query string
+    const re = /limit['"]?\s*[:=]\s*['"]?(\d+)/g;
+    let m;
+    while ((m = re.exec(src))) {
+      const n = Number(m[1]);
+      if (n > 100) offenders.push(`${f} → limit=${n}`);
+    }
+  }
+  check(
+    'aucun appel front ne demande limit > 100',
+    offenders.length === 0,
+    offenders.length ? offenders.join(', ') : `${files.length} fichiers scrutés`,
+  );
 }
 
 console.log(

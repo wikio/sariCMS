@@ -35,6 +35,19 @@ Ce dossier contient le schéma MySQL et les données de démarrage du CMS
 > Administration → Rôles pour les cocher. Le rôle `super-admin` n'est pas
 > concerné, il contourne le contrôle de permissions.
 
+> 🔁 **Après un `git pull` qui ajoute une table (`authors`…), régénérez le
+> client Prisma** — sinon l'API répond `500` sur les routes concernées avec
+> « Modèle Prisma « author » introuvable dans le client généré ». Le modèle
+> est bien dans `prisma/schema.prisma`, mais le client compilé dans
+> `node_modules` date d'avant :
+>
+> ```bash
+> cd backend && npx prisma generate && npm run start:dev
+> ```
+>
+> Cela ne concerne que `DB_DRIVER=mysql` / `postgres` ; en `json` Prisma n'est
+> pas chargé.
+
 > ⚠️ **`schema.mysql.sql` ne crée aucun compte.** Il ne pose que les tables :
 > la table `users` reste vide, et l'administration est inaccessible tant que
 > l'un des deux fichiers de données n'a pas été importé — voir §1.
