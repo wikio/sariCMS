@@ -18,6 +18,7 @@ import Toggle from '@/components/admin/Toggle';
 import DateTimePicker from '@/components/admin/fields/DateTimePicker';
 import AutocompleteSelect from '@/components/admin/fields/AutocompleteSelect';
 import ProductMultiSelect from '@/components/admin/fields/ProductMultiSelect';
+import AuthorPicker from '@/components/admin/fields/AuthorPicker';
 import { activeCurrencies, defaultCurrency, FALLBACK_CURRENCY, loadCurrencies, saveCurrencies, type Currency } from '@/lib/currencies';
 import { useAdminLabels } from '@/lib/admin-labels';
 import { COLOR_PRESETS, resolveColor } from '@/lib/colors';
@@ -80,7 +81,15 @@ export function renderField(
   value: unknown,
   onChange: (v: unknown) => void,
   record: Record<string, unknown>,
-  extra: { origin?: unknown; originLocale?: string; t?: (key: string) => string; moduleKey?: string; valueOf?: (key: string) => unknown } = {},
+  extra: {
+    origin?: unknown;
+    originLocale?: string;
+    t?: (key: string) => string;
+    moduleKey?: string;
+    valueOf?: (key: string) => unknown;
+    /** Écriture d'un autre champ du même formulaire (ex. `authorName` depuis le sélecteur d'auteur). */
+    setField?: (key: string, value: unknown) => void;
+  } = {},
 ) {
   const ph = spec.placeholder || '';
   const t = extra.t || ((key: string) => key); // Fallback: retourner la clé si pas de fonction de traduction
@@ -190,6 +199,16 @@ export function renderField(
       return wrap(<BlocksEditor value={asBlocks(value)} onChange={onChange} />);
     case 'products':
       return wrap(<ProductMultiSelect value={Array.isArray(value) ? value : []} onChange={onChange} />);
+    case 'author':
+      return wrap(
+        <AuthorPicker
+          value={value as string | number | null}
+          onChange={onChange}
+          // Le nom reste stocké sur l'article : la vitrine et les exports
+          // continuent de l'afficher même si la fiche auteur est supprimée.
+          onNameChange={(name) => extra.setField?.('authorName', name)}
+        />,
+      );
     case 'rating':
       return wrap(
         <div className="flex gap-1">

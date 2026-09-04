@@ -8,6 +8,7 @@
       "services": "Services",
       "careers": "Careers",
       "news": "News",
+      "authors": "Authors",
       "events": "Events",
       "solutions": "Solutions",
       "testimonials": "Testimonials",
@@ -632,6 +633,7 @@
       "solutions": "Solutions",
       "events": "Events",
       "news": "News",
+      "authors": "Authors",
       "careers": "Job listings",
       "applications": "Applications",
       "pages": "Pages",
@@ -1448,6 +1450,29 @@
       "dragToResize": "Drag to resize · click to close",
       "close": "Close"
     },
+    "authorPicker": {
+      "placeholder": "Search for an author…",
+      "loading": "Loading…",
+      "noResult": "No author found",
+      "change": "Change",
+      "clear": "Remove author",
+      "fallbackBadge": "Default",
+      "createTitle": "New author",
+      "createSubtitle": "The record is created right away and selected for this article.",
+      "name": "Full name",
+      "namePlaceholder": "e.g. Dr. Martin Dupont",
+      "role": "Qualification",
+      "rolePlaceholder": "e.g. Medical Director",
+      "roleHint": "Shown under the author's name on the article page.",
+      "bio": "Description",
+      "bioPlaceholder": "Introduce the author in a few lines…",
+      "bioHint": "Used in the “About the author” block on the website.",
+      "cancel": "Cancel",
+      "save": "Create author",
+      "saving": "Creating…",
+      "nameRequired": "Name is required.",
+      "createFailed": "Could not create the author."
+    },
     "servicesFields": {
       "title": "Title",
       "slug": "Slug",
@@ -1523,7 +1548,8 @@
         "Menu": "Menu",
         "Informations": "Information",
         "Coordonnées": "Contact details",
-        "Général": "General"
+        "Général": "General",
+        "Publication": "Publishing"
       },
       "title": "Title",
       "name": "Name",
@@ -1624,7 +1650,9 @@
       },
       "authors": {
         "name": "Full name",
-        "role": "Role"
+        "role": "Qualification",
+        "bio": "Description",
+        "isFallback": "Default author"
       },
       "testimonials": {
         "name": "Name",
@@ -1648,7 +1676,9 @@
       },
       "legal": {
         "content": "Legal text"
-      }
+      },
+      "authorId": "Author",
+      "isFallback": "Default author"
     },
     "imageUploader": {
       "dropHere": "Drop an image here",

@@ -70,10 +70,16 @@ export class NewsService extends BaseCrudService<NewsEntity> {
     return out;
   }
 
-  async statsByAuthor(authorId: string) {
-    const published = await this.repository.count({ authorId, status: 'published' });
-    const drafts = await this.repository.count({ authorId, status: 'draft' });
-    return { authorId, published, drafts, total: published + drafts };
+  /**
+   * Comptage des articles d'un auteur. L'identifiant arrive en chaîne depuis
+   * l'URL alors qu'il est stocké en entier : sans conversion, la comparaison
+   * échoue et le total renvoyé est toujours nul.
+   */
+  async statsByAuthor(authorId: string | number) {
+    const id = Number(authorId);
+    const published = await this.repository.count({ authorId: id, status: 'published' });
+    const drafts = await this.repository.count({ authorId: id, status: 'draft' });
+    return { authorId: id, published, drafts, total: published + drafts };
   }
 
 }

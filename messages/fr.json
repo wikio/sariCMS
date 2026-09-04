@@ -8,6 +8,7 @@
       "services": "Services",
       "careers": "Carrières",
       "news": "Actualités",
+      "authors": "Auteurs",
       "events": "Événements",
       "solutions": "Solutions",
       "testimonials": "Témoignages",
@@ -632,6 +633,7 @@
       "solutions": "Solutions",
       "events": "Événements",
       "news": "Actualités",
+      "authors": "Auteurs",
       "careers": "Offres d'emploi",
       "applications": "Candidatures",
       "pages": "Pages",
@@ -1448,6 +1450,29 @@
       "dragToResize": "Glisser pour redimensionner · cliquer pour fermer",
       "close": "Fermer"
     },
+    "authorPicker": {
+      "placeholder": "Rechercher un auteur…",
+      "loading": "Chargement…",
+      "noResult": "Aucun auteur trouvé",
+      "change": "Changer",
+      "clear": "Retirer l'auteur",
+      "fallbackBadge": "Par défaut",
+      "createTitle": "Nouvel auteur",
+      "createSubtitle": "La fiche est créée immédiatement et sélectionnée pour cet article.",
+      "name": "Nom complet",
+      "namePlaceholder": "Ex : Dr. Martin Dupont",
+      "role": "Qualification",
+      "rolePlaceholder": "Ex : Directrice médicale",
+      "roleHint": "Affichée sous le nom de l'auteur sur la page de l'article.",
+      "bio": "Description",
+      "bioPlaceholder": "Présentez l'auteur en quelques lignes…",
+      "bioHint": "Reprise dans le bloc « À propos de l'auteur » de la vitrine.",
+      "cancel": "Annuler",
+      "save": "Créer l'auteur",
+      "saving": "Création…",
+      "nameRequired": "Le nom est obligatoire.",
+      "createFailed": "Création impossible."
+    },
     "servicesFields": {
       "title": "Intitulé",
       "slug": "Slug",
@@ -1523,7 +1548,8 @@
         "Menu": "Menu",
         "Informations": "Informations",
         "Coordonnées": "Coordonnées",
-        "Général": "Général"
+        "Général": "Général",
+        "Publication": "Publication"
       },
       "title": "Titre",
       "name": "Nom",
@@ -1624,7 +1650,9 @@
       },
       "authors": {
         "name": "Nom complet",
-        "role": "Fonction / Rôle"
+        "role": "Qualification",
+        "bio": "Description",
+        "isFallback": "Auteur par défaut"
       },
       "testimonials": {
         "name": "Nom",
@@ -1648,7 +1676,9 @@
       },
       "legal": {
         "content": "Texte juridique"
-      }
+      },
+      "authorId": "Auteur",
+      "isFallback": "Auteur par défaut"
     },
     "imageUploader": {
       "dropHere": "Déposez une image ici",

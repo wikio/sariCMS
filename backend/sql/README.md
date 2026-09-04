@@ -5,16 +5,35 @@ Ce dossier contient le schéma MySQL et les données de démarrage du CMS
 
 | Fichier                    | Rôle                                                           |
 | -------------------------- | -------------------------------------------------------------- |
-| `schema.mysql.sql`         | Structure : base `sari_cms`, 22 tables, index, clés étrangères |
+| `schema.mysql.sql`         | Structure : base `sari_cms`, 26 tables, index, clés étrangères |
 | `generate-schema.mjs`      | **Génère** `schema.mysql.sql` depuis `prisma/schema.prisma`     |
 | `seed.mysql.sql`           | Données de démarrage (contexte algérien, FR / EN / AR)         |
 | `generate-seed.mjs`        | Générateur du seed (reproductible, IDs déterministes)          |
 | `auth-only.mysql.sql`      | **Comptes, rôles et permissions seuls** — sans catalogue        |
 | `extract-auth.mjs`         | Extrait `auth-only.mysql.sql` depuis le seed                    |
-| `migrate-data.mysql.sql`   | **Reprise** des jeux `data/{fr,en,ar}/*.json` — 291 lignes      |
+| `migrate-data.mysql.sql`   | **Reprise** des jeux `data/{fr,en,ar}/*.json` — 333 lignes      |
 | `migrate-data.mjs`         | Générateur de la reprise (dates converties, `legacyId` posés)   |
+| `migrate-commerce.mysql.sql` | **Migration additive** : tables `orders`, `quotes`, `job_applications` |
+| `migrate-authors.mysql.sql`  | **Migration additive** : table `authors` + `news_articles.authorId`    |
 | `setup-env.mjs`            | Crée `backend/.env` (pilote MySQL + secrets JWT aléatoires)     |
 | `test-auth-sql.mjs`        | Vérifie hachages, types de comptes et rejeu de `auth-only`      |
+| `test-commerce-sql.mjs`    | Vérifie la migration commerce (rejeu sur SQLite)                |
+| `test-authors-sql.mjs`     | Vérifie la migration auteurs (rejeu sur SQLite)                 |
+
+> 🩹 **Base déjà en production ?** N'exécutez pas `schema.mysql.sql`, qui
+> commence par `DROP TABLE`. Les fichiers `migrate-*.mysql.sql` ajoutent les
+> nouveautés sans rien détruire et sont rejouables :
+>
+> ```bash
+> mysql -u root -p sari_cms < backend/sql/migrate-commerce.mysql.sql
+> mysql -u root -p sari_cms < backend/sql/migrate-authors.mysql.sql
+> mysql -u root -p sari_cms < backend/sql/migrate-data.mysql.sql   # contenu
+> ```
+>
+> Les permissions des nouvelles ressources sont créées, mais **ne sont pas
+> accordées automatiquement** aux rôles existants : ouvrez
+> Administration → Rôles pour les cocher. Le rôle `super-admin` n'est pas
+> concerné, il contourne le contrôle de permissions.
 
 > ⚠️ **`schema.mysql.sql` ne crée aucun compte.** Il ne pose que les tables :
 > la table `users` reste vide, et l'administration est inaccessible tant que
@@ -52,7 +71,7 @@ lignes. Choisissez selon l'usage :
 | **Reprendre le contenu réel du site** (fichiers `data/`) | `schema` → `auth-only` → `migrate-data` |
 
 `auth-only.mysql.sql` contient exactement la partie authentification du seed
-(100 permissions, 4 rôles, 5 comptes), sans son catalogue : c'est ce qui permet
+(120 permissions, 4 rôles, 5 comptes), sans son catalogue : c'est ce qui permet
 de se connecter tout en gardant le contenu de `migrate-data`.
 
 ### Via la ligne de commande `mysql`
@@ -191,9 +210,9 @@ Options : `--truncate` (vide les tables avant l'import), `--out CHEMIN`
 | **Dates littérales** | « 15 Janvier 2024 », « 15 يناير 2024 » ou la plage « 15-18 Mars 2024 » deviennent des `DATETIME`. Une plage alimente `startDate` **et** `endDate`. Le libellé d'origine reste affiché par la vitrine. |
 | **Rejouable** | `ON DUPLICATE KEY UPDATE` : réimporter met à jour au lieu d'échouer. |
 
-Volume repris : **291 lignes** sur 10 tables — services (12), solutions (27),
-produits (45), actualités (45), événements (45), carrières (45), partenaires
-(18), témoignages (12), carrousel (12), pages (30).
+Volume repris : **333 lignes** sur 11 tables — services (12), solutions (27),
+produits (45), auteurs (42), actualités (45), événements (45), carrières (45),
+partenaires (18), témoignages (12), carrousel (12), pages (30).
 
 ### Slugs et legacyId dans les fichiers JSON
 
@@ -283,7 +302,7 @@ SELECT COUNT(*) FROM role_permissions;  -- attendu : 237
   Clinique El Afia, Clinique Ibn Rochd, EPH Beni Messous).
 - **Événements / actualités** : SIMEM (SAFEX Alger), journées médicales, etc.
 - **RBAC** : 4 rôles (`super-admin`, `admin`, `editor`, `viewer`) et
-  100 permissions (`resource:action`).
+  120 permissions (`resource:action`).
 - **Langues** : `fr`, `en`, `ar` sur l'ensemble du contenu vitrine.
 
 ---

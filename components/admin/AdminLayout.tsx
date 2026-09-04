@@ -115,6 +115,7 @@ function Shell({ children }: { children: ReactNode }) {
     { id: 'services', icon: Wrench, label: t('menu.services'), href: `/${locale}/admin/services` },
     { id: 'solutions', icon: Layers, label: t('menu.solutions'), href: `/${locale}/admin/solutions` },
     { id: 'news', icon: Newspaper, label: t('menu.news'), href: `/${locale}/admin/news` },
+    { id: 'authors', icon: UserRound, label: t('menu.authors'), href: `/${locale}/admin/authors` },
     { id: 'events', icon: Calendar, label: t('menu.events'), href: `/${locale}/admin/events` },
     { id: 'careers', icon: Briefcase, label: t('menu.careers'), href: `/${locale}/admin/careers` },
     { id: 'testimonials', icon: MessageCircle, label: t('menu.testimonials'), href: `/${locale}/admin/testimonials` },

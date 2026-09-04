@@ -105,7 +105,10 @@ export interface News {
   category: string;
   date: string;
   publicationDate?: string;
+  /** Nom affiché de l'auteur (fiche liée, ou nom libre pour les articles repris). */
   author?: string;
+  /** Fiche auteur liée : sert à afficher la qualification et la présentation. */
+  authorId?: number | string;
   shortDesc: string;
   fullContent?: string;
   image: string;
@@ -113,6 +116,25 @@ export interface News {
   tags?: string[];
   sujet?: string;
   classification?: string;
+}
+
+/**
+ * Fiche auteur d'une actualité. `role` est la qualification affichée sous le
+ * nom sur la page article, `bio` la présentation courte qui la suit.
+ */
+export interface Author {
+  id: number | string;
+  locale?: string;
+  legacyId?: string;
+  slug?: string;
+  name: string;
+  role?: string;
+  bio?: string;
+  photo?: string;
+  email?: string;
+  /** Auteur retenu lorsqu'un article n'en désigne aucun. */
+  isFallback?: boolean;
+  sortOrder?: number;
 }
 
 export interface Career {

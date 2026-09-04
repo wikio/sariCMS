@@ -8,6 +8,7 @@
       "services": "الخدمات",
       "careers": "الوظائف",
       "news": "الأخبار",
+      "authors": "المؤلفون",
       "events": "الفعاليات",
       "solutions": "الحلول",
       "testimonials": "الشهادات",
@@ -632,6 +633,7 @@
       "solutions": "الحلول",
       "events": "الفعاليات",
       "news": "الأخبار",
+      "authors": "المؤلفون",
       "careers": "عروض التوظيف",
       "applications": "الترشيحات",
       "pages": "الصفحات",
@@ -1448,6 +1450,29 @@
       "dragToResize": "اسحب لتغيير الحجم · انقر للإغلاق",
       "close": "إغلاق"
     },
+    "authorPicker": {
+      "placeholder": "ابحث عن مؤلف…",
+      "loading": "جارٍ التحميل…",
+      "noResult": "لم يتم العثور على مؤلف",
+      "change": "تغيير",
+      "clear": "إزالة المؤلف",
+      "fallbackBadge": "افتراضي",
+      "createTitle": "مؤلف جديد",
+      "createSubtitle": "يتم إنشاء البطاقة فوراً واختيارها لهذا المقال.",
+      "name": "الاسم الكامل",
+      "namePlaceholder": "مثال: د. مارتن دوبون",
+      "role": "المؤهل",
+      "rolePlaceholder": "مثال: المديرة الطبية",
+      "roleHint": "يظهر أسفل اسم المؤلف في صفحة المقال.",
+      "bio": "الوصف",
+      "bioPlaceholder": "قدّم المؤلف في بضعة أسطر…",
+      "bioHint": "يُستخدم في قسم «حول المؤلف» في الموقع.",
+      "cancel": "إلغاء",
+      "save": "إنشاء المؤلف",
+      "saving": "جارٍ الإنشاء…",
+      "nameRequired": "الاسم مطلوب.",
+      "createFailed": "تعذّر إنشاء المؤلف."
+    },
     "servicesFields": {
       "title": "العنوان",
       "slug": "الرابط",
@@ -1523,7 +1548,8 @@
         "Menu": "القائمة",
         "Informations": "المعلومات",
         "Coordonnées": "بيانات الاتصال",
-        "Général": "عام"
+        "Général": "عام",
+        "Publication": "النشر"
       },
       "title": "العنوان",
       "name": "الاسم",
@@ -1624,7 +1650,9 @@
       },
       "authors": {
         "name": "الاسم الكامل",
-        "role": "الوظيفة / الدور"
+        "role": "المؤهل",
+        "bio": "الوصف",
+        "isFallback": "المؤلف الافتراضي"
       },
       "testimonials": {
         "name": "الاسم",
@@ -1648,7 +1676,9 @@
       },
       "legal": {
         "content": "النص القانوني"
-      }
+      },
+      "authorId": "المؤلف",
+      "isFallback": "المؤلف الافتراضي"
     },
     "imageUploader": {
       "dropHere": "أفلت صورة هنا",

@@ -1,0 +1,142 @@
+[
+  {
+    "id": 1,
+    "legacyId": "author-1",
+    "slug": "dr-marie-laurent",
+    "name": "Dr. Marie Laurent",
+    "role": "Medical Director",
+    "bio": "A medical imaging specialist, she supports healthcare facilities in selecting and commissioning their diagnostic equipment.",
+    "isFallback": false,
+    "sortOrder": 1
+  },
+  {
+    "id": 2,
+    "legacyId": "author-2",
+    "slug": "jean-dupont",
+    "name": "Jean Dupont",
+    "role": "Head of Partnerships",
+    "bio": "He leads SARI Système's industrial alliances and the growth of its distribution network in Algeria.",
+    "isFallback": false,
+    "sortOrder": 2
+  },
+  {
+    "id": 3,
+    "legacyId": "author-3",
+    "slug": "service-formation",
+    "name": "Service Formation",
+    "role": "Training Team",
+    "bio": "The team designs and delivers training programmes for practitioners and biomedical technicians.",
+    "isFallback": false,
+    "sortOrder": 3
+  },
+  {
+    "id": 4,
+    "legacyId": "author-4",
+    "slug": "direction-qualite",
+    "name": "Direction Qualité",
+    "role": "Quality & Compliance Department",
+    "bio": "It ensures ISO compliance and regulatory conformity across the entire catalogue.",
+    "isFallback": false,
+    "sortOrder": 4
+  },
+  {
+    "id": 5,
+    "legacyId": "author-5",
+    "slug": "dr-philippe-martin",
+    "name": "Dr. Philippe Martin",
+    "role": "Hygiene & Sterilisation Consultant",
+    "bio": "He advises practices and clinics on sterilisation protocols and infection risk prevention.",
+    "isFallback": false,
+    "sortOrder": 5
+  },
+  {
+    "id": 6,
+    "legacyId": "author-6",
+    "slug": "service-technique",
+    "name": "Service Technique",
+    "role": "Technical Engineering Office",
+    "bio": "The engineering office assesses equipment performance and writes the installation guides.",
+    "isFallback": false,
+    "sortOrder": 6
+  },
+  {
+    "id": 7,
+    "legacyId": "author-7",
+    "slug": "equipe-sari",
+    "name": "Équipe SARI",
+    "role": "SARI Système Editorial Team",
+    "bio": "SARI Système's editorial team publishes company news, event reports and product announcements.",
+    "isFallback": true,
+    "sortOrder": 7
+  },
+  {
+    "id": 8,
+    "legacyId": "author-8",
+    "slug": "service-juridique",
+    "name": "Service Juridique",
+    "role": "Regulatory Affairs",
+    "bio": "The department tracks medical device regulations and explains their practical impact.",
+    "isFallback": false,
+    "sortOrder": 8
+  },
+  {
+    "id": 9,
+    "legacyId": "author-9",
+    "slug": "service-sav",
+    "name": "Service SAV",
+    "role": "After-Sales & Maintenance",
+    "bio": "The team handles preventive and corrective maintenance of the equipment installed at our customers' sites.",
+    "isFallback": false,
+    "sortOrder": 9
+  },
+  {
+    "id": 10,
+    "legacyId": "author-10",
+    "slug": "equipe-rse",
+    "name": "Équipe RSE",
+    "role": "Corporate Social Responsibility",
+    "bio": "The team drives the company's environmental commitments and the eco-design of its ranges.",
+    "isFallback": false,
+    "sortOrder": 10
+  },
+  {
+    "id": 11,
+    "legacyId": "author-11",
+    "slug": "dr-thomas-bernard",
+    "name": "Dr. Thomas Bernard",
+    "role": "Telemedicine Specialist",
+    "bio": "He studies telemedicine use cases and hosts the webinars devoted to remote practice.",
+    "isFallback": false,
+    "sortOrder": 11
+  },
+  {
+    "id": 12,
+    "legacyId": "author-12",
+    "slug": "service-rh",
+    "name": "Service RH",
+    "role": "Human Resources",
+    "bio": "The department publishes job openings and supports candidates throughout the hiring process.",
+    "isFallback": false,
+    "sortOrder": 12
+  },
+  {
+    "id": 13,
+    "legacyId": "author-13",
+    "slug": "service-commercial",
+    "name": "Service Commercial",
+    "role": "Sales Engineering",
+    "bio": "The team designs complete equipment solutions and documents the projects delivered.",
+    "isFallback": false,
+    "sortOrder": 13
+  },
+  {
+    "id": 14,
+    "legacyId": "author-14",
+    "slug": "direction-innovation",
+    "name": "Direction Innovation",
+    "role": "Innovation & Technology Watch",
+    "bio": "It analyses medical market trends and prepares tomorrow's product ranges.",
+    "isFallback": false,
+    "sortOrder": 14
+  }
+]

@@ -5,6 +5,7 @@ import type {
   Product,
   Event,
   News,
+  Author,
   Career,
   Service,
   Testimonial,
@@ -99,6 +100,7 @@ function mapNews(row: Record<string, unknown>): News {
     category: String(row.category ?? ''),
     date: String(row.date ?? row.publishedAt ?? ''),
     author: row.authorName ? String(row.authorName) : row.author ? String(row.author) : undefined,
+    authorId: row.authorId !== null && row.authorId !== undefined ? (row.authorId as number | string) : undefined,
     shortDesc: String(row.shortDesc ?? ''),
     fullContent: row.fullContent ? String(row.fullContent) : undefined,
     image: String(row.image ?? ''),
@@ -427,6 +429,62 @@ export async function getNews(locale: string): Promise<News[]> {
     
     return rows.length ? rows.map(mapNews) : [];
   });
+}
+
+/**
+ * Fiches auteurs. Le repli JSON (`data/{locale}/authors.json`) permet à la
+ * vitrine de rester complète tant que l'API n'est pas alimentée.
+ */
+function mapAuthor(row: Record<string, unknown>): Author {
+  return {
+    id: asPublicId(row),
+    locale: row.locale ? String(row.locale) : 'fr',
+    legacyId: row.legacyId ? String(row.legacyId) : undefined,
+    slug: row.slug ? String(row.slug) : undefined,
+    name: String(row.name ?? ''),
+    role: row.role ? String(row.role) : undefined,
+    bio: row.bio ? String(row.bio) : undefined,
+    photo: row.photo ? String(row.photo) : undefined,
+    email: row.email ? String(row.email) : undefined,
+    isFallback: Boolean(row.isFallback),
+    sortOrder: typeof row.sortOrder === 'number' ? row.sortOrder : undefined,
+  };
+}
+
+export async function getAuthors(locale: string): Promise<Author[]> {
+  return fromCmsOrJson(locale, 'authors', [], async () => {
+    const rows = await cmsPublicList<Record<string, unknown>>('authors', locale);
+    if (rows.length === 0 && locale !== 'fr') {
+      const frRows = await cmsPublicList<Record<string, unknown>>('authors', 'fr');
+      return frRows.length ? frRows.map(mapAuthor) : [];
+    }
+    return rows.length ? rows.map(mapAuthor) : [];
+  });
+}
+
+/**
+ * Auteur d'un article : par identifiant, sinon par nom (articles repris qui ne
+ * portent qu'un `authorName`). Retourne `null` si aucune fiche ne correspond,
+ * afin que la page puisse basculer sur l'auteur par défaut.
+ */
+export async function getArticleAuthor(locale: string, item: News): Promise<Author | null> {
+  const authors = await getAuthors(locale);
+  if (item.authorId !== undefined && item.authorId !== null) {
+    const byId = authors.find((a) => String(a.id) === String(item.authorId));
+    if (byId) return byId;
+  }
+  if (item.author) {
+    const name = item.author.trim().toLowerCase();
+    const byName = authors.find((a) => a.name.trim().toLowerCase() === name);
+    if (byName) return byName;
+  }
+  return null;
+}
+
+/** Auteur par défaut configuré dans la liste des auteurs. */
+export async function getDefaultAuthor(locale: string): Promise<Author | null> {
+  const authors = await getAuthors(locale);
+  return authors.find((a) => a.isFallback) ?? null;
 }
 
 export async function getEvents(locale: string): Promise<Event[]> {

@@ -4,6 +4,7 @@ import mongoose from 'mongoose';
 import {
   APPLICATION_REPOSITORY,
   AUDIT_LOG_REPOSITORY,
+  AUTHOR_REPOSITORY,
   COLLECTIONS,
   CONTACT_INFO_REPOSITORY,
   CONTACT_MESSAGE_REPOSITORY,
@@ -62,6 +63,7 @@ const TOKEN_BY_COLLECTION: Record<string, symbol> = {
   [COLLECTIONS.orders]: ORDER_REPOSITORY,
   [COLLECTIONS.quotes]: QUOTE_REPOSITORY,
   [COLLECTIONS.applications]: APPLICATION_REPOSITORY,
+  [COLLECTIONS.authors]: AUTHOR_REPOSITORY,
 };
 
 const genericSchema = new mongoose.Schema(

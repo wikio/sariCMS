@@ -341,12 +341,54 @@ tables.push({
   })),
 });
 
+/**
+ * authors — fiches auteurs des actualités.
+ *
+ * Les articles ne portaient qu'un nom libre (`author`), répété à l'identique
+ * sur plusieurs fiches et traduit en arabe. On en fait des enregistrements :
+ * chaque auteur gagne une qualification et une présentation, affichées par la
+ * vitrine sous son nom. Le lien article → auteur est posé plus bas via
+ * `authorId`, en s'appuyant sur le nom pour retrouver la fiche correspondante.
+ */
+tables.push({
+  name: 'authors',
+  columns: [
+    'id', 'locale', 'slug', 'name', 'role', 'bio', 'isFallback',
+    'sortOrder', 'legacyId', 'isDefault', 'status',
+  ],
+  rows: collect('authors.json', 'author', (item, locale, id, legacyId) => ({
+    id,
+    locale,
+    slug: item.slug,
+    name: item.name,
+    role: item.role ?? null,
+    bio: item.bio ?? null,
+    isFallback: Boolean(item.isFallback),
+    sortOrder: item.sortOrder ?? 0,
+    legacyId,
+    isDefault: locale === 'fr',
+    status: 'published',
+  })),
+});
+
+/**
+ * Index nom d'auteur → id de fiche, par langue. Sert à renseigner
+ * `news_articles.authorId` : les actualités désignent leur auteur par son nom
+ * (« Dr. Marie Laurent », « د. ماري لوران »), il faut le convertir en clé.
+ */
+const AUTHOR_ID_BY_NAME = new Map();
+for (const locale of LOCALES) {
+  for (const item of load(locale, 'authors.json')) {
+    AUTHOR_ID_BY_NAME.set(`${locale}::${item.name}`, Number(item.id) + OFFSET[locale]);
+  }
+}
+
 /** news — la date littérale est conservée, une date SQL est dérivée */
 tables.push({
   name: 'news_articles',
   columns: [
     'id', 'locale', 'slug', 'title', 'category', 'classification', 'sujet',
-    'authorName', 'date', 'publicationDate', 'readTime', 'shortDesc',
+    'authorName', 'authorId', 'date', 'publicationDate', 'readTime', 'shortDesc',
     'fullContent', 'image', 'legacyId', 'isDefault', 'status', 'publishedAt',
   ],
   rows: collect('news.json', 'news', (item, locale, id, legacyId) => {
@@ -360,6 +402,7 @@ tables.push({
       classification: item.classification ?? null,
       sujet: item.sujet ?? null,
       authorName: item.author ?? null,
+      authorId: AUTHOR_ID_BY_NAME.get(`${locale}::${item.author}`) ?? null,
       date: parsed?.start ?? null,
       publicationDate: parsed?.start ?? null,
       readTime: item.readTime ?? null,

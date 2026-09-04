@@ -13,6 +13,7 @@ export const RESOURCE_BY_TYPE: Record<string, string> = {
   services: 'services',
   careers: 'careers',
   news: 'news',
+  authors: 'authors',
   events: 'events',
   testimonials: 'testimonials',
   partners: 'partners',
@@ -39,9 +40,10 @@ export const WRITABLE_FIELDS: Record<string, string[]> = {
     'contact', 'applyAuth', 'status',
   ],
   news: [
-    'title', 'slug', 'locale', 'category', 'classification', 'sujet', 'authorName', 'date', 'publicationDate',
+    'title', 'slug', 'locale', 'category', 'classification', 'sujet', 'authorName', 'authorId', 'date', 'publicationDate',
     'readTime', 'shortDesc', 'fullContent', 'image', 'tags', 'status',
   ],
+  authors: ['name', 'slug', 'locale', 'role', 'bio', 'email', 'photo', 'isFallback', 'sortOrder', 'status'],
   events: [
     'title', 'slug', 'locale', 'type', 'date', 'startDate', 'endDate', 'location', 'shortDesc', 'fullContent',
     'image', 'agenda', 'status',
@@ -71,6 +73,7 @@ const DEFAULTS: Record<string, Record<string, unknown>> = {
   services: { title: 'Nouveau service', status: 'draft', icon: 'wrench' },
   careers: { title: 'Nouvelle offre', status: 'draft', type: 'CDI' },
   news: { title: 'Nouvel article', status: 'draft' },
+  authors: { name: 'Nouvel auteur', status: 'published' },
   events: { title: 'Nouvel événement', status: 'draft' },
   testimonials: { name: 'Nouveau témoignage', text: 'Avis client', rating: 5, status: 'published' },
   partners: { name: 'Nouveau partenaire', status: 'published' },

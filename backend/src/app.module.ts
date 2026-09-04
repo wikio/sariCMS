@@ -23,6 +23,7 @@ import { MenusModule } from './modules/menus/menus.module';
 import { ContactModule } from './modules/contact/contact.module';
 import { TranslationsModule } from './modules/translations/translations.module';
 import { AuditLogsModule } from './modules/audit-logs/audit-logs.module';
+import { AuthorsModule } from './modules/authors/authors.module';
 import { NewsModule } from './modules/news/news.module';
 import { EventsModule } from './modules/events/events.module';
 import { ProductsModule } from './modules/products/products.module';
@@ -82,6 +83,7 @@ import { MailModule } from './modules/mail/mail.module';
     TranslationsModule,
     AuditLogsModule,
     NewsModule,
+    AuthorsModule,
     EventsModule,
     ProductsModule,
     ServicesModule,

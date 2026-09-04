@@ -329,6 +329,38 @@ CREATE TABLE `settings` (
   UNIQUE KEY `settings_key_key` (`key`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Author
+DROP TABLE IF EXISTS `authors`;
+CREATE TABLE `authors` (
+  `id`          INT          NOT NULL AUTO_INCREMENT,
+  `locale`      VARCHAR(255) NOT NULL DEFAULT 'fr',
+  `slug`        VARCHAR(255) NULL,
+  `name`        VARCHAR(255) NOT NULL,
+  `email`       VARCHAR(255) NULL,
+  `role`        VARCHAR(255) NULL,
+  `bio`         TEXT         NULL,
+  `photo`       VARCHAR(255) NULL,
+  `isFallback`  TINYINT(1)   NOT NULL DEFAULT 0,
+  `sortOrder`   INT          NOT NULL DEFAULT 0,
+  `status`      VARCHAR(255) NOT NULL DEFAULT 'published',
+  `legacyId`    VARCHAR(255) NULL,
+  `parentId`    INT          NULL,
+  `isDefault`   TINYINT(1)   NOT NULL DEFAULT 0,
+  `publishedAt` DATETIME(3)  NULL,
+  `createdAt`   DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `updatedAt`   DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  `deletedAt`   DATETIME(3)  NULL,
+  `createdBy`   INT          NULL,
+  `updatedBy`   INT          NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `authors_slug_locale_key` (`slug`, `locale`),
+  KEY `authors_status_sortOrder_idx` (`status`, `sortOrder`),
+  KEY `authors_isFallback_idx` (`isFallback`),
+  KEY `authors_legacyId_idx` (`legacyId`),
+  KEY `authors_parentId_idx` (`parentId`),
+  KEY `authors_deletedAt_idx` (`deletedAt`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- NewsArticle
 DROP TABLE IF EXISTS `news_articles`;
 CREATE TABLE `news_articles` (
@@ -364,7 +396,8 @@ CREATE TABLE `news_articles` (
   KEY `news_articles_authorId_idx` (`authorId`),
   KEY `news_articles_legacyId_idx` (`legacyId`),
   KEY `news_articles_parentId_idx` (`parentId`),
-  KEY `news_articles_deletedAt_idx` (`deletedAt`)
+  KEY `news_articles_deletedAt_idx` (`deletedAt`),
+  CONSTRAINT `news_articles_authorId_fkey` FOREIGN KEY (`authorId`) REFERENCES `authors` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- EventItem

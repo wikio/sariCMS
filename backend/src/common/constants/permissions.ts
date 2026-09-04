@@ -14,6 +14,7 @@ export const RESOURCES = [
   'audit',
   'settings',
   'news',
+  'authors',
   'events',
   'products',
   'services',

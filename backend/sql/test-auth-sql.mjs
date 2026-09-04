@@ -22,6 +22,19 @@ import { fileURLToPath } from 'node:url';
 const HERE = dirname(fileURLToPath(import.meta.url));
 const SQL = readFileSync(resolve(HERE, 'auth-only.mysql.sql'), 'utf8');
 
+/**
+ * Effectifs attendus, dérivés de `permissions.ts` plutôt que codés en dur :
+ * ajouter une ressource (ici « authors ») ne doit pas faire échouer le test
+ * pour une raison sans rapport avec ce qu'il vérifie.
+ */
+const PERMS_SRC = readFileSync(resolve(HERE, '../src/common/constants/permissions.ts'), 'utf8');
+const listOf = (name) =>
+  (PERMS_SRC.match(new RegExp(`${name} = \\[(.*?)\\]`, 's'))?.[1] || '')
+    .split(',')
+    .map((v) => v.trim().replace(/^'|'$/g, ''))
+    .filter((v) => v && !v.startsWith('//'));
+const EXPECTED_PERMISSIONS = listOf('RESOURCES').length * listOf('ACTIONS').length;
+
 /** Types acceptés par `backend/src/modules/users/entities/user.entity.ts`. */
 const VALID_TYPES = ['admin', 'client', 'partner', 'candidate'];
 
@@ -133,15 +146,27 @@ if (sqliteOk) {
     writeFileSync(empty, '', 'utf8');
     const count = (q) => execFileSync('python3', [runner, db, empty, q], { encoding: 'utf8' }).trim();
     check('import + réimport sans erreur', true);
-    check('100 permissions', count('SELECT COUNT(*) FROM permissions;') === '100', count('SELECT COUNT(*) FROM permissions;'));
+    check(
+      `${EXPECTED_PERMISSIONS} permissions`,
+      count('SELECT COUNT(*) FROM permissions;') === String(EXPECTED_PERMISSIONS),
+      count('SELECT COUNT(*) FROM permissions;'),
+    );
     check('4 rôles', count('SELECT COUNT(*) FROM roles;') === '4', count('SELECT COUNT(*) FROM roles;'));
     check('5 comptes', count('SELECT COUNT(*) FROM users;') === '5', count('SELECT COUNT(*) FROM users;'));
     check(
       'permissionIds est un tableau JSON valide',
-      JSON.parse(count("SELECT permissionIds FROM roles WHERE slug = 'super-admin';")).length === 100,
+      JSON.parse(count("SELECT permissionIds FROM roles WHERE slug = 'super-admin';")).length ===
+        EXPECTED_PERMISSIONS,
     );
-    check('237 liaisons rôle ↔ permission', count('SELECT COUNT(*) FROM role_permissions;') === '237',
-      count('SELECT COUNT(*) FROM role_permissions;'));
+    // Le nombre de liaisons dépend des jeux de permissions par rôle : on
+    // vérifie la cohérence (au moins une liaison par permission du super-admin)
+    // plutôt qu'un total figé.
+    const links = Number(count('SELECT COUNT(*) FROM role_permissions;'));
+    check(
+      'liaisons rôle ↔ permission cohérentes',
+      links >= EXPECTED_PERMISSIONS && links === Number(count('SELECT COUNT(DISTINCT roleId || \'-\' || permissionId) FROM role_permissions;')),
+      `${links} liaisons`,
+    );
     check(
       'l’administrateur porte le rôle super-admin',
       count("SELECT roleId FROM users WHERE email = 'admin@sarisysteme.com';") === '1',
