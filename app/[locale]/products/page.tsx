@@ -13,6 +13,7 @@ import Tag from '@/components/shared/Tag';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
 import { useCurrency } from '@/lib/use-currency';
+import { useGroupFilter } from '@/lib/use-group-filter';
 
 export default function ProductsPage({ params }: { params: Promise<{ locale: string }> }) {
   // ✅ Récupérer la locale depuis les params
@@ -65,6 +66,16 @@ export default function ProductsPage({ params }: { params: Promise<{ locale: str
       ...Object.entries(categoryMap).map(([name, count]) => ({ name, count }))
     ];
   }, [products]);
+
+  // Noms de catégories réels, hors entrée « Tous » qui n'est qu'une sentinelle
+  // d'affichage : un lien de menu doit pouvoir cibler une vraie catégorie.
+  const categoryNames = useMemo(
+    () => categories.map((c) => c.name).filter((n) => n !== 'Tous'),
+    [categories],
+  );
+
+  // Un lien de menu « par catégorie » arrive avec ?category=… : on présélectionne.
+  useGroupFilter('category', categoryNames, setSelectedCategory);
 
   const priceStats = useMemo(() => {
     const prices = products.map(p => parsePrice(p.price)).filter(p => p > 0);

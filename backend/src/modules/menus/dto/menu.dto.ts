@@ -28,9 +28,13 @@ export class MenuAutoDto {
   @IsIn(AUTO_SOURCES)
   source!: (typeof AUTO_SOURCES)[number];
 
-  @ApiProperty({ enum: ['all', 'pick'] })
-  @IsIn(['all', 'pick'])
-  mode!: 'all' | 'pick';
+  /**
+   * `groups` liste les catégories du module, et non ses fiches ; `ids` porte
+   * alors des noms de catégories.
+   */
+  @ApiProperty({ enum: ['all', 'pick', 'groups'] })
+  @IsIn(['all', 'pick', 'groups'])
+  mode!: 'all' | 'pick' | 'groups';
 
   @ApiPropertyOptional({ type: [String] })
   @IsOptional()
@@ -60,6 +64,16 @@ export class MenuAutoDto {
   @IsOptional()
   @IsBoolean()
   showIcon?: boolean;
+
+  /**
+   * Reprendre l'image de la fiche en vignette.
+   * Absent = faux ; sans objet en mode `groups`, une catégorie n'ayant pas
+   * d'image propre.
+   */
+  @ApiPropertyOptional({ default: false })
+  @IsOptional()
+  @IsBoolean()
+  showImage?: boolean;
 }
 
 export class MenuItemDto {

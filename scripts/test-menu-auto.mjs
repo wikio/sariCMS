@@ -248,7 +248,7 @@ console.log('\n— Options d’affichage du sous-menu (description / icône) —
   check("le Header importe IconMark", /import IconMark from '@\/components\/admin\/IconMark';/.test(header));
   check(
     "l'icône du sous-lien est rendue quand elle existe",
-    (header.match(/sub\.icon && \(?\s*<IconMark/g) || []).length >= 2,
+    (header.match(/sub\.icon (?:&&|\?) \(?\s*<IconMark/g) || []).length >= 2,
     'desktop et mobile doivent tous deux rendre l’icône',
   );
   check(
@@ -266,7 +266,7 @@ console.log('\n— Options d’affichage du sous-menu (description / icône) —
   check('l’éditeur propose l’interrupteur icône', /setRule\(\{ showIcon: !showIcon \}\)/.test(picker));
   check(
     'l’interrupteur icône est désactivé pour les modules sans icône',
-    /disabled=\{!sourceHasIcon\}/.test(picker),
+    /disabled=\{!sourceHasIcon(?: \|\| isGroups)?\}/.test(picker),
   );
   check(
     'l’aperçu de l’admin rend aussi l’icône',
@@ -281,6 +281,121 @@ console.log('\n— Options d’affichage du sous-menu (description / icône) —
       `libellés d’affichage présents en ${loc}`,
       ['displayTitle', 'showDesc', 'showIcon', 'iconUnsupported', 'iconMissingNotice']
         .every((k) => typeof node[k] === 'string' && node[k].length > 0),
+    );
+  }
+}
+
+console.log('\n— Sous-menus par catégories et vignettes —');
+
+{
+  const autoSrc = readFileSync(resolve(ROOT, 'lib/menu-auto.ts'), 'utf8');
+
+  check('le mode groups existe', /'all' \| 'pick' \| 'groups'/.test(autoSrc));
+  check(
+    'le champ de regroupement est déclaré par module',
+    /groupField\?: 'category' \| 'type'/.test(autoSrc),
+  );
+  check(
+    'events regroupe par type, news et products par catégorie',
+    /news: \{[^}]*groupField: 'category'/.test(autoSrc) &&
+      /products: \{[^}]*groupField: 'category'/.test(autoSrc) &&
+      /events: \{[^}]*groupField: 'type'/.test(autoSrc),
+  );
+  check(
+    'solutions et services restent sans regroupement',
+    !/solutions: \{[^}]*groupField/.test(autoSrc) &&
+      !/services: \{[^}]*groupField/.test(autoSrc),
+    'ces modules sont déjà des rubriques',
+  );
+  check(
+    'seules les fiches publiées alimentent les catégories',
+    /export function collectGroups[\s\S]{0,320}if \(!isPublished\(entity\)\) continue;/.test(autoSrc),
+  );
+  check(
+    "l'URL de catégorie encode la valeur",
+    /encodeURIComponent\(String\(group\)\.trim\(\)\)/.test(autoSrc),
+  );
+  check(
+    "l'URL de catégorie vise la liste filtrée",
+    /\$\{locale\}\/\$\{basePath\}\?\$\{groupParam\(source\)\}=\$\{value\}/.test(autoSrc),
+  );
+  check(
+    'sélection de catégories vide = toutes',
+    /wanted\.length\s*\n?\s*\? wanted\.filter/.test(autoSrc),
+  );
+  check(
+    'la vignette est conditionnée à showImage',
+    /image: showImage && entity\.image \? String\(entity\.image\) : undefined/.test(autoSrc),
+  );
+  check('AutoEntity expose image, category et type',
+    /^\s*image\?: string;/m.test(autoSrc) &&
+    /^\s*category\?: string;/m.test(autoSrc) &&
+    /^\s*type\?: string;/m.test(autoSrc));
+
+  // Le mode groupes sort avant la résolution des fiches : une catégorie n'a ni
+  // description, ni icône, ni image propres.
+  const groupsBlock = autoSrc.slice(
+    autoSrc.indexOf("if (rule.mode === 'groups')"),
+    autoSrc.indexOf('let selected: AutoEntity[];'),
+  );
+  check(
+    'une entrée de catégorie ne porte aucun visuel de fiche',
+    !/\bicon:/.test(groupsBlock) && !/\bimage:/.test(groupsBlock) && !/\bdesc:/.test(groupsBlock),
+  );
+
+  const dto = readFileSync(
+    resolve(ROOT, 'backend/src/modules/menus/dto/menu.dto.ts'),
+    'utf8',
+  );
+  check("le DTO accepte le mode groups", /IsIn\(\['all', 'pick', 'groups'\]\)/.test(dto));
+  check('le DTO accepte showImage', /@IsBoolean\(\)\s*\n\s*showImage\?: boolean;/.test(dto));
+
+  const types = readFileSync(resolve(ROOT, 'types/index.ts'), 'utf8');
+  check('MenuAutoRule connaît groups et showImage',
+    /'all' \| 'pick' \| 'groups'/.test(types) && /showImage\?: boolean;/.test(types));
+  check('MenuLink transporte une image', /^\s*image\?: string;/m.test(types));
+
+  // Rendu : la vignette prime sur l'icône, sinon les deux se disputeraient la
+  // même gouttière. Vérifié sur les deux rendus, desktop et mobile.
+  const header = readFileSync(resolve(ROOT, 'components/layout/Header.tsx'), 'utf8');
+  check(
+    'la vignette est rendue avant l’icône',
+    (header.match(/\{sub\.image \? \([\s\S]*?\) : sub\.icon \? \(/g) || []).length >= 2,
+    'desktop et mobile doivent tous deux donner la priorité à la vignette',
+  );
+  check('les vignettes sont chargées paresseusement',
+    (header.match(/loading="lazy"/g) || []).length >= 2);
+
+  // Sans lecture du paramètre d'URL, un lien de catégorie serait inerte.
+  const hook = readFileSync(resolve(ROOT, 'lib/use-group-filter.ts'), 'utf8');
+  check('le hook lit le paramètre d’URL', /useSearchParams\(\)/.test(hook));
+  check('la correspondance ignore casse et espaces',
+    /\.trim\(\)\.toLowerCase\(\) === wanted\.toLowerCase\(\)/.test(hook));
+  check('le filtre ne s’applique qu’une fois',
+    /if \(applied\.current\) return;/.test(hook));
+  check('une catégorie inconnue laisse la liste complète',
+    /if \(match\) apply\(match\);/.test(hook));
+
+  for (const [page, param] of [
+    ['app/[locale]/news/page.tsx', 'category'],
+    ['app/[locale]/events/page.tsx', 'type'],
+    ['app/[locale]/products/page.tsx', 'category'],
+  ]) {
+    const src = readFileSync(resolve(ROOT, page), 'utf8');
+    check(
+      `${page.split('/')[1]} applique le filtre d’URL (${param})`,
+      new RegExp(`useGroupFilter\\('${param}'`).test(src),
+    );
+  }
+
+  for (const loc of ['fr', 'en', 'ar']) {
+    const msgs = JSON.parse(readFileSync(resolve(ROOT, `messages/${loc}.json`), 'utf8'));
+    const node = msgs?.admin?.menus ?? {};
+    check(
+      `libellés catégories/vignette présents en ${loc}`,
+      ['modeGroups', 'groupsHint', 'groupsEmpty', 'groupsNoVisual', 'showImage'].every(
+        (k) => typeof node[k] === 'string' && node[k].length > 0,
+      ),
     );
   }
 }

@@ -15,7 +15,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { Check, Eye, EyeOff, Layers, Loader2, X } from 'lucide-react';
+import { Check, Eye, EyeOff, Image as ImageIcon, Layers, Loader2, X } from 'lucide-react';
 import { cmsAdminList } from '@/lib/cms-admin';
 import IconMark from '@/components/admin/IconMark';
 import { CmsError } from '@/lib/cms';
@@ -25,6 +25,8 @@ import {
   isPublished,
   resolveAutoSubmenu,
   SOURCES_WITH_ICON,
+  SOURCES_WITH_GROUPS,
+  collectGroups,
   type AutoEntity,
   type AutoRule,
   type AutoSource,
@@ -88,7 +90,16 @@ export default function AutoSubmenuPicker({
   // Mêmes valeurs par défaut que le résolveur : description reprise, icône non.
   const showDesc = rule?.showDesc !== false;
   const showIcon = rule?.showIcon === true;
+  const showImage = rule?.showImage === true;
   const sourceHasIcon = rule ? SOURCES_WITH_ICON.includes(rule.source) : false;
+  const sourceHasGroups = rule ? SOURCES_WITH_GROUPS.includes(rule.source) : false;
+  const isGroups = rule?.mode === 'groups';
+
+  // Catégories réellement présentes dans le contenu publié.
+  const groups = useMemo(
+    () => (rule && sourceHasGroups ? collectGroups(entities, rule.source) : []),
+    [rule, entities, sourceHasGroups],
+  );
 
   // Combien de fiches retenues n'ont pas d'icône : l'éditeur saurait sinon
   // difficilement pourquoi certaines lignes restent sans pictogramme.
@@ -177,17 +188,30 @@ export default function AutoSubmenuPicker({
         <button
           type="button"
           className={`ad-btn ${rule.mode === 'all' ? 'ad-btn-primary' : 'ad-btn-ghost'}`}
-          onClick={() => setRule({ mode: 'all' })}
+          onClick={() => setRule({ mode: 'all', ids: [] })}
         >
           {t('modeAll')}
         </button>
         <button
           type="button"
           className={`ad-btn ${rule.mode === 'pick' ? 'ad-btn-primary' : 'ad-btn-ghost'}`}
-          onClick={() => setRule({ mode: 'pick' })}
+          onClick={() => setRule({ mode: 'pick', ids: rule.mode === 'groups' ? [] : rule.ids })}
         >
           {t('modePick')}
         </button>
+        {/* Les catégories n'existent que pour les modules qui en ont un champ :
+            Solutions et Services sont déjà eux-mêmes des rubriques. */}
+        {sourceHasGroups && (
+          <button
+            type="button"
+            className={`ad-btn ${isGroups ? 'ad-btn-primary' : 'ad-btn-ghost'}`}
+            // Les `ids` d'un mode portent des fiches, ceux de l'autre des noms
+            // de catégories : les conserver produirait une sélection vide.
+            onClick={() => setRule({ mode: 'groups', ids: [] })}
+          >
+            {t('modeGroups')}
+          </button>
+        )}
 
         <label className="flex items-center gap-2 text-xs ms-auto" style={{ color: 'var(--ad-muted)' }}>
           {t('limitLabel')}
@@ -221,23 +245,42 @@ export default function AutoSubmenuPicker({
           type="button"
           className={`ad-btn ${showIcon ? 'ad-btn-primary' : 'ad-btn-ghost'}`}
           aria-pressed={showIcon}
-          disabled={!sourceHasIcon}
+          disabled={!sourceHasIcon || isGroups}
           title={sourceHasIcon ? undefined : t('iconUnsupported')}
-          style={sourceHasIcon ? undefined : { opacity: 0.5, cursor: 'not-allowed' }}
+          style={!sourceHasIcon || isGroups ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}
           onClick={() => setRule({ showIcon: !showIcon })}
         >
           {showIcon ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
           {t('showIcon')}
         </button>
 
-        {!sourceHasIcon && (
+        {/* Une catégorie n'est pas une fiche : ni image ni icône propres. */}
+        <button
+          type="button"
+          className={`ad-btn ${showImage ? 'ad-btn-primary' : 'ad-btn-ghost'}`}
+          aria-pressed={showImage}
+          disabled={isGroups}
+          title={isGroups ? t('groupsNoVisual') : undefined}
+          style={isGroups ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}
+          onClick={() => setRule({ showImage: !showImage })}
+        >
+          <ImageIcon className="w-4 h-4" />
+          {t('showImage')}
+        </button>
+
+        {!isGroups && !sourceHasIcon && (
           <span className="text-xs" style={{ color: 'var(--ad-muted)' }}>
             {t('iconUnsupported')}
           </span>
         )}
+        {isGroups && (
+          <span className="text-xs" style={{ color: 'var(--ad-muted)' }}>
+            {t('groupsNoVisual')}
+          </span>
+        )}
       </div>
 
-      {sourceHasIcon && showIcon && missingIconCount > 0 && (
+      {!isGroups && sourceHasIcon && showIcon && missingIconCount > 0 && (
         <p className="text-xs" style={{ color: 'var(--ad-muted)' }}>
           {t('iconMissingNotice', { count: missingIconCount })}
         </p>
@@ -249,6 +292,48 @@ export default function AutoSubmenuPicker({
         </div>
       )}
       {error && <div className="text-xs" style={{ color: 'var(--ad-danger, #e11d48)' }}>{error}</div>}
+
+      {/* Sélection des catégories */}
+      {isGroups && !loading && (
+        <div className="space-y-1">
+          <p className="text-xs" style={{ color: 'var(--ad-muted)' }}>
+            {t('groupsHint')}
+          </p>
+          {groups.length === 0 ? (
+            <p className="text-xs" style={{ color: 'var(--ad-muted)' }}>{t('groupsEmpty')}</p>
+          ) : (
+            <div className="max-h-52 overflow-auto space-y-1 pe-1">
+              {groups.map((group) => {
+                // Aucune coche = toutes les catégories : c'est le réglage le
+                // plus courant, et il suit le contenu sans intervention.
+                const picked = (rule.ids || []).map(String);
+                const checked = picked.length === 0 || picked.includes(group);
+                return (
+                  <button
+                    key={group}
+                    type="button"
+                    className="w-full text-start px-2 py-1.5 rounded flex items-center gap-2 hover:opacity-80"
+                    style={{ background: picked.includes(group) ? 'var(--ad-bg)' : 'transparent' }}
+                    onClick={() => toggleId(group)}
+                  >
+                    <span
+                      className="w-4 h-4 shrink-0 rounded flex items-center justify-center"
+                      style={{
+                        border: '1px solid var(--ad-line)',
+                        background: checked ? 'var(--ad-accent)' : 'transparent',
+                        opacity: picked.length === 0 ? 0.5 : 1,
+                      }}
+                    >
+                      {checked && <Check className="w-3 h-3" style={{ color: '#fff' }} />}
+                    </span>
+                    <span className="text-sm truncate">{group}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Sélection manuelle */}
       {rule.mode === 'pick' && !loading && (
@@ -294,7 +379,14 @@ export default function AutoSubmenuPicker({
             <ul className="text-xs space-y-1">
               {preview.slice(0, 8).map((node) => (
                 <li key={node.id} className="flex items-start gap-1.5" style={{ color: 'var(--ad-muted)' }}>
-                  {node.icon ? (
+                  {node.image ? (
+                    <img
+                      src={node.image}
+                      alt=""
+                      className="w-6 h-6 rounded object-cover shrink-0"
+                      style={{ background: 'var(--ad-bg)' }}
+                    />
+                  ) : node.icon ? (
                     <IconMark name={node.icon} className="w-3.5 h-3.5 mt-0.5 shrink-0" />
                   ) : (
                     <span aria-hidden>·</span>

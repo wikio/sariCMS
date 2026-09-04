@@ -1724,7 +1724,12 @@
       "showDesc": "Description",
       "showIcon": "Icon",
       "iconUnsupported": "This module has no icon.",
-      "iconMissingNotice": "{count} item(s) without an icon: only the title will show for those."
+      "iconMissingNotice": "{count} item(s) without an icon: only the title will show for those.",
+      "modeGroups": "Categories",
+      "groupsHint": "One entry per category, linking to the filtered list. No tick = all of them.",
+      "groupsEmpty": "No category found in this module’s published content.",
+      "groupsNoVisual": "A category has neither icon nor image.",
+      "showImage": "Thumbnail"
     }
   },
   "common": {

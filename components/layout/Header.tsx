@@ -226,9 +226,18 @@ export default function Header({ config, menu }: { config: Config; menu: MenuTyp
                           {/* L'icône n'est présente que si l'administration l'a
                               activée et que la fiche en possède une. */}
                           <div className="flex items-start gap-2.5">
-                            {sub.icon && (
+                            {/* Vignette prioritaire sur l'icône : les deux
+                                occuperaient la même gouttière. */}
+                            {sub.image ? (
+                              <img
+                                src={sub.image}
+                                alt=""
+                                loading="lazy"
+                                className="w-10 h-10 rounded object-cover shrink-0 bg-gray-100 dark:bg-gray-800"
+                              />
+                            ) : sub.icon ? (
                               <IconMark name={sub.icon} className="w-4 h-4 mt-0.5 shrink-0 text-sari-blue" />
-                            )}
+                            ) : null}
                             <div className="min-w-0">
                               <div className="font-semibold text-sari-dark dark:text-white">{sub.label}</div>
                               {sub.desc && <div className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{sub.desc}</div>}
@@ -268,9 +277,16 @@ export default function Header({ config, menu }: { config: Config; menu: MenuTyp
                         {/* Mêmes options qu'en desktop : la configuration de
                             l'administration doit valoir sur les deux rendus. */}
                         <span className="flex items-start gap-2">
-                          {sub.icon && (
+                          {sub.image ? (
+                            <img
+                              src={sub.image}
+                              alt=""
+                              loading="lazy"
+                              className="w-8 h-8 rounded object-cover shrink-0 bg-gray-100 dark:bg-gray-800"
+                            />
+                          ) : sub.icon ? (
                             <IconMark name={sub.icon} className="w-4 h-4 mt-0.5 shrink-0 text-sari-blue" />
-                          )}
+                          ) : null}
                           <span className="min-w-0">
                             <span className="block">{sub.label}</span>
                             {sub.desc && (

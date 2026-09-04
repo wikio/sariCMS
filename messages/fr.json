@@ -1724,7 +1724,12 @@
       "showDesc": "Description",
       "showIcon": "Icône",
       "iconUnsupported": "Ce module n’a pas d’icône.",
-      "iconMissingNotice": "{count} fiche(s) sans icône : seul le titre s’affichera pour celles-ci."
+      "iconMissingNotice": "{count} fiche(s) sans icône : seul le titre s’affichera pour celles-ci.",
+      "modeGroups": "Catégories",
+      "groupsHint": "Une entrée par catégorie, menant à la liste filtrée. Aucune coche = toutes.",
+      "groupsEmpty": "Aucune catégorie dans le contenu publié de ce module.",
+      "groupsNoVisual": "Une catégorie n’a ni icône ni image.",
+      "showImage": "Vignette"
     }
   },
   "common": {

@@ -30,13 +30,17 @@ export interface Config {
  */
 export interface MenuAutoRule {
   source: 'solutions' | 'services' | 'products' | 'news' | 'events';
-  mode: 'all' | 'pick';
+  /** `groups` : les catégories du module au lieu de ses fiches. */
+  mode: 'all' | 'pick' | 'groups';
+  /** Ids de fiches en mode `pick`, noms de catégories en mode `groups`. */
   ids?: Array<string | number>;
   limit?: number;
   /** Description courte sous le titre. Absent = affichée. */
   showDesc?: boolean;
   /** Icône de la fiche devant le titre. Absent = masquée. */
   showIcon?: boolean;
+  /** Vignette de l'image de la fiche. Absent = masquée. */
+  showImage?: boolean;
 }
 
 export interface MenuLink {
@@ -45,6 +49,8 @@ export interface MenuLink {
   href: string;
   desc?: string;
   icon?: string;
+  /** Vignette affichée devant le libellé du sous-lien. */
+  image?: string;
   submenu?: MenuLink[];
   /** Présente si le sous-menu est généré ; `submenu` est alors calculé. */
   auto?: MenuAutoRule | null;
