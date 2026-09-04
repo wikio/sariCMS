@@ -535,7 +535,13 @@
       "language": "Language",
       "stock": "Stock",
       "publication": "Publication",
-      "rubric": "Section"
+      "rubric": "Section",
+      "bulkStatusConfirm": "Set {count} record(s) to “{status}”?",
+      "bulkStatusDone": "{count} record(s) set to “{status}”",
+      "bulkStatusNoop": "Already “{status}”",
+      "bulkError": "Bulk action failed",
+      "clearSelection": "Clear selection",
+      "bulkPartial": "{done} done, {failed} failed"
     },
     "visibility": {
       "breadcrumb": "Advanced settings / Storefront visibility",

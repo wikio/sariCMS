@@ -535,7 +535,13 @@
       "language": "اللغة",
       "stock": "المخزون",
       "publication": "النشر",
-      "rubric": "القسم"
+      "rubric": "القسم",
+      "bulkStatusConfirm": "تغيير {count} سجل(سجلات) إلى «{status}»؟",
+      "bulkStatusDone": "تم تغيير {count} سجل(سجلات) إلى «{status}»",
+      "bulkStatusNoop": "بالفعل «{status}»",
+      "bulkError": "تعذّر تنفيذ الإجراء الجماعي",
+      "clearSelection": "إلغاء التحديد",
+      "bulkPartial": "تمت معالجة {done}، فشل {failed}"
     },
     "visibility": {
       "breadcrumb": "إعدادات متقدمة / ظهور الواجهة",

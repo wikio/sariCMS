@@ -535,7 +535,13 @@
       "language": "Langue",
       "stock": "Stock",
       "publication": "Publication",
-      "rubric": "Rubrique"
+      "rubric": "Rubrique",
+      "bulkStatusConfirm": "Passer {count} fiche(s) en « {status} » ?",
+      "bulkStatusDone": "{count} fiche(s) passée(s) en « {status} »",
+      "bulkStatusNoop": "Déjà en « {status} »",
+      "bulkError": "Action groupée impossible",
+      "clearSelection": "Tout désélectionner",
+      "bulkPartial": "{done} traitée(s), {failed} en échec"
     },
     "visibility": {
       "breadcrumb": "Configuration avancée / Visibilité vitrine",
