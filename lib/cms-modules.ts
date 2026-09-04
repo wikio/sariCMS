@@ -181,7 +181,10 @@ export const CMS_MODULES: CmsModule[] = [
   },
   {
     key: 'events', resource: 'events', path: 'events', label: 'Événements', singular: 'événement',
-    icon: Calendar, layout: 'timeline', titleKey: 'title', imageKey: 'image', subtitleKey: 'date', badgeKey: 'type',
+    // `subtitleKey` pointait `date`, un champ hérité que l'éditeur ne remplit
+    // plus (il enregistre `startDate`) : la colonne affichait donc la valeur
+    // brute de la base au lieu de la date mise en forme.
+    icon: Calendar, layout: 'timeline', titleKey: 'title', imageKey: 'image', subtitleKey: 'startDate', badgeKey: 'type',
     searchKeys: ['title', 'location', 'type', 'category'],
     filterKeys: [{ key: 'status', label: 'Statut', options: STATUS.map((s) => s.value) }, { key: 'type', label: 'Type' }, { key: 'category', label: 'Catégorie' }],
     defaults: { title: 'Nouvel événement', status: 'draft', locale: 'fr', agenda: [] },
@@ -330,7 +333,10 @@ export const CMS_MODULES: CmsModule[] = [
   },
   {
     key: 'galleries', resource: 'pages', path: 'galleries', label: 'Galeries', singular: 'galerie',
-    icon: Images, layout: 'mosaic', titleKey: 'title', subtitleKey: 'subtype', badgeKey: 'status',
+    // `subtype` vaut « gallery » sur toutes les lignes (c'est le filtre du
+    // module) : la colonne répétait la même valeur. Le slug, lui, est déclaré
+    // dans `fields` et distingue les galeries entre elles.
+    icon: Images, layout: 'mosaic', titleKey: 'title', subtitleKey: 'slug', badgeKey: 'status',
     searchKeys: ['title'],
     filterKeys: [{ key: 'status', label: 'Statut', options: STATUS.map((s) => s.value) }],
     filter: { subtype: 'gallery' },

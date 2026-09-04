@@ -19,6 +19,7 @@ import { CmsError } from '@/lib/cms';
 import { nextSku } from '@/lib/admin-settings';
 import { slugify } from '@/lib/slugify';
 import DateText from '@/components/shared/DateText';
+import { useAdminLabels } from '@/lib/admin-labels';
 
 type ViewMode = 'list' | 'cards';
 
@@ -256,6 +257,17 @@ export default function CmsList({ mod }: { mod: CmsModule }) {
   );
 }
 
+/**
+ * Le champ affiché en sous-titre est-il une date ?
+ *
+ * Les vues Liste et Cartes s'appuient dessus pour formater la valeur selon
+ * « Paramètres → Dates & heures » au lieu de rendre l'horodatage brut de la
+ * base (`2024-10-15T00:00:00.000Z`).
+ */
+function isDateSubtitle(mod: CmsModule): boolean {
+  return mod.fields.some((f) => f.key === mod.subtitleKey && f.kind === 'datetime');
+}
+
 function SortMark({ active, dir }: { active: boolean; dir: 'asc' | 'desc' }) {
   if (!active) return null;
   return dir === 'asc' ? <ArrowUp className="w-3 h-3 inline" /> : <ArrowDown className="w-3 h-3 inline" />;
@@ -279,11 +291,22 @@ function ListTable({
   setSelected: (ids: string[]) => void;
 }) {
   const t = useTranslations('admin.common');
+  const labels = useAdminLabels(mod.key);
+  const STATUS_LABELS: Record<string, string> = {
+    draft: t('statusDraft'), published: t('statusPublished'), archived: t('statusArchived'),
+  };
   // La colonne « sous-titre » peut pointer un champ date (ex. les événements) :
   // elle suit alors le format configuré au lieu d'afficher la valeur brute.
-  const subtitleIsDate = mod.fields.some(
-    (f) => f.key === mod.subtitleKey && f.kind === 'datetime',
-  );
+  const subtitleKey = mod.subtitleKey || 'slug';
+  const subtitleIsDate = isDateSubtitle(mod);
+  // En-tête de la colonne : le libellé du champ réellement affiché plutôt
+  // qu'un « Meta » générique qui n'annonçait pas son contenu.
+  const subtitleLabel = labels.field(subtitleKey, subtitleKey);
+  // La pastille de droite montre le statut ; quand le module distingue un
+  // second axe (le type d'un événement, le contrat d'une offre), il n'était
+  // visible qu'en vue cartes. On lui donne sa propre colonne.
+  const badgeKey = mod.badgeKey && mod.badgeKey !== 'status' ? mod.badgeKey : null;
+  const badgeLabel = badgeKey ? labels.field(badgeKey, badgeKey) : '';
   if (rows.length === 0) return <Empty mod={mod} />;
   const toggle = (id: string) => setSelected(selected.includes(id) ? selected.filter((x) => x !== id) : [...selected, id]);
   const body = (
@@ -294,7 +317,10 @@ function ListTable({
           {canReorder && <th className="w-10"></th>}
           {mod.imageKey && <th>{t("visual")}</th>}
           <th onClick={() => onSort(mod.titleKey)}>{t("title")} <SortMark active={sortKey === mod.titleKey} dir={sortDir} /></th>
-          <th onClick={() => onSort(mod.subtitleKey || 'slug')}>Meta <SortMark active={sortKey === (mod.subtitleKey || 'slug')} dir={sortDir} /></th>
+          <th onClick={() => onSort(subtitleKey)}>{subtitleLabel} <SortMark active={sortKey === subtitleKey} dir={sortDir} /></th>
+          {badgeKey && (
+            <th onClick={() => onSort(badgeKey)}>{badgeLabel} <SortMark active={sortKey === badgeKey} dir={sortDir} /></th>
+          )}
           <th onClick={() => onSort('status')}>{t("status")} <SortMark active={sortKey === 'status'} dir={sortDir} /></th>
           <th></th>
         </tr>
@@ -319,10 +345,18 @@ function ListTable({
             </td>
             <td className="text-sm" style={{ color: 'var(--ad-muted)' }}>
               {subtitleIsDate
-                ? <DateText value={row[mod.subtitleKey!]} fallback="" />
-                : String(row[mod.subtitleKey || 'slug'] || '')}
+                ? <DateText value={row[subtitleKey]} fallback="—" />
+                : String(row[subtitleKey] || '—')}
             </td>
-            <td><span className="ad-chip ad-chip-acc">{String(row.status || row[mod.badgeKey || ''] || '')}</span></td>
+            {badgeKey && (
+              <td className="text-sm">
+                {String(row[badgeKey] || '') ? (
+                  <span className="ad-chip">{String(row[badgeKey])}</span>
+                ) : <span style={{ color: 'var(--ad-muted)' }}>—</span>}
+              </td>
+            )}
+            {/* `status` seul : le repli sur `badgeKey` doublonnait la colonne voisine. */}
+            <td><span className="ad-chip ad-chip-acc">{STATUS_LABELS[String(row.status || '')] || String(row.status || '—')}</span></td>
             <td className="text-right">
               <div className="flex justify-end gap-1">
                 <Link href={`/${locale}/admin/${mod.path}/${row.id}?consult=1`} className="ad-btn ad-btn-icon ad-btn-ghost" title={t("consult")}><Eye className="w-4 h-4" /></Link>
@@ -360,6 +394,7 @@ function CardCanvas({
   onDragEnd: (e: DragEndEvent) => void;
 }) {
   const t = useTranslations('admin.common');
+  const subtitleIsDate = isDateSubtitle(mod);
   if (rows.length === 0) return <Empty mod={mod} />;
   const cards = rows.map((row) => (
     <SortableCard key={String(row.id)} id={String(row.id)} disabled={!canReorder}>
@@ -379,7 +414,14 @@ function CardCanvas({
               <span className={`ad-chip ${['published', 'active'].includes(String(row[mod.badgeKey])) ? 'ad-chip-ok' : 'ad-chip-warn'}`}>{String(row[mod.badgeKey])}</span>
             )}
           </div>
-          {mod.subtitleKey && <p className="text-xs" style={{ color: 'var(--ad-muted)' }}>{String(row[mod.subtitleKey] || '')}</p>}
+          {mod.subtitleKey && (
+            <p className="text-xs" style={{ color: 'var(--ad-muted)' }}>
+              {/* Même règle qu'en vue Liste : un champ date suit le format configuré. */}
+              {subtitleIsDate
+                ? <DateText value={row[mod.subtitleKey]} fallback="" />
+                : String(row[mod.subtitleKey] || '')}
+            </p>
+          )}
           {mod.key === 'products' && (
             <div className="flex justify-between text-sm">
               <span style={{ color: 'var(--ad-muted)' }}>{String(row.sku || row.category || '')}</span>
