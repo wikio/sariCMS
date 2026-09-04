@@ -11,6 +11,9 @@ export class QuotesService extends BaseCrudService<QuoteEntity> {
   protected readonly repository: ICrudRepository<QuoteEntity>;
   protected readonly options: CrudServiceOptions = {
     resource: 'quotes',
+    // Table sans colonne `legacyId` (contenu non traduit par fiches sœurs) :
+    // l'injecter faisait échouer la création sous MySQL.
+    hasLegacyId: false,
     searchFields: ['reference', 'client', 'email', 'company', 'phone'],
     sortableFields: ['createdAt', 'updatedAt', 'date', 'total', 'status'],
     listFields: ['id', 'reference', 'client', 'email', 'company', 'date', 'status', 'total', 'currency', 'userId'],

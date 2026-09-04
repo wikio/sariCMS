@@ -11,6 +11,9 @@ export class OrdersService extends BaseCrudService<OrderEntity> {
   protected readonly repository: ICrudRepository<OrderEntity>;
   protected readonly options: CrudServiceOptions = {
     resource: 'orders',
+    // Table sans colonne `legacyId` (contenu non traduit par fiches sœurs) :
+    // l'injecter faisait échouer la création sous MySQL.
+    hasLegacyId: false,
     searchFields: ['code', 'client', 'email', 'company', 'phone'],
     sortableFields: ['createdAt', 'updatedAt', 'date', 'total', 'status'],
     listFields: ['id', 'code', 'client', 'email', 'company', 'date', 'status', 'total', 'currency', 'paid', 'userId'],

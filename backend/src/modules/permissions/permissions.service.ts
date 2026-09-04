@@ -11,6 +11,9 @@ export class PermissionsService extends BaseCrudService<PermissionEntity> {
   protected readonly repository: ICrudRepository<PermissionEntity>;
   protected readonly options: CrudServiceOptions = {
     resource: 'permissions',
+    // Table sans colonne `legacyId` (contenu non traduit par fiches sœurs) :
+    // l'injecter faisait échouer la création sous MySQL.
+    hasLegacyId: false,
     searchFields: ['resource', 'action', 'description'],
     sortableFields: ['resource', 'action', 'createdAt'],
     listFields: ['id', 'resource', 'action', 'description'],

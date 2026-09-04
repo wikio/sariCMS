@@ -31,6 +31,16 @@ export interface CrudServiceOptions {
   cacheTtl?: number;
   listFields?: string[];
   cardFields?: string[];
+  /**
+   * La table porte-t-elle une colonne `legacyId` ?
+   *
+   * `legacyId` relie les versions FR/EN/AR d'une même fiche : il n'a de sens
+   * que pour les contenus traduisibles. Les tables techniques (menus, rôles,
+   * utilisateurs, permissions…) ne l'ont pas, et le leur envoyer faisait
+   * échouer la création sous MySQL/Postgres avec « Unknown argument
+   * `legacyId` ». Le défaut `true` reste juste pour les modules de contenu.
+   */
+  hasLegacyId?: boolean;
 }
 
 @Injectable()
@@ -331,6 +341,9 @@ export abstract class BaseCrudService<T extends BaseEntity> {
    * étant conservée.
    */
   protected withLegacyId(dto: Partial<T>): Partial<T> {
+    // Table sans colonne `legacyId` : ne rien injecter, sinon Prisma rejette
+    // l'argument inconnu et la création répond 500.
+    if (this.options.hasLegacyId === false) return dto;
     if (dto.legacyId) return dto;
     const prefix = this.options.resource.slice(0, 4).replace(/[^a-z0-9]/gi, '') || 'ent';
     return {

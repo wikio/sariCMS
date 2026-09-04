@@ -12,6 +12,9 @@ export class PagesService extends BaseCrudService<PageEntity> {
   protected readonly repository: ICrudRepository<PageEntity>;
   protected readonly options: CrudServiceOptions = {
     resource: 'pages',
+    // Table sans colonne `legacyId` (contenu non traduit par fiches sœurs) :
+    // l'injecter faisait échouer la création sous MySQL.
+    hasLegacyId: false,
     searchFields: ['title', 'slug', 'subtitle', 'category', 'content'],
     sortableFields: ['createdAt', 'updatedAt', 'title', 'sortOrder', 'publishedAt', 'kind'],
     listFields: ['id', 'slug', 'locale', 'kind', 'subtype', 'title', 'status', 'updatedAt'],
