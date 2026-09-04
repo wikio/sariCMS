@@ -26,6 +26,22 @@ export type AutoRule = {
   ids?: Array<string | number>;
   /** Nombre maximal d'entrées affichées (0 ou absent = pas de limite). */
   limit?: number;
+  /**
+   * Afficher la description courte de la fiche sous son titre.
+   *
+   * Absent = `true` : c'était le comportement avant que l'option existe, et le
+   * changer silencieusement viderait les menus déjà en base de leurs
+   * descriptions.
+   */
+  showDesc?: boolean;
+  /**
+   * Afficher l'icône de la fiche devant son titre.
+   *
+   * Absent = `false` : aucune icône n'était rendue auparavant, l'activer par
+   * défaut modifierait l'apparence des menus existants sans qu'on l'ait
+   * demandé. Sans effet sur les modules qui n'ont pas de champ `icon`.
+   */
+  showIcon?: boolean;
 };
 
 /** Entrée de menu, manuelle ou générée. */
@@ -49,8 +65,13 @@ export type AutoEntity = {
   name?: string;
   status?: string;
   shortDesc?: string;
+  /** Nom d'icône Lucide ; seuls Solutions et Services en possèdent une. */
+  icon?: string;
   sortOrder?: number;
 };
+
+/** Modules dont les fiches portent un champ `icon` exploitable dans un menu. */
+export const SOURCES_WITH_ICON: readonly AutoSource[] = ['solutions', 'services'];
 
 /**
  * Segment d'URL de chaque module.
@@ -124,11 +145,18 @@ export function resolveAutoSubmenu(
   const limit = Number(rule.limit) || 0;
   if (limit > 0) selected = selected.slice(0, limit);
 
+  // Options d'affichage : la description était toujours reprise avant qu'elles
+  // existent, l'icône jamais. On conserve ces valeurs par défaut pour ne pas
+  // changer l'aspect des menus déjà enregistrés.
+  const showDesc = rule.showDesc !== false;
+  const showIcon = rule.showIcon === true;
+
   return selected.map((entity) => ({
     id: `auto-${rule.source}-${entity.id ?? entity.slug}`,
     label: entityLabel(entity, rule.source),
     href: entityUrl(locale, basePath, entity),
-    desc: entity.shortDesc ? String(entity.shortDesc) : undefined,
+    desc: showDesc && entity.shortDesc ? String(entity.shortDesc) : undefined,
+    icon: showIcon && entity.icon ? String(entity.icon) : undefined,
   }));
 }
 

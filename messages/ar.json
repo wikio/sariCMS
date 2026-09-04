@@ -1719,7 +1719,12 @@
       "source_services": "الخدمات",
       "source_products": "المنتجات",
       "source_news": "الأخبار",
-      "source_events": "الفعاليات"
+      "source_events": "الفعاليات",
+      "displayTitle": "العرض",
+      "showDesc": "الوصف",
+      "showIcon": "الأيقونة",
+      "iconUnsupported": "هذه الوحدة لا تحتوي على أيقونة.",
+      "iconMissingNotice": "{count} عنصر بدون أيقونة: سيظهر العنوان فقط لهذه العناصر."
     }
   },
   "common": {

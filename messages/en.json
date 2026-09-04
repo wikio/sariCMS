@@ -1719,7 +1719,12 @@
       "source_services": "Services",
       "source_products": "Products",
       "source_news": "News",
-      "source_events": "Events"
+      "source_events": "Events",
+      "displayTitle": "Display",
+      "showDesc": "Description",
+      "showIcon": "Icon",
+      "iconUnsupported": "This module has no icon.",
+      "iconMissingNotice": "{count} item(s) without an icon: only the title will show for those."
     }
   },
   "common": {

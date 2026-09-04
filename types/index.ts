@@ -33,6 +33,10 @@ export interface MenuAutoRule {
   mode: 'all' | 'pick';
   ids?: Array<string | number>;
   limit?: number;
+  /** Description courte sous le titre. Absent = affichée. */
+  showDesc?: boolean;
+  /** Icône de la fiche devant le titre. Absent = masquée. */
+  showIcon?: boolean;
 }
 
 export interface MenuLink {

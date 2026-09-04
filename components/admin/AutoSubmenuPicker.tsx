@@ -15,14 +15,16 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { Check, Eye, Layers, Loader2, X } from 'lucide-react';
+import { Check, Eye, EyeOff, Layers, Loader2, X } from 'lucide-react';
 import { cmsAdminList } from '@/lib/cms-admin';
+import IconMark from '@/components/admin/IconMark';
 import { CmsError } from '@/lib/cms';
 import {
   AUTO_SOURCES,
   entityLabel,
   isPublished,
   resolveAutoSubmenu,
+  SOURCES_WITH_ICON,
   type AutoEntity,
   type AutoRule,
   type AutoSource,
@@ -82,6 +84,25 @@ export default function AutoSubmenuPicker({
 
   const published = useMemo(() => entities.filter(isPublished), [entities]);
   const hiddenCount = entities.length - published.length;
+
+  // Mêmes valeurs par défaut que le résolveur : description reprise, icône non.
+  const showDesc = rule?.showDesc !== false;
+  const showIcon = rule?.showIcon === true;
+  const sourceHasIcon = rule ? SOURCES_WITH_ICON.includes(rule.source) : false;
+
+  // Combien de fiches retenues n'ont pas d'icône : l'éditeur saurait sinon
+  // difficilement pourquoi certaines lignes restent sans pictogramme.
+  const missingIconCount = useMemo(() => {
+    if (!rule || !sourceHasIcon) return 0;
+    const selected =
+      rule.mode === 'pick'
+        ? (rule.ids || [])
+            .map(String)
+            .map((id) => published.find((e) => String(e.id) === id))
+            .filter(Boolean)
+        : published;
+    return selected.filter((e) => !String(e?.icon || '').trim()).length;
+  }, [rule, published, sourceHasIcon]);
 
   // Aperçu : exactement la résolution utilisée par la vitrine.
   const preview = useMemo(
@@ -180,6 +201,48 @@ export default function AutoSubmenuPicker({
         </label>
       </div>
 
+      {/* Options d'affichage du sous-menu sur la vitrine */}
+      <div className="flex flex-wrap items-center gap-2 pt-1" style={{ borderTop: '1px solid var(--ad-line)' }}>
+        <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>
+          {t('displayTitle')}
+        </span>
+
+        <button
+          type="button"
+          className={`ad-btn ${showDesc ? 'ad-btn-primary' : 'ad-btn-ghost'}`}
+          aria-pressed={showDesc}
+          onClick={() => setRule({ showDesc: !showDesc })}
+        >
+          {showDesc ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+          {t('showDesc')}
+        </button>
+
+        <button
+          type="button"
+          className={`ad-btn ${showIcon ? 'ad-btn-primary' : 'ad-btn-ghost'}`}
+          aria-pressed={showIcon}
+          disabled={!sourceHasIcon}
+          title={sourceHasIcon ? undefined : t('iconUnsupported')}
+          style={sourceHasIcon ? undefined : { opacity: 0.5, cursor: 'not-allowed' }}
+          onClick={() => setRule({ showIcon: !showIcon })}
+        >
+          {showIcon ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+          {t('showIcon')}
+        </button>
+
+        {!sourceHasIcon && (
+          <span className="text-xs" style={{ color: 'var(--ad-muted)' }}>
+            {t('iconUnsupported')}
+          </span>
+        )}
+      </div>
+
+      {sourceHasIcon && showIcon && missingIconCount > 0 && (
+        <p className="text-xs" style={{ color: 'var(--ad-muted)' }}>
+          {t('iconMissingNotice', { count: missingIconCount })}
+        </p>
+      )}
+
       {loading && (
         <div className="text-xs flex items-center gap-2" style={{ color: 'var(--ad-muted)' }}>
           <Loader2 className="w-3 h-3 animate-spin" /> {t('autoLoading')}
@@ -228,10 +291,19 @@ export default function AutoSubmenuPicker({
           {preview.length === 0 ? (
             <p className="text-xs" style={{ color: 'var(--ad-muted)' }}>{t('previewEmpty')}</p>
           ) : (
-            <ul className="text-xs space-y-0.5">
+            <ul className="text-xs space-y-1">
               {preview.slice(0, 8).map((node) => (
-                <li key={node.id} className="truncate" style={{ color: 'var(--ad-muted)' }}>
-                  · {node.label} <span className="opacity-60">{node.href}</span>
+                <li key={node.id} className="flex items-start gap-1.5" style={{ color: 'var(--ad-muted)' }}>
+                  {node.icon ? (
+                    <IconMark name={node.icon} className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                  ) : (
+                    <span aria-hidden>·</span>
+                  )}
+                  <span className="min-w-0">
+                    <span className="truncate">{node.label} </span>
+                    <span className="opacity-60">{node.href}</span>
+                    {node.desc && <span className="block opacity-70 truncate">{node.desc}</span>}
+                  </span>
                 </li>
               ))}
               {preview.length > 8 && (

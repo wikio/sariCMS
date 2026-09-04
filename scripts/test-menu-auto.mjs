@@ -198,6 +198,93 @@ console.log('\n— Résolution côté vitrine —');
   );
 }
 
+console.log('\n— Options d’affichage du sous-menu (description / icône) —');
+
+{
+  const autoSrc = readFileSync(resolve(ROOT, 'lib/menu-auto.ts'), 'utf8');
+
+  // Rétrocompatibilité : les menus déjà en base n'ont ni showDesc ni showIcon.
+  // La description doit rester visible, l'icône rester masquée.
+  check(
+    'description affichée par défaut (showDesc absent = vrai)',
+    /const showDesc = rule\.showDesc !== false;/.test(autoSrc),
+  );
+  check(
+    'icône masquée par défaut (showIcon absent = faux)',
+    /const showIcon = rule\.showIcon === true;/.test(autoSrc),
+  );
+  check(
+    'la description est conditionnée à showDesc',
+    /desc: showDesc && entity\.shortDesc \? String\(entity\.shortDesc\) : undefined/.test(autoSrc),
+  );
+  check(
+    "l'icône est conditionnée à showIcon",
+    /icon: showIcon && entity\.icon \? String\(entity\.icon\) : undefined/.test(autoSrc),
+  );
+  check('AutoEntity expose icon', /^\s*icon\?: string;/m.test(autoSrc));
+  check(
+    'les modules porteurs d’icône sont déclarés',
+    /SOURCES_WITH_ICON[^=]*=\s*\['solutions', 'services'\]/.test(autoSrc),
+  );
+
+  // Le DTO doit accepter les deux champs, sinon forbidNonWhitelisted rejette
+  // l'enregistrement avec « property showDesc should not exist ».
+  const dto = readFileSync(
+    resolve(ROOT, 'backend/src/modules/menus/dto/menu.dto.ts'),
+    'utf8',
+  );
+  check('le DTO accepte showDesc', /@IsBoolean\(\)\s*\n\s*showDesc\?: boolean;/.test(dto));
+  check('le DTO accepte showIcon', /@IsBoolean\(\)\s*\n\s*showIcon\?: boolean;/.test(dto));
+
+  const types = readFileSync(resolve(ROOT, 'types/index.ts'), 'utf8');
+  check(
+    'MenuAutoRule porte les deux options',
+    /showDesc\?: boolean;/.test(types) && /showIcon\?: boolean;/.test(types),
+  );
+
+  // Rendu vitrine : les deux affichages doivent être conditionnels, et les
+  // versions desktop et mobile doivent se comporter pareil.
+  const header = readFileSync(resolve(ROOT, 'components/layout/Header.tsx'), 'utf8');
+  check("le Header importe IconMark", /import IconMark from '@\/components\/admin\/IconMark';/.test(header));
+  check(
+    "l'icône du sous-lien est rendue quand elle existe",
+    (header.match(/sub\.icon && \(?\s*<IconMark/g) || []).length >= 2,
+    'desktop et mobile doivent tous deux rendre l’icône',
+  );
+  check(
+    'la description reste conditionnelle',
+    (header.match(/sub\.desc &&/g) || []).length >= 2,
+    'desktop et mobile doivent tous deux rendre la description',
+  );
+
+  // Éditeur : les interrupteurs, et le garde-fou sur les modules sans icône.
+  const picker = readFileSync(
+    resolve(ROOT, 'components/admin/AutoSubmenuPicker.tsx'),
+    'utf8',
+  );
+  check('l’éditeur propose l’interrupteur description', /setRule\(\{ showDesc: !showDesc \}\)/.test(picker));
+  check('l’éditeur propose l’interrupteur icône', /setRule\(\{ showIcon: !showIcon \}\)/.test(picker));
+  check(
+    'l’interrupteur icône est désactivé pour les modules sans icône',
+    /disabled=\{!sourceHasIcon\}/.test(picker),
+  );
+  check(
+    'l’aperçu de l’admin rend aussi l’icône',
+    /node\.icon \?/.test(picker) && /<IconMark/.test(picker),
+  );
+
+  // Les libellés doivent exister dans les trois langues.
+  for (const loc of ['fr', 'en', 'ar']) {
+    const msgs = JSON.parse(readFileSync(resolve(ROOT, `messages/${loc}.json`), 'utf8'));
+    const node = msgs?.admin?.menus ?? {};
+    check(
+      `libellés d’affichage présents en ${loc}`,
+      ['displayTitle', 'showDesc', 'showIcon', 'iconUnsupported', 'iconMissingNotice']
+        .every((k) => typeof node[k] === 'string' && node[k].length > 0),
+    );
+  }
+}
+
 console.log(
   failures === 0
     ? '\n✅ Tous les contrôles passent.\n'

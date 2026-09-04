@@ -1719,7 +1719,12 @@
       "source_services": "Services",
       "source_products": "Produits",
       "source_news": "Actualités",
-      "source_events": "Événements"
+      "source_events": "Événements",
+      "displayTitle": "Affichage",
+      "showDesc": "Description",
+      "showIcon": "Icône",
+      "iconUnsupported": "Ce module n’a pas d’icône.",
+      "iconMissingNotice": "{count} fiche(s) sans icône : seul le titre s’affichera pour celles-ci."
     }
   },
   "common": {

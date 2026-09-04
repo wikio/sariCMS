@@ -7,6 +7,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { Menu, X, Phone, Mail, ShoppingCart, User, LogOut, LayoutDashboard, Package, Briefcase, FileText, Search, Moon, Sun, ChevronDown } from 'lucide-react';
 import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
 import SearchHeader from '@/components/layout/SearchHeader';
+import IconMark from '@/components/admin/IconMark';
 import type { Config, Menu as MenuType } from '@/types';
 import { loadAdminSettings } from '@/lib/admin-settings';
 import { useCart } from '@/contexts/CartContext';
@@ -222,8 +223,17 @@ export default function Header({ config, menu }: { config: Config; menu: MenuTyp
                     <div className="absolute top-full left-0 mt-2 w-72 bg-white dark:bg-[#1a1a1a] shadow-2xl border border-gray-200 dark:border-gray-800 z-50 rounded-lg overflow-hidden">
                       {item.submenu.map((sub, subIdx) => (
                         <Link key={subIdx} href={getLinkHref(sub.href)} onClick={() => setActiveSubmenu(null)} className="block px-4 py-3 hover:bg-sari-blue/5 dark:hover:bg-sari-blue/10 transition-colors border-b border-gray-100 dark:border-gray-800 last:border-0">
-                          <div className="font-semibold text-sari-dark dark:text-white">{sub.label}</div>
-                          {sub.desc && <div className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{sub.desc}</div>}
+                          {/* L'icône n'est présente que si l'administration l'a
+                              activée et que la fiche en possède une. */}
+                          <div className="flex items-start gap-2.5">
+                            {sub.icon && (
+                              <IconMark name={sub.icon} className="w-4 h-4 mt-0.5 shrink-0 text-sari-blue" />
+                            )}
+                            <div className="min-w-0">
+                              <div className="font-semibold text-sari-dark dark:text-white">{sub.label}</div>
+                              {sub.desc && <div className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{sub.desc}</div>}
+                            </div>
+                          </div>
                         </Link>
                       ))}
                     </div>
@@ -255,7 +265,19 @@ export default function Header({ config, menu }: { config: Config; menu: MenuTyp
                   <div className="pl-4 space-y-1 pb-2 bg-gray-50 dark:bg-[#111111]">
                     {item.submenu.map((sub, subIdx) => (
                       <Link key={subIdx} href={getLinkHref(sub.href)} onClick={() => setMobileMenuOpen(false)} className="block py-2 px-3 text-gray-600 dark:text-gray-400 text-sm hover:text-sari-blue">
-                        {sub.label}
+                        {/* Mêmes options qu'en desktop : la configuration de
+                            l'administration doit valoir sur les deux rendus. */}
+                        <span className="flex items-start gap-2">
+                          {sub.icon && (
+                            <IconMark name={sub.icon} className="w-4 h-4 mt-0.5 shrink-0 text-sari-blue" />
+                          )}
+                          <span className="min-w-0">
+                            <span className="block">{sub.label}</span>
+                            {sub.desc && (
+                              <span className="block text-xs text-gray-500 dark:text-gray-500 mt-0.5">{sub.desc}</span>
+                            )}
+                          </span>
+                        </span>
                       </Link>
                     ))}
                   </div>

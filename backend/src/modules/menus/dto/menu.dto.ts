@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsArray,
+  IsBoolean,
   IsIn,
   IsInt,
   IsOptional,
@@ -41,6 +42,24 @@ export class MenuAutoDto {
   @IsInt()
   @Min(0)
   limit?: number;
+
+  /**
+   * Reprendre la description courte de la fiche sous son titre.
+   * Absent = vrai, pour ne pas vider les menus déjà enregistrés.
+   */
+  @ApiPropertyOptional({ default: true })
+  @IsOptional()
+  @IsBoolean()
+  showDesc?: boolean;
+
+  /**
+   * Reprendre l'icône de la fiche devant son titre.
+   * Absent = faux ; sans effet sur les modules dépourvus de champ `icon`.
+   */
+  @ApiPropertyOptional({ default: false })
+  @IsOptional()
+  @IsBoolean()
+  showIcon?: boolean;
 }
 
 export class MenuItemDto {
