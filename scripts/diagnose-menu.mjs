@@ -30,6 +30,15 @@ const head = (s) => {
 line(`\x1b[1mDiagnostic du menu — locale « ${locale} »\x1b[0m`);
 line(`API interrogée : ${API}`);
 
+/** Liste publiée d'un module, telle que la vitrine la reçoit. */
+async function fetchModule(source) {
+  const url = `${API}/public/${source}?view=block&limit=100&locale=${encodeURIComponent(locale)}`;
+  const res = await fetch(url, { cache: 'no-store' });
+  const payload = await res.json();
+  const rows = payload?.data?.data ?? payload?.data ?? payload ?? [];
+  return Array.isArray(rows) ? rows : [];
+}
+
 // ─────────────────────────────────────────────── étage 1 : l'API (la BD)
 head('1. API  /public/menus  (source réelle : votre base de données)');
 
@@ -86,6 +95,88 @@ try {
 } catch (e) {
   line(`\x1b[31m✖ API injoignable : ${e.message}\x1b[0m`);
   line('  La vitrine utilise alors le JSON statique (étage 2).');
+}
+
+// ───────────────────────── étage 1 bis : résolution des règles « auto »
+const autoItems = [];
+for (const r of rows) {
+  for (const it of Array.isArray(r.items) ? r.items : []) {
+    if (it?.auto?.source) autoItems.push(it);
+  }
+}
+
+if (autoItems.length) {
+  head('1 bis. Sous-menus générés — résolution réelle de chaque règle');
+  line('Rappel : « sous-menu:0 » ci-dessus est NORMAL pour une règle auto.');
+  line('Le sous-menu n’est pas stocké en base, il est calculé à l’affichage.');
+  line('Ce qui compte, c’est le nombre d’entrées résolues ci-dessous.');
+  line();
+
+  for (const it of autoItems) {
+    const { source, mode, ids = [], limit = 0 } = it.auto;
+    line(`\x1b[1m${it.label}\x1b[0m — ${source} / ${mode}` +
+         `${limit ? ` (max ${limit})` : ''}`);
+
+    let pool = [];
+    try {
+      pool = await fetchModule(source);
+    } catch (e) {
+      line(`  \x1b[31m✖ module « ${source} » injoignable : ${e.message}\x1b[0m`);
+      continue;
+    }
+    line(`  ${pool.length} fiche(s) publiée(s) dans « ${source} » pour cette langue.`);
+
+    if (!pool.length) {
+      line(`  \x1b[31m✖ Le sous-menu sera VIDE : aucune fiche publiée.\x1b[0m`);
+      line(`    Publiez des fiches dans « ${source} », en langue « ${locale} ».`);
+      line();
+      continue;
+    }
+
+    if (mode === 'pick') {
+      const wanted = ids.map(String);
+      line(`  ids choisis dans l’admin : ${wanted.length ? wanted.join(', ') : '(aucun)'}`);
+
+      if (!wanted.length) {
+        line('  \x1b[31m✖ Le sous-menu sera VIDE : mode « sélection » sans aucun id.\x1b[0m');
+        line('    Cochez des fiches dans l’admin, ou passez la règle sur « tout ».');
+        line();
+        continue;
+      }
+
+      const found = [];
+      const missing = [];
+      for (const id of wanted) {
+        const hit = pool.find(
+          (e) => String(e.id) === id || String(e.legacyId ?? '') === id,
+        );
+        (hit ? found : missing).push(hit ?? id);
+      }
+
+      for (const e of found) {
+        line(`      \x1b[32m✔\x1b[0m ${e.title ?? e.name ?? e.slug}  (id ${e.id})`);
+      }
+      for (const id of missing) {
+        line(`      \x1b[31m✖ id ${id} introuvable\x1b[0m — fiche archivée, supprimée,` +
+             ` ou d’une autre langue`);
+      }
+
+      const total = limit > 0 ? Math.min(found.length, limit) : found.length;
+      line(`  → ${total} entrée(s) affichée(s) dans le menu.`);
+      if (!found.length) {
+        line('  \x1b[31m✖ Le sous-menu sera VIDE : aucun id ne correspond.\x1b[0m');
+        line('    Les ids enregistrés ne désignent aucune fiche publiée de cette');
+        line('    langue. Rouvrez la règle dans l’admin et resélectionnez les fiches.');
+      }
+    } else {
+      const total = limit > 0 ? Math.min(pool.length, limit) : pool.length;
+      line(`  → ${total} entrée(s) affichée(s) dans le menu :`);
+      for (const e of pool.slice(0, total)) {
+        line(`      \x1b[32m✔\x1b[0m ${e.title ?? e.name ?? e.slug}  (id ${e.id})`);
+      }
+    }
+    line();
+  }
 }
 
 // ──────────────────────────────────────── étage 2 : le JSON statique
