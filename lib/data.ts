@@ -28,19 +28,52 @@ import {
   type MenuNode,
 } from '@/lib/menu-auto';
 
-const dataCache = new Map<string, unknown>();
+/**
+ * Durée de vie des données mises en cache, en millisecondes.
+ *
+ * Ce cache vit dans le module, donc côté serveur il dure aussi longtemps que le
+ * processus Node. Sans expiration, une modification faite dans l'administration
+ * n'apparaissait sur la vitrine qu'après un redémarrage complet : le contenu
+ * était bien enregistré et bien renvoyé par l'API, mais jamais relu.
+ *
+ * Trente secondes gardent l'intérêt du cache — les rafales de requêtes d'un
+ * même rendu ne touchent l'API qu'une fois — tout en rendant les changements
+ * visibles d'eux-mêmes. `CMS_CACHE_TTL=0` désactive complètement la mise en
+ * cache, ce qui est pratique pendant qu'on règle les contenus.
+ */
+const CACHE_TTL_MS = (() => {
+  const raw = Number(process.env.CMS_CACHE_TTL ?? process.env.NEXT_PUBLIC_CMS_CACHE_TTL);
+  return Number.isFinite(raw) && raw >= 0 ? raw : 30_000;
+})();
+
+type CacheEntry = { value: unknown; expiresAt: number };
+
+const dataCache = new Map<string, CacheEntry>();
+
+/** Valeur encore valide pour cette clé, ou `undefined` si absente/expirée. */
+function cacheGet(cacheKey: string): unknown | undefined {
+  const hit = dataCache.get(cacheKey);
+  if (!hit) return undefined;
+  if (hit.expiresAt <= Date.now()) {
+    // Entrée périmée : on la retire pour que le prochain appel recharge.
+    dataCache.delete(cacheKey);
+    return undefined;
+  }
+  return hit.value;
+}
 
 async function loadData<T>(locale: string, key: string, fallback: T): Promise<T> {
   const cacheKey = `${locale}_${key}`;
 
-  if (dataCache.has(cacheKey)) {
-    return dataCache.get(cacheKey) as T;
+  const cached = cacheGet(cacheKey);
+  if (cached !== undefined) {
+    return cached as T;
   }
 
   try {
     const data = await import(`@/data/${locale}/${key}.json`);
     const result = (data.default || fallback) as T;
-    dataCache.set(cacheKey, result);
+    cacheSet(locale, key, result);
     return result;
   } catch {
     console.warn(`⚠️ Données non trouvées: ${locale}/${key}.json, utilisation du fallback`);
@@ -49,7 +82,9 @@ async function loadData<T>(locale: string, key: string, fallback: T): Promise<T>
 }
 
 function cacheSet<T>(locale: string, key: string, value: T): T {
-  dataCache.set(`${locale}_${key}`, value);
+  // TTL nul : on ne mémorise rien, chaque appel repart de la source.
+  if (CACHE_TTL_MS <= 0) return value;
+  dataCache.set(`${locale}_${key}`, { value, expiresAt: Date.now() + CACHE_TTL_MS });
   return value;
 }
 
@@ -60,7 +95,8 @@ async function fromCmsOrJson<T>(
   loader: () => Promise<T | null | undefined>,
 ): Promise<T> {
   const cacheKey = `${locale}_${key}`;
-  if (dataCache.has(cacheKey)) return dataCache.get(cacheKey) as T;
+  const cached = cacheGet(cacheKey);
+  if (cached !== undefined) return cached as T;
   try {
     const remote = await loader();
     if (remote !== null && remote !== undefined) {
