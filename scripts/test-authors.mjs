@@ -218,6 +218,27 @@ console.log('\n3. Reprise SQL (migrate-data.mysql.sql)');
 }
 
 // ---------------------------------------------------------------------------
+// Mode consultation : le champ auteur stocke un identifiant. Sans branche
+// dédiée, `ConsultValue` affichait la valeur brute (« 16 ») au lieu du nom.
+// ---------------------------------------------------------------------------
+{
+  const consultSrc = readFileSync(resolve(ROOT, 'components/admin/ConsultValue.tsx'), 'utf8');
+  check(
+    "le mode consultation traite le champ 'author'",
+    /spec\.kind === 'author'/.test(consultSrc),
+  );
+  check(
+    'il résout le nom via getAuthors',
+    /getAuthors\(locale\)/.test(consultSrc),
+  );
+  // Une fiche supprimée ne doit pas laisser une case vide : on garde `#id`.
+  check(
+    'une fiche absente retombe sur #id',
+    /`#\$\{id\}`/.test(consultSrc),
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Garde-fou : l'API rejette `limit > 100` (ValidationPipe, QueryDto.@Max(100)).
 // Un appel codé en dur à 200 renvoyait une 400 et le champ auteur restait vide.
 // On vérifie que plus aucun appel du front ne dépasse ce plafond.

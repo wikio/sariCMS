@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useLocale, useMessages, useTranslations } from 'next-intl';
 import type { FieldSpec } from '@/lib/cms-modules';
-import { getProducts } from '@/lib/data';
+import { getAuthors, getProducts } from '@/lib/data';
 import { resolveColor } from '@/lib/colors';
 import { useDateFormat } from '@/lib/use-date-format';
 import HtmlEditor from '@/components/admin/fields/HtmlEditor';
@@ -110,6 +110,13 @@ export default function ConsultValue({ spec, value }: { spec: FieldSpec; value: 
     const ids = Array.isArray(value) ? value.map((id) => String(id)) : [];
     if (!ids.length) return <div className="text-sm" style={{ color: 'var(--ad-muted)' }}>—</div>;
     return <ProductIdsPreview ids={ids} />;
+  }
+  if (spec.kind === 'author') {
+    // Le champ stocke un identifiant : en consultation, l'afficher brut
+    // (« 7 ») n'apprend rien. On résout le nom de la fiche.
+    const id = value == null || value === '' ? '' : String(value);
+    if (!id) return <div className="text-sm" style={{ color: 'var(--ad-muted)' }}>—</div>;
+    return <AuthorIdPreview id={id} />;
   }
   if (spec.kind === 'gallery') {
     const items = asList(value).filter((src) => src.startsWith('/') || src.startsWith('http'));
@@ -255,6 +262,40 @@ function ProductIdsPreview({ ids }: { ids: string[] }) {
         );
       })}
     </ul>
+  );
+}
+
+/**
+ * Nom de l'auteur derrière un identifiant.
+ *
+ * La fiche peut avoir été supprimée depuis : on affiche alors `#id` plutôt
+ * qu'un vide, pour que la valeur enregistrée reste visible et corrigeable.
+ */
+function AuthorIdPreview({ id }: { id: string }) {
+  const locale = useLocale();
+  const [author, setAuthor] = useState<{ name: string; role?: string } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    getAuthors(locale)
+      .then((rows) => {
+        if (cancelled) return;
+        const found = rows.find((a) => String(a.id) === id);
+        setAuthor(found ? { name: found.name, role: found.role } : null);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [locale, id]);
+
+  return (
+    <div className="text-sm font-semibold">
+      {author ? author.name : `#${id}`}
+      {author?.role ? (
+        <span className="font-normal ms-2" style={{ color: 'var(--ad-muted)' }}>{author.role}</span>
+      ) : null}
+    </div>
   );
 }
 
