@@ -20,6 +20,13 @@ import { cmsPublicList, cmsPublicOne, cmsPublicTranslations, cmsFetch } from '@/
 import { loadFicheLocale } from '@/lib/fiche-i18n';
 import { asPublicId, matchesEntity } from '@/lib/ids';
 import { findByRouteKey } from '@/lib/entity-url';
+import {
+  applyAutoMenus,
+  usedAutoSources,
+  type AutoEntity,
+  type AutoSource,
+  type MenuNode,
+} from '@/lib/menu-auto';
 
 const dataCache = new Map<string, unknown>();
 
@@ -390,16 +397,76 @@ export async function getConfig(locale: string): Promise<Config> {
   });
 }
 
+/**
+ * Charge les listes nécessaires aux sous-menus générés.
+ *
+ * Seuls les modules réellement référencés par une règle sont chargés, et en
+ * parallèle : un menu sans sous-menu automatique ne coûte aucune requête
+ * supplémentaire.
+ */
+async function loadAutoDatasets(
+  sources: AutoSource[],
+  locale: string,
+): Promise<Partial<Record<AutoSource, AutoEntity[]>>> {
+  if (!sources.length) return {};
+  const loaders: Record<AutoSource, (l: string) => Promise<unknown[]>> = {
+    solutions: getSolutionCategories,
+    services: getServices,
+    products: getProducts,
+    news: getNews,
+    events: getEvents,
+  };
+  const entries = await Promise.all(
+    sources.map(async (source) => {
+      try {
+        return [source, (await loaders[source](locale)) as AutoEntity[]] as const;
+      } catch {
+        // Un module indisponible ne doit pas faire disparaître tout le menu :
+        // le lien parent reste, simplement sans sous-menu.
+        return [source, [] as AutoEntity[]] as const;
+      }
+    }),
+  );
+  return Object.fromEntries(entries) as Partial<Record<AutoSource, AutoEntity[]>>;
+}
+
+/**
+ * Développe les sous-menus générés d'un menu déjà chargé.
+ *
+ * Exporté pour que l'aperçu de l'administration applique exactement la même
+ * résolution que la vitrine.
+ */
+export async function expandAutoMenus(menu: Menu, locale: string): Promise<Menu> {
+  const main = (menu.mainMenu || []) as MenuNode[];
+  const nav = (menu.footerMenu?.navigation || []) as MenuNode[];
+  const sources = [...new Set([...usedAutoSources(main), ...usedAutoSources(nav)])];
+  if (!sources.length) return menu;
+
+  const datasets = await loadAutoDatasets(sources, locale);
+  return {
+    ...menu,
+    mainMenu: applyAutoMenus(main, datasets, locale) as Menu['mainMenu'],
+    footerMenu: {
+      ...menu.footerMenu,
+      navigation: applyAutoMenus(nav, datasets, locale) as Menu['footerMenu']['navigation'],
+    },
+  };
+}
+
 export async function getMenu(locale: string): Promise<Menu> {
   const fallback: Menu = {
     mainMenu: [],
     footerMenu: { navigation: [], legal: [] },
     socialLinks: {},
   };
-  return fromCmsOrJson(locale, 'menu', fallback, async () => {
+  const menu = await fromCmsOrJson(locale, 'menu', fallback, async () => {
     const rows = await cmsPublicList<Record<string, unknown>>('menus', locale);
     return mapMenu(rows);
   });
+  // Résolution après la mise en cache du menu brut : les règles sont ainsi
+  // réévaluées à chaque appel, sans quoi une fiche archivée resterait affichée
+  // tant que le cache du menu n'a pas expiré.
+  return expandAutoMenus(menu, locale);
 }
 
 export async function getHero(locale: string): Promise<HeroSlide[]> {

@@ -1700,6 +1700,26 @@
       "saveSuccess": "Configuration enregistrée",
       "saveError": "Échec de l'enregistrement",
       "exportSuccess": "Configuration exportée"
+    },
+    "menus": {
+      "autoTitle": "Sous-menu automatique",
+      "autoActive": "Sous-menu automatique · {source}",
+      "autoHint": "La liste est générée à l'affichage : une fiche publiée apparaît d'elle-même, une fiche archivée ou en brouillon disparaît. Inutile de revenir ici.",
+      "autoRemove": "Retirer la génération automatique",
+      "autoLoading": "Chargement du contenu…",
+      "autoLoadError": "Contenu inaccessible",
+      "autoEmpty": "Aucune fiche publiée dans ce module.",
+      "modeAll": "Toutes",
+      "modePick": "Sélection",
+      "limitLabel": "Limite (0 = tout)",
+      "previewTitle": "Aperçu · {count} entrée(s)",
+      "previewEmpty": "Rien à afficher : le lien n'aura pas de sous-menu.",
+      "hiddenNotice": "{count} fiche(s) masquée(s) car archivée(s) ou en brouillon.",
+      "source_solutions": "Solutions",
+      "source_services": "Services",
+      "source_products": "Produits",
+      "source_news": "Actualités",
+      "source_events": "Événements"
     }
   },
   "common": {

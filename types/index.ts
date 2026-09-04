@@ -24,19 +24,32 @@ export interface Config {
   };
 }
 
+/**
+ * Règle de sous-menu généré depuis le contenu.
+ * Voir `lib/menu-auto.ts` : la liste est résolue à l'affichage, pas figée.
+ */
+export interface MenuAutoRule {
+  source: 'solutions' | 'services' | 'products' | 'news' | 'events';
+  mode: 'all' | 'pick';
+  ids?: Array<string | number>;
+  limit?: number;
+}
+
+export interface MenuLink {
+  id?: string;
+  label: string;
+  href: string;
+  desc?: string;
+  icon?: string;
+  submenu?: MenuLink[];
+  /** Présente si le sous-menu est généré ; `submenu` est alors calculé. */
+  auto?: MenuAutoRule | null;
+}
+
 export interface Menu {
-  mainMenu: Array<{
-    id: string;
-    label: string;
-    href: string;
-    submenu?: Array<{
-      label: string;
-      href: string;
-      desc?: string;
-    }>;
-  }>;
+  mainMenu: Array<MenuLink & { id: string }>;
   footerMenu: {
-    navigation: Array<{ label: string; href: string }>;
+    navigation: MenuLink[];
     legal: Array<{ label: string; href: string }>;
   };
   socialLinks: Record<string, string>;

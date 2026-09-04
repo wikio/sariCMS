@@ -13,6 +13,8 @@ import { useToast } from '@/components/admin/Toast';
 import { IconPicker } from '@/components/admin/fields/FieldKit';
 import SlugPicker from '@/components/admin/SlugPicker';
 import { cmsAdminCreate, cmsAdminList, cmsAdminUpdate } from '@/lib/cms-admin';
+import AutoSubmenuPicker from '@/components/admin/AutoSubmenuPicker';
+import type { AutoRule } from '@/lib/menu-auto';
 import { CmsError } from '@/lib/cms';
 
 type MenuItem = {
@@ -22,6 +24,12 @@ type MenuItem = {
   desc?: string;
   icon?: string;
   submenu?: MenuItem[];
+  /**
+   * Sous-menu généré depuis le contenu (voir `lib/menu-auto.ts`).
+   * Quand elle est présente, `submenu` n'est pas enregistré : la liste est
+   * recalculée à l'affichage, donc toujours à jour.
+   */
+  auto?: AutoRule | null;
 };
 
 type MenuRecord = {
@@ -169,10 +177,14 @@ export default function MenuStudio() {
         location: tab,
         locale,
         status: 'published',
+        // Une règle `auto` remplace le sous-menu : on n'enregistre pas la
+        // liste résolue, sinon elle serait figée à la date d'enregistrement et
+        // continuerait d'afficher les fiches archivées depuis.
         items: draft.map((it) => ({
           ...it,
           id: it.id || uid(),
-          submenu: (it.submenu || []).map((c) => ({ ...c, id: c.id || uid() })),
+          auto: it.auto || null,
+          submenu: it.auto ? [] : (it.submenu || []).map((c) => ({ ...c, id: c.id || uid() })),
         })),
       };
       if (current?.id) {
@@ -242,8 +254,16 @@ export default function MenuStudio() {
                     </div>
                   </div>
 
-                  {/* Sous-menu */}
-                  {(item.submenu?.length || 0) > 0 && (
+                  {/* Sous-menu généré depuis le contenu */}
+                  <AutoSubmenuPicker
+                    value={item.auto}
+                    onChange={(auto) => setItem(i, { auto })}
+                  />
+
+                  {/* Sous-menu saisi à la main. Masqué quand une règle est
+                      active : la liste générée la remplace à l'affichage, en
+                      montrer deux serait trompeur. */}
+                  {!item.auto && (item.submenu?.length || 0) > 0 && (
                     <div className="ml-4 pl-4 space-y-2" style={{ borderLeft: '2px solid var(--ad-line)' }}>
                       <div className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-accent)' }}>Sous-menu</div>
                       {item.submenu!.map((child, ci) => (
@@ -261,9 +281,11 @@ export default function MenuStudio() {
                     </div>
                   )}
 
-                  <button type="button" className="ad-btn ad-btn-ghost" onClick={() => addChild(i)}>
-                    <Plus className="w-4 h-4" /> Ajouter un sous-lien
-                  </button>
+                  {!item.auto && (
+                    <button type="button" className="ad-btn ad-btn-ghost" onClick={() => addChild(i)}>
+                      <Plus className="w-4 h-4" /> Ajouter un sous-lien
+                    </button>
+                  )}
                 </div>
               </SortableItem>
             ))}

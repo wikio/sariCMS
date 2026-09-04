@@ -1700,6 +1700,26 @@
       "saveSuccess": "Configuration saved",
       "saveError": "Save failed",
       "exportSuccess": "Configuration exported"
+    },
+    "menus": {
+      "autoTitle": "Automatic submenu",
+      "autoActive": "Automatic submenu · {source}",
+      "autoHint": "The list is generated at display time: a published record shows up on its own, an archived or draft one disappears. No need to come back here.",
+      "autoRemove": "Remove automatic generation",
+      "autoLoading": "Loading content…",
+      "autoLoadError": "Content unavailable",
+      "autoEmpty": "No published record in this module.",
+      "modeAll": "All",
+      "modePick": "Selection",
+      "limitLabel": "Limit (0 = all)",
+      "previewTitle": "Preview · {count} item(s)",
+      "previewEmpty": "Nothing to show: the link will have no submenu.",
+      "hiddenNotice": "{count} record(s) hidden because archived or draft.",
+      "source_solutions": "Solutions",
+      "source_services": "Services",
+      "source_products": "Products",
+      "source_news": "News",
+      "source_events": "Events"
     }
   },
   "common": {

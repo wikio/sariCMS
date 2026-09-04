@@ -11,6 +11,10 @@ import type { Config, Menu as MenuType } from '@/types';
 import { loadAdminSettings } from '@/lib/admin-settings';
 import { useCart } from '@/contexts/CartContext';
 import { useVisibility } from '@/lib/site-visibility';
+import { locales } from '@/lib/i18n';
+
+/** Segments de langue reconnus en tête d'URL (voir getLinkHref). */
+const LOCALE_SEGMENTS = new Set<string>(locales);
 
 export default function Header({ config, menu }: { config: Config; menu: MenuType }) {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -29,8 +33,17 @@ export default function Header({ config, menu }: { config: Config; menu: MenuTyp
 
   // ✅ Fonction robuste pour générer les liens avec la locale
   const getLinkHref = (href: string) => {
+    const raw = String(href || '');
+    // Lien externe : laissé intact (mailto:, tel:, https://…).
+    if (/^(https?:)?\/\//i.test(raw) || /^(mailto|tel):/i.test(raw)) return raw;
     // Supprime les '#' ou '/' au début pour éviter les doubles slashes ou les mots collés
-    const cleanPath = href.replace(/^[#\/]+/, '');
+    const cleanPath = raw.replace(/^[#\/]+/, '');
+    // Les sous-menus générés viennent de `entityUrl`, qui préfixe déjà la
+    // langue : re-préfixer produirait `/fr/fr/solutions/...`, donc un 404.
+    if (/^[a-z]{2}(-[A-Za-z]{2})?(\/|$)/.test(cleanPath)) {
+      const [first, ...rest] = cleanPath.split('/');
+      if (LOCALE_SEGMENTS.has(first)) return `/${locale}/${rest.join('/')}`.replace(/\/+$/, '') || `/${locale}`;
+    }
     return `/${locale}/${cleanPath}`;
   };
 

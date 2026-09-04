@@ -1700,6 +1700,26 @@
       "saveSuccess": "تم حفظ الإعدادات",
       "saveError": "فشل الحفظ",
       "exportSuccess": "تم تصدير الإعدادات"
+    },
+    "menus": {
+      "autoTitle": "قائمة فرعية تلقائية",
+      "autoActive": "قائمة فرعية تلقائية · {source}",
+      "autoHint": "تُنشأ القائمة عند العرض: يظهر السجل المنشور تلقائيًا، ويختفي المؤرشف أو المسودة. لا حاجة للعودة إلى هنا.",
+      "autoRemove": "إزالة الإنشاء التلقائي",
+      "autoLoading": "جارٍ تحميل المحتوى…",
+      "autoLoadError": "المحتوى غير متاح",
+      "autoEmpty": "لا يوجد سجل منشور في هذه الوحدة.",
+      "modeAll": "الكل",
+      "modePick": "تحديد",
+      "limitLabel": "الحد (0 = الكل)",
+      "previewTitle": "معاينة · {count} عنصر",
+      "previewEmpty": "لا شيء للعرض: لن تكون للرابط قائمة فرعية.",
+      "hiddenNotice": "{count} سجل مخفي لأنه مؤرشف أو مسودة.",
+      "source_solutions": "الحلول",
+      "source_services": "الخدمات",
+      "source_products": "المنتجات",
+      "source_news": "الأخبار",
+      "source_events": "الفعاليات"
     }
   },
   "common": {
