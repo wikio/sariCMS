@@ -7,9 +7,11 @@ import { previewCode, DEFAULT_TEMPLATES, type CodeKind } from '@/lib/codes';
 import { testErpConnection } from '@/lib/erp';
 import { useToast } from '@/components/admin/Toast';
 import GedPicker from '@/components/admin/GedPicker';
+import DateFormatPicker from '@/components/admin/DateFormatPicker';
+import { notifyDateSettingsChanged } from '@/lib/use-date-format';
 
 type SectionId = 'general' | 'commerce' | 'security' | 'integrations' | 'seo';
-type TabId = 'general' | 'products' | 'codes' | 'quotes' | 'invoicing' | 'security' | 'smtp' | 'database' | 'seo';
+type TabId = 'general' | 'dates' | 'products' | 'codes' | 'quotes' | 'invoicing' | 'security' | 'smtp' | 'database' | 'seo';
 
 interface TabDef { id: TabId; label: string }
 interface SectionDef { id: SectionId; label: string; tabs: TabDef[] }
@@ -17,6 +19,7 @@ interface SectionDef { id: SectionId; label: string; tabs: TabDef[] }
 const SECTIONS: SectionDef[] = [
   { id: 'general', label: 'Général', tabs: [
     { id: 'general', label: 'Identité & langue' },
+    { id: 'dates', label: 'Dates & heures' },
   ] },
   { id: 'commerce', label: 'Commerce', tabs: [
     { id: 'products', label: 'Produits & stock' },
@@ -39,6 +42,7 @@ const SECTIONS: SectionDef[] = [
 // Index de recherche : onglet → mots-clés.
 const SEARCH_INDEX: Record<TabId, string> = {
   general: 'langue langue origine logo site vitrine identité société entreprise',
+  dates: 'date heure format affichage jour mois année calendrier iso horodatage relatif',
   products: 'produit stock réapprovisionnement crop largeur hauteur catalogue rupture',
   codes: 'code format devis commande facture produit numéro année sku',
   quotes: 'devis ligne validité commande pièce jointe transformer expiration',
@@ -171,6 +175,35 @@ export default function AdminSettingsPage() {
                   <option value="ar">العربية</option>
                 </select>
               </label>
+            </section>
+          )}
+
+          {tab === 'dates' && (
+            <section className="ad-card p-5 space-y-4">
+              <h2 className="ad-section-title">Dates &amp; heures</h2>
+              <p className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>
+                Ce format s’applique partout : fiches en consultation et en édition, tableaux de
+                l’administration et pages de la vitrine. Les noms de mois et de jours suivent
+                automatiquement la langue affichée.
+              </p>
+
+              <div className="space-y-1.5">
+                <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>
+                  Format d’affichage
+                </span>
+                <DateFormatPicker
+                  value={settings.dates.format}
+                  locale={settings.defaultLocale}
+                  onChange={(v) => setSettings({ ...settings, dates: { ...settings.dates, format: v } })}
+                />
+              </div>
+
+              <ToggleRow
+                label="Afficher l’heure"
+                hint="Lorsque la valeur enregistrée comporte une heure (début d’un événement, publication d’un article). Une date sans heure n’affiche jamais « 00:00 »."
+                on={settings.dates.showTime}
+                onToggle={() => setSettings({ ...settings, dates: { ...settings.dates, showTime: !settings.dates.showTime } })}
+              />
             </section>
           )}
 
@@ -318,7 +351,7 @@ export default function AdminSettingsPage() {
             </section>
           )}
 
-          <button className="ad-btn ad-btn-primary" onClick={() => { saveAdminSettings(settings); showToast('Paramètres enregistrés', 'success'); }}>
+          <button className="ad-btn ad-btn-primary" onClick={() => { saveAdminSettings(settings); notifyDateSettingsChanged(); showToast('Paramètres enregistrés', 'success'); }}>
             <Save className="w-4 h-4" /> Enregistrer
           </button>
         </div>

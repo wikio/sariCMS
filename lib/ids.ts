@@ -1,6 +1,6 @@
 /** Compare an entity id/slug with a route param (number from JSON or UUID/slug from the API). */
 export function matchesEntity(
-  item: { id?: unknown; slug?: unknown } | null | undefined,
+  item: { id?: unknown; slug?: unknown; legacyId?: unknown } | null | undefined,
   rawId: unknown,
 ): boolean {
   if (!item || rawId === undefined || rawId === null || rawId === '') return false;
@@ -15,6 +15,15 @@ export function matchesEntity(
     if (item.id !== undefined && item.id !== null && String(item.id) === prefix) return true;
     const pn = Number(prefix);
     if (!Number.isNaN(pn) && Number(item.id) === pn) return true;
+  }
+
+  // Dernier recours : le legacyId, partagé par toutes les versions
+  // linguistiques d'une fiche. Sans lui, une URL portant l'id d'une autre
+  // langue (cas du changement de langue) ne trouvait aucune correspondance
+  // et la page affichait « introuvable ».
+  if (item.legacyId !== undefined && item.legacyId !== null) {
+    const legacy = String(item.legacyId);
+    if (legacy === needle || (prefix && legacy === prefix)) return true;
   }
   return false;
 }

@@ -40,7 +40,21 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
 
   delegate(model: string): any {
     const d = this.raw[model];
-    if (!d) throw new Error(`Unknown Prisma model "${model}"`);
+    if (!d) {
+      // Cas courant : le modèle existe bien dans `schema.prisma`, mais le
+      // client généré dans node_modules date d'avant son ajout. Le message
+      // brut « Unknown Prisma model » n'orientait pas vers la commande à
+      // lancer, alors que c'est presque toujours la cause.
+      const known = Object.keys(this.raw)
+        .filter((k) => !k.startsWith('$') && !k.startsWith('_'))
+        .sort();
+      throw new Error(
+        `Modèle Prisma « ${model} » introuvable dans le client généré. ` +
+          `Si le modèle figure bien dans prisma/schema.prisma, le client est périmé : ` +
+          `lancez « npx prisma generate » dans backend/ puis redémarrez l'API. ` +
+          `Modèles connus : ${known.join(', ') || '(aucun)'}.`,
+      );
+    }
     return d;
   }
 }

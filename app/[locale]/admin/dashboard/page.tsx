@@ -14,6 +14,8 @@ import { cmsAdminFetch, cmsHealth, cmsImportCatalog, cmsStatus } from '@/lib/cms
 import { unwrapList, CmsError } from '@/lib/cms';
 import { loadOrders, orderRevenue } from '@/lib/crm-store';
 import { seedDemoWorkspace } from '@/lib/demo-seed';
+import DateText from '@/components/shared/DateText';
+import { money } from '@/lib/commerce-math';
 
 export default function AdminDashboardPage() {
   const locale = useLocale();
@@ -115,7 +117,7 @@ export default function AdminDashboardPage() {
           }))} />
         </section>
         <section className="ad-card p-5 ad-rise">
-          <h3 className="ad-section-title">Commandes · {orderRevenue(orders).toLocaleString()} DA livrés</h3>
+          <h3 className="ad-section-title">Commandes · {money(orderRevenue(orders))} livrés</h3>
           <DonutChart items={[
             { label: t("delivered"), value: orders.filter((o) => o.status === 'delivered').length, color: '#0f9f6e' },
             { label: 'En cours', value: orders.filter((o) => o.status === 'processing' || o.status === 'shipped').length, color: '#169EC9' },
@@ -174,7 +176,7 @@ export default function AdminDashboardPage() {
             {logs.map((log) => (
               <li key={String(log.id)} className="flex justify-between gap-2">
                 <span><b>{log.action}</b> · {log.resource}</span>
-                <span style={{ color: 'var(--ad-muted)' }}>{log.createdAt ? new Date(log.createdAt).toLocaleTimeString() : ''}</span>
+                <span style={{ color: 'var(--ad-muted)' }}><DateText value={log.createdAt} timeOnly fallback="" /></span>
               </li>
             ))}
             {logs.length === 0 && <li style={{ color: 'var(--ad-muted)' }}>Aucune activité pour l’instant.</li>}

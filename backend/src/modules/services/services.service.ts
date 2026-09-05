@@ -38,12 +38,4 @@ export class ServicesService extends BaseCrudService<ServiceEntity> {
     return out;
   }
 
-  async findPublished(idOrSlug: string, locale?: string) {
-    const bySlug = await this.repository.findOne(locale ? { slug: idOrSlug, locale } : { slug: idOrSlug });
-    const numericId = Number(idOrSlug);
-    const entity = bySlug ?? (Number.isFinite(numericId) && /^\d+$/.test(String(idOrSlug)) ? await this.repository.findById(numericId) : null);
-    if (!entity || entity.status !== 'published') return null;
-    if (locale && entity.locale && entity.locale !== locale) return null;
-    return this.toView(entity, 'block');
-  }
 }

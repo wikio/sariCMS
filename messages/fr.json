@@ -8,6 +8,7 @@
       "services": "Services",
       "careers": "Carrières",
       "news": "Actualités",
+      "authors": "Auteurs",
       "events": "Événements",
       "solutions": "Solutions",
       "testimonials": "Témoignages",
@@ -89,7 +90,11 @@
       "attemptsLeft": "tentative(s) restante(s).",
       "accessBlocked": "Accès temporairement bloqué",
       "tryLater": "Réessayez dans quelques minutes.",
-      "phase1": "Mode Phase 1 - Authentification locale"
+      "phase1": "Mode Phase 1 - Authentification locale",
+      "emailPlaceholder": "vous@exemple.com",
+      "apiUnreachable": "L'API est injoignable. Vérifiez qu'elle est démarrée.",
+      "verifyTotp": "Vérifier le code",
+      "notAdmin": "Ce compte n'est pas un compte administrateur. Utilisez votre espace personnel."
     },
     "dataManager": {
       "title": "Titre",
@@ -398,12 +403,33 @@
       "experience": "Expérience",
       "motivation": "Motivation",
       "comment": "Commentaire",
-      "documents": "Documents"
+      "documents": "Documents",
+      "contact": "Contact"
     },
     "permissions": {
       "title": "Rôles & permissions",
       "rbac": "RBAC",
-      "resource": "Ressource"
+      "resource": "Ressource",
+      "subtitle": "Cochez les permissions accordées à chaque rôle. Chaque clic est enregistré immédiatement.",
+      "newRole": "Nouveau rôle",
+      "roleName": "Nom du rôle",
+      "roleSlug": "Identifiant (slug)",
+      "roleDescription": "Description",
+      "create": "Créer",
+      "cancel": "Annuler",
+      "delete": "Supprimer",
+      "deleteConfirm": "Supprimer ce rôle ? Les utilisateurs concernés perdront leurs droits.",
+      "systemRole": "Rôle système : non modifiable",
+      "saved": "Permissions mises à jour",
+      "created": "Rôle créé",
+      "deleted": "Rôle supprimé",
+      "loadError": "Impossible de charger les rôles",
+      "saveError": "Enregistrement impossible",
+      "selectAll": "Tout cocher",
+      "clearAll": "Tout décocher",
+      "permissionCount": "{count} permission(s)",
+      "noRole": "Aucun rôle. Créez-en un pour commencer.",
+      "nameRequired": "Le nom et l'identifiant sont obligatoires."
     },
     "common": {
       "add": "Ajouter",
@@ -509,7 +535,13 @@
       "language": "Langue",
       "stock": "Stock",
       "publication": "Publication",
-      "rubric": "Rubrique"
+      "rubric": "Rubrique",
+      "bulkStatusConfirm": "Passer {count} fiche(s) en « {status} » ?",
+      "bulkStatusDone": "{count} fiche(s) passée(s) en « {status} »",
+      "bulkStatusNoop": "Déjà en « {status} »",
+      "bulkError": "Action groupée impossible",
+      "clearSelection": "Tout désélectionner",
+      "bulkPartial": "{done} traitée(s), {failed} en échec"
     },
     "visibility": {
       "breadcrumb": "Configuration avancée / Visibilité vitrine",
@@ -607,6 +639,7 @@
       "solutions": "Solutions",
       "events": "Événements",
       "news": "Actualités",
+      "authors": "Auteurs",
       "careers": "Offres d'emploi",
       "applications": "Candidatures",
       "pages": "Pages",
@@ -765,7 +798,9 @@
       "check": "Chèque",
       "cashOnDelivery": "Paiement à la livraison",
       "fees": "Frais",
-      "clientInstructions": "Instructions client"
+      "clientInstructions": "Instructions client",
+      "name": "Nom",
+      "type": "Type"
     },
     "taxes": {
       "title": "Taxes",
@@ -776,14 +811,22 @@
       "added": "Ajoutée",
       "rate": "Taux",
       "zone": "Zone",
-      "target": "Cible"
+      "target": "Cible",
+      "name": "Nom"
     },
     "currencies": {
       "title": "Devises",
       "registeredCurrencies": "Devises enregistrées",
       "code": "Code",
       "symbol": "Symbole",
-      "rateToDZD": "Taux vers DZD"
+      "rateToDZD": "Taux vers DZD",
+      "name": "Nom",
+      "isDefault": "Par défaut",
+      "isDefaultHint": "Devise utilisée pour tous les montants du site et de l’administration.",
+      "setDefault": "Définir comme devise par défaut",
+      "setDefaultInactive": "Activez la devise pour pouvoir la définir par défaut",
+      "defaultChanged": "Devise par défaut : {code}",
+      "appliedNotice": "Montants affichés en {name} ({symbol})."
     },
     "shopStats": {
       "title": "Pilotage boutique",
@@ -794,7 +837,8 @@
       "csvExport": "Export CSV",
       "byPaymentMethod": "Par mode de paiement",
       "finalized": "Finalisées",
-      "taxesCollected": "Taxes collectées"
+      "taxesCollected": "Taxes collectées",
+      "cancelled": "Annulées"
     },
     "stats": {
       "breadcrumb": "Pilotage",
@@ -849,7 +893,8 @@
       "twoFactorEnabled": "La connexion exige désormais un code TOTP à 6 chiffres.",
       "twoFactorDesc": "Activez la 2FA pour sécuriser votre compte avec une appli d'authentification.",
       "showProfile": "Afficher le profil",
-      "updateProfile": "Mettre à jour le profil"
+      "updateProfile": "Mettre à jour le profil",
+      "informations": "Informations"
     },
     "builder": {
       "title": "Éditeur de pages (GrapesJS)",
@@ -1097,11 +1142,16 @@
       "option_Promo": "Promo",
       "option_Best-seller": "Best-seller",
       "option_Sur commande": "Sur commande",
-      "colorPlaceholder": "sari-blue, #1e40af, red-500...",
+      "colorPlaceholder": "sari-blue, #169EC9, red-500…",
       "pickColor": "Choisir une couleur",
       "answer": "Réponse",
       "addQuestion": "Ajouter une question",
-      "questionN": "Question {n}"
+      "questionN": "Question {n}",
+      "searchProduct": "Rechercher un produit…",
+      "noProductFound": "Aucun produit trouvé",
+      "loading": "Chargement…",
+      "selectedCount": "{count} produit(s) sélectionné(s)",
+      "clearAll": "Tout retirer"
     },
     "htmlEditor": {
       "header": "En-tête",
@@ -1396,11 +1446,38 @@
       "startDate": "Date de début",
       "endDate": "Date de fin",
       "publicationDate": "Date de publication",
-      "hintFullDesc": "Éditeur riche — section pleine largeur."
+      "hintFullDesc": "Éditeur riche — section pleine largeur.",
+      "auto": "Auto",
+      "groupCatalogue": "Catalogue",
+      "groupMédias": "Médias",
+      "groupTechnique": "Technique"
     },
     "drawer": {
       "dragToResize": "Glisser pour redimensionner · cliquer pour fermer",
       "close": "Fermer"
+    },
+    "authorPicker": {
+      "placeholder": "Rechercher un auteur…",
+      "loading": "Chargement…",
+      "noResult": "Aucun auteur trouvé",
+      "change": "Changer",
+      "clear": "Retirer l'auteur",
+      "fallbackBadge": "Par défaut",
+      "createTitle": "Nouvel auteur",
+      "createSubtitle": "La fiche est créée immédiatement et sélectionnée pour cet article.",
+      "name": "Nom complet",
+      "namePlaceholder": "Ex : Dr. Martin Dupont",
+      "role": "Qualification",
+      "rolePlaceholder": "Ex : Directrice médicale",
+      "roleHint": "Affichée sous le nom de l'auteur sur la page de l'article.",
+      "bio": "Description",
+      "bioPlaceholder": "Présentez l'auteur en quelques lignes…",
+      "bioHint": "Reprise dans le bloc « À propos de l'auteur » de la vitrine.",
+      "cancel": "Annuler",
+      "save": "Créer l'auteur",
+      "saving": "Création…",
+      "nameRequired": "Le nom est obligatoire.",
+      "createFailed": "Création impossible."
     },
     "servicesFields": {
       "title": "Intitulé",
@@ -1448,6 +1525,211 @@
       "hintCatalogPdf": "Upload, GED, consultation et téléchargement.",
       "hintShortDesc": "Max 280 caractères.",
       "hintFullDesc": "Éditeur riche — section pleine largeur."
+    },
+    "fields": {
+      "_groups": {
+        "Identité": "Identité",
+        "Contenu": "Contenu",
+        "Détails": "Détails",
+        "Média": "Média",
+        "Médias": "Médias",
+        "Catalogue": "Catalogue",
+        "Technique": "Technique",
+        "Mission": "Mission",
+        "Poste": "Poste",
+        "Profil": "Profil",
+        "Article": "Article",
+        "Texte": "Texte",
+        "Dates": "Dates",
+        "Programme": "Programme",
+        "Événement": "Événement",
+        "Auteur": "Auteur",
+        "Citation": "Citation",
+        "Fiche": "Fiche",
+        "Slide": "Slide",
+        "Blocs": "Blocs",
+        "Page": "Page",
+        "Légal": "Légal",
+        "Galerie": "Galerie",
+        "Menu": "Menu",
+        "Informations": "Informations",
+        "Coordonnées": "Coordonnées",
+        "Général": "Général",
+        "Publication": "Publication"
+      },
+      "title": "Titre",
+      "name": "Nom",
+      "slug": "Slug",
+      "locale": "Langue",
+      "status": "Statut",
+      "category": "Catégorie",
+      "icon": "Icône",
+      "color": "Couleur",
+      "image": "Visuel",
+      "gallery": "Galerie",
+      "logo": "Logo",
+      "photo": "Photo",
+      "media": "Médias",
+      "shortDesc": "Accroche",
+      "fullDesc": "Description",
+      "fullContent": "Présentation",
+      "content": "Contenu",
+      "description": "Texte",
+      "subtitle": "Sous-titre",
+      "features": "Atouts",
+      "faq": "FAQ",
+      "specs": "Spécifications",
+      "options": "Options / variantes",
+      "tags": "Tags",
+      "productIds": "Produits associés",
+      "price": "Prix",
+      "sku": "Code produit",
+      "inStock": "En stock",
+      "deliveryTime": "Délai de livraison",
+      "catalogPdf": "Fiche technique PDF",
+      "type": "Type",
+      "kind": "Famille",
+      "subtype": "Mise en page",
+      "location": "Lieu",
+      "date": "Date",
+      "publicationDate": "Date de publication",
+      "startDate": "Date de début",
+      "endDate": "Date de fin",
+      "readTime": "Temps de lecture",
+      "authorName": "Auteur",
+      "classification": "Classification",
+      "sujet": "Sujet",
+      "agenda": "Programme",
+      "targetAudience": "Public cible",
+      "slides": "Slides",
+      "sections": "Sections scroll",
+      "rating": "Note",
+      "role": "Fonction",
+      "clinic": "Établissement",
+      "text": "Citation",
+      "website": "Site web",
+      "email": "Email",
+      "bio": "Biographie",
+      "cta": "Libellé CTA",
+      "ctaLink": "Lien CTA",
+      "sortOrder": "Ordre d'affichage",
+      "products": {
+        "name": "Nom commercial",
+        "slug": "Slug URL",
+        "status": "Publication",
+        "image": "Visuel principal",
+        "fullDesc": "Description détaillée",
+        "features": "Points forts",
+        "inStock": "Stock"
+      },
+      "services": {
+        "title": "Intitulé",
+        "icon": "Icône Lucide",
+        "fullDesc": "Présentation",
+        "features": "Engagements"
+      },
+      "careers": {
+        "title": "Intitulé du poste",
+        "image": "Portrait",
+        "type": "Contrat",
+        "location": "Lieu",
+        "salary": "Rémunération",
+        "typeTravail": "Rythme",
+        "contact": "Contact RH",
+        "mission": "Mission",
+        "objectifs": "Objectifs",
+        "prerequis": "Prérequis",
+        "experience": "Expérience",
+        "workflow": "Processus de recrutement",
+        "benefits": "Avantages",
+        "applyAuth": "Connexion pour postuler"
+      },
+      "news": {
+        "image": "Une",
+        "shortDesc": "Chapô",
+        "fullContent": "Corps de l’article",
+        "category": "Rubrique"
+      },
+      "events": {
+        "location": "Emplacement",
+        "fullContent": "Présentation"
+      },
+      "authors": {
+        "name": "Nom complet",
+        "role": "Qualification",
+        "bio": "Description",
+        "isFallback": "Auteur par défaut"
+      },
+      "testimonials": {
+        "name": "Nom",
+        "role": "Fonction"
+      },
+      "solutions": {
+        "title": "Titre",
+        "icon": "Icône",
+        "features": "Atouts",
+        "image": "Visuel",
+        "fullDesc": "Présentation",
+        "productIds": "Produits associés"
+      },
+      "hero": {
+        "image": "Visuel plein écran",
+        "description": "Texte"
+      },
+      "pages": {
+        "content": "Contenu HTML",
+        "media": "Images"
+      },
+      "legal": {
+        "content": "Texte juridique"
+      },
+      "authorId": "Auteur",
+      "isFallback": "Auteur par défaut"
+    },
+    "imageUploader": {
+      "dropHere": "Déposez une image ici",
+      "orUrl": "ou collez une URL",
+      "formats": "JPG, PNG, WebP ou SVG — 5 Mo maximum",
+      "preview": "Aperçu",
+      "remove": "Retirer l'image",
+      "invalidType": "Format de fichier non pris en charge",
+      "tooLarge": "Fichier trop volumineux"
+    },
+    "configEditor": {
+      "title": "Éditeur de configuration",
+      "saveSuccess": "Configuration enregistrée",
+      "saveError": "Échec de l'enregistrement",
+      "exportSuccess": "Configuration exportée"
+    },
+    "menus": {
+      "autoTitle": "Sous-menu automatique",
+      "autoActive": "Sous-menu automatique · {source}",
+      "autoHint": "La liste est générée à l'affichage : une fiche publiée apparaît d'elle-même, une fiche archivée ou en brouillon disparaît. Inutile de revenir ici.",
+      "autoRemove": "Retirer la génération automatique",
+      "autoLoading": "Chargement du contenu…",
+      "autoLoadError": "Contenu inaccessible",
+      "autoEmpty": "Aucune fiche publiée dans ce module.",
+      "modeAll": "Toutes",
+      "modePick": "Sélection",
+      "limitLabel": "Limite (0 = tout)",
+      "previewTitle": "Aperçu · {count} entrée(s)",
+      "previewEmpty": "Rien à afficher : le lien n'aura pas de sous-menu.",
+      "hiddenNotice": "{count} fiche(s) masquée(s) car archivée(s) ou en brouillon.",
+      "source_solutions": "Solutions",
+      "source_services": "Services",
+      "source_products": "Produits",
+      "source_news": "Actualités",
+      "source_events": "Événements",
+      "displayTitle": "Affichage",
+      "showDesc": "Description",
+      "showIcon": "Icône",
+      "iconUnsupported": "Ce module n’a pas d’icône.",
+      "iconMissingNotice": "{count} fiche(s) sans icône : seul le titre s’affichera pour celles-ci.",
+      "modeGroups": "Catégories",
+      "groupsHint": "Une entrée par catégorie, menant à la liste filtrée. Aucune coche = toutes.",
+      "groupsEmpty": "Aucune catégorie dans le contenu publié de ce module.",
+      "groupsNoVisual": "Une catégorie n’a ni icône ni image.",
+      "showImage": "Vignette"
     }
   },
   "common": {
@@ -1828,7 +2110,16 @@
         "message": "Désolé, la page que vous recherchez n'existe pas ou a été déplacée.",
         "whatToDo": "Que souhaitez-vous faire ?",
         "backHome": "Retour à l'accueil",
-        "contactUs": "Nous contacter"
+        "contactUs": "Nous contacter",
+        "description": "La page que vous cherchez n'existe pas ou a été déplacée.",
+        "backToHome": "Retour à l'accueil",
+        "goBack": "Page précédente",
+        "suggestions": "Ces pages peuvent vous intéresser",
+        "browseProducts": "Parcourir le catalogue",
+        "ourServices": "Nos services",
+        "ourSolutions": "Nos solutions",
+        "needHelp": "Besoin d'aide ?",
+        "contactSupport": "Contacter le support"
       },
       "SearchHeader": {
         "title": "Que recherchez-vous ?",
@@ -1840,6 +2131,9 @@
         "tipOr": "= OU",
         "tipAnd": "= ET",
         "tipExample": "Ex: échographe, tensiomètre"
+      },
+      "FloatingApplicationsButton": {
+        "viewApplications": "Voir mes candidatures"
       }
     },
     "sections": {
@@ -2011,7 +2305,8 @@
       },
       "Pagination": {
         "previousPage": "Page précédente",
-        "nextPage": "Page suivante"
+        "nextPage": "Page suivante",
+        "pageInfo": "Page {current} sur {total}"
       },
       "ProductFilters": {},
       "SearchBar": {
@@ -2250,7 +2545,11 @@
       "optionPayDesc": "Finaliser le paiement sans créer de compte",
       "optionQuote": "Demander un devis",
       "optionQuoteDesc": "Recevoir un devis personnalisé sous 24h",
-      "cancel": "Annuler"
+      "cancel": "Annuler",
+      "preparingPayment": "Préparation du paiement",
+      "preparingPaymentDesc": "Votre commande est en cours de création, vous allez être redirigé.",
+      "taxIncluded": "incluse",
+      "captchaRequired": "Veuillez valider le contrôle antispam"
     },
     "contact": {
       "heroTag": "Contact",
@@ -2377,7 +2676,17 @@
       "messagesTitle": "Messages",
       "admin": "Admin",
       "you": "Vous",
-      "emptyThread": "Aucun message"
+      "emptyThread": "Aucun message",
+      "productsDesc": "Parcourez le catalogue et ajoutez des articles à votre panier.",
+      "addToCart": "Ajouter au panier",
+      "noProducts": "Aucun produit ne correspond à votre recherche",
+      "noMessagesYet": "Aucun message pour le moment",
+      "typeMessage": "Écrivez votre message…",
+      "sendMessage": "Envoyer",
+      "referrals": "Parrainages",
+      "revenue": "Chiffre d’affaires",
+      "back": "Retour",
+      "from": "De"
     },
     "eventDetail": {
       "notFound": "Événement non trouvé",
@@ -2518,7 +2827,8 @@
       "whyJoin3": "Formation continue",
       "whyJoin4": "Évolution de carrière",
       "applicationsClosed": "Les candidatures sont actuellement fermées.",
-      "startJourney": "Commencer le parcours"
+      "startJourney": "Commencer le parcours",
+      "applyDisabled": "Les candidatures sont closes pour cette offre."
     },
     "legal": {
       "pageNotFound": "Page non trouvée",
@@ -2592,7 +2902,16 @@
         "Gérez votre CV et documents",
         "Alertes pour les nouvelles offres",
         "Communication directe avec les RH"
-      ]
+      ],
+      "title": "Connexion",
+      "email": "Adresse e-mail",
+      "remember": "Se souvenir de moi",
+      "loginButton": "Se connecter",
+      "loggingIn": "Connexion en cours…",
+      "loginError": "Identifiants incorrects",
+      "captchaError": "Veuillez valider le captcha",
+      "createAccount": "Créer un compte",
+      "demoHint": "Compte de démonstration"
     },
     "news": {
       "noNewsTitle": "Aucune actualité pour le moment",
@@ -2686,7 +3005,9 @@
       "manualValidation": "Ce paiement sera validé manuellement par notre équipe",
       "paymentDone": "Paiement enregistré",
       "paymentPending": "Votre paiement est en attente de validation par notre équipe.",
-      "paymentValidated": "Votre paiement est validé. Merci !"
+      "paymentValidated": "Votre paiement est validé. Merci !",
+      "noMethod": "Aucun moyen de paiement disponible",
+      "fillPaypalEmail": "Renseignez votre e-mail PayPal"
     },
     "productDetail": {
       "noProductsLoaded": "Aucun produit chargé",
@@ -2822,7 +3143,11 @@
       "tipsTitle": "💡 Astuces de recherche :",
       "tipOr": "= Recherche OU (plusieurs termes)",
       "tipAnd": "= Recherche ET (tous les termes)",
-      "tipExample": "Exemple : \"échographe, tensiomètre\" OU \"lit + électrique\""
+      "tipExample": "Exemple : \"échographe, tensiomètre\" OU \"lit + électrique\"",
+      "home": "Accueil",
+      "loading": "Recherche en cours…",
+      "startSearching": "Lancez une recherche",
+      "startSearchingDesc": "Saisissez un mot-clé pour trouver un produit, un service ou une actualité."
     },
     "serviceDetail": {
       "notFound": "Service non trouvé",
@@ -2877,7 +3202,8 @@
       },
       "products": {
         "subtitle": "Notre sélection",
-        "title": "Nos Équipements"
+        "title": "Nos Équipements",
+        "viewAll": "Voir tous les produits"
       },
       "features": {
         "subtitle": "Nos avantages",
@@ -3473,7 +3799,11 @@
               "Aides à la mobilité"
             ]
           }
-        }
+        },
+        "cta": "Découvrir",
+        "empty": "Aucune solution publiée pour le moment.",
+        "emptyDesc": "Les solutions ajoutées depuis l'administration apparaîtront ici.",
+        "productsCount": "produits associés"
       },
       "process": {
         "subtitle": "Notre Méthode",
@@ -3817,7 +4147,84 @@
       "notes": "Notes supplémentaires",
       "submit": "Soumettre la demande",
       "cancel": "Annuler",
-      "back": "Retour"
+      "back": "Retour",
+      "subtitle": "Suivez vos demandes de devis et leur avancement.",
+      "noRequestsDesc": "Créez une demande pour recevoir une proposition chiffrée.",
+      "lines": "ligne(s)",
+      "nature": "Nature",
+      "natureOther": "Précisez la nature",
+      "duplicate": "Dupliquer",
+      "duplicatedFrom": "Dupliquée depuis",
+      "edit": "Modifier",
+      "note": "Note",
+      "notePlaceholder": "Précisions utiles au chiffrage (délais, contraintes, site…)",
+      "history": "Historique",
+      "stepProducts": "Produits",
+      "stepProductsDesc": "Choisissez dans le catalogue ou décrivez un article sur mesure.",
+      "stepDetails": "Détails",
+      "stepContact": "Contact",
+      "stepRecap": "Récapitulatif",
+      "next": "Suivant",
+      "previous": "Précédent",
+      "send": "Envoyer la demande",
+      "saveDraft": "Enregistrer le brouillon",
+      "savedAsDraft": "Brouillon enregistré",
+      "submitted": "Demande envoyée",
+      "catalog": "Catalogue",
+      "searchCatalog": "Rechercher un produit…",
+      "noResults": "Aucun produit trouvé",
+      "product": "Produit",
+      "special": "Article sur mesure",
+      "addSpecial": "Ajouter un article sur mesure",
+      "description": "Description",
+      "unit": "Unité",
+      "lineTotal": "Total ligne",
+      "subtotal": "Sous-total",
+      "taxes": "TVA",
+      "discount": "Remise",
+      "totalTtc": "Total TTC",
+      "email": "E-mail",
+      "phone": "Téléphone",
+      "address": "Adresse",
+      "country": "Pays",
+      "delivery": "Livraison",
+      "desiredDate": "Date souhaitée",
+      "attachFile": "Joindre un fichier",
+      "downloadFile": "Télécharger la pièce jointe",
+      "downloadPdf": "Télécharger le PDF",
+      "accept": "Accepter",
+      "refuse": "Refuser",
+      "requestRevision": "Demander une révision",
+      "revisionAsked": "Révision demandée",
+      "response": "Réponse",
+      "errNameRequired": "Le nom est obligatoire",
+      "errEmail": "Adresse e-mail invalide",
+      "errPhone": "Numéro de téléphone invalide",
+      "errNature": "Indiquez la nature de la demande",
+      "errNatureOther": "Précisez la nature",
+      "errNoLines": "Ajoutez au moins un article",
+      "errQty": "Quantité invalide",
+      "errLineLimit": "Nombre maximal d’articles atteint",
+      "errAttachment": "Pièce jointe refusée (format ou taille)",
+      "contactIntro": "Ces coordonnées servent à vous recontacter et à établir le devis. Les champs marqués d'une étoile sont obligatoires.",
+      "phoneHint": "Un conseiller vous rappelle sur ce numéro.",
+      "emailHint": "Le devis et son suivi sont envoyés à cette adresse.",
+      "addressHint": "Adresse de livraison ou d'installation.",
+      "addressPlaceholder": "Numéro, rue, ville, code postal",
+      "countryHint": "Détermine la zone de taxation et de livraison.",
+      "countryPlaceholder": "Commencez à taper le nom du pays",
+      "errPhoneRequired": "Le téléphone est obligatoire",
+      "errEmailRequired": "L'adresse e-mail est obligatoire",
+      "errAddressRequired": "L'adresse est obligatoire",
+      "errAddressShort": "Adresse trop courte pour être exploitable",
+      "errCountryRequired": "Le pays est obligatoire",
+      "errCaptcha": "Veuillez valider le contrôle antispam",
+      "antispam": "Contrôle antispam",
+      "sentTitle": "Demande envoyée",
+      "sentDesc": "Nous revenons vers vous rapidement. Conservez cette référence pour tout échange.",
+      "yourReference": "Votre référence",
+      "copyReference": "Copier la référence",
+      "viewMyQuotes": "Voir mes devis"
     }
   }
 }

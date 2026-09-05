@@ -16,6 +16,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { PAGE_KINDS, PAGE_STATUSES, PAGE_SUBTYPES } from '../entities/page.entity';
+import { SLUG_REGEX, SLUG_MESSAGE } from '../../../common/validation/slug';
 
 export class PageSlideDto {
   @ApiPropertyOptional()
@@ -63,7 +64,7 @@ export class PageSlideDto {
 export class CreatePageDto {
   @ApiProperty({ example: 'mentions-legales' })
   @IsString()
-  @Matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+  @Matches(SLUG_REGEX, { message: SLUG_MESSAGE })
   @MaxLength(160)
   slug!: string;
 

@@ -5,6 +5,7 @@ import type {
   Product,
   Event,
   News,
+  Author,
   Career,
   Service,
   Testimonial,
@@ -15,23 +16,64 @@ import type {
   HeroSlide,
   SolutionCategory,
 } from '@/types';
-import { cmsPublicList, cmsPublicOne, cmsFetch } from '@/lib/cms';
+import { cmsPublicList, cmsPublicOne, cmsPublicTranslations, cmsFetch } from '@/lib/cms';
 import { loadFicheLocale } from '@/lib/fiche-i18n';
 import { asPublicId, matchesEntity } from '@/lib/ids';
+import { findByRouteKey } from '@/lib/entity-url';
+import {
+  applyAutoMenus,
+  usedAutoSources,
+  type AutoEntity,
+  type AutoSource,
+  type MenuNode,
+} from '@/lib/menu-auto';
 
-const dataCache = new Map<string, unknown>();
+/**
+ * Durée de vie des données mises en cache, en millisecondes.
+ *
+ * Ce cache vit dans le module, donc côté serveur il dure aussi longtemps que le
+ * processus Node. Sans expiration, une modification faite dans l'administration
+ * n'apparaissait sur la vitrine qu'après un redémarrage complet : le contenu
+ * était bien enregistré et bien renvoyé par l'API, mais jamais relu.
+ *
+ * Trente secondes gardent l'intérêt du cache — les rafales de requêtes d'un
+ * même rendu ne touchent l'API qu'une fois — tout en rendant les changements
+ * visibles d'eux-mêmes. `CMS_CACHE_TTL=0` désactive complètement la mise en
+ * cache, ce qui est pratique pendant qu'on règle les contenus.
+ */
+const CACHE_TTL_MS = (() => {
+  const raw = Number(process.env.CMS_CACHE_TTL ?? process.env.NEXT_PUBLIC_CMS_CACHE_TTL);
+  return Number.isFinite(raw) && raw >= 0 ? raw : 30_000;
+})();
+
+type CacheEntry = { value: unknown; expiresAt: number };
+
+const dataCache = new Map<string, CacheEntry>();
+
+/** Valeur encore valide pour cette clé, ou `undefined` si absente/expirée. */
+function cacheGet(cacheKey: string): unknown | undefined {
+  const hit = dataCache.get(cacheKey);
+  if (!hit) return undefined;
+  if (hit.expiresAt <= Date.now()) {
+    // Entrée périmée : on la retire pour que le prochain appel recharge.
+    dataCache.delete(cacheKey);
+    return undefined;
+  }
+  return hit.value;
+}
 
 async function loadData<T>(locale: string, key: string, fallback: T): Promise<T> {
   const cacheKey = `${locale}_${key}`;
 
-  if (dataCache.has(cacheKey)) {
-    return dataCache.get(cacheKey) as T;
+  const cached = cacheGet(cacheKey);
+  if (cached !== undefined) {
+    return cached as T;
   }
 
   try {
     const data = await import(`@/data/${locale}/${key}.json`);
     const result = (data.default || fallback) as T;
-    dataCache.set(cacheKey, result);
+    cacheSet(locale, key, result);
     return result;
   } catch {
     console.warn(`⚠️ Données non trouvées: ${locale}/${key}.json, utilisation du fallback`);
@@ -40,7 +82,9 @@ async function loadData<T>(locale: string, key: string, fallback: T): Promise<T>
 }
 
 function cacheSet<T>(locale: string, key: string, value: T): T {
-  dataCache.set(`${locale}_${key}`, value);
+  // TTL nul : on ne mémorise rien, chaque appel repart de la source.
+  if (CACHE_TTL_MS <= 0) return value;
+  dataCache.set(`${locale}_${key}`, { value, expiresAt: Date.now() + CACHE_TTL_MS });
   return value;
 }
 
@@ -51,7 +95,8 @@ async function fromCmsOrJson<T>(
   loader: () => Promise<T | null | undefined>,
 ): Promise<T> {
   const cacheKey = `${locale}_${key}`;
-  if (dataCache.has(cacheKey)) return dataCache.get(cacheKey) as T;
+  const cached = cacheGet(cacheKey);
+  if (cached !== undefined) return cached as T;
   try {
     const remote = await loader();
     if (remote !== null && remote !== undefined) {
@@ -71,6 +116,8 @@ async function fromCmsOrJson<T>(
 function mapProduct(row: Record<string, unknown>): Product {
   return {
     id: asPublicId(row),
+    locale: row.locale ? String(row.locale) : undefined,
+    legacyId: row.legacyId ? String(row.legacyId) : undefined,
     name: String(row.name ?? ''),
     category: String(row.category ?? ''),
     price: String(row.price ?? ''),
@@ -96,6 +143,7 @@ function mapNews(row: Record<string, unknown>): News {
     category: String(row.category ?? ''),
     date: String(row.date ?? row.publishedAt ?? ''),
     author: row.authorName ? String(row.authorName) : row.author ? String(row.author) : undefined,
+    authorId: row.authorId !== null && row.authorId !== undefined ? (row.authorId as number | string) : undefined,
     shortDesc: String(row.shortDesc ?? ''),
     fullContent: row.fullContent ? String(row.fullContent) : undefined,
     image: String(row.image ?? ''),
@@ -156,6 +204,10 @@ function mapCareer(row: Record<string, unknown>): Career {
 function mapService(row: Record<string, unknown>): Service {
   return {
     id: asPublicId(row),
+    // locale + legacyId : indispensables au changement de langue, qui relie
+    // les versions d'une même fiche par leur legacyId.
+    locale: row.locale ? String(row.locale) : undefined,
+    legacyId: row.legacyId ? String(row.legacyId) : undefined,
     title: String(row.title ?? ''),
     icon: String(row.icon ?? ''),
     color: row.color ? String(row.color) : undefined,
@@ -202,18 +254,50 @@ function mapHero(row: Record<string, unknown>): HeroSlide {
 }
 
 function mapSolution(row: Record<string, unknown>): SolutionCategory {
+  // productIds peut arriver en JSON string depuis MySQL/Prisma (colonne Json).
+  let productIds: Array<string | number> = [];
+  if (Array.isArray(row.productIds)) {
+    productIds = row.productIds as Array<string | number>;
+  } else if (typeof row.productIds === 'string' && row.productIds.trim()) {
+    try {
+      const parsed = JSON.parse(row.productIds);
+      if (Array.isArray(parsed)) productIds = parsed;
+    } catch {
+      productIds = row.productIds
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+    }
+  }
+
+  const parseJsonArray = <T,>(value: unknown): T[] | undefined => {
+    if (Array.isArray(value)) return value as T[];
+    if (typeof value === 'string' && value.trim()) {
+      try {
+        const parsed = JSON.parse(value);
+        if (Array.isArray(parsed)) return parsed as T[];
+      } catch {
+        /* valeur non JSON — ignorée */
+      }
+    }
+    return undefined;
+  };
+
   return {
-    id: String(row.id ?? ''),
+    id: asPublicId(row),
+    locale: row.locale ? String(row.locale) : undefined,
+    legacyId: row.legacyId ? String(row.legacyId) : undefined,
     slug: row.slug ? String(row.slug) : undefined,
     title: String(row.title ?? ''),
     shortDesc: String(row.shortDesc ?? ''),
     fullDesc: row.fullDesc ? String(row.fullDesc) : undefined,
     icon: String(row.icon ?? ''),
     image: String(row.image ?? ''),
-    color: String(row.color ?? 'sari-blue'),
-    productIds: Array.isArray(row.productIds) ? (row.productIds as Array<string | number>) : [],
-    features: Array.isArray(row.features) ? (row.features as string[]) : undefined,
-    faq: Array.isArray(row.faq) ? (row.faq as SolutionCategory['faq']) : undefined,
+    color: String(row.color || 'sari-blue'),
+    productIds,
+    features: parseJsonArray<string>(row.features),
+    faq: parseJsonArray<{ q: string; a: string }>(row.faq),
+    sortOrder: typeof row.sortOrder === 'number' ? row.sortOrder : undefined,
   };
 }
 
@@ -349,16 +433,82 @@ export async function getConfig(locale: string): Promise<Config> {
   });
 }
 
+/**
+ * Charge les listes nécessaires aux sous-menus générés.
+ *
+ * Seuls les modules réellement référencés par une règle sont chargés, et en
+ * parallèle : un menu sans sous-menu automatique ne coûte aucune requête
+ * supplémentaire.
+ */
+async function loadAutoDatasets(
+  sources: AutoSource[],
+  locale: string,
+): Promise<Partial<Record<AutoSource, AutoEntity[]>>> {
+  if (!sources.length) return {};
+  const loaders: Record<AutoSource, (l: string) => Promise<unknown[]>> = {
+    solutions: getSolutionCategories,
+    services: getServices,
+    products: getProducts,
+    news: getNews,
+    events: getEvents,
+  };
+  const entries = await Promise.all(
+    sources.map(async (source) => {
+      try {
+        return [source, (await loaders[source](locale)) as AutoEntity[]] as const;
+      } catch {
+        // Un module indisponible ne doit pas faire disparaître tout le menu :
+        // le lien parent reste, simplement sans sous-menu.
+        return [source, [] as AutoEntity[]] as const;
+      }
+    }),
+  );
+  return Object.fromEntries(entries) as Partial<Record<AutoSource, AutoEntity[]>>;
+}
+
+/**
+ * Développe les sous-menus générés d'un menu déjà chargé.
+ *
+ * Exporté pour que l'aperçu de l'administration applique exactement la même
+ * résolution que la vitrine.
+ */
+export async function expandAutoMenus(menu: Menu, locale: string): Promise<Menu> {
+  const main = (menu.mainMenu || []) as MenuNode[];
+  const nav = (menu.footerMenu?.navigation || []) as MenuNode[];
+  const legal = (menu.footerMenu?.legal || []) as MenuNode[];
+  const sources = [...new Set([...usedAutoSources(main), ...usedAutoSources(nav)])];
+
+  // Même sans règle « auto », il faut traverser les listes : l'éditeur de menus
+  // enregistre `submenu: []` sur chaque entrée, y compris celles qui n'ont pas
+  // de sous-menu. Or un tableau vide est vrai en JavaScript, donc le header
+  // affichait un chevron et ouvrait un panneau vide sur ces entrées. On
+  // normalise systématiquement le tableau vide en `undefined`.
+  const datasets = sources.length ? await loadAutoDatasets(sources, locale) : {};
+  return {
+    ...menu,
+    mainMenu: applyAutoMenus(main, datasets, locale) as Menu['mainMenu'],
+    footerMenu: {
+      ...menu.footerMenu,
+      navigation: applyAutoMenus(nav, datasets, locale) as Menu['footerMenu']['navigation'],
+      legal: applyAutoMenus(legal, datasets, locale) as Menu['footerMenu']['legal'],
+    },
+  };
+}
+
 export async function getMenu(locale: string): Promise<Menu> {
   const fallback: Menu = {
     mainMenu: [],
     footerMenu: { navigation: [], legal: [] },
     socialLinks: {},
   };
-  return fromCmsOrJson(locale, 'menu', fallback, async () => {
+  const menu = await fromCmsOrJson(locale, 'menu', fallback, async () => {
     const rows = await cmsPublicList<Record<string, unknown>>('menus', locale);
     return mapMenu(rows);
   });
+  // Résolution après la mise en cache du menu brut : les règles sont ainsi
+  // réévaluées à chaque appel, sans quoi une fiche archivée resterait affichée
+  // tant que le cache du menu n'a pas expiré.
+  return expandAutoMenus(menu, locale);
 }
 
 export async function getHero(locale: string): Promise<HeroSlide[]> {
@@ -388,6 +538,62 @@ export async function getNews(locale: string): Promise<News[]> {
     
     return rows.length ? rows.map(mapNews) : [];
   });
+}
+
+/**
+ * Fiches auteurs. Le repli JSON (`data/{locale}/authors.json`) permet à la
+ * vitrine de rester complète tant que l'API n'est pas alimentée.
+ */
+function mapAuthor(row: Record<string, unknown>): Author {
+  return {
+    id: asPublicId(row),
+    locale: row.locale ? String(row.locale) : 'fr',
+    legacyId: row.legacyId ? String(row.legacyId) : undefined,
+    slug: row.slug ? String(row.slug) : undefined,
+    name: String(row.name ?? ''),
+    role: row.role ? String(row.role) : undefined,
+    bio: row.bio ? String(row.bio) : undefined,
+    photo: row.photo ? String(row.photo) : undefined,
+    email: row.email ? String(row.email) : undefined,
+    isFallback: Boolean(row.isFallback),
+    sortOrder: typeof row.sortOrder === 'number' ? row.sortOrder : undefined,
+  };
+}
+
+export async function getAuthors(locale: string): Promise<Author[]> {
+  return fromCmsOrJson(locale, 'authors', [], async () => {
+    const rows = await cmsPublicList<Record<string, unknown>>('authors', locale);
+    if (rows.length === 0 && locale !== 'fr') {
+      const frRows = await cmsPublicList<Record<string, unknown>>('authors', 'fr');
+      return frRows.length ? frRows.map(mapAuthor) : [];
+    }
+    return rows.length ? rows.map(mapAuthor) : [];
+  });
+}
+
+/**
+ * Auteur d'un article : par identifiant, sinon par nom (articles repris qui ne
+ * portent qu'un `authorName`). Retourne `null` si aucune fiche ne correspond,
+ * afin que la page puisse basculer sur l'auteur par défaut.
+ */
+export async function getArticleAuthor(locale: string, item: News): Promise<Author | null> {
+  const authors = await getAuthors(locale);
+  if (item.authorId !== undefined && item.authorId !== null) {
+    const byId = authors.find((a) => String(a.id) === String(item.authorId));
+    if (byId) return byId;
+  }
+  if (item.author) {
+    const name = item.author.trim().toLowerCase();
+    const byName = authors.find((a) => a.name.trim().toLowerCase() === name);
+    if (byName) return byName;
+  }
+  return null;
+}
+
+/** Auteur par défaut configuré dans la liste des auteurs. */
+export async function getDefaultAuthor(locale: string): Promise<Author | null> {
+  const authors = await getAuthors(locale);
+  return authors.find((a) => a.isFallback) ?? null;
 }
 
 export async function getEvents(locale: string): Promise<Event[]> {
@@ -506,20 +712,138 @@ export async function getVerificationCodes(locale: string): Promise<Verification
   return loadData<VerificationCode[]>(locale, 'verification-codes', []);
 }
 
+/** Champs d'une solution qui peuvent être traduits fiche par fiche. */
+const SOLUTION_TRANSLATABLE_FIELDS = [
+  'title',
+  'slug',
+  'icon',
+  'color',
+  'shortDesc',
+  'fullDesc',
+  'features',
+  'faq',
+  'image',
+];
+
 export async function getSolutionCategories(locale: string): Promise<SolutionCategory[]> {
   return fromCmsOrJson(locale, 'solution-categories', [], async () => {
-    const rows = await cmsPublicList<Record<string, unknown>>('solutions', locale);
+    let rows = await cmsPublicList<Record<string, unknown>>('solutions', locale);
+
+    // Fallback FR : une solution non encore traduite doit rester accessible,
+    // ses champs traduits seront appliqués depuis la fiche i18n ci-dessous.
+    if (!rows.length && locale !== 'fr') {
+      rows = await cmsPublicList<Record<string, unknown>>('solutions', 'fr');
+    }
     if (!rows.length) return null;
-    
-    // Appliquer les traductions depuis localStorage pour chaque catégorie
-    const translatedRows = rows.map(row => 
-      applyFicheTranslation(row, 'solutions', locale, [
-        'title', 'slug', 'icon', 'color', 'shortDesc', 'fullDesc', 'features', 'faq', 'image'
-      ])
+
+    // Appliquer les traductions (fiches i18n) pour chaque catégorie
+    const translatedRows = rows.map((row) =>
+      applyFicheTranslation(row, 'solutions', locale, SOLUTION_TRANSLATABLE_FIELDS),
     );
-    
-    return translatedRows.map(mapSolution);
+
+    const mapped = translatedRows.map(mapSolution);
+    mapped.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+    return mapped;
   });
+}
+
+/**
+ * Résout une solution depuis un segment d'URL `id-slug` (ou juste `id`/`slug`).
+ * Voir `lib/entity-url.ts` pour la construction des URLs.
+ */
+export async function getSolutionByKey(
+  locale: string,
+  key: string,
+): Promise<SolutionCategory | null> {
+  const categories = await getSolutionCategories(locale);
+  return findByRouteKey(categories, key);
+}
+
+/**
+ * Versions linguistiques d'une solution, indexées par langue.
+ *
+ * Source de vérité : l'API (`/public/solutions/{key}/translations`), qui relie
+ * les fiches par `legacyId`. En cas d'indisponibilité, on retombe sur les
+ * données locales de la langue cible (rapprochement par legacyId puis par id).
+ */
+export async function getSolutionTranslations(
+  key: string,
+): Promise<Record<string, SolutionCategory>> {
+  const rows = await cmsPublicTranslations<Record<string, unknown>>('solutions', key);
+  const out: Record<string, SolutionCategory> = {};
+  for (const row of rows) {
+    const mapped = mapSolution(row);
+    if (mapped.locale) out[mapped.locale] = mapped;
+  }
+  return out;
+}
+
+/**
+ * Versions linguistiques d'une fiche, quel que soit le module.
+ *
+ * Interroge `/public/{resource}/{key}/translations`, qui relie les fiches par
+ * `legacyId`. Le résultat est indexé par langue, sous une forme minimale
+ * (`id` / `slug` / `legacyId` / `locale`) suffisante pour reconstruire l'URL —
+ * inutile de connaître la forme complète de chaque module.
+ *
+ * Renvoie un objet vide si l'API est indisponible : l'appelant retombe alors
+ * sur ses propres données locales.
+ */
+export async function getEntityTranslations(
+  resource: string,
+  key: string,
+): Promise<Record<string, { id: string; slug?: string; legacyId?: string; locale?: string }>> {
+  const rows = await cmsPublicTranslations<Record<string, unknown>>(resource, key);
+  const out: Record<string, { id: string; slug?: string; legacyId?: string; locale?: string }> = {};
+  for (const row of rows) {
+    const locale = row.locale ? String(row.locale) : '';
+    if (!locale) continue;
+    out[locale] = {
+      id: String(asPublicId(row)),
+      slug: row.slug ? String(row.slug) : undefined,
+      legacyId: row.legacyId ? String(row.legacyId) : undefined,
+      locale,
+    };
+  }
+  return out;
+}
+
+/**
+ * Liste d'un module dans une langue donnée, sous forme d'entités routables.
+ *
+ * Sert de repli au sélecteur de langue quand l'endpoint `/translations` est
+ * indisponible : on compare alors les listes des deux langues (legacyId, puis
+ * id). Une seule fonction évite d'aiguiller vers `getNews`, `getEvents`, etc.
+ */
+export async function getRoutableList(
+  resource: string,
+  locale: string,
+): Promise<Array<{ id: string; slug?: string; legacyId?: string; locale?: string; title?: string; name?: string }>> {
+  const loaders: Record<string, (l: string) => Promise<unknown[]>> = {
+    news: getNews,
+    events: getEvents,
+    services: getServices,
+    products: getProducts,
+    careers: getCareers,
+    partners: getPartners,
+    solutions: getSolutionCategories,
+    pages: getGenericContent,
+  };
+  const loader = loaders[resource];
+  if (!loader) return [];
+  try {
+    const rows = (await loader(locale)) as Array<Record<string, unknown>>;
+    return rows.map((row) => ({
+      id: String(row.id ?? ''),
+      slug: row.slug ? String(row.slug) : undefined,
+      legacyId: row.legacyId ? String(row.legacyId) : undefined,
+      locale: row.locale ? String(row.locale) : undefined,
+      title: row.title ? String(row.title) : undefined,
+      name: row.name ? String(row.name) : undefined,
+    }));
+  } catch {
+    return [];
+  }
 }
 
 export function clearCache(): void {

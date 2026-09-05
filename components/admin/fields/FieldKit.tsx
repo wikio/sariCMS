@@ -18,7 +18,10 @@ import Toggle from '@/components/admin/Toggle';
 import DateTimePicker from '@/components/admin/fields/DateTimePicker';
 import AutocompleteSelect from '@/components/admin/fields/AutocompleteSelect';
 import ProductMultiSelect from '@/components/admin/fields/ProductMultiSelect';
-import { activeCurrencies, loadCurrencies, saveCurrencies, type Currency } from '@/lib/currencies';
+import AuthorPicker from '@/components/admin/fields/AuthorPicker';
+import { activeCurrencies, defaultCurrency, FALLBACK_CURRENCY, loadCurrencies, saveCurrencies, type Currency } from '@/lib/currencies';
+import { useAdminLabels } from '@/lib/admin-labels';
+import { COLOR_PRESETS, resolveColor } from '@/lib/colors';
 import { useMessages, useTranslations } from 'next-intl';
 
 /** Vérifie silencieusement si une clé de traduction existe dans un namespace */
@@ -37,20 +40,11 @@ function resolveOptionTranslation(messages: Record<string, any>, locale: string,
   return null;
 }
 
-export function FieldShell({ spec, value, origin, originLocale, children }: { spec: FieldSpec; value?: unknown; origin?: unknown; originLocale?: string; children: React.ReactNode }) {
+export function FieldShell({ spec, value, origin, originLocale, moduleKey, children }: { spec: FieldSpec; value?: unknown; origin?: unknown; originLocale?: string; moduleKey?: string; children: React.ReactNode }) {
   const t = useTranslations('admin.editor');
-  const tF = useTranslations('admin.careersFields');
-  const resolvedLabel = (() => { 
-    try { 
-      const translated = tF(spec.key);
-      // Check if translation actually resolved (not just returning the key path)
-      if (typeof translated === 'string' && translated !== spec.key && !translated.startsWith('admin.careersFields.')) {
-        return translated;
-      }
-    } catch {}
-    return spec.label; 
-  })();
-  const resolvedHint = (() => { const HINT_KEYS: Record<string,string> = { type: 'hintType', applyAuth: 'hintApplyAuth', icon: 'hintIcon', fullDesc: 'hintFullDesc', fullContent: 'hintFullDesc' }; const k = HINT_KEYS[spec.key]; if (!k) return spec.hint; try { const r = tF(k); return typeof r === 'string' ? r : spec.hint; } catch { return spec.hint; } })();
+  const labels = useAdminLabels(moduleKey);
+  const resolvedLabel = labels.field(spec.key, spec.label);
+  const resolvedHint = labels.hint(spec.key, spec.hint);
   const len = typeof value === 'string' ? value.length : 0;
   const over = spec.maxLength != null && len > spec.maxLength;
   const originText = origin == null || origin === '' ? '' : typeof origin === 'string' ? origin : JSON.stringify(origin);
@@ -87,12 +81,20 @@ export function renderField(
   value: unknown,
   onChange: (v: unknown) => void,
   record: Record<string, unknown>,
-  extra: { origin?: unknown; originLocale?: string; t?: (key: string) => string; moduleKey?: string; valueOf?: (key: string) => unknown } = {},
+  extra: {
+    origin?: unknown;
+    originLocale?: string;
+    t?: (key: string) => string;
+    moduleKey?: string;
+    valueOf?: (key: string) => unknown;
+    /** Écriture d'un autre champ du même formulaire (ex. `authorName` depuis le sélecteur d'auteur). */
+    setField?: (key: string, value: unknown) => void;
+  } = {},
 ) {
   const ph = spec.placeholder || '';
   const t = extra.t || ((key: string) => key); // Fallback: retourner la clé si pas de fonction de traduction
   const wrap = (node: React.ReactNode) => (
-    <FieldShell spec={spec} value={value} origin={extra.origin} originLocale={extra.originLocale}>{node}</FieldShell>
+    <FieldShell spec={spec} value={value} origin={extra.origin} originLocale={extra.originLocale} moduleKey={extra.moduleKey}>{node}</FieldShell>
   );
   switch (spec.kind) {
     case 'html':
@@ -142,7 +144,6 @@ export function renderField(
       return wrap(<DateTimePicker 
         value={String(value || '')} 
         onChange={(newValue) => {
-          console.log('[FieldKit.datetime] onChange called:', { key: spec.key, value: newValue });
           onChange(newValue);
         }} 
         label={spec.label} 
@@ -174,7 +175,7 @@ export function renderField(
         <textarea className="ad-textarea min-h-[90px]" placeholder={ph || (spec.placeholder || '')} maxLength={spec.maxLength} value={String(value || '')} onChange={(e) => onChange(e.target.value)} />,
       );
     case 'image':
-      return wrap(<MediaPicker value={String(value || '')} onChange={onChange} moduleName={extra.moduleKey || spec.key} recordId={record.id} recordSlug={record.slug as string} />);
+      return wrap(<MediaPicker value={String(value || '')} onChange={onChange} moduleName={extra.moduleKey || spec.key} recordId={record.id as string | number | undefined} recordSlug={record.slug as string} />);
     case 'file':
       return wrap(<FilePicker value={String(value || '')} onChange={onChange} />);
     case 'gallery':
@@ -198,6 +199,16 @@ export function renderField(
       return wrap(<BlocksEditor value={asBlocks(value)} onChange={onChange} />);
     case 'products':
       return wrap(<ProductMultiSelect value={Array.isArray(value) ? value : []} onChange={onChange} />);
+    case 'author':
+      return wrap(
+        <AuthorPicker
+          value={value as string | number | null}
+          onChange={onChange}
+          // Le nom reste stocké sur l'article : la vitrine et les exports
+          // continuent de l'afficher même si la fiche auteur est supprimée.
+          onNameChange={(name) => extra.setField?.('authorName', name)}
+        />,
+      );
     case 'rating':
       return wrap(
         <div className="flex gap-1">
@@ -335,13 +346,11 @@ function TaxonomySelect({ spec, value, onChange, locale }: { spec: FieldSpec; va
     if (matchedByValue) return; // already canonical
     const matchedByLabel = options.find((o) => o.label === value);
     if (matchedByLabel) {
-      console.log(`TaxonomySelect: normalizing value "${value}" → "${matchedByLabel.value}"`);
       onChange(matchedByLabel.value);
     }
   }, [value, options, onChange]);
   
   // Debug log
-  console.log('TaxonomySelect:', { value, current, options: options.map(o => ({ v: o.value, l: o.label })) });
 
   const create = () => {
     const label = draft.trim();
@@ -443,9 +452,11 @@ function PriceInner({ value, onChange, placeholder }: { value: string; onChange:
     return () => window.removeEventListener('sari-currencies', on);
   }, []);
   const { amount, suffix } = parsePrice(value);
+  // À défaut de devise reconnue dans la valeur saisie, on propose celle
+  // configurée par défaut (page Devises) plutôt que la première de la liste.
   const curr = list.find((c) => suffix === c.symbol || suffix === c.code || suffix.includes(c.symbol) || suffix.includes(c.code))
-    || list[0]
-    || { code: 'DZD', symbol: 'DA', name: 'Dinar algérien', id: 'dzd', rate: 1, active: true };
+    || (list.length ? defaultCurrency(list) : null)
+    || FALLBACK_CURRENCY;
 
   const quote = /sur\s*devis/i.test(value) || suffix.toLowerCase() === 'sur devis';
   const setAmount = (next: string) => onChange(next.trim() ? `${next.trim()} ${curr.symbol}` : '');
@@ -526,18 +537,9 @@ export function ColorPicker({ value, onChange }: { value: string; onChange: (v: 
   const inputRef = useRef<HTMLInputElement>(null);
   const [inputRect, setInputRect] = useState<DOMRect | null>(null);
 
-  const PRESET_COLORS = [
-    { name: 'sari-blue', value: '#1e40af' },
-    { name: 'red-500', value: '#ef4444' },
-    { name: 'green-500', value: '#10b981' },
-    { name: 'purple-500', value: '#8b5cf6' },
-    { name: 'pink-500', value: '#ec4899' },
-    { name: 'orange-500', value: '#f97316' },
-    { name: 'indigo-500', value: '#6366f1' },
-    { name: 'teal-500', value: '#14b8a6' },
-    { name: 'cyan-500', value: '#06b6d4' },
-    { name: 'yellow-500', value: '#eab308' },
-  ];
+  // Palette partagée avec la vitrine (lib/colors.ts) : le rendu de l'admin
+  // correspond exactement à la couleur affichée sur le site public.
+  const PRESET_COLORS = COLOR_PRESETS;
 
   useEffect(() => {
     setInputValue(value || '');
@@ -596,10 +598,8 @@ export function ColorPicker({ value, onChange }: { value: string; onChange: (v: 
     onChange(hexValue);
   };
 
-  const displayColor = useMemo(() => {
-    const preset = PRESET_COLORS.find(c => c.name === inputValue);
-    return preset ? preset.value : inputValue;
-  }, [inputValue]);
+  // Aperçu : jeton connu → sa couleur, sinon la valeur brute (hex, rgb…).
+  const displayColor = useMemo(() => (inputValue ? resolveColor(inputValue) : ''), [inputValue]);
 
   return (
     <div className="relative">
@@ -752,19 +752,15 @@ export function IconPicker({ value, onChange }: { value: string; onChange: (v: s
           placeholder={t('searchIcon')}
           value={q}
           onFocus={() => {
-            console.log('[IconPicker] onFocus called, opening dropdown');
             setOpen(true);
           }}
           onChange={(e) => { 
-            console.log('[IconPicker] onChange called:', e.target.value);
             setQ(e.target.value); 
             setOpen(true); 
           }}
         />
       </div>
       {open && portalRect && (() => {
-        console.log('[IconPicker] Rendering dropdown with portalRect:', portalRect);
-        console.log('[IconPicker] Hits count:', hits.length);
         return createPortal(
         <div
           className="ad-combo-list ad-scroll"
@@ -792,7 +788,6 @@ export function IconPicker({ value, onChange }: { value: string; onChange: (v: s
               className={`ad-combo-item items-center gap-2 ${name === value ? 'is-on font-bold' : ''}`}
               onMouseDown={(e) => {
                 e.preventDefault();
-                console.log('[IconPicker] Icon selected:', name);
                 onChange(name); 
                 setQ(''); 
                 setOpen(false);

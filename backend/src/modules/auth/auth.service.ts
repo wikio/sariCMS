@@ -85,7 +85,13 @@ export class AuthService {
       throw new UnauthorizedException('Invalid or expired 2FA challenge');
     }
     if (payload.typ !== '2fa') throw new UnauthorizedException('Invalid token type');
-    const user = await this.users.findById(Number(payload.sub));
+    // `sub` peut être un entier (MySQL/Postgres) ou un UUID (driver JSON) :
+    // Number('c5c1...') vaut NaN et faisait échouer toute requête authentifiée.
+    const rawSub = payload.sub;
+    const subId = (typeof rawSub === 'number' || /^\d+$/.test(String(rawSub))
+      ? Number(rawSub)
+      : rawSub) as unknown as number;
+    const user = await this.users.findById(subId);
     if (!user || !user.totpEnabled) throw new UnauthorizedException('2FA is not enabled');
     this.assertTotp(user, dto.code);
     return this.issueSession(user, meta);

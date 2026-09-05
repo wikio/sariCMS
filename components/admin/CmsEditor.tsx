@@ -15,6 +15,7 @@ import { slugify } from '@/lib/slugify';
 import { CmsError } from '@/lib/cms';
 import { loadAdminSettings, nextSku } from '@/lib/admin-settings';
 import { isTranslatableField, loadFicheLocale, saveFicheLocale } from '@/lib/fiche-i18n';
+import { useAdminLabels } from '@/lib/admin-labels';
 
 const LANGS = [
   { id: 'fr', label: 'FR' },
@@ -54,43 +55,11 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
     };
   }), [mod.fields]);
 
-  // Resolve group name: try admin.careersFields.group{Key} first, then fallback
-  const GROUP_KEYS: Record<string, string> = { 
-    'Poste': 'groupPoste', 'Média': 'groupMedia', 'Mission': 'groupMission', 
-    'Profil': 'groupProfil', 'Identité': 'groupIdentité', 'Contenu': 'groupContenu', 
-    'Détails': 'groupDétails', 'Catalogue': 'groupCatalogue', 'Médias': 'groupMédias', 
-    'Technique': 'groupTechnique', 'Général': 'general',
-    'Auteur': 'groupAuthor', 'Citation': 'groupQuote', 'Fiche': 'groupCard',
-    'Informations': 'groupInfo', 'Coordonnées': 'groupContact',
-    'Programme': 'groupProgramme', 'Texte': 'groupText', 'Article': 'groupArticle'
-  };
-  const groupName = (g: string) => {
-    const key = GROUP_KEYS[g];
-    if (!key) return g;
-    try { return tFields(key); } catch { try { return tEditor(key); } catch { return g; } }
-  };
-
-  // Resolve field label: try admin.careersFields.{key} first, then fallback to field.label
-  const fieldLabel = (field: { key: string; label: string }) => {
-    try { 
-      const translated = tFields(field.key);
-      // Check if translation actually resolved (not just returning the key path)
-      if (typeof translated === 'string' && translated !== field.key && !translated.startsWith('admin.careersFields.')) {
-        return translated;
-      }
-    } catch {}
-    
-    // Fallback: try to find translation in module-specific namespace
-    try {
-      const moduleKey = mod.key; // e.g., 'testimonials', 'partners'
-      const moduleTranslated = tFields(`${moduleKey}.${field.key}` as any);
-      if (typeof moduleTranslated === 'string' && !moduleTranslated.includes('.')) {
-        return moduleTranslated;
-      }
-    } catch {}
-    
-    return field.label;
-  };
+  // Libellés traduits (sections + champs) — namespace `admin.fields`,
+  // avec repli sur les anciens namespaces puis sur le libellé du module.
+  const labels = useAdminLabels(mod.key);
+  const groupName = (g: string) => labels.group(g);
+  const fieldLabel = (field: { key: string; label: string }) => labels.field(field.key, field.label);
 
   const router = useRouter();
   const params = useSearchParams();
@@ -122,7 +91,6 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
         // Migration: copier date vers publicationDate si publicationDate est vide (pour news)
         if (mod.key === 'news' && row.date && !row.publicationDate) {
           row.publicationDate = row.date;
-          console.log('[CmsEditor] Migrated date to publicationDate:', row.publicationDate);
         }
         
         setRecord(row);
@@ -259,7 +227,7 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
     }
     setSaving(true);
     try {
-      const payload = { ...record, locale: record.locale || settings.defaultLocale };
+      const payload: Record<string, unknown> = { ...record, locale: record.locale || settings.defaultLocale };
       
       // Générer automatiquement le slug s'il est vide (version par défaut)
       const slugField = mod.fields.find((f) => f.kind === 'slug');
@@ -274,27 +242,25 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
       // Supprimer date du payload pour news et events (utiliser seulement publicationDate/startDate)
       if ((mod.key === 'news' || mod.key === 'events') && 'date' in payload) {
         delete payload.date;
-        console.log(`[CmsEditor.save] Removed date from payload for ${mod.key}, using only publicationDate/startDate`);
       }
       
-      // S'assurer que icon et color sont toujours envoyés pour solutions (même s'ils sont vides)
+      // Solutions : icône, couleur et produits associés doivent toujours partir
+      // dans le payload, sinon un champ vidé ne serait jamais effacé côté API.
       if (mod.key === 'solutions') {
         if (!('icon' in payload)) payload.icon = null;
         if (!('color' in payload)) payload.color = null;
-        console.log('[CmsEditor.save] Ensured icon and color are in payload for solutions');
+        payload.productIds = Array.isArray(payload.productIds) ? payload.productIds : [];
       }
       
       // Convertir publicationDate en objet Date si c'est une chaîne
       if (mod.key === 'news' && payload.publicationDate && typeof payload.publicationDate === 'string') {
         payload.publicationDate = new Date(payload.publicationDate);
-        console.log('[CmsEditor.save] Converted publicationDate to Date object:', payload.publicationDate);
       }
       
       if (mod.key === 'products') {
         if (!String(payload.slug || '').trim()) payload.slug = slugify(String(payload.name || ''));
         if (!String(payload.sku || '').trim()) payload.sku = nextSku(settings.codes.product);
       }
-      console.log('[CmsEditor.save] Payload being sent:', JSON.stringify(payload, null, 2));
       const saved = id === 'new' || !record.id
         ? await cmsAdminCreate(mod.resource, payload)
         : await cmsAdminUpdate(mod.resource, String(record.id), payload);
@@ -467,7 +433,7 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
                               {locked && <p className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>Champ partagé, verrouillé.</p>}
                             </div>
                           ) : (
-                            renderField(field, valueOf(field.key), (v) => set(field.key, v), record, { t: tEditor, moduleKey: mod.singular || mod.key, valueOf })
+                            renderField(field, valueOf(field.key), (v) => set(field.key, v), record, { t: tEditor, moduleKey: mod.singular || mod.key, valueOf, setField: set })
                           )}
                         </div>
                       </div>
@@ -488,7 +454,7 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
                           <ConsultValue spec={field} value={tab} />
                           <p className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>{tEditor('lockedOnActiveLang')}</p>
                         </div>
-                      ) : renderField(field, valueOf(field.key), (v) => set(field.key, v), record, { origin: originOf(field.key), originLocale: settings.defaultLocale, t: tEditor, moduleKey: mod.singular || mod.key, valueOf })}
+                      ) : renderField(field, valueOf(field.key), (v) => set(field.key, v), record, { origin: originOf(field.key), originLocale: settings.defaultLocale, t: tEditor, moduleKey: mod.singular || mod.key, valueOf, setField: set })}
                     </div>
                   ))}
                 </div>
@@ -501,7 +467,7 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
       {!consult && (
         <div className="fixed bottom-0 left-0 right-0 z-20 border-t px-5 py-3 flex justify-end gap-2" style={{ background: 'var(--ad-surface)', borderColor: 'var(--ad-line)' }}>
           <button className="ad-btn ad-btn-ghost" onClick={() => router.push(`/${locale}/admin/${mod.path}`)}>{tEditor('cancel')}</button>
-          {record.id && <button className="ad-btn ad-btn-ghost" onClick={() => router.push(`/${locale}/admin/${mod.path}/${record.id}?consult=1`)}><Eye className="w-4 h-4" /> {tEditor('consultMode')}</button>}
+          {record.id ? <button className="ad-btn ad-btn-ghost" onClick={() => router.push(`/${locale}/admin/${mod.path}/${record.id}?consult=1`)}><Eye className="w-4 h-4" /> {tEditor('consultMode')}</button> : null}
           <button className="ad-btn ad-btn-primary" disabled={saving} onClick={save}><Save className="w-4 h-4" /> {saving ? '…' : tEditor('save')}</button>
         </div>
       )}

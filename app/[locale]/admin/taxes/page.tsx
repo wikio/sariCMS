@@ -10,6 +10,7 @@ import Toggle from '@/components/admin/Toggle';
 import TagInput from '@/components/admin/TagInput';
 import SearchField from '@/components/admin/SearchField';
 import { useTranslations } from 'next-intl';
+import { money } from '@/lib/commerce-math';
 
 const empty = (): TaxRule => ({
   id: `t-${Date.now()}`, name: '', names: { fr: '', en: '', ar: '' }, labels: { fr: '', en: '', ar: '' },
@@ -89,7 +90,7 @@ export default function TaxesPage() {
               <tr key={t.id}>
                 <td><input type="checkbox" checked={selected.includes(t.id)} onChange={(e) => setSelected((s) => e.target.checked ? [...s, t.id] : s.filter((x) => x !== t.id))} /></td>
                 <td className="font-bold">{t.name}</td>
-                <td>{t.mode === 'percent' ? `${t.rate} %` : `${t.rate} DA`}</td>
+                <td>{t.mode === 'percent' ? `${t.rate} %` : money(t.rate)}</td>
                 <td>{t.zone}</td>
                 <td>{t.scope === 'all' ? 'Tous' : (t.scopeValues || []).join(', ') || t.category || '—'}</td>
                 <td><span className="ad-chip ad-chip-acc">{taxCompletion(t)}%</span></td>

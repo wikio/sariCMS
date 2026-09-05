@@ -12,7 +12,7 @@ import {
 import { getEvents } from '@/lib/data';
 import { matchesEntity } from '@/lib/ids';
 import { extractLegacyId, findEventTranslation, buildMultilingualUrl } from '@/lib/translation-utils';
-import { formatDate, formatDateRange, hasTime } from '@/lib/date-utils';
+import { useDateUtils } from '@/lib/use-date-format';
 import type { Event } from '@/types';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
@@ -23,6 +23,7 @@ export default function EventDetailPage() {
   const params = useParams();
   const id = params.id as string;
   const locale = useLocale();
+  const { formatDate, formatDateRange, hasTime } = useDateUtils();
   const t = useTranslations('pages.eventDetail');
   const isRtl = locale === 'ar';
 
@@ -225,7 +226,7 @@ export default function EventDetailPage() {
                 {t('aboutTitle')}
               </h2>
               <div className="prose dark:prose-invert max-w-none text-gray-600 dark:text-gray-400 text-lg leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: event.fullContent }} />
+                dangerouslySetInnerHTML={{ __html: event.fullContent || '' }} />
             </div>
 
             {/* Programme */}

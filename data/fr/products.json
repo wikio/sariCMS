@@ -1,6 +1,8 @@
 [
   {
     "id": 1,
+    "slug": "echographe-portable-pro-x1",
+    "legacyId": "prd-1",
     "name": "Échographe Portable Pro X1",
     "category": "Diagnostic",
     "price": "Sur devis",
@@ -51,6 +53,8 @@
   },
   {
     "id": 2,
+    "slug": "lit-examen-electrique-premium",
+    "legacyId": "prd-2",
     "name": "Lit d'Examen Électrique Premium",
     "category": "Équipements",
     "price": "2 450 € HT",
@@ -101,6 +105,8 @@
   },
   {
     "id": 3,
+    "slug": "sterilisateur-autoclave-classe-b",
+    "legacyId": "prd-3",
     "name": "Stérilisateur Autoclave Classe B",
     "category": "Chirurgie",
     "price": "3 890 € HT",
@@ -149,6 +155,8 @@
   },
   {
     "id": 4,
+    "slug": "tensiometre-digital-pro",
+    "legacyId": "prd-4",
     "name": "Tensiomètre Digital Pro",
     "category": "Diagnostic",
     "price": "189 € HT",
@@ -189,6 +197,8 @@
   },
   {
     "id": 5,
+    "slug": "microscope-binoculaire-led",
+    "legacyId": "prd-5",
     "name": "Microscope Binoculaire LED",
     "category": "Diagnostic",
     "price": "1 290 € HT",
@@ -228,6 +238,8 @@
   },
   {
     "id": 6,
+    "slug": "pack-consommables-starter",
+    "legacyId": "prd-6",
     "name": "Pack Consommables Starter",
     "category": "Consommables",
     "price": "299 € HT",
@@ -270,6 +282,8 @@
   },
   {
     "id": 7,
+    "slug": "defibrillateur-semi-automatique",
+    "legacyId": "prd-7",
     "name": "Défibrillateur Semi-Automatique",
     "category": "Urgence",
     "price": "1 850 € HT",
@@ -310,6 +324,8 @@
   },
   {
     "id": 8,
+    "slug": "concentrateur-oxygene-5l",
+    "legacyId": "prd-8",
     "name": "Concentrateur d'Oxygène 5L",
     "category": "Respiratoire",
     "price": "890 € HT",
@@ -350,6 +366,8 @@
   },
   {
     "id": 9,
+    "slug": "lampe-scialytique-mobile-led",
+    "legacyId": "prd-9",
     "name": "Lampe Scialytique Mobile LED",
     "category": "Chirurgie",
     "price": "3 200 € HT",
@@ -396,6 +414,8 @@
   },
   {
     "id": 10,
+    "slug": "pousse-seringue-electrique-double",
+    "legacyId": "prd-10",
     "name": "Pousse-Seringue Électrique Double",
     "category": "Soins Intensifs",
     "price": "1 450 € HT",
@@ -437,6 +457,8 @@
   },
   {
     "id": 11,
+    "slug": "aspirateur-de-secretions-portable",
+    "legacyId": "prd-11",
     "name": "Aspirateur de Secrétions Portable",
     "category": "Soins",
     "price": "350 € HT",
@@ -478,6 +500,8 @@
   },
   {
     "id": 12,
+    "slug": "balance-bebe-numerique",
+    "legacyId": "prd-12",
     "name": "Balance Bébé Numérique",
     "category": "Pédiatrie",
     "price": "220 € HT",
@@ -519,6 +543,8 @@
   },
   {
     "id": 13,
+    "slug": "nebuliseur-a-compression",
+    "legacyId": "prd-13",
     "name": "Nébuliseur à Compression",
     "category": "Respiratoire",
     "price": "85 € HT",
@@ -560,6 +586,8 @@
   },
   {
     "id": 14,
+    "slug": "fauteuil-roulant-leger-aluminium",
+    "legacyId": "prd-14",
     "name": "Fauteuil Roulant Léger Aluminium",
     "category": "Mobilité",
     "price": "450 € HT",
@@ -609,6 +637,8 @@
   },
   {
     "id": 15,
+    "slug": "moniteur-de-signes-vitaux-multiparametres",
+    "legacyId": "prd-15",
     "name": "Moniteur de Signes Vitaux Multiparamètres",
     "category": "Urgence",
     "price": "2 800 € HT",

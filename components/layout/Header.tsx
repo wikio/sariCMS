@@ -7,10 +7,27 @@ import { useLocale, useTranslations } from 'next-intl';
 import { Menu, X, Phone, Mail, ShoppingCart, User, LogOut, LayoutDashboard, Package, Briefcase, FileText, Search, Moon, Sun, ChevronDown } from 'lucide-react';
 import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
 import SearchHeader from '@/components/layout/SearchHeader';
+import IconMark from '@/components/admin/IconMark';
 import type { Config, Menu as MenuType } from '@/types';
 import { loadAdminSettings } from '@/lib/admin-settings';
 import { useCart } from '@/contexts/CartContext';
 import { useVisibility } from '@/lib/site-visibility';
+import { locales } from '@/lib/i18n';
+
+/**
+ * Une entrée n'a un sous-menu que si la liste contient réellement des liens.
+ * L'éditeur enregistre `submenu: []` sur toutes les entrées et un tableau vide
+ * est vrai en JavaScript : sans ce test, un chevron apparaissait sur des
+ * entrées sans sous-menu, ouvrant un panneau vide.
+ */
+function hasSubmenu<T extends { submenu?: unknown }>(
+  item: T,
+): item is T & { submenu: NonNullable<T['submenu']> & { length: number } } {
+  return Array.isArray(item?.submenu) && item.submenu.length > 0;
+}
+
+/** Segments de langue reconnus en tête d'URL (voir getLinkHref). */
+const LOCALE_SEGMENTS = new Set<string>(locales);
 
 export default function Header({ config, menu }: { config: Config; menu: MenuType }) {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -29,8 +46,17 @@ export default function Header({ config, menu }: { config: Config; menu: MenuTyp
 
   // ✅ Fonction robuste pour générer les liens avec la locale
   const getLinkHref = (href: string) => {
+    const raw = String(href || '');
+    // Lien externe : laissé intact (mailto:, tel:, https://…).
+    if (/^(https?:)?\/\//i.test(raw) || /^(mailto|tel):/i.test(raw)) return raw;
     // Supprime les '#' ou '/' au début pour éviter les doubles slashes ou les mots collés
-    const cleanPath = href.replace(/^[#\/]+/, '');
+    const cleanPath = raw.replace(/^[#\/]+/, '');
+    // Les sous-menus générés viennent de `entityUrl`, qui préfixe déjà la
+    // langue : re-préfixer produirait `/fr/fr/solutions/...`, donc un 404.
+    if (/^[a-z]{2}(-[A-Za-z]{2})?(\/|$)/.test(cleanPath)) {
+      const [first, ...rest] = cleanPath.split('/');
+      if (LOCALE_SEGMENTS.has(first)) return `/${locale}/${rest.join('/')}`.replace(/\/+$/, '') || `/${locale}`;
+    }
     return `/${locale}/${cleanPath}`;
   };
 
@@ -72,8 +98,17 @@ export default function Header({ config, menu }: { config: Config; menu: MenuTyp
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  /*
+    Libellé d'une entrée de menu. Voir Footer.tsx pour le raisonnement complet :
+    les menus étant enregistrés par langue, le libellé saisi fait autorité et
+    les clés `common.nav.*` ne sont qu'un repli pour les entrées historiques
+    sans libellé propre. On ne demande une clé que si elle existe, sinon les
+    entrées créées dans l'admin (id aléatoire) déclenchent une erreur
+    MISSING_MESSAGE à chaque rendu.
+  */
   const getNavText = (item: any) => {
-    if (item.id) {
+    if (typeof item.label === 'string' && item.label.trim()) return item.label;
+    if (item.id && tNav.has?.(item.id)) {
       try {
         const translated = tNav(item.id);
         return translated.startsWith('common.nav.') ? item.label : translated;
@@ -199,18 +234,36 @@ export default function Header({ config, menu }: { config: Config; menu: MenuTyp
 
             <nav className="hidden lg:flex items-center gap-1 flex-1 justify-center">
               {navigation.map((item, idx) => (
-                <div key={idx} className="relative group" onMouseEnter={() => item.submenu && setActiveSubmenu(idx)} onMouseLeave={() => setActiveSubmenu(null)}>
+                <div key={idx} className="relative group" onMouseEnter={() => hasSubmenu(item) && setActiveSubmenu(idx)} onMouseLeave={() => setActiveSubmenu(null)}>
                   <Link href={getLinkHref(item.href)} className="relative px-4 py-2 font-medium transition-colors whitespace-nowrap overflow-hidden text-sari-dark dark:text-white hover:text-sari-blue">
                     {getNavText(item)}
-                    {item.submenu && <ChevronDown className="w-4 h-4 inline ml-1 transition-transform group-hover:rotate-180" />}
+                    {hasSubmenu(item) && <ChevronDown className="w-4 h-4 inline ml-1 transition-transform group-hover:rotate-180" />}
                     <div className="absolute bottom-0 left-0 h-0.5 bg-sari-lime transition-all duration-300 w-0 group-hover:w-full"></div>
                   </Link>
-                  {item.submenu && activeSubmenu === idx && (
+                  {hasSubmenu(item) && activeSubmenu === idx && (
                     <div className="absolute top-full left-0 mt-2 w-72 bg-white dark:bg-[#1a1a1a] shadow-2xl border border-gray-200 dark:border-gray-800 z-50 rounded-lg overflow-hidden">
                       {item.submenu.map((sub, subIdx) => (
                         <Link key={subIdx} href={getLinkHref(sub.href)} onClick={() => setActiveSubmenu(null)} className="block px-4 py-3 hover:bg-sari-blue/5 dark:hover:bg-sari-blue/10 transition-colors border-b border-gray-100 dark:border-gray-800 last:border-0">
-                          <div className="font-semibold text-sari-dark dark:text-white">{sub.label}</div>
-                          {sub.desc && <div className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{sub.desc}</div>}
+                          {/* L'icône n'est présente que si l'administration l'a
+                              activée et que la fiche en possède une. */}
+                          <div className="flex items-start gap-2.5">
+                            {/* Vignette prioritaire sur l'icône : les deux
+                                occuperaient la même gouttière. */}
+                            {sub.image ? (
+                              <img
+                                src={sub.image}
+                                alt=""
+                                loading="lazy"
+                                className="w-10 h-10 rounded object-cover shrink-0 bg-gray-100 dark:bg-gray-800"
+                              />
+                            ) : sub.icon ? (
+                              <IconMark name={sub.icon} className="w-4 h-4 mt-0.5 shrink-0 text-sari-blue" />
+                            ) : null}
+                            <div className="min-w-0">
+                              <div className="font-semibold text-sari-dark dark:text-white">{sub.label}</div>
+                              {sub.desc && <div className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{sub.desc}</div>}
+                            </div>
+                          </div>
                         </Link>
                       ))}
                     </div>
@@ -238,11 +291,30 @@ export default function Header({ config, menu }: { config: Config; menu: MenuTyp
                 <Link href={getLinkHref(item.href)} onClick={() => setMobileMenuOpen(false)} className="block py-3 px-3 font-medium border-b border-gray-100 dark:border-gray-800 text-sari-dark dark:text-white">
                   {getNavText(item)}
                 </Link>
-                {item.submenu && (
+                {hasSubmenu(item) && (
                   <div className="pl-4 space-y-1 pb-2 bg-gray-50 dark:bg-[#111111]">
                     {item.submenu.map((sub, subIdx) => (
                       <Link key={subIdx} href={getLinkHref(sub.href)} onClick={() => setMobileMenuOpen(false)} className="block py-2 px-3 text-gray-600 dark:text-gray-400 text-sm hover:text-sari-blue">
-                        {sub.label}
+                        {/* Mêmes options qu'en desktop : la configuration de
+                            l'administration doit valoir sur les deux rendus. */}
+                        <span className="flex items-start gap-2">
+                          {sub.image ? (
+                            <img
+                              src={sub.image}
+                              alt=""
+                              loading="lazy"
+                              className="w-8 h-8 rounded object-cover shrink-0 bg-gray-100 dark:bg-gray-800"
+                            />
+                          ) : sub.icon ? (
+                            <IconMark name={sub.icon} className="w-4 h-4 mt-0.5 shrink-0 text-sari-blue" />
+                          ) : null}
+                          <span className="min-w-0">
+                            <span className="block">{sub.label}</span>
+                            {sub.desc && (
+                              <span className="block text-xs text-gray-500 dark:text-gray-500 mt-0.5">{sub.desc}</span>
+                            )}
+                          </span>
+                        </span>
                       </Link>
                     ))}
                   </div>

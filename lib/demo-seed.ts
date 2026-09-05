@@ -70,7 +70,14 @@ const PARTNERS = [
 ];
 
 async function ensurePeople() {
-  const existing = await cmsAdminList('users', { limit: '200' });
+  // `limit` est plafonné à 100 par l'API : la valeur 200 déclenchait une 400
+  // (« limit must not be greater than 100 »), et l'amorçage échouait.
+  const existing: Array<Record<string, unknown>> = [];
+  for (let page = 1; page <= 20; page += 1) {
+    const chunk = await cmsAdminList('users', { limit: '100', page: String(page) });
+    existing.push(...chunk);
+    if (chunk.length < 100) break;
+  }
   const emails = new Set(existing.map((u) => String(u.email || '').toLowerCase()));
   for (const person of [...CLIENTS, ...CANDIDATES, ...PARTNERS]) {
     if (emails.has(person.email.toLowerCase())) continue;

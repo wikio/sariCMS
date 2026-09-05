@@ -15,6 +15,7 @@ import SearchField from '@/components/admin/SearchField';
 import MessageComposer from '@/components/admin/MessageComposer';
 import { renderTemplate, sendMail } from '@/lib/mail';
 import { useTranslations } from 'next-intl';
+import DateText from '@/components/shared/DateText';
 
 const empty = (): NotifyMessage => ({
   id: `m-${Date.now()}`, name: '', trigger: 'stock_backorder', subject: '', body: '<p></p>', active: true, locale: 'fr',
@@ -53,6 +54,7 @@ export default function MessagesPage() {
 /* ============================ Conversations ============================ */
 
 function InboxTab() {
+  const t = useTranslations('admin.messages');
   const { showToast } = useToast();
   const [threads, setThreads] = useState<Thread[]>([]);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -130,7 +132,7 @@ function InboxTab() {
                   }}
                 >
                   <div className="mb-1 text-[10px] uppercase tracking-wide font-black opacity-70">
-                    {m.role === 'admin' ? 'Admin' : open.name} · {new Date(m.at).toLocaleString()}
+                    {m.role === 'admin' ? 'Admin' : open.name} · <DateText value={m.at} />
                   </div>
                   {m.body}
                 </div>
@@ -184,7 +186,7 @@ function InboxTab() {
                     <td>{threadLabel(t) ? <span className="ad-chip ad-chip-acc">{threadLabel(t)}</span> : '—'}</td>
                     <td className="text-sm" style={{ color: 'var(--ad-muted)' }}>
                       {last ? <span className="truncate inline-block max-w-[260px] align-middle">{last.body}</span> : '—'}
-                      {last && <span className="block text-[11px]">{new Date(last.at).toLocaleString()}</span>}
+                      {last && <span className="block text-[11px]"><DateText value={last.at} /></span>}
                     </td>
                     <td className="text-right whitespace-nowrap">
                       {unread > 0 && <span className="ad-chip ad-chip-warn">{unread}</span>}
@@ -204,6 +206,7 @@ function InboxTab() {
 }
 
 function NewConversation({ onClose, onDone }: { onClose: () => void; onDone: () => void }) {
+  const t = useTranslations('admin.messages');
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [type, setType] = useState<'client' | 'candidate' | 'partner'>('client');

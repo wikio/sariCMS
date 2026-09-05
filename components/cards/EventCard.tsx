@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { Calendar, MapPin, ChevronRight, ChevronLeft } from 'lucide-react';
 import { slugify } from '@/lib/slugify';
+import { useDateUtils } from '@/lib/use-date-format';
 import type { Event } from '@/types';
 
 interface EventCardProps {
@@ -13,6 +14,7 @@ interface EventCardProps {
 }
 
 export default function EventCard({ event, variant = 'standard' }: EventCardProps) {
+  const { formatDate, formatDateRange, formatDateParts } = useDateUtils();
   const locale = useLocale();
   const t = useTranslations('components.cards.EventCard');
   const isRtl = locale === 'ar';
@@ -34,10 +36,14 @@ export default function EventCard({ event, variant = 'standard' }: EventCardProp
 
   const badgeClass = typeColors[event.type] || 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300';
 
-  // Extraire le jour et le mois de la date
-  const dateParts = event.date.split(' ');
-  const day = dateParts[0];
-  const month = dateParts[1] || '';
+  // Date de référence : la valeur du CMS (ISO) si elle existe, sinon le texte libre historique.
+  const rawDate = event.startDate || event.date;
+  // Libellé complet, mis en forme selon le format choisi dans l'administration.
+  const dateLabel = event.endDate
+    ? formatDateRange(rawDate, event.endDate)
+    : formatDate(rawDate);
+  // Pastille « calendrier » : jour et mois isolés.
+  const { day, month } = formatDateParts(rawDate);
 
   // === Variante HORIZONTAL ===
   if (variant === 'horizontal') {
@@ -70,7 +76,7 @@ export default function EventCard({ event, variant = 'standard' }: EventCardProp
           </h3>
           <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm mb-2">
             <Calendar className="w-4 h-4 flex-shrink-0" />
-            <span>{event.date}</span>
+            <span>{dateLabel}</span>
           </div>
           <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm mb-4">
             <MapPin className="w-4 h-4 flex-shrink-0" />
@@ -122,7 +128,7 @@ export default function EventCard({ event, variant = 'standard' }: EventCardProp
         </h3>
         <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm mb-3">
           <Calendar className="w-4 h-4 flex-shrink-0" />
-          <span>{event.date}</span>
+          <span>{dateLabel}</span>
         </div>
         <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm mb-4">
           <MapPin className="w-4 h-4 flex-shrink-0" />

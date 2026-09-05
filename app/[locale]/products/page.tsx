@@ -4,7 +4,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { Search, X, Filter, Package, CheckCircle, Clock, RotateCcw, Grid3X3, List, Euro, Folder } from 'lucide-react';
+import { Search, X, Filter, Package, CheckCircle, Clock, RotateCcw, Grid3X3, List, Banknote, Folder } from 'lucide-react';
 import { getProducts } from '@/lib/data';
 import type { Product } from '@/types';
 import ProductCard from '@/components/cards/ProductCard';
@@ -12,6 +12,8 @@ import Pagination from '@/components/ui/Pagination';
 import Tag from '@/components/shared/Tag';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
+import { useCurrency } from '@/lib/use-currency';
+import { useGroupFilter } from '@/lib/use-group-filter';
 
 export default function ProductsPage({ params }: { params: Promise<{ locale: string }> }) {
   // ✅ Récupérer la locale depuis les params
@@ -36,6 +38,7 @@ export default function ProductsPage({ params }: { params: Promise<{ locale: str
   const itemsPerPage = 9;
 
   const t = useTranslations('pages.products');
+  const { format: formatMoney } = useCurrency();
   const tNav = useTranslations('common.nav'); // ✅ Pour les éléments de navigation
 
   useEffect(() => {
@@ -63,6 +66,16 @@ export default function ProductsPage({ params }: { params: Promise<{ locale: str
       ...Object.entries(categoryMap).map(([name, count]) => ({ name, count }))
     ];
   }, [products]);
+
+  // Noms de catégories réels, hors entrée « Tous » qui n'est qu'une sentinelle
+  // d'affichage : un lien de menu doit pouvoir cibler une vraie catégorie.
+  const categoryNames = useMemo(
+    () => categories.map((c) => c.name).filter((n) => n !== 'Tous'),
+    [categories],
+  );
+
+  // Un lien de menu « par catégorie » arrive avec ?category=… : on présélectionne.
+  useGroupFilter('category', categoryNames, setSelectedCategory);
 
   const priceStats = useMemo(() => {
     const prices = products.map(p => parsePrice(p.price)).filter(p => p > 0);
@@ -337,8 +350,8 @@ export default function ProductsPage({ params }: { params: Promise<{ locale: str
                       className="w-full accent-sari-blue"
                     />
                     <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
-                      <span>{priceStats.min.toLocaleString('fr-FR')} €</span>
-                      <span>{priceStats.max.toLocaleString('fr-FR')} €</span>
+                      <span>{formatMoney(priceStats.min)}</span>
+                      <span>{formatMoney(priceStats.max)}</span>
                     </div>
                   </div>
                 </div>
@@ -412,8 +425,8 @@ export default function ProductsPage({ params }: { params: Promise<{ locale: str
                   </Tag>
                 )}
                 {(priceRange.min > priceStats.min || priceRange.max < priceStats.max) && (
-                  <Tag active onRemove={() => setPriceRange({ min: priceStats.min, max: priceStats.max })} removable icon={<Euro className="w-3 h-3" />}>
-                    {priceRange.min}€ - {priceRange.max}€
+                  <Tag active onRemove={() => setPriceRange({ min: priceStats.min, max: priceStats.max })} removable icon={<Banknote className="w-3 h-3" />}>
+                    {formatMoney(priceRange.min)} - {formatMoney(priceRange.max)}
                   </Tag>
                 )}
               </div>

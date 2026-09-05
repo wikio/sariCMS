@@ -6,6 +6,7 @@ import SearchField from '@/components/admin/SearchField';
 import { cmsAdminFetch } from '@/lib/cms-admin';
 import { unwrapList } from '@/lib/cms';
 import { useTranslations } from 'next-intl';
+import DateText from '@/components/shared/DateText';
 
 type LogRow = {
   id?: string;
@@ -80,7 +81,7 @@ export default function LogsPage() {
             <tbody>
               {shown.map((row) => (
                 <tr key={String(row.id)}>
-                  <td className="text-sm whitespace-nowrap">{row.createdAt ? new Date(row.createdAt).toLocaleString() : '—'}</td>
+                  <td className="text-sm whitespace-nowrap"><DateText value={row.createdAt} /></td>
                   <td><span className="ad-chip ad-chip-acc">{row.action}</span></td>
                   <td>{row.resource}</td>
                   <td className="font-mono text-xs">{row.resourceId || '—'}</td>

@@ -45,7 +45,7 @@ export interface Offer {
   [key: string]: unknown;
 }
 
-const APPS_KEY = 'sari_applications';
+export const APPS_KEY = 'sari_applications';
 
 export const APP_STEPS: Array<{ value: ApplicationStatus; label: string }> = [
   { value: 'new', label: 'Nouvelle' },
@@ -67,6 +67,7 @@ export function loadApplications(): Application[] {
 
 export function saveApplications(rows: Application[]) {
   localStorage.setItem(APPS_KEY, JSON.stringify(rows));
+  void import('@/lib/crm-sync').then((m) => m.pushCollection('applications', rows)).catch(() => {});
 }
 
 export function statusRank(status: ApplicationStatus): number {

@@ -11,6 +11,9 @@ export class TranslationsService extends BaseCrudService<TranslationEntity> {
   protected readonly repository: ICrudRepository<TranslationEntity>;
   protected readonly options: CrudServiceOptions = {
     resource: 'translations',
+    // Table sans colonne `legacyId` (contenu non traduit par fiches sœurs) :
+    // l'injecter faisait échouer la création sous MySQL.
+    hasLegacyId: false,
     searchFields: ['entityType', 'field', 'value', 'locale'],
     sortableFields: ['entityType', 'locale', 'field', 'updatedAt'],
     listFields: ['id', 'entityType', 'entityId', 'locale', 'field', 'updatedAt'],

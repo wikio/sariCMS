@@ -8,6 +8,7 @@
       "services": "Services",
       "careers": "Careers",
       "news": "News",
+      "authors": "Authors",
       "events": "Events",
       "solutions": "Solutions",
       "testimonials": "Testimonials",
@@ -89,7 +90,11 @@
       "attemptsLeft": "attempt(s) remaining.",
       "accessBlocked": "Access temporarily blocked",
       "tryLater": "Try again in a few minutes.",
-      "phase1": "Phase 1 Mode - Local Authentication"
+      "phase1": "Phase 1 Mode - Local Authentication",
+      "emailPlaceholder": "you@example.com",
+      "apiUnreachable": "The API is unreachable. Check that it is running.",
+      "verifyTotp": "Verify code",
+      "notAdmin": "This account is not an administrator account. Please use your personal dashboard."
     },
     "dataManager": {
       "title": "Title",
@@ -398,12 +403,33 @@
       "experience": "Experience",
       "motivation": "Motivation",
       "comment": "Comment",
-      "documents": "Documents"
+      "documents": "Documents",
+      "contact": "Contact"
     },
     "permissions": {
       "title": "Roles & permissions",
       "rbac": "RBAC",
-      "resource": "Resource"
+      "resource": "Resource",
+      "subtitle": "Tick the permissions granted to each role. Every click is saved immediately.",
+      "newRole": "New role",
+      "roleName": "Role name",
+      "roleSlug": "Identifier (slug)",
+      "roleDescription": "Description",
+      "create": "Create",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "deleteConfirm": "Delete this role? Affected users will lose their rights.",
+      "systemRole": "System role: cannot be modified",
+      "saved": "Permissions updated",
+      "created": "Role created",
+      "deleted": "Role deleted",
+      "loadError": "Unable to load roles",
+      "saveError": "Unable to save",
+      "selectAll": "Select all",
+      "clearAll": "Clear all",
+      "permissionCount": "{count} permission(s)",
+      "noRole": "No role yet. Create one to get started.",
+      "nameRequired": "Name and identifier are required."
     },
     "common": {
       "add": "Add",
@@ -509,7 +535,13 @@
       "language": "Language",
       "stock": "Stock",
       "publication": "Publication",
-      "rubric": "Section"
+      "rubric": "Section",
+      "bulkStatusConfirm": "Set {count} record(s) to “{status}”?",
+      "bulkStatusDone": "{count} record(s) set to “{status}”",
+      "bulkStatusNoop": "Already “{status}”",
+      "bulkError": "Bulk action failed",
+      "clearSelection": "Clear selection",
+      "bulkPartial": "{done} done, {failed} failed"
     },
     "visibility": {
       "breadcrumb": "Advanced settings / Storefront visibility",
@@ -607,6 +639,7 @@
       "solutions": "Solutions",
       "events": "Events",
       "news": "News",
+      "authors": "Authors",
       "careers": "Job listings",
       "applications": "Applications",
       "pages": "Pages",
@@ -765,7 +798,9 @@
       "check": "Check",
       "cashOnDelivery": "Cash on delivery",
       "fees": "Fees",
-      "clientInstructions": "Client instructions"
+      "clientInstructions": "Client instructions",
+      "name": "Name",
+      "type": "Type"
     },
     "taxes": {
       "title": "Taxes",
@@ -776,14 +811,22 @@
       "added": "Added",
       "rate": "Rate",
       "zone": "Zone",
-      "target": "Target"
+      "target": "Target",
+      "name": "Name"
     },
     "currencies": {
       "title": "Currencies",
       "registeredCurrencies": "Registered currencies",
       "code": "Code",
       "symbol": "Symbol",
-      "rateToDZD": "Rate to DZD"
+      "rateToDZD": "Rate to DZD",
+      "name": "Name",
+      "isDefault": "Default",
+      "isDefaultHint": "Currency used for every amount across the site and the admin.",
+      "setDefault": "Set as default currency",
+      "setDefaultInactive": "Activate the currency before making it the default",
+      "defaultChanged": "Default currency: {code}",
+      "appliedNotice": "Amounts are displayed in {name} ({symbol})."
     },
     "shopStats": {
       "title": "Shop analytics",
@@ -794,7 +837,8 @@
       "csvExport": "CSV Export",
       "byPaymentMethod": "By payment method",
       "finalized": "Finalized",
-      "taxesCollected": "Taxes collected"
+      "taxesCollected": "Taxes collected",
+      "cancelled": "Cancelled"
     },
     "stats": {
       "breadcrumb": "Operations",
@@ -849,7 +893,8 @@
       "twoFactorEnabled": "Login now requires a 6-digit TOTP code.",
       "twoFactorDesc": "Enable 2FA to secure your account with an authenticator app.",
       "showProfile": "Show profile",
-      "updateProfile": "Update profile"
+      "updateProfile": "Update profile",
+      "informations": "Information"
     },
     "builder": {
       "title": "Page builder (GrapesJS)",
@@ -1097,11 +1142,16 @@
       "option_Promo": "Sale",
       "option_Best-seller": "Best-seller",
       "option_Sur commande": "On order",
-      "colorPlaceholder": "sari-blue, #1e40af, red-500...",
+      "colorPlaceholder": "sari-blue, #169EC9, red-500…",
       "pickColor": "Pick a color",
       "answer": "Answer",
       "addQuestion": "Add question",
-      "questionN": "Question {n}"
+      "questionN": "Question {n}",
+      "searchProduct": "Search for a product…",
+      "noProductFound": "No product found",
+      "loading": "Loading…",
+      "selectedCount": "{count} product(s) selected",
+      "clearAll": "Clear all"
     },
     "htmlEditor": {
       "header": "Header",
@@ -1397,11 +1447,37 @@
       "targetAudience": "Target audience",
       "startDate": "Start date",
       "endDate": "End date",
-      "publicationDate": "Publication date"
+      "publicationDate": "Publication date",
+      "cta": "CTA label",
+      "ctaLink": "CTA link",
+      "description": "Text"
     },
     "drawer": {
       "dragToResize": "Drag to resize · click to close",
       "close": "Close"
+    },
+    "authorPicker": {
+      "placeholder": "Search for an author…",
+      "loading": "Loading…",
+      "noResult": "No author found",
+      "change": "Change",
+      "clear": "Remove author",
+      "fallbackBadge": "Default",
+      "createTitle": "New author",
+      "createSubtitle": "The record is created right away and selected for this article.",
+      "name": "Full name",
+      "namePlaceholder": "e.g. Dr. Martin Dupont",
+      "role": "Qualification",
+      "rolePlaceholder": "e.g. Medical Director",
+      "roleHint": "Shown under the author's name on the article page.",
+      "bio": "Description",
+      "bioPlaceholder": "Introduce the author in a few lines…",
+      "bioHint": "Used in the “About the author” block on the website.",
+      "cancel": "Cancel",
+      "save": "Create author",
+      "saving": "Creating…",
+      "nameRequired": "Name is required.",
+      "createFailed": "Could not create the author."
     },
     "servicesFields": {
       "title": "Title",
@@ -1449,6 +1525,211 @@
       "hintCatalogPdf": "Upload, DMS, view and download.",
       "hintShortDesc": "Max 280 characters.",
       "hintFullDesc": "Rich editor — full width section."
+    },
+    "fields": {
+      "_groups": {
+        "Identité": "Identity",
+        "Contenu": "Content",
+        "Détails": "Details",
+        "Média": "Media",
+        "Médias": "Media",
+        "Catalogue": "Catalog",
+        "Technique": "Technical",
+        "Mission": "Mission",
+        "Poste": "Position",
+        "Profil": "Profile",
+        "Article": "Article",
+        "Texte": "Text",
+        "Dates": "Dates",
+        "Programme": "Agenda",
+        "Événement": "Event",
+        "Auteur": "Author",
+        "Citation": "Quote",
+        "Fiche": "Details",
+        "Slide": "Slide",
+        "Blocs": "Blocks",
+        "Page": "Page",
+        "Légal": "Legal",
+        "Galerie": "Gallery",
+        "Menu": "Menu",
+        "Informations": "Information",
+        "Coordonnées": "Contact details",
+        "Général": "General",
+        "Publication": "Publishing"
+      },
+      "title": "Title",
+      "name": "Name",
+      "slug": "Slug",
+      "locale": "Language",
+      "status": "Status",
+      "category": "Category",
+      "icon": "Icon",
+      "color": "Color",
+      "image": "Image",
+      "gallery": "Gallery",
+      "logo": "Logo",
+      "photo": "Photo",
+      "media": "Media",
+      "shortDesc": "Hook",
+      "fullDesc": "Description",
+      "fullContent": "Content",
+      "content": "Content",
+      "description": "Text",
+      "subtitle": "Subtitle",
+      "features": "Highlights",
+      "faq": "FAQ",
+      "specs": "Specifications",
+      "options": "Options / variants",
+      "tags": "Tags",
+      "productIds": "Linked products",
+      "price": "Price",
+      "sku": "Product code",
+      "inStock": "In stock",
+      "deliveryTime": "Delivery time",
+      "catalogPdf": "Technical sheet PDF",
+      "type": "Type",
+      "kind": "Family",
+      "subtype": "Layout",
+      "location": "Location",
+      "date": "Date",
+      "publicationDate": "Publication date",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "readTime": "Reading time",
+      "authorName": "Author",
+      "classification": "Classification",
+      "sujet": "Topic",
+      "agenda": "Agenda",
+      "targetAudience": "Target audience",
+      "slides": "Slides",
+      "sections": "Scroll sections",
+      "rating": "Rating",
+      "role": "Role",
+      "clinic": "Institution",
+      "text": "Quote",
+      "website": "Website",
+      "email": "Email",
+      "bio": "Biography",
+      "cta": "CTA label",
+      "ctaLink": "CTA link",
+      "sortOrder": "Display order",
+      "products": {
+        "name": "Commercial name",
+        "slug": "URL slug",
+        "status": "Publication",
+        "image": "Main image",
+        "fullDesc": "Detailed description",
+        "features": "Key points",
+        "inStock": "Stock"
+      },
+      "services": {
+        "title": "Name",
+        "icon": "Lucide icon",
+        "fullDesc": "Overview",
+        "features": "Commitments"
+      },
+      "careers": {
+        "title": "Job title",
+        "image": "Portrait",
+        "type": "Contract",
+        "location": "Location",
+        "salary": "Salary",
+        "typeTravail": "Work pace",
+        "contact": "HR contact",
+        "mission": "Mission",
+        "objectifs": "Objectives",
+        "prerequis": "Prerequisites",
+        "experience": "Experience",
+        "workflow": "Recruitment process",
+        "benefits": "Benefits",
+        "applyAuth": "Login to apply"
+      },
+      "news": {
+        "image": "Cover",
+        "shortDesc": "Standfirst",
+        "fullContent": "Article body",
+        "category": "Section"
+      },
+      "events": {
+        "location": "Venue",
+        "fullContent": "Overview"
+      },
+      "authors": {
+        "name": "Full name",
+        "role": "Qualification",
+        "bio": "Description",
+        "isFallback": "Default author"
+      },
+      "testimonials": {
+        "name": "Name",
+        "role": "Role"
+      },
+      "solutions": {
+        "title": "Title",
+        "icon": "Icon",
+        "features": "Highlights",
+        "image": "Image",
+        "fullDesc": "Overview",
+        "productIds": "Linked products"
+      },
+      "hero": {
+        "image": "Full-screen image",
+        "description": "Text"
+      },
+      "pages": {
+        "content": "HTML content",
+        "media": "Images"
+      },
+      "legal": {
+        "content": "Legal text"
+      },
+      "authorId": "Author",
+      "isFallback": "Default author"
+    },
+    "imageUploader": {
+      "dropHere": "Drop an image here",
+      "orUrl": "or paste a URL",
+      "formats": "JPG, PNG, WebP or SVG — 5 MB max",
+      "preview": "Preview",
+      "remove": "Remove image",
+      "invalidType": "Unsupported file format",
+      "tooLarge": "File too large"
+    },
+    "configEditor": {
+      "title": "Configuration editor",
+      "saveSuccess": "Configuration saved",
+      "saveError": "Save failed",
+      "exportSuccess": "Configuration exported"
+    },
+    "menus": {
+      "autoTitle": "Automatic submenu",
+      "autoActive": "Automatic submenu · {source}",
+      "autoHint": "The list is generated at display time: a published record shows up on its own, an archived or draft one disappears. No need to come back here.",
+      "autoRemove": "Remove automatic generation",
+      "autoLoading": "Loading content…",
+      "autoLoadError": "Content unavailable",
+      "autoEmpty": "No published record in this module.",
+      "modeAll": "All",
+      "modePick": "Selection",
+      "limitLabel": "Limit (0 = all)",
+      "previewTitle": "Preview · {count} item(s)",
+      "previewEmpty": "Nothing to show: the link will have no submenu.",
+      "hiddenNotice": "{count} record(s) hidden because archived or draft.",
+      "source_solutions": "Solutions",
+      "source_services": "Services",
+      "source_products": "Products",
+      "source_news": "News",
+      "source_events": "Events",
+      "displayTitle": "Display",
+      "showDesc": "Description",
+      "showIcon": "Icon",
+      "iconUnsupported": "This module has no icon.",
+      "iconMissingNotice": "{count} item(s) without an icon: only the title will show for those.",
+      "modeGroups": "Categories",
+      "groupsHint": "One entry per category, linking to the filtered list. No tick = all of them.",
+      "groupsEmpty": "No category found in this module’s published content.",
+      "groupsNoVisual": "A category has neither icon nor image.",
+      "showImage": "Thumbnail"
     }
   },
   "common": {
@@ -1829,7 +2110,16 @@
         "message": "Sorry, the page you are looking for does not exist or has been moved.",
         "whatToDo": "What would you like to do?",
         "backHome": "Back to Home",
-        "contactUs": "Contact Us"
+        "contactUs": "Contact Us",
+        "description": "The page you are looking for does not exist or has been moved.",
+        "backToHome": "Back to home",
+        "goBack": "Go back",
+        "suggestions": "You may be looking for",
+        "browseProducts": "Browse the catalogue",
+        "ourServices": "Our services",
+        "ourSolutions": "Our solutions",
+        "needHelp": "Need help?",
+        "contactSupport": "Contact support"
       },
       "SearchHeader": {
         "title": "What are you looking for?",
@@ -1841,6 +2131,9 @@
         "tipOr": "= OR",
         "tipAnd": "= AND",
         "tipExample": "Ex: ultrasound, blood pressure"
+      },
+      "FloatingApplicationsButton": {
+        "viewApplications": "View my applications"
       }
     },
     "sections": {
@@ -2012,7 +2305,8 @@
       },
       "Pagination": {
         "previousPage": "Previous page",
-        "nextPage": "Next page"
+        "nextPage": "Next page",
+        "pageInfo": "Page {current} of {total}"
       },
       "ProductFilters": {},
       "SearchBar": {
@@ -2251,7 +2545,11 @@
       "optionPayDesc": "Complete payment without creating an account",
       "optionQuote": "Request a Quote",
       "optionQuoteDesc": "Receive a personalized quote within 24 hours",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "preparingPayment": "Preparing payment",
+      "preparingPaymentDesc": "Your order is being created, you will be redirected.",
+      "taxIncluded": "included",
+      "captchaRequired": "Please complete the anti-spam check"
     },
     "contact": {
       "heroTag": "Contact",
@@ -2378,7 +2676,17 @@
       "messagesTitle": "Messages",
       "admin": "Admin",
       "you": "You",
-      "emptyThread": "No messages"
+      "emptyThread": "No messages",
+      "productsDesc": "Browse the catalogue and add items to your cart.",
+      "addToCart": "Add to cart",
+      "noProducts": "No product matches your search",
+      "noMessagesYet": "No messages yet",
+      "typeMessage": "Type your message…",
+      "sendMessage": "Send",
+      "referrals": "Referrals",
+      "revenue": "Revenue",
+      "back": "Back",
+      "from": "From"
     },
     "eventDetail": {
       "notFound": "Event Not Found",
@@ -2519,7 +2827,8 @@
       "whyJoin3": "Continuous training",
       "whyJoin4": "Career development",
       "applicationsClosed": "Applications are currently closed.",
-      "startJourney": "Start the journey"
+      "startJourney": "Start the journey",
+      "applyDisabled": "Applications are closed for this position."
     },
     "legal": {
       "pageNotFound": "Page not found",
@@ -2593,7 +2902,16 @@
         "Manage your CV and documents",
         "Alerts for new job offers",
         "Direct communication with HR"
-      ]
+      ],
+      "title": "Sign in",
+      "email": "Email address",
+      "remember": "Remember me",
+      "loginButton": "Sign in",
+      "loggingIn": "Signing in…",
+      "loginError": "Incorrect credentials",
+      "captchaError": "Please complete the captcha",
+      "createAccount": "Create an account",
+      "demoHint": "Demo account"
     },
     "news": {
       "noNewsTitle": "No news at the moment",
@@ -2687,7 +3005,9 @@
       "manualValidation": "This payment will be manually validated by our team",
       "paymentDone": "Payment recorded",
       "paymentPending": "Your payment is pending validation by our team.",
-      "paymentValidated": "Your payment is validated. Thank you!"
+      "paymentValidated": "Your payment is validated. Thank you!",
+      "noMethod": "No payment method available",
+      "fillPaypalEmail": "Enter your PayPal email"
     },
     "productDetail": {
       "noProductsLoaded": "No products loaded",
@@ -2823,7 +3143,11 @@
       "tipsTitle": "💡 Search tips:",
       "tipOr": "= OR search (multiple terms)",
       "tipAnd": "= AND search (all terms)",
-      "tipExample": "Example: \"ultrasound, blood pressure\" OR \"bed + electric\""
+      "tipExample": "Example: \"ultrasound, blood pressure\" OR \"bed + electric\"",
+      "home": "Home",
+      "loading": "Searching…",
+      "startSearching": "Start searching",
+      "startSearchingDesc": "Enter a keyword to find a product, a service or a news item."
     },
     "serviceDetail": {
       "notFound": "Service Not Found",
@@ -2878,7 +3202,8 @@
       },
       "products": {
         "subtitle": "Our selection",
-        "title": "Our Equipment"
+        "title": "Our Equipment",
+        "viewAll": "View all products"
       },
       "features": {
         "subtitle": "Our advantages",
@@ -2941,6 +3266,10 @@
             {
               "q": "Are blood pressure monitors medically certified?",
               "a": "Yes, all our monitors are Class IIa medical devices, CE certified with ESH protocol validation."
+            },
+            {
+              "q": "Do you provide training on how to use the equipment?",
+              "a": "Yes, a basic training session is included with every purchase. Advanced training is available as an option."
             }
           ]
         },
@@ -2968,6 +3297,14 @@
             {
               "icon": "clock",
               "text": "24/48/72h ECG Holters"
+            },
+            {
+              "icon": "shield-check",
+              "text": "Medical CE compliance"
+            },
+            {
+              "icon": "headphones",
+              "text": "24/7 technical support"
             }
           ],
           "faq": [
@@ -3003,12 +3340,24 @@
             {
               "icon": "monitor",
               "text": "PACS/RIS solutions"
+            },
+            {
+              "icon": "shield-check",
+              "text": "HDS compliance"
+            },
+            {
+              "icon": "wrench",
+              "text": "Preventive maintenance"
             }
           ],
           "faq": [
             {
               "q": "Do you offer CT scanners?",
               "a": "Yes, from entry-level 16-slice to high-end 128-slice, with installation and training included."
+            },
+            {
+              "q": "Are the MRI scanners suitable for all patients?",
+              "a": "Yes, our MRI scanners suit every patient profile, including children and people with claustrophobia (open MRI available)."
             }
           ]
         },
@@ -3037,12 +3386,24 @@
             {
               "icon": "bed",
               "text": "Electric operating tables"
+            },
+            {
+              "icon": "shield-check",
+              "text": "Certified sterilisation"
+            },
+            {
+              "icon": "wrench",
+              "text": "Maintenance and after-sales service"
             }
           ],
           "faq": [
             {
               "q": "Are your autoclaves class B?",
               "a": "Yes, all compliant with EN 13060 standards with vacuum drying cycle."
+            },
+            {
+              "q": "Are the surgical lights LED?",
+              "a": "Yes, all our surgical lights are LED with a 50,000-hour lifespan, a CRI above 95 and intensity up to 150,000 lux."
             }
           ]
         },
@@ -3070,12 +3431,24 @@
             {
               "icon": "heart-pulse",
               "text": "Neonatal monitors"
+            },
+            {
+              "icon": "heart-pulse",
+              "text": "Neonatal monitors"
+            },
+            {
+              "icon": "shield-check",
+              "text": "Child-friendly equipment"
             }
           ],
           "faq": [
             {
               "q": "Are incubators suitable for premature babies?",
               "a": "Yes, from 28 weeks of gestation with precise temperature, humidity and oxygen control."
+            },
+            {
+              "q": "How accurate are the scales?",
+              "a": "Our paediatric scales are accurate to 5 g, with a hold function for restless babies and a tare function for nappies."
             }
           ]
         },
@@ -3104,12 +3477,24 @@
             {
               "icon": "clock",
               "text": "24/7 guaranteed support"
+            },
+            {
+              "icon": "syringe",
+              "text": "Syringe pumps"
+            },
+            {
+              "icon": "clock",
+              "text": "Guaranteed 24/7 support"
             }
           ],
           "faq": [
             {
               "q": "Are defibrillators automatic?",
               "a": "Yes, we offer semi-automatic and fully automatic AEDs with voice guidance."
+            },
+            {
+              "q": "Do the emergency trolleys come fully equipped?",
+              "a": "Yes, our trolleys ship with everything required: defibrillator, monitor, suction unit, oxygen and emergency drugs."
             }
           ]
         },
@@ -3135,12 +3520,24 @@
             {
               "icon": "lock",
               "text": "HDS cybersecurity"
+            },
+            {
+              "icon": "database",
+              "text": "Health data hosting"
+            },
+            {
+              "icon": "smartphone",
+              "text": "Mobile applications"
             }
           ],
           "faq": [
             {
               "q": "Are your EMR solutions HDS compliant?",
               "a": "Yes, all HDS certified and GDPR compliant."
+            },
+            {
+              "q": "Do you offer telemedicine solutions?",
+              "a": "Yes, we provide complete teleconsultation, tele-expertise and remote monitoring solutions with secure HD video conferencing."
             }
           ]
         },
@@ -3166,12 +3563,24 @@
             {
               "icon": "rotate-3d",
               "text": "Centrifuges"
+            },
+            {
+              "icon": "thermometer",
+              "text": "Ovens and incubators"
+            },
+            {
+              "icon": "droplets",
+              "text": "Reagents and consumables"
             }
           ],
           "faq": [
             {
               "q": "What types of analyzers do you offer?",
               "a": "Hematology, biochemistry, immunology and coagulation analyzers."
+            },
+            {
+              "q": "Are reagents included?",
+              "a": "Starter reagents are included with every analyser. We then offer supply contracts at preferential rates."
             }
           ]
         },
@@ -3199,12 +3608,24 @@
             {
               "icon": "dumbbell",
               "text": "Exercise equipment"
+            },
+            {
+              "icon": "footprints",
+              "text": "Gait training platforms"
+            },
+            {
+              "icon": "shield-check",
+              "text": "CE-certified equipment"
             }
           ],
           "faq": [
             {
               "q": "Do you offer neurological rehabilitation equipment?",
               "a": "Yes, including virtual reality systems and exoskeletons."
+            },
+            {
+              "q": "Are the electrotherapy units multifunctional?",
+              "a": "Yes, our units combine TENS, EMS, ultrasound and therapeutic laser in a single compact device."
             }
           ]
         }
@@ -3378,7 +3799,11 @@
               "Mobility aids"
             ]
           }
-        }
+        },
+        "cta": "Discover",
+        "empty": "No published solutions yet.",
+        "emptyDesc": "Solutions added from the admin panel will appear here.",
+        "productsCount": "linked products"
       },
       "process": {
         "subtitle": "Our Method",
@@ -3722,7 +4147,84 @@
       "notes": "Additional notes",
       "submit": "Submit request",
       "cancel": "Cancel",
-      "back": "Back"
+      "back": "Back",
+      "subtitle": "Track your quote requests and their progress.",
+      "noRequestsDesc": "Create a request to receive a priced proposal.",
+      "lines": "line(s)",
+      "nature": "Nature",
+      "natureOther": "Specify the nature",
+      "duplicate": "Duplicate",
+      "duplicatedFrom": "Duplicated from",
+      "edit": "Edit",
+      "note": "Note",
+      "notePlaceholder": "Details useful for pricing (deadlines, constraints, site…)",
+      "history": "History",
+      "stepProducts": "Products",
+      "stepProductsDesc": "Pick from the catalogue or describe a custom item.",
+      "stepDetails": "Details",
+      "stepContact": "Contact",
+      "stepRecap": "Summary",
+      "next": "Next",
+      "previous": "Previous",
+      "send": "Send request",
+      "saveDraft": "Save draft",
+      "savedAsDraft": "Draft saved",
+      "submitted": "Request sent",
+      "catalog": "Catalogue",
+      "searchCatalog": "Search for a product…",
+      "noResults": "No product found",
+      "product": "Product",
+      "special": "Custom item",
+      "addSpecial": "Add a custom item",
+      "description": "Description",
+      "unit": "Unit",
+      "lineTotal": "Line total",
+      "subtotal": "Subtotal",
+      "taxes": "VAT",
+      "discount": "Discount",
+      "totalTtc": "Total incl. VAT",
+      "email": "Email",
+      "phone": "Phone",
+      "address": "Address",
+      "country": "Country",
+      "delivery": "Delivery",
+      "desiredDate": "Desired date",
+      "attachFile": "Attach a file",
+      "downloadFile": "Download attachment",
+      "downloadPdf": "Download PDF",
+      "accept": "Accept",
+      "refuse": "Decline",
+      "requestRevision": "Request a revision",
+      "revisionAsked": "Revision requested",
+      "response": "Response",
+      "errNameRequired": "Name is required",
+      "errEmail": "Invalid email address",
+      "errPhone": "Invalid phone number",
+      "errNature": "Specify the nature of the request",
+      "errNatureOther": "Please specify the nature",
+      "errNoLines": "Add at least one item",
+      "errQty": "Invalid quantity",
+      "errLineLimit": "Maximum number of items reached",
+      "errAttachment": "Attachment rejected (format or size)",
+      "contactIntro": "These details let us reach you and prepare the quote. Fields marked with an asterisk are required.",
+      "phoneHint": "An advisor will call you back on this number.",
+      "emailHint": "The quote and its updates are sent to this address.",
+      "addressHint": "Delivery or installation address.",
+      "addressPlaceholder": "Number, street, city, postal code",
+      "countryHint": "Determines the tax and delivery zone.",
+      "countryPlaceholder": "Start typing the country name",
+      "errPhoneRequired": "Phone number is required",
+      "errEmailRequired": "Email address is required",
+      "errAddressRequired": "Address is required",
+      "errAddressShort": "Address too short to be usable",
+      "errCountryRequired": "Country is required",
+      "errCaptcha": "Please complete the anti-spam check",
+      "antispam": "Anti-spam check",
+      "sentTitle": "Request sent",
+      "sentDesc": "We will get back to you shortly. Keep this reference for any follow-up.",
+      "yourReference": "Your reference",
+      "copyReference": "Copy reference",
+      "viewMyQuotes": "View my quotes"
     }
   }
 }
