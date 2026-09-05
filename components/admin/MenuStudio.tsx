@@ -8,12 +8,16 @@ import {
 } from '@dnd-kit/core';
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ChevronDown, ChevronUp, CornerDownRight, GripVertical, Plus, Save, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, CornerDownRight, GripVertical, Languages, Plus, Save, Trash2 } from 'lucide-react';
 import PixelGridLoader from '@/components/admin/PixelGridLoader';
 import { useToast } from '@/components/admin/Toast';
 import { IconPicker } from '@/components/admin/fields/FieldKit';
 import SlugPicker from '@/components/admin/SlugPicker';
 import { cmsAdminCreate, cmsAdminList, cmsAdminUpdate } from '@/lib/cms-admin';
+import { locales as LOCALES } from '@/lib/i18n';
+
+/** Libellés lisibles des langues gérées. */
+const LOCALE_LABELS: Record<string, string> = { fr: 'Français', en: 'English', ar: 'العربية' };
 import AutoSubmenuPicker from '@/components/admin/AutoSubmenuPicker';
 import type { AutoRule } from '@/lib/menu-auto';
 import { CmsError } from '@/lib/cms';
@@ -92,16 +96,27 @@ function normalizeItems(items: unknown): MenuItem[] {
 }
 
 function MenuStudioInner() {
-  const locale = useLocale();
+  const adminLocale = useLocale();
   const { showToast } = useToast();
   const searchParams = useSearchParams();
   const [tab, setTab] = useState(() => {
     const wanted = searchParams.get('location');
     return wanted && LOCATIONS.some((l) => l.id === wanted) ? wanted : 'main';
   });
+
+  // Langue du menu édité. Elle était implicitement celle de l'interface : on
+  // ne pouvait donc modifier que le menu de la langue dans laquelle on
+  // naviguait, sans aucun indice à l'écran. Les autres langues continuaient
+  // d'afficher l'ancien menu statique, d'où des menus divergents.
+  const [locale, setLocale] = useState<string>(() => {
+    const wanted = searchParams.get('lang');
+    return wanted && (LOCALES as readonly string[]).includes(wanted) ? wanted : adminLocale;
+  });
+
   const [menus, setMenus] = useState<MenuRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [copying, setCopying] = useState(false);
   const [draft, setDraft] = useState<MenuItem[]>([]);
 
   const load = async () => {
@@ -174,24 +189,73 @@ function MenuStudioInner() {
     }));
   };
 
+  /** Construit l'enregistrement d'un menu pour une langue donnée. */
+  const buildPayload = (targetLocale: string) => ({
+    name: LOCATIONS.find((l) => l.id === tab)?.label || tab,
+    location: tab,
+    locale: targetLocale,
+    status: 'published',
+    // Une règle `auto` remplace le sous-menu : on n'enregistre pas la liste
+    // résolue, sinon elle serait figée à la date d'enregistrement et
+    // continuerait d'afficher les fiches archivées depuis.
+    // `submenu` n'est écrit que s'il contient réellement des liens : un
+    // tableau vide étant vrai en JavaScript, la vitrine affichait sinon un
+    // chevron et un panneau déroulant vide sur ces entrées.
+    items: draft.map((it) => {
+      const children = it.auto
+        ? []
+        : (it.submenu || []).map((c) => ({ ...c, id: c.id || uid() }));
+      return {
+        ...it,
+        id: it.id || uid(),
+        auto: it.auto || null,
+        submenu: children.length ? children : undefined,
+      };
+    }),
+  });
+
+  /**
+   * Recopie la structure courante vers les autres langues.
+   *
+   * Les menus sont enregistrés par langue (unicité emplacement + langue) :
+   * enregistrer en français ne crée rien pour l'anglais ni l'arabe, qui
+   * continuaient donc d'afficher l'ancien menu statique. Cette copie reprend
+   * liens, ordre, règles et sous-menus ; seuls les libellés restent à traduire
+   * dans chaque langue.
+   */
+  const copyToOtherLocales = async () => {
+    const targets = (LOCALES as readonly string[]).filter((l) => l !== locale);
+    if (!targets.length) return;
+    setCopying(true);
+    try {
+      const results = await Promise.allSettled(
+        targets.map(async (target) => {
+          const rows = await cmsAdminList<MenuRecord>('menus', {
+            filter: JSON.stringify({ locale: target }),
+          });
+          const existing = rows.find((m) => m.location === tab);
+          const payload = buildPayload(target);
+          return existing?.id
+            ? cmsAdminUpdate<MenuRecord>('menus', existing.id, payload)
+            : cmsAdminCreate<MenuRecord>('menus', payload);
+        }),
+      );
+      const failed = results.filter((r) => r.status === 'rejected').length;
+      showToast(
+        failed
+          ? `Copie partielle : ${targets.length - failed}/${targets.length} langue(s)`
+          : `Structure copiée vers ${targets.join(', ')}`,
+        failed ? 'error' : 'success',
+      );
+    } finally {
+      setCopying(false);
+    }
+  };
+
   const save = async () => {
     setSaving(true);
     try {
-      const payload = {
-        name: LOCATIONS.find((l) => l.id === tab)?.label || tab,
-        location: tab,
-        locale,
-        status: 'published',
-        // Une règle `auto` remplace le sous-menu : on n'enregistre pas la
-        // liste résolue, sinon elle serait figée à la date d'enregistrement et
-        // continuerait d'afficher les fiches archivées depuis.
-        items: draft.map((it) => ({
-          ...it,
-          id: it.id || uid(),
-          auto: it.auto || null,
-          submenu: it.auto ? [] : (it.submenu || []).map((c) => ({ ...c, id: c.id || uid() })),
-        })),
-      };
+      const payload = buildPayload(locale);
       if (current?.id) {
         const saved = await cmsAdminUpdate<MenuRecord>('menus', current.id, payload);
         setMenus((prev) => prev.map((m) => (m.id === current.id ? { ...m, ...saved, items: payload.items } : m)));
@@ -233,6 +297,49 @@ function MenuStudioInner() {
       <p className="text-sm ad-rise" style={{ color: 'var(--ad-muted)' }}>
         {LOCATIONS.find((l) => l.id === tab)?.hint}
       </p>
+
+      {/* Langue éditée. Chaque langue a son propre menu en base : sans ce
+          choix, on ne modifiait que celle de l'interface et les autres
+          gardaient l'ancien menu. */}
+      <div className="ad-card p-3 flex flex-col lg:flex-row lg:items-center gap-3 ad-rise">
+        <span className="text-[11px] font-black uppercase tracking-widest shrink-0" style={{ color: 'var(--ad-muted)' }}>
+          Langue du menu
+        </span>
+        <div className="flex flex-wrap gap-2">
+          {(LOCALES as readonly string[]).map((code) => (
+            <button
+              key={code}
+              type="button"
+              className={`ad-btn ${locale === code ? 'ad-btn-primary' : 'ad-btn-ghost'}`}
+              onClick={() => setLocale(code)}
+            >
+              {LOCALE_LABELS[code] || code.toUpperCase()}
+              {!menus.some((m) => m.location === tab) && locale === code && (
+                <span className="ml-1 text-[10px] opacity-70">(vide)</span>
+              )}
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-2 lg:ms-auto">
+          <button
+            type="button"
+            className="ad-btn ad-btn-ghost"
+            disabled={copying || saving || !draft.length}
+            onClick={copyToOtherLocales}
+            title="Recopie liens, ordre et sous-menus vers les autres langues ; les libellés restent à traduire."
+          >
+            <Languages className="w-4 h-4" />
+            {copying ? '…' : 'Copier vers les autres langues'}
+          </button>
+        </div>
+      </div>
+
+      {!current && !loading && (
+        <p className="text-sm ad-rise" style={{ color: 'var(--ad-warn, #b45309)' }}>
+          Aucun menu enregistré pour cette langue : la vitrine affiche le menu
+          par défaut. Enregistrez pour le remplacer.
+        </p>
+      )}
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
         <SortableContext items={draft.map((it) => it.id || it.href)} strategy={verticalListSortingStrategy}>

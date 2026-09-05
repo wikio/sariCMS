@@ -14,6 +14,18 @@ import { useCart } from '@/contexts/CartContext';
 import { useVisibility } from '@/lib/site-visibility';
 import { locales } from '@/lib/i18n';
 
+/**
+ * Une entrée n'a un sous-menu que si la liste contient réellement des liens.
+ * L'éditeur enregistre `submenu: []` sur toutes les entrées et un tableau vide
+ * est vrai en JavaScript : sans ce test, un chevron apparaissait sur des
+ * entrées sans sous-menu, ouvrant un panneau vide.
+ */
+function hasSubmenu<T extends { submenu?: unknown }>(
+  item: T,
+): item is T & { submenu: NonNullable<T['submenu']> & { length: number } } {
+  return Array.isArray(item?.submenu) && item.submenu.length > 0;
+}
+
 /** Segments de langue reconnus en tête d'URL (voir getLinkHref). */
 const LOCALE_SEGMENTS = new Set<string>(locales);
 
@@ -222,13 +234,13 @@ export default function Header({ config, menu }: { config: Config; menu: MenuTyp
 
             <nav className="hidden lg:flex items-center gap-1 flex-1 justify-center">
               {navigation.map((item, idx) => (
-                <div key={idx} className="relative group" onMouseEnter={() => item.submenu && setActiveSubmenu(idx)} onMouseLeave={() => setActiveSubmenu(null)}>
+                <div key={idx} className="relative group" onMouseEnter={() => hasSubmenu(item) && setActiveSubmenu(idx)} onMouseLeave={() => setActiveSubmenu(null)}>
                   <Link href={getLinkHref(item.href)} className="relative px-4 py-2 font-medium transition-colors whitespace-nowrap overflow-hidden text-sari-dark dark:text-white hover:text-sari-blue">
                     {getNavText(item)}
-                    {item.submenu && <ChevronDown className="w-4 h-4 inline ml-1 transition-transform group-hover:rotate-180" />}
+                    {hasSubmenu(item) && <ChevronDown className="w-4 h-4 inline ml-1 transition-transform group-hover:rotate-180" />}
                     <div className="absolute bottom-0 left-0 h-0.5 bg-sari-lime transition-all duration-300 w-0 group-hover:w-full"></div>
                   </Link>
-                  {item.submenu && activeSubmenu === idx && (
+                  {hasSubmenu(item) && activeSubmenu === idx && (
                     <div className="absolute top-full left-0 mt-2 w-72 bg-white dark:bg-[#1a1a1a] shadow-2xl border border-gray-200 dark:border-gray-800 z-50 rounded-lg overflow-hidden">
                       {item.submenu.map((sub, subIdx) => (
                         <Link key={subIdx} href={getLinkHref(sub.href)} onClick={() => setActiveSubmenu(null)} className="block px-4 py-3 hover:bg-sari-blue/5 dark:hover:bg-sari-blue/10 transition-colors border-b border-gray-100 dark:border-gray-800 last:border-0">
@@ -279,7 +291,7 @@ export default function Header({ config, menu }: { config: Config; menu: MenuTyp
                 <Link href={getLinkHref(item.href)} onClick={() => setMobileMenuOpen(false)} className="block py-3 px-3 font-medium border-b border-gray-100 dark:border-gray-800 text-sari-dark dark:text-white">
                   {getNavText(item)}
                 </Link>
-                {item.submenu && (
+                {hasSubmenu(item) && (
                   <div className="pl-4 space-y-1 pb-2 bg-gray-50 dark:bg-[#111111]">
                     {item.submenu.map((sub, subIdx) => (
                       <Link key={subIdx} href={getLinkHref(sub.href)} onClick={() => setMobileMenuOpen(false)} className="block py-2 px-3 text-gray-600 dark:text-gray-400 text-sm hover:text-sari-blue">

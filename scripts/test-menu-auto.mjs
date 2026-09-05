@@ -183,7 +183,11 @@ console.log('\n— Résolution côté vitrine —');
 {
   const dataSrc = readFileSync(resolve(ROOT, 'lib/data.ts'), 'utf8');
   check('getMenu développe les règles', /return expandAutoMenus\(menu, locale\)/.test(dataSrc));
-  check('les modules non référencés ne sont pas chargés', /if \(!sources\.length\) return menu;/.test(dataSrc));
+  check(
+    'les modules non référencés ne sont pas chargés',
+    /sources\.length \? await loadAutoDatasets\(sources, locale\) : \{\}/.test(dataSrc),
+    'sans court-circuiter la normalisation des sous-menus vides',
+  );
 
   const autoSrc = readFileSync(resolve(ROOT, 'lib/menu-auto.ts'), 'utf8');
   check('un sous-menu vide reste undefined', /resolved\.length \? resolved : undefined/.test(autoSrc));
@@ -194,7 +198,7 @@ console.log('\n— Résolution côté vitrine —');
   // resteraient affichées.
   check(
     "l'administration n'enregistre pas la liste résolue",
-    /submenu: it\.auto \? \[\] :/.test(studioSrc),
+    /const children = it\.auto\s*\n?\s*\? \[\]/.test(studioSrc),
   );
 }
 
@@ -578,6 +582,84 @@ console.log('\n— Choix de la cible d’un lien (SlugPicker) —');
       ),
     );
   }
+}
+
+console.log('\n— Harmonisation des menus entre langues —');
+
+{
+  const header = readFileSync(resolve(ROOT, 'components/layout/Header.tsx'), 'utf8');
+  const studio = readFileSync(resolve(ROOT, 'components/admin/MenuStudio.tsx'), 'utf8');
+  const dataLib = readFileSync(resolve(ROOT, 'lib/data.ts'), 'utf8');
+
+  // Un tableau vide est vrai en JavaScript : sans test de longueur, le header
+  // affichait un chevron et un panneau vide sur les entrées sans sous-menu.
+  check(
+    'le header teste la longueur du sous-menu, pas sa présence',
+    /Array\.isArray\(item\?\.submenu\) && item\.submenu\.length > 0/.test(header),
+  );
+  check(
+    'plus aucune condition sur `item.submenu` seul',
+    !/\{item\.submenu && /.test(header) && !/item\.submenu && setActiveSubmenu/.test(header),
+  );
+  check(
+    'les quatre points d’affichage utilisent le même test',
+    (header.match(/hasSubmenu\(item\)/g) || []).length >= 4,
+  );
+
+  // L'éditeur écrivait `submenu: []` sur toutes les entrées.
+  check(
+    'l’éditeur n’enregistre plus de sous-menu vide',
+    /submenu: children\.length \? children : undefined/.test(studio),
+  );
+
+  // Sans règle auto, expandAutoMenus court-circuitait et laissait les [] bruts.
+  check(
+    'les menus sont normalisés même sans règle auto',
+    /const datasets = sources\.length \? await loadAutoDatasets\(sources, locale\) : \{\};/.test(dataLib),
+  );
+  check(
+    'le pied de page légal est normalisé lui aussi',
+    /legal: applyAutoMenus\(legal, datasets, locale\)/.test(dataLib),
+  );
+
+  // Les menus sont enregistrés par langue : il faut pouvoir choisir laquelle.
+  check(
+    'l’éditeur expose un choix de langue',
+    /const \[locale, setLocale\] = useState<string>/.test(studio) &&
+      /LOCALE_LABELS/.test(studio),
+  );
+  check(
+    'la langue éditée ne dépend plus de l’interface',
+    /const adminLocale = useLocale\(\);/.test(studio),
+  );
+  check(
+    'une copie vers les autres langues est proposée',
+    /const copyToOtherLocales = async/.test(studio) &&
+      /filter\(\(l\) => l !== locale\)/.test(studio),
+  );
+  check(
+    'la copie met à jour ou crée selon l’existant',
+    /existing\?\.id[\s\S]{0,160}cmsAdminUpdate[\s\S]{0,120}cmsAdminCreate/.test(studio),
+  );
+  check(
+    'l’absence de menu pour une langue est signalée',
+    /Aucun menu enregistré pour cette langue/.test(studio),
+  );
+
+  // Les fichiers statiques de repli doivent rester alignés entre langues.
+  const shapes = ['fr', 'en', 'ar'].map((loc) => {
+    const m = JSON.parse(readFileSync(resolve(ROOT, `data/${loc}/menu.json`), 'utf8'));
+    const ids = (arr) => (arr || []).map((i) => i.id).join(',');
+    return [
+      ids(m.mainMenu),
+      ids(m.footerMenu?.navigation),
+      ids(m.footerMenu?.legal),
+    ].join(' | ');
+  });
+  check(
+    'les menus statiques de repli ont la même structure dans les 3 langues',
+    shapes[0] === shapes[1] && shapes[1] === shapes[2],
+  );
 }
 
 console.log(

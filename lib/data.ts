@@ -475,16 +475,22 @@ async function loadAutoDatasets(
 export async function expandAutoMenus(menu: Menu, locale: string): Promise<Menu> {
   const main = (menu.mainMenu || []) as MenuNode[];
   const nav = (menu.footerMenu?.navigation || []) as MenuNode[];
+  const legal = (menu.footerMenu?.legal || []) as MenuNode[];
   const sources = [...new Set([...usedAutoSources(main), ...usedAutoSources(nav)])];
-  if (!sources.length) return menu;
 
-  const datasets = await loadAutoDatasets(sources, locale);
+  // Même sans règle « auto », il faut traverser les listes : l'éditeur de menus
+  // enregistre `submenu: []` sur chaque entrée, y compris celles qui n'ont pas
+  // de sous-menu. Or un tableau vide est vrai en JavaScript, donc le header
+  // affichait un chevron et ouvrait un panneau vide sur ces entrées. On
+  // normalise systématiquement le tableau vide en `undefined`.
+  const datasets = sources.length ? await loadAutoDatasets(sources, locale) : {};
   return {
     ...menu,
     mainMenu: applyAutoMenus(main, datasets, locale) as Menu['mainMenu'],
     footerMenu: {
       ...menu.footerMenu,
       navigation: applyAutoMenus(nav, datasets, locale) as Menu['footerMenu']['navigation'],
+      legal: applyAutoMenus(legal, datasets, locale) as Menu['footerMenu']['legal'],
     },
   };
 }
