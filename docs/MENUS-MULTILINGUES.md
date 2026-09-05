@@ -66,14 +66,26 @@ dans la langue cible sont conservés** lorsque l'entrée existe encore (même
 identifiant) ; seules les nouvelles entrées restent à traduire.
 
 ```bash
-npm run menus:sync -- --dry-run                 # simulation, sans jeton
-npm run menus:sync -- --from fr --token <jwt>   # application réelle
-npm run menus:sync -- --from fr --to ar
+# 1. Simulation : montre ce qui serait écrit, sans authentification
+npm run menus:sync -- --dry-run
+
+# 2. Application : le script se connecte lui-même
+npm run menus:sync -- --from fr --email admin@sarisysteme.com --password '…'
+
+# Variante : une seule langue cible
+npm run menus:sync -- --from fr --to ar --email admin@… --password '…'
 ```
 
-L'écriture passe par l'API d'administration : fournissez un jeton via
-`--token` ou la variable d'environnement `ADMIN_TOKEN`. En simulation sans
-jeton, la lecture se fait sur l'endpoint public.
+L'écriture passe par l'API d'administration. Indiquez `--email` et
+`--password` : le script obtient le jeton lui-même via `POST /auth/login`. Si
+le compte utilise la double authentification, passez plutôt `--token <jwt>`.
+Les variables `ADMIN_EMAIL`, `ADMIN_PASSWORD` et `ADMIN_TOKEN` sont aussi lues
+dans l'environnement, ce qui évite d'écrire le mot de passe dans l'historique
+du terminal.
+
+Astuce : `--from fr --to fr` réécrit le français sur lui-même. Cela nettoie
+les sous-menus vides hérités d'anciens enregistrements sans rien changer aux
+libellés.
 
 L'équivalent existe dans l'interface : bouton **« Copier vers les autres
 langues »** de l'éditeur de menus, qui agit sur l'onglet courant.

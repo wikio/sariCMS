@@ -4,6 +4,7 @@
  *
  *   node scripts/sync-menus.mjs --dry-run                  # simulation
  *   node scripts/sync-menus.mjs --from fr --to en,ar
+ *   node scripts/sync-menus.mjs --from fr --email admin@… --password '…'
  *   node scripts/sync-menus.mjs --from fr --token <jwt>
  *
  * À quoi cela sert : les menus sont enregistrés par langue (une ligne par
@@ -20,8 +21,10 @@
  * Il nettoie au passage les sous-menus vides : un tableau vide est vrai en
  * JavaScript et produit un chevron ouvrant un panneau sans contenu.
  *
- * L'écriture passe par l'API d'administration, qui exige une authentification.
- * Fournissez un jeton avec --token, ou ADMIN_TOKEN dans l'environnement.
+ * L'écriture passe par l'API d'administration, qui exige une authentification :
+ * indiquez --email et --password (le script obtient le jeton lui-même), ou
+ * directement --token. Les variables ADMIN_EMAIL, ADMIN_PASSWORD et
+ * ADMIN_TOKEN sont également lues dans l'environnement.
  */
 
 const argv = process.argv.slice(2);
@@ -36,7 +39,9 @@ const API = (
 ).replace(/\/$/, '');
 const FROM = argOf('from', 'fr');
 const TO = argOf('to', '').split(',').map((s) => s.trim()).filter(Boolean);
-const TOKEN = argOf('token', process.env.ADMIN_TOKEN || '');
+let TOKEN = argOf('token', process.env.ADMIN_TOKEN || '');
+const EMAIL = argOf('email', process.env.ADMIN_EMAIL || '');
+const PASSWORD = argOf('password', process.env.ADMIN_PASSWORD || '');
 const DRY = has('dry-run');
 
 const C = process.stdout.isTTY
@@ -124,14 +129,52 @@ function indexLabels(items) {
   return map;
 }
 
+/**
+ * Échange un couple email / mot de passe contre un jeton d'accès.
+ * Évite d'avoir à extraire un JWT du navigateur à la main.
+ */
+async function connexion() {
+  const res = await fetch(`${API}/auth/login`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', accept: 'application/json' },
+    body: JSON.stringify({ email: EMAIL, password: PASSWORD }),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const detail = body?.message || res.statusText;
+    throw new Error(`connexion refusée (HTTP ${res.status}) — ${detail}`);
+  }
+  const data = body?.data ?? body;
+  if (data?.requires2fa) {
+    throw new Error(
+      "double authentification activée sur ce compte : passez --token <jwt>, " +
+        'copié depuis les outils de développement du navigateur.',
+    );
+  }
+  const token = data?.accessToken || data?.access_token;
+  if (!token) throw new Error("réponse de connexion sans jeton d'accès");
+  return token;
+}
+
 async function main() {
   line(`${C.b}Alignement des menus${C.x}`);
   line(`API       : ${API}`);
   line(`Référence : ${FROM}`);
   if (DRY) line(`${C.y}Mode simulation — aucune écriture${C.x}`);
+  if (!TOKEN && EMAIL && PASSWORD) {
+    try {
+      TOKEN = await connexion();
+      line(`Connecté  : ${EMAIL}`);
+    } catch (err) {
+      line(`\n${C.r}Échec de la connexion : ${err.message}${C.x}`);
+      process.exit(1);
+    }
+  }
   if (!TOKEN && !DRY) {
-    line(`${C.y}Aucun jeton fourni : l'API refusera l'écriture (401).${C.x}`);
-    line(`${C.d}Passez --token <jwt> ou définissez ADMIN_TOKEN.${C.x}`);
+    line(`\n${C.r}Authentification requise pour écrire.${C.x}`);
+    line(`${C.d}Indiquez --email <adresse> --password <mot de passe>,${C.x}`);
+    line(`${C.d}ou --token <jwt>. Ajoutez --dry-run pour simuler sans écrire.${C.x}`);
+    process.exit(1);
   }
 
   const source = await menusOf(FROM);
