@@ -62,6 +62,17 @@ export default function DashboardPage() {
     }
   }, [locale, user?.type]);
 
+  // Ce filtre doit rester AVANT le retour anticipé ci-dessous : un hook
+  // placé après un « return » conditionnel n'est pas appelé à chaque
+  // rendu, ce que React refuse (« Rendered more hooks than during the
+  // previous render »). Il ne dépend pas de l'utilisateur, donc le
+  // calculer systématiquement ne coûte rien.
+  const filteredProducts = useMemo(() => {
+    const q = productQ.trim().toLowerCase();
+    if (!q) return products;
+    return products.filter((p) => (p.name || '').toLowerCase().includes(q) || (p.category || '').toLowerCase().includes(q));
+  }, [products, productQ]);
+
   // Pas de rendu pendant la redirection : évite que l'espace client
   // n'apparaisse une fraction de seconde à un administrateur.
   if (!user || isBackOfficeUser(user.type)) return null;
@@ -73,12 +84,6 @@ export default function DashboardPage() {
   const myOrders = orders.filter((o) => o.userId === user.id || (o.customerEmail && o.customerEmail === user.email));
   const myQuotes = myOrders.filter((o) => o.isQuote || o.status === 'quote_requested');
   const realOrders = myOrders.filter((o) => !o.isQuote && o.status !== 'quote_requested');
-
-  const filteredProducts = useMemo(() => {
-    const q = productQ.trim().toLowerCase();
-    if (!q) return products;
-    return products.filter((p) => (p.name || '').toLowerCase().includes(q) || (p.category || '').toLowerCase().includes(q));
-  }, [products, productQ]);
 
   const menuItems = [
     { id: 'overview', label: t('overview'), icon: LayoutDashboard },

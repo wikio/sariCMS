@@ -183,6 +183,25 @@ check('le captcha protège le checkout invité', /<ImageCaptcha/.test(cart));
 check('paiement et devis sont tous deux protégés', /if \(!antispamPasse\(\)\) return;/.test(cart));
 check('le double envoi est bloqué', /cart\.length === 0 \|\| redirecting/.test(cart));
 
+/* ------------------------------------------------------ règles hooks */
+
+// Un hook placé après un « return » conditionnel n'est pas appelé à chaque
+// rendu : React lève « Rendered more hooks than during the previous render »
+// et la page devient inutilisable. Le tableau de bord a connu ce défaut.
+section('Règles des hooks');
+
+const dashboard = lire('app/[locale]/dashboard/page.tsx');
+const gardeIdx = dashboard.indexOf('if (!user || isBackOfficeUser(user.type)) return null;');
+check('le tableau de bord garde son retour anticipé', gardeIdx > 0);
+check(
+  'le filtre produits est déclaré avant le retour anticipé',
+  dashboard.indexOf('const filteredProducts = useMemo(') < gardeIdx,
+);
+check(
+  'aucun hook ne subsiste après le retour anticipé',
+  !/^ {2}const .*= use(Memo|State|Effect|Callback|Ref)\(/m.test(dashboard.slice(gardeIdx)),
+);
+
 /* --------------------------------------------------------- traductions */
 
 section('Traductions');
