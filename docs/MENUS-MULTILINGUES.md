@@ -87,6 +87,31 @@ Astuce : `--from fr --to fr` réécrit le français sur lui-même. Cela nettoie
 les sous-menus vides hérités d'anciens enregistrements sans rien changer aux
 libellés.
 
+Le script répare aussi les règles de sous-menu automatique incomplètes. Les
+enregistrements antérieurs à l'ajout du champ `mode` faisaient rejeter
+l'écriture du menu entier par l'API (`HTTP 400 — mode must be one of the
+following values: all, pick, groups`) ; la valeur par défaut est désormais
+appliquée.
+
+### Attention à npm et aux options
+
+Selon la version de npm, les options peuvent être avalées et seules les
+valeurs transmises au script :
+
+```
+npm run menus:check -- --api http://localhost:3001/api/v1 --url http://localhost:5000
+> node scripts/check-menus.mjs http://localhost:3001/api/v1 http://localhost:5000
+                               ^^^ --api et --url ont disparu
+```
+
+Les scripts s'en accommodent : une URL nue contenant `/api` ou `:3001` est
+prise pour l'API, l'autre pour le site, et la forme `--api=…` fonctionne
+également. En cas de doute, appelez directement :
+
+```bash
+node scripts/check-menus.mjs --api http://localhost:3001/api/v1 --url http://localhost:5000
+```
+
 L'équivalent existe dans l'interface : bouton **« Copier vers les autres
 langues »** de l'éditeur de menus, qui agit sur l'onglet courant.
 

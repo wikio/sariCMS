@@ -30,7 +30,11 @@
 const argv = process.argv.slice(2);
 const argOf = (name, fallback) => {
   const i = argv.indexOf(`--${name}`);
-  return i >= 0 && argv[i + 1] ? argv[i + 1] : fallback;
+  if (i >= 0 && argv[i + 1]) return argv[i + 1];
+  // Certaines versions de npm avalent les options : --api=X reste lisible.
+  const eq = argv.find((a) => a.startsWith(`--${name}=`));
+  if (eq) return eq.slice(name.length + 3);
+  return fallback;
 };
 const has = (name) => argv.includes(`--${name}`);
 
@@ -100,6 +104,31 @@ async function menusOf(locale) {
  * Recopie une entrée vers la langue cible.
  * Le libellé déjà traduit est préservé : seule la structure est alignée.
  */
+const SOURCES_AUTO = ['solutions', 'services', 'products', 'news', 'events'];
+
+/**
+ * Remet une règle « auto » en conformité avec ce que l'API accepte.
+ *
+ * D'anciens enregistrements portent une règle incomplète — typiquement sans
+ * `mode`, ajouté depuis. L'API refuse alors l'écriture du menu entier
+ * (HTTP 400 « mode must be one of… »), et un seul emplacement fautif faisait
+ * échouer tout l'alignement. On complète donc la règle avec les valeurs par
+ * défaut ; une source inconnue fait retirer la règle, l'entrée restant un
+ * lien simple.
+ */
+function assainirAuto(auto) {
+  if (!auto || typeof auto !== 'object') return null;
+  if (!SOURCES_AUTO.includes(auto.source)) return null;
+  const mode = ['all', 'pick', 'groups'].includes(auto.mode) ? auto.mode : 'all';
+  const regle = { source: auto.source, mode };
+  if (Array.isArray(auto.ids) && auto.ids.length) regle.ids = auto.ids;
+  if (Number.isInteger(auto.limit) && auto.limit >= 0) regle.limit = auto.limit;
+  for (const cle of ['showDesc', 'showIcon', 'group']) {
+    if (auto[cle] !== undefined) regle[cle] = auto[cle];
+  }
+  return regle;
+}
+
 function port(item, translated) {
   const known = translated?.get(item.id);
   const children = Array.isArray(item.submenu)
@@ -113,6 +142,10 @@ function port(item, translated) {
   // Un sous-menu vide produirait un chevron sans contenu : on l'omet.
   if (children.length) out.submenu = children;
   else delete out.submenu;
+  // Une règle « auto » héritée peut être incomplète et faire rejeter l'écriture.
+  const auto = assainirAuto(item.auto);
+  if (auto) out.auto = auto;
+  else delete out.auto;
   return out;
 }
 

@@ -35,13 +35,28 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const argv = process.argv.slice(2);
 const argOf = (name, fallback) => {
   const i = argv.indexOf(`--${name}`);
-  return i >= 0 && argv[i + 1] ? argv[i + 1] : fallback;
+  if (i >= 0 && argv[i + 1]) return argv[i + 1];
+  const eq = argv.find((a) => a.startsWith(`--${name}=`));
+  if (eq) return eq.slice(name.length + 3);
+  return fallback;
 };
 
+/*
+ * Certaines versions de npm avalent les options et ne transmettent que les
+ * valeurs : « npm run menus:check -- --api X --url Y » arrive alors comme
+ * ['X', 'Y']. Plutôt que de perdre silencieusement les arguments, on
+ * reconnaît les URL nues à leur forme : celle qui porte un chemin d'API est
+ * l'API, l'autre est le site.
+ */
+const nus = argv.filter((a) => /^https?:\/\//.test(a) && !argv[argv.indexOf(a) - 1]?.startsWith('--'));
+const estApi = (u) => /\/api(\/|$)|:3001/.test(u);
+const apiNu = nus.find(estApi);
+const siteNu = nus.find((u) => u !== apiNu);
+
 const API = (
-  argOf('api', process.env.NEXT_PUBLIC_API_URL || process.env.API_URL || 'http://localhost:3001/api/v1')
+  argOf('api', apiNu || process.env.NEXT_PUBLIC_API_URL || process.env.API_URL || 'http://localhost:3001/api/v1')
 ).replace(/\/$/, '');
-const SITE = argOf('url', '').replace(/\/$/, '');
+const SITE = argOf('url', siteNu || '').replace(/\/$/, '');
 const LOCALES = (argOf('locales', 'fr,en,ar')).split(',').map((s) => s.trim()).filter(Boolean);
 
 /* ---------------------------------------------------------------- couleurs */
