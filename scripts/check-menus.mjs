@@ -272,11 +272,10 @@ compareLocales();
 await checkPages();
 
 head('Visibilité du pied de page');
-line(`  ${C.d}Les interrupteurs de Administration → Visibilité sont enregistrés dans`);
-line(`  le navigateur (localStorage), pas en base : ils s'appliquent donc à`);
-line(`  toutes les langues à la fois, et seulement sur le poste où ils ont été`);
-line(`  modifiés. Un lien masqué disparaît aussi de la version arabe.${C.x}`);
-line(`  ${C.d}Clés concernées : footer.<id> et page.<id> / module.<id>.${C.x}`);
+line('  Les réglages de Administration → Visibilité sont enregistrés en base,');
+line('  une entrée par langue : ils valent pour tous les visiteurs, et masquer');
+line('  un lien en français ne le masque plus en arabe.');
+line('  Contrôle dédié : node scripts/test-visibility.mjs');
 
 line();
 if (problems) {

@@ -37,6 +37,7 @@ import { ApplicationsModule } from './modules/applications/applications.module';
 import { HeroModule } from './modules/hero/hero.module';
 import { HealthModule } from './modules/health/health.module';
 import { SettingsModule } from './modules/settings/settings.module';
+import { VisibilityModule } from './modules/visibility/visibility.module';
 import { GeoModule } from './modules/geo/geo.module';
 import { MailModule } from './modules/mail/mail.module';
 
@@ -96,6 +97,7 @@ import { MailModule } from './modules/mail/mail.module';
     HeroModule,
     HealthModule,
     SettingsModule,
+    VisibilityModule,
     GeoModule,
     MailModule,
   ],
