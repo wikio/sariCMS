@@ -1,5 +1,19 @@
 #!/usr/bin/env node
 /**
+ * Garde-fous STATIQUES sur les sous-menus générés depuis le contenu.
+ *
+ * ATTENTION — portée réelle de ce script : il n'exécute pas l'application et
+ * n'interroge aucun serveur. Il relit les fichiers source et vérifie, par
+ * expressions régulières, que certaines décisions n'ont pas été défaites ; la
+ * résolution des règles y est réimplémentée à l'identique pour tester la
+ * logique elle-même. Il ne peut donc PAS détecter un menu absent en base, une
+ * langue qui diverge, ni un problème d'affichage.
+ *
+ * Pour contrôler ce que votre serveur sert réellement :
+ *     node scripts/check-menus.mjs --url https://mon-site.tld
+ * et pour aligner les langues :
+ *     node scripts/sync-menus.mjs --from fr --token <jwt>
+ *
  * Vérifie les sous-menus générés depuis le contenu, sans navigateur.
  *
  * Le besoin : un lien de menu (Solutions, Services…) doit pouvoir peupler son
