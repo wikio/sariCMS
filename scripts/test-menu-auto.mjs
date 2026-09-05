@@ -370,11 +370,23 @@ console.log('\n— Sous-menus par catégories et vignettes —');
   const hook = readFileSync(resolve(ROOT, 'lib/use-group-filter.ts'), 'utf8');
   check('le hook lit le paramètre d’URL', /useSearchParams\(\)/.test(hook));
   check('la correspondance ignore casse et espaces',
-    /\.trim\(\)\.toLowerCase\(\) === wanted\.toLowerCase\(\)/.test(hook));
-  check('le filtre ne s’applique qu’une fois',
-    /if \(applied\.current\) return;/.test(hook));
+    /function foldValue[\s\S]{0,140}\.trim\(\)\.toLowerCase\(\)/.test(hook) &&
+      /foldValue\(value\) === target/.test(hook));
+  // Une navigation vers la même route ne démonte pas le composant : un simple
+  // booléen « déjà appliqué » figeait la première catégorie et rendait le
+  // deuxième clic inopérant. On mémorise la valeur traitée.
+  check('le filtre suit chaque nouvelle valeur d’URL',
+    /handled\.current === wanted/.test(hook) && !/if \(applied\.current\) return;/.test(hook));
+  check('la valeur n’est retenue qu’une fois la liste chargée',
+    /if \(!list\.length\) return;[\s\S]{0,80}handled\.current = wanted;/.test(hook));
+  check('les accents composés sont normalisés',
+    /normalize\('NFC'\)/.test(hook));
+  check('la pagination est remise à la première page',
+    /resetPageRef\.current\?\.\(\)/.test(hook));
+  check('listes et rappels passent par des refs (pas de boucle d’effet)',
+    /availableRef\.current = available;/.test(hook) && /applyRef\.current = apply;/.test(hook));
   check('une catégorie inconnue laisse la liste complète',
-    /if \(match\) apply\(match\);/.test(hook));
+    /if \(!match\) return;/.test(hook));
 
   for (const [page, param] of [
     ['app/[locale]/news/page.tsx', 'category'],
@@ -382,9 +394,16 @@ console.log('\n— Sous-menus par catégories et vignettes —');
     ['app/[locale]/products/page.tsx', 'category'],
   ]) {
     const src = readFileSync(resolve(ROOT, page), 'utf8');
+    const mod = page.split('/')[2];
     check(
-      `${page.split('/')[1]} applique le filtre d’URL (${param})`,
+      `${mod} applique le filtre d’URL (${param})`,
       new RegExp(`useGroupFilter\\('${param}'`).test(src),
+    );
+    // Sans remise à zéro, arriver depuis la page 2 donne un écran vide.
+    check(
+      `${mod} revient à la première page en filtrant`,
+      new RegExp(`useGroupFilter\\('${param}'[^;]*setCurrentPage\\(1\\)`).test(src) ||
+        /useEffect\(\(\) => \{\s*setCurrentPage\(1\);\s*\}, \[[^\]]*selectedCategory/.test(src),
     );
   }
 

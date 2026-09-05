@@ -39,7 +39,7 @@ export default function EventsPage() {
   ) as string[];
 
   // Un lien de menu « par type » arrive avec ?type=… : on présélectionne.
-  useGroupFilter('type', eventTypes, setSelectedType);
+  useGroupFilter('type', eventTypes, setSelectedType, () => setCurrentPage(1));
 
   // Filtrer par type si sélectionné
   const filteredEvents = selectedType

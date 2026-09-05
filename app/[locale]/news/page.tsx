@@ -39,7 +39,7 @@ export default function NewsPage() {
   ) as string[];
 
   // Un lien de menu « par catégorie » arrive avec ?category=… : on présélectionne.
-  useGroupFilter('category', allCategories, setSelectedCategory);
+  useGroupFilter('category', allCategories, setSelectedCategory, () => setCurrentPage(1));
 
   // Filtrer par catégorie si sélectionnée
   const filteredNews = selectedCategory
