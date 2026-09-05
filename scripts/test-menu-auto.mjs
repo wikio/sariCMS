@@ -537,10 +537,47 @@ console.log('\n— Choix de la cible d’un lien (SlugPicker) —');
 
   // Un id de lien créé dans l'admin n'a pas de clé i18n : ne pas la demander.
   const header = readFileSync(resolve(ROOT, 'components/layout/Header.tsx'), 'utf8');
+  const footer = readFileSync(resolve(ROOT, 'components/layout/Footer.tsx'), 'utf8');
   check(
     'le header ne traduit un id que si la clé existe',
     /tNav\.has\?\.\(item\.id\)/.test(header),
   );
+  check(
+    'le pied de page ne traduit un id que si la clé existe',
+    /if \(!lookup\.has\?\.\(id\)\) continue;/.test(footer),
+  );
+
+  // Les menus sont enregistrés par langue : le titre saisi fait autorité.
+  // Sinon renommer une entrée dont l'id correspond à une ancienne clé restait
+  // sans effet, la traduction écrasant le nouveau titre.
+  check(
+    'le titre saisi l’emporte sur la clé (header)',
+    /if \(typeof item\.label === 'string' && item\.label\.trim\(\)\) return item\.label;/.test(header),
+  );
+  check(
+    'le titre saisi l’emporte sur la clé (pied de page)',
+    (footer.match(/if \(item\.label\?\.trim\(\)\) return item\.label;/g) || []).length === 2,
+    'navigation et légal',
+  );
+
+  // Les replis légaux passent par plusieurs espaces de noms : aucun ne doit
+  // lever d'exception si la clé manque (pages.legal.legal, .terms n'existent pas).
+  check(
+    'les replis légaux sont tentés dans l’ordre sans lever',
+    /translateId\(item\.id, tLegal, t\)/.test(footer) && /catch \{/.test(footer),
+  );
+
+  // Une entrée sans titre doit encore pouvoir s'appuyer sur sa clé historique.
+  for (const [loc] of [['fr'], ['en'], ['ar']]) {
+    const msgs = JSON.parse(readFileSync(resolve(ROOT, `messages/${loc}.json`), 'utf8'));
+    const nav = msgs?.common?.nav ?? {};
+    check(
+      `les ids du menu statique restent traduisibles en ${loc}`,
+      ['home', 'about', 'products', 'services', 'news', 'events', 'careers', 'contact'].every(
+        (k) => typeof nav[k] === 'string' && nav[k].length > 0,
+      ),
+    );
+  }
 }
 
 console.log(

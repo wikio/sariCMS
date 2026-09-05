@@ -86,10 +86,16 @@ export default function Header({ config, menu }: { config: Config; menu: MenuTyp
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  /*
+    Libellé d'une entrée de menu. Voir Footer.tsx pour le raisonnement complet :
+    les menus étant enregistrés par langue, le libellé saisi fait autorité et
+    les clés `common.nav.*` ne sont qu'un repli pour les entrées historiques
+    sans libellé propre. On ne demande une clé que si elle existe, sinon les
+    entrées créées dans l'admin (id aléatoire) déclenchent une erreur
+    MISSING_MESSAGE à chaque rendu.
+  */
   const getNavText = (item: any) => {
-    // Les liens créés depuis l'admin portent un id aléatoire, sans clé de
-    // traduction : on vérifie d'abord son existence, sinon next-intl journalise
-    // une erreur MISSING_MESSAGE à chaque rendu du header.
+    if (typeof item.label === 'string' && item.label.trim()) return item.label;
     if (item.id && tNav.has?.(item.id)) {
       try {
         const translated = tNav(item.id);
