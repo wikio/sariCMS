@@ -240,8 +240,8 @@ export default function SlugPicker({
       {label && (
         <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>{label}</span>
       )}
-      <div className="flex flex-col sm:flex-row gap-2">
-        <select className="ad-select sm:w-56 shrink-0" value={kind} onChange={(e) => {
+      <div className="relative flex flex-col sm:flex-row gap-2">
+        <select className="ad-select sm:w-1/2 sm:min-w-0 shrink-0" value={kind} onChange={(e) => {
           const k = e.target.value as SlugKind;
           setKind(k);
           setQ('');
@@ -253,7 +253,7 @@ export default function SlugPicker({
         </select>
 
         {kind === 'free' ? (
-          <div className="ad-search flex-1">
+          <div className="ad-search sm:w-1/2 min-w-0">
             <Link2 className="ad-search-ico w-4 h-4" style={{ color: 'var(--ad-accent)' }} />
             <input
               className="ad-input"
@@ -263,7 +263,7 @@ export default function SlugPicker({
             />
           </div>
         ) : (
-          <div className="relative flex-1">
+          <div className="sm:w-1/2 min-w-0">
             <div className="ad-search">
               {kind === 'static' ? <Globe className="ad-search-ico w-4 h-4" style={{ color: 'var(--ad-accent)' }} /> : <FileText className="ad-search-ico w-4 h-4" style={{ color: 'var(--ad-accent)' }} />}
               <input

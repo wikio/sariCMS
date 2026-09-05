@@ -490,6 +490,32 @@ console.log('\n— Choix de la cible d’un lien (SlugPicker) —');
     /<Suspense[\s\S]{0,200}<MenuStudioInner \/>/.test(studio),
   );
 
+  // Le panneau de résultats est en position absolue : il se cale sur le plus
+  // proche ancêtre positionné. Ancré au seul champ de recherche, il n'occupait
+  // que le reliquat de largeur laissé par le select (224 px fixes), d'où un
+  // affichage écrasé sur desktop — correct en mobile où la rangée s'empile.
+  check(
+    'la rangée sert de repère au panneau de résultats',
+    /<div className="relative flex flex-col sm:flex-row gap-2">/.test(picker),
+  );
+  check(
+    'le select occupe la moitié de la largeur',
+    /className="ad-select sm:w-1\/2 sm:min-w-0 shrink-0"/.test(picker),
+  );
+  check(
+    'la recherche occupe l’autre moitié',
+    /<div className="sm:w-1\/2 min-w-0">\s*\n\s*<div className="ad-search">/.test(picker),
+  );
+  check(
+    'le champ de lien libre occupe aussi la moitié',
+    /className="ad-search sm:w-1\/2 min-w-0"/.test(picker),
+  );
+  check(
+    'le champ de recherche n’enferme plus le panneau',
+    !/<div className="relative flex-1">/.test(picker),
+    'sinon le panneau retombe sur la largeur résiduelle',
+  );
+
   // Un id de lien créé dans l'admin n'a pas de clé i18n : ne pas la demander.
   const header = readFileSync(resolve(ROOT, 'components/layout/Header.tsx'), 'utf8');
   check(
