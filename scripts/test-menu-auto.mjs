@@ -19,7 +19,7 @@
  * Usage : node scripts/test-menu-auto.mjs
  */
 
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -398,6 +398,104 @@ console.log('\n— Sous-menus par catégories et vignettes —');
       ),
     );
   }
+}
+
+console.log('\n— Choix de la cible d’un lien (SlugPicker) —');
+
+{
+  const picker = readFileSync(resolve(ROOT, 'components/admin/SlugPicker.tsx'), 'utf8');
+
+  // Un lien libre doit rester saisissable à la main.
+  check(
+    'le mode « lien libre » expose un champ URL éditable',
+    /kind === 'free' \? \([\s\S]{0,400}placeholder="\/chemin-ou-url"/.test(picker),
+  );
+
+  // Chaque module doit pouvoir viser sa page liste OU une fiche précise.
+  check(
+    'chaque module propose sa page liste',
+    /const MODULE_INDEX/.test(picker) &&
+      ['products', 'services', 'solutions', 'news', 'events', 'careers'].every((k) =>
+        new RegExp(`${k}: \\{ path: '/${k}'`).test(picker),
+      ),
+  );
+  check(
+    'la page liste est proposée avant les fiches',
+    /setHits\(\[\.\.\.indexHit\(query\), \.\.\.rows/.test(picker),
+  );
+  check(
+    'la page liste reste proposée si les fiches sont inaccessibles',
+    /catch \{[\s\S]{0,200}setHits\(indexHit\(query\)\);/.test(picker),
+  );
+  check(
+    'les libellés annoncent le double choix liste/fiche',
+    (picker.match(/— liste ou/g) || []).length >= 5,
+  );
+
+  // Un chemin proposé par l'admin doit exister dans l'app.
+  check(
+    '/legal (404, la route est legal/[type]) n’est plus proposé',
+    !/path: '\/legal',/.test(picker),
+  );
+  check(
+    'les trois pages légales réelles sont proposées',
+    ['/legal/mentions', '/legal/privacy', '/legal/conditions'].every((p) =>
+      picker.includes(`path: '${p}'`),
+    ),
+  );
+
+  const appDir = resolve(ROOT, 'app/[locale]');
+  const staticPaths = [...picker.matchAll(/\{ path: '([^']+)'/g)].map((m) => m[1]);
+  const missing = staticPaths.filter((p) => {
+    if (p === '/') return false;
+    const segs = p.slice(1).split('/');
+    // Une page d'index doit exister ; sinon la route n'est servie que par un
+    // segment dynamique et le lien renvoie 404.
+    if (segs.length === 1) return !existsSync(resolve(appDir, segs[0], 'page.tsx'));
+    return !existsSync(resolve(appDir, segs[0]));
+  });
+  check(
+    'tous les chemins statiques proposés existent dans l’app',
+    missing.length === 0,
+    missing.length ? `introuvables : ${missing.join(', ')}` : 'aucun lien mort',
+  );
+
+  // Rouvrir un lien existant doit resélectionner le bon onglet.
+  check(
+    'une URL de page liste rouvre son module',
+    /const idx = \(Object\.keys\(MODULE_INDEX\)[\s\S]{0,160}if \(idx\) return idx;/.test(picker),
+  );
+
+  // L'ancienne fiche générique n'éditait aucun lien : elle doit rediriger.
+  const legacy = readFileSync(
+    resolve(ROOT, 'app/[locale]/admin/menus/[id]/page.tsx'),
+    'utf8',
+  );
+  check(
+    'la fiche générique d’un menu redirige vers l’éditeur complet',
+    /router\.replace\(`\/\$\{locale\}\/admin\/menus/.test(legacy),
+  );
+  check(
+    'la redirection ouvre l’onglet du menu visé',
+    /\?location=\$\{encodeURIComponent\(location\)\}/.test(legacy),
+  );
+
+  const studio = readFileSync(resolve(ROOT, 'components/admin/MenuStudio.tsx'), 'utf8');
+  check(
+    'l’éditeur accepte un emplacement via l’URL',
+    /searchParams\.get\('location'\)/.test(studio),
+  );
+  check(
+    'useSearchParams est enveloppé dans Suspense',
+    /<Suspense[\s\S]{0,200}<MenuStudioInner \/>/.test(studio),
+  );
+
+  // Un id de lien créé dans l'admin n'a pas de clé i18n : ne pas la demander.
+  const header = readFileSync(resolve(ROOT, 'components/layout/Header.tsx'), 'utf8');
+  check(
+    'le header ne traduit un id que si la clé existe',
+    /tNav\.has\?\.\(item\.id\)/.test(header),
+  );
 }
 
 console.log(

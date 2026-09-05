@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import {
   DndContext, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent,
@@ -90,10 +91,14 @@ function normalizeItems(items: unknown): MenuItem[] {
   }));
 }
 
-export default function MenuStudio() {
+function MenuStudioInner() {
   const locale = useLocale();
   const { showToast } = useToast();
-  const [tab, setTab] = useState('main');
+  const searchParams = useSearchParams();
+  const [tab, setTab] = useState(() => {
+    const wanted = searchParams.get('location');
+    return wanted && LOCATIONS.some((l) => l.id === wanted) ? wanted : 'main';
+  });
   const [menus, setMenus] = useState<MenuRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -320,5 +325,13 @@ function SortableItem({ id, children }: { id: string; children: React.ReactNode 
         <div className="flex-1 min-w-0">{children}</div>
       </div>
     </div>
+  );
+}
+
+export default function MenuStudio() {
+  return (
+    <Suspense fallback={<div className="ad-card"><PixelGridLoader label="Menus" /></div>}>
+      <MenuStudioInner />
+    </Suspense>
   );
 }

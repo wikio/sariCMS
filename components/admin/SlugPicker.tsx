@@ -29,12 +29,12 @@ export type SlugKind =
 const KIND_OPTIONS: Array<{ id: SlugKind; label: string }> = [
   { id: 'free', label: 'Lien libre (URL manuelle)' },
   { id: 'static', label: 'Page statique' },
-  { id: 'products', label: 'Produit' },
-  { id: 'services', label: 'Service' },
-  { id: 'solutions', label: 'Solution' },
-  { id: 'news', label: 'Article d’actualité' },
-  { id: 'events', label: 'Événement' },
-  { id: 'careers', label: 'Offre d’emploi' },
+  { id: 'products', label: 'Produits — liste ou fiche' },
+  { id: 'services', label: 'Services — liste ou fiche' },
+  { id: 'solutions', label: 'Solutions — liste ou fiche' },
+  { id: 'news', label: 'Actualités — liste ou article' },
+  { id: 'events', label: 'Événements — liste ou fiche' },
+  { id: 'careers', label: 'Carrières — liste ou offre' },
   { id: 'pages', label: 'Page générique' },
 ];
 
@@ -48,8 +48,22 @@ const STATIC_PATHS: Array<{ path: string; label: string; icon: string }> = [
   { path: '/events', label: 'Événements', icon: 'calendar' },
   { path: '/careers', label: 'Carrières', icon: 'briefcase' },
   { path: '/contact', label: 'Contact', icon: 'mail' },
-  { path: '/legal', label: 'Pages légales', icon: 'scale' },
+  // La route légale est /legal/[type] : il n'existe pas de page d'index, donc
+  // on référence les trois pages réelles plutôt qu'un /legal qui renvoie 404.
+  { path: '/legal/mentions', label: 'Mentions légales', icon: 'scale' },
+  { path: '/legal/privacy', label: 'Confidentialité', icon: 'shield' },
+  { path: '/legal/conditions', label: 'Conditions générales', icon: 'file-text' },
 ];
+
+/** Page liste de chaque module, pour pointer la rubrique plutôt qu'une fiche. */
+const MODULE_INDEX: Partial<Record<SlugKind, { path: string; label: string }>> = {
+  products: { path: '/products', label: 'Tous les produits (page catalogue)' },
+  services: { path: '/services', label: 'Tous les services (page liste)' },
+  solutions: { path: '/solutions', label: 'Toutes les solutions (page liste)' },
+  news: { path: '/news', label: 'Toutes les actualités (page liste)' },
+  events: { path: '/events', label: 'Tous les événements (page liste)' },
+  careers: { path: '/careers', label: 'Toutes les offres (page carrières)' },
+};
 
 /** Ressource backend + clés d'affichage par module dynamique. */
 const MODULE_DEFS: Record<Exclude<SlugKind, 'free' | 'static'>, {
@@ -113,6 +127,11 @@ function pubId(item: Record<string, unknown>): string | number {
 export function inferSlugKind(href: string): SlugKind {
   const h = (href || '').trim();
   if (!h || h === '#') return 'free';
+  // Une page liste appartient à son module : on rouvre le bon onglet plutôt
+  // que « page statique », sinon modifier le lien obligerait à rechercher le
+  // module à la main.
+  const idx = (Object.keys(MODULE_INDEX) as SlugKind[]).find((k) => MODULE_INDEX[k]?.path === h);
+  if (idx) return idx;
   if (STATIC_PATHS.some((s) => s.path === h)) return 'static';
   if (h.startsWith('/products/')) return 'products';
   if (h.startsWith('/services/')) return 'services';
@@ -153,6 +172,15 @@ export default function SlugPicker({
     return () => document.removeEventListener('mousedown', onDoc);
   }, []);
 
+  /** Entrée « page liste » du module courant, si elle correspond à la saisie. */
+  const indexHit = (query: string): Record<string, unknown>[] => {
+    const idx = MODULE_INDEX[kind];
+    if (!idx) return [];
+    const needle = query.trim().toLowerCase();
+    if (needle && !idx.label.toLowerCase().includes(needle) && !idx.path.includes(needle)) return [];
+    return [{ __path: idx.path, __label: idx.label, __icon: def?.icon || 'list', __index: true }];
+  };
+
   const search = async (query: string) => {
     if (kind === 'static') {
       const needle = query.trim().toLowerCase();
@@ -170,9 +198,11 @@ export default function SlugPicker({
         filter: JSON.stringify({ locale }),
         limit: '20',
       });
-      setHits(rows.slice(0, 20));
+      setHits([...indexHit(query), ...rows.slice(0, 20)]);
     } catch {
-      setHits([]);
+      // Même si les fiches sont inaccessibles (session expirée, API muette),
+      // la page liste reste sélectionnable : le champ n'est jamais vide.
+      setHits(indexHit(query));
     } finally {
       setBusy(false);
     }
@@ -201,7 +231,7 @@ export default function SlugPicker({
   };
 
   const titleOf = (item: Record<string, unknown>) => {
-    if (kind === 'static') return String(item.__label || '');
+    if (kind === 'static' || item.__index) return String(item.__label || '');
     return String(item[def?.titleKey || 'title'] || item.name || item.title || '—');
   };
 
@@ -250,18 +280,30 @@ export default function SlugPicker({
                 {busy && <div className="ad-combo-item text-xs" style={{ color: 'var(--ad-muted)' }}>Recherche…</div>}
                 {!busy && hits.length === 0 && <div className="ad-combo-item text-xs" style={{ color: 'var(--ad-muted)' }}>Aucun résultat</div>}
                 {hits.map((item, i) => {
-                  const isStatic = kind === 'static';
+                  const isIndex = Boolean(item.__index);
+                  const isStatic = kind === 'static' || isIndex;
                   const title = titleOf(item);
                   const path = isStatic ? String(item.__path || '') : def ? def.build(item) : '';
                   const id = isStatic ? '' : String(pubId(item));
                   return (
-                    <button key={i} type="button" className="ad-combo-item items-center gap-2" onClick={() => (isStatic ? selectStatic(item) : selectEntity(item))}>
+                    <button
+                      key={i}
+                      type="button"
+                      className="ad-combo-item items-center gap-2"
+                      style={isIndex ? { borderBottom: '1px solid var(--ad-line)' } : undefined}
+                      onClick={() => (isStatic ? selectStatic(item) : selectEntity(item))}
+                    >
                       {isStatic ? (
                         <IconMark name={String(item.__icon || '')} className="w-4 h-4 shrink-0" />
                       ) : (
                         <IconMark name={def?.icon || ''} className="w-4 h-4 shrink-0" />
                       )}
                       <span className="truncate flex-1 text-start">{title}</span>
+                      {isIndex && (
+                        <span className="text-[10px] font-black uppercase tracking-wider shrink-0" style={{ color: 'var(--ad-accent)' }}>
+                          rubrique
+                        </span>
+                      )}
                       {id && <span className="font-mono text-[10px] opacity-60">#{id}</span>}
                       <span className="font-mono text-[10px] opacity-60 max-w-[45%] truncate">{path}</span>
                     </button>

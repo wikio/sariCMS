@@ -87,7 +87,10 @@ export default function Header({ config, menu }: { config: Config; menu: MenuTyp
   }, []);
 
   const getNavText = (item: any) => {
-    if (item.id) {
+    // Les liens créés depuis l'admin portent un id aléatoire, sans clé de
+    // traduction : on vérifie d'abord son existence, sinon next-intl journalise
+    // une erreur MISSING_MESSAGE à chaque rendu du header.
+    if (item.id && tNav.has?.(item.id)) {
       try {
         const translated = tNav(item.id);
         return translated.startsWith('common.nav.') ? item.label : translated;
