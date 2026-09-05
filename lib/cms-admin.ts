@@ -61,8 +61,11 @@ export const WRITABLE_FIELDS: Record<string, string[]> = {
   ],
   menus: ['name', 'location', 'items', 'locale', 'status'],
   users: [
+    // `wilaya` existe en base et dans le DTO serveur : sans lui ici, `pick()`
+    // le retirait silencieusement de la charge utile et la wilaya saisie
+    // n'était jamais enregistrée.
     'email', 'password', 'firstName', 'lastName', 'phone', 'company', 'type', 'status',
-    'roleId', 'locale', 'avatar', 'address', 'position', 'experience', 'motivation', 'cvUrl',
+    'roleId', 'locale', 'avatar', 'address', 'wilaya', 'position', 'experience', 'motivation', 'cvUrl',
     'ip', 'country',
   ],
   roles: ['name', 'slug', 'description', 'permissionIds', 'isSystem'],
@@ -163,6 +166,23 @@ export async function cmsAdminList<T = Record<string, unknown>>(
   }
   const payload = await cmsAdminFetch<unknown>(`/${resource}?${params.toString()}`);
   return unwrapList<T>(payload);
+}
+
+/**
+ * Charge une fiche complète.
+ *
+ * La liste renvoie une projection allégée (`view=block`) : `position` et
+ * `roleId`, par exemple, en sont absents. Ouvrir un formulaire d'édition à
+ * partir d'une ligne de liste afficherait donc ces champs vides, et les
+ * effacerait à l'enregistrement. On relit la fiche entière avant d'éditer.
+ */
+export async function cmsAdminGet<T = Record<string, unknown>>(
+  resource: string,
+  id: string,
+): Promise<T> {
+  const payload = await cmsAdminFetch<unknown>(`/${resource}/${id}`);
+  const corps = payload as { data?: unknown };
+  return ((corps && typeof corps === 'object' && 'data' in corps ? corps.data : payload) || {}) as T;
 }
 
 export async function cmsAdminCreate<T = Record<string, unknown>>(
