@@ -2545,7 +2545,11 @@
       "optionPayDesc": "إتمام الدفع دون إنشاء حساب",
       "optionQuote": "طلب عرض سعر",
       "optionQuoteDesc": "احصل على عرض سعر مخصص خلال 24 ساعة",
-      "cancel": "إلغاء"
+      "cancel": "إلغاء",
+      "preparingPayment": "جارٍ تحضير الدفع",
+      "preparingPaymentDesc": "يتم إنشاء طلبك، ستتم إعادة توجيهك.",
+      "taxIncluded": "مشمولة",
+      "captchaRequired": "يرجى إكمال التحقق من الرسائل المزعجة"
     },
     "contact": {
       "heroTag": "اتصل بنا",
@@ -4201,7 +4205,26 @@
       "errNoLines": "أضف منتجًا واحدًا على الأقل",
       "errQty": "الكمية غير صالحة",
       "errLineLimit": "تم بلوغ الحد الأقصى لعدد المنتجات",
-      "errAttachment": "تم رفض المرفق (الصيغة أو الحجم)"
+      "errAttachment": "تم رفض المرفق (الصيغة أو الحجم)",
+      "contactIntro": "تُستخدم هذه البيانات للتواصل معك وإعداد عرض السعر. الحقول المميزة بنجمة إلزامية.",
+      "phoneHint": "سيتصل بك مستشار على هذا الرقم.",
+      "emailHint": "يُرسل عرض السعر ومتابعته إلى هذا العنوان.",
+      "addressHint": "عنوان التسليم أو التركيب.",
+      "addressPlaceholder": "الرقم، الشارع، المدينة، الرمز البريدي",
+      "countryHint": "يحدد منطقة الضريبة والتسليم.",
+      "countryPlaceholder": "ابدأ بكتابة اسم البلد",
+      "errPhoneRequired": "رقم الهاتف إلزامي",
+      "errEmailRequired": "البريد الإلكتروني إلزامي",
+      "errAddressRequired": "العنوان إلزامي",
+      "errAddressShort": "العنوان قصير جدًا",
+      "errCountryRequired": "البلد إلزامي",
+      "errCaptcha": "يرجى إكمال التحقق من الرسائل المزعجة",
+      "antispam": "التحقق من الرسائل المزعجة",
+      "sentTitle": "تم إرسال الطلب",
+      "sentDesc": "سنعود إليك قريبًا. احتفظ بهذا المرجع لأي متابعة.",
+      "yourReference": "مرجعك",
+      "copyReference": "نسخ المرجع",
+      "viewMyQuotes": "عرض عروض الأسعار"
     }
   }
 }

@@ -2545,7 +2545,11 @@
       "optionPayDesc": "Complete payment without creating an account",
       "optionQuote": "Request a Quote",
       "optionQuoteDesc": "Receive a personalized quote within 24 hours",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "preparingPayment": "Preparing payment",
+      "preparingPaymentDesc": "Your order is being created, you will be redirected.",
+      "taxIncluded": "included",
+      "captchaRequired": "Please complete the anti-spam check"
     },
     "contact": {
       "heroTag": "Contact",
@@ -4201,7 +4205,26 @@
       "errNoLines": "Add at least one item",
       "errQty": "Invalid quantity",
       "errLineLimit": "Maximum number of items reached",
-      "errAttachment": "Attachment rejected (format or size)"
+      "errAttachment": "Attachment rejected (format or size)",
+      "contactIntro": "These details let us reach you and prepare the quote. Fields marked with an asterisk are required.",
+      "phoneHint": "An advisor will call you back on this number.",
+      "emailHint": "The quote and its updates are sent to this address.",
+      "addressHint": "Delivery or installation address.",
+      "addressPlaceholder": "Number, street, city, postal code",
+      "countryHint": "Determines the tax and delivery zone.",
+      "countryPlaceholder": "Start typing the country name",
+      "errPhoneRequired": "Phone number is required",
+      "errEmailRequired": "Email address is required",
+      "errAddressRequired": "Address is required",
+      "errAddressShort": "Address too short to be usable",
+      "errCountryRequired": "Country is required",
+      "errCaptcha": "Please complete the anti-spam check",
+      "antispam": "Anti-spam check",
+      "sentTitle": "Request sent",
+      "sentDesc": "We will get back to you shortly. Keep this reference for any follow-up.",
+      "yourReference": "Your reference",
+      "copyReference": "Copy reference",
+      "viewMyQuotes": "View my quotes"
     }
   }
 }

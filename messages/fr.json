@@ -2545,7 +2545,11 @@
       "optionPayDesc": "Finaliser le paiement sans créer de compte",
       "optionQuote": "Demander un devis",
       "optionQuoteDesc": "Recevoir un devis personnalisé sous 24h",
-      "cancel": "Annuler"
+      "cancel": "Annuler",
+      "preparingPayment": "Préparation du paiement",
+      "preparingPaymentDesc": "Votre commande est en cours de création, vous allez être redirigé.",
+      "taxIncluded": "incluse",
+      "captchaRequired": "Veuillez valider le contrôle antispam"
     },
     "contact": {
       "heroTag": "Contact",
@@ -4201,7 +4205,26 @@
       "errNoLines": "Ajoutez au moins un article",
       "errQty": "Quantité invalide",
       "errLineLimit": "Nombre maximal d’articles atteint",
-      "errAttachment": "Pièce jointe refusée (format ou taille)"
+      "errAttachment": "Pièce jointe refusée (format ou taille)",
+      "contactIntro": "Ces coordonnées servent à vous recontacter et à établir le devis. Les champs marqués d'une étoile sont obligatoires.",
+      "phoneHint": "Un conseiller vous rappelle sur ce numéro.",
+      "emailHint": "Le devis et son suivi sont envoyés à cette adresse.",
+      "addressHint": "Adresse de livraison ou d'installation.",
+      "addressPlaceholder": "Numéro, rue, ville, code postal",
+      "countryHint": "Détermine la zone de taxation et de livraison.",
+      "countryPlaceholder": "Commencez à taper le nom du pays",
+      "errPhoneRequired": "Le téléphone est obligatoire",
+      "errEmailRequired": "L'adresse e-mail est obligatoire",
+      "errAddressRequired": "L'adresse est obligatoire",
+      "errAddressShort": "Adresse trop courte pour être exploitable",
+      "errCountryRequired": "Le pays est obligatoire",
+      "errCaptcha": "Veuillez valider le contrôle antispam",
+      "antispam": "Contrôle antispam",
+      "sentTitle": "Demande envoyée",
+      "sentDesc": "Nous revenons vers vous rapidement. Conservez cette référence pour tout échange.",
+      "yourReference": "Votre référence",
+      "copyReference": "Copier la référence",
+      "viewMyQuotes": "Voir mes devis"
     }
   }
 }

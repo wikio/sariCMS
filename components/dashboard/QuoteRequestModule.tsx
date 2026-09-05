@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
-  AlertCircle, ArrowLeft, Calendar, Check, ChevronLeft, ChevronRight, Copy, FileText,
+  AlertCircle, ArrowLeft, Calendar, Check, CheckCircle, ChevronLeft, ChevronRight, Copy, FileText,
   MapPin, Package, Plus, Search, Send, Trash2, Mail, Phone, Globe, ShoppingCart, Upload,
 } from 'lucide-react';
 import { getConfig, getProducts } from '@/lib/data';
@@ -20,6 +20,9 @@ import {
 import { loadAdminSettings } from '@/lib/admin-settings';
 import DateText from '@/components/shared/DateText';
 import { useCurrency } from '@/lib/use-currency';
+import ImageCaptcha from '@/components/ImageCaptcha';
+import SimpleHtmlEditor, { htmlToText } from '@/components/ui/SimpleHtmlEditor';
+import CountrySelect from '@/components/ui/CountrySelect';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_RE = /^[+\d][\d\s().-]{6,}$/;
@@ -133,6 +136,12 @@ function QuoteWizard({ user, locale, onCancel, onDone }: { user: User; locale: s
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  /** Antispam de l'étape récapitulative, avant l'envoi définitif. */
+  const [captchaOk, setCaptchaOk] = useState(false);
+  /** Référence attribuée à l'envoi, affichée en confirmation. */
+  const [reference, setReference] = useState('');
+
+  const antispam = loadAdminSettings().security?.siteCaptcha !== false;
 
   useEffect(() => {
     getProducts(locale).then(setProducts);
@@ -183,8 +192,21 @@ function QuoteWizard({ user, locale, onCancel, onDone }: { user: User; locale: s
       if (nature === 'autre' && !natureOther.trim()) out.natureOther = t('errNatureOther');
     }
     if (s === 3) {
-      if (contact.phone && !PHONE_RE.test(contact.phone.trim())) out.phone = t('errPhone');
-      if (!EMAIL_RE.test(contact.email.trim())) out.email = t('errEmail');
+      // Ces quatre champs conditionnent la prise de contact commerciale et la
+      // livraison : ils étaient facultatifs, d'où des demandes inexploitables.
+      if (!contact.phone.trim()) out.phone = t('errPhoneRequired');
+      else if (!PHONE_RE.test(contact.phone.trim())) out.phone = t('errPhone');
+
+      if (!contact.email.trim()) out.email = t('errEmailRequired');
+      else if (!EMAIL_RE.test(contact.email.trim())) out.email = t('errEmail');
+
+      if (!contact.address.trim()) out.address = t('errAddressRequired');
+      else if (contact.address.trim().length < 5) out.address = t('errAddressShort');
+
+      if (!contact.country.trim()) out.country = t('errCountryRequired');
+    }
+    if (s === 4 && antispam && !captchaOk) {
+      out.captcha = t('errCaptcha');
     }
     return out;
   };
@@ -227,8 +249,11 @@ function QuoteWizard({ user, locale, onCancel, onDone }: { user: User; locale: s
     const errs = validateStep(step);
     if (Object.keys(errs).length) { setErrors(errs); return; }
     setSaving(true);
-    persist('submitted');
-    setTimeout(() => { setSaving(false); onDone(); }, 400);
+    // La référence est produite à l'enregistrement, au format défini dans
+    // Administration → Codes : on la récupère pour la montrer au client
+    // plutôt que de refermer l'assistant sans rien afficher.
+    const quote = persist('submitted');
+    setTimeout(() => { setSaving(false); setReference(quote.reference || ''); }, 400);
   };
 
   const saveDraft = () => {
@@ -244,6 +269,46 @@ function QuoteWizard({ user, locale, onCancel, onDone }: { user: User; locale: s
   ) : null;
 
   const stepsLabels = [t('stepProducts'), t('stepDetails'), t('stepContact'), t('stepRecap')];
+
+  /*
+   * Confirmation d'envoi.
+   *
+   * L'assistant se refermait aussitôt la demande enregistrée : le client ne
+   * voyait jamais la référence pourtant générée au format configuré dans
+   * Administration → Codes. Il ne pouvait donc pas la citer en cas de relance.
+   */
+  if (reference) {
+    return (
+      <div className="max-w-xl mx-auto text-center py-10">
+        <div className="w-20 h-20 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
+          <CheckCircle className="w-10 h-10 text-green-500" />
+        </div>
+        <h3 className="text-2xl font-bold text-sari-dark dark:text-white mb-2">{t('sentTitle')}</h3>
+        <p className="text-gray-600 dark:text-gray-400 mb-6">{t('sentDesc')}</p>
+
+        <div className="inline-flex flex-col items-center gap-2 px-6 py-4 border-2 border-dashed border-sari-blue/40 rounded-xl bg-sari-blue/5 mb-6">
+          <span className="text-xs uppercase tracking-wide text-gray-500">{t('yourReference')}</span>
+          <div className="flex items-center gap-2">
+            <code className="text-xl font-black text-sari-blue tracking-wider">{reference}</code>
+            <button
+              type="button"
+              onClick={() => navigator.clipboard?.writeText(reference)}
+              title={t('copyReference')}
+              className="p-1.5 rounded hover:bg-sari-blue/10 text-sari-blue"
+            >
+              <Copy className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-center gap-3">
+          <button onClick={onDone} className="bg-sari-blue text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-sari-blue/90">
+            {t('viewMyQuotes')}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -375,9 +440,22 @@ function QuoteWizard({ user, locale, onCancel, onDone }: { user: User; locale: s
               <label className="block text-sm font-bold text-sari-dark dark:text-white mb-2 flex items-center gap-2"><Calendar className="w-4 h-4 text-sari-blue" /> {t('desiredDate')}</label>
               <input type="date" value={desiredDate} onChange={(e) => setDesiredDate(e.target.value)} className="ad-input" />
             </div>
-            <div>
+            {/*
+              * La note occupe toute la largeur de la section et accepte une mise
+              * en forme simple : les demandes détaillées (listes de références,
+              * contraintes techniques) étaient illisibles dans un champ étroit
+              * en texte brut.
+              */}
+            <div className="w-full">
               <label className="block text-sm font-bold text-sari-dark dark:text-white mb-2">{t('note')}</label>
-              <textarea rows={4} value={note} onChange={(e) => setNote(e.target.value)} placeholder={t('notePlaceholder')} className="ad-textarea" />
+              <SimpleHtmlEditor
+                value={note}
+                onChange={setNote}
+                placeholder={t('notePlaceholder')}
+                rows={8}
+                maxLength={4000}
+                ariaLabel={t('note')}
+              />
             </div>
           </div>
         )}
@@ -385,25 +463,47 @@ function QuoteWizard({ user, locale, onCancel, onDone }: { user: User; locale: s
         {step === 3 && (
           <div className="space-y-5">
             <h3 className="text-xl font-bold text-sari-dark dark:text-white">{t('stepContact')}</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{t('contactIntro')}</p>
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-bold text-sari-dark dark:text-white mb-2 flex items-center gap-2"><Phone className="w-4 h-4 text-sari-blue" /> {t('phone')}</label>
+                <label className="block text-sm font-bold text-sari-dark dark:text-white mb-2 flex items-center gap-2"><Phone className="w-4 h-4 text-sari-blue" /> {t('phone')} <span className="text-red-500">*</span></label>
                 <input value={contact.phone} onChange={(e) => { setContact({ ...contact, phone: e.target.value }); setErrors((p) => { const { phone: _n, ...r } = p; return r; }); }} className={inputCls('phone')} />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('phoneHint')}</p>
                 <FieldError k="phone" />
               </div>
               <div>
                 <label className="block text-sm font-bold text-sari-dark dark:text-white mb-2 flex items-center gap-2"><Mail className="w-4 h-4 text-sari-blue" /> {t('email')} <span className="text-red-500">*</span></label>
                 <input type="email" value={contact.email} onChange={(e) => { setContact({ ...contact, email: e.target.value }); setErrors((p) => { const { email: _n, ...r } = p; return r; }); }} className={inputCls('email')} />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('emailHint')}</p>
                 <FieldError k="email" />
               </div>
-              <div>
-                <label className="block text-sm font-bold text-sari-dark dark:text-white mb-2 flex items-center gap-2"><MapPin className="w-4 h-4 text-sari-blue" /> {t('address')}</label>
-                <input value={contact.address} onChange={(e) => setContact({ ...contact, address: e.target.value })} className="ad-input" />
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-sari-dark dark:text-white mb-2 flex items-center gap-2"><Globe className="w-4 h-4 text-sari-blue" /> {t('country')}</label>
-                <input value={contact.country} onChange={(e) => setContact({ ...contact, country: e.target.value })} className="ad-input" />
-              </div>
+            </div>
+            {/*
+              * L'adresse occupe toute la largeur : sur deux colonnes, une
+              * adresse complète était tronquée et donc illisible à la saisie.
+              */}
+            <div className="w-full">
+              <label className="block text-sm font-bold text-sari-dark dark:text-white mb-2 flex items-center gap-2"><MapPin className="w-4 h-4 text-sari-blue" /> {t('address')} <span className="text-red-500">*</span></label>
+              <textarea
+                rows={2}
+                value={contact.address}
+                onChange={(e) => { setContact({ ...contact, address: e.target.value }); setErrors((p) => { const { address: _n, ...r } = p; return r; }); }}
+                placeholder={t('addressPlaceholder')}
+                className={`${inputCls('address')} resize-y`}
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('addressHint')}</p>
+              <FieldError k="address" />
+            </div>
+            <div className="md:max-w-sm">
+              <label className="block text-sm font-bold text-sari-dark dark:text-white mb-2 flex items-center gap-2"><Globe className="w-4 h-4 text-sari-blue" /> {t('country')} <span className="text-red-500">*</span></label>
+              <CountrySelect
+                value={contact.country}
+                onChange={(v) => { setContact({ ...contact, country: v }); setErrors((p) => { const { country: _n, ...r } = p; return r; }); }}
+                placeholder={t('countryPlaceholder')}
+                error={Boolean(errors.country)}
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('countryHint')}</p>
+              <FieldError k="country" />
             </div>
           </div>
         )}
@@ -442,7 +542,33 @@ function QuoteWizard({ user, locale, onCancel, onDone }: { user: User; locale: s
               <div><span className="text-gray-500">{t('email')} :</span> <strong>{contact.email}</strong></div>
               <div><span className="text-gray-500">{t('phone')} :</span> <strong>{contact.phone || '—'}</strong></div>
             </div>
-            {note && <p className="text-sm text-gray-500"><span className="font-bold">{t('note')} :</span> {note}</p>}
+            <div className="grid md:grid-cols-2 gap-3 text-sm">
+              <div><span className="text-gray-500">{t('address')} :</span> <strong>{contact.address || '—'}</strong></div>
+              <div><span className="text-gray-500">{t('country')} :</span> <strong>{contact.country || '—'}</strong></div>
+            </div>
+            {/* La note est du HTML : on la rend, sans l'afficher balises comprises. */}
+            {htmlToText(note) && (
+              <div className="text-sm text-gray-500">
+                <span className="font-bold">{t('note')} :</span>
+                <div
+                  className="prose prose-sm dark:prose-invert max-w-none mt-1 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5"
+                  dangerouslySetInnerHTML={{ __html: note }}
+                />
+              </div>
+            )}
+            {/*
+              * Antispam avant l'envoi définitif : c'est le seul point du
+              * parcours qui crée réellement une demande côté serveur.
+              */}
+            {antispam && (
+              <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+                <label className="block text-sm font-bold text-sari-dark dark:text-white mb-2">
+                  {t('antispam')} <span className="text-red-500">*</span>
+                </label>
+                <ImageCaptcha onChange={(ok) => { setCaptchaOk(ok); if (ok) setErrors((p) => { const { captcha: _c, ...r } = p; return r; }); }} />
+                <FieldError k="captcha" />
+              </div>
+            )}
           </div>
         )}
 

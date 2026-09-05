@@ -11,7 +11,8 @@
     "menus:check": "node scripts/check-menus.mjs",
     "menus:sync": "node scripts/sync-menus.mjs",
     "visibility:test": "node scripts/test-visibility.mjs",
-    "routes:check": "node scripts/check-routes.mjs"
+    "routes:check": "node scripts/check-routes.mjs",
+    "quote:test": "node scripts/test-quote-checkout.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
