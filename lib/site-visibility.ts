@@ -97,6 +97,7 @@ export const VISIBILITY_GROUPS: VisibilityGroup[] = [
     label: "Sections (page d’accueil)",
     items: [
       { key: 'section.hero', label: 'Bannière', defaultOn: true, labelKey: 'section_hero' },
+      { key: 'section.marquee', label: 'Bandeau partenaires défilant', defaultOn: true, labelKey: 'section_marquee' },
       { key: 'section.products', label: 'Produits à la une', defaultOn: true, labelKey: 'section_products' },
       { key: 'section.services', label: 'Services', defaultOn: true, labelKey: 'section_services' },
       { key: 'section.solutions', label: 'Solutions', defaultOn: true, labelKey: 'section_solutions' },

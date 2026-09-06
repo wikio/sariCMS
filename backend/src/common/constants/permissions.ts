@@ -26,6 +26,8 @@ export const RESOURCES = [
   'orders',
   'quotes',
   'applications',
+  'home',
+  'newsletter',
 ] as const;
 export type Resource = (typeof RESOURCES)[number];
 

@@ -35,6 +35,8 @@ import { OrdersModule } from './modules/orders/orders.module';
 import { QuotesModule } from './modules/quotes/quotes.module';
 import { ApplicationsModule } from './modules/applications/applications.module';
 import { HeroModule } from './modules/hero/hero.module';
+import { HomeModule } from './modules/home/home.module';
+import { NewsletterModule } from './modules/newsletter/newsletter.module';
 import { HealthModule } from './modules/health/health.module';
 import { SettingsModule } from './modules/settings/settings.module';
 import { VisibilityModule } from './modules/visibility/visibility.module';
@@ -95,6 +97,8 @@ import { MailModule } from './modules/mail/mail.module';
     QuotesModule,
     ApplicationsModule,
     HeroModule,
+    HomeModule,
+    NewsletterModule,
     HealthModule,
     SettingsModule,
     VisibilityModule,

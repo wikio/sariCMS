@@ -1,120 +1,110 @@
 // components/sections/NewsletterSection.tsx
 'use client';
 
-import { useState } from 'react';
-import { useTranslations } from 'next-intl';
-import { Mail, Send, CheckCircle, Newspaper, Gift, Shield } from 'lucide-react';
+/**
+ * Bandeau d'abonnement de la page d'accueil.
+ *
+ * Les textes, les arguments affichés sous le champ, le consentement explicite
+ * et le double opt-in se règlent dans le studio ; l'inscription est envoyée à
+ * `/api/newsletter` et enregistrée côté serveur (voir `lib/newsletter-store.ts`
+ * et le module `newsletter` de l'API), jamais dans le navigateur.
+ */
+import { useLocale, useTranslations } from 'next-intl';
+import NewsletterSignup from '@/components/shared/NewsletterSignup';
+import { getLucideIcon } from '@/lib/lucide-icons';
+import { boolSetting, setting, txt, visibleItems, type HomeSectionConfig } from '@/lib/home/config';
+import { BuilderBlock, ScopedStyle, isSectionVisible } from '@/components/sections/SectionFrame';
+import { BACKGROUND_CLASS, styleVars } from '@/lib/home/config';
 
-export default function NewsletterSection() {
-  const [email, setEmail] = useState('');
-  const [subscribed, setSubscribed] = useState(false);
+interface NewsletterSectionProps {
+  config?: HomeSectionConfig;
+  /** Point d'entrée enregistré avec l'adresse ; le bandeau de pied de page met `footer`. */
+  source?: string;
+  /** Version compacte (pied de page, barre latérale) sans bandeau ni arguments. */
+  compact?: boolean;
+}
+
+export default function NewsletterSection({ config, source = 'home.newsletter', compact = false }: NewsletterSectionProps) {
+  const locale = useLocale();
   const t = useTranslations('components.sections.NewsletterSection');
+  if (!isSectionVisible(config)) return null;
 
-  const handleSubscribe = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (email) {
-      setSubscribed(true);
-      setEmail('');
-      setTimeout(() => setSubscribed(false), 5000);
-    }
-  };
+  const style = config?.style || {};
+  const showFeatures = compact ? false : setting(config, 'showFeatures', true);
+  const requireConsent = boolSetting(config, 'requireConsent', false);
+  const doubleOptIn = boolSetting(config, 'doubleOptIn', false);
+  const topics = visibleItems(config)
+    .filter((item) => String(item.kind ?? 'topic') === 'topic')
+    .map((item) => ({ id: String(item.id), label: String(item.label ?? item.title ?? '') }))
+    .filter((topic) => topic.label);
+  const features = visibleItems(config)
+    .filter((item) => String(item.kind ?? '') === 'argument')
+    .map((item) => ({ icon: String(item.icon ?? 'mail-check'), title: String(item.title ?? ''), desc: String(item.description ?? '') }));
 
-  const features = [
-    { 
-      icon: Newspaper, 
-      title: t('feature1Title'), 
-      desc: t('feature1Desc') 
-    },
-    { 
-      icon: Gift, 
-      title: t('feature2Title'), 
-      desc: t('feature2Desc') 
-    },
-    { 
-      icon: Shield, 
-      title: t('feature3Title'), 
-      desc: t('feature3Desc') 
-    }
-  ];
+  const form = (
+    <NewsletterSignup
+      source={source}
+      variant={compact ? 'card' : 'band'}
+      requireConsent={requireConsent}
+      doubleOptIn={doubleOptIn}
+      topics={topics.length ? topics : []}
+      labels={{
+        title: txt(config, 'title', compact ? '' : t('title')),
+        description: txt(config, 'description', compact ? '' : t('description')),
+        placeholder: txt(config, 'placeholder', t('placeholder')),
+        submit: txt(config, 'submit', t('subscribe')),
+        legal: txt(config, 'legal', t('legalText')),
+        successTitle: txt(config, 'successTitle', t('successTitle')),
+        successDesc: txt(config, 'successDesc', t('successDesc')),
+      }}
+    />
+  );
+
+  if (compact) return <div id="home-newsletter-compact">{form}</div>;
 
   return (
-    <section className="py-24 bg-sari-blue relative overflow-hidden">
-      <div className="absolute inset-0 grid-pattern-bg opacity-10"></div>
-      <div className="absolute top-0 left-0 w-96 h-96 bg-white/5 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
-      <div className="absolute bottom-0 right-0 w-96 h-96 bg-white/5 rounded-full translate-x-1/2 translate-y-1/2"></div>
-      
-      <div className="container mx-auto px-6 relative z-10">
-        <div className="max-w-4xl mx-auto text-center">
-          {/* Icône */}
-          <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Mail className="w-10 h-10 text-white" />
-          </div>
-          
-          {/* Titre */}
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-            {t('title')}
-          </h2>
-          <p className="text-xl text-blue-100 mb-12 max-w-2xl mx-auto">
-            {t('description')}
-          </p>
-
-          {/* Formulaire ou message de succès */}
-          {subscribed ? (
-            <div className="bg-white/10 backdrop-blur-sm border-2 border-white/30 rounded-lg p-8 max-w-xl mx-auto animate-fade-in-up">
-              <CheckCircle className="w-16 h-16 text-white mx-auto mb-4" />
-              <h3 className="text-2xl font-bold text-white mb-2">
-                {t('successTitle')}
-              </h3>
-              <p className="text-blue-100">
-                {t('successDesc')}
-              </p>
-            </div>
-          ) : (
-            <form onSubmit={handleSubscribe} className="max-w-xl mx-auto">
-              <div className="flex flex-col sm:flex-row gap-4">
-                <input
-                  type="email"
-                  required
-                  placeholder={t('placeholder')}
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="flex-1 px-6 py-4 rounded-lg text-sari-dark focus:outline-none focus:ring-4 focus:ring-sari-lime/50"
-                />
-                <button 
-                  type="submit" 
-                  className="bg-sari-lime text-sari-dark px-8 py-4 font-bold rounded-lg hover:bg-white transition-colors flex items-center justify-center gap-2"
-                >
-                  <Send className="w-5 h-5" />
-                  {t('subscribe')}
-                </button>
+    <BuilderBlock config={config} sectionKey="newsletter">
+      <section
+        id="home-newsletter"
+        className={`relative overflow-hidden ${BACKGROUND_CLASS[style.background || 'blue'] || 'bg-sari-blue'}`}
+        style={{
+          ...styleVars(config),
+          paddingTop: `${style.paddingY ?? 96}px`,
+          paddingBottom: `${style.paddingY ?? 96}px`,
+          ...(style.backgroundImage
+            ? { backgroundImage: `url("${style.backgroundImage}")`, backgroundSize: 'cover', backgroundPosition: 'center' }
+            : {}),
+        }}
+      >
+        <ScopedStyle sectionKey="newsletter" config={config} />
+        <div className="absolute inset-0 grid-pattern-bg opacity-10" />
+        <div className="absolute top-0 left-0 w-96 h-96 bg-white/5 rounded-full -translate-x-1/2 -translate-y-1/2" />
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-white/5 rounded-full translate-x-1/2 translate-y-1/2" />
+        <div className="container mx-auto px-6 relative z-10">
+          <div className="max-w-4xl mx-auto text-center">
+            <span className="text-sari-lime font-bold uppercase tracking-wider text-sm">
+              {txt(config, 'subtitle', t('subtitle'))}
+            </span>
+            {form}
+            {showFeatures && features.length ? (
+              <div className="grid md:grid-cols-3 gap-6 mt-16">
+                {features.map((feature, i) => {
+                  const Icon = getLucideIcon(feature.icon);
+                  return (
+                    <div key={i} className="text-center">
+                      <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Icon className="w-8 h-8 text-white" />
+                      </div>
+                      <h3 className="text-lg font-bold text-white mb-2">{feature.title}</h3>
+                      <p className="text-blue-100 text-sm">{feature.desc}</p>
+                    </div>
+                  );
+                })}
               </div>
-              <p className="text-sm text-blue-100 mt-4">
-                {t('legalText')}
-              </p>
-            </form>
-          )}
-
-          {/* Features */}
-          <div className="grid md:grid-cols-3 gap-6 mt-16">
-            {features.map((feature, i) => {
-              const IconComponent = feature.icon;
-              return (
-                <div key={i} className="text-center">
-                  <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <IconComponent className="w-8 h-8 text-white" />
-                  </div>
-                  <h3 className="text-lg font-bold text-white mb-2">
-                    {feature.title}
-                  </h3>
-                  <p className="text-blue-100 text-sm">
-                    {feature.desc}
-                  </p>
-                </div>
-              );
-            })}
+            ) : null}
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </BuilderBlock>
   );
 }

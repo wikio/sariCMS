@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "_comment": "Configuration des blocs de la page d'accueil (langue fr). Enregistrée par l'administration (Studio → Page d'accueil). Les blocs absents gardent les valeurs par défaut du code et les textes des traductions du site. Structure commune aux trois langues : elle se règle en français.",
+  "order": [
+    "hero",
+    "partners-marquee",
+    "navigation",
+    "mission",
+    "products",
+    "blocks",
+    "stats",
+    "testimonials",
+    "events",
+    "news",
+    "newsletter",
+    "partners",
+    "cta"
+  ],
+  "sections": {}
+}

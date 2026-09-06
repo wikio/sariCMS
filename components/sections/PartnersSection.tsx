@@ -1,52 +1,100 @@
 // components/sections/PartnersSection.tsx
 'use client';
 
-import { useTranslations } from 'next-intl';
+/**
+ * Partenaires en vedette.
+ *
+ * La sélection (quelles fiches, dans quel ordre) et le nombre affiché se
+ * règlent dans le studio ; les logos gardent l'effet « noir et blanc puis
+ * couleur au survol » tant que l'administrateur ne le désactive pas.
+ */
+import { useLocale, useTranslations } from 'next-intl';
+import Link from 'next/link';
 import type { Partner } from '@/types';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
+import {
+  applySelection,
+  limitOf,
+  localizeHref,
+  numberSetting,
+  setting,
+  selectionFor,
+  txt,
+  type HomeSectionConfig,
+} from '@/lib/home/config';
+import SectionFrame, { HS_CARD_RADIUS } from '@/components/sections/SectionFrame';
 
 interface PartnersSectionProps {
   partners: Partner[];
+  config?: HomeSectionConfig;
 }
 
-export default function PartnersSection({ partners }: PartnersSectionProps) {
+export default function PartnersSection({ partners, config }: PartnersSectionProps) {
+  const locale = useLocale();
   const t = useTranslations('components.sections.PartnersSection');
 
-  // ✅ Vérification que partners existe et n'est pas vide
-  if (!partners || partners.length === 0) return null;
+  const source = Array.isArray(partners) ? partners : [];
+  const selected = applySelection(source, selectionFor(config, 6), { titleKey: 'name' });
+  if (selected.length === 0) return null;
+
+  const grayscale = setting(config, 'grayscale', true);
+  const withBorder = setting(config, 'showBorder', true);
+  const logoHeight = numberSetting(config, 'logoHeight', 64);
+  const columns = limitOf(config, 6);
+  const radius = config?.style?.radius ?? 12;
 
   return (
-    <section className="py-24 bg-white dark:bg-[#1a1a1a]">
-      <div className="container mx-auto px-6">
-        <div className="text-center mb-16">
-          <span className="text-sari-lime font-bold uppercase tracking-wider text-sm">
-            {t('subtitle')}
-          </span>
-          <h2 className="text-4xl md:text-5xl font-bold text-sari-dark dark:text-white mt-4 mb-6">
-            {t('title')}
-          </h2>
-          <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-            {t('description')}
-          </p>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 items-center stagger-children">
-          {partners.map((partner) => (
+    <SectionFrame
+      sectionKey="partners"
+      config={config}
+      header={{
+        align: 'center',
+        fallbacks: { subtitle: t('subtitle'), title: t('title'), description: t('description') },
+      }}
+    >
+      <div
+        className="grid grid-cols-2 sm:grid-cols-3 lg:[grid-template-columns:repeat(var(--hs-cols,6),minmax(0,1fr))] gap-[var(--hs-gap,32px)] items-center stagger-children"
+        style={{
+          ['--hs-cols' as string]: String(columns),
+          ['--hs-gap' as string]: `${config?.style?.gap ?? 32}px`,
+        }}
+      >
+        {selected.map((partner) => {
+          const card = (
             <div
-              key={partner.id}
-              className="bg-gray-50 dark:bg-[#111111] p-8 flex flex-col items-center justify-center border border-gray-200 dark:border-gray-800 rounded-xl hover:border-sari-blue hover:shadow-lg transition-all duration-300 group"
+              className={`${HS_CARD_RADIUS} bg-gray-50 dark:bg-[#111111] p-8 flex flex-col items-center justify-center transition-all duration-300 group hover:shadow-lg ${
+                withBorder ? 'border border-gray-200 dark:border-gray-800 hover:border-sari-blue' : ''
+              }`}
+              style={{ borderRadius: `${radius}px` }}
             >
-              <ImageWithFallback
-                src={partner.logo}
-                alt={partner.name}
-                fallbackText={partner.name}
-                className="max-h-16 w-auto opacity-70 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300 grayscale group-hover:grayscale-0"
-                objectFit="contain"
-              />
+              {/* La hauteur du logo se règle dans le studio : la boîte borne
+                  l'image, l'image garde ses proportions. */}
+              <span className="w-full flex items-center justify-center overflow-hidden" style={{ maxHeight: `${logoHeight}px` }}>
+                <ImageWithFallback
+                  src={partner.logo}
+                  alt={partner.name}
+                  fallbackText={partner.name}
+                  className={`h-full w-auto transition-all duration-300 group-hover:scale-110 ${grayscale ? 'opacity-70 grayscale group-hover:opacity-100 group-hover:grayscale-0' : 'opacity-100'}`}
+                  objectFit="contain"
+                />
+              </span>
             </div>
-          ))}
-        </div>
+          );
+          // La fiche partenaire n'a pas de lien en base : le logo reste une
+          // vignette, cliquable seulement si l'administrateur a lié une page.
+          const href = localizeHref(config?.settings?.logoHref, locale, '');
+          return href ? (
+            <Link key={String(partner.id)} href={href} className="block">
+              {card}
+            </Link>
+          ) : (
+            <div key={String(partner.id)}>{card}</div>
+          );
+        })}
       </div>
-    </section>
+      {txt(config, 'note') ? (
+        <p className="text-center text-gray-500 dark:text-gray-400 mt-8">{txt(config, 'note')}</p>
+      ) : null}
+    </SectionFrame>
   );
 }

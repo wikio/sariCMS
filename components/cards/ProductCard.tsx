@@ -12,9 +12,19 @@ interface ProductCardProps {
   product: Product;
   variant?: 'standard' | 'compact' | 'featured';
   onClick?: (product: Product) => void;
+  /** Le bloc « produits phares » de la page d'accueil peut masquer le prix… */
+  showPrice?: boolean;
+  /** …et la mention de disponibilité. */
+  showStock?: boolean;
 }
 
-export default function ProductCard({ product, variant = 'standard', onClick }: ProductCardProps) {
+export default function ProductCard({
+  product,
+  variant = 'standard',
+  onClick,
+  showPrice = true,
+  showStock = true,
+}: ProductCardProps) {
   const locale = useLocale();
   const t = useTranslations('components.cards.ProductCard');
   const { withSymbol } = useCurrency();
@@ -86,19 +96,21 @@ export default function ProductCard({ product, variant = 'standard', onClick }: 
               <Package className="w-16 h-16" />
             </div>
           )}
-          <div className="absolute top-4 right-4">
-            <span className="bg-sari-lime text-sari-dark px-2 py-1 text-xs font-bold rounded">
-              {withSymbol(product.price)}
-            </span>
-          </div>
-          {!product.inStock && (
+          {showPrice ? (
+            <div className="absolute top-4 right-4">
+              <span className="bg-sari-lime text-sari-dark px-2 py-1 text-xs font-bold rounded">
+                {withSymbol(product.price)}
+              </span>
+            </div>
+          ) : null}
+          {showStock && !product.inStock ? (
             <div className="absolute top-4 left-4">
               <span className="bg-red-500 text-white px-2 py-1 text-xs font-bold rounded flex items-center gap-1">
                 <Clock className="w-3 h-3" />
                 {t('outOfStock')}
               </span>
             </div>
-          )}
+          ) : null}
           <div className="absolute inset-0 bg-sari-blue/90 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
             <span className="bg-white text-sari-blue px-6 py-3 font-semibold transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
               {t('viewDetails')}

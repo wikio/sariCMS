@@ -1,129 +1,136 @@
 // components/sections/StatsSection.tsx
 'use client';
 
+/**
+ * Bloc « Chiffres clés ».
+ *
+ * Les valeurs s'éditent directement dans le studio de la page d'accueil
+ * (répéteur valeur / suffixe / libellé / icône), langue par langue. Tant
+ * qu'aucun chiffre n'y est enregistré, le bloc reprend les statistiques du
+ * fichier de configuration du site — les deux sources restent donc valides.
+ */
 import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Users, Award, Headphones, ThumbsUp } from 'lucide-react';
+import { Award, Headphones, ThumbsUp, Users } from 'lucide-react';
+import { getLucideIcon } from '@/lib/lucide-icons';
+import { numberSetting, setting, visibleItems, type HomeItem, type HomeSectionConfig } from '@/lib/home/config';
+import SectionFrame, { isSectionVisible } from '@/components/sections/SectionFrame';
 import type { Config } from '@/types';
 
 interface StatsSectionProps {
-  config: Config;
+  /** Réglages généraux du site (data/config.json) : source de repli. */
+  config?: Config;
+  /** Réglages du bloc dans le studio de la page d'accueil. */
+  home?: HomeSectionConfig;
 }
 
-// Hook personnalisé pour l'animation de compteur
-function useCounter(end: number, duration: number = 2000) {
-  const [count, setCount] = useState(0);
-  const [isVisible, setIsVisible] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+/**
+ * Compteur animé : démarre quand le bloc entre dans l'écran (une seule fois) et
+ * décélère jusqu'à la valeur cible. Une valeur non numérique (« 24/7 ») n'est
+ * pas animée, elle est affichée telle quelle.
+ */
+function useCounter(end: number, duration: number) {
+  const [count, setCount] = useState(duration > 0 ? 0 : end);
+  const [started, setStarted] = useState(false);
+  const ref = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
+    if (duration <= 0) {
+      setCount(end);
+      return;
+    }
+    const node = ref.current;
+    if (!node) {
+      setCount(end);
+      return;
+    }
     const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setStarted(true);
+          observer.disconnect();
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.25 },
     );
-
-    if (ref.current) {
-      observer.observe(ref.current);
-    }
-
+    observer.observe(node);
     return () => observer.disconnect();
-  }, []);
+  }, [duration, end]);
 
   useEffect(() => {
-    if (isVisible && end > 0) {
-      let startTime: number;
-      const animate = (timestamp: number) => {
-        if (!startTime) startTime = timestamp;
-        const progress = Math.min((timestamp - startTime) / duration, 1);
-        setCount(Math.floor(progress * end));
-        if (progress < 1) {
-          requestAnimationFrame(animate);
-        }
-      };
-      requestAnimationFrame(animate);
-    }
-  }, [isVisible, end, duration]);
+    if (!started || duration <= 0) return;
+    let frame = 0;
+    let startTime = 0;
+    const tick = (timestamp: number) => {
+      if (!startTime) startTime = timestamp;
+      const progress = Math.min(1, (timestamp - startTime) / duration);
+      setCount(Math.floor((1 - (1 - progress) ** 2) * end));
+      if (progress < 1) frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [started, duration, end]);
 
-  return { ref, count };
+  return { ref, count, ready: duration <= 0 ? true : started };
 }
 
-export default function StatsSection({ config }: StatsSectionProps) {
+function Counter({ value, suffix, duration }: { value: number; suffix: string; duration: number }) {
+  const { ref, count } = useCounter(value, duration);
+  return (
+    <div ref={ref} className="text-5xl md:text-6xl font-black mb-2">
+      {value > 0 ? `${count}${suffix}` : `${value}${suffix}`}
+    </div>
+  );
+}
+
+export default function StatsSection({ config, home }: StatsSectionProps) {
   const t = useTranslations('components.sections.StatsSection');
+  const animate = setting(home, 'animate', true);
+  const duration = animate ? numberSetting(home, 'duration', 2000) : 0;
+  const items = visibleItems(home);
+  const fromConfig = home?.settings?.fromConfig === true;
 
-  // ✅ Extraction sécurisée des statistiques avec valeurs par défaut
-  const clients = parseInt(config?.stats?.clients || '500') || 500;
-  const experience = parseInt(config?.stats?.experience || '20') || 20;
-  const satisfaction = parseInt(config?.stats?.satisfaction || '98') || 98;
-
-  const counter1 = useCounter(clients, 2000);
-  const counter2 = useCounter(experience, 2000);
-  const counter3 = useCounter(satisfaction, 2000);
-
-  const stats = [
-    {
-      ref: counter1.ref,
-      value: `${counter1.count}+`,
-      label: t('activeClients'),
-      icon: Users,
-    },
-    {
-      ref: counter2.ref,
-      value: `${counter2.count}`,
-      label: t('yearsExperience'),
-      icon: Award,
-    },
-    {
-      ref: null,
-      value: config?.stats?.support || '24/7',
-      label: t('techSupport'),
-      icon: Headphones,
-    },
-    {
-      ref: counter3.ref,
-      value: `${counter3.count}%`,
-      label: t('satisfiedClients'),
-      icon: ThumbsUp,
-    },
+  const fallback = [
+    { value: parseInt(config?.stats?.clients || '500', 10) || 500, suffix: '+', label: t('activeClients'), icon: Users },
+    { value: parseInt(config?.stats?.experience || '20', 10) || 20, suffix: '', label: t('yearsExperience'), icon: Award },
+    { value: 0, suffix: '', label: t('techSupport'), icon: Headphones, raw: config?.stats?.support || '24/7' },
+    { value: parseInt(config?.stats?.satisfaction || '98', 10) || 98, suffix: '%', label: t('satisfiedClients'), icon: ThumbsUp },
   ];
 
-  return (
-    <section className="py-24 bg-sari-blue text-white relative overflow-hidden">
-      <div className="absolute inset-0 grid-pattern-bg opacity-10"></div>
-      <div className="container mx-auto px-6 relative">
-        <div className="text-center mb-16">
-          <span className="text-sari-lime font-bold uppercase tracking-wider text-sm">
-            {t('subtitle')}
-          </span>
-          <h2 className="text-4xl md:text-5xl font-bold text-white mt-4">
-            {t('title')}
-          </h2>
-        </div>
+  const stats = items.length
+    ? items.map((item: HomeItem, index: number) => ({
+        value: Number(String(item.value ?? '').replace(/[^\d.]/g, '')) || 0,
+        suffix: String(item.suffix ?? ''),
+        label: String(item.label ?? ''),
+        raw: /^\d+$/.test(String(item.value ?? '').trim()) ? '' : String(item.value ?? ''),
+        icon: item.icon ? getLucideIcon(String(item.icon)) : [Users, Award, Headphones, ThumbsUp][index % 4],
+      }))
+    : fromConfig || !items.length
+      ? fallback
+      : [];
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-          {stats.map((stat, i) => {
-            const IconComponent = stat.icon;
-            return (
-              <div
-                key={i}
-                ref={stat.ref}
-                className="text-center stagger-children"
-              >
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 rounded-full mb-4">
-                  <IconComponent className="w-8 h-8 text-white" />
-                </div>
-                <div className="text-5xl md:text-6xl font-black mb-2">
-                  {stat.value}
-                </div>
-                <div className="text-blue-100 text-lg">{stat.label}</div>
+  if (!stats.length || !isSectionVisible(home)) return null;
+
+  return (
+    <SectionFrame sectionKey="stats" config={home} header={{ align: 'center', fallbacks: { subtitle: t('subtitle'), title: t('title') } }}>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+        {stats.map((stat, i) => {
+          const IconComponent = stat.icon as React.ComponentType<{ className?: string }>;
+          return (
+            <div key={i} className="text-center stagger-children">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 rounded-full mb-4">
+                <IconComponent className="w-8 h-8 text-white" />
               </div>
-            );
-          })}
-        </div>
+              {stat.raw ? (
+                <div className="text-5xl md:text-6xl font-black mb-2">{stat.raw}</div>
+              ) : (
+                <Counter value={stat.value} suffix={stat.suffix} duration={duration} />
+              )}
+              <div className="text-blue-100 text-lg">{stat.label}</div>
+            </div>
+          );
+        })}
       </div>
-    </section>
+    </SectionFrame>
   );
 }
