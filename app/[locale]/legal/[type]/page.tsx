@@ -15,12 +15,13 @@ interface LegalPageProps {
 
 export async function generateMetadata({ params }: LegalPageProps) {
   const { locale, type } = await params;
+  const t = await getTranslations({ locale, namespace: 'pages.legal' });
   const legal = await getLegal(locale);
   const page = legal[type];
-  
+
   return {
-    title: page?.title || t('pageNotFound', { defaultMessage: 'Page non trouvée' }),
-    description: page?.title || t('legalDoc', { defaultMessage: 'Document légal' }),
+    title: page?.title || t('pageNotFound'),
+    description: page?.title || t('legalDoc'),
   };
 }
 

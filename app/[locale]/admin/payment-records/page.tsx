@@ -10,6 +10,8 @@ import { useToast } from '@/components/admin/Toast';
 import Drawer from '@/components/admin/Drawer';
 import SearchField from '@/components/admin/SearchField';
 import { useTranslations } from 'next-intl';
+import DateText from '@/components/shared/DateText';
+import { money } from '@/lib/commerce-math';
 
 const STATUSES: Array<{ value: '' | PaymentStatus; label: string }> = [
   { value: '', label: 'Tous les statuts' },
@@ -85,7 +87,7 @@ export default function PaymentRecordsPage() {
       </header>
 
       <div className="grid grid-cols-3 gap-3">
-        {[[stats.total, 'Paiements'], [`${stats.validated.toLocaleString()} DA`, 'Montant validé'], [stats.pending, 'En attente']].map(([v, l]) => (
+        {[[stats.total, 'Paiements'], [money(stats.validated), 'Montant validé'], [stats.pending, 'En attente']].map(([v, l]) => (
           <div key={String(l)} className="ad-card p-4">
             <div className="text-2xl font-black tabular-nums">{v}</div>
             <div className="text-xs" style={{ color: 'var(--ad-muted)' }}>{l}</div>
@@ -111,13 +113,13 @@ export default function PaymentRecordsPage() {
                 <td><div className="font-bold">{p.client}</div><div className="text-xs" style={{ color: 'var(--ad-muted)' }}>{p.email}</div></td>
                 <td>{paymentTypeLabel(p.method)}</td>
                 <td className="font-mono">{p.cardMasked || '—'}</td>
-                <td className="font-black whitespace-nowrap">{Number(p.amount).toLocaleString()} DA</td>
+                <td className="font-black whitespace-nowrap">{money(Number(p.amount))}</td>
                 <td>
                   <span className={`ad-chip ${p.status === 'validated' ? 'ad-chip-ok' : p.status === 'rejected' ? 'ad-chip-mute' : 'ad-chip-warn'}`}>
                     {paymentStatusLabel(p.status)}
                   </span>
                 </td>
-                <td className="text-sm">{new Date(p.date).toLocaleString()}</td>
+                <td className="text-sm"><DateText value={p.date} /></td>
                 <td className="text-right whitespace-nowrap">
                   <button className="ad-btn ad-btn-ghost" onClick={() => { setConsult(true); setOpen(p); setNote(''); }}><Eye className="w-4 h-4" /> Voir</button>
                   {p.status === 'pending' && (
@@ -150,12 +152,12 @@ export default function PaymentRecordsPage() {
           <>
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div><span style={{ color: 'var(--ad-muted)' }}>{t("order")}</span><div className="font-bold font-mono">{open.orderCode || (open.orderId ? `#${open.orderId}` : '—')}</div></div>
-              <div><span style={{ color: 'var(--ad-muted)' }}>{t("amount")}</span><div className="font-black">{Number(open.amount).toLocaleString()} DA</div></div>
+              <div><span style={{ color: 'var(--ad-muted)' }}>{t("amount")}</span><div className="font-black">{money(Number(open.amount))}</div></div>
               <div><span style={{ color: 'var(--ad-muted)' }}>{t("client")}</span><div className="font-bold">{open.client}</div></div>
               <div><span style={{ color: 'var(--ad-muted)' }}>Email</span><div>{open.email}</div></div>
               <div><span style={{ color: 'var(--ad-muted)' }}>{t("method")}</span><div>{paymentTypeLabel(open.method)}</div></div>
               <div><span style={{ color: 'var(--ad-muted)' }}>{t("card")}</span><div className="font-mono">{open.cardMasked || '—'}</div></div>
-              <div className="col-span-2"><span style={{ color: 'var(--ad-muted)' }}>Date</span><div>{new Date(open.date).toLocaleString()}</div></div>
+              <div className="col-span-2"><span style={{ color: 'var(--ad-muted)' }}>Date</span><div><DateText value={open.date} /></div></div>
             </div>
 
             {open.note && (

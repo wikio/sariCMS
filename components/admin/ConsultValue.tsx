@@ -1,7 +1,11 @@
 'use client';
 
-import { useMessages, useTranslations } from 'next-intl';
+import { useEffect, useState } from 'react';
+import { useLocale, useMessages, useTranslations } from 'next-intl';
 import type { FieldSpec } from '@/lib/cms-modules';
+import { getAuthors, getProducts } from '@/lib/data';
+import { resolveColor } from '@/lib/colors';
+import { useDateFormat } from '@/lib/use-date-format';
 import HtmlEditor from '@/components/admin/fields/HtmlEditor';
 import IconMark from '@/components/admin/IconMark';
 import ProcessFlow, { normalizeSteps } from '@/components/admin/ProcessFlow';
@@ -75,8 +79,25 @@ export default function ConsultValue({ spec, value }: { spec: FieldSpec; value: 
   if (spec.kind === 'html') {
     return <HtmlEditor value={String(value || '')} onChange={() => undefined} readOnly />;
   }
+  if (spec.kind === 'datetime') {
+    // Sans ce cas, la valeur brute (« 2026-09-19T09:00:00.000Z ») tombait
+    // dans le rendu générique et s'affichait telle quelle.
+    return <DateValue value={value} />;
+  }
   if (spec.kind === 'icon') {
     return <IconMark name={String(value)} className="w-6 h-6" showLabel />;
+  }
+  if (spec.kind === 'color') {
+    const token = String(value);
+    return (
+      <div className="flex items-center gap-2 text-sm font-semibold">
+        <span
+          className="w-6 h-6 rounded"
+          style={{ backgroundColor: resolveColor(token), border: '1px solid var(--ad-line)' }}
+        />
+        <span className="font-mono">{token}</span>
+      </div>
+    );
   }
   if (spec.kind === 'image' || spec.kind === 'file') {
     const src = String(value);
@@ -84,6 +105,18 @@ export default function ConsultValue({ spec, value }: { spec: FieldSpec; value: 
       return <img src={src} alt="" className="max-h-40 object-contain" />;
     }
     return <a className="underline text-sm" href={src} target="_blank" rel="noreferrer">{src}</a>;
+  }
+  if (spec.kind === 'products') {
+    const ids = Array.isArray(value) ? value.map((id) => String(id)) : [];
+    if (!ids.length) return <div className="text-sm" style={{ color: 'var(--ad-muted)' }}>—</div>;
+    return <ProductIdsPreview ids={ids} />;
+  }
+  if (spec.kind === 'author') {
+    // Le champ stocke un identifiant : en consultation, l'afficher brut
+    // (« 7 ») n'apprend rien. On résout le nom de la fiche.
+    const id = value == null || value === '' ? '' : String(value);
+    if (!id) return <div className="text-sm" style={{ color: 'var(--ad-muted)' }}>—</div>;
+    return <AuthorIdPreview id={id} />;
   }
   if (spec.kind === 'gallery') {
     const items = asList(value).filter((src) => src.startsWith('/') || src.startsWith('http'));
@@ -191,4 +224,83 @@ export default function ConsultValue({ spec, value }: { spec: FieldSpec; value: 
     return <div className="text-sm">{formatObject(value)}</div>;
   }
   return <div className="text-sm font-semibold break-words">{String(value)}</div>;
+}
+
+/**
+ * Aperçu en lecture seule des produits liés (champ `productIds`).
+ * Les IDs sont résolus vers leur nom ; ceux qui n'existent plus restent
+ * affichés sous forme de puce `#id` pour ne rien masquer à l'utilisateur.
+ */
+function ProductIdsPreview({ ids }: { ids: string[] }) {
+  const locale = useLocale();
+  const [products, setProducts] = useState<Array<{ id: string; name: string; image?: string }>>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    getProducts(locale)
+      .then((rows) => {
+        if (cancelled) return;
+        setProducts(rows.map((p) => ({ id: String(p.id), name: p.name, image: p.image })));
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [locale]);
+
+  const byId = new Map(products.map((p) => [p.id, p]));
+
+  return (
+    <ul className="flex flex-wrap gap-2">
+      {ids.map((id) => {
+        const product = byId.get(id);
+        return (
+          <li key={id} className="ad-chip ad-chip-acc inline-flex items-center gap-2">
+            {product?.image ? <img src={product.image} alt="" className="w-4 h-4 rounded object-cover" /> : null}
+            {product ? product.name : `#${id}`}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+/**
+ * Nom de l'auteur derrière un identifiant.
+ *
+ * La fiche peut avoir été supprimée depuis : on affiche alors `#id` plutôt
+ * qu'un vide, pour que la valeur enregistrée reste visible et corrigeable.
+ */
+function AuthorIdPreview({ id }: { id: string }) {
+  const locale = useLocale();
+  const [author, setAuthor] = useState<{ name: string; role?: string } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    getAuthors(locale)
+      .then((rows) => {
+        if (cancelled) return;
+        const found = rows.find((a) => String(a.id) === id);
+        setAuthor(found ? { name: found.name, role: found.role } : null);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [locale, id]);
+
+  return (
+    <div className="text-sm font-semibold">
+      {author ? author.name : `#${id}`}
+      {author?.role ? (
+        <span className="font-normal ms-2" style={{ color: 'var(--ad-muted)' }}>{author.role}</span>
+      ) : null}
+    </div>
+  );
+}
+
+/** Date mise en forme selon le format choisi dans les paramètres. */
+function DateValue({ value }: { value: unknown }) {
+  const { format } = useDateFormat();
+  return <div className="text-sm font-semibold">{format(value, { fallback: '—' })}</div>;
 }

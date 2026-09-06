@@ -6,8 +6,9 @@ import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { ChevronRight, ChevronLeft, Package, Layers, Building, Headphones } from 'lucide-react';
 import { getSolutionCategories } from '@/lib/data';
+import { entityUrl } from '@/lib/entity-url';
+import { resolveColor, withAlpha } from '@/lib/colors';
 import type { SolutionCategory } from '@/types';
-import SectionTitle from '@/components/ui/SectionTitle';
 import FAQ from '@/components/ui/FAQ';
 import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
 import IconMark from '@/components/admin/IconMark';
@@ -16,29 +17,41 @@ export default function SolutionsPage() {
   const locale = useLocale();
   const t = useTranslations('pages.solutions');
   const isRtl = locale === 'ar';
-  
+
   const [categories, setCategories] = useState<SolutionCategory[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
     const loadData = async () => {
       setLoading(true);
-      const data = await getSolutionCategories(locale);
-      setCategories(data);
-      setLoading(false);
+      try {
+        const data = await getSolutionCategories(locale);
+        if (!cancelled) setCategories(data);
+      } catch (error) {
+        console.error('[solutions] chargement impossible :', error);
+        if (!cancelled) setCategories([]);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     };
     loadData();
+    return () => {
+      cancelled = true;
+    };
   }, [locale]);
 
   const processSteps = t.raw('process.steps') || [];
   const faqItems = t.raw('faq.items') || [];
   const stats = t.raw('intro.stats') || {};
-  
+
+  // Les stats reprennent la charte : couleurs figées, classes Tailwind statiques
+  // (une classe construite dynamiquement serait purgée au build).
   const statsData = [
-    { value: stats.categories || '9', label: stats.categoriesLabel || '', icon: Layers, color: 'sari-blue' },
-    { value: stats.products || '500+', label: stats.productsLabel || '', icon: Package, color: 'sari-lime' },
-    { value: stats.clients || '500+', label: stats.clientsLabel || '', icon: Building, color: 'purple-500' },
-    { value: stats.support || '24/7', label: stats.supportLabel || '', icon: Headphones, color: 'green-500' }
+    { value: String(categories.length || stats.categories || '0'), label: stats.categoriesLabel || '', icon: Layers, wrap: 'bg-sari-blue/10', text: 'text-sari-blue' },
+    { value: stats.products || '500+', label: stats.productsLabel || '', icon: Package, wrap: 'bg-sari-lime/10', text: 'text-sari-lime' },
+    { value: stats.clients || '500+', label: stats.clientsLabel || '', icon: Building, wrap: 'bg-purple-500/10', text: 'text-purple-500' },
+    { value: stats.support || '24/7', label: stats.supportLabel || '', icon: Headphones, wrap: 'bg-green-500/10', text: 'text-green-500' },
   ];
 
   if (loading) {
@@ -82,8 +95,8 @@ export default function SolutionsPage() {
               const Icon = stat.icon;
               return (
                 <div key={i} className="bg-gray-50 dark:bg-[#111111] p-6 border border-gray-200 dark:border-gray-800 rounded-xl text-center hover:shadow-lg transition-all">
-                  <div className={`w-14 h-14 ${stat.color === 'sari-lime' ? 'bg-sari-lime/10' : `bg-${stat.color}/10`} rounded-full flex items-center justify-center mx-auto mb-4`}>
-                    <Icon className={`w-7 h-7 text-${stat.color}`} />
+                  <div className={`w-14 h-14 ${stat.wrap} rounded-full flex items-center justify-center mx-auto mb-4`}>
+                    <Icon className={`w-7 h-7 ${stat.text}`} />
                   </div>
                   <div className="text-3xl md:text-4xl font-bold text-sari-dark dark:text-white mb-2">{stat.value}</div>
                   <div className="text-sm text-gray-600 dark:text-gray-400">{stat.label}</div>
@@ -94,46 +107,64 @@ export default function SolutionsPage() {
         </div>
       </section>
 
-      {/* ✅ GRILLE DES CATÉGORIES (Lue directement depuis le JSON) */}
-      {categories.length > 0 && (
-        <section className="py-20 bg-sari-gray dark:bg-[#111111]">
-          <div className="container mx-auto px-6">
-            <div className="text-center mb-16">
-              <span className="text-sari-blue font-bold uppercase tracking-wider text-sm">{t('categories.subtitle')}</span>
-              <h2 className="text-4xl md:text-5xl font-bold text-sari-dark dark:text-white mt-2 mb-6">{t('categories.title')}</h2>
-              <p className="text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">{t('categories.description')}</p>
+      {/* ✅ GRILLE DES SOLUTIONS — icône, couleur et contenu issus de la base */}
+      <section className="py-20 bg-sari-gray dark:bg-[#111111]">
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-16">
+            <span className="text-sari-blue font-bold uppercase tracking-wider text-sm">{t('categories.subtitle')}</span>
+            <h2 className="text-4xl md:text-5xl font-bold text-sari-dark dark:text-white mt-2 mb-6">{t('categories.title')}</h2>
+            <p className="text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">{t('categories.description')}</p>
+          </div>
+
+          {categories.length === 0 ? (
+            <div className="max-w-xl mx-auto text-center bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl p-12">
+              <div className="w-16 h-16 rounded-full bg-sari-blue/10 flex items-center justify-center mx-auto mb-6">
+                <Layers className="w-8 h-8 text-sari-blue" />
+              </div>
+              <h3 className="text-xl font-bold text-sari-dark dark:text-white mb-2">{t('categories.empty')}</h3>
+              <p className="text-gray-600 dark:text-gray-400">{t('categories.emptyDesc')}</p>
             </div>
+          ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {categories.map((cat, i) => {
+                // Couleur de la fiche → couleur CSS réelle (jeton charte, jeton
+                // Tailwind ou hex saisi dans l'admin).
+                const color = resolveColor(cat.color);
                 return (
                   <Link
                     key={cat.id}
-                    href={`/${locale}/solutions/${cat.slug || cat.id}`}
+                    href={entityUrl(locale, 'solutions', cat)}
                     className="bg-white dark:bg-[#1a1a1a] p-8 border border-gray-200 dark:border-gray-800 rounded-xl hover:shadow-2xl transition-all group overflow-hidden relative block"
                   >
-                    <div className="absolute top-4 right-4 text-6xl font-black text-gray-100 dark:text-gray-800 group-hover:text-sari-blue/10 transition-colors">
+                    <div className={`absolute top-4 ${isRtl ? 'left-4' : 'right-4'} text-6xl font-black text-gray-100 dark:text-gray-800 transition-colors`}>
                       {String(i + 1).padStart(2, '0')}
                     </div>
-                    <div className="w-16 h-16 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-all" style={{ backgroundColor: `var(--${cat.color || 'sari-blue'})20` }}>
-                      <IconMark name={cat.icon} className="w-8 h-8 transition-colors" style={{ color: `var(--${cat.color || 'sari-blue'})` }} />
+                    <div
+                      className="w-16 h-16 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-all relative"
+                      style={{ backgroundColor: withAlpha(cat.color, 0.12) }}
+                    >
+                      <IconMark name={cat.icon} fallback="layers" className="w-8 h-8" color={color} />
                     </div>
                     <h3 className="text-2xl font-bold text-sari-dark dark:text-white mb-3 relative">{cat.title}</h3>
                     <p className="text-gray-600 dark:text-gray-400 mb-6 relative line-clamp-3">{cat.shortDesc}</p>
-                    <span className="font-semibold inline-flex items-center gap-2 group-hover:gap-3 transition-all relative" style={{ color: `var(--${cat.color || 'sari-blue'})` }}>
-                      {t('categories.items.diagnostic.cta', { defaultMessage: 'Découvrir' })}
+                    <span
+                      className="font-semibold inline-flex items-center gap-2 group-hover:gap-3 transition-all relative"
+                      style={{ color }}
+                    >
+                      {t('categories.cta')}
                       {isRtl ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                     </span>
                   </Link>
                 );
               })}
             </div>
-          </div>
-        </section>
-      )}
+          )}
+        </div>
+      </section>
 
       {/* PROCESS EN 5 ÉTAPES */}
       {processSteps.length > 0 && (
-        <section className="py-20 bg-sari-gray dark:bg-[#111111]">
+        <section className="py-20 bg-white dark:bg-[#1a1a1a]">
           <div className="container mx-auto px-6">
             <div className="text-center mb-16">
               <span className="text-sari-blue font-bold uppercase tracking-wider text-sm">{t('process.subtitle')}</span>
@@ -143,7 +174,7 @@ export default function SolutionsPage() {
             <div className="relative max-w-6xl mx-auto">
               <div className="hidden lg:block absolute top-16 left-0 right-0 h-1 bg-sari-blue/20"></div>
               <div className="grid md:grid-cols-3 lg:grid-cols-5 gap-6">
-                {processSteps.map((step: any, i) => (
+                {processSteps.map((step: { number?: string; title?: string; desc?: string }, i: number) => (
                   <div key={i} className="relative text-center group">
                     <div className="relative z-10 w-32 h-32 bg-white dark:bg-[#1a1a1a] border-4 border-sari-blue rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-sari-blue group-hover:scale-110 transition-all shadow-lg">
                       <div className="text-center">
@@ -163,7 +194,7 @@ export default function SolutionsPage() {
 
       {/* FAQ */}
       {faqItems.length > 0 && (
-        <section className="py-20 bg-white dark:bg-[#1a1a1a]">
+        <section className="py-20 bg-sari-gray dark:bg-[#111111]">
           <div className="container mx-auto px-6">
             <div className="text-center mb-16">
               <h2 className="text-4xl md:text-5xl font-bold text-sari-dark dark:text-white">{t('faq.title')}</h2>

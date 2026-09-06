@@ -20,6 +20,7 @@ import { getConfig } from '@/lib/data';
 import { orderPdfHtml, printHtml, quotePdfHtml } from '@/lib/pdf-templates';
 import { nextCodeFor } from '@/lib/codes';
 import { fetchInvoiceFromErp } from '@/lib/erp';
+import DateText from '@/components/shared/DateText';
 
 type Kind = 'orders' | 'quotes';
 type Row = (Order | Quote) & { history?: Array<{ status: string; at: string; note?: string }>; phone?: string; company?: string; coupon?: string; quoteId?: number; orderId?: number; zone?: string; ip?: string; address?: string };
@@ -173,7 +174,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
       email_client: row.email,
       numero_commande: ('code' in row && row.code) || String(row.id),
       numero_devis: ('reference' in row && row.reference) || String(row.id),
-      montant_ttc: `${Number(row.total).toLocaleString()} DA`,
+      montant_ttc: money(Number(row.total)),
     });
     sendMail({ to: row.email, toName: row.client, subject, html }).catch(() => {});
   };
@@ -297,7 +298,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
       </header>
 
       <div className="grid grid-cols-3 gap-3">
-        {[[stats.total, title], [`${stats.amount.toLocaleString()} DA`, t('amount')], [stats.pending, t('inProgress')]].map(([v, l]) => (
+        {[[stats.total, title], [money(stats.amount), t('amount')], [stats.pending, t('inProgress')]].map(([v, l]) => (
           <div key={String(l)} className="ad-card p-4">
             <div className="text-2xl font-black tabular-nums">{v}</div>
             <div className="text-xs" style={{ color: 'var(--ad-muted)' }}>{l}</div>
@@ -322,8 +323,8 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                 <tr key={row.id}>
                   <td className="font-mono text-sm">{('reference' in row && row.reference) || ('code' in row && row.code) || `#${row.id}`}</td>
                   <td><div className="font-bold">{row.client}</div><div className="text-xs" style={{ color: 'var(--ad-muted)' }}>{row.email}</div></td>
-                  <td>{row.date}</td>
-                  <td className="font-black whitespace-nowrap">{Number(row.total).toLocaleString()} DA</td>
+                  <td><DateText value={row.date} dateOnly /></td>
+                  <td className="font-black whitespace-nowrap">{money(Number(row.total))}</td>
                   <td>{'invoice' in row && row.invoice ? <span className="ad-chip ad-chip-ok">{row.invoice.number}</span> : <span style={{ color: 'var(--ad-muted)' }}>—</span>}</td>
                   <td><span className={`ad-chip ${row.status === 'delivered' || row.status === 'accepted' ? 'ad-chip-ok' : row.status === 'cancelled' || row.status === 'rejected' ? 'ad-chip-mute' : 'ad-chip-warn'}`}>{row.status}</span></td>
                   <td className="text-right whitespace-nowrap">
@@ -343,7 +344,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
             <article key={row.id} className="ad-card p-4 space-y-2">
               <div className="flex justify-between"><span className="font-mono text-xs">#{row.id}</span><span className="ad-chip ad-chip-acc">{row.status}</span></div>
               <h3 className="font-black">{row.client}</h3>
-              <div className="font-black" style={{ color: 'var(--ad-accent)' }}>{Number(row.total).toLocaleString()} DA</div>
+              <div className="font-black" style={{ color: 'var(--ad-accent)' }}>{money(Number(row.total))}</div>
               <div className="flex gap-2">
                 <button className="ad-btn ad-btn-ghost flex-1" onClick={() => { setConsult(true); setOpen(row); }}>Consulter</button>
                 <button className="ad-btn ad-btn-icon ad-btn-ghost" title="Message au client" onClick={() => setMessageTo(row)}><MessageSquareText className="w-4 h-4" /></button>
@@ -402,7 +403,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
               </div>
               <div><span style={{ color: 'var(--ad-muted)' }}>Téléphone</span><div>{open.phone || '—'}</div></div>
               <div><span style={{ color: 'var(--ad-muted)' }}>Société</span><div>{open.company || '—'}</div></div>
-              <div><span style={{ color: 'var(--ad-muted)' }}>Date</span><div className="font-bold">{open.date}</div></div>
+              <div><span style={{ color: 'var(--ad-muted)' }}>Date</span><div className="font-bold"><DateText value={open.date} dateOnly /></div></div>
               <div><span style={{ color: 'var(--ad-muted)' }}>Paiement</span><div>{('payment' in open && open.payment) || '—'}</div></div>
               <div className="col-span-2"><span style={{ color: 'var(--ad-muted)' }}>Adresse</span><div>{open.address || '—'}</div></div>
               <div className="col-span-2">
@@ -418,7 +419,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                   <div>
                     Abouti à la commande{' '}
                     <button className="underline font-bold" onClick={() => { setOpen(null); window.location.href = `/${locale}/admin/orders`; }}>
-                      #{linkedOrder.id} · {linkedOrder.status} · {Number(linkedOrder.total).toLocaleString()} DA
+                      #{linkedOrder.id} · {linkedOrder.status} · {money(Number(linkedOrder.total))}
                     </button>
                   </div>
                 ) : (
@@ -445,7 +446,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
             )}
 
             {linkedQuote && (
-              <div className="ad-origin">Devis d’origine : <button className="underline font-bold" onClick={() => { window.location.href = `/${locale}/admin/quotes`; }}>#{linkedQuote.id} · {linkedQuote.status} · {linkedQuote.total.toLocaleString()} DA</button></div>
+              <div className="ad-origin">Devis d’origine : <button className="underline font-bold" onClick={() => { window.location.href = `/${locale}/admin/quotes`; }}>#{linkedQuote.id} · {linkedQuote.status} · {money(linkedQuote.total)}</button></div>
             )}
 
             {kind === 'orders' && (
@@ -512,8 +513,8 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                 {related.length === 0 && <li style={{ color: 'var(--ad-muted)' }}>Aucun autre document.</li>}
                 {related.map((r) => (
                   <li key={r.id} className="flex justify-between">
-                    <button className="underline" onClick={() => setOpen(r)}>#{r.id} · {r.date} · {r.status}</button>
-                    <strong>{Number(r.total).toLocaleString()} DA</strong>
+                    <button className="underline" onClick={() => setOpen(r)}>#{r.id} · <DateText value={r.date} dateOnly /> · {r.status}</button>
+                    <strong>{money(Number(r.total))}</strong>
                   </li>
                 ))}
               </ul>

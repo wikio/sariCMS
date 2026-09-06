@@ -6,11 +6,11 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { Calendar, Clock, ChevronLeft, ChevronRight, Mail, CheckCircle } from 'lucide-react';
-import { getNews } from '@/lib/data';
+import { getNews, getArticleAuthor, getDefaultAuthor } from '@/lib/data';
 import { matchesEntity } from '@/lib/ids';
 import { extractLegacyId, findNewsTranslation, buildMultilingualUrl } from '@/lib/translation-utils';
-import { formatDate, hasTime } from '@/lib/date-utils';
-import type { News } from '@/types';
+import { useDateUtils } from '@/lib/use-date-format';
+import type { News, Author } from '@/types';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
 import ImageWithFallback from '@/components/ui/ImageWithFallback';
@@ -19,6 +19,7 @@ import LanguageIndicator from '@/components/ui/LanguageIndicator';
 export default function NewsDetailPage() {
   const params = useParams();
   const locale = useLocale();
+  const { formatDate, hasTime } = useDateUtils();
   const t = useTranslations('pages.newsDetail');
 
   // ✅ CORRECTION : On cible explicitement la clé 'id' de l'objet params
@@ -29,6 +30,7 @@ export default function NewsDetailPage() {
   const numericId = parseInt(idString, 10);
 
   const [item, setItem] = useState<News | null>(null);
+  const [author, setAuthor] = useState<Author | null>(null);
   const [relatedNews, setRelatedNews] = useState<News[]>([]);
   const [latestNews, setLatestNews] = useState<News[]>([]);
   const [prevArticle, setPrevArticle] = useState<News | null>(null);
@@ -65,8 +67,14 @@ export default function NewsDetailPage() {
         setLatestNews(latest);
         setPrevArticle(currentIndex > 0 ? news[currentIndex - 1] : null);
         setNextArticle(currentIndex < news.length - 1 ? news[currentIndex + 1] : null);
+
+        // Auteur de l'article ; à défaut, celui marqué par défaut dans la
+        // liste des auteurs. Si aucun des deux n'existe, le bloc reste masqué.
+        const resolved = await getArticleAuthor(locale, found);
+        setAuthor(resolved ?? (await getDefaultAuthor(locale)));
       } else {
         setItem(null);
+        setAuthor(null);
       }
     };
     
@@ -151,15 +159,27 @@ export default function NewsDetailPage() {
               <p className="text-xl text-gray-300 mb-6 italic">{item.sujet}</p>
             )}
             <div className="flex flex-wrap items-center gap-6 text-gray-300">
-              <div className="flex items-center gap-2">
-                <div className="w-10 h-10 bg-sari-blue flex items-center justify-center text-white font-bold rounded-full">
-                  {item.author?.charAt(0) || 'A'}
+              {/* Sans auteur ni auteur par défaut, le bloc n'est pas affiché. */}
+              {author && (
+                <div className="flex items-center gap-2">
+                  <div className="w-10 h-10 bg-sari-blue flex items-center justify-center text-white font-bold rounded-full overflow-hidden">
+                    {author.photo ? (
+                      <ImageWithFallback
+                        src={author.photo}
+                        alt={author.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      author.name.charAt(0)
+                    )}
+                  </div>
+                  <div>
+                    <div className="font-semibold text-white">{author.name}</div>
+                    {/* Qualification de l'auteur, à la place du libellé générique. */}
+                    <div className="text-xs text-gray-400">{author.role || t('author')}</div>
+                  </div>
                 </div>
-                <div>
-                  <div className="font-semibold text-white">{item.author}</div>
-                  <div className="text-xs text-gray-400">{t('author')}</div>
-                </div>
-              </div>
+              )}
               <div className="flex items-center gap-2">
                 <Calendar className="w-5 h-5 text-sari-blue" />
                 <span>
@@ -189,7 +209,7 @@ export default function NewsDetailPage() {
         <div className="grid lg:grid-cols-3 gap-12">
           <div className="lg:col-span-2">
             <article className="bg-white dark:bg-[#1a1a1a] p-8 md:p-12 border border-gray-200 dark:border-gray-800 shadow-xl mb-8 rounded-xl">
-              <div className="prose dark:prose-invert max-w-none text-gray-600 dark:text-gray-400 text-lg leading-relaxed mb-12" dangerouslySetInnerHTML={{ __html: item.fullContent }}></div>
+              <div className="prose dark:prose-invert max-w-none text-gray-600 dark:text-gray-400 text-lg leading-relaxed mb-12" dangerouslySetInnerHTML={{ __html: item.fullContent || '' }}></div>
               
               {item.tags && item.tags.length > 0 && (
                 <div className="border-t border-gray-200 dark:border-gray-800 pt-8 mb-8">
@@ -275,21 +295,34 @@ export default function NewsDetailPage() {
           </div>
 
           <div className="lg:col-span-1 space-y-8">
-            <div className="bg-white dark:bg-[#1a1a1a] p-8 border border-gray-200 dark:border-gray-800 shadow-xl rounded-xl">
-              <h3 className="text-xl font-bold text-sari-dark dark:text-white mb-6">{t('aboutAuthor')}</h3>
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-16 h-16 bg-sari-blue flex items-center justify-center text-white text-2xl font-bold rounded-full">
-                  {item.author?.charAt(0) || 'A'}
+            {/* Carte auteur : masquée si l'article n'a ni auteur ni auteur par défaut. */}
+            {author && (
+              <div className="bg-white dark:bg-[#1a1a1a] p-8 border border-gray-200 dark:border-gray-800 shadow-xl rounded-xl">
+                <h3 className="text-xl font-bold text-sari-dark dark:text-white mb-6">{t('aboutAuthor')}</h3>
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-16 h-16 bg-sari-blue flex items-center justify-center text-white text-2xl font-bold rounded-full overflow-hidden shrink-0">
+                    {author.photo ? (
+                      <ImageWithFallback
+                        src={author.photo}
+                        alt={author.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      author.name.charAt(0)
+                    )}
+                  </div>
+                  <div>
+                    <div className="font-bold text-sari-dark dark:text-white text-lg">{author.name}</div>
+                    {/* Qualification issue de la fiche auteur (et non la catégorie de l'article). */}
+                    {author.role && <div className="text-sari-blue text-sm">{author.role}</div>}
+                  </div>
                 </div>
-                <div>
-                  <div className="font-bold text-sari-dark dark:text-white text-lg">{item.author}</div>
-                  <div className="text-sari-blue text-sm">{item.category}</div>
-                </div>
+                {/* Présentation saisie dans la fiche auteur, en remplacement du texte figé. */}
+                {author.bio && (
+                  <p className="text-gray-600 dark:text-gray-400 text-sm">{author.bio}</p>
+                )}
               </div>
-              <p className="text-gray-600 dark:text-gray-400 text-sm">
-                Expert dans le domaine médical, {item.author} partage régulièrement ses connaissances et analyses sur les dernières innovations technologiques.
-              </p>
-            </div>
+            )}
 
             <div className="bg-white dark:bg-[#1a1a1a] p-8 border border-gray-200 dark:border-gray-800 shadow-xl rounded-xl">
               <h3 className="text-xl font-bold text-sari-dark dark:text-white mb-6 border-b border-gray-200 dark:border-gray-800 pb-4">

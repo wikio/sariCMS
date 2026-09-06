@@ -55,3 +55,28 @@ export function clearAdminSession(): void {
 export function hasAdminSession(): boolean {
   return Boolean(readAdminAccess() || (typeof window !== 'undefined' && localStorage.getItem('sari_admin_auth') === 'true'));
 }
+
+/**
+ * Seul le type `admin` a sa place dans le back-office.
+ *
+ * `/auth/login` est le même point d'entrée pour tous les types de comptes :
+ * un client qui saisissait ses identifiants sur /admin obtenait une session
+ * valide, car la garde ne vérifiait que la présence d'un token, jamais le
+ * type. Cette fonction est le point de contrôle unique.
+ */
+export function isAdminUser(user: AdminUser | null): boolean {
+  return user?.type === 'admin';
+}
+
+/** Session présente ET rattachée à un compte administrateur. */
+export function hasAdminAccess(): boolean {
+  return hasAdminSession() && isAdminUser(readAdminUser());
+}
+
+/**
+ * L'espace client/partenaire/candidat n'est pas destiné aux administrateurs :
+ * ils disposent du back-office. Sert de garde côté /dashboard.
+ */
+export function isBackOfficeUser(type?: string | null): boolean {
+  return type === 'admin';
+}

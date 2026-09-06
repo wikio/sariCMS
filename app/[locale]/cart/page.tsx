@@ -1,38 +1,87 @@
 // app/[locale]/panier/page.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ShoppingCart, Trash2, Plus, Minus, CreditCard, Shield, CheckCircle, LogIn, FileText } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { useOrders } from '@/contexts/OrdersContext';
+import { useOrders, type Order, type OrderItem } from '@/contexts/OrdersContext';
 import Breadcrumb from '@/components/ui/Breadcrumb';
+import { useCurrency } from '@/lib/use-currency';
+import ImageCaptcha from '@/components/ImageCaptcha';
+import { computeTotals } from '@/lib/commerce-math';
+import { loadTaxes, type TaxRule } from '@/lib/shop-store';
+import { loadAdminSettings } from '@/lib/admin-settings';
 
 export default function CartPage() {
   const locale = useLocale();
   const t = useTranslations('pages.cart');
   const router = useRouter();
   
+  const { format: formatMoney, withSymbol } = useCurrency();
   const { items: cart, removeFromCart, updateQuantity, clearCart } = useCart();
   const { isAuthenticated, user } = useAuth();
   const { addOrder } = useOrders();
 
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [orderSubmitted, setOrderSubmitted] = useState(false);
+  /** Vrai pendant la création de la commande et la navigation vers le paiement. */
+  const [redirecting, setRedirecting] = useState(false);
+  const [captchaOk, setCaptchaOk] = useState(false);
+  const [captchaError, setCaptchaError] = useState('');
 
-  const totalAmount = cart.reduce((sum, item) => {
-    const price = parseFloat(String(item.price).replace(/[^0-9.]/g, '')) || 0;
-    return sum + (price * item.quantity);
-  }, 0);
-  const taxAmount = totalAmount * 0.19;
-  const grandTotal = totalAmount + taxAmount;
+  /**
+   * Règles de taxe configurées dans l'administration.
+   *
+   * Elles vivent dans le `localStorage` : la lecture doit donc attendre le
+   * montage, sinon le rendu serveur et le premier rendu client divergent.
+   */
+  const [taxes, setTaxes] = useState<TaxRule[]>([]);
+  useEffect(() => { setTaxes(loadTaxes()); }, []);
+
+  const antispam = loadAdminSettings().security?.siteCaptcha !== false;
+
+  /**
+   * Totaux calculés par le moteur commun, et non par un taux écrit en dur.
+   *
+   * Le panier appliquait « × 0,19 » quelles que soient les règles définies
+   * dans Administration → Taxes : une TVA réduite, une éco-taxe fixe ou une
+   * taxe déjà incluse dans le prix étaient toutes ignorées, et le tableau
+   * affichait un montant qui ne correspondait à rien.
+   */
+  const totals = useMemo(() => {
+    const items = cart.map((item) => ({
+      id: Number(item.id) || 0,
+      name: item.name,
+      price: parseFloat(String(item.price).replace(/[^0-9.]/g, '')) || 0,
+      quantity: item.quantity,
+      discount: 0,
+      category: item.category || undefined,
+    }));
+    return computeTotals(items, taxes);
+  }, [cart, taxes]);
+
+  const totalAmount = totals.subtotal;
+  const taxAmount = totals.taxTotal;
+  const grandTotal = totals.total;
 
   const createOrderAndRedirect = (options: { isQuote?: boolean; customerName?: string; customerEmail?: string; customerPhone?: string; customerCompany?: string } = {}) => {
+    // Le panier tolère des ids/prix textuels et une catégorie absente ; une
+    // commande exige des champs stricts. On normalise à la conversion.
+    const orderItems: OrderItem[] = cart.map((item) => ({
+      id: Number(item.id),
+      name: item.name,
+      price: String(item.price),
+      quantity: item.quantity,
+      image: item.image,
+      category: item.category || '',
+    }));
+
     const orderData = {
-      items: cart,
+      items: orderItems,
       totalAmount,
       taxAmount,
       grandTotal,
@@ -44,18 +93,39 @@ export default function CartPage() {
       customerType: isAuthenticated ? user?.type || 'guest' : 'guest',
       isGuest: !isAuthenticated,
       isQuote: options.isQuote || false,
-      status: (options.isQuote ? 'quote_requested' : 'pending') as const,
+      status: (options.isQuote ? 'quote_requested' : 'pending') as Order['status'],
     };
-    const order = addOrder(orderData);
-    clearCart();
-    return order;
+    return addOrder(orderData);
+  };
+
+  /**
+   * Crée la commande, affiche l'écran de transition, puis navigue.
+   *
+   * Le panier était vidé avant la navigation : la page se re-rendait
+   * immédiatement, tombait sur `cart.length === 0` et affichait « votre panier
+   * est vide » à la place de l'attente. On garde donc le panier jusqu'à ce que
+   * la page de paiement soit demandée, et on le vide seulement ensuite.
+   */
+  const goToPayment = (orderId: number | string) => {
+    setRedirecting(true);
+    router.push(`/${locale}/payment/${orderId}`);
+    // Laisse le temps à la navigation de partir avant de toucher au panier.
+    setTimeout(() => clearCart(), 600);
+  };
+
+  /** L'antispam ne s'applique qu'aux visiteurs non authentifiés. */
+  const antispamPasse = () => {
+    if (!antispam || isAuthenticated) return true;
+    if (captchaOk) return true;
+    setCaptchaError(t('captchaRequired'));
+    return false;
   };
 
   const handleCheckout = () => {
-    if (cart.length === 0) return;
+    if (cart.length === 0 || redirecting) return;
     if (isAuthenticated) {
       const order = createOrderAndRedirect();
-      router.push(`/${locale}/payment/${order.id}`);
+      goToPayment(order.id);
     } else {
       setShowCheckoutModal(true);
     }
@@ -65,14 +135,20 @@ export default function CartPage() {
     if (option === 'login') {
       localStorage.setItem('sari_pending_cart', JSON.stringify(cart));
       router.push(`/${locale}/connexion?source=produit`);
-    } else if (option === 'pay') {
+      return;
+    }
+    // Paiement et demande de devis créent une commande : on protège les deux.
+    if (!antispamPasse()) return;
+
+    if (option === 'pay') {
       const order = createOrderAndRedirect();
       setShowCheckoutModal(false);
-      router.push(`/${locale}/payment/${order.id}`);
+      goToPayment(order.id);
     } else if (option === 'quote') {
       createOrderAndRedirect({ isQuote: true });
       setShowCheckoutModal(false);
       setOrderSubmitted(true);
+      clearCart();
       setTimeout(() => {
         setOrderSubmitted(false);
         router.push(`/${locale}`);
@@ -93,6 +169,27 @@ export default function CartPage() {
             <Link href={`/${locale}`} className="btn-primary text-white px-8 py-3 font-semibold inline-block rounded-lg">
               {t('backHome')}
             </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /*
+   * Écran de transition, placé AVANT le test du panier vide.
+   *
+   * La commande est créée et la navigation lancée : sans cet écran, l'ordre
+   * des rendus faisait apparaître « votre panier est vide » pendant la
+   * fraction de seconde qui précède l'arrivée sur la page de paiement.
+   */
+  if (redirecting) {
+    return (
+      <div className="pt-40 pb-24 min-h-screen bg-gray-50 dark:bg-[#111111]">
+        <div className="container mx-auto px-6">
+          <div className="max-w-md mx-auto bg-white dark:bg-[#1a1a1a] p-12 border border-gray-200 dark:border-gray-800 shadow-xl text-center rounded-xl">
+            <div className="w-16 h-16 mx-auto mb-6 rounded-full border-4 border-gray-200 dark:border-gray-700 border-t-sari-blue animate-spin" />
+            <h1 className="text-2xl font-bold text-sari-dark dark:text-white mb-2">{t('preparingPayment')}</h1>
+            <p className="text-gray-600 dark:text-gray-400">{t('preparingPaymentDesc')}</p>
           </div>
         </div>
       </div>
@@ -137,7 +234,7 @@ export default function CartPage() {
                 <div className="flex-1">
                   <h3 className="font-bold text-sari-dark dark:text-white mb-2">{item.name}</h3>
                   <div className="text-sm text-gray-500 dark:text-gray-400 mb-2">{item.category}</div>
-                  <div className="text-lg font-bold text-sari-lime">{item.price}</div>
+                  <div className="text-lg font-bold text-sari-lime">{withSymbol(item.price)}</div>
                 </div>
                 <div className="flex items-center gap-2">
                   <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="w-8 h-8 border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 rounded">-</button>
@@ -156,15 +253,36 @@ export default function CartPage() {
               <div className="space-y-3 mb-6">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600 dark:text-gray-400">{t('subtotal')} :</span>
-                  <span className="font-semibold text-sari-dark dark:text-white">{totalAmount.toFixed(2)} €</span>
+                  <span className="font-semibold text-sari-dark dark:text-white">{formatMoney(totalAmount, { decimals: 2 })}</span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">{t('tax')} :</span>
-                  <span className="font-semibold text-sari-dark dark:text-white">{taxAmount.toFixed(2)} €</span>
-                </div>
+                {/*
+                  * Une ligne par règle de taxe, avec son libellé et son taux.
+                  * Une taxe « incluse » est déjà comprise dans le prix affiché :
+                  * on la signale sans l'ajouter une seconde fois au total.
+                  */}
+                {totals.taxLines.length === 0 ? (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600 dark:text-gray-400">{t('tax')} :</span>
+                    <span className="font-semibold text-sari-dark dark:text-white">{formatMoney(taxAmount, { decimals: 2 })}</span>
+                  </div>
+                ) : (
+                  totals.taxLines.map((line) => (
+                    <div key={line.id} className="flex justify-between text-sm">
+                      <span className="text-gray-600 dark:text-gray-400">
+                        {line.name}
+                        {line.mode === 'percent' && <span className="opacity-70"> ({line.rate} %)</span>}
+                        {line.included && <span className="opacity-70"> · {t('taxIncluded')}</span>}
+                        {' :'}
+                      </span>
+                      <span className="font-semibold text-sari-dark dark:text-white">
+                        {formatMoney(line.amount, { decimals: 2 })}
+                      </span>
+                    </div>
+                  ))
+                )}
                 <div className="flex justify-between text-lg pt-3 border-t border-gray-200 dark:border-gray-800">
                   <span className="font-bold text-sari-dark dark:text-white">{t('total')} :</span>
-                  <span className="font-bold text-sari-lime">{grandTotal.toFixed(2)} €</span>
+                  <span className="font-bold text-sari-lime">{formatMoney(grandTotal, { decimals: 2 })}</span>
                 </div>
               </div>
               <button onClick={handleCheckout} className="w-full btn-primary text-white py-3 font-semibold shadow-lg flex items-center justify-center gap-2 rounded-lg">
@@ -192,6 +310,18 @@ export default function CartPage() {
               <h2 className="text-2xl font-bold text-sari-dark dark:text-white mb-2">{t('checkoutOptions')}</h2>
               <p className="text-gray-600 dark:text-gray-400 text-sm">{t('checkoutOptionsDesc')}</p>
             </div>
+            {/*
+              * Antispam avant toute création de commande par un visiteur non
+              * authentifié — que ce soit pour payer ou pour demander un devis.
+              */}
+            {antispam && !isAuthenticated && (
+              <div className="mb-4">
+                <ImageCaptcha onChange={(ok) => { setCaptchaOk(ok); if (ok) setCaptchaError(''); }} />
+                {captchaError && (
+                  <p className="text-xs text-red-500 mt-1">{captchaError}</p>
+                )}
+              </div>
+            )}
             <div className="space-y-3">
               <button onClick={() => handleCheckoutOption('login')} className="w-full p-4 border-2 border-gray-200 dark:border-gray-700 hover:border-sari-blue transition-all rounded-lg text-left group">
                 <div className="flex items-center gap-3">

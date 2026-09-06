@@ -128,12 +128,24 @@ function comparable(value: unknown): number {
   return Number.isNaN(asNum) ? 0 : asNum;
 }
 
+/**
+ * Génère un slug à partir d'un titre.
+ *
+ * Conserve les lettres et chiffres Unicode : un titre arabe produisait
+ * auparavant un slug vide (`[^a-z0-9]` supprimait tout), ce qui empêchait
+ * l'enregistrement des fiches traduites. Les accents latins restent
+ * translittérés (`Imagerie Médicale` → `imagerie-medicale`) pour garder des
+ * URLs propres côté FR/EN.
+ */
 export function slugify(input: string): string {
-  return input
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+  const hasLatin = /[a-zA-Z]/.test(input);
+  const base = hasLatin
+    ? input.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    : input;
+  return base
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
+    .trim()
+    .replace(/[^\p{L}\p{N}]+/gu, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, 80);
 }

@@ -2,6 +2,7 @@
 
 import type { Order, Quote } from '@/lib/crm-store';
 import { amountInWords } from '@/lib/number-to-words';
+import { defaultCurrency } from '@/lib/currencies';
 
 export interface CompanyInfo {
   name: string;
@@ -12,7 +13,22 @@ export interface CompanyInfo {
   logo?: string;
 }
 
-const money = (n: number) => `${Math.round(n).toLocaleString('fr-FR')} DA`;
+// Devise configurée dans l'administration (page Devises), et non le dinar
+// codé en dur : un PDF doit porter la même devise que l'écran qui l'a produit.
+/**
+ * Nom de la devise pour le montant en toutes lettres.
+ *
+ * `amountInWords` accorde le pluriel en suffixant un « s » : on ne lui passe
+ * donc que le substantif, sans qualificatif. « Dinar algérien » → « dinar »,
+ * qui donnera « quatre mille dinars ». Garder le nom complet produirait
+ * « dinar algériens », et retirer un « s » final mutilerait « Dollar US ».
+ */
+function currencyWord(): string {
+  const [word] = defaultCurrency().name.trim().toLowerCase().split(/\s+/);
+  return word || 'dinar';
+}
+
+const money = (n: number) => `${Math.round(n).toLocaleString('fr-FR')} ${defaultCurrency().symbol}`;
 
 function escapeHtml(s: string): string {
   return String(s || '')
@@ -129,7 +145,7 @@ function documentShell(opts: {
   </div>
 
   <div class="letters">
-    Arrêté le présent document à la somme de : <b>${escapeHtml(amountInWords(opts.total))}</b>.
+    Arrêté le présent document à la somme de : <b>${escapeHtml(amountInWords(opts.total, currencyWord()))}</b>.
   </div>
 
   ${opts.note ? `<div class="note"><b>Note :</b> ${escapeHtml(opts.note)}</div>` : ''}

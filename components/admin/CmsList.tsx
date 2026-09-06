@@ -8,7 +8,7 @@ import {
 } from '@dnd-kit/core';
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ArrowDown, ArrowUp, Copy, Download, Eye, Filter, GripVertical, LayoutGrid, List as ListIcon, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Archive, ArrowDown, ArrowUp, CheckCircle2, Copy, Download, Eye, FileEdit, Filter, GripVertical, LayoutGrid, List as ListIcon, Pencil, Plus, Trash2 } from 'lucide-react';
 import PixelGridLoader from '@/components/admin/PixelGridLoader';
 import SearchField from '@/components/admin/SearchField';
 import IconMark from '@/components/admin/IconMark';
@@ -18,6 +18,8 @@ import type { CmsModule } from '@/lib/cms-modules';
 import { CmsError } from '@/lib/cms';
 import { nextSku } from '@/lib/admin-settings';
 import { slugify } from '@/lib/slugify';
+import DateText from '@/components/shared/DateText';
+import { useAdminLabels } from '@/lib/admin-labels';
 
 type ViewMode = 'list' | 'cards';
 
@@ -58,6 +60,8 @@ export default function CmsList({ mod }: { mod: CmsModule }) {
   const [sortKey, setSortKey] = useState(mod.titleKey);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
   const [selected, setSelected] = useState<string[]>([]);
+  /** Une action groupée est en cours : évite un double envoi. */
+  const [busy, setBusy] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -156,12 +160,89 @@ export default function CmsList({ mod }: { mod: CmsModule }) {
     a.click();
   };
 
+  /** Lignes effectivement sélectionnées, pour connaître leur statut courant. */
+  const selectedRows = useMemo(
+    () => rows.filter((r) => selected.includes(String(r.id))),
+    [rows, selected],
+  );
+
+  // Statuts proposés en action groupée : ceux que le module déclare vraiment
+  // (les menus, par exemple, ignorent « archivé »). Sans champ `status`
+  // déclaré — le module Auteurs — aucune action de statut n'est offerte.
+  const statusOptions = useMemo(() => {
+    const field = mod.fields.find((f) => f.key === 'status');
+    const opts = (field?.options || []) as Array<string | { value: string }>;
+    return opts.map((o) => (typeof o === 'string' ? o : o.value)).filter(Boolean);
+  }, [mod.fields]);
+
+  /**
+   * Exécute une action sur chaque fiche sélectionnée.
+   *
+   * `allSettled` plutôt que `all` : une fiche en échec (droits insuffisants,
+   * enregistrement supprimé entre-temps) ne doit pas masquer le sort des
+   * autres. On renvoie les identifiants réellement traités pour n'actualiser
+   * l'affichage que sur ceux-là.
+   */
+  const runBulk = async (ids: string[], action: (id: string) => Promise<unknown>) => {
+    const results = await Promise.allSettled(ids.map((id) => action(id)));
+    const done: string[] = [];
+    let firstError: unknown = null;
+    results.forEach((res, i) => {
+      if (res.status === 'fulfilled') done.push(ids[i]);
+      else if (!firstError) firstError = res.reason;
+    });
+    return { done, failed: ids.length - done.length, firstError };
+  };
+
   const bulkDelete = async () => {
     if (!selected.length || !confirm(t("bulkTrashConfirm", { count: selected.length }))) return;
-    for (const id of selected) await cmsAdminDelete(mod.resource, id);
-    setRows((prev) => prev.filter((r) => !selected.includes(String(r.id))));
-    setSelected([]);
-    showToast(t("bulkTrashed"), 'success');
+    setBusy(true);
+    try {
+      const { done, failed, firstError } = await runBulk(selected, (id) => cmsAdminDelete(mod.resource, id));
+      // On ne retire que les lignes réellement supprimées : les autres restent
+      // visibles et sélectionnées, prêtes pour une nouvelle tentative.
+      if (done.length) setRows((prev) => prev.filter((r) => !done.includes(String(r.id))));
+      setSelected(selected.filter((id) => !done.includes(id)));
+      if (failed) {
+        showToast(
+          `${t("bulkPartial", { done: done.length, failed })} — ${firstError instanceof CmsError ? firstError.message : ''}`.trim(),
+          'error',
+        );
+      } else {
+        showToast(t("bulkTrashed"), 'success');
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  /** Applique un statut à toute la sélection. */
+  const bulkStatus = async (status: string) => {
+    if (!selected.length) return;
+    const label = STATUS_LABELS[status] || status;
+    if (!confirm(t("bulkStatusConfirm", { count: selected.length, status: label }))) return;
+    setBusy(true);
+    try {
+      const { done, failed, firstError } = await runBulk(selected, (id) =>
+        cmsAdminUpdate(mod.resource, id, { status }),
+      );
+      // Mise à jour locale plutôt que rechargement : le tri, les filtres et la
+      // position de défilement en cours sont conservés.
+      if (done.length) {
+        setRows((prev) => prev.map((r) => (done.includes(String(r.id)) ? { ...r, status } : r)));
+      }
+      setSelected(selected.filter((id) => !done.includes(id)));
+      if (failed) {
+        showToast(
+          `${t("bulkPartial", { done: done.length, failed })} — ${firstError instanceof CmsError ? firstError.message : ''}`.trim(),
+          'error',
+        );
+      } else {
+        showToast(t("bulkStatusDone", { count: done.length, status: label }), 'success');
+      }
+    } finally {
+      setBusy(false);
+    }
   };
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
@@ -233,9 +314,42 @@ export default function CmsList({ mod }: { mod: CmsModule }) {
       </div>
 
       {selected.length > 0 && (
-        <div className="ad-card p-3 flex items-center gap-2">
+        <div className="ad-card p-3 flex flex-wrap items-center gap-2">
           <span className="text-sm font-bold">{t("selected", { count: selected.length })}</span>
-          <button className="ad-btn ad-btn-danger" onClick={bulkDelete}><Trash2 className="w-4 h-4" />{t("trash")}</button>
+
+          {/* Changement de statut en lot. Le bouton du statut déjà commun à
+              toute la sélection est désactivé : l'action n'aurait aucun effet. */}
+          {statusOptions.length > 0 && (
+            <>
+              <span className="text-xs uppercase tracking-wider ms-2" style={{ color: 'var(--ad-muted)' }}>
+                {t("status")}
+              </span>
+              {statusOptions.map((value) => {
+                const already = selectedRows.length > 0 && selectedRows.every((r) => String(r.status) === value);
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    className={`ad-btn ${value === 'published' ? 'ad-btn-primary' : 'ad-btn-ghost'}`}
+                    disabled={busy || already}
+                    title={already ? t("bulkStatusNoop", { status: STATUS_LABELS[value] || value }) : undefined}
+                    onClick={() => bulkStatus(value)}
+                  >
+                    <StatusIcon value={value} />
+                    {STATUS_LABELS[value] || value}
+                  </button>
+                );
+              })}
+              <span className="w-px h-6 mx-1" style={{ background: 'var(--ad-line)' }} />
+            </>
+          )}
+
+          <button className="ad-btn ad-btn-danger" disabled={busy} onClick={bulkDelete}>
+            <Trash2 className="w-4 h-4" />{t("trash")}
+          </button>
+          <button className="ad-btn ad-btn-ghost ms-auto" disabled={busy} onClick={() => setSelected([])}>
+            {t("clearSelection")}
+          </button>
         </div>
       )}
 
@@ -253,6 +367,24 @@ export default function CmsList({ mod }: { mod: CmsModule }) {
       )}
     </div>
   );
+}
+
+/** Pictogramme du statut, pour distinguer les boutons d'un coup d'œil. */
+function StatusIcon({ value }: { value: string }) {
+  if (value === 'published') return <CheckCircle2 className="w-4 h-4" />;
+  if (value === 'archived') return <Archive className="w-4 h-4" />;
+  return <FileEdit className="w-4 h-4" />;
+}
+
+/**
+ * Le champ affiché en sous-titre est-il une date ?
+ *
+ * Les vues Liste et Cartes s'appuient dessus pour formater la valeur selon
+ * « Paramètres → Dates & heures » au lieu de rendre l'horodatage brut de la
+ * base (`2024-10-15T00:00:00.000Z`).
+ */
+function isDateSubtitle(mod: CmsModule): boolean {
+  return mod.fields.some((f) => f.key === mod.subtitleKey && f.kind === 'datetime');
 }
 
 function SortMark({ active, dir }: { active: boolean; dir: 'asc' | 'desc' }) {
@@ -278,6 +410,22 @@ function ListTable({
   setSelected: (ids: string[]) => void;
 }) {
   const t = useTranslations('admin.common');
+  const labels = useAdminLabels(mod.key);
+  const STATUS_LABELS: Record<string, string> = {
+    draft: t('statusDraft'), published: t('statusPublished'), archived: t('statusArchived'),
+  };
+  // La colonne « sous-titre » peut pointer un champ date (ex. les événements) :
+  // elle suit alors le format configuré au lieu d'afficher la valeur brute.
+  const subtitleKey = mod.subtitleKey || 'slug';
+  const subtitleIsDate = isDateSubtitle(mod);
+  // En-tête de la colonne : le libellé du champ réellement affiché plutôt
+  // qu'un « Meta » générique qui n'annonçait pas son contenu.
+  const subtitleLabel = labels.field(subtitleKey, subtitleKey);
+  // La pastille de droite montre le statut ; quand le module distingue un
+  // second axe (le type d'un événement, le contrat d'une offre), il n'était
+  // visible qu'en vue cartes. On lui donne sa propre colonne.
+  const badgeKey = mod.badgeKey && mod.badgeKey !== 'status' ? mod.badgeKey : null;
+  const badgeLabel = badgeKey ? labels.field(badgeKey, badgeKey) : '';
   if (rows.length === 0) return <Empty mod={mod} />;
   const toggle = (id: string) => setSelected(selected.includes(id) ? selected.filter((x) => x !== id) : [...selected, id]);
   const body = (
@@ -288,7 +436,10 @@ function ListTable({
           {canReorder && <th className="w-10"></th>}
           {mod.imageKey && <th>{t("visual")}</th>}
           <th onClick={() => onSort(mod.titleKey)}>{t("title")} <SortMark active={sortKey === mod.titleKey} dir={sortDir} /></th>
-          <th onClick={() => onSort(mod.subtitleKey || 'slug')}>Meta <SortMark active={sortKey === (mod.subtitleKey || 'slug')} dir={sortDir} /></th>
+          <th onClick={() => onSort(subtitleKey)}>{subtitleLabel} <SortMark active={sortKey === subtitleKey} dir={sortDir} /></th>
+          {badgeKey && (
+            <th onClick={() => onSort(badgeKey)}>{badgeLabel} <SortMark active={sortKey === badgeKey} dir={sortDir} /></th>
+          )}
           <th onClick={() => onSort('status')}>{t("status")} <SortMark active={sortKey === 'status'} dir={sortDir} /></th>
           <th></th>
         </tr>
@@ -311,8 +462,20 @@ function ListTable({
                 {String(row[mod.titleKey] || '—')}
               </span>
             </td>
-            <td className="text-sm" style={{ color: 'var(--ad-muted)' }}>{String(row[mod.subtitleKey || 'slug'] || '')}</td>
-            <td><span className="ad-chip ad-chip-acc">{String(row.status || row[mod.badgeKey || ''] || '')}</span></td>
+            <td className="text-sm" style={{ color: 'var(--ad-muted)' }}>
+              {subtitleIsDate
+                ? <DateText value={row[subtitleKey]} fallback="—" />
+                : String(row[subtitleKey] || '—')}
+            </td>
+            {badgeKey && (
+              <td className="text-sm">
+                {String(row[badgeKey] || '') ? (
+                  <span className="ad-chip">{String(row[badgeKey])}</span>
+                ) : <span style={{ color: 'var(--ad-muted)' }}>—</span>}
+              </td>
+            )}
+            {/* `status` seul : le repli sur `badgeKey` doublonnait la colonne voisine. */}
+            <td><span className="ad-chip ad-chip-acc">{STATUS_LABELS[String(row.status || '')] || String(row.status || '—')}</span></td>
             <td className="text-right">
               <div className="flex justify-end gap-1">
                 <Link href={`/${locale}/admin/${mod.path}/${row.id}?consult=1`} className="ad-btn ad-btn-icon ad-btn-ghost" title={t("consult")}><Eye className="w-4 h-4" /></Link>
@@ -350,6 +513,7 @@ function CardCanvas({
   onDragEnd: (e: DragEndEvent) => void;
 }) {
   const t = useTranslations('admin.common');
+  const subtitleIsDate = isDateSubtitle(mod);
   if (rows.length === 0) return <Empty mod={mod} />;
   const cards = rows.map((row) => (
     <SortableCard key={String(row.id)} id={String(row.id)} disabled={!canReorder}>
@@ -369,7 +533,14 @@ function CardCanvas({
               <span className={`ad-chip ${['published', 'active'].includes(String(row[mod.badgeKey])) ? 'ad-chip-ok' : 'ad-chip-warn'}`}>{String(row[mod.badgeKey])}</span>
             )}
           </div>
-          {mod.subtitleKey && <p className="text-xs" style={{ color: 'var(--ad-muted)' }}>{String(row[mod.subtitleKey] || '')}</p>}
+          {mod.subtitleKey && (
+            <p className="text-xs" style={{ color: 'var(--ad-muted)' }}>
+              {/* Même règle qu'en vue Liste : un champ date suit le format configuré. */}
+              {subtitleIsDate
+                ? <DateText value={row[mod.subtitleKey]} fallback="" />
+                : String(row[mod.subtitleKey] || '')}
+            </p>
+          )}
           {mod.key === 'products' && (
             <div className="flex justify-between text-sm">
               <span style={{ color: 'var(--ad-muted)' }}>{String(row.sku || row.category || '')}</span>
@@ -413,7 +584,7 @@ function SortableCard({ id, disabled, children }: { id: string; disabled?: boole
   );
 }
 
-function Empty({ mod }: { mod: CmsModule }) {
+function Empty({ mod, singular }: { mod: CmsModule; singular?: string }) {
   const t = useTranslations('admin.common');
-  return <div className="ad-card p-12 text-center" style={{ color: 'var(--ad-muted)' }}>{t("noRecords", { singular: translatedSingular })}</div>;
+  return <div className="ad-card p-12 text-center" style={{ color: 'var(--ad-muted)' }}>{t("noRecords", { singular: singular || mod.singular })}</div>;
 }

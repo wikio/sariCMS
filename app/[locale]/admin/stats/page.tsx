@@ -7,6 +7,7 @@ import PixelGridLoader from '@/components/admin/PixelGridLoader';
 import { BarChart, DonutChart } from '@/components/admin/charts/MiniCharts';
 import { cmsStatus } from '@/lib/cms-admin';
 import { loadOrders, loadQuotes, orderRevenue } from '@/lib/crm-store';
+import { money } from '@/lib/commerce-math';
 
 export default function StatsPage() {
   const locale = useLocale();
@@ -58,7 +59,7 @@ export default function StatsPage() {
         {[
           [Object.values(counts).reduce((a, b) => a + b, 0), 'Fiches CMS'],
           [orders.length, 'Commandes'],
-          [`${orderRevenue(orders).toLocaleString()} DA`, 'CA livré'],
+          [money(orderRevenue(orders)), 'CA livré'],
           [quotes.filter((q) => q.status === 'accepted').length, 'Devis acceptés'],
         ].map(([v, l]) => (
           <div key={String(l)} className="ad-card p-4">

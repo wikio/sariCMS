@@ -24,19 +24,42 @@ export interface Config {
   };
 }
 
+/**
+ * Règle de sous-menu généré depuis le contenu.
+ * Voir `lib/menu-auto.ts` : la liste est résolue à l'affichage, pas figée.
+ */
+export interface MenuAutoRule {
+  source: 'solutions' | 'services' | 'products' | 'news' | 'events';
+  /** `groups` : les catégories du module au lieu de ses fiches. */
+  mode: 'all' | 'pick' | 'groups';
+  /** Ids de fiches en mode `pick`, noms de catégories en mode `groups`. */
+  ids?: Array<string | number>;
+  limit?: number;
+  /** Description courte sous le titre. Absent = affichée. */
+  showDesc?: boolean;
+  /** Icône de la fiche devant le titre. Absent = masquée. */
+  showIcon?: boolean;
+  /** Vignette de l'image de la fiche. Absent = masquée. */
+  showImage?: boolean;
+}
+
+export interface MenuLink {
+  id?: string;
+  label: string;
+  href: string;
+  desc?: string;
+  icon?: string;
+  /** Vignette affichée devant le libellé du sous-lien. */
+  image?: string;
+  submenu?: MenuLink[];
+  /** Présente si le sous-menu est généré ; `submenu` est alors calculé. */
+  auto?: MenuAutoRule | null;
+}
+
 export interface Menu {
-  mainMenu: Array<{
-    id: string;
-    label: string;
-    href: string;
-    submenu?: Array<{
-      label: string;
-      href: string;
-      desc?: string;
-    }>;
-  }>;
+  mainMenu: Array<MenuLink & { id: string }>;
   footerMenu: {
-    navigation: Array<{ label: string; href: string }>;
+    navigation: MenuLink[];
     legal: Array<{ label: string; href: string }>;
   };
   socialLinks: Record<string, string>;
@@ -45,6 +68,10 @@ export interface Menu {
 export interface Product {
   id: number | string;
   slug?: string;
+  /** Langue de la fiche (utile quand chaque langue a sa propre ligne en base). */
+  locale?: string;
+  /** Identifiant partagé par les versions FR/EN/AR d'un même produit. */
+  legacyId?: string;
   name: string;
   category: string;
   price: string;
@@ -101,7 +128,10 @@ export interface News {
   category: string;
   date: string;
   publicationDate?: string;
+  /** Nom affiché de l'auteur (fiche liée, ou nom libre pour les articles repris). */
   author?: string;
+  /** Fiche auteur liée : sert à afficher la qualification et la présentation. */
+  authorId?: number | string;
   shortDesc: string;
   fullContent?: string;
   image: string;
@@ -109,6 +139,25 @@ export interface News {
   tags?: string[];
   sujet?: string;
   classification?: string;
+}
+
+/**
+ * Fiche auteur d'une actualité. `role` est la qualification affichée sous le
+ * nom sur la page article, `bio` la présentation courte qui la suit.
+ */
+export interface Author {
+  id: number | string;
+  locale?: string;
+  legacyId?: string;
+  slug?: string;
+  name: string;
+  role?: string;
+  bio?: string;
+  photo?: string;
+  email?: string;
+  /** Auteur retenu lorsqu'un article n'en désigne aucun. */
+  isFallback?: boolean;
+  sortOrder?: number;
 }
 
 export interface Career {
@@ -134,6 +183,10 @@ export interface Career {
 
 export interface Service {
   id: number | string;
+  /** Langue de la fiche (fr, en, ar) */
+  locale?: string;
+  /** Identifiant partagé par toutes les versions linguistiques d'un même service */
+  legacyId?: string;
   slug?: string;
   title: string;
   icon: string;
@@ -225,7 +278,11 @@ export interface HeroSlide {
 }
 
 export interface SolutionCategory {
-  id: string;
+  id: number | string;
+  /** Langue de la fiche (fr, en, ar) */
+  locale?: string;
+  /** Identifiant partagé par toutes les versions linguistiques d'une même solution */
+  legacyId?: string;
   slug?: string;
   title: string;
   shortDesc: string;
@@ -236,6 +293,7 @@ export interface SolutionCategory {
   productIds: Array<number | string>;
   features?: string[];
   faq?: Array<{ q: string; a: string }>;
+  sortOrder?: number;
 }
 
 export interface Navigation {

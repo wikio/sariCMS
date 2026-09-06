@@ -60,6 +60,8 @@ export interface CmsRequestOptions extends Omit<RequestInit, 'body'> {
   token?: string | null;
   json?: unknown;
   timeoutMs?: number;
+  /** Corps brut, utilisé lorsque `json` n'est pas fourni (upload de fichier…). */
+  body?: BodyInit | null;
 }
 
 export async function cmsFetch<T = unknown>(path: string, options: CmsRequestOptions = {}): Promise<T> {
@@ -132,5 +134,27 @@ export async function cmsPublicOne<T>(resource: string, idOrSlug: string, locale
     return await cmsFetch<T>(`/public/${resource}/${encodeURIComponent(idOrSlug)}${qs ? `?${qs}` : ''}`);
   } catch {
     return null;
+  }
+}
+
+/**
+ * Récupère les versions linguistiques d'une fiche (endpoint
+ * `/public/{resource}/{idOrSlug}/translations`).
+ *
+ * Sert au sélecteur de langue : il obtient l'id + le slug de la fiche
+ * équivalente dans la langue cible et peut donc rediriger vers
+ * `/{locale}/solutions/{id}-{slug-traduit}` plutôt que vers la liste.
+ */
+export async function cmsPublicTranslations<T>(
+  resource: string,
+  idOrSlug: string,
+): Promise<T[]> {
+  try {
+    const payload = await cmsFetch<unknown>(
+      `/public/${resource}/${encodeURIComponent(idOrSlug)}/translations`,
+    );
+    return unwrapList<T>(payload);
+  } catch {
+    return [];
   }
 }

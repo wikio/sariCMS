@@ -17,6 +17,17 @@ export class PublicEventsController {
     return this.events.findAll(publishedQuery(query, locale ? { locale } : {}));
   }
 
+  // Déclaré avant ':idOrSlug' : sinon Nest capterait « translations » comme un slug.
+  @Get(':idOrSlug/translations')
+  @ApiOperation({
+    summary: "Versions linguistiques d'une fiche (même legacyId)",
+    description:
+      "Permet au sélecteur de langue de rediriger vers l'URL équivalente dans la langue cible.",
+  })
+  translations(@Param('idOrSlug') idOrSlug: string) {
+    return this.events.findTranslations(idOrSlug);
+  }
+
   @Get(':idOrSlug')
   @ApiOperation({ summary: 'Événement publié par slug ou id' })
   async bySlug(@Param('idOrSlug') idOrSlug: string, @Query('locale') locale?: string) {

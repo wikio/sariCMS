@@ -2,6 +2,7 @@
 
 import { Check } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import DateText from '@/components/shared/DateText';
 
 export type ProcessStep = {
   id?: string;
@@ -59,7 +60,7 @@ export default function ProcessFlow({
               {step.detail && <p className="text-xs mt-1" style={{ color: 'var(--ad-muted)' }}>{step.detail}</p>}
               {(step.at || step.owner) && (
                 <p className="text-[11px] mt-1" style={{ color: 'var(--ad-muted)' }}>
-                  {[step.owner, step.at ? new Date(step.at).toLocaleString() : ''].filter(Boolean).join(' · ')}
+                  {step.owner}{step.owner && step.at ? ' · ' : ''}{step.at ? <DateText value={step.at} /> : null}
                 </p>
               )}
             </div>

@@ -12,6 +12,7 @@ import {
   MinLength,
   ValidateNested,
 } from 'class-validator';
+import { SLUG_REGEX, SLUG_MESSAGE } from '../../../common/validation/slug';
 
 export class SolutionFaqDto {
   @ApiProperty()
@@ -35,7 +36,7 @@ export class CreateSolutionDto {
   @ApiPropertyOptional({ example: 'diagnostic' })
   @IsOptional()
   @IsString()
-  @Matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+  @Matches(SLUG_REGEX, { message: SLUG_MESSAGE })
   @MaxLength(80)
   slug?: string;
 
@@ -44,6 +45,16 @@ export class CreateSolutionDto {
   @IsString()
   @MaxLength(8)
   locale?: string;
+
+  @ApiPropertyOptional({
+    description:
+      "Identifiant commun aux versions linguistiques d'une même solution. Permet au sélecteur de langue de basculer vers la bonne fiche traduite.",
+    example: 'sol-1',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  legacyId?: string;
 
   @ApiPropertyOptional()
   @IsOptional()

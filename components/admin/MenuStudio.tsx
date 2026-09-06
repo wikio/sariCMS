@@ -1,18 +1,25 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import {
   DndContext, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent,
 } from '@dnd-kit/core';
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ChevronDown, ChevronUp, CornerDownRight, GripVertical, Plus, Save, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, CornerDownRight, GripVertical, Languages, Plus, Save, Trash2 } from 'lucide-react';
 import PixelGridLoader from '@/components/admin/PixelGridLoader';
 import { useToast } from '@/components/admin/Toast';
 import { IconPicker } from '@/components/admin/fields/FieldKit';
 import SlugPicker from '@/components/admin/SlugPicker';
 import { cmsAdminCreate, cmsAdminList, cmsAdminUpdate } from '@/lib/cms-admin';
+import { locales as LOCALES } from '@/lib/i18n';
+
+/** Libellés lisibles des langues gérées. */
+const LOCALE_LABELS: Record<string, string> = { fr: 'Français', en: 'English', ar: 'العربية' };
+import AutoSubmenuPicker from '@/components/admin/AutoSubmenuPicker';
+import type { AutoRule } from '@/lib/menu-auto';
 import { CmsError } from '@/lib/cms';
 
 type MenuItem = {
@@ -22,6 +29,12 @@ type MenuItem = {
   desc?: string;
   icon?: string;
   submenu?: MenuItem[];
+  /**
+   * Sous-menu généré depuis le contenu (voir `lib/menu-auto.ts`).
+   * Quand elle est présente, `submenu` n'est pas enregistré : la liste est
+   * recalculée à l'affichage, donc toujours à jour.
+   */
+  auto?: AutoRule | null;
 };
 
 type MenuRecord = {
@@ -82,13 +95,28 @@ function normalizeItems(items: unknown): MenuItem[] {
   }));
 }
 
-export default function MenuStudio() {
-  const locale = useLocale();
+function MenuStudioInner() {
+  const adminLocale = useLocale();
   const { showToast } = useToast();
-  const [tab, setTab] = useState('main');
+  const searchParams = useSearchParams();
+  const [tab, setTab] = useState(() => {
+    const wanted = searchParams.get('location');
+    return wanted && LOCATIONS.some((l) => l.id === wanted) ? wanted : 'main';
+  });
+
+  // Langue du menu édité. Elle était implicitement celle de l'interface : on
+  // ne pouvait donc modifier que le menu de la langue dans laquelle on
+  // naviguait, sans aucun indice à l'écran. Les autres langues continuaient
+  // d'afficher l'ancien menu statique, d'où des menus divergents.
+  const [locale, setLocale] = useState<string>(() => {
+    const wanted = searchParams.get('lang');
+    return wanted && (LOCALES as readonly string[]).includes(wanted) ? wanted : adminLocale;
+  });
+
   const [menus, setMenus] = useState<MenuRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [copying, setCopying] = useState(false);
   const [draft, setDraft] = useState<MenuItem[]>([]);
 
   const load = async () => {
@@ -161,20 +189,73 @@ export default function MenuStudio() {
     }));
   };
 
+  /** Construit l'enregistrement d'un menu pour une langue donnée. */
+  const buildPayload = (targetLocale: string) => ({
+    name: LOCATIONS.find((l) => l.id === tab)?.label || tab,
+    location: tab,
+    locale: targetLocale,
+    status: 'published',
+    // Une règle `auto` remplace le sous-menu : on n'enregistre pas la liste
+    // résolue, sinon elle serait figée à la date d'enregistrement et
+    // continuerait d'afficher les fiches archivées depuis.
+    // `submenu` n'est écrit que s'il contient réellement des liens : un
+    // tableau vide étant vrai en JavaScript, la vitrine affichait sinon un
+    // chevron et un panneau déroulant vide sur ces entrées.
+    items: draft.map((it) => {
+      const children = it.auto
+        ? []
+        : (it.submenu || []).map((c) => ({ ...c, id: c.id || uid() }));
+      return {
+        ...it,
+        id: it.id || uid(),
+        auto: it.auto || null,
+        submenu: children.length ? children : undefined,
+      };
+    }),
+  });
+
+  /**
+   * Recopie la structure courante vers les autres langues.
+   *
+   * Les menus sont enregistrés par langue (unicité emplacement + langue) :
+   * enregistrer en français ne crée rien pour l'anglais ni l'arabe, qui
+   * continuaient donc d'afficher l'ancien menu statique. Cette copie reprend
+   * liens, ordre, règles et sous-menus ; seuls les libellés restent à traduire
+   * dans chaque langue.
+   */
+  const copyToOtherLocales = async () => {
+    const targets = (LOCALES as readonly string[]).filter((l) => l !== locale);
+    if (!targets.length) return;
+    setCopying(true);
+    try {
+      const results = await Promise.allSettled(
+        targets.map(async (target) => {
+          const rows = await cmsAdminList<MenuRecord>('menus', {
+            filter: JSON.stringify({ locale: target }),
+          });
+          const existing = rows.find((m) => m.location === tab);
+          const payload = buildPayload(target);
+          return existing?.id
+            ? cmsAdminUpdate<MenuRecord>('menus', existing.id, payload)
+            : cmsAdminCreate<MenuRecord>('menus', payload);
+        }),
+      );
+      const failed = results.filter((r) => r.status === 'rejected').length;
+      showToast(
+        failed
+          ? `Copie partielle : ${targets.length - failed}/${targets.length} langue(s)`
+          : `Structure copiée vers ${targets.join(', ')}`,
+        failed ? 'error' : 'success',
+      );
+    } finally {
+      setCopying(false);
+    }
+  };
+
   const save = async () => {
     setSaving(true);
     try {
-      const payload = {
-        name: LOCATIONS.find((l) => l.id === tab)?.label || tab,
-        location: tab,
-        locale,
-        status: 'published',
-        items: draft.map((it) => ({
-          ...it,
-          id: it.id || uid(),
-          submenu: (it.submenu || []).map((c) => ({ ...c, id: c.id || uid() })),
-        })),
-      };
+      const payload = buildPayload(locale);
       if (current?.id) {
         const saved = await cmsAdminUpdate<MenuRecord>('menus', current.id, payload);
         setMenus((prev) => prev.map((m) => (m.id === current.id ? { ...m, ...saved, items: payload.items } : m)));
@@ -217,6 +298,49 @@ export default function MenuStudio() {
         {LOCATIONS.find((l) => l.id === tab)?.hint}
       </p>
 
+      {/* Langue éditée. Chaque langue a son propre menu en base : sans ce
+          choix, on ne modifiait que celle de l'interface et les autres
+          gardaient l'ancien menu. */}
+      <div className="ad-card p-3 flex flex-col lg:flex-row lg:items-center gap-3 ad-rise">
+        <span className="text-[11px] font-black uppercase tracking-widest shrink-0" style={{ color: 'var(--ad-muted)' }}>
+          Langue du menu
+        </span>
+        <div className="flex flex-wrap gap-2">
+          {(LOCALES as readonly string[]).map((code) => (
+            <button
+              key={code}
+              type="button"
+              className={`ad-btn ${locale === code ? 'ad-btn-primary' : 'ad-btn-ghost'}`}
+              onClick={() => setLocale(code)}
+            >
+              {LOCALE_LABELS[code] || code.toUpperCase()}
+              {!menus.some((m) => m.location === tab) && locale === code && (
+                <span className="ml-1 text-[10px] opacity-70">(vide)</span>
+              )}
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-2 lg:ms-auto">
+          <button
+            type="button"
+            className="ad-btn ad-btn-ghost"
+            disabled={copying || saving || !draft.length}
+            onClick={copyToOtherLocales}
+            title="Recopie liens, ordre et sous-menus vers les autres langues ; les libellés restent à traduire."
+          >
+            <Languages className="w-4 h-4" />
+            {copying ? '…' : 'Copier vers les autres langues'}
+          </button>
+        </div>
+      </div>
+
+      {!current && !loading && (
+        <p className="text-sm ad-rise" style={{ color: 'var(--ad-warn, #b45309)' }}>
+          Aucun menu enregistré pour cette langue : la vitrine affiche le menu
+          par défaut. Enregistrez pour le remplacer.
+        </p>
+      )}
+
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
         <SortableContext items={draft.map((it) => it.id || it.href)} strategy={verticalListSortingStrategy}>
           <div className="space-y-2">
@@ -242,8 +366,16 @@ export default function MenuStudio() {
                     </div>
                   </div>
 
-                  {/* Sous-menu */}
-                  {(item.submenu?.length || 0) > 0 && (
+                  {/* Sous-menu généré depuis le contenu */}
+                  <AutoSubmenuPicker
+                    value={item.auto}
+                    onChange={(auto) => setItem(i, { auto })}
+                  />
+
+                  {/* Sous-menu saisi à la main. Masqué quand une règle est
+                      active : la liste générée la remplace à l'affichage, en
+                      montrer deux serait trompeur. */}
+                  {!item.auto && (item.submenu?.length || 0) > 0 && (
                     <div className="ml-4 pl-4 space-y-2" style={{ borderLeft: '2px solid var(--ad-line)' }}>
                       <div className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-accent)' }}>Sous-menu</div>
                       {item.submenu!.map((child, ci) => (
@@ -261,9 +393,11 @@ export default function MenuStudio() {
                     </div>
                   )}
 
-                  <button type="button" className="ad-btn ad-btn-ghost" onClick={() => addChild(i)}>
-                    <Plus className="w-4 h-4" /> Ajouter un sous-lien
-                  </button>
+                  {!item.auto && (
+                    <button type="button" className="ad-btn ad-btn-ghost" onClick={() => addChild(i)}>
+                      <Plus className="w-4 h-4" /> Ajouter un sous-lien
+                    </button>
+                  )}
                 </div>
               </SortableItem>
             ))}
@@ -298,5 +432,13 @@ function SortableItem({ id, children }: { id: string; children: React.ReactNode 
         <div className="flex-1 min-w-0">{children}</div>
       </div>
     </div>
+  );
+}
+
+export default function MenuStudio() {
+  return (
+    <Suspense fallback={<div className="ad-card"><PixelGridLoader label="Menus" /></div>}>
+      <MenuStudioInner />
+    </Suspense>
   );
 }

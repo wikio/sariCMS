@@ -4,19 +4,28 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   ArrowDownAZ, ArrowUpAZ, Check, GripVertical, Pencil, Plus, RefreshCw,
   Search, SlidersHorizontal, Table2, LayoutGrid, Trash2, X, Save, Eye,
+  CheckSquare, Square, Mail, ShieldOff, ShieldCheck, KeyRound, MessageSquare,
 } from 'lucide-react';
+import UserForm from '@/components/admin/UserForm';
+import UserSheet from '@/components/admin/UserSheet';
+import UserRow from '@/components/admin/UserRow';
+import MessageComposer from '@/components/admin/MessageComposer';
+import type { PersonType } from '@/lib/messages';
 import PixelGridLoader from '@/components/admin/PixelGridLoader';
 import { useToast } from '@/components/admin/Toast';
 import {
   cmsAdminAutocomplete,
   cmsAdminCreate,
   cmsAdminDelete,
+  cmsAdminGet,
   cmsAdminList,
   cmsAdminUpdate,
   extraFiltersForType,
   newItemDraft,
 } from '@/lib/cms-admin';
 import { CmsError } from '@/lib/cms';
+import { userRecordHref } from '@/lib/user-links';
+import Link from 'next/link';
 
 export type CrudVariant =
   | 'catalog'
@@ -196,6 +205,13 @@ export default function AdminCrud({
   const [saving, setSaving] = useState(false);
   const [inline, setInline] = useState<{ id: string; field: string; value: string } | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
+  // Sélection multiple et fiche de consultation : réservées aux comptes, les
+  // autres modules disposent déjà de ces outils dans CmsList.
+  const [selected, setSelected] = useState<string[]>([]);
+  const [consulting, setConsulting] = useState<Record<string, unknown> | null>(null);
+  const [messaging, setMessaging] = useState<Record<string, unknown> | null>(null);
+  const [busy, setBusy] = useState(false);
+  const estUsers = cfg.dataType === 'users';
 
   const load = async () => {
     setLoading(true);
@@ -274,6 +290,14 @@ export default function AdminCrud({
   };
 
   const add = async () => {
+    // Comptes : on ouvre un formulaire vierge sans rien écrire en base.
+    // L'ancien comportement créait immédiatement un compte de remplissage
+    // (« user1757…@sarisysteme.com ») avec un mot de passe connu ; abandonner
+    // la saisie laissait ce compte actif derrière soi.
+    if (estUsers) {
+      setEditing({ locale, type: 'client', status: 'active' });
+      return;
+    }
     try {
       const created = await cmsAdminCreate(cfg.resource, newItemDraft(cfg.resource, locale));
       setRows((prev) => [created as Record<string, unknown>, ...prev]);
@@ -293,6 +317,121 @@ export default function AdminCrud({
     } catch (err) {
       showToast(err instanceof CmsError ? err.message : 'Erreur', 'error');
     }
+  };
+
+  /**
+   * Exécute une action sur chaque élément sélectionné.
+   *
+   * `allSettled` plutôt que `all` : une fiche en échec (droits insuffisants,
+   * compte supprimé entre-temps) ne doit pas masquer le sort des autres. On
+   * renvoie les identifiants réellement traités afin de n'actualiser que
+   * ceux-là et de laisser les autres sélectionnés pour un nouvel essai.
+   */
+  const runBulk = async (ids: string[], action: (id: string) => Promise<unknown>) => {
+    const results = await Promise.allSettled(ids.map((id) => action(id)));
+    const done: string[] = [];
+    let firstError: unknown = null;
+    results.forEach((res, i) => {
+      if (res.status === 'fulfilled') done.push(ids[i]);
+      else if (!firstError) firstError = res.reason;
+    });
+    return { done, failed: ids.length - done.length, firstError };
+  };
+
+  /**
+   * Ouvre une fiche après avoir rechargé l'enregistrement complet.
+   *
+   * La liste ne renvoie qu'une projection : éditer directement une de ses
+   * lignes afficherait `position` ou `roleId` vides, puis les effacerait à
+   * l'enregistrement. En cas d'échec on retombe sur la ligne de liste, ce qui
+   * vaut mieux que de ne rien ouvrir.
+   */
+  const ouvrirFiche = async (row: Record<string, unknown>, mode: 'edit' | 'view') => {
+    const poser = (r: Record<string, unknown>) => (mode === 'edit' ? setEditing(r) : setConsulting(r));
+    poser(row);
+    if (!row.id) return;
+    try {
+      const complet = await cmsAdminGet(cfg.resource, String(row.id));
+      if (complet && typeof complet === 'object') poser({ ...row, ...(complet as Record<string, unknown>) });
+    } catch {
+      /* Fiche complète indisponible : la ligne de liste reste affichée. */
+    }
+  };
+
+  /** Change le statut d'un seul compte, sans passer par la sélection. */
+  const setRowStatus = async (row: Record<string, unknown>, status: string) => {
+    setBusy(true);
+    try {
+      await cmsAdminUpdate(cfg.resource, String(row.id), { status });
+      setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, status } : r)));
+      showToast('Statut mis à jour', 'success');
+    } catch (err) {
+      showToast(err instanceof CmsError ? err.message : 'Erreur', 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const toggleSelect = (id: string) =>
+    setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+
+  const toggleSelectAll = () => {
+    const ids = filtered.map((r) => String(r.id));
+    // Tout décocher si la page entière est déjà sélectionnée, sinon tout cocher.
+    setSelected((prev) => (ids.every((id) => prev.includes(id)) ? prev.filter((id) => !ids.includes(id)) : ids));
+  };
+
+  /** Applique un champ (statut, type…) à toute la sélection. */
+  const bulkPatch = async (patch: Record<string, unknown>, libelle: string) => {
+    if (!selected.length) return;
+    if (!confirm(`${libelle} — ${selected.length} compte(s) ?`)) return;
+    setBusy(true);
+    try {
+      const { done, failed, firstError } = await runBulk(selected, (id) => cmsAdminUpdate(cfg.resource, id, patch));
+      // Mise à jour locale plutôt que rechargement : tri, filtres et position
+      // de défilement en cours sont conservés.
+      if (done.length) setRows((prev) => prev.map((r) => (done.includes(String(r.id)) ? { ...r, ...patch } : r)));
+      setSelected((prev) => prev.filter((id) => !done.includes(id)));
+      if (failed) {
+        showToast(`${done.length} traité(s), ${failed} en échec — ${firstError instanceof CmsError ? firstError.message : ''}`.trim(), 'error');
+      } else {
+        showToast(`${libelle} : ${done.length} compte(s)`, 'success');
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const bulkDelete = async () => {
+    if (!selected.length || !confirm(`Envoyer ${selected.length} compte(s) en corbeille ?`)) return;
+    setBusy(true);
+    try {
+      const { done, failed, firstError } = await runBulk(selected, (id) => cmsAdminDelete(cfg.resource, id));
+      if (done.length) setRows((prev) => prev.filter((r) => !done.includes(String(r.id))));
+      setSelected((prev) => prev.filter((id) => !done.includes(id)));
+      if (failed) {
+        showToast(`${done.length} supprimé(s), ${failed} en échec — ${firstError instanceof CmsError ? firstError.message : ''}`.trim(), 'error');
+      } else {
+        showToast(`${done.length} compte(s) en corbeille`, 'success');
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  /** Ouvre le client mail avec la sélection en copie cachée. */
+  const bulkMail = () => {
+    const mails = rows
+      .filter((r) => selected.includes(String(r.id)))
+      .map((r) => String(r.email || '').trim())
+      .filter(Boolean);
+    if (!mails.length) {
+      showToast('Aucune adresse e-mail dans la sélection', 'error');
+      return;
+    }
+    // Cci plutôt que « À » : les destinataires ne doivent pas voir les
+    // adresses des autres comptes.
+    window.location.href = `mailto:?bcc=${encodeURIComponent(mails.join(','))}`;
   };
 
   const onDrop = async (targetId: string) => {
@@ -338,10 +477,16 @@ export default function AdminCrud({
       </header>
 
       <div className="ad-card p-3 ad-rise ad-rise-2">
+        {/*
+          La recherche occupe l'essentiel de la largeur : les filtres, sur une
+          base flexible égale, lui prenaient auparavant la majorité de la
+          place. `basis` fixe leur largeur et `flex-1` donne le reste au champ.
+          L'icône utilise `ad-affix`, donc elle passe à droite en arabe.
+        */}
         <div className="flex flex-col lg:flex-row gap-2">
-          <div className="relative flex-1">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--ad-muted)' }} />
-            <input className="ad-input pl-9" value={q} onChange={(e) => setQ(e.target.value)} placeholder={cfg.searchHint || 'Recherche avancée…'} />
+          <div className="ad-affix has-start flex-1 lg:min-w-[22rem]">
+            <span className="ad-affix-start"><Search className="w-4 h-4" /></span>
+            <input className="ad-input" value={q} onChange={(e) => setQ(e.target.value)} placeholder={cfg.searchHint || 'Recherche avancée…'} />
             {autoHits.length > 0 && (
               <div className="absolute z-20 left-0 right-0 mt-1 ad-card overflow-hidden">
                 {autoHits.map((h) => (
@@ -353,16 +498,51 @@ export default function AdminCrud({
             )}
           </div>
           {cfg.filters.map((f) => (
-            <select key={f.key} className="ad-select lg:w-40" value={filters[f.key] || ''} onChange={(e) => setFilters((p) => ({ ...p, [f.key]: e.target.value }))}>
+            <select key={f.key} className="ad-select lg:basis-40 lg:shrink-0 lg:grow-0" value={filters[f.key] || ''} onChange={(e) => setFilters((p) => ({ ...p, [f.key]: e.target.value }))}>
               <option value="">{f.label}</option>
               {(f.options || dynamicOptions(f.key)).map((opt) => <option key={opt} value={opt}>{opt}</option>)}
             </select>
           ))}
-          <button className="ad-btn ad-btn-ghost" onClick={() => { setQ(''); setFilters({}); }}>
+          <button className="ad-btn ad-btn-ghost lg:shrink-0" onClick={() => { setQ(''); setFilters({}); }}>
             <SlidersHorizontal className="w-4 h-4" /> Reset
           </button>
         </div>
       </div>
+
+      {estUsers && selected.length > 0 && (
+        <div className="ad-card p-3 ad-rise flex flex-wrap items-center gap-2" style={{ borderColor: 'var(--ad-accent)' }}>
+          <span className="text-sm font-bold">{selected.length} compte(s) sélectionné(s)</span>
+          <div className="flex flex-wrap gap-2 ml-auto">
+            <button className="ad-btn ad-btn-ghost" disabled={busy} onClick={() => bulkPatch({ status: 'active' }, 'Activer')}>
+              <ShieldCheck className="w-4 h-4" /> Activer
+            </button>
+            <button className="ad-btn ad-btn-ghost" disabled={busy} onClick={() => bulkPatch({ status: 'blocked' }, 'Bloquer')}>
+              <ShieldOff className="w-4 h-4" /> Bloquer
+            </button>
+            <button className="ad-btn ad-btn-ghost" disabled={busy} onClick={() => bulkPatch({ status: 'pending' }, 'Mettre en attente')}>
+              <KeyRound className="w-4 h-4" /> En attente
+            </button>
+            <select
+              className="ad-select w-auto"
+              disabled={busy}
+              value=""
+              onChange={(e) => { if (e.target.value) bulkPatch({ type: e.target.value }, `Changer le type en « ${e.target.value} »`); e.target.value = ''; }}
+            >
+              <option value="">Changer le type…</option>
+              {['admin', 'client', 'partner', 'candidate'].map((v) => <option key={v} value={v}>{v}</option>)}
+            </select>
+            <button className="ad-btn ad-btn-ghost" disabled={busy} onClick={bulkMail}>
+              <Mail className="w-4 h-4" /> E-mail
+            </button>
+            <button className="ad-btn ad-btn-danger" disabled={busy} onClick={bulkDelete}>
+              <Trash2 className="w-4 h-4" /> Corbeille
+            </button>
+            <button className="ad-btn ad-btn-ghost" onClick={() => setSelected([])}>
+              <X className="w-4 h-4" /> Désélectionner
+            </button>
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div className="ad-card"><PixelGridLoader label="Sync CMS" /></div>
@@ -371,6 +551,15 @@ export default function AdminCrud({
           <table className="ad-table">
             <thead>
               <tr>
+                {estUsers && (
+                  <th className="w-8">
+                    <button className="ad-btn ad-btn-icon ad-btn-ghost !p-1" onClick={toggleSelectAll} title="Tout sélectionner">
+                      {filtered.length > 0 && filtered.every((r) => selected.includes(String(r.id)))
+                        ? <CheckSquare className="w-4 h-4" />
+                        : <Square className="w-4 h-4" />}
+                    </button>
+                  </th>
+                )}
                 {cfg.orderField && <th />}
                 <th onClick={() => toggleSort(cfg.titleField)}>{cfg.titleField} {sortIcon(sortKey, cfg.titleField, sortDir)}</th>
                 {cfg.inlineFields.filter((f) => f !== cfg.titleField).map((f) => (
@@ -388,16 +577,23 @@ export default function AdminCrud({
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={() => onDrop(String(row.id))}
                 >
+                  {estUsers && (
+                    <td className="w-8">
+                      <button className="ad-btn ad-btn-icon ad-btn-ghost !p-1" onClick={() => toggleSelect(String(row.id))}>
+                        {selected.includes(String(row.id)) ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
+                      </button>
+                    </td>
+                  )}
                   {cfg.orderField && <td className="w-8 opacity-40"><GripVertical className="w-4 h-4" /></td>}
                   <td className="font-semibold">{titleOf(row, cfg)}</td>
                   {cfg.inlineFields.filter((f) => f !== cfg.titleField).map((f) => (
                     <td key={f}>
-                      {inline?.id === row.id && inline.field === f ? (
+                      {inline && inline.id === row.id && inline.field === f ? (
                         <input
                           autoFocus
                           className="ad-input py-1"
                           value={inline.value}
-                          onChange={(e) => setInline({ ...inline, value: e.target.value })}
+                          onChange={(e) => setInline({ id: String(row.id), field: f, value: e.target.value })}
                           onBlur={persistInline}
                           onKeyDown={(e) => e.key === 'Enter' && persistInline()}
                         />
@@ -409,7 +605,11 @@ export default function AdminCrud({
                     </td>
                   ))}
                   <td className="text-right whitespace-nowrap">
-                    <button className="ad-btn ad-btn-icon ad-btn-ghost" onClick={() => setEditing(row)}><Pencil className="w-4 h-4" /></button>
+                    {estUsers && (
+                      <button className="ad-btn ad-btn-icon ad-btn-ghost" onClick={() => setMessaging(row)} title="Envoyer un message interne"><MessageSquare className="w-4 h-4" /></button>
+                    )}
+                    <button className="ad-btn ad-btn-icon ad-btn-ghost ml-1" onClick={() => ouvrirFiche(row, 'view')} title="Consulter la fiche"><Eye className="w-4 h-4" /></button>
+                    <button className="ad-btn ad-btn-icon ad-btn-ghost ml-1" onClick={() => ouvrirFiche(row, 'edit')} title="Éditer"><Pencil className="w-4 h-4" /></button>
                     <button className="ad-btn ad-btn-icon ad-btn-danger ml-1" onClick={() => remove(String(row.id))}><Trash2 className="w-4 h-4" /></button>
                   </td>
                 </tr>
@@ -418,11 +618,80 @@ export default function AdminCrud({
           </table>
         </div>
       ) : (
-        <SmartGrid cfg={cfg} rows={filtered} onEdit={setEditing} onDelete={remove} onDrop={onDrop} setDragId={setDragId} onInline={(row, field) => setInline({ id: String(row.id), field, value: String(row[field] ?? '') })} inline={inline} persistInline={persistInline} setInline={setInline} />
+        <SmartGrid cfg={cfg} locale={locale} rows={filtered} onEdit={(r) => ouvrirFiche(r, 'edit')} onConsult={(r) => ouvrirFiche(r, 'view')} onDelete={remove} onDrop={onDrop} setDragId={setDragId} onInline={(row, field) => setInline({ id: String(row.id), field, value: String(row[field] ?? '') })} inline={inline} persistInline={persistInline} setInline={setInline} selected={selected} onToggleSelect={toggleSelect} onMessage={setMessaging} onStatus={setRowStatus} />
       )}
 
-      {editing && (
-        <div className="fixed inset-0 z-50 bg-black/45 backdrop-blur-sm flex items-end md:items-center justify-center p-4">
+      {messaging && (
+        <MessageComposer
+          email={String(messaging.email || '')}
+          name={[messaging.firstName, messaging.lastName].filter(Boolean).join(' ') || String(messaging.email || '')}
+          type={(['client', 'partner', 'candidate'].includes(String(messaging.type)) ? messaging.type : 'other') as PersonType}
+          onClose={() => setMessaging(null)}
+        />
+      )}
+
+      {consulting && (
+        <div className="ad-overlay">
+          <div className="ad-card ad-modal w-full max-w-4xl max-h-[92dvh] ad-rise">
+            <div className="ad-modal-body ad-scroll p-4 sm:p-6">
+            <UserSheet
+              record={consulting}
+              locale={locale}
+              onClose={() => setConsulting(null)}
+              onEdit={() => { setEditing(consulting); setConsulting(null); }}
+            />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {editing && estUsers && (
+        <div className="ad-overlay">
+          {/*
+            En-tête fixe et corps défilant : le cadre ne défile pas, seul le
+            contenu le fait. `dvh` plutôt que `vh` car sur mobile la barre
+            d'adresse rogne la fenêtre, ce qui rendait le pied inaccessible.
+          */}
+          <div className="ad-card ad-modal w-full max-w-4xl max-h-[92dvh] ad-rise">
+            <div className="flex items-center justify-between gap-2 p-4 sm:p-6 pb-3 border-b shrink-0" style={{ borderColor: 'var(--ad-line)' }}>
+              <h2 className="text-lg sm:text-xl font-black truncate">
+                {editing.id ? `Édition · ${titleOf(editing, cfg)}` : 'Nouveau compte'}
+              </h2>
+              <button className="ad-btn ad-btn-icon ad-btn-ghost shrink-0" onClick={() => setEditing(null)}><X className="w-4 h-4" /></button>
+            </div>
+            <div className="ad-modal-body ad-scroll p-4 sm:p-6">
+            <UserForm
+              record={editing}
+              locale={locale}
+              saving={saving}
+              onCancel={() => setEditing(null)}
+              onSave={async (payload) => {
+                setSaving(true);
+                try {
+                  if (payload.id) {
+                    const saved = await cmsAdminUpdate(cfg.resource, String(payload.id), payload);
+                    setRows((prev) => prev.map((r) => (r.id === payload.id ? { ...r, ...(saved as Record<string, unknown>) } : r)));
+                    showToast('Compte enregistré', 'success');
+                  } else {
+                    const cree = await cmsAdminCreate(cfg.resource, payload) as Record<string, unknown>;
+                    setRows((prev) => [cree, ...prev]);
+                    showToast('Compte créé', 'success');
+                  }
+                  setEditing(null);
+                } catch (err) {
+                  showToast(err instanceof CmsError ? err.message : 'Erreur', 'error');
+                } finally {
+                  setSaving(false);
+                }
+              }}
+            />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {editing && !estUsers && (
+        <div className="ad-overlay">
           <div className="ad-card w-full max-w-3xl max-h-[90vh] overflow-y-auto ad-scroll p-6 ad-rise">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-black">Édition · {titleOf(editing, cfg)}</h2>
@@ -470,14 +739,22 @@ function coerce(value: string) {
 }
 
 function SmartGrid({
-  cfg, rows, onEdit, onDelete, onDrop, setDragId, inline, setInline, persistInline,
+  cfg, rows, onEdit, onConsult, onDelete, onDrop, setDragId, inline, setInline, persistInline, locale,
+  selected = [], onToggleSelect, onMessage, onStatus,
 }: {
   cfg: ModuleCrudConfig;
+  locale: string;
   rows: Record<string, unknown>[];
   onEdit: (r: Record<string, unknown>) => void;
+  onConsult?: (r: Record<string, unknown>) => void;
   onDelete: (id: string) => void;
+  selected?: string[];
+  onToggleSelect?: (id: string) => void;
+  onMessage?: (r: Record<string, unknown>) => void;
+  onStatus?: (r: Record<string, unknown>, statut: string) => void;
   onDrop: (id: string) => void;
   setDragId: (id: string | null) => void;
+  onInline?: (row: Record<string, unknown>, field: string) => void;
   inline: { id: string; field: string; value: string } | null;
   setInline: (v: { id: string; field: string; value: string } | null) => void;
   persistInline: () => void;
@@ -505,8 +782,8 @@ function SmartGrid({
         <div className="p-4 space-y-2">
           <div className="flex items-start justify-between gap-2">
             <div>
-              {inline?.id === row.id && inline.field === cfg.titleField ? (
-                <input className="ad-input py-1" value={inline.value} onChange={(e) => setInline({ ...inline, value: e.target.value })} onBlur={persistInline} autoFocus />
+              {inline && inline.id === row.id && inline.field === cfg.titleField ? (
+                <input className="ad-input py-1" value={inline.value} onChange={(e) => setInline({ id: String(row.id), field: cfg.titleField, value: e.target.value })} onBlur={persistInline} autoFocus />
               ) : (
                 <h3 className="font-bold leading-snug cursor-text" onClick={() => setInline({ id: String(row.id), field: cfg.titleField, value: title })}>{title}</h3>
               )}
@@ -562,21 +839,30 @@ function SmartGrid({
   }
 
   if (cfg.variant === 'people') {
+    // Une colonne : chaque ligne porte désormais coordonnées et statistiques,
+    // que trois colonnes tronqueraient. Deux colonnes seulement sur très
+    // grand écran, où la place le permet.
     return (
-      <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-3">
+      <div className="grid gap-2 2xl:grid-cols-2">
         {rows.map((row) => (
-          <article key={String(row.id)} className="ad-card p-4 flex gap-3 items-center">
-            <div className="w-12 h-12 rounded-2xl flex items-center justify-center font-black text-white" style={{ background: 'linear-gradient(135deg, var(--ad-accent), #0d7a9e)' }}>
-              {String(row.firstName || row.email || '?').slice(0, 1).toUpperCase()}
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="font-bold truncate">{String(row.firstName || '')} {String(row.lastName || '')}</div>
-              <div className="text-xs truncate" style={{ color: 'var(--ad-muted)' }}>{String(row.email)}</div>
-            </div>
-            <span className="ad-chip ad-chip-acc">{String(row.type)}</span>
-            <button className="ad-btn ad-btn-icon ad-btn-ghost" onClick={() => onEdit(row)}><Pencil className="w-4 h-4" /></button>
-          </article>
+          <UserRow
+            key={String(row.id)}
+            record={row}
+            locale={locale}
+            selected={selected.includes(String(row.id))}
+            onToggleSelect={() => onToggleSelect?.(String(row.id))}
+            onConsult={() => onConsult?.(row)}
+            onEdit={() => onEdit(row)}
+            onDelete={() => onDelete(String(row.id))}
+            onMessage={() => onMessage?.(row)}
+            onStatus={(statut) => onStatus?.(row, statut)}
+          />
         ))}
+        {rows.length === 0 && (
+          <div className="ad-card p-10 text-center 2xl:col-span-2" style={{ color: 'var(--ad-muted)' }}>
+            Aucun compte ne correspond à la recherche.
+          </div>
+        )}
       </div>
     );
   }
@@ -590,5 +876,30 @@ function SmartGrid({
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * Badge de type de compte, cliquable vers la vue métier correspondante.
+ *
+ * Clients, partenaires et candidats ne sont pas des tables distinctes : ce sont
+ * des lignes de `users` avec un `type` différent. Le badge mène donc à la liste
+ * métier filtrée sur l'email du compte (unique en base). Le type `admin`
+ * renvoie vers Rôles & permissions.
+ */
+function TypeChip({ locale, type, email }: { locale: string; type: unknown; email: unknown }) {
+  const label = String(type ?? '—');
+  const href = userRecordHref(locale, type, email);
+  if (!href) return <span className="ad-chip ad-chip-acc">{label}</span>;
+  return (
+    <Link
+      href={href}
+      className="ad-chip ad-chip-acc hover:underline"
+      title={`Voir la fiche ${label}`}
+      onClick={(e) => e.stopPropagation()}
+    >
+      {label}
+      <Eye className="w-3 h-3 ml-1 inline-block" />
+    </Link>
   );
 }

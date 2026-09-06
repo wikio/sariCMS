@@ -1,6 +1,8 @@
 [
   {
     "id": 1,
+    "slug": "new-generation-of-portable-ultrasound-systems",
+    "legacyId": "news-1",
     "title": "New generation of portable ultrasound systems",
     "date": "15 Janvier 2024",
     "author": "Dr. Marie Laurent",
@@ -14,6 +16,8 @@
   },
   {
     "id": 2,
+    "slug": "strategic-partnership-with-a-global-imaging-leader",
+    "legacyId": "news-2",
     "title": "Strategic partnership with a global imaging leader",
     "date": "10 Janvier 2024",
     "author": "Jean Dupont",
@@ -27,6 +31,8 @@
   },
   {
     "id": 3,
+    "slug": "2024-continuing-education-schedule-now-available",
+    "legacyId": "news-3",
     "title": "2024 Continuing Education: Schedule now available",
     "date": "5 Janvier 2024",
     "author": "Service Formation",
@@ -40,6 +46,8 @@
   },
   {
     "id": 4,
+    "slug": "sari-systeme-obtains-iso-13485-certification",
+    "legacyId": "news-4",
     "title": "SARI Système obtains ISO 13485 certification",
     "date": "20 Décembre 2023",
     "author": "Direction Qualité",
@@ -53,6 +61,8 @@
   },
   {
     "id": 5,
+    "slug": "benefits-of-class-b-sterilization-in-clinics",
+    "legacyId": "news-5",
     "title": "Benefits of Class B sterilization in clinics",
     "date": "15 Décembre 2023",
     "author": "Dr. Philippe Martin",
@@ -66,6 +76,8 @@
   },
   {
     "id": 6,
+    "slug": "innovation-next-generation-oxygen-concentrators",
+    "legacyId": "news-6",
     "title": "Innovation: Next-generation oxygen concentrators",
     "date": "10 Décembre 2023",
     "author": "Service Technique",
@@ -79,6 +91,8 @@
   },
   {
     "id": 7,
+    "slug": "looking-back-at-the-international-medical-exhibition-2023",
+    "legacyId": "news-7",
     "title": "Looking back at the International Medical Exhibition 2023",
     "date": "1 Décembre 2023",
     "author": "Équipe SARI",
@@ -92,6 +106,8 @@
   },
   {
     "id": 8,
+    "slug": "how-to-choose-your-professional-blood-pressure-monitor",
+    "legacyId": "news-8",
     "title": "How to choose your professional blood pressure monitor?",
     "date": "25 Novembre 2023",
     "author": "Dr. Marie Laurent",
@@ -105,6 +121,8 @@
   },
   {
     "id": 9,
+    "slug": "new-regulations-on-medical-devices",
+    "legacyId": "news-9",
     "title": "New regulations on medical devices",
     "date": "20 Novembre 2023",
     "author": "Service Juridique",
@@ -118,6 +136,8 @@
   },
   {
     "id": 10,
+    "slug": "the-importance-of-preventive-maintenance",
+    "legacyId": "news-10",
     "title": "The importance of preventive maintenance",
     "date": "15 Novembre 2023",
     "author": "Service SAV",
@@ -131,6 +151,8 @@
   },
   {
     "id": 11,
+    "slug": "focus-on-our-eco-friendly-consumable-packs",
+    "legacyId": "news-11",
     "title": "Focus on our eco-friendly consumable packs",
     "date": "10 Novembre 2023",
     "author": "Équipe RSE",
@@ -144,6 +166,8 @@
   },
   {
     "id": 12,
+    "slug": "webinar-the-future-of-telemedicine",
+    "legacyId": "news-12",
     "title": "Webinar: The future of telemedicine",
     "date": "5 Novembre 2023",
     "author": "Dr. Thomas Bernard",
@@ -157,6 +181,8 @@
   },
   {
     "id": 13,
+    "slug": "recruitment-we-are-expanding-our-team",
+    "legacyId": "news-13",
     "title": "Recruitment: We are expanding our team!",
     "date": "1 Novembre 2023",
     "author": "Service RH",
@@ -170,6 +196,8 @@
   },
   {
     "id": 14,
+    "slug": "case-study-full-equipment-setup-for-a-new-clinic",
+    "legacyId": "news-14",
     "title": "Case study: Full equipment setup for a new clinic",
     "date": "25 Octobre 2023",
     "author": "Service Commercial",
@@ -183,6 +211,8 @@
   },
   {
     "id": 15,
+    "slug": "medical-technology-trends-for-2024",
+    "legacyId": "news-15",
     "title": "Medical technology trends for 2024",
     "date": "20 Octobre 2023",
     "author": "Direction Innovation",

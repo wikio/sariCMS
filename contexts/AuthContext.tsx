@@ -8,7 +8,6 @@ export interface User {
   id: string;
   name: string;
   firstName?: string;
-  lastName?: string;
   email: string;
   type: 'client' | 'partner' | 'candidate' | 'admin';
   phone?: string;
@@ -16,6 +15,19 @@ export interface User {
   avatar?: string;
   address?: string;
   country?: string;
+  wilaya?: string;
+  lastName?: string;
+  position?: string;
+  experience?: string;
+  motivation?: string;
+  cvUrl?: string;
+  /**
+   * Langue choisie par la personne dans son profil.
+   *
+   * Conservée à la connexion : sans elle, un compte réglé en arabe repartait
+   * systématiquement sur la langue de la page de connexion.
+   */
+  locale?: string;
 }
 
 interface AuthContextType {
@@ -30,6 +42,20 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const USER_KEY = 'sari_user';
+/**
+ * Jeton d'accès de la vitrine.
+ *
+ * Distinct de `sari_admin_access` : un visiteur connecté au dashboard public
+ * n'est pas forcément administrateur, et mélanger les deux ferait fuiter une
+ * session admin vers des écrans qui ne la contrôlent pas.
+ */
+export const FRONT_TOKEN_KEY = 'sari_front_access';
+
+/** Jeton courant de la vitrine, ou null hors navigateur / hors session. */
+export function frontToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem(FRONT_TOKEN_KEY);
+}
 const USERS_REGISTRY_KEY = 'sari_users_registry';
 
 /** Registre local des comptes créés via l'inscription (fallback hors-ligne). */
@@ -82,6 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       );
       if (res?.accessToken && res.user) {
         const u = res.user as Record<string, unknown>;
+        localStorage.setItem(FRONT_TOKEN_KEY, res.accessToken);
         persist({
           id: String(u.id ?? ''),
           name: [u.firstName, u.lastName].filter(Boolean).join(' ') || String(u.email),
@@ -91,6 +118,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           type: (u.type as User['type']) || (type as User['type']) || 'client',
           phone: u.phone ? String(u.phone) : undefined,
           company: u.company ? String(u.company) : undefined,
+          locale: u.locale ? String(u.locale) : undefined,
+          address: u.address ? String(u.address) : undefined,
+          country: u.country ? String(u.country) : undefined,
+          wilaya: u.wilaya ? String(u.wilaya) : undefined,
+          position: u.position ? String(u.position) : undefined,
+          avatar: u.avatar ? String(u.avatar) : undefined,
         });
         return true;
       }
@@ -126,6 +159,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     setUser(null);
     localStorage.removeItem(USER_KEY);
+    localStorage.removeItem(FRONT_TOKEN_KEY);
   };
 
   /** Inscription : backend /users d'abord, sinon registre local. */

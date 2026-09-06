@@ -7,7 +7,11 @@ export type FieldKind =
   | 'text' | 'textarea' | 'html' | 'slug' | 'email' | 'phone' | 'url'
   | 'price' | 'number' | 'select' | 'radio' | 'toggle' | 'tags'
   | 'image' | 'gallery' | 'file' | 'faq' | 'list' | 'specs' | 'options' | 'agenda'
-  | 'slides' | 'sections' | 'rating' | 'icon' | 'color' | 'process' | 'datetime';
+  | 'slides' | 'sections' | 'rating' | 'icon' | 'color' | 'process' | 'datetime'
+  /** Sélection multiple de produits par autocomplétion (module Solutions). */
+  | 'products'
+  /** Choix d'un auteur par autocomplétion, avec création à la volée (module Actualités). */
+  | 'author';
 
 export type ListLayout = 'catalog' | 'magazine' | 'timeline' | 'mosaic' | 'quotes' | 'people' | 'slides' | 'docs';
 
@@ -166,7 +170,7 @@ export const CMS_MODULES: CmsModule[] = [
       { key: 'category', label: 'Rubrique', kind: 'select', taxonomy: 'news.category', options: ['Innovation', 'Produits', 'Santé', 'Formation', 'Corporate'].map((v) => ({ value: v, label: v })), hint: 'Gérée dans Taxonomies.', group: 'Article' },
       { key: 'classification', label: 'Classification', kind: 'text', group: 'Article' },
       { key: 'sujet', label: 'Sujet', kind: 'text', group: 'Article' },
-      { key: 'authorName', label: 'Auteur', kind: 'text', group: 'Article', hint: 'Nom de l\'auteur de l\'article.' },
+      { key: 'authorId', label: 'Auteur', kind: 'author', group: 'Article', hint: 'Choisissez une fiche auteur ; sa qualification et sa description sont reprises sur la vitrine. Sans auteur, l\'article utilise l\'auteur par défaut.' },
       { key: 'publicationDate', label: 'Date de publication', kind: 'datetime', required: true, hint: 'Date et heure de publication de l\'article.', group: 'Article' },
       { key: 'readTime', label: 'Temps de lecture', kind: 'text', suffix: 'min', group: 'Article' },
       { key: 'image', label: 'Une', kind: 'image', group: 'Média' },
@@ -177,7 +181,10 @@ export const CMS_MODULES: CmsModule[] = [
   },
   {
     key: 'events', resource: 'events', path: 'events', label: 'Événements', singular: 'événement',
-    icon: Calendar, layout: 'timeline', titleKey: 'title', imageKey: 'image', subtitleKey: 'date', badgeKey: 'type',
+    // `subtitleKey` pointait `date`, un champ hérité que l'éditeur ne remplit
+    // plus (il enregistre `startDate`) : la colonne affichait donc la valeur
+    // brute de la base au lieu de la date mise en forme.
+    icon: Calendar, layout: 'timeline', titleKey: 'title', imageKey: 'image', subtitleKey: 'startDate', badgeKey: 'type',
     searchKeys: ['title', 'location', 'type', 'category'],
     filterKeys: [{ key: 'status', label: 'Statut', options: STATUS.map((s) => s.value) }, { key: 'type', label: 'Type' }, { key: 'category', label: 'Catégorie' }],
     defaults: { title: 'Nouvel événement', status: 'draft', locale: 'fr', agenda: [] },
@@ -203,13 +210,14 @@ export const CMS_MODULES: CmsModule[] = [
     icon: User, layout: 'people', titleKey: 'name', imageKey: 'photo', subtitleKey: 'role',
     searchKeys: ['name', 'email', 'role'],
     filterKeys: [],
-    defaults: { name: 'Nouvel auteur', bio: '', role: '' },
+    defaults: { name: 'Nouvel auteur', bio: '', role: '', isFallback: false, status: 'published', locale: 'fr' },
     fields: [
       { key: 'name', label: 'Nom complet', kind: 'text', required: true, placeholder: 'Ex: Dr. Martin Dupont', maxLength: 120, group: 'Identité' },
+      { key: 'role', label: 'Qualification', kind: 'text', placeholder: 'Ex: Directrice médicale, Expert en cardiologie', hint: 'Affichée sous le nom de l\'auteur sur la page de l\'article.', group: 'Identité', i18n: true },
       { key: 'email', label: 'Email', kind: 'email', placeholder: 'auteur@exemple.com', group: 'Identité' },
-      { key: 'role', label: 'Fonction / Rôle', kind: 'text', placeholder: 'Ex: Journaliste médical, Expert en cardiologie', group: 'Identité' },
       { key: 'photo', label: 'Photo', kind: 'image', group: 'Média' },
-      { key: 'bio', label: 'Biographie', kind: 'textarea', wide: true, placeholder: 'Présentez l\'auteur en quelques lignes...', group: 'Contenu' },
+      { key: 'bio', label: 'Description', kind: 'textarea', wide: true, placeholder: 'Présentez l\'auteur en quelques lignes...', hint: 'Reprise dans le bloc « À propos de l\'auteur » de la vitrine.', group: 'Contenu', i18n: true },
+      { key: 'isFallback', label: 'Auteur par défaut', kind: 'toggle', hint: 'Utilisé pour les articles sans auteur. Un seul auteur par défaut : activer celui-ci désactive le précédent.', group: 'Publication' },
     ],
   },
   {
@@ -325,7 +333,10 @@ export const CMS_MODULES: CmsModule[] = [
   },
   {
     key: 'galleries', resource: 'pages', path: 'galleries', label: 'Galeries', singular: 'galerie',
-    icon: Images, layout: 'mosaic', titleKey: 'title', subtitleKey: 'subtype', badgeKey: 'status',
+    // `subtype` vaut « gallery » sur toutes les lignes (c'est le filtre du
+    // module) : la colonne répétait la même valeur. Le slug, lui, est déclaré
+    // dans `fields` et distingue les galeries entre elles.
+    icon: Images, layout: 'mosaic', titleKey: 'title', subtitleKey: 'slug', badgeKey: 'status',
     searchKeys: ['title'],
     filterKeys: [{ key: 'status', label: 'Statut', options: STATUS.map((s) => s.value) }],
     filter: { subtype: 'gallery' },

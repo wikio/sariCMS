@@ -5,6 +5,7 @@ import { History, Mail, Send } from 'lucide-react';
 import { useToast } from '@/components/admin/Toast';
 import HtmlEditor from '@/components/admin/fields/HtmlEditor';
 import { sendMail, loadOutbox, type OutboxEntry } from '@/lib/mail';
+import DateText from '@/components/shared/DateText';
 
 const TEMPLATES = [
   { id: 'welcome', name: 'Bienvenue', subject: 'Bienvenue chez SARI Système' },
@@ -79,7 +80,7 @@ export default function EmailsPage() {
                 <tr key={m.id}>
                   <td className="font-bold">{m.to}</td>
                   <td>{m.subject}</td>
-                  <td className="text-sm">{new Date(m.sentAt).toLocaleString()}</td>
+                  <td className="text-sm"><DateText value={m.sentAt} /></td>
                   <td><span className={`ad-chip ${m.provider === 'smtp' ? 'ad-chip-ok' : 'ad-chip-mute'}`}>{m.provider === 'smtp' ? 'SMTP' : 'Fichier'}</span></td>
                 </tr>
               ))}

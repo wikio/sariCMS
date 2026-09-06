@@ -5,11 +5,11 @@ import {
   IsBoolean,
   IsOptional,
   IsString,
-  IsUUID,
   Matches,
   MaxLength,
   MinLength,
 } from 'class-validator';
+import { IsEntityId } from '../../../common/validation/entity-id';
 
 export class CreateRoleDto {
   @ApiProperty()
@@ -30,12 +30,15 @@ export class CreateRoleDto {
   @MaxLength(500)
   description?: string;
 
-  @ApiPropertyOptional({ type: [String] })
+  @ApiPropertyOptional({
+    type: [String],
+    description: "Ids de permissions : entiers (MySQL) ou UUID (driver JSON)",
+  })
   @IsOptional()
   @IsArray()
   @ArrayUnique()
-  @IsUUID('4', { each: true })
-  permissionIds?: string[];
+  @IsEntityId({ each: true })
+  permissionIds?: Array<string | number>;
 
   @ApiPropertyOptional()
   @IsOptional()

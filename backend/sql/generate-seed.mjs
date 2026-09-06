@@ -52,10 +52,14 @@ function json(v) {
 // Permissions (aligné sur backend/src/common/constants/permissions.ts)
 // ---------------------------------------------------------------------------
 const ACTIONS = ['create', 'read', 'update', 'delete', 'admin'];
+// Les nouvelles ressources sont ajoutées EN FIN DE LISTE : les identifiants de
+// permission sont attribués séquentiellement, insérer au milieu décalerait
+// ceux déjà référencés par la table de liaison des rôles.
 const RESOURCES = [
   'users', 'roles', 'permissions', 'pages', 'faqs', 'testimonials', 'menus',
   'contact', 'translations', 'audit', 'settings', 'news', 'events', 'products',
   'services', 'partners', 'careers', 'solutions', 'hero', 'dashboard',
+  'orders', 'quotes', 'applications', 'authors',
 ];
 const permKey = (r, a) => `${r}:${a}`;
 const permId = (r, a) => id('perm', permKey(r, a));
@@ -63,6 +67,7 @@ const permId = (r, a) => id('perm', permKey(r, a));
 const CONTENT_RESOURCES = [
   'pages', 'faqs', 'testimonials', 'menus', 'news', 'events', 'products',
   'services', 'partners', 'careers', 'solutions', 'hero', 'translations',
+  'authors',
 ];
 
 function permSetOf(pred) {

@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { useToast } from '@/components/admin/Toast';
+import { resolveColor, withAlpha } from '@/lib/colors';
 
 interface ContentItem {
   id: number;
@@ -207,7 +208,12 @@ export default function AdminContentsPage() {
                     )}
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-${typeInfo.color}/10 text-${typeInfo.color}`}>
+                    {/* Couleurs en style inline : une classe Tailwind construite
+                        dynamiquement (`bg-${...}`) est éliminée au build. */}
+                    <span
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold"
+                      style={{ backgroundColor: withAlpha(typeInfo.color, 0.1), color: resolveColor(typeInfo.color) }}
+                    >
                       <TypeIcon className="w-3 h-3" />
                       {typeInfo.label}
                     </span>

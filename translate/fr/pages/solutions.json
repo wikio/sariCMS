@@ -27,6 +27,10 @@
     "subtitle": "Nos Catégories",
     "title": "Explorez nos solutions par domaine",
     "description": "Chaque catégorie regroupe les meilleurs équipements pour répondre aux besoins spécifiques de votre pratique",
+    "cta": "Découvrir",
+    "empty": "Aucune solution publiée pour le moment.",
+    "emptyDesc": "Les solutions ajoutées depuis l'administration apparaîtront ici.",
+    "productsCount": "produits associés",
     "items": {
       "diagnostic": {
         "icon": "stethoscope",

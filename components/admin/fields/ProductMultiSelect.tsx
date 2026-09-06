@@ -1,81 +1,125 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Search, X, Check } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Search, X, Check, Package } from 'lucide-react';
+import { useLocale, useTranslations } from 'next-intl';
 import { getProducts } from '@/lib/data';
-import { useLocale } from 'next-intl';
-
-interface Product {
-  id: string | number;
-  name: string;
-  category?: string;
-  image?: string;
-}
+import type { Product } from '@/types';
 
 interface ProductMultiSelectProps {
   value: Array<string | number>;
   onChange: (value: Array<string | number>) => void;
 }
 
+/**
+ * Sélection multiple de produits par autocomplétion (champ `productIds`).
+ *
+ * Les IDs sont comparés en chaîne : selon la source (JSON statique ou API),
+ * un même produit peut arriver en `1` ou `"1"`.
+ */
 export default function ProductMultiSelect({ value = [], onChange }: ProductMultiSelectProps) {
   const locale = useLocale();
+  const t = useTranslations('admin.editor');
   const [products, setProducts] = useState<Product[]>([]);
   const [search, setSearch] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const boxRef = useRef<HTMLDivElement>(null);
+
+  const selectedIds = useMemo(
+    () => new Set((Array.isArray(value) ? value : []).map((id) => String(id))),
+    [value],
+  );
 
   useEffect(() => {
+    let cancelled = false;
     const loadProducts = async () => {
       try {
         setLoading(true);
         const data = await getProducts(locale);
-        setProducts(data);
+        if (!cancelled) setProducts(data);
       } catch (error) {
-        console.error('Failed to load products:', error);
+        console.error('[ProductMultiSelect] chargement impossible :', error);
+        if (!cancelled) setProducts([]);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
     loadProducts();
+    return () => {
+      cancelled = true;
+    };
   }, [locale]);
 
-  const filteredProducts = products.filter(p => 
-    p.name.toLowerCase().includes(search.toLowerCase()) ||
-    (p.category && p.category.toLowerCase().includes(search.toLowerCase()))
-  );
+  // Fermer la liste au clic extérieur
+  useEffect(() => {
+    const onDoc = (e: MouseEvent) => {
+      if (boxRef.current && !boxRef.current.contains(e.target as Node)) setIsOpen(false);
+    };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, []);
+
+  const filteredProducts = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return products;
+    return products.filter(
+      (p) =>
+        p.name.toLowerCase().includes(q) ||
+        String(p.category || '').toLowerCase().includes(q) ||
+        String(p.id).toLowerCase() === q,
+    );
+  }, [products, search]);
 
   const toggleProduct = (productId: string | number) => {
-    const newValue = value.includes(productId)
-      ? value.filter(id => id !== productId)
-      : [...value, productId];
-    onChange(newValue);
+    const key = String(productId);
+    const current = (Array.isArray(value) ? value : []).map((id) => String(id));
+    const next = current.includes(key) ? current.filter((id) => id !== key) : [...current, key];
+    onChange(next);
   };
 
   const removeProduct = (productId: string | number) => {
-    onChange(value.filter(id => id !== productId));
+    const key = String(productId);
+    onChange((Array.isArray(value) ? value : []).filter((id) => String(id) !== key));
   };
 
-  const selectedProducts = products.filter(p => value.includes(p.id));
+  // On conserve aussi les IDs orphelins (produit supprimé / autre langue)
+  // pour ne pas les perdre silencieusement à l'enregistrement.
+  const selectedProducts = products.filter((p) => selectedIds.has(String(p.id)));
+  const knownIds = new Set(products.map((p) => String(p.id)));
+  const orphanIds = Array.from(selectedIds).filter((id) => !knownIds.has(id));
 
   return (
-    <div className="space-y-2">
-      {/* Selected products */}
-      {selectedProducts.length > 0 && (
-        <div className="flex flex-wrap gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
-          {selectedProducts.map(product => (
+    <div className="space-y-2" ref={boxRef}>
+      {/* Produits sélectionnés */}
+      {(selectedProducts.length > 0 || orphanIds.length > 0) && (
+        <div className="flex flex-wrap gap-2 p-2 rounded-lg" style={{ background: 'var(--ad-surface-2)' }}>
+          {selectedProducts.map((product) => (
             <div
               key={product.id}
-              className="flex items-center gap-2 px-3 py-1.5 bg-sari-blue text-white rounded-full text-sm"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm"
+              style={{ background: 'var(--ad-accent)', color: 'var(--ad-accent-ink)' }}
             >
-              {product.image && (
+              {product.image ? (
                 <img src={product.image} alt="" className="w-5 h-5 rounded-full object-cover" />
+              ) : (
+                <Package className="w-4 h-4 opacity-80" />
               )}
               <span>{product.name}</span>
               <button
                 type="button"
                 onClick={() => removeProduct(product.id)}
                 className="hover:bg-white/20 rounded-full p-0.5 transition-colors"
+                aria-label={String(product.name)}
               >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          ))}
+          {orphanIds.map((id) => (
+            <div key={id} className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm ad-chip ad-chip-warn">
+              <span className="font-mono">#{id}</span>
+              <button type="button" onClick={() => removeProduct(id)} className="p-0.5">
                 <X className="w-3 h-3" />
               </button>
             </div>
@@ -83,56 +127,58 @@ export default function ProductMultiSelect({ value = [], onChange }: ProductMult
         </div>
       )}
 
-      {/* Search input */}
+      {/* Recherche */}
       <div className="relative">
         <div className="ad-search">
           <Search className="ad-search-ico w-4 h-4" style={{ color: 'var(--ad-accent)' }} />
           <input
             className="ad-input"
-            placeholder="Rechercher un produit..."
+            placeholder={t('searchProduct')}
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setIsOpen(true);
+            }}
             onFocus={() => setIsOpen(true)}
-            onBlur={() => setTimeout(() => setIsOpen(false), 200)}
           />
         </div>
 
-        {/* Dropdown */}
         {isOpen && (
-          <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-64 overflow-y-auto">
+          <div
+            className="absolute z-30 w-full mt-1 rounded-lg shadow-lg max-h-64 overflow-y-auto ad-scroll"
+            style={{ background: 'var(--ad-surface)', border: '1px solid var(--ad-line)' }}
+          >
             {loading ? (
-              <div className="p-4 text-center text-gray-500">Chargement...</div>
+              <div className="p-4 text-center text-sm" style={{ color: 'var(--ad-muted)' }}>{t('loading')}</div>
             ) : filteredProducts.length === 0 ? (
-              <div className="p-4 text-center text-gray-500">Aucun produit trouvé</div>
+              <div className="p-4 text-center text-sm" style={{ color: 'var(--ad-muted)' }}>{t('noProductFound')}</div>
             ) : (
               <div className="py-1">
-                {filteredProducts.map(product => {
-                  const isSelected = value.includes(product.id);
+                {filteredProducts.map((product) => {
+                  const isSelected = selectedIds.has(String(product.id));
                   return (
                     <button
                       key={product.id}
                       type="button"
+                      onMouseDown={(e) => e.preventDefault()}
                       onClick={() => toggleProduct(product.id)}
-                      className={`w-full px-4 py-2 text-left flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
-                        isSelected ? 'bg-sari-blue/10' : ''
-                      }`}
+                      className="w-full px-4 py-2 text-left flex items-center gap-3 transition-colors ad-combo-item"
+                      style={isSelected ? { background: 'var(--ad-surface-2)' } : undefined}
                     >
-                      {product.image && (
+                      {product.image ? (
                         <img src={product.image} alt="" className="w-8 h-8 rounded object-cover" />
+                      ) : (
+                        <span className="w-8 h-8 rounded flex items-center justify-center" style={{ background: 'var(--ad-surface-2)' }}>
+                          <Package className="w-4 h-4" style={{ color: 'var(--ad-muted)' }} />
+                        </span>
                       )}
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium text-gray-900 dark:text-white truncate">
-                          {product.name}
-                        </div>
+                        <div className="font-medium truncate">{product.name}</div>
                         {product.category && (
-                          <div className="text-xs text-gray-500 dark:text-gray-400">
-                            {product.category}
-                          </div>
+                          <div className="text-xs" style={{ color: 'var(--ad-muted)' }}>{product.category}</div>
                         )}
                       </div>
-                      {isSelected && (
-                        <Check className="w-5 h-5 text-sari-blue flex-shrink-0" />
-                      )}
+                      {isSelected && <Check className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--ad-accent)' }} />}
                     </button>
                   );
                 })}
@@ -142,8 +188,13 @@ export default function ProductMultiSelect({ value = [], onChange }: ProductMult
         )}
       </div>
 
-      <div className="text-xs text-gray-500 dark:text-gray-400">
-        {value.length} produit{value.length !== 1 ? 's' : ''} sélectionné{value.length !== 1 ? 's' : ''}
+      <div className="flex items-center justify-between text-xs" style={{ color: 'var(--ad-muted)' }}>
+        <span>{t('selectedCount', { count: selectedIds.size })}</span>
+        {selectedIds.size > 0 && (
+          <button type="button" className="underline" onClick={() => onChange([])}>
+            {t('clearAll')}
+          </button>
+        )}
       </div>
     </div>
   );

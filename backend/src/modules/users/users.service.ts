@@ -15,6 +15,9 @@ export class UsersService extends BaseCrudService<UserEntity> {
   protected readonly repository: ICrudRepository<UserEntity>;
   protected readonly options: CrudServiceOptions = {
     resource: 'users',
+    // Table sans colonne `legacyId` (contenu non traduit par fiches sœurs) :
+    // l'injecter faisait échouer la création sous MySQL.
+    hasLegacyId: false,
     searchFields: ['email', 'firstName', 'lastName', 'company', 'phone'],
     sortableFields: ['createdAt', 'updatedAt', 'email', 'lastName', 'type', 'status'],
     uniqueFields: ['email'],

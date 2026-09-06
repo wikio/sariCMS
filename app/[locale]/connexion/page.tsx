@@ -10,12 +10,15 @@ import { useAuth } from '@/contexts/AuthContext';
 import ImageCaptcha from '@/components/ImageCaptcha';
 import { loadAdminSettings } from '@/lib/admin-settings';
 
+/** Langues servies par le site ; garde-fou contre une valeur aberrante en base. */
+const LANGUES_VALIDES = ['fr', 'en', 'ar'];
+
 export default function LoginPage() {
   const locale = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
   const t = useTranslations('pages.login');
-  const { login } = useAuth();
+  const { login, user } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -58,7 +61,27 @@ export default function LoginPage() {
           return;
         }
       }
-      router.push(`/${locale}/dashboard`);
+      // Un administrateur qui se connecte par le formulaire public est
+      // envoyé directement au back-office : le dashboard le rejetterait.
+      // On relit localStorage (écrit par login()) plutôt que l'état `user`
+      // du contexte, qui n'est pas encore rafraîchi dans cette closure.
+      let signedInType: string | undefined = user?.type;
+      let langueCompte: string | undefined;
+      try {
+        const raw = localStorage.getItem('sari_user');
+        if (raw) {
+          const compte = JSON.parse(raw) as { type?: string; locale?: string };
+          signedInType = compte.type;
+          langueCompte = compte.locale;
+        }
+      } catch { /* valeur du contexte conservée */ }
+      const target = signedInType === 'admin' ? 'admin/dashboard' : 'dashboard';
+      // La langue du profil prime sur celle de la page de connexion : un
+      // compte réglé en arabe atterrissait jusqu'ici sur un espace en
+      // français. La valeur est vérifiée avant usage, une langue inconnue
+      // venue de la base produirait une URL invalide.
+      const langue = LANGUES_VALIDES.includes(String(langueCompte)) ? String(langueCompte) : locale;
+      router.push(`/${langue}/${target}`);
     } else {
       setError(t('loginError', { defaultMessage: 'Email ou mot de passe incorrect' }));
     }

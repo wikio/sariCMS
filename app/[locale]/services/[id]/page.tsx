@@ -7,13 +7,15 @@ import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { Check, Send, AlertCircle } from 'lucide-react';
 import { getServices } from '@/lib/data';
-import { matchesEntity } from '@/lib/ids';
+import { entityRouteKey, findByRouteKey, routeId } from '@/lib/entity-url';
 import type { Service } from '@/types';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import CTAButton from '@/components/ui/CTAButton';
 import FAQ from '@/components/ui/FAQ';
 import EmptyState from '@/components/ui/EmptyState';
 import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
+import IconMark from '@/components/admin/IconMark';
+import { resolveColor } from '@/lib/colors';
 
 export default function ServiceDetailPage() {
   const params = useParams();
@@ -26,7 +28,21 @@ export default function ServiceDetailPage() {
   useEffect(() => {
     const loadService = async () => {
       const services = await getServices(locale);
-      const found = services.find((s) => matchesEntity(s, id));
+      // Même résolveur que les solutions : id, slug complet, partie slug, puis
+      // legacyId. `matchesEntity` ignorait le legacyId, donc une URL portant
+      // l'id d'une autre langue ne trouvait rien.
+      const found = findByRouteKey(services, id);
+      console.info(
+        `[services/detail] segment « ${id} » en ${locale}` +
+          `\n  id extrait : ${routeId(id)} — ${services.length} fiches chargées` +
+          `\n  fiches : ${services
+            .map((s) => `${s.id}${s.legacyId ? `(legacy ${s.legacyId})` : ''}`)
+            .join(', ')}` +
+          (found
+            ? `\n  ✅ trouvée : id=${found.id} legacyId=${found.legacyId ?? '(aucun)'}` +
+              ` — URL canonique « ${entityRouteKey(found)} »`
+            : `\n  ❌ AUCUNE fiche ne correspond → écran « service introuvable ».`),
+      );
       setService(found || null);
     };
     loadService();
@@ -45,17 +61,28 @@ export default function ServiceDetailPage() {
     );
   }
 
+  // Couleur de la fiche, résolue depuis le jeton stocké en base
+  // ('sari-blue', 'orange-500', '#0f766e'…).
+  const accent = resolveColor(service.color);
+
   return (
     <PageVisibilityGuard visibilityKey="module.services">
     <div className="pt-32 pb-24 min-h-screen page-enter">
-      <div className="bg-sari-blue py-24 text-center text-white relative overflow-hidden">
+      {/* Bandeau aux couleurs de la fiche : l'icône et la couleur viennent de
+          la base (champs `icon` et `color`), comme sur les cartes et le module
+          Solutions. Auparavant un emoji 🏥 et un bleu figés donnaient le même
+          en-tête aux quatre services. */}
+      <div
+        className="py-24 text-center text-white relative overflow-hidden"
+        style={{ backgroundColor: accent }}
+      >
         <div className="absolute inset-0 grid-pattern-bg opacity-10"></div>
         <div className="container mx-auto px-6 relative">
           <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6">
-            <span className="text-4xl">🏥</span>
+            <IconMark name={service.icon} fallback="wrench" className="w-10 h-10" color="#ffffff" />
           </div>
           <h1 className="text-5xl font-bold mb-4">{service.title}</h1>
-          <p className="text-xl text-blue-100 max-w-2xl mx-auto">{service.shortDesc}</p>
+          <p className="text-xl max-w-2xl mx-auto text-white/80">{service.shortDesc}</p>
         </div>
       </div>
 
@@ -74,7 +101,7 @@ export default function ServiceDetailPage() {
               </h2>
               <div
                 className="prose dark:prose-invert max-w-none text-gray-600 dark:text-gray-400 text-lg leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: service.fullDesc }}
+                dangerouslySetInnerHTML={{ __html: service.fullDesc || '' }}
               />
             </div>
 

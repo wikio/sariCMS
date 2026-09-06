@@ -6,6 +6,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { AuthService } from './auth.service';
 import { EnableTotpDto, LoginDto, RefreshDto, TwoFaLoginDto, VerifyTotpDto } from './dto/auth.dto';
+import { ChangePasswordDto } from '../users/dto/user.dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -51,6 +52,23 @@ export class AuthController {
   @ApiOperation({ summary: 'Profil de l’utilisateur authentifié + permissions' })
   me(@CurrentUser('id') id: number) {
     return this.auth.me(id);
+  }
+
+  /**
+   * Changement de mot de passe par la personne elle-même.
+   *
+   * Distinct de `PATCH /users/:id`, réservé aux administrateurs : ici
+   * l'ancien mot de passe est exigé, ce qui empêche un jeton volé de
+   * verrouiller le compte de sa victime. La limitation de débit protège
+   * contre la recherche du mot de passe actuel par essais successifs.
+   */
+  @Post('change-password')
+  @ApiBearerAuth()
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Changer son propre mot de passe' })
+  changePassword(@CurrentUser('id') id: number, @Body() dto: ChangePasswordDto) {
+    return this.auth.changePassword(id, dto);
   }
 
   @Post('2fa/setup')

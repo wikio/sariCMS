@@ -1,6 +1,8 @@
 [
   {
     "id": 1,
+    "slug": "our-quality-commitment",
+    "legacyId": "pag-1",
     "type": "simple",
     "title": "Our Quality Commitment",
     "category": "Company",
@@ -9,6 +11,8 @@
   },
   {
     "id": 2,
+    "slug": "about-sari-systeme",
+    "legacyId": "pag-2",
     "type": "about",
     "title": "About SARI Système",
     "category": "Presentation",
@@ -24,6 +28,8 @@
   },
   {
     "id": 3,
+    "slug": "our-achievements-in-pictures",
+    "legacyId": "pag-3",
     "type": "gallery",
     "title": "Our Achievements in Pictures",
     "category": "Gallery",
@@ -39,6 +45,8 @@
   },
   {
     "id": 4,
+    "slug": "summer-2024-promotion",
+    "legacyId": "pag-4",
     "type": "flyer",
     "title": "Summer 2024 Promotion",
     "subtitle": "Up to 30% off all equipment",
@@ -49,6 +57,8 @@
   },
   {
     "id": 5,
+    "slug": "sari-systeme-in-motion",
+    "legacyId": "pag-5",
     "type": "slide",
     "title": "SARI Système in Motion",
     "category": "Presentation",
@@ -84,6 +94,8 @@
   },
   {
     "id": 6,
+    "slug": "discover-sari-systeme",
+    "legacyId": "pag-6",
     "type": "scroll",
     "title": "Discover SARI Système",
     "category": "Presentation",
@@ -128,6 +140,8 @@
   },
   {
     "id": 7,
+    "slug": "complete-guide-choosing-your-ultrasound-machine",
+    "legacyId": "pag-7",
     "type": "full",
     "title": "Complete Guide: Choosing Your Ultrasound Machine",
     "subtitle": "The ultimate guide for healthcare professionals",
@@ -137,6 +151,8 @@
   },
   {
     "id": 8,
+    "slug": "artificial-intelligence-in-medicine",
+    "legacyId": "pag-8",
     "type": "full",
     "title": "Artificial Intelligence in Medicine",
     "subtitle": "How AI is revolutionizing medical diagnosis",
@@ -146,6 +162,8 @@
   },
   {
     "id": 9,
+    "slug": "our-flagship-equipment",
+    "legacyId": "pag-9",
     "type": "gallery",
     "title": "Our Flagship Equipment",
     "subtitle": "The cream of medical technologies",
@@ -162,6 +180,8 @@
   },
   {
     "id": 10,
+    "slug": "testimonials-from-our-clients",
+    "legacyId": "pag-10",
     "type": "slide",
     "title": "Testimonials from Our Clients",
     "subtitle": "They trust us",

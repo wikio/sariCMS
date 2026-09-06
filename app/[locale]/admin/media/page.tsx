@@ -11,6 +11,7 @@ import ImageEditor from '@/components/admin/ImageEditor';
 import { useToast } from '@/components/admin/Toast';
 import { CMS_MODULES } from '@/lib/cms-modules';
 import { useTranslations } from 'next-intl';
+import DateText from '@/components/shared/DateText';
 
 type MediaItem = {
   file: string;
@@ -268,7 +269,7 @@ export default function MediaPage() {
             </div>
             <div className="text-[11px] space-y-0.5" style={{ color: 'var(--ad-muted)' }}>
               <div>Nom d’origine : {editing.originalName}</div>
-              <div>Ajouté le : {editing.createdAt ? new Date(editing.createdAt).toLocaleString() : '—'}</div>
+              <div>Ajouté le : <DateText value={editing.createdAt} /></div>
             </div>
           </div>
         )}

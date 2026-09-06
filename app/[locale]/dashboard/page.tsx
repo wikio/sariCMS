@@ -8,7 +8,7 @@ import Link from 'next/link';
 import {
   LayoutDashboard, User, Briefcase, Mail, Package, FileText, LogOut, CheckCircle,
   Clock, ShoppingBag, CreditCard, Inbox, Activity, Handshake, Plus, Minus, Trash2,
-  Search, MapPin, Euro, Target, Award, Gift,
+  Search, MapPin, Banknote, Target, Award, Gift,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useApplications } from '@/contexts/ApplicationsContext';
@@ -18,11 +18,16 @@ import { getProducts } from '@/lib/data';
 import type { Product } from '@/types';
 import QuoteRequestModule from '@/components/dashboard/QuoteRequestModule';
 import MessagesModule from '@/components/dashboard/MessagesModule';
+import ProfileModule from '@/components/dashboard/ProfileModule';
 import { unreadForUser } from '@/lib/messages';
+import { isBackOfficeUser } from '@/lib/admin-session';
+import DateText from '@/components/shared/DateText';
+import { useCurrency } from '@/lib/use-currency';
 
 export default function DashboardPage() {
   const locale = useLocale();
   const t = useTranslations('pages.dashboard');
+  const { withSymbol, format: formatMoney } = useCurrency();
   const router = useRouter();
   const { user, isAuthenticated, logout } = useAuth();
   const { applications, removeApplication } = useApplications();
@@ -43,8 +48,14 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!isAuthenticated) {
       router.push(`/${locale}/connexion`);
+      return;
     }
-  }, [isAuthenticated, locale, router]);
+    // L'espace personnel est réservé aux clients, partenaires et candidats :
+    // un administrateur dispose du back-office et est redirigé vers celui-ci.
+    if (isBackOfficeUser(user?.type)) {
+      router.replace(`/${locale}/admin/dashboard`);
+    }
+  }, [isAuthenticated, locale, router, user?.type]);
 
   useEffect(() => {
     if (user?.type === 'client' || user?.type === 'partner') {
@@ -52,7 +63,20 @@ export default function DashboardPage() {
     }
   }, [locale, user?.type]);
 
-  if (!user) return null;
+  // Ce filtre doit rester AVANT le retour anticipé ci-dessous : un hook
+  // placé après un « return » conditionnel n'est pas appelé à chaque
+  // rendu, ce que React refuse (« Rendered more hooks than during the
+  // previous render »). Il ne dépend pas de l'utilisateur, donc le
+  // calculer systématiquement ne coûte rien.
+  const filteredProducts = useMemo(() => {
+    const q = productQ.trim().toLowerCase();
+    if (!q) return products;
+    return products.filter((p) => (p.name || '').toLowerCase().includes(q) || (p.category || '').toLowerCase().includes(q));
+  }, [products, productQ]);
+
+  // Pas de rendu pendant la redirection : évite que l'espace client
+  // n'apparaisse une fraction de seconde à un administrateur.
+  if (!user || isBackOfficeUser(user.type)) return null;
 
   const isCandidate = user.type === 'candidate';
   const isPartner = user.type === 'partner';
@@ -61,12 +85,6 @@ export default function DashboardPage() {
   const myOrders = orders.filter((o) => o.userId === user.id || (o.customerEmail && o.customerEmail === user.email));
   const myQuotes = myOrders.filter((o) => o.isQuote || o.status === 'quote_requested');
   const realOrders = myOrders.filter((o) => !o.isQuote && o.status !== 'quote_requested');
-
-  const filteredProducts = useMemo(() => {
-    const q = productQ.trim().toLowerCase();
-    if (!q) return products;
-    return products.filter((p) => (p.name || '').toLowerCase().includes(q) || (p.category || '').toLowerCase().includes(q));
-  }, [products, productQ]);
 
   const menuItems = [
     { id: 'overview', label: t('overview'), icon: LayoutDashboard },
@@ -188,7 +206,7 @@ export default function DashboardPage() {
                     <>
                       <Kpi icon={ShoppingBag} color="sari-blue" value={products.length} label={t('products')} />
                       <Kpi icon={Handshake} color="green" value={realOrders.length} label={t('referrals')} />
-                      <Kpi icon={Euro} color="orange" value={`${realOrders.reduce((s, o) => s + o.grandTotal, 0).toLocaleString()} DA`} label={t('revenue')} />
+                      <Kpi icon={Banknote} color="orange" value={formatMoney(realOrders.reduce((s, o) => s + o.grandTotal, 0))} label={t('revenue')} />
                     </>
                   )}
                 </div>
@@ -217,11 +235,11 @@ export default function DashboardPage() {
                             <Package className="w-5 h-5 text-sari-blue" />
                             <div>
                               <div className="font-semibold text-sari-dark dark:text-white">#{o.id}</div>
-                              <div className="text-xs text-gray-500">{new Date(o.createdAt).toLocaleDateString()}</div>
+                              <div className="text-xs text-gray-500"><DateText value={o.createdAt} dateOnly /></div>
                             </div>
                           </div>
                           <div className="flex items-center gap-3">
-                            <span className="font-bold text-sari-dark dark:text-white">{o.grandTotal.toFixed(2)} DA</span>
+                            <span className="font-bold text-sari-dark dark:text-white">{formatMoney(o.grandTotal, { decimals: 2 })}</span>
                             {getStatusBadge(o.status)}
                           </div>
                         </div>
@@ -268,7 +286,7 @@ export default function DashboardPage() {
                             <h3 className="font-bold text-sari-dark dark:text-white mt-1 line-clamp-2">{p.name}</h3>
                             {p.shortDesc && <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{p.shortDesc}</p>}
                             <div className="mt-auto pt-3 flex items-center justify-between">
-                              <span className="font-black text-sari-dark dark:text-white">{p.price}</span>
+                              <span className="font-black text-sari-dark dark:text-white">{withSymbol(p.price)}</span>
                               {inCart ? (
                                 <div className="flex items-center gap-1">
                                   <button onClick={() => updateQuantity(p.id, qty - 1)} className="p-1.5 border border-gray-300 dark:border-gray-700 rounded"><Minus className="w-3.5 h-3.5" /></button>
@@ -290,7 +308,7 @@ export default function DashboardPage() {
                   <div className="bg-sari-blue text-white rounded-xl p-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <ShoppingBag className="w-6 h-6" />
-                      <span className="font-bold">{cart.length} {t('products')} · {cartTotal.toLocaleString()} DA</span>
+                      <span className="font-bold">{cart.length} {t('products')} · {formatMoney(cartTotal)}</span>
                     </div>
                     <Link href={`/${locale}/cart`} className="bg-white text-sari-blue px-4 py-2 font-semibold rounded-lg">{t("viewCart", { defaultMessage: "Voir le panier" })}</Link>
                   </div>
@@ -324,10 +342,10 @@ export default function DashboardPage() {
                             </div>
                             <div className="flex flex-wrap gap-4 text-sm text-gray-500 dark:text-gray-400 mb-3">
                               <span className="flex items-center gap-1"><MapPin className="w-4 h-4" /> {app.location}</span>
-                              <span className="flex items-center gap-1"><Euro className="w-4 h-4" /> {app.salary}</span>
+                              <span className="flex items-center gap-1"><Banknote className="w-4 h-4" /> {app.salary}</span>
                               <span className="flex items-center gap-1"><Briefcase className="w-4 h-4" /> {app.type}</span>
                             </div>
-                            <div className="text-xs text-gray-500 dark:text-gray-400 mb-4">{t('appliedOn')} {new Date(app.appliedAt).toLocaleDateString()}</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400 mb-4">{t('appliedOn')} <DateText value={app.appliedAt} dateOnly /></div>
                             <div className="flex gap-2">
                               <Link href={`/${locale}/jobs/${app.jobId}`} className="text-sari-blue font-semibold hover:underline text-sm">{t('viewOffer')}</Link>
                               <button onClick={() => removeApplication(app.id)} className="text-red-500 hover:underline text-sm">{t('withdraw')}</button>
@@ -361,7 +379,7 @@ export default function DashboardPage() {
                         <div className="flex items-start justify-between mb-4">
                           <div>
                             <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">{t('orderNumber')} #{order.id}</div>
-                            <div className="text-xs text-gray-400 dark:text-gray-500">{new Date(order.createdAt).toLocaleDateString()}</div>
+                            <div className="text-xs text-gray-400 dark:text-gray-500"><DateText value={order.createdAt} dateOnly /></div>
                           </div>
                           {getStatusBadge(order.status)}
                         </div>
@@ -369,13 +387,13 @@ export default function DashboardPage() {
                           {order.items.map((it) => (
                             <div key={it.id} className="flex items-center justify-between text-sm">
                               <span className="text-gray-600 dark:text-gray-400">{it.name} × {it.quantity}</span>
-                              <span className="font-semibold text-sari-dark dark:text-white">{Number(it.price) * it.quantity} DA</span>
+                              <span className="font-semibold text-sari-dark dark:text-white">{formatMoney(Number(it.price) * it.quantity)}</span>
                             </div>
                           ))}
                         </div>
                         <div className="flex items-center justify-between border-t border-gray-100 dark:border-gray-800 pt-3 mb-3">
                           <span className="font-bold text-sari-dark dark:text-white">{t('total')}</span>
-                          <span className="font-black text-sari-lime text-lg">{order.grandTotal.toFixed(2)} DA</span>
+                          <span className="font-black text-sari-lime text-lg">{formatMoney(order.grandTotal, { decimals: 2 })}</span>
                         </div>
                         {(order.status === 'pending' || order.status === 'pending_payment') && (
                           <div className="flex gap-2">
@@ -403,32 +421,7 @@ export default function DashboardPage() {
             )}
 
             {/* === PROFILE === */}
-            {activeTab === 'profile' && (
-              <div className="bg-white dark:bg-[#1a1a1a] p-8 border border-gray-200 dark:border-gray-800 shadow-xl rounded-xl">
-                <h2 className="text-2xl font-bold text-sari-dark dark:text-white mb-6 flex items-center gap-3"><User className="w-6 h-6 text-sari-blue" /> {t('myProfile')}</h2>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-bold text-sari-dark dark:text-white mb-2">{t('fullName')}</label>
-                    <input type="text" defaultValue={user.name} className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none rounded-lg" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-bold text-sari-dark dark:text-white mb-2">{t('email')}</label>
-                    <input type="email" defaultValue={user.email} className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none rounded-lg" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-bold text-sari-dark dark:text-white mb-2">{t('phone')}</label>
-                    <input type="tel" placeholder="+213 …" className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none rounded-lg" />
-                  </div>
-                  {(isClient || isPartner) && (
-                    <div>
-                      <label className="block text-sm font-bold text-sari-dark dark:text-white mb-2">{t('company')}</label>
-                      <input type="text" placeholder={t("company", { defaultMessage: "Société" })} className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none rounded-lg" />
-                    </div>
-                  )}
-                </div>
-                <button className="btn-primary text-white px-6 py-3 font-semibold rounded-lg flex items-center gap-2 mt-6"><CheckCircle className="w-5 h-5" /> {t('saveChanges')}</button>
-              </div>
-            )}
+            {activeTab === 'profile' && <ProfileModule />}
           </div>
         </div>
       </div>

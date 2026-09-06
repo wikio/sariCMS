@@ -9,6 +9,7 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
+import { SLUG_REGEX, SLUG_MESSAGE } from '../../../common/validation/slug';
 
 export class CreateEventDto {
   @ApiProperty()
@@ -20,7 +21,7 @@ export class CreateEventDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  @Matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+  @Matches(SLUG_REGEX, { message: SLUG_MESSAGE })
   @MaxLength(180)
   slug?: string;
 

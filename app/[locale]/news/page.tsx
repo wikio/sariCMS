@@ -11,7 +11,8 @@ import type { News } from '@/types';
 import Pagination from '@/components/ui/Pagination';
 import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
 import ImageWithFallback from '@/components/ui/ImageWithFallback';
-import { formatDate } from '@/lib/date-utils';
+import { useDateUtils } from '@/lib/use-date-format';
+import { useGroupFilter } from '@/lib/use-group-filter';
 
 export default function NewsPage() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -19,6 +20,7 @@ export default function NewsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const itemsPerPage = 6;
   const locale = useLocale();
+  const { formatDate } = useDateUtils();
   const t = useTranslations('pages.news');
   const isRtl = locale === 'ar';
 
@@ -30,6 +32,15 @@ export default function NewsPage() {
     loadNews();
   }, [locale]);
 
+  // Catégories disponibles, calculées avant le filtrage pour que la liste des
+  // onglets ne se réduise pas à la catégorie courante.
+  const allCategories = Array.from(new Set(news.map((item) => item.category))).filter(
+    Boolean,
+  ) as string[];
+
+  // Un lien de menu « par catégorie » arrive avec ?category=… : on présélectionne.
+  useGroupFilter('category', allCategories, setSelectedCategory, () => setCurrentPage(1));
+
   // Filtrer par catégorie si sélectionnée
   const filteredNews = selectedCategory
     ? news.filter(item => item.category === selectedCategory)
@@ -39,7 +50,7 @@ export default function NewsPage() {
   const currentItems = filteredNews.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   // Obtenir la liste unique des catégories
-  const categories = Array.from(new Set(news.map(item => item.category))).filter(Boolean);
+  const categories = allCategories;
 
   if (news.length === 0) {
     return (
