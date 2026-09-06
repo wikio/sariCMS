@@ -21,6 +21,7 @@ import {
   cmsAdminGet,
   cmsAdminList,
   cmsAdminUpdate,
+  estTraduitParLangue,
   extraFiltersForType,
   newItemDraft,
 } from '@/lib/cms-admin';
@@ -226,7 +227,12 @@ export default function AdminCrud({
     }
   };
 
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [dataType, locale]);
+  // Les modules traduits rechargent au changement de langue : leurs
+  // enregistrements diffèrent d'une langue à l'autre. Les comptes non : la
+  // liste est la même, seuls les libellés de l'interface changent, et
+  // refaire l'appel ferait clignoter la liste sans rien y changer.
+  const langueDeChargement = estTraduitParLangue(dataType) ? locale : '';
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, [dataType, langueDeChargement]);
 
   useEffect(() => {
     if (!cfg.autocompleteField || q.length < 2) {
@@ -275,7 +281,13 @@ export default function AdminCrud({
     if (!editing) return;
     setSaving(true);
     try {
-      const payload = { ...editing, locale: editing.locale || locale };
+      // La langue du sélecteur ne sert de valeur par défaut que pour les
+      // contenus traduits. Sur un compte, `locale` est la langue choisie par
+      // la personne : l'écraser avec celle de l'administrateur bascule son
+      // espace client dans une langue qu'elle n'a pas demandée.
+      const payload = estTraduitParLangue(cfg.dataType)
+        ? { ...editing, locale: editing.locale || locale }
+        : { ...editing };
       const saved = editing.id
         ? await cmsAdminUpdate(cfg.resource, String(editing.id), payload)
         : await cmsAdminCreate(cfg.resource, payload);
@@ -296,7 +308,9 @@ export default function AdminCrud({
     // (« user1757…@sarisysteme.com ») avec un mot de passe connu ; abandonner
     // la saisie laissait ce compte actif derrière soi.
     if (estUsers) {
-      setEditing({ locale, type: 'client', status: 'active' });
+      // Pas de langue imposée : le formulaire propose le choix, et la
+      // personne le changera depuis son espace si besoin.
+      setEditing({ type: 'client', status: 'active' });
       return;
     }
     try {

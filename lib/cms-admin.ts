@@ -235,11 +235,32 @@ export async function cmsImportCatalog(replace = false) {
   );
 }
 
+/**
+ * Ressources dont les enregistrements ne sont pas des traductions.
+ *
+ * Le back-office liste la plupart des contenus une langue à la fois : une
+ * actualité existe en français, en anglais et en arabe sous trois
+ * enregistrements distincts, et afficher les trois mélangés n'aurait pas de
+ * sens. Les comptes utilisateurs, eux, n'existent qu'une fois. Leur champ
+ * `locale` dit dans quelle langue la personne veut voir le site, pas dans
+ * quelle langue sa fiche est rédigée : filtrer dessus faisait disparaître de
+ * la liste tous les comptes réglés sur une autre langue que celle du
+ * sélecteur — la liste devenait même vide en arabe.
+ */
+const RESSOURCES_SANS_TRADUCTION = new Set(['users']);
+
+/** Un module liste-t-il des enregistrements propres à une langue ? */
+export function estTraduitParLangue(dataType: string): boolean {
+  return !RESSOURCES_SANS_TRADUCTION.has(dataType);
+}
+
 export function extraFiltersForType(dataType: string, locale: string): Record<string, string> {
-  const filter: Record<string, string> = { locale };
+  const filter: Record<string, string> = {};
+  if (estTraduitParLangue(dataType)) filter.locale = locale;
   if (dataType === 'legal') filter.kind = 'legal';
   if (dataType === 'genericContent') filter.kind = 'generic';
-  return { filter: JSON.stringify(filter) };
+  // Un filtre vide vaut mieux qu'un `filter={}` inutile dans l'URL.
+  return Object.keys(filter).length ? { filter: JSON.stringify(filter) } : {};
 }
 
 export async function cmsAdminAutocomplete(

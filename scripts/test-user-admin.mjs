@@ -137,7 +137,10 @@ check('un échec partiel ne masque pas les réussites', /Promise\.allSettled/.te
 check('les lignes en échec restent sélectionnées', /prev\.filter\(\(id\) => !done\.includes\(id\)\)/.test(srcCrud));
 check('les actions groupées demandent confirmation', /confirm\(`\$\{libelle\}/.test(srcCrud));
 check('la fiche complète est relue avant édition', /cmsAdminGet\(cfg\.resource/.test(srcCrud));
-check('« Nouveau » n’écrit plus de compte de remplissage', /if \(estUsers\) \{\s*\n\s*setEditing\(\{ locale, type: 'client', status: 'active' \}\);/.test(srcCrud));
+// On vérifie le comportement, pas la liste exacte des champs : « Nouveau »
+// doit ouvrir un formulaire vierge et ne rien écrire en base avant la saisie.
+check('« Nouveau » n’écrit plus de compte de remplissage',
+  /if \(estUsers\) \{[\s\S]{0,400}?setEditing\(\{[^}]*status: 'active' \}\);\s*\n\s*return;/.test(srcCrud));
 check('la création passe par le formulaire dédié', /cmsAdminCreate\(cfg\.resource, payload\)/.test(srcCrud));
 
 /* ------------------------------------------------ champ wilaya */
@@ -505,6 +508,37 @@ for (const lang of ['fr', 'en', 'ar']) {
     'pwdMismatch', 'pwdChanged', 'pwdWrongCurrent', 'profileSaved', 'firstName', 'lastName', 'wilaya', 'country'];
   check(`« ${lang} » : les clés du profil existent`, requises.every((k) => bloc[k]));
 }
+
+// ---------------------------------------------------------------------------
+// Le sélecteur de langue ne doit pas filtrer la liste des comptes
+// ---------------------------------------------------------------------------
+// Un compte n'existe qu'une fois, quelle que soit la langue. Son champ
+// `locale` est la langue dans laquelle la personne veut voir le site. Quand ce
+// champ servait de filtre, passer l'administration en anglais masquait tous
+// les comptes réglés en français, et l'arabe donnait une liste vide.
+
+const clientCms = lire('lib/cms-admin.ts');
+check('les ressources non traduites sont recensées', /RESSOURCES_SANS_TRADUCTION/.test(clientCms));
+check('les comptes en font partie', /RESSOURCES_SANS_TRADUCTION = new Set\(\['users'\]\)/.test(clientCms));
+check('le test de traduction est exporté', /export function estTraduitParLangue/.test(clientCms));
+check('le filtre de langue est conditionnel',
+  /if \(estTraduitParLangue\(dataType\)\) filter\.locale = locale;/.test(clientCms));
+check('la langue n’est plus ajoutée d’office',
+  !/const filter: Record<string, string> = \{ locale \};/.test(clientCms));
+check('un filtre vide n’est pas envoyé', /Object\.keys\(filter\)\.length \? \{ filter:/.test(clientCms));
+check('les pages légales gardent leur filtre', /if \(dataType === 'legal'\) filter\.kind = 'legal';/.test(clientCms));
+
+check('le CRUD importe le test de traduction', /estTraduitParLangue,/.test(crudSrc));
+check('la liste des comptes ne recharge pas au changement de langue',
+  /const langueDeChargement = estTraduitParLangue\(dataType\) \? locale : '';/.test(crudSrc));
+check('l’effet dépend de la langue conditionnelle',
+  /\}, \[dataType, langueDeChargement\]\);/.test(crudSrc));
+check('l’ancien rechargement systématique a disparu',
+  !/\}, \[dataType, locale\]\);/.test(crudSrc));
+check('l’enregistrement n’écrase pas la langue du compte',
+  /estTraduitParLangue\(cfg\.dataType\)\s*\?\s*\{ \.\.\.editing, locale: editing\.locale \|\| locale \}/.test(crudSrc));
+check('le nouveau compte n’hérite pas de la langue de l’administrateur',
+  /setEditing\(\{ type: 'client', status: 'active' \}\);/.test(crudSrc));
 
 console.log(`\n${ok} contrôle(s) réussi(s), ${ko} échec(s).`);
 if (ko) process.exitCode = 1;
