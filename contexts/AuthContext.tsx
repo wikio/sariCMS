@@ -16,6 +16,13 @@ export interface User {
   avatar?: string;
   address?: string;
   country?: string;
+  /**
+   * Langue choisie par la personne dans son profil.
+   *
+   * Conservée à la connexion : sans elle, un compte réglé en arabe repartait
+   * systématiquement sur la langue de la page de connexion.
+   */
+  locale?: string;
 }
 
 interface AuthContextType {
@@ -91,6 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           type: (u.type as User['type']) || (type as User['type']) || 'client',
           phone: u.phone ? String(u.phone) : undefined,
           company: u.company ? String(u.company) : undefined,
+          locale: u.locale ? String(u.locale) : undefined,
         });
         return true;
       }

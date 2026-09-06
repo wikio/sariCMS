@@ -4,10 +4,13 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   ArrowDownAZ, ArrowUpAZ, Check, GripVertical, Pencil, Plus, RefreshCw,
   Search, SlidersHorizontal, Table2, LayoutGrid, Trash2, X, Save, Eye,
-  CheckSquare, Square, Mail, ShieldOff, ShieldCheck, KeyRound,
+  CheckSquare, Square, Mail, ShieldOff, ShieldCheck, KeyRound, MessageSquare,
 } from 'lucide-react';
 import UserForm from '@/components/admin/UserForm';
 import UserSheet from '@/components/admin/UserSheet';
+import UserRow from '@/components/admin/UserRow';
+import MessageComposer from '@/components/admin/MessageComposer';
+import type { PersonType } from '@/lib/messages';
 import PixelGridLoader from '@/components/admin/PixelGridLoader';
 import { useToast } from '@/components/admin/Toast';
 import {
@@ -206,6 +209,7 @@ export default function AdminCrud({
   // autres modules disposent déjà de ces outils dans CmsList.
   const [selected, setSelected] = useState<string[]>([]);
   const [consulting, setConsulting] = useState<Record<string, unknown> | null>(null);
+  const [messaging, setMessaging] = useState<Record<string, unknown> | null>(null);
   const [busy, setBusy] = useState(false);
   const estUsers = cfg.dataType === 'users';
 
@@ -354,6 +358,20 @@ export default function AdminCrud({
     }
   };
 
+  /** Change le statut d'un seul compte, sans passer par la sélection. */
+  const setRowStatus = async (row: Record<string, unknown>, status: string) => {
+    setBusy(true);
+    try {
+      await cmsAdminUpdate(cfg.resource, String(row.id), { status });
+      setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, status } : r)));
+      showToast('Statut mis à jour', 'success');
+    } catch (err) {
+      showToast(err instanceof CmsError ? err.message : 'Erreur', 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const toggleSelect = (id: string) =>
     setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
@@ -459,10 +477,16 @@ export default function AdminCrud({
       </header>
 
       <div className="ad-card p-3 ad-rise ad-rise-2">
+        {/*
+          La recherche occupe l'essentiel de la largeur : les filtres, sur une
+          base flexible égale, lui prenaient auparavant la majorité de la
+          place. `basis` fixe leur largeur et `flex-1` donne le reste au champ.
+          L'icône utilise `ad-affix`, donc elle passe à droite en arabe.
+        */}
         <div className="flex flex-col lg:flex-row gap-2">
-          <div className="relative flex-1">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--ad-muted)' }} />
-            <input className="ad-input pl-9" value={q} onChange={(e) => setQ(e.target.value)} placeholder={cfg.searchHint || 'Recherche avancée…'} />
+          <div className="ad-affix has-start flex-1 lg:min-w-[22rem]">
+            <span className="ad-affix-start"><Search className="w-4 h-4" /></span>
+            <input className="ad-input" value={q} onChange={(e) => setQ(e.target.value)} placeholder={cfg.searchHint || 'Recherche avancée…'} />
             {autoHits.length > 0 && (
               <div className="absolute z-20 left-0 right-0 mt-1 ad-card overflow-hidden">
                 {autoHits.map((h) => (
@@ -474,12 +498,12 @@ export default function AdminCrud({
             )}
           </div>
           {cfg.filters.map((f) => (
-            <select key={f.key} className="ad-select lg:w-40" value={filters[f.key] || ''} onChange={(e) => setFilters((p) => ({ ...p, [f.key]: e.target.value }))}>
+            <select key={f.key} className="ad-select lg:basis-40 lg:shrink-0 lg:grow-0" value={filters[f.key] || ''} onChange={(e) => setFilters((p) => ({ ...p, [f.key]: e.target.value }))}>
               <option value="">{f.label}</option>
               {(f.options || dynamicOptions(f.key)).map((opt) => <option key={opt} value={opt}>{opt}</option>)}
             </select>
           ))}
-          <button className="ad-btn ad-btn-ghost" onClick={() => { setQ(''); setFilters({}); }}>
+          <button className="ad-btn ad-btn-ghost lg:shrink-0" onClick={() => { setQ(''); setFilters({}); }}>
             <SlidersHorizontal className="w-4 h-4" /> Reset
           </button>
         </div>
@@ -581,7 +605,10 @@ export default function AdminCrud({
                     </td>
                   ))}
                   <td className="text-right whitespace-nowrap">
-                    <button className="ad-btn ad-btn-icon ad-btn-ghost" onClick={() => ouvrirFiche(row, 'view')} title="Consulter la fiche"><Eye className="w-4 h-4" /></button>
+                    {estUsers && (
+                      <button className="ad-btn ad-btn-icon ad-btn-ghost" onClick={() => setMessaging(row)} title="Envoyer un message interne"><MessageSquare className="w-4 h-4" /></button>
+                    )}
+                    <button className="ad-btn ad-btn-icon ad-btn-ghost ml-1" onClick={() => ouvrirFiche(row, 'view')} title="Consulter la fiche"><Eye className="w-4 h-4" /></button>
                     <button className="ad-btn ad-btn-icon ad-btn-ghost ml-1" onClick={() => ouvrirFiche(row, 'edit')} title="Éditer"><Pencil className="w-4 h-4" /></button>
                     <button className="ad-btn ad-btn-icon ad-btn-danger ml-1" onClick={() => remove(String(row.id))}><Trash2 className="w-4 h-4" /></button>
                   </td>
@@ -591,31 +618,48 @@ export default function AdminCrud({
           </table>
         </div>
       ) : (
-        <SmartGrid cfg={cfg} locale={locale} rows={filtered} onEdit={(r) => ouvrirFiche(r, 'edit')} onConsult={(r) => ouvrirFiche(r, 'view')} onDelete={remove} onDrop={onDrop} setDragId={setDragId} onInline={(row, field) => setInline({ id: String(row.id), field, value: String(row[field] ?? '') })} inline={inline} persistInline={persistInline} setInline={setInline} selected={selected} onToggleSelect={toggleSelect} selectable={estUsers} />
+        <SmartGrid cfg={cfg} locale={locale} rows={filtered} onEdit={(r) => ouvrirFiche(r, 'edit')} onConsult={(r) => ouvrirFiche(r, 'view')} onDelete={remove} onDrop={onDrop} setDragId={setDragId} onInline={(row, field) => setInline({ id: String(row.id), field, value: String(row[field] ?? '') })} inline={inline} persistInline={persistInline} setInline={setInline} selected={selected} onToggleSelect={toggleSelect} onMessage={setMessaging} onStatus={setRowStatus} />
+      )}
+
+      {messaging && (
+        <MessageComposer
+          email={String(messaging.email || '')}
+          name={[messaging.firstName, messaging.lastName].filter(Boolean).join(' ') || String(messaging.email || '')}
+          type={(['client', 'partner', 'candidate'].includes(String(messaging.type)) ? messaging.type : 'other') as PersonType}
+          onClose={() => setMessaging(null)}
+        />
       )}
 
       {consulting && (
         <div className="fixed inset-0 z-50 bg-black/45 backdrop-blur-sm flex items-end md:items-center justify-center p-4">
-          <div className="ad-card w-full max-w-4xl max-h-[90vh] overflow-y-auto ad-scroll p-6 ad-rise">
+          <div className="ad-card ad-modal w-full max-w-4xl max-h-[92dvh] ad-rise">
+            <div className="ad-modal-body ad-scroll p-4 sm:p-6">
             <UserSheet
               record={consulting}
               locale={locale}
               onClose={() => setConsulting(null)}
               onEdit={() => { setEditing(consulting); setConsulting(null); }}
             />
+            </div>
           </div>
         </div>
       )}
 
       {editing && estUsers && (
         <div className="fixed inset-0 z-50 bg-black/45 backdrop-blur-sm flex items-end md:items-center justify-center p-4">
-          <div className="ad-card w-full max-w-4xl max-h-[90vh] overflow-y-auto ad-scroll p-6 ad-rise">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-black">
+          {/*
+            En-tête fixe et corps défilant : le cadre ne défile pas, seul le
+            contenu le fait. `dvh` plutôt que `vh` car sur mobile la barre
+            d'adresse rogne la fenêtre, ce qui rendait le pied inaccessible.
+          */}
+          <div className="ad-card ad-modal w-full max-w-4xl max-h-[92dvh] ad-rise">
+            <div className="flex items-center justify-between gap-2 p-4 sm:p-6 pb-3 border-b shrink-0" style={{ borderColor: 'var(--ad-line)' }}>
+              <h2 className="text-lg sm:text-xl font-black truncate">
                 {editing.id ? `Édition · ${titleOf(editing, cfg)}` : 'Nouveau compte'}
               </h2>
-              <button className="ad-btn ad-btn-icon ad-btn-ghost" onClick={() => setEditing(null)}><X className="w-4 h-4" /></button>
+              <button className="ad-btn ad-btn-icon ad-btn-ghost shrink-0" onClick={() => setEditing(null)}><X className="w-4 h-4" /></button>
             </div>
+            <div className="ad-modal-body ad-scroll p-4 sm:p-6">
             <UserForm
               record={editing}
               locale={locale}
@@ -641,6 +685,7 @@ export default function AdminCrud({
                 }
               }}
             />
+            </div>
           </div>
         </div>
       )}
@@ -695,7 +740,7 @@ function coerce(value: string) {
 
 function SmartGrid({
   cfg, rows, onEdit, onConsult, onDelete, onDrop, setDragId, inline, setInline, persistInline, locale,
-  selected = [], onToggleSelect, selectable = false,
+  selected = [], onToggleSelect, onMessage, onStatus,
 }: {
   cfg: ModuleCrudConfig;
   locale: string;
@@ -705,7 +750,8 @@ function SmartGrid({
   onDelete: (id: string) => void;
   selected?: string[];
   onToggleSelect?: (id: string) => void;
-  selectable?: boolean;
+  onMessage?: (r: Record<string, unknown>) => void;
+  onStatus?: (r: Record<string, unknown>, statut: string) => void;
   onDrop: (id: string) => void;
   setDragId: (id: string | null) => void;
   onInline?: (row: Record<string, unknown>, field: string) => void;
@@ -793,42 +839,30 @@ function SmartGrid({
   }
 
   if (cfg.variant === 'people') {
+    // Une colonne : chaque ligne porte désormais coordonnées et statistiques,
+    // que trois colonnes tronqueraient. Deux colonnes seulement sur très
+    // grand écran, où la place le permet.
     return (
-      <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-3">
-        {rows.map((row) => {
-          const coche = selected.includes(String(row.id));
-          return (
-            <article
-              key={String(row.id)}
-              className="ad-card p-4 flex gap-3 items-center"
-              style={coche ? { borderColor: 'var(--ad-accent)' } : undefined}
-            >
-              {selectable && onToggleSelect && (
-                <button
-                  className="ad-btn ad-btn-icon ad-btn-ghost !p-1 shrink-0"
-                  onClick={() => onToggleSelect(String(row.id))}
-                  title="Sélectionner"
-                >
-                  {coche ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
-                </button>
-              )}
-              <div className="w-12 h-12 rounded-2xl flex items-center justify-center font-black text-white shrink-0" style={{ background: 'linear-gradient(135deg, var(--ad-accent), #0d7a9e)' }}>
-                {String(row.firstName || row.email || '?').slice(0, 1).toUpperCase()}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="font-bold truncate">{String(row.firstName || '')} {String(row.lastName || '')}</div>
-                <div className="text-xs truncate" style={{ color: 'var(--ad-muted)' }}>{String(row.email)}</div>
-              </div>
-              <TypeChip locale={locale} type={row.type} email={row.email} />
-              {onConsult && (
-                <button className="ad-btn ad-btn-icon ad-btn-ghost" onClick={() => onConsult(row)} title="Consulter la fiche">
-                  <Eye className="w-4 h-4" />
-                </button>
-              )}
-              <button className="ad-btn ad-btn-icon ad-btn-ghost" onClick={() => onEdit(row)} title="Éditer"><Pencil className="w-4 h-4" /></button>
-            </article>
-          );
-        })}
+      <div className="grid gap-2 2xl:grid-cols-2">
+        {rows.map((row) => (
+          <UserRow
+            key={String(row.id)}
+            record={row}
+            locale={locale}
+            selected={selected.includes(String(row.id))}
+            onToggleSelect={() => onToggleSelect?.(String(row.id))}
+            onConsult={() => onConsult?.(row)}
+            onEdit={() => onEdit(row)}
+            onDelete={() => onDelete(String(row.id))}
+            onMessage={() => onMessage?.(row)}
+            onStatus={(statut) => onStatus?.(row, statut)}
+          />
+        ))}
+        {rows.length === 0 && (
+          <div className="ad-card p-10 text-center 2xl:col-span-2" style={{ color: 'var(--ad-muted)' }}>
+            Aucun compte ne correspond à la recherche.
+          </div>
+        )}
       </div>
     );
   }

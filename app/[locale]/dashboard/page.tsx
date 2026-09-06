@@ -28,7 +28,7 @@ export default function DashboardPage() {
   const t = useTranslations('pages.dashboard');
   const { withSymbol, format: formatMoney } = useCurrency();
   const router = useRouter();
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout, refreshUser } = useAuth();
   const { applications, removeApplication } = useApplications();
   const { orders, removeOrder, updateOrderStatus } = useOrders();
   const { items: cart, addToCart, removeFromCart, updateQuantity, total: cartTotal } = useCart();
@@ -36,6 +36,8 @@ export default function DashboardPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [productQ, setProductQ] = useState('');
   const [unreadMessages, setUnreadMessages] = useState(0);
+  // Langue du profil : initialisée depuis le compte, sinon depuis l'URL.
+  const [langueProfil, setLangueProfil] = useState(user?.locale || locale);
 
   useEffect(() => {
     const refreshUnread = () => setUnreadMessages(user?.email ? unreadForUser(user.email) : 0);
@@ -61,6 +63,32 @@ export default function DashboardPage() {
       getProducts(locale).then(setProducts);
     }
   }, [locale, user?.type]);
+
+  // Le compte peut arriver après le premier rendu (lecture de localStorage) :
+  // sans cette synchronisation, le sélecteur resterait sur la langue de l'URL.
+  useEffect(() => {
+    if (user?.locale) setLangueProfil(user.locale);
+  }, [user?.locale]);
+
+  /**
+   * Enregistre le profil et applique la langue choisie.
+   *
+   * La valeur est écrite dans le compte local puis la page est rechargée sur
+   * le préfixe correspondant : c'est ce même champ que la connexion relit
+   * ensuite pour ouvrir la bonne version du site.
+   */
+  const enregistrerProfil = () => {
+    try {
+      const brut = localStorage.getItem('sari_user');
+      if (brut) {
+        const compte = JSON.parse(brut) as Record<string, unknown>;
+        compte.locale = langueProfil;
+        localStorage.setItem('sari_user', JSON.stringify(compte));
+      }
+    } catch { /* Stockage indisponible : la redirection ci-dessous s'applique quand même. */ }
+    refreshUser();
+    if (langueProfil !== locale) router.push(`/${langueProfil}/dashboard`);
+  };
 
   // Ce filtre doit rester AVANT le retour anticipé ci-dessous : un hook
   // placé après un « return » conditionnel n'est pas appelé à chaque
@@ -442,8 +470,35 @@ export default function DashboardPage() {
                       <input type="text" placeholder={t("company", { defaultMessage: "Société" })} className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none rounded-lg" />
                     </div>
                   )}
+                  {/*
+                    Langue d'affichage : c'est elle qui décide de la version du
+                    site présentée à la connexion. Le choix s'applique
+                    immédiatement, sinon il faudrait se déconnecter pour en
+                    constater l'effet.
+                  */}
+                  <div>
+                    <label htmlFor="profil-langue" className="block text-sm font-bold text-sari-dark dark:text-white mb-2">
+                      {t('displayLanguage')}
+                    </label>
+                    <select
+                      id="profil-langue"
+                      value={langueProfil}
+                      onChange={(e) => setLangueProfil(e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none rounded-lg"
+                    >
+                      <option value="fr">Français</option>
+                      <option value="en">English</option>
+                      <option value="ar">العربية</option>
+                    </select>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('displayLanguageHint')}</p>
+                  </div>
                 </div>
-                <button className="btn-primary text-white px-6 py-3 font-semibold rounded-lg flex items-center gap-2 mt-6"><CheckCircle className="w-5 h-5" /> {t('saveChanges')}</button>
+                <button
+                  className="btn-primary text-white px-6 py-3 font-semibold rounded-lg flex items-center gap-2 mt-6"
+                  onClick={enregistrerProfil}
+                >
+                  <CheckCircle className="w-5 h-5" /> {t('saveChanges')}
+                </button>
               </div>
             )}
           </div>

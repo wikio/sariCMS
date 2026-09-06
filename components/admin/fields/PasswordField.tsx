@@ -70,37 +70,44 @@ export default function PasswordField({
   return (
     <div className="space-y-2">
       <div className="flex gap-2">
-        <div className="relative flex-1">
+        {/*
+          Boutons logés dans le champ : `ad-affix-btn` les dimensionne (1,9 rem)
+          pour laisser un jour avec la bordure, et `end-1`/`end-2` réserve
+          exactement la place occupée. Les boutons `ad-btn-icon` employés
+          auparavant étaient plus hauts que l'espace disponible et mordaient
+          sur le cadre.
+        */}
+        <div className={`ad-affix flex-1 ${value ? 'end-2' : 'end-1'}`}>
           <input
             id={id}
             type={visible ? 'text' : 'password'}
-            className="ad-input pr-20 font-mono"
+            className="ad-input font-mono"
             style={enErreur && value.length > 0 ? { borderColor: '#dc2626' } : undefined}
             value={value}
             autoComplete="new-password"
             placeholder={required ? t('passwordPlaceholder') : t('passwordKeepPlaceholder')}
             onChange={(e) => appliquer(e.target.value)}
           />
-          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+          <span className="ad-affix-end">
             {value && (
               <button
                 type="button"
-                className="ad-btn ad-btn-icon ad-btn-ghost !p-1"
+                className="ad-affix-btn"
                 title={t('copyPassword')}
                 onClick={() => copier(value)}
               >
-                {copie ? <Check className="w-4 h-4" style={{ color: 'var(--ad-ok)' }} /> : <Copy className="w-4 h-4" />}
+                {copie ? <Check style={{ color: 'var(--ad-ok)' }} /> : <Copy />}
               </button>
             )}
             <button
               type="button"
-              className="ad-btn ad-btn-icon ad-btn-ghost !p-1"
+              className="ad-affix-btn"
               title={visible ? t('hidePassword') : t('showPassword')}
               onClick={() => setVisible((v) => !v)}
             >
-              {visible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              {visible ? <EyeOff /> : <Eye />}
             </button>
-          </div>
+          </span>
         </div>
         <button type="button" className="ad-btn ad-btn-ghost whitespace-nowrap" onClick={generer}>
           <RefreshCw className="w-4 h-4" /> {t('generate')}

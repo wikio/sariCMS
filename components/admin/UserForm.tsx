@@ -403,14 +403,25 @@ export default function UserForm({
         </Section>
       )}
 
+      {/*
+        Pied collant au bas de la zone défilante : les boutons restent
+        atteignables sans avoir à faire défiler jusqu'en bas d'un formulaire
+        long. `-mx`/`-mb` compensent le remplissage du conteneur pour que la
+        barre occupe toute la largeur.
+      */}
       <div
-        className="flex flex-wrap justify-end gap-2 pt-4 border-t sticky bottom-0 py-3"
+        className="sticky bottom-0 z-10 flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-3 pb-1 border-t -mx-4 sm:-mx-6 px-4 sm:px-6 -mb-4 sm:-mb-6"
         style={{ borderColor: 'var(--ad-line)', background: 'var(--ad-surface)' }}
       >
-        <button type="button" className="ad-btn ad-btn-ghost" onClick={onCancel}>
+        <button type="button" className="ad-btn ad-btn-ghost w-full sm:w-auto justify-center" onClick={onCancel}>
           <X className="w-4 h-4" /> {t('cancel')}
         </button>
-        <button type="button" className="ad-btn ad-btn-primary" disabled={saving || (!touche && !creation)} onClick={enregistrer}>
+        <button
+          type="button"
+          className="ad-btn ad-btn-primary w-full sm:w-auto justify-center"
+          disabled={saving || (!touche && !creation)}
+          onClick={enregistrer}
+        >
           <Save className="w-4 h-4" /> {saving ? t('saving') : t('save')}
         </button>
       </div>

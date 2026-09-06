@@ -125,7 +125,7 @@ check('un bouton de consultation existe', /Consulter la fiche/.test(srcCrud));
 check('la sélection multiple est disponible', /const \[selected, setSelected\]/.test(srcCrud));
 check('une case à cocher par ligne', /toggleSelect\(String\(row\.id\)\)/.test(srcCrud));
 check('une case « tout sélectionner »', /toggleSelectAll/.test(srcCrud));
-check('les cartes sont aussi sélectionnables', /selectable && onToggleSelect/.test(srcCrud));
+check('chaque ligne de compte est sélectionnable', /onToggleSelect=\{\(\) => onToggleSelect\?\.\(String\(row\.id\)\)\}/.test(srcCrud));
 check('activation groupée', /bulkPatch\(\{ status: 'active' \}/.test(srcCrud));
 check('blocage groupé', /bulkPatch\(\{ status: 'blocked' \}/.test(srcCrud));
 check('mise en attente groupée', /bulkPatch\(\{ status: 'pending' \}/.test(srcCrud));
@@ -168,6 +168,95 @@ check('le script est idempotent', /réinitialisé/.test(srcSeed));
 check('la limite de 100 du serveur est respectée', /\/users\?limit=100/.test(srcSeed));
 check('l’enveloppe data.data est gérée', /corps\?\.data\?\.data/.test(srcSeed));
 
+/* ------------------------------------------ mise en page et RTL */
+
+section('Mise en page, RTL et responsive');
+
+const css = lire('app/admin.css');
+const iCard = css.indexOf('.ad-card {');
+const iModal = css.indexOf('.ad-modal {');
+
+// `.ad-card` impose `overflow: visible` et admin.css est chargé APRÈS
+// Tailwind : une classe utilitaire `overflow-y-auto` était donc écrasée et
+// le bas des formulaires longs restait inatteignable.
+check('une classe de modale défilante existe', iModal > 0 && css.includes('.ad-modal-body {'));
+check('elle est déclarée après .ad-card', iModal > iCard);
+check('le cadre de la modale ne défile pas', /\.ad-modal \{[^}]*overflow: hidden/s.test(css));
+check('le corps de la modale défile', /\.ad-modal-body \{[^}]*overflow-y: auto/s.test(css));
+check('le corps peut rétrécir dans un conteneur flex', /\.ad-modal-body \{[^}]*min-height: 0/s.test(css));
+
+check('les icônes de champ suivent le sens d’écriture', /\.ad-affix-start \{[^}]*inset-inline-start/s.test(css));
+check('les boutons de champ suivent le sens d’écriture', /\.ad-affix-end \{[^}]*inset-inline-end/s.test(css));
+check('la réserve de texte est logique, pas figée à gauche', /padding-inline-start/.test(css) && /padding-inline-end/.test(css));
+check('la réserve dépend du nombre de boutons', /\.ad-affix\.end-1 > \.ad-input/.test(css) && /\.ad-affix\.end-2 > \.ad-input/.test(css));
+check('les boutons logés dans un champ sont dimensionnés', /\.ad-affix-btn \{[^}]*width: 1\.9rem/s.test(css));
+
+const crudSrc = lire('components/admin/AdminCrud.tsx');
+check('les modales utilisent la structure défilante', (crudSrc.match(/ad-modal-body/g) || []).length >= 2);
+check('la hauteur tient compte de la barre mobile', /max-h-\[92dvh\]/.test(crudSrc));
+check('la recherche prend le plus de place', /flex-1 lg:min-w-\[22rem\]/.test(crudSrc));
+check('les filtres ont une largeur bornée', /lg:basis-40 lg:shrink-0/.test(crudSrc));
+check('la recherche utilise le décalage logique', /ad-affix has-start flex-1/.test(crudSrc));
+
+const selSrc = lire('components/admin/fields/SearchSelect.tsx');
+check('la liste cherchable n’utilise plus pl-9', !/pl-9/.test(selSrc) && /ad-affix has-start/.test(selSrc));
+check('sa réserve varie selon la coche', /selection \? 'end-2' : 'end-1'/.test(selSrc));
+
+const pwdSrc = lire('components/admin/fields/PasswordField.tsx');
+check('le champ mot de passe n’utilise plus pr-20', !/pr-20/.test(pwdSrc));
+check('ses boutons sont dimensionnés pour le champ', /ad-affix-btn/.test(pwdSrc));
+check('sa réserve varie selon le bouton copier', /value \? 'end-2' : 'end-1'/.test(pwdSrc));
+
+const formSrc2 = lire('components/admin/UserForm.tsx');
+check('le pied du formulaire reste visible', /sticky bottom-0/.test(formSrc2));
+check('les boutons s’empilent sur mobile', /flex-col-reverse sm:flex-row/.test(formSrc2));
+
+/* ------------------------------------------- ligne utilisateur */
+
+section('Ligne enrichie dans la liste');
+
+const rowSrc = lire('components/admin/UserRow.tsx');
+check('un bouton de message interne existe', /onMessage/.test(rowSrc) && /MessageSquare/.test(rowSrc));
+check('le téléphone est affiché', /icon=\{Phone\}/.test(rowSrc));
+check('l’adresse est affichée', /icon=\{MapPin\}/.test(rowSrc));
+check('le code du compte est affiché', /userCode\(type, record\.id\)/.test(rowSrc));
+check('les clients voient commandes et devis', /tl\('orders'\)/.test(rowSrc) && /tl\('quotes'\)/.test(rowSrc));
+check('les candidats voient leurs candidatures', /tl\('applications'\)/.test(rowSrc));
+check('un lien mène aux candidatures avec le nombre', /seeApplications'\)\} \(\{statsCandidat\.applications\}\)/.test(rowSrc));
+check('les administrateurs voient type et rôle', /tl\('roleLabel'\)/.test(rowSrc) && /tl\('seeRoles'\)/.test(rowSrc));
+check('des boutons changent le statut sur la ligne', /onStatus\('active'\)/.test(rowSrc) && /onStatus\('blocked'\)/.test(rowSrc));
+check('les statistiques sont calculées après montage', /useEffect\(\(\) => \{[\s\S]{0,200}setStatsClient/.test(rowSrc));
+check('la mise en page est adaptée au mobile', /sm:p-4/.test(rowSrc) && /hidden sm:inline-flex/.test(rowSrc));
+
+const statsSrc = lire('lib/user-stats.ts');
+check('les devis sont comptés sous leurs deux formes', /isQuote\)[\s\S]{0,80}quote_requested/.test(statsSrc));
+check('seules les commandes réglées comptent au chiffre d’affaires', /filter\(\(o\) => \['paid', 'shipped', 'delivered'\][\s\S]{0,120}reduce/.test(statsSrc));
+check('le code du compte porte un préfixe par type', /CLI/.test(statsSrc) && /CND/.test(statsSrc) && /PRT/.test(statsSrc));
+check('les lectures localStorage sont protégées', /typeof window === 'undefined'/.test(statsSrc));
+
+/* --------------------------------------------- langue du compte */
+
+section('Langue choisie par la personne');
+
+const authSrc = lire('contexts/AuthContext.tsx');
+check('le type User porte la langue', /locale\?: string;/.test(authSrc));
+check('la connexion conserve la langue du compte', /locale: u\.locale \? String\(u\.locale\) : undefined/.test(authSrc));
+
+const loginSrc = lire('app/[locale]/connexion/page.tsx');
+check('la redirection suit la langue du compte', /router\.push\(`\/\$\{langue\}\/\$\{target\}`\)/.test(loginSrc));
+check('une langue inconnue est rejetée', /LANGUES_VALIDES\.includes/.test(loginSrc));
+
+const dashSrc = lire('app/[locale]/dashboard/page.tsx');
+check('le profil propose de changer de langue', /profil-langue/.test(dashSrc));
+check('le choix est enregistré', /enregistrerProfil/.test(dashSrc));
+check('le changement est appliqué aussitôt', /router\.push\(`\/\$\{langueProfil\}\/dashboard`\)/.test(dashSrc));
+
+// Un hook après un retour conditionnel casse le rendu (React lève
+// « Rendered more hooks than during the previous render »).
+const gardeIdx2 = dashSrc.indexOf('if (!user || isBackOfficeUser(user.type)) return null;');
+check('le nouvel état est déclaré avant le retour anticipé', dashSrc.indexOf('const [langueProfil') < gardeIdx2);
+check('aucun hook après le retour anticipé', !/^ {2}const .*= use(Memo|State|Effect|Callback|Ref)\(/m.test(dashSrc.slice(gardeIdx2)));
+
 /* ------------------------------------------------- traductions */
 
 section('Traductions');
@@ -182,8 +271,20 @@ const CLES = [
 ];
 const SOUS_BLOCS = { type: ['admin', 'client', 'partner', 'candidate'], status: ['active', 'pending', 'blocked'], locale: ['fr', 'en', 'ar'], strength: ['empty', 'weak', 'medium', 'strong'], rule: ['length', 'upper', 'lower', 'digit'] };
 
+const CLES_LISTE = [
+  'sendMessage', 'consult', 'userCode', 'orders', 'quotes', 'applications',
+  'seeApplications', 'seeOrders', 'seeRoles', 'activate', 'block', 'setPending',
+];
+
 for (const lang of ['fr', 'en', 'ar']) {
   const msgs = JSON.parse(lire(`messages/${lang}.json`));
+  const blocListe = msgs?.admin?.userList || {};
+  const manqueListe = CLES_LISTE.filter((k) => !blocListe[k]);
+  check(`« ${lang} » : les clés de la liste existent`, manqueListe.length === 0);
+  check(
+    `« ${lang} » : la langue du profil est traduite`,
+    Boolean(msgs?.pages?.dashboard?.displayLanguage && msgs?.pages?.dashboard?.displayLanguageHint),
+  );
   const bloc = msgs?.admin?.userForm || {};
   const manquantes = CLES.filter((k) => !bloc[k]);
   const sousManquantes = Object.entries(SOUS_BLOCS)

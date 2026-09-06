@@ -1855,6 +1855,32 @@
         "lower": "حرف صغير",
         "digit": "رقم"
       }
+    },
+    "userList": {
+      "select": "تحديد",
+      "sendMessage": "إرسال رسالة داخلية",
+      "consult": "عرض البطاقة",
+      "edit": "تعديل",
+      "trash": "نقل إلى سلة المهملات",
+      "userCode": "رمز الحساب",
+      "orders": "طلبات",
+      "quotes": "عروض أسعار",
+      "paid": "مدفوعة",
+      "awaiting": "في الانتظار",
+      "seeOrders": "عرض الطلبات",
+      "applications": "ترشحات",
+      "accepted": "مقبولة",
+      "rejected": "مرفوضة",
+      "inProgress": "قيد المعالجة",
+      "seeApplications": "الترشحات",
+      "seeApplicationsTitle": "عرض ترشحات هذا الشخص",
+      "roleLabel": "الدور",
+      "fullRights": "جميع الصلاحيات",
+      "language": "اللغة",
+      "seeRoles": "الأدوار والصلاحيات",
+      "activate": "تفعيل",
+      "setPending": "في الانتظار",
+      "block": "حظر"
     }
   },
   "common": {
@@ -2811,7 +2837,9 @@
       "referrals": "الإحالات",
       "revenue": "رقم الأعمال",
       "back": "رجوع",
-      "from": "من"
+      "from": "من",
+      "displayLanguage": "لغة العرض",
+      "displayLanguageHint": "سيُفتح الموقع بهذه اللغة عند تسجيل دخولك القادم."
     },
     "eventDetail": {
       "notFound": "الفعالية غير موجودة",

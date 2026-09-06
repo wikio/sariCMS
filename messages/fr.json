@@ -1855,6 +1855,32 @@
         "lower": "Une minuscule",
         "digit": "Un chiffre"
       }
+    },
+    "userList": {
+      "select": "Sélectionner",
+      "sendMessage": "Envoyer un message interne",
+      "consult": "Consulter la fiche",
+      "edit": "Éditer",
+      "trash": "Mettre en corbeille",
+      "userCode": "Code du compte",
+      "orders": "commandes",
+      "quotes": "devis",
+      "paid": "réglées",
+      "awaiting": "en attente",
+      "seeOrders": "Voir les commandes",
+      "applications": "candidatures",
+      "accepted": "acceptées",
+      "rejected": "refusées",
+      "inProgress": "en cours",
+      "seeApplications": "Candidatures",
+      "seeApplicationsTitle": "Voir les candidatures de cette personne",
+      "roleLabel": "rôle",
+      "fullRights": "tous droits",
+      "language": "langue",
+      "seeRoles": "Rôles et permissions",
+      "activate": "Activer",
+      "setPending": "En attente",
+      "block": "Bloquer"
     }
   },
   "common": {
@@ -2811,7 +2837,9 @@
       "referrals": "Parrainages",
       "revenue": "Chiffre d’affaires",
       "back": "Retour",
-      "from": "De"
+      "from": "De",
+      "displayLanguage": "Langue d'affichage",
+      "displayLanguageHint": "Le site s'ouvrira dans cette langue à votre prochaine connexion."
     },
     "eventDetail": {
       "notFound": "Événement non trouvé",

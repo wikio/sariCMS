@@ -118,11 +118,16 @@ export default function SearchSelect({
 
   return (
     <div className="relative" ref={conteneur}>
-      <div className="relative">
-        <Search
-          className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
-          style={{ color: 'var(--ad-muted)' }}
-        />
+      {/*
+        `ad-affix` gère le décalage du texte par propriétés logiques : en arabe
+        l'icône passe à droite et le remplissage suit, là où un décalage figé
+        laissait l'icône chevaucher le texte saisi.
+        `end-2` réserve la place du chevron et de la coche de validation.
+      */}
+      <div className={`ad-affix has-start ${selection ? 'end-2' : 'end-1'}`}>
+        <span className="ad-affix-start">
+          <Search className="w-4 h-4" />
+        </span>
         <input
           id={id}
           type="text"
@@ -131,7 +136,7 @@ export default function SearchSelect({
           aria-autocomplete="list"
           autoComplete="off"
           disabled={disabled}
-          className="ad-input pl-9 pr-16"
+          className="ad-input"
           style={error ? { borderColor: 'var(--ad-danger, #dc2626)' } : undefined}
           value={query}
           placeholder={placeholder}
@@ -147,13 +152,13 @@ export default function SearchSelect({
           }}
           onKeyDown={auClavier}
         />
-        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+        <span className="ad-affix-end">
           {selection && <Check className="w-4 h-4" style={{ color: 'var(--ad-ok)' }} />}
           <ChevronDown
             className={`w-4 h-4 transition-transform ${open ? 'rotate-180' : ''}`}
             style={{ color: 'var(--ad-muted)' }}
           />
-        </div>
+        </span>
       </div>
 
       {open && (
