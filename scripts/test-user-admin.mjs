@@ -379,6 +379,44 @@ for (const lang of ['fr', 'en', 'ar']) {
     Boolean(bloc.showDetails && bloc.hideDetails));
 }
 
+/* ------------------------------------------- panneaux défilants */
+
+section('Panneaux défilants sur une carte');
+
+// Troisième occurrence du même piège : `.ad-card { overflow: visible }` est
+// déclarée après Tailwind et l'emporte sur `overflow-y-auto` posé en classe
+// utilitaire. Les panneaux qui doivent défiler ont donc leur propre classe.
+check('une classe dédiée porte le défilement', /\.ad-pane\s*\{/.test(cssSrc));
+check('le panneau affiche son ascenseur', /\.ad-pane\s*\{[^}]*overflow-y:\s*auto/.test(cssSrc));
+check('le panneau peut rétrécir dans un parent flex', /\.ad-pane\s*\{[^}]*min-height:\s*0/.test(cssSrc));
+check('le défilement ne déborde pas sur la page', /\.ad-pane\s*\{[^}]*overscroll-behavior/.test(cssSrc));
+// La hauteur est séparée : imposée à un panneau borné par `max-height`,
+// elle le ferait retomber sur sa hauteur de contenu, sans ascenseur.
+check('la hauteur pleine est une variante distincte', /\.ad-pane-fill\s*\{[^}]*height:\s*100%/.test(cssSrc));
+check('le cadre rogne son contenu', /\.ad-frame\s*\{[^}]*overflow:\s*hidden/.test(cssSrc));
+check('la classe défilante est déclarée après la carte',
+  cssSrc.indexOf('.ad-pane {') > cssSrc.indexOf('.ad-card {'));
+
+const trSrc = lire('app/[locale]/admin/translations/page.tsx');
+check('l’arbre des fichiers défile', /ad-pane ad-pane-fill/.test(trSrc));
+check('l’arbre est borné par un cadre', /ad-card ad-frame/.test(trSrc));
+check('l’en-tête de l’arbre ne défile pas', /border-b shrink-0/.test(trSrc));
+check('la liste des clés défile aussi', /flex-1 ad-pane ad-scroll/.test(trSrc));
+// `vh` compte la barre d'adresse des mobiles et coupe le bas de la liste.
+check('la hauteur suit la fenêtre réelle', !/max-h-\[\d+vh\]/.test(trSrc));
+check('le bouton de rafraîchissement est décrit', /aria-label=\{t\("refresh"\)\}/.test(trSrc));
+
+// Les deux autres écrans qui bâtissaient un panneau défilant sur une carte.
+for (const page of ['app/[locale]/admin/builder/page.tsx', 'app/[locale]/admin/careers/[id]/flow/page.tsx']) {
+  const src = lire(page);
+  check(`« ${page.split('/').at(-2)} » : le panneau latéral défile`, /ad-card ad-pane ad-scroll/.test(src));
+}
+
+for (const lang of ['fr', 'en', 'ar']) {
+  const bloc = JSON.parse(lire(`messages/${lang}.json`))?.admin?.translations || {};
+  check(`« ${lang} » : le libellé de rafraîchissement existe`, Boolean(bloc.refresh));
+}
+
 /* ------------------------------------------------ vue table des comptes */
 
 section('Vue table : mêmes détails que la vue module');

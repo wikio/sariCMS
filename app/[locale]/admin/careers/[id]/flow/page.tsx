@@ -184,7 +184,7 @@ export default function FlowBuilderPage() {
 
       <div className="grid lg:grid-cols-[280px_1fr] gap-4">
         {/* Bibliothèque d'étapes */}
-        <aside className="ad-card p-3 ad-rise ad-rise-2 max-h-[74vh] min-w-0 overflow-y-auto ad-scroll space-y-3">
+        <aside className="ad-card ad-pane ad-scroll p-3 ad-rise ad-rise-2 max-h-[74dvh] min-w-0 space-y-3">
           <div className="text-xs font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>{t('stepLibrary')}</div>
           {categories.map((cat) => (
             <div key={cat.name} className="space-y-1.5">

@@ -439,6 +439,46 @@
 }
 
 /*
+ * Panneau défilant bâti sur une carte.
+ *
+ * `.ad-card` impose `overflow: visible` — les listes déroulantes en
+ * dépendent — et `admin.css` est chargé après Tailwind : à spécificité
+ * égale, cette règle l'emportait sur un `overflow-y-auto` posé en classe
+ * utilitaire, et le contenu débordait sans ascenseur. Une classe dédiée
+ * règle le cas sans recourir à `!important`.
+ *
+ * La hauteur vient du conteneur (grille ou flex), d'où `height: 100%` et
+ * `min-height: 0` : sans ce dernier, un enfant flex refuse de rétrécir
+ * sous sa taille de contenu et déborde malgré tout.
+ */
+.ad-pane {
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+/*
+ * Variante qui remplit son conteneur. Séparée de `.ad-pane` : un panneau
+ * borné par `max-height` n'a pas de parent de hauteur fixe, et lui imposer
+ * `height: 100%` le ferait retomber sur sa hauteur de contenu — donc plus
+ * d'ascenseur du tout.
+ */
+.ad-pane-fill {
+  height: 100%;
+}
+
+/*
+ * Cadre qui rogne son contenu, à poser sur la carte qui contient un
+ * `.ad-pane`. Même raison que ci-dessus : `overflow-hidden` en classe
+ * utilitaire ne passe pas devant `.ad-card`, et le contenu débordait des
+ * coins arrondis.
+ */
+.ad-frame {
+  overflow: hidden;
+}
+
+/*
  * Voile de la fenêtre modale.
  *
  * Il occupe tout l'écran et centre son contenu. `position: fixed` se réfère à

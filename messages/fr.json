@@ -879,7 +879,8 @@
       "tree": "Arbre",
       "chooseFile": "Choisissez un fichier JSON",
       "save": "Sauver",
-      "filterPlaceholder": "Filtrer une clé ou une valeur…"
+      "filterPlaceholder": "Filtrer une clé ou une valeur…",
+      "refresh": "Rafraîchir l’arborescence"
     },
     "profile": {
       "noUser": "Aucun utilisateur connecté.",

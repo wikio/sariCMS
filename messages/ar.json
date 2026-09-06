@@ -879,7 +879,8 @@
       "tree": "الشجرة",
       "chooseFile": "اختر ملف JSON",
       "save": "حفظ",
-      "filterPlaceholder": "تصفية مفتاح أو قيمة…"
+      "filterPlaceholder": "تصفية مفتاح أو قيمة…",
+      "refresh": "تحديث الشجرة"
     },
     "profile": {
       "noUser": "لا يوجد مستخدم متصل.",

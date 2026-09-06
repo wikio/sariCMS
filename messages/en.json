@@ -879,7 +879,8 @@
       "tree": "Tree",
       "chooseFile": "Choose a JSON file",
       "save": "Save",
-      "filterPlaceholder": "Filter a key or value…"
+      "filterPlaceholder": "Filter a key or value…",
+      "refresh": "Refresh the tree"
     },
     "profile": {
       "noUser": "No user logged in.",

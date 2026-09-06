@@ -158,7 +158,7 @@ export default function BuilderPage() {
       </header>
 
       <div className="grid lg:grid-cols-[280px_1fr] gap-4">
-        <aside className="ad-card p-3 ad-rise ad-rise-2 max-h-[74vh] min-w-0 overflow-y-auto ad-scroll space-y-3">
+        <aside className="ad-card ad-pane ad-scroll p-3 ad-rise ad-rise-2 max-h-[74dvh] min-w-0 space-y-3">
           <div>
             <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest mb-2" style={{ color: 'var(--ad-muted)' }}>
               <Layers className="w-4 h-4" /> Composants existants
@@ -184,7 +184,7 @@ export default function BuilderPage() {
 
         <div className="min-w-0">
           {showCode ? (
-            <pre className="ad-card p-4 text-xs overflow-auto ad-scroll max-h-[74vh] whitespace-pre-wrap" style={{ color: 'var(--ad-ink)' }}>{code}</pre>
+            <pre className="ad-card ad-pane ad-scroll p-4 text-xs max-h-[74dvh] whitespace-pre-wrap" style={{ color: 'var(--ad-ink)' }}>{code}</pre>
           ) : (
             <div className="ad-card overflow-hidden ad-rise ad-rise-3" ref={host} />
           )}
