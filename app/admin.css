@@ -276,7 +276,18 @@
   background-attachment: fixed;
   animation: auroraDrift 22s ease-in-out infinite alternate;
 }
-[data-admin-theme="aurora"] .ad-card {
+/*
+ * Effet de verre dépoli des cartes.
+ *
+ * `:not(.ad-modal)` est indispensable : ce sélecteur est plus spécifique que
+ * `.ad-modal` (0-2-0 contre 0-1-0) et réimposait donc à la fenêtre modale la
+ * surface semi-transparente du thème, laissant le voile sombre transparaître.
+ * Le `backdrop-filter` posait un second problème : sur un ancêtre, il crée un
+ * bloc conteneur pour les descendants `position: fixed`, si bien que le voile
+ * se positionnait par rapport à la carte au lieu de la fenêtre — d'où une
+ * fiche décentrée.
+ */
+[data-admin-theme="aurora"] .ad-card:not(.ad-sheet) {
   background: var(--ad-surface);
   border: 1px solid var(--ad-line);
   backdrop-filter: blur(18px);
@@ -316,7 +327,7 @@
 [data-admin-theme="brutal"] .ad-app {
   background: var(--ad-bg);
 }
-[data-admin-theme="brutal"] .ad-card {
+[data-admin-theme="brutal"] .ad-card:not(.ad-sheet) {
   border: 2px solid #111111;
   box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.9);
   transition: transform 0.12s ease, box-shadow 0.12s ease;
@@ -458,7 +469,15 @@
  * (qui ne défile pas) du corps (qui défile), plutôt que de forcer la règle
  * avec `!important`.
  */
-.ad-modal {
+/*
+ * Panneau d'une fenêtre modale (le cadre, pas le voile).
+ *
+ * Nommé `ad-sheet` et non `ad-modal` : cette dernière existe déjà plus bas et
+ * désigne le VOILE plein écran. Deux règles de même nom, la seconde
+ * l'emportant, transformaient le panneau en voile — d'où une fiche
+ * décentrée au fond translucide.
+ */
+.ad-sheet {
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -466,15 +485,13 @@
    * Fond toujours opaque : le thème « aurora » rend `--ad-surface`
    * semi-transparent (rgba …, 0.55) pour l'effet de verre dépoli des cartes.
    * Sur une fenêtre modale, le voile sombre transparaissait au travers et le
-   * texte devenait illisible. `color-mix` retire la transparence sans figer
-   * une couleur, donc chaque thème garde la sienne.
+   * texte devenait illisible.
    */
-  background: color-mix(in srgb, var(--ad-surface) 100%, #000 0%);
-  background-color: var(--ad-modal-surface, var(--ad-surface));
+  background-color: var(--ad-sheet-surface, var(--ad-surface));
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
 }
 /* Thèmes à surface translucide : on impose une teinte pleine. */
-[data-admin-theme="aurora"] .ad-modal { --ad-modal-surface: #141c42; }
+[data-admin-theme="aurora"] .ad-sheet { --ad-sheet-surface: #141c42; }
 .ad-modal-body {
   overflow-y: auto;
   overflow-x: visible;
@@ -773,12 +790,21 @@
   justify-content: center;
   padding: 1rem;
   background: rgba(8, 16, 20, 0.55);
+  overflow: hidden;
 }
+/*
+ * Le panneau reçoit la teinte pleine du thème. `aurora` la définit sur
+ * `.ad-sheet` ; on la répète ici pour les fenêtres bâties sur
+ * `.ad-modal-card`, qui sont les plus nombreuses.
+ */
+[data-admin-theme="aurora"] .ad-modal-card { --ad-sheet-surface: #141c42; }
 .ad-modal-card {
   width: min(640px, 100%);
-  max-height: 90vh;
+  /* `dvh` : sur mobile la barre d'adresse rogne `vh` et coupe le pied. */
+  max-height: 90dvh;
   overflow: auto;
-  background: var(--ad-surface);
+  /* Opaque même sous « aurora », dont la surface est semi-transparente. */
+  background: var(--ad-sheet-surface, var(--ad-surface));
   border: 1px solid var(--ad-line);
   border-radius: var(--ad-radius);
   box-shadow: var(--ad-shadow);

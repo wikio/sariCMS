@@ -650,7 +650,7 @@ export default function AdminCrud({
 
       {consulting && (
         <div className="ad-overlay">
-          <div className="ad-card ad-modal w-full max-w-4xl max-h-[92dvh] ad-rise">
+          <div className="ad-card ad-sheet w-full max-w-4xl max-h-[92dvh] ad-rise">
             <div className="ad-modal-body ad-scroll p-4 sm:p-6">
             <UserSheet
               record={consulting}
@@ -670,7 +670,7 @@ export default function AdminCrud({
             contenu le fait. `dvh` plutôt que `vh` car sur mobile la barre
             d'adresse rogne la fenêtre, ce qui rendait le pied inaccessible.
           */}
-          <div className="ad-card ad-modal w-full max-w-4xl max-h-[92dvh] ad-rise">
+          <div className="ad-card ad-sheet w-full max-w-4xl max-h-[92dvh] ad-rise">
             <div className="flex items-center justify-between gap-2 p-4 sm:p-6 pb-3 border-b shrink-0" style={{ borderColor: 'var(--ad-line)' }}>
               <h2 className="text-lg sm:text-xl font-black truncate">
                 {editing.id ? `Édition · ${titleOf(editing, cfg)}` : 'Nouveau compte'}
@@ -710,7 +710,8 @@ export default function AdminCrud({
 
       {editing && !estUsers && (
         <div className="ad-overlay">
-          <div className="ad-card w-full max-w-3xl max-h-[90vh] overflow-y-auto ad-scroll p-6 ad-rise">
+          <div className="ad-card ad-sheet w-full max-w-3xl max-h-[90dvh] ad-rise">
+            <div className="ad-modal-body ad-scroll p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-black">Édition · {titleOf(editing, cfg)}</h2>
               <button className="ad-btn ad-btn-icon ad-btn-ghost" onClick={() => setEditing(null)}><X className="w-4 h-4" /></button>
@@ -731,7 +732,12 @@ export default function AdminCrud({
                 </label>
               ))}
             </div>
-            <div className="flex justify-end gap-2 mt-5">
+            </div>
+            {/* Pied fixe : les boutons restent atteignables sur un formulaire long. */}
+            <div
+              className="flex justify-end gap-2 px-6 py-4 border-t shrink-0"
+              style={{ borderColor: 'var(--ad-line)' }}
+            >
               <button className="ad-btn ad-btn-ghost" onClick={() => setEditing(null)}>Fermer</button>
               <button className="ad-btn ad-btn-primary" disabled={!dirty || saving} onClick={saveEditor}>
                 <Save className="w-4 h-4" /> {saving ? '…' : 'Enregistrer'}

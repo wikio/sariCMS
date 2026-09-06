@@ -315,9 +315,32 @@ check('la couche de fond est une classe dédiée', /\.ad-overlay\s*\{/.test(cssS
 check('la couche de fond est fixée au cadre visible', /\.ad-overlay\s*\{[^}]*position:\s*fixed/.test(cssSrc));
 check('le modal est centré', /\.ad-overlay\s*\{[^}]*align-items:\s*center/.test(cssSrc)
   && /\.ad-overlay\s*\{[^}]*justify-content:\s*center/.test(cssSrc));
-check('le modal a un fond opaque', /--ad-modal-surface/.test(cssSrc));
+check('le panneau a un fond opaque', /--ad-sheet-surface/.test(cssSrc));
 check('« aurora » impose sa propre teinte opaque',
-  /\[data-admin-theme="aurora"\]\s*\.ad-modal\s*\{[^}]*--ad-modal-surface/.test(cssSrc));
+  /\[data-admin-theme="aurora"\]\s*\.ad-sheet\s*\{[^}]*--ad-sheet-surface/.test(cssSrc));
+
+// `.ad-modal` désignait déjà le VOILE plein écran, 300 lignes plus bas :
+// réutiliser ce nom pour le panneau le transformait en voile (fiche
+// décentrée, fond translucide). Le panneau s'appelle donc `.ad-sheet`.
+check('le panneau ne réutilise pas le nom du voile',
+  !/^\.ad-modal\s*\{[^}]*flex-direction:\s*column/m.test(cssSrc));
+check('le voile reste fixé au cadre visible',
+  /^\.ad-modal\s*\{[^}]*position:\s*fixed/m.test(cssSrc));
+check('les panneaux du module utilisent la classe dédiée',
+  (crudSrc.match(/ad-card ad-sheet /g) || []).length === 3);
+check('le modal d’édition générique est un panneau',
+  /ad-card ad-sheet w-full max-w-3xl/.test(crudSrc));
+
+// Le thème pose un backdrop-filter sur .ad-card : sur un ancêtre, il crée un
+// bloc conteneur qui décentre tout position:fixed imbriqué.
+check('le verre dépoli épargne les panneaux',
+  /\[data-admin-theme="aurora"\]\s*\.ad-card:not\(\.ad-sheet\)/.test(cssSrc));
+check('le thème brutal épargne aussi les panneaux',
+  /\[data-admin-theme="brutal"\]\s*\.ad-card:not\(\.ad-sheet\)/.test(cssSrc));
+check('les fenêtres historiques sont opaques elles aussi',
+  /\.ad-modal-card\s*\{[^}]*var\(--ad-sheet-surface/.test(cssSrc));
+check('les fenêtres historiques suivent la hauteur réelle',
+  /\.ad-modal-card\s*\{[^}]*max-height:\s*90dvh/.test(cssSrc));
 check('plus aucun voile Tailwind dans le module', !/bg-black\/45/.test(crudSrc));
 check('les trois modals utilisent la couche dédiée',
   (crudSrc.match(/className="ad-overlay"/g) || []).length === 3);
