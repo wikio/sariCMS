@@ -386,7 +386,19 @@ function touchStorefrontCache() {
  * client — y référencer ce module ferait entrer `fs` dans le bundle navigateur.
  */
 const HOME_TTL_MS = Number(process.env.HOME_CACHE_TTL_MS ?? 30_000);
-const homeCache = new Map<string, { value: HomeSnapshot; expiresAt: number }>();
+
+type HomeCacheEntry = { value: HomeSnapshot; expiresAt: number };
+
+/**
+ * Le cache est posé sur `globalThis` plutôt que dans une constante du module :
+ * en développement, la page (composant serveur) et la passerelle
+ * `app/api/admin/home` (route handler) chargent chacune **leur propre
+ * instance** de ce fichier. Un `Map` de module aurait donc été vidé du mauvais
+ * côté, et la vitrine aurait continué à servir trente secondes une
+ * modification déjà enregistrée — l’impression qu’il faut recharger deux fois.
+ */
+const withCache = globalThis as typeof globalThis & { __sariHomeCache?: Map<string, HomeCacheEntry> };
+const homeCache: Map<string, HomeCacheEntry> = (withCache.__sariHomeCache ??= new Map<string, HomeCacheEntry>());
 
 export function clearHomeCache(): void {
   homeCache.clear();

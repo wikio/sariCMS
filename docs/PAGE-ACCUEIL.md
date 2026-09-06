@@ -66,6 +66,15 @@ qui n’est pas versionné ; en MySQL ou PostgreSQL, appliquer la migration
 (`npx prisma migrate deploy`) ou rejouer `backend/sql/schema.mysql.sql`, qui
 contient les deux tables `home_sections` et `newsletter_subscribers`.
 
+La vitrine lit ces lignes par `getHomeSnapshot(langue)` (`lib/home/store.ts`),
+avec un cache de trente secondes (`HOME_CACHE_TTL_MS` pour le réglage) vidé à
+chaque écriture par `touchStorefrontCache()`. Ce cache est posé sur `globalThis`
+et non dans une constante du module : en développement, la page (composant
+serveur) et la passerelle `app/api/admin/home` (route handler) chargent chacune
+leur propre instance du fichier, et un cache de module se serait vidé du mauvais
+côté — la modification enregistrée aurait attendu une expiration avant
+d’apparaître.
+
 Le store de démonstration ne contenant aucune ligne au départ, la page se
 construit donc entièrement à partir des défauts du code et des traductions du
 site — c’est ce qui permet de vérifier la règle de langue d’un seul coup d’œil.
