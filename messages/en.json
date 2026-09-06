@@ -1882,7 +1882,13 @@
       "setPending": "Pending",
       "block": "Block",
       "showDetails": "Show details",
-      "hideDetails": "Hide details"
+      "hideDetails": "Hide details",
+      "columnUser": "User",
+      "columnType": "Type",
+      "columnStatus": "Status",
+      "columnActions": "Actions",
+      "selectAll": "Select all",
+      "emptyList": "No account to display."
     }
   },
   "common": {

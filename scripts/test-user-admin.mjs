@@ -216,17 +216,21 @@ check('les boutons s’empilent sur mobile', /flex-col-reverse sm:flex-row/.test
 section('Ligne enrichie dans la liste');
 
 const rowSrc = lire('components/admin/UserRow.tsx');
+// Le détail d'un compte est partagé par la vue module et la vue table :
+// il vit dans son propre fichier pour que les deux ne divergent pas.
+const detSrc = lire('components/admin/UserDetails.tsx');
 check('un bouton de message interne existe', /onMessage/.test(rowSrc) && /MessageSquare/.test(rowSrc));
-check('le téléphone est affiché', /icon=\{Phone\}/.test(rowSrc));
-check('l’adresse est affichée', /icon=\{MapPin\}/.test(rowSrc));
+check('le téléphone est affiché', /icon=\{Phone\}/.test(detSrc));
+check('l’adresse est affichée', /icon=\{MapPin\}/.test(detSrc));
 check('le code du compte est affiché', /userCode\(type, record\.id\)/.test(rowSrc));
-check('les clients voient commandes et devis', /tl\('orders'\)/.test(rowSrc) && /tl\('quotes'\)/.test(rowSrc));
-check('les candidats voient leurs candidatures', /tl\('applications'\)/.test(rowSrc));
-check('un lien mène aux candidatures avec le nombre', /seeApplications'\)\} \(\{statsCandidat\.applications\}\)/.test(rowSrc));
-check('les administrateurs voient type et rôle', /tl\('roleLabel'\)/.test(rowSrc) && /tl\('seeRoles'\)/.test(rowSrc));
-check('des boutons changent le statut sur la ligne', /onStatus\('active'\)/.test(rowSrc) && /onStatus\('blocked'\)/.test(rowSrc));
-check('les statistiques sont calculées après montage', /useEffect\(\(\) => \{[\s\S]{0,200}setStatsClient/.test(rowSrc));
+check('les clients voient commandes et devis', /tl\('orders'\)/.test(detSrc) && /tl\('quotes'\)/.test(detSrc));
+check('les candidats voient leurs candidatures', /tl\('applications'\)/.test(detSrc));
+check('un lien mène aux candidatures avec le nombre', /seeApplications'\)\} \(\{statsCandidat\.applications\}\)/.test(detSrc));
+check('les administrateurs voient type et rôle', /tl\('roleLabel'\)/.test(detSrc) && /tl\('seeRoles'\)/.test(detSrc));
+check('des boutons changent le statut sur la ligne', /onStatus\('active'\)/.test(detSrc) && /onStatus\('blocked'\)/.test(detSrc));
+check('les statistiques sont calculées après montage', /useEffect\(\(\) => \{[\s\S]{0,300}clientStats\(/.test(detSrc));
 check('la mise en page est adaptée au mobile', /sm:p-4/.test(rowSrc) && /hidden sm:inline-flex/.test(rowSrc));
+check('la vue module réutilise le détail partagé', /<UserDetails\b/.test(rowSrc));
 
 const statsSrc = lire('lib/user-stats.ts');
 check('les devis sont comptés sous leurs deux formes', /isQuote\)[\s\S]{0,80}quote_requested/.test(statsSrc));
@@ -350,6 +354,44 @@ for (const lang of ['fr', 'en', 'ar']) {
   const bloc = JSON.parse(lire(`messages/${lang}.json`))?.admin?.userList || {};
   check(`« ${lang} » : les libellés de la flèche existent`,
     Boolean(bloc.showDetails && bloc.hideDetails));
+}
+
+/* ------------------------------------------------ vue table des comptes */
+
+section('Vue table : mêmes détails que la vue module');
+
+const tblSrc = lire('components/admin/UsersTable.tsx');
+
+// La table générique montrait les colonnes brutes de la ressource : passer
+// d'une vue à l'autre faisait perdre la moitié des informations.
+check('le module aiguille les comptes vers leur propre table',
+  /view === 'table' && estUsers \?/.test(crudSrc) && /<UsersTable/.test(crudSrc));
+check('la table réutilise le détail partagé', /<UserDetails\b/.test(tblSrc));
+check('le nom est sur la première ligne', /\{nom\}/.test(tblSrc));
+check('le courriel et le code sont en dessous',
+  /mailto:\$\{email\}/.test(tblSrc) && /userCode\(type, row\.id\)/.test(tblSrc));
+check('une flèche ouvre le détail', /ChevronDown/.test(tblSrc));
+check('la flèche annonce son état', /aria-expanded=\{ouvert\}/.test(tblSrc));
+check('la flèche pivote à l’ouverture', /rotate-180/.test(tblSrc));
+check('le détail occupe une ligne pleine largeur', /colSpan=\{6\}/.test(tblSrc));
+check('la flèche désigne la ligne de détail',
+  /aria-controls=\{`detail-\$\{id\}`\}/.test(tblSrc) && /id=\{`detail-\$\{id\}`\}/.test(tblSrc));
+check('plusieurs lignes peuvent rester ouvertes', /const \[ouverts, setOuverts\]/.test(tblSrc));
+check('le détail n’est monté qu’à l’ouverture', /\{ouvert && \(/.test(tblSrc));
+check('la sélection multiple est disponible', /onToggleSelectAll/.test(tblSrc));
+check('les actions de la ligne sont présentes',
+  ['onMessage', 'onConsult', 'onEdit', 'onDelete'].every((a) => tblSrc.includes(a)));
+check('le changement de statut est relayé', /onStatus\(row, statutCible\)/.test(tblSrc));
+check('les colonnes sont triables', /toggleSort\('lastName'\)/.test(tblSrc) && /toggleSort\('status'\)/.test(tblSrc));
+// Les pastilles doivent rester visibles quand les colonnes disparaissent.
+check('type et statut restent lisibles sur mobile', /md:hidden/.test(tblSrc));
+check('les décalages suivent le sens de lecture',
+  !/\bml-1\b/.test(tblSrc) && !/\bmr-1\b/.test(tblSrc.replace(/w-3 h-3 mr-1/g, '')));
+
+for (const lang of ['fr', 'en', 'ar']) {
+  const bloc = JSON.parse(lire(`messages/${lang}.json`))?.admin?.userList || {};
+  check(`« ${lang} » : les en-têtes de colonnes existent`,
+    ['columnUser', 'columnType', 'columnStatus', 'columnActions', 'selectAll', 'emptyList'].every((k) => bloc[k]));
 }
 
 /* --------------------------------------------------- vitrine : profil */

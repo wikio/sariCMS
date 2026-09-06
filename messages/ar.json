@@ -1882,7 +1882,13 @@
       "setPending": "في الانتظار",
       "block": "حظر",
       "showDetails": "عرض التفاصيل",
-      "hideDetails": "إخفاء التفاصيل"
+      "hideDetails": "إخفاء التفاصيل",
+      "columnUser": "المستخدم",
+      "columnType": "النوع",
+      "columnStatus": "الحالة",
+      "columnActions": "إجراءات",
+      "selectAll": "تحديد الكل",
+      "emptyList": "لا يوجد حساب للعرض."
     }
   },
   "common": {

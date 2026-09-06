@@ -9,6 +9,7 @@ import {
 import UserForm from '@/components/admin/UserForm';
 import UserSheet from '@/components/admin/UserSheet';
 import UserRow from '@/components/admin/UserRow';
+import UsersTable from '@/components/admin/UsersTable';
 import MessageComposer from '@/components/admin/MessageComposer';
 import type { PersonType } from '@/lib/messages';
 import PixelGridLoader from '@/components/admin/PixelGridLoader';
@@ -546,6 +547,23 @@ export default function AdminCrud({
 
       {loading ? (
         <div className="ad-card"><PixelGridLoader label="Sync CMS" /></div>
+      ) : view === 'table' && estUsers ? (
+        <UsersTable
+          rows={filtered}
+          locale={locale}
+          selected={selected}
+          busy={busy}
+          onToggleSelect={toggleSelect}
+          onToggleSelectAll={toggleSelectAll}
+          onConsult={(r) => ouvrirFiche(r, 'view')}
+          onEdit={(r) => ouvrirFiche(r, 'edit')}
+          onDelete={remove}
+          onMessage={setMessaging}
+          onStatus={setRowStatus}
+          sortKey={sortKey}
+          sortDir={sortDir}
+          toggleSort={toggleSort}
+        />
       ) : view === 'table' ? (
         <div className="ad-card overflow-x-auto ad-rise ad-rise-3">
           <table className="ad-table">

@@ -1882,7 +1882,13 @@
       "setPending": "En attente",
       "block": "Bloquer",
       "showDetails": "Afficher les détails",
-      "hideDetails": "Masquer les détails"
+      "hideDetails": "Masquer les détails",
+      "columnUser": "Utilisateur",
+      "columnType": "Type",
+      "columnStatus": "Statut",
+      "columnActions": "Actions",
+      "selectAll": "Tout sélectionner",
+      "emptyList": "Aucun compte à afficher."
     }
   },
   "common": {
