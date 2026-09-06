@@ -53,6 +53,23 @@ un indicateur de robustesse. Le bouton « Générer » produit toujours une vale
 conforme, sans caractères ambigus (ni `O`/`0`, ni `l`/`1`/`I`) puisqu'un mot de
 passe temporaire est souvent recopié à la main ou dicté au téléphone.
 
+## Changer son mot de passe depuis la vitrine
+
+Un compte connecté peut changer son mot de passe lui-même :
+**Tableau de bord → Profil → Changer mon mot de passe**. Le formulaire exige
+l'ancien mot de passe, ce qui distingue cette opération de la réinitialisation
+faite par un administrateur et empêche un poste laissé ouvert de verrouiller
+le compte de son propriétaire.
+
+Les règles sont celles indiquées plus haut. Le serveur refuse en outre un
+nouveau mot de passe identique à l'ancien, et limite les tentatives à cinq par
+minute. Après un changement réussi, les sessions ouvertes ailleurs sont
+révoquées : un mot de passe change en général parce qu'on le croit compromis.
+
+Si vous testez ce parcours avec un compte du tableau ci-dessus, remettez
+ensuite le mot de passe documenté, sinon la ligne correspondante ne sera plus
+exacte.
+
 ## Supprimer les comptes
 
 Ces comptes portent tous le préfixe `test.` : dans Administration →

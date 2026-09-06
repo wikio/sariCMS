@@ -411,6 +411,45 @@
 }
 
 /*
+ * Liste de suggestions d'un champ à autocomplétion.
+ *
+ * Même piège que la fenêtre modale : `.ad-card` impose `overflow: visible` et
+ * admin.css passe après Tailwind, donc `overflow-y-auto` était sans effet et
+ * la liste débordait sans ascenseur. La hauteur est bornée ici, et le
+ * défilement déclaré sur la même règle pour qu'aucune ne l'emporte.
+ */
+.ad-options {
+  max-height: 16rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  /* Le pointeur doit pouvoir faire défiler la liste sur mobile. */
+  -webkit-overflow-scrolling: touch;
+}
+
+/*
+ * Voile de la fenêtre modale.
+ *
+ * Il occupe tout l'écran et centre son contenu. `position: fixed` se réfère à
+ * la fenêtre, sauf si un ancêtre porte `transform`, `filter` ou
+ * `backdrop-filter` : c'est le cas du thème « aurora ». On neutralise donc
+ * l'héritage sur le voile lui-même.
+ */
+.ad-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(8, 12, 20, 0.55);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  overflow: hidden;
+}
+
+/*
  * Fenêtre modale : en-tête et pied fixes, contenu défilant.
  *
  * `admin.css` est chargé après Tailwind : la règle `.ad-card` ci-dessus
@@ -423,7 +462,19 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  /*
+   * Fond toujours opaque : le thème « aurora » rend `--ad-surface`
+   * semi-transparent (rgba …, 0.55) pour l'effet de verre dépoli des cartes.
+   * Sur une fenêtre modale, le voile sombre transparaissait au travers et le
+   * texte devenait illisible. `color-mix` retire la transparence sans figer
+   * une couleur, donc chaque thème garde la sienne.
+   */
+  background: color-mix(in srgb, var(--ad-surface) 100%, #000 0%);
+  background-color: var(--ad-modal-surface, var(--ad-surface));
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
 }
+/* Thèmes à surface translucide : on impose une teinte pleine. */
+[data-admin-theme="aurora"] .ad-modal { --ad-modal-surface: #141c42; }
 .ad-modal-body {
   overflow-y: auto;
   overflow-x: visible;

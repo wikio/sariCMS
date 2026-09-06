@@ -61,9 +61,34 @@ export default function SearchSelect({
   const [query, setQuery] = useState(affichage);
   const [open, setOpen] = useState(false);
   const [surbrillance, setSurbrillance] = useState(0);
+  // Sens d'ouverture : vers le bas par défaut, vers le haut s'il manque la
+  // place. Les champs pays et wilaya sont en bas d'un formulaire défilant, et
+  // leur liste se retrouvait tronquée par le bord de la fenêtre modale.
+  const [versLeHaut, setVersLeHaut] = useState(false);
   const conteneur = useRef<HTMLDivElement>(null);
 
   useEffect(() => { setQuery(affichage); }, [affichage]);
+
+  useEffect(() => {
+    if (!open || !conteneur.current) return;
+    const placer = () => {
+      const cadre = conteneur.current?.getBoundingClientRect();
+      if (!cadre) return;
+      const hauteurListe = 264; // 16 rem de liste + marge
+      const dessous = window.innerHeight - cadre.bottom;
+      // On n'ouvre vers le haut que si le dessus offre réellement mieux.
+      setVersLeHaut(dessous < hauteurListe && cadre.top > dessous);
+    };
+    placer();
+    window.addEventListener('resize', placer);
+    // `capture` : le défilement se produit dans le corps de la modale, pas
+    // sur la fenêtre, et un écouteur simple ne le verrait pas.
+    window.addEventListener('scroll', placer, true);
+    return () => {
+      window.removeEventListener('resize', placer);
+      window.removeEventListener('scroll', placer, true);
+    };
+  }, [open]);
 
   // Fermeture au clic extérieur : sans cela la liste reste ouverte au-dessus
   // du reste du formulaire et masque les champs suivants.
@@ -164,7 +189,7 @@ export default function SearchSelect({
       {open && (
         <div
           role="listbox"
-          className="absolute z-40 left-0 right-0 mt-1 ad-card overflow-hidden max-h-64 overflow-y-auto ad-scroll"
+          className={`absolute z-40 left-0 right-0 ad-card ad-options ad-scroll ${versLeHaut ? 'bottom-full mb-1' : 'top-full mt-1'}`}
         >
           {allowEmpty && (
             <button

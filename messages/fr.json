@@ -1880,7 +1880,9 @@
       "seeRoles": "Rôles et permissions",
       "activate": "Activer",
       "setPending": "En attente",
-      "block": "Bloquer"
+      "block": "Bloquer",
+      "showDetails": "Afficher les détails",
+      "hideDetails": "Masquer les détails"
     }
   },
   "common": {
@@ -2251,7 +2253,8 @@
         "signUp": "S'inscrire",
         "welcome": "Bienvenue",
         "guest": "Invité",
-        "user": "Utilisateur"
+        "user": "Utilisateur",
+        "notSignedIn": "Non connecté"
       },
       "LoadingSpinner": {
         "loading": "Chargement..."
@@ -2839,7 +2842,36 @@
       "back": "Retour",
       "from": "De",
       "displayLanguage": "Langue d'affichage",
-      "displayLanguageHint": "Le site s'ouvrira dans cette langue à votre prochaine connexion."
+      "displayLanguageHint": "Le site s'ouvrira dans cette langue à votre prochaine connexion.",
+      "firstName": "Prénom",
+      "lastName": "Nom",
+      "position": "Fonction",
+      "address": "Adresse",
+      "wilaya": "Wilaya",
+      "country": "Pays",
+      "open": "Ouvrir",
+      "close": "Fermer",
+      "profileSaved": "Profil mis à jour.",
+      "profileSaveOffline": "Modifications enregistrées sur cet appareil, mais le serveur n’a pas répondu.",
+      "profileNameRequired": "Le nom et le prénom sont obligatoires.",
+      "profileEmailInvalid": "Adresse e-mail invalide.",
+      "changePassword": "Changer mon mot de passe",
+      "currentPassword": "Mot de passe actuel",
+      "newPassword": "Nouveau mot de passe",
+      "confirmPassword": "Confirmer le mot de passe",
+      "showPassword": "Afficher le mot de passe",
+      "hidePassword": "Masquer le mot de passe",
+      "pwdRuleLength": "Au moins 10 caractères",
+      "pwdRuleUpper": "Une majuscule",
+      "pwdRuleLower": "Une minuscule",
+      "pwdRuleDigit": "Un chiffre",
+      "pwdMismatch": "Les deux saisies diffèrent.",
+      "pwdChanged": "Mot de passe modifié.",
+      "pwdWrongCurrent": "Mot de passe actuel incorrect.",
+      "pwdTooMany": "Trop de tentatives. Réessayez dans une minute.",
+      "pwdRejected": "Nouveau mot de passe refusé : il doit être différent de l’ancien et respecter les règles.",
+      "pwdFailed": "Le changement a échoué. Réessayez plus tard.",
+      "pwdNeedsSession": "Reconnectez-vous pour changer votre mot de passe."
     },
     "eventDetail": {
       "notFound": "Événement non trouvé",

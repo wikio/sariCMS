@@ -631,7 +631,7 @@ export default function AdminCrud({
       )}
 
       {consulting && (
-        <div className="fixed inset-0 z-50 bg-black/45 backdrop-blur-sm flex items-end md:items-center justify-center p-4">
+        <div className="ad-overlay">
           <div className="ad-card ad-modal w-full max-w-4xl max-h-[92dvh] ad-rise">
             <div className="ad-modal-body ad-scroll p-4 sm:p-6">
             <UserSheet
@@ -646,7 +646,7 @@ export default function AdminCrud({
       )}
 
       {editing && estUsers && (
-        <div className="fixed inset-0 z-50 bg-black/45 backdrop-blur-sm flex items-end md:items-center justify-center p-4">
+        <div className="ad-overlay">
           {/*
             En-tête fixe et corps défilant : le cadre ne défile pas, seul le
             contenu le fait. `dvh` plutôt que `vh` car sur mobile la barre
@@ -691,7 +691,7 @@ export default function AdminCrud({
       )}
 
       {editing && !estUsers && (
-        <div className="fixed inset-0 z-50 bg-black/45 backdrop-blur-sm flex items-end md:items-center justify-center p-4">
+        <div className="ad-overlay">
           <div className="ad-card w-full max-w-3xl max-h-[90vh] overflow-y-auto ad-scroll p-6 ad-rise">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-black">Édition · {titleOf(editing, cfg)}</h2>

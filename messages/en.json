@@ -1880,7 +1880,9 @@
       "seeRoles": "Roles and permissions",
       "activate": "Activate",
       "setPending": "Pending",
-      "block": "Block"
+      "block": "Block",
+      "showDetails": "Show details",
+      "hideDetails": "Hide details"
     }
   },
   "common": {
@@ -2251,7 +2253,8 @@
         "signUp": "Sign up",
         "welcome": "Welcome",
         "guest": "Guest",
-        "user": "User"
+        "user": "User",
+        "notSignedIn": "Not signed in"
       },
       "LoadingSpinner": {
         "loading": "Loading..."
@@ -2839,7 +2842,36 @@
       "back": "Back",
       "from": "From",
       "displayLanguage": "Display language",
-      "displayLanguageHint": "The site will open in this language the next time you sign in."
+      "displayLanguageHint": "The site will open in this language the next time you sign in.",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "position": "Position",
+      "address": "Address",
+      "wilaya": "Wilaya",
+      "country": "Country",
+      "open": "Open",
+      "close": "Close",
+      "profileSaved": "Profile updated.",
+      "profileSaveOffline": "Changes saved on this device, but the server did not respond.",
+      "profileNameRequired": "First and last name are required.",
+      "profileEmailInvalid": "Invalid e-mail address.",
+      "changePassword": "Change my password",
+      "currentPassword": "Current password",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm password",
+      "showPassword": "Show password",
+      "hidePassword": "Hide password",
+      "pwdRuleLength": "At least 10 characters",
+      "pwdRuleUpper": "One uppercase letter",
+      "pwdRuleLower": "One lowercase letter",
+      "pwdRuleDigit": "One digit",
+      "pwdMismatch": "The two entries differ.",
+      "pwdChanged": "Password changed.",
+      "pwdWrongCurrent": "Current password is incorrect.",
+      "pwdTooMany": "Too many attempts. Try again in a minute.",
+      "pwdRejected": "New password rejected: it must differ from the old one and meet the rules.",
+      "pwdFailed": "The change failed. Please try again later.",
+      "pwdNeedsSession": "Sign in again to change your password."
     },
     "eventDetail": {
       "notFound": "Event Not Found",

@@ -247,15 +247,21 @@ check('la redirection suit la langue du compte', /router\.push\(`\/\$\{langue\}\
 check('une langue inconnue est rejetée', /LANGUES_VALIDES\.includes/.test(loginSrc));
 
 const dashSrc = lire('app/[locale]/dashboard/page.tsx');
-check('le profil propose de changer de langue', /profil-langue/.test(dashSrc));
-check('le choix est enregistré', /enregistrerProfil/.test(dashSrc));
-check('le changement est appliqué aussitôt', /router\.push\(`\/\$\{langueProfil\}\/dashboard`\)/.test(dashSrc));
+// Le profil de la vitrine vit désormais dans son propre module : le tableau
+// de bord ne fait que le monter.
+const profilSrc = lire('components/dashboard/ProfileModule.tsx');
+check('le tableau de bord délègue le profil au module', /<ProfileModule \/>/.test(dashSrc));
+check('le profil propose de changer de langue', /profil-langue/.test(profilSrc));
+check('le choix est enregistré', /localStorage\.setItem\('sari_user'/.test(profilSrc));
+check('le changement est appliqué aussitôt', /router\.push\(`\/\$\{brouillon\.locale\}\/dashboard`\)/.test(profilSrc));
 
 // Un hook après un retour conditionnel casse le rendu (React lève
 // « Rendered more hooks than during the previous render »).
 const gardeIdx2 = dashSrc.indexOf('if (!user || isBackOfficeUser(user.type)) return null;');
-check('le nouvel état est déclaré avant le retour anticipé', dashSrc.indexOf('const [langueProfil') < gardeIdx2);
 check('aucun hook après le retour anticipé', !/^ {2}const .*= use(Memo|State|Effect|Callback|Ref)\(/m.test(dashSrc.slice(gardeIdx2)));
+const gardeProfil = profilSrc.indexOf('if (!user) return null;');
+check('le module déclare ses hooks avant le retour anticipé',
+  !/^ {2}const .*= use(Memo|State|Effect|Callback|Ref)\(/m.test(profilSrc.slice(gardeProfil, profilSrc.indexOf('function Ligne('))));
 
 /* ------------------------------------------------- traductions */
 
@@ -291,6 +297,110 @@ for (const lang of ['fr', 'en', 'ar']) {
     .flatMap(([b, ks]) => ks.filter((k) => !bloc?.[b]?.[k]).map((k) => `${b}.${k}`));
   check(`« ${lang} » : les ${CLES.length} clés principales existent`, manquantes.length === 0);
   check(`« ${lang} » : les sous-blocs sont complets`, sousManquantes.length === 0);
+}
+
+/* ------------------------------------- présentation du modal et des listes */
+
+section('Modal centré et listes déroulantes');
+
+const cssSrc = lire('app/admin.css');
+
+// Le thème « aurora » rend --ad-surface translucide : un modal bâti sur
+// .ad-card laissait voir le voile sombre au travers.
+check('la couche de fond est une classe dédiée', /\.ad-overlay\s*\{/.test(cssSrc));
+check('la couche de fond est fixée au cadre visible', /\.ad-overlay\s*\{[^}]*position:\s*fixed/.test(cssSrc));
+check('le modal est centré', /\.ad-overlay\s*\{[^}]*align-items:\s*center/.test(cssSrc)
+  && /\.ad-overlay\s*\{[^}]*justify-content:\s*center/.test(cssSrc));
+check('le modal a un fond opaque', /--ad-modal-surface/.test(cssSrc));
+check('« aurora » impose sa propre teinte opaque',
+  /\[data-admin-theme="aurora"\]\s*\.ad-modal\s*\{[^}]*--ad-modal-surface/.test(cssSrc));
+check('plus aucun voile Tailwind dans le module', !/bg-black\/45/.test(crudSrc));
+check('les trois modals utilisent la couche dédiée',
+  (crudSrc.match(/className="ad-overlay"/g) || []).length === 3);
+
+// .ad-card impose overflow:visible (les listes déroulantes en dépendent) :
+// une classe dédiée est nécessaire pour rendre la sous-liste défilante.
+const selectSrc = lire('components/admin/fields/SearchSelect.tsx');
+check('la sous-liste a une classe défilante', /\.ad-options\s*\{/.test(cssSrc));
+check('la sous-liste est plafonnée en hauteur', /\.ad-options\s*\{[^}]*max-height/.test(cssSrc));
+check('la sous-liste affiche son ascenseur', /\.ad-options\s*\{[^}]*overflow-y:\s*auto/.test(cssSrc));
+check('le défilement ne déborde pas sur le modal', /\.ad-options\s*\{[^}]*overscroll-behavior/.test(cssSrc));
+check('la liste des pays utilise la classe', /ad-card ad-options ad-scroll/.test(selectSrc));
+check('plus de conflit overflow sur la liste', !/overflow-hidden max-h-64 overflow-y-auto/.test(selectSrc));
+check('la liste s’ouvre vers le haut si besoin', /versLeHaut/.test(selectSrc));
+// Le défilement a lieu sur le corps du modal, pas sur la fenêtre : sans
+// capture, l'écouteur ne verrait jamais l'événement.
+check('la mesure suit le défilement du modal',
+  /addEventListener\('scroll',\s*placer,\s*true\)/.test(selectSrc));
+
+/* ------------------------------------------------ liste : détails repliés */
+
+section('Liste : détails repliables');
+
+check('la ligne a un état replié', /const \[ouvert, setOuvert\]/.test(rowSrc));
+check('les détails sont masqués par défaut', /useState\(false\)/.test(rowSrc));
+check('le courriel et le code sont sur la même ligne',
+  /userCode\(type, record\.id\)/.test(rowSrc) && /mailto:\$\{email\}/.test(rowSrc));
+check('une flèche commande l’ouverture', /ChevronDown/.test(rowSrc));
+check('la flèche annonce son état', /aria-expanded=\{ouvert\}/.test(rowSrc));
+check('la flèche pivote à l’ouverture', /rotate-180/.test(rowSrc));
+check('le bloc de détails est conditionné', /\{ouvert && \(/.test(rowSrc));
+
+for (const lang of ['fr', 'en', 'ar']) {
+  const bloc = JSON.parse(lire(`messages/${lang}.json`))?.admin?.userList || {};
+  check(`« ${lang} » : les libellés de la flèche existent`,
+    Boolean(bloc.showDetails && bloc.hideDetails));
+}
+
+/* --------------------------------------------------- vitrine : profil */
+
+section('Vitrine : déconnexion et profil');
+
+const headerSrc = lire('components/layout/Header.tsx');
+check('l’en-tête est branché sur la session', /useAuth\(\)/.test(headerSrc));
+check('la déconnexion appelle bien logout', /logout\(\)/.test(headerSrc));
+check('plus de gestionnaire factice', !/Votre logique de logout ici/.test(headerSrc));
+check('la déconnexion renvoie à l’accueil', /router\.push\(`\/\$\{locale\}`\)/.test(headerSrc));
+check('le menu dépend de l’état de connexion', /isAuthenticated \?/.test(headerSrc));
+
+check('le profil s’ouvre en consultation', /useState<'lecture' \| 'edition'>\('lecture'\)/.test(profilSrc));
+check('un bouton bascule en édition', /setMode\('edition'\)/.test(profilSrc));
+check('l’édition peut être annulée', /const annuler = \(\)/.test(profilSrc));
+
+// Les champs réservés à l'administration ne doivent pas apparaître ici :
+// les exposer permettrait à un visiteur de se promouvoir ou de débloquer
+// un compte suspendu.
+for (const interdit of ['roleId', 'totpEnabled', 'partner-code', 'temp-password']) {
+  check(`le champ « ${interdit} » reste réservé à l’administration`, !profilSrc.includes(interdit));
+}
+check('le statut n’est pas modifiable', !/status:/.test(profilSrc));
+check('le type de compte n’est pas modifiable', !/type:\s*['"]/.test(profilSrc));
+
+for (const champ of ['firstName', 'lastName', 'phone', 'company', 'position', 'address', 'wilaya', 'country', 'locale']) {
+  check(`le champ « ${champ} » est proposé`, profilSrc.includes(`${champ}:`));
+}
+
+check('le changement de mot de passe est proposé', /BlocMotDePasse/.test(profilSrc));
+check('l’ancien mot de passe est exigé', /currentPassword/.test(profilSrc));
+check('les règles du serveur sont réutilisées', /checkPassword|PASSWORD_MIN/.test(profilSrc));
+check('la confirmation est vérifiée', /identiques/.test(profilSrc));
+check('l’envoi passe par le point d’entrée dédié', /'\/auth\/change-password'/.test(profilSrc));
+check('le jeton de la vitrine est utilisé', /frontToken\(\)/.test(profilSrc));
+check('la limitation de débit est expliquée', /429/.test(profilSrc));
+
+const authCtl = lire('backend/src/modules/auth/auth.controller.ts');
+const authSvc = lire('backend/src/modules/auth/auth.service.ts');
+check('le serveur expose le changement de mot de passe', /@Post\('change-password'\)/.test(authCtl));
+check('le point d’entrée est limité en débit', /@Throttle\(\{ default: \{ limit: 5/.test(authCtl));
+check('l’ancien mot de passe est vérifié', /bcrypt\.compare\(dto\.currentPassword/.test(authSvc));
+check('un mot de passe inchangé est refusé', /must differ from the current one/.test(authSvc));
+check('les autres sessions sont révoquées', /revokedAt: new Date\(\)\.toISOString\(\)/.test(authSvc));
+
+for (const lang of ['fr', 'en', 'ar']) {
+  const bloc = JSON.parse(lire(`messages/${lang}.json`))?.pages?.dashboard || {};
+  const requises = ['changePassword', 'currentPassword', 'newPassword', 'confirmPassword',
+    'pwdMismatch', 'pwdChanged', 'pwdWrongCurrent', 'profileSaved', 'firstName', 'lastName', 'wilaya', 'country'];
+  check(`« ${lang} » : les clés du profil existent`, requises.every((k) => bloc[k]));
 }
 
 console.log(`\n${ok} contrôle(s) réussi(s), ${ko} échec(s).`);

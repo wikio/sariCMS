@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { Menu, X, Phone, Mail, ShoppingCart, User, LogOut, LayoutDashboard, Package, Briefcase, FileText, Search, Moon, Sun, ChevronDown } from 'lucide-react';
 import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
@@ -11,6 +12,7 @@ import IconMark from '@/components/admin/IconMark';
 import type { Config, Menu as MenuType } from '@/types';
 import { loadAdminSettings } from '@/lib/admin-settings';
 import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { useVisibility } from '@/lib/site-visibility';
 import { locales } from '@/lib/i18n';
 
@@ -37,6 +39,8 @@ export default function Header({ config, menu }: { config: Config; menu: MenuTyp
   const [isDark, setIsDark] = useState(false); // Géré par votre ThemeProvider si nécessaire
 
   const locale = useLocale();
+  const router = useRouter();
+  const { user, isAuthenticated, logout } = useAuth();
   const t = useTranslations('components.layout.header');
   const tNav = useTranslations('common.nav');
 
@@ -119,13 +123,26 @@ export default function Header({ config, menu }: { config: Config; menu: MenuTyp
     return item.label;
   };
 
+  /**
+   * Déconnexion effective.
+   *
+   * Le gestionnaire précédent ne faisait que refermer le menu : la session
+   * restait ouverte et l'utilisateur, croyant s'être déconnecté, retrouvait
+   * son compte au rechargement. On vide la session puis on renvoie vers
+   * l'accueil, car la page courante peut être réservée aux personnes
+   * connectées.
+   */
   const handleLogout = () => {
-    // Votre logique de logout ici
     setShowUserMenu(false);
+    logout();
+    router.push(`/${locale}`);
   };
 
+  /** Libellé du type de compte, replié sur une valeur générique si inconnu. */
   const getUserTypeLabel = () => {
-    return t('userTypeDefault'); // Adaptez selon votre contexte d'auth
+    const type = String(user?.type ?? '');
+    const cle = `userType${type.charAt(0).toUpperCase()}${type.slice(1)}`;
+    return type && t.has?.(cle) ? t(cle) : t('userTypeDefault');
   };
 
   return (
@@ -176,7 +193,9 @@ export default function Header({ config, menu }: { config: Config; menu: MenuTyp
                   <div className="relative z-10 w-8 h-8 bg-sari-lime/20 rounded-full flex items-center justify-center border-2 border-sari-lime">
                     <User className="w-4 h-4 text-sari-lime" />
                   </div>
-                  <span className="hidden sm:inline font-semibold relative z-10 text-sm">{t('login')}</span>
+                  <span className="hidden sm:inline font-semibold relative z-10 text-sm">
+                    {isAuthenticated ? (user?.firstName || t('account')) : t('login')}
+                  </span>
                 </button>
                 
                 {showUserMenu && (
@@ -189,20 +208,44 @@ export default function Header({ config, menu }: { config: Config; menu: MenuTyp
                             <User className="w-6 h-6" />
                           </div>
                           <div>
-                            <div className="font-bold">{t("user")}</div>
-                            <div className="text-xs text-blue-100 capitalize">{getUserTypeLabel()}</div>
+                            <div className="font-bold truncate">
+                              {isAuthenticated ? (user?.name || user?.email || t('user')) : t('user')}
+                            </div>
+                            <div className="text-xs text-blue-100 capitalize truncate">
+                              {isAuthenticated ? getUserTypeLabel() : t('notSignedIn')}
+                            </div>
                           </div>
                         </div>
                       </div>
+                      {/*
+                        Les entrées dépendent de l'état de connexion : le menu
+                        proposait « Déconnexion » à un visiteur, et « Connexion »
+                        n'apparaissait nulle part.
+                      */}
                       <div className="p-2">
-                        <Link href={getLinkHref('#dashboard')} onClick={() => setShowUserMenu(false)} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors rounded">
-                          <LayoutDashboard className="w-4 h-4 text-sari-blue" />
-                          <span className="text-sm font-medium">{t('dashboard')}</span>
-                        </Link>
-                        <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 transition-colors rounded">
-                          <LogOut className="w-4 h-4" />
-                          <span className="text-sm font-medium">{t('logout')}</span>
-                        </button>
+                        {isAuthenticated ? (
+                          <>
+                            <Link href={getLinkHref('#dashboard')} onClick={() => setShowUserMenu(false)} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors rounded">
+                              <LayoutDashboard className="w-4 h-4 text-sari-blue" />
+                              <span className="text-sm font-medium">{t('dashboard')}</span>
+                            </Link>
+                            <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 transition-colors rounded">
+                              <LogOut className="w-4 h-4" />
+                              <span className="text-sm font-medium">{t('logout')}</span>
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <Link href={`/${locale}/connexion`} onClick={() => setShowUserMenu(false)} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors rounded">
+                              <User className="w-4 h-4 text-sari-blue" />
+                              <span className="text-sm font-medium">{t('login')}</span>
+                            </Link>
+                            <Link href={`/${locale}/inscription`} onClick={() => setShowUserMenu(false)} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors rounded">
+                              <FileText className="w-4 h-4 text-sari-blue" />
+                              <span className="text-sm font-medium">{t('signUp')}</span>
+                            </Link>
+                          </>
+                        )}
                       </div>
                     </div>
                   </>

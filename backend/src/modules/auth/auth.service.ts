@@ -128,6 +128,52 @@ export class AuthService {
     return { ...safe, role, permissions, totpEnabled: Boolean(user.totpEnabled) };
   }
 
+  /**
+   * Change le mot de passe d'un compte après vérification de l'ancien.
+   *
+   * Les sessions ouvertes ailleurs sont révoquées : un mot de passe change
+   * en général parce qu'on le croit compromis, laisser les jetons valides
+   * viderait la mesure de son sens.
+   */
+  async changePassword(userId: number, dto: { currentPassword: string; newPassword: string }) {
+    const user = await this.users.findById(userId);
+    if (!user) throw new UnauthorizedException();
+
+    const ok = await bcrypt.compare(dto.currentPassword, user.passwordHash);
+    if (!ok) throw new UnauthorizedException('Current password is incorrect');
+
+    // Un mot de passe identique à l'ancien donnerait une fausse impression
+    // de sécurité : on le refuse explicitement.
+    const identique = await bcrypt.compare(dto.newPassword, user.passwordHash);
+    if (identique) throw new BadRequestException('The new password must differ from the current one');
+
+    await this.users.update(userId, {
+      passwordHash: bcrypt.hashSync(dto.newPassword, 10),
+    } as Partial<UserEntity>);
+
+    // Révocation des sessions ouvertes ailleurs. Un échec ici ne doit pas
+    // annuler le changement de mot de passe, déjà enregistré.
+    try {
+      const { data } = await this.refreshTokens.findMany({
+        limit: 200,
+        filters: [{ field: 'userId', op: 'eq', value: userId }],
+      });
+      await Promise.all(
+        (data || [])
+          .filter((jeton) => !jeton.revokedAt)
+          .map((jeton) =>
+            this.refreshTokens.update(jeton.id, {
+              revokedAt: new Date().toISOString(),
+            } as Partial<RefreshTokenEntity>),
+          ),
+      );
+    } catch {
+      /* Révocation impossible : le mot de passe est changé malgré tout. */
+    }
+
+    return { changed: true };
+  }
+
   async setupTotp(userId: number) {
     const user = await this.users.findById(userId);
     if (!user) throw new UnauthorizedException();

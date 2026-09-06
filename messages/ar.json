@@ -1880,7 +1880,9 @@
       "seeRoles": "الأدوار والصلاحيات",
       "activate": "تفعيل",
       "setPending": "في الانتظار",
-      "block": "حظر"
+      "block": "حظر",
+      "showDetails": "عرض التفاصيل",
+      "hideDetails": "إخفاء التفاصيل"
     }
   },
   "common": {
@@ -2251,7 +2253,8 @@
         "signUp": "إنشاء حساب",
         "welcome": "مرحباً",
         "guest": "زائر",
-        "user": "المستخدم"
+        "user": "المستخدم",
+        "notSignedIn": "غير متصل"
       },
       "LoadingSpinner": {
         "loading": "جاري التحميل..."
@@ -2839,7 +2842,36 @@
       "back": "رجوع",
       "from": "من",
       "displayLanguage": "لغة العرض",
-      "displayLanguageHint": "سيُفتح الموقع بهذه اللغة عند تسجيل دخولك القادم."
+      "displayLanguageHint": "سيُفتح الموقع بهذه اللغة عند تسجيل دخولك القادم.",
+      "firstName": "الاسم",
+      "lastName": "اللقب",
+      "position": "الوظيفة",
+      "address": "العنوان",
+      "wilaya": "الولاية",
+      "country": "البلد",
+      "open": "فتح",
+      "close": "إغلاق",
+      "profileSaved": "تم تحديث الملف الشخصي.",
+      "profileSaveOffline": "تم حفظ التعديلات على هذا الجهاز، لكن الخادم لم يستجب.",
+      "profileNameRequired": "الاسم واللقب إلزاميان.",
+      "profileEmailInvalid": "عنوان بريد إلكتروني غير صالح.",
+      "changePassword": "تغيير كلمة المرور",
+      "currentPassword": "كلمة المرور الحالية",
+      "newPassword": "كلمة المرور الجديدة",
+      "confirmPassword": "تأكيد كلمة المرور",
+      "showPassword": "إظهار كلمة المرور",
+      "hidePassword": "إخفاء كلمة المرور",
+      "pwdRuleLength": "10 أحرف على الأقل",
+      "pwdRuleUpper": "حرف كبير واحد",
+      "pwdRuleLower": "حرف صغير واحد",
+      "pwdRuleDigit": "رقم واحد",
+      "pwdMismatch": "الإدخالان مختلفان.",
+      "pwdChanged": "تم تغيير كلمة المرور.",
+      "pwdWrongCurrent": "كلمة المرور الحالية غير صحيحة.",
+      "pwdTooMany": "محاولات كثيرة. أعد المحاولة بعد دقيقة.",
+      "pwdRejected": "تم رفض كلمة المرور الجديدة: يجب أن تختلف عن القديمة وتحترم الشروط.",
+      "pwdFailed": "فشل التغيير. أعد المحاولة لاحقًا.",
+      "pwdNeedsSession": "سجّل الدخول من جديد لتغيير كلمة المرور."
     },
     "eventDetail": {
       "notFound": "الفعالية غير موجودة",
