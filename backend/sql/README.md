@@ -5,7 +5,7 @@ Ce dossier contient le schéma MySQL et les données de démarrage du CMS
 
 | Fichier                    | Rôle                                                           |
 | -------------------------- | -------------------------------------------------------------- |
-| `schema.mysql.sql`         | Structure : base `sari_cms`, 26 tables, index, clés étrangères |
+| `schema.mysql.sql`         | Structure : base `sari_cms`, 28 tables, index, clés étrangères |
 | `generate-schema.mjs`      | **Génère** `schema.mysql.sql` depuis `prisma/schema.prisma`     |
 | `seed.mysql.sql`           | Données de démarrage (contexte algérien, FR / EN / AR)         |
 | `generate-seed.mjs`        | Générateur du seed (reproductible, IDs déterministes)          |

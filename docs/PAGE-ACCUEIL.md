@@ -59,6 +59,20 @@ Priorité des valeurs, de la plus faible à la plus forte : défauts du code
 (`HOME_DEFAULTS`, `lib/home/config.ts`) → fichier `data/{langue}/home.json` →
 ligne de l’API.
 
+Côté base, le pilote suivi n’exige rien de spécial : en `DB_DRIVER=json`
+(valeur par défaut du dépôt), les lignes vivent dans `backend/storage/json/`,
+qui n’est pas versionné ; en MySQL ou PostgreSQL, appliquer la migration
+`backend/prisma/migrations/20260906_add_home_sections_and_newsletter`
+(`npx prisma migrate deploy`) ou rejouer `backend/sql/schema.mysql.sql`, qui
+contient les deux tables `home_sections` et `newsletter_subscribers`.
+
+Le store de démonstration ne contenant aucune ligne au départ, la page se
+construit donc entièrement à partir des défauts du code et des traductions du
+site — c’est ce qui permet de vérifier la règle de langue d’un seul coup d’œil.
+Pour revenir à cet état après avoir joué avec le studio : **Administration →
+Page d’accueil → Réinitialiser**, bloc par bloc, ou `cd backend && npm run seed`
+qui vide `homeSections` et la table `newsletter`.
+
 ## Règle de langue
 
 La **structure** d’un bloc — affiché ou non, ordre, nombre, fiches sélectionnées,

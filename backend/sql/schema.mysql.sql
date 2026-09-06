@@ -754,4 +754,60 @@ CREATE TABLE `job_applications` (
   CONSTRAINT `job_applications_careerId_fkey` FOREIGN KEY (`careerId`) REFERENCES `careers` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- HomeSection
+DROP TABLE IF EXISTS `home_sections`;
+CREATE TABLE `home_sections` (
+  `id`        INT          NOT NULL AUTO_INCREMENT,
+  `key`       VARCHAR(255) NOT NULL,
+  `locale`    VARCHAR(255) NOT NULL DEFAULT 'fr',
+  `label`     VARCHAR(255) NULL,
+  `enabled`   TINYINT(1)   NOT NULL DEFAULT 1,
+  `sortOrder` INT          NOT NULL DEFAULT 0,
+  `texts`     JSON         NULL,
+  `selection` JSON         NULL,
+  `settings`  JSON         NULL,
+  `style`     JSON         NULL,
+  `items`     JSON         NULL,
+  `builder`   JSON         NULL,
+  `status`    VARCHAR(255) NOT NULL DEFAULT 'published',
+  `createdAt` DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `updatedAt` DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  `deletedAt` DATETIME(3)  NULL,
+  `createdBy` INT          NULL,
+  `updatedBy` INT          NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `home_sections_key_locale_key` (`key`, `locale`),
+  KEY `home_sections_locale_status_sortOrder_idx` (`locale`, `status`, `sortOrder`),
+  KEY `home_sections_deletedAt_idx` (`deletedAt`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- NewsletterSubscriber
+DROP TABLE IF EXISTS `newsletter_subscribers`;
+CREATE TABLE `newsletter_subscribers` (
+  `id`             INT          NOT NULL AUTO_INCREMENT,
+  `email`          VARCHAR(255) NOT NULL,
+  `name`           VARCHAR(255) NULL,
+  `locale`         VARCHAR(255) NOT NULL DEFAULT 'fr',
+  `status`         VARCHAR(255) NOT NULL DEFAULT 'subscribed',
+  `source`         VARCHAR(255) NULL,
+  `consent`        TINYINT(1)   NOT NULL DEFAULT 0,
+  `topics`         JSON         NULL,
+  `notes`          TEXT         NULL,
+  `token`          VARCHAR(255) NULL,
+  `ip`             VARCHAR(255) NULL,
+  `userAgent`      TEXT         NULL,
+  `subscribedAt`   DATETIME(3)  NULL,
+  `unsubscribedAt` DATETIME(3)  NULL,
+  `createdAt`      DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `updatedAt`      DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  `deletedAt`      DATETIME(3)  NULL,
+  `createdBy`      INT          NULL,
+  `updatedBy`      INT          NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `newsletter_subscribers_email_key` (`email`),
+  KEY `newsletter_subscribers_status_locale_idx` (`status`, `locale`),
+  KEY `newsletter_subscribers_source_idx` (`source`),
+  KEY `newsletter_subscribers_deletedAt_idx` (`deletedAt`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 SET FOREIGN_KEY_CHECKS = 1;
