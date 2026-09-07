@@ -3,9 +3,9 @@
 -- Exemples du bloc « Bandeau défilant » de la page d'accueil, en base.
 -- Trois réglages volontairement différents, pour voir le module travailler :
 --   fr : mélange actualités + événements + partenaires, deux blocs du studio,
---        carte autour de chaque élément, pas de titre au-dessus du bandeau ;
+--        carte autour de chaque élément, pas de titre au-dessus du bandeau,
 --   en : actualités seules, éléments en « texte + image » dans une boîte de
---        112 px, titre d'en-tête affiché ;
+--        112 px, titre d'en-tête affiché,
 --   ar : blocs du studio uniquement (aucune fiche de module), pastilles, sens
 --        de défilement inversé pour l'écriture droite → gauche.
 --
@@ -40,4 +40,4 @@ ON DUPLICATE KEY UPDATE
   `status`    = VALUES(`status`);
 
 -- Pour repartir de zéro :
--- DELETE FROM `home_sections` WHERE `key` = 'partners-marquee';
+--   DELETE FROM `home_sections` WHERE `key` = 'partners-marquee'

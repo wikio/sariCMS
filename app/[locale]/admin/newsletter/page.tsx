@@ -263,24 +263,24 @@ export default function AdminNewsletterPage() {
         </span>
         <button
           type="button"
-          className="ad-btn ad-btn-ghost text-xs"
+          className="ad-btn ad-btn-sm ad-btn-ghost"
           onClick={() => void downloadSubscribersCsv(filters).catch((err: Error) => showToast(err.message, 'error'))}
           disabled={!rows.length}
         >
-          <Download className="w-3.5 h-3.5" /> {t('exportCsv')}
+          <Download className="w-4 h-4" /> {t('exportCsv')}
         </button>
-        <button type="button" className="ad-btn ad-btn-ghost text-xs" onClick={() => void refresh()}>
-          <RefreshCcw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} /> {t('reload')}
+        <button type="button" className="ad-btn ad-btn-sm ad-btn-ghost" onClick={() => void refresh()}>
+          <RefreshCcw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> {t('reload')}
         </button>
         <button
           type="button"
-          className="ad-btn ad-btn-primary text-xs"
+          className="ad-btn ad-btn-sm ad-btn-primary"
           onClick={() => {
             setForm({ ...EMPTY_FORM, locale, topics: [] });
             setEditing({ mode: 'create', row: {} });
           }}
         >
-          <Plus className="w-3.5 h-3.5" /> {t('addSubscriber')}
+          <Plus className="w-4 h-4" /> {t('addSubscriber')}
         </button>
       </div>
 
@@ -343,25 +343,25 @@ export default function AdminNewsletterPage() {
       </div>
 
       {picked.length ? (
-        <div className="ad-card px-3 py-2 flex flex-wrap items-center gap-2">
+        <div className="ad-card ad-toolbar px-3 py-2">
           <span className="text-xs font-bold">{t('selected', { count: picked.length })}</span>
-          <button type="button" className="ad-btn ad-btn-ghost text-xs" onClick={() => void runBulk('subscribed')}>
+          <button type="button" className="ad-btn ad-btn-sm ad-btn-ghost" onClick={() => void runBulk('subscribed')}>
             <Send className="w-3.5 h-3.5" /> {t('markSubscribed')}
           </button>
-          <button type="button" className="ad-btn ad-btn-ghost text-xs" onClick={() => void runBulk('unsubscribed')}>
+          <button type="button" className="ad-btn ad-btn-sm ad-btn-ghost" onClick={() => void runBulk('unsubscribed')}>
             <ThumbsDown className="w-3.5 h-3.5" /> {t('markUnsubscribed')}
           </button>
           <button
             type="button"
-            className="ad-btn ad-btn-ghost text-xs"
+            className="ad-btn ad-btn-sm ad-btn-ghost"
             onClick={() => void downloadSubscribersCsv(filters, picked).catch((err: Error) => showToast(err.message, 'error'))}
           >
             <Download className="w-3.5 h-3.5" /> {t('exportSelection', { count: picked.length })}
           </button>
-          <button type="button" className="ad-btn ad-btn-danger text-xs" onClick={() => void runBulk('delete')}>
+          <button type="button" className="ad-btn ad-btn-sm ad-btn-danger" onClick={() => void runBulk('delete')}>
             <Trash2 className="w-3.5 h-3.5" /> {t('trashSelected')}
           </button>
-          <button type="button" className="ad-btn-icon ms-auto" onClick={() => setPicked([])} aria-label={t('clearSelection')}>
+          <button type="button" className="ad-btn ad-btn-icon ad-btn-ghost ad-btn-sm ms-auto" onClick={() => setPicked([])} aria-label={t('clearSelection')}>
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -462,13 +462,13 @@ export default function AdminNewsletterPage() {
                     ) : null}
                   </td>
                   <td className="px-3 py-2">
-                    <div className="flex items-center justify-end gap-0.5">
+                    <div className="ad-row-actions">
                       {filters.trash ? (
                         <>
-                          <button type="button" className="ad-btn-icon" title={t('restore')} onClick={() => void restore(row)}>
+                          <button type="button" className="ad-btn ad-btn-icon ad-btn-ghost ad-btn-sm" title={t('restore')} onClick={() => void restore(row)}>
                             <RotateCcw className="w-3.5 h-3.5" />
                           </button>
-                          <button type="button" className="ad-btn-icon" title={t('purge')} onClick={() => void removeRow(row, true)}>
+                          <button type="button" className="ad-btn ad-btn-icon ad-btn-danger ad-btn-sm" title={t('purge')} onClick={() => void removeRow(row, true)}>
                             <Undo2 className="w-3.5 h-3.5" />
                           </button>
                         </>
@@ -476,7 +476,7 @@ export default function AdminNewsletterPage() {
                         <>
                           <Link
                             href={`/${locale}/admin/newsletter/${row.id}`}
-                            className="ad-btn-icon"
+                            className="ad-btn ad-btn-icon ad-btn-ghost ad-btn-sm"
                             title={t('view')}
                             aria-label={t('view')}
                           >
@@ -484,7 +484,7 @@ export default function AdminNewsletterPage() {
                           </Link>
                           <button
                             type="button"
-                            className="ad-btn-icon"
+                            className="ad-btn ad-btn-icon ad-btn-ghost ad-btn-sm"
                             title={row.status === 'unsubscribed' ? t('reactivate') : t('deactivate')}
                             onClick={() => void patchRow(row, { status: row.status === 'unsubscribed' ? 'subscribed' : 'unsubscribed' }, t('updated'))}
                           >
@@ -492,7 +492,7 @@ export default function AdminNewsletterPage() {
                           </button>
                           <button
                             type="button"
-                            className="ad-btn-icon"
+                            className="ad-btn ad-btn-icon ad-btn-ghost ad-btn-sm"
                             title={t('edit')}
                             onClick={() => {
                               setForm({ ...row, topics: row.topics || [] });
@@ -501,7 +501,7 @@ export default function AdminNewsletterPage() {
                           >
                             <Pencil className="w-3.5 h-3.5" />
                           </button>
-                          <button type="button" className="ad-btn-icon" title={t('trash')} onClick={() => void removeRow(row)}>
+                          <button type="button" className="ad-btn ad-btn-icon ad-btn-danger ad-btn-sm" title={t('trash')} onClick={() => void removeRow(row)}>
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </>
@@ -530,12 +530,12 @@ export default function AdminNewsletterPage() {
               ))}
             </select>
           </label>
-          <div className="ms-auto flex items-center gap-1">
-            <button type="button" className="ad-btn-icon" disabled={page === 0} onClick={() => setPage((p) => Math.max(0, p - 1))} aria-label={t('previousPage')}>
+          <div className="ad-toolbar ms-auto gap-1">
+            <button type="button" className="ad-btn ad-btn-icon ad-btn-ghost ad-btn-sm" disabled={page === 0} onClick={() => setPage((p) => Math.max(0, p - 1))} aria-label={t('previousPage')}>
               ‹
             </button>
             <span className="tabular-nums">{page + 1} / {pageCount}</span>
-            <button type="button" className="ad-btn-icon" disabled={page + 1 >= pageCount} onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))} aria-label={t('nextPage')}>
+            <button type="button" className="ad-btn ad-btn-icon ad-btn-ghost ad-btn-sm" disabled={page + 1 >= pageCount} onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))} aria-label={t('nextPage')}>
               ›
             </button>
           </div>

@@ -117,7 +117,7 @@ export default function TaxonomiesPage() {
         <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>{t('subtitle')}</p>
       </header>
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="ad-toolbar">
         {groups.map((g) => (
           <button key={g.key} type="button" className={`ad-btn ${current?.key === g.key ? 'ad-btn-primary' : 'ad-btn-ghost'}`} onClick={() => setTab(g.key)}>
             {tabLabel(g.key)}
@@ -149,16 +149,22 @@ export default function TaxonomiesPage() {
                 <tr key={term.value}>
                   <td className="font-mono text-sm">{term.value}</td>
                   <td>{termLabel(term, locale)}</td>
-                  <td className="text-right whitespace-nowrap">
-                    <button className="ad-btn ad-btn-ghost" onClick={() => { setMode('consult'); setOriginal(term); setDraft({ ...term }); }}>
-                      <Eye className="w-4 h-4" />
-                    </button>
-                    <button className="ad-btn ad-btn-ghost" onClick={() => { setMode('edit'); setOriginal(term); setDraft({ ...term }); }}>
-                      <Pencil className="w-4 h-4" /> {t('editTerm')}
-                    </button>
-                    <button className="ad-btn ad-btn-icon ad-btn-danger ml-1" onClick={() => { removeTaxonomyTerm(current.key, term.value); refresh(); }}>
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                  {/* Un seul groupe d'actions, à la même taille que la ligne :
+                      trois boutons de largeurs différentes, serrés sans espace et
+                      suivis d'un `ml-1` de bricolage, donnaient une colonne qui
+                      sautait d'une ligne à l'autre. */}
+                  <td>
+                    <div className="ad-row-actions">
+                      <button className="ad-btn ad-btn-icon ad-btn-ghost ad-btn-sm" title={t('consultTerm')} onClick={() => { setMode('consult'); setOriginal(term); setDraft({ ...term }); }}>
+                        <Eye className="w-4 h-4" />
+                      </button>
+                      <button className="ad-btn ad-btn-ghost ad-btn-sm" onClick={() => { setMode('edit'); setOriginal(term); setDraft({ ...term }); }}>
+                        <Pencil className="w-4 h-4" /> {t('editTerm')}
+                      </button>
+                      <button className="ad-btn ad-btn-icon ad-btn-danger ad-btn-sm" title={t('deleteTerm')} onClick={() => { removeTaxonomyTerm(current.key, term.value); refresh(); }}>
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

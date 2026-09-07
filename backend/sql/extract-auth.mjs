@@ -91,8 +91,11 @@ for (const { table, sql } of blocks) {
 }
 
 lines.push('-- Vérification :');
-lines.push('--   SELECT id, email, type, status, roleId FROM users;');
-lines.push('--   SELECT COUNT(*) FROM permissions;');
+// Aucun point-virgule en fin de ligne commentée : plusieurs clients (HeidiSQL
+// compris) découpent le script sur chaque `;`, y compris dans un commentaire, et
+// une ligne de vérification écrite ainsi devenait une instruction vide refusée.
+lines.push('--   SELECT id, email, type, status, roleId FROM users');
+lines.push('--   puis SELECT COUNT(*) FROM permissions');
 
 writeFileSync(OUT, lines.join('\n'), 'utf8');
 

@@ -450,5 +450,5 @@ INSERT IGNORE INTO `users` (`id`, `email`, `passwordHash`, `firstName`, `lastNam
 (5, 'mohamed.saidi@gmail.com', '$2a$10$3cS.EJwJt9O1FSl2AugOc.rt7n/PJfwWycaRUwkUYJbFe1YgsyUvW', 'Mohamed', 'SAIDI', '(+213) 661 22 33 44', NULL, 'candidate', 'pending', 'fr', NULL, NULL, 'Constantine', 'Algérie', 'Technicien biomédical', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000');
 
 -- Vérification :
---   SELECT id, email, type, status, roleId FROM users;
---   SELECT COUNT(*) FROM permissions;
+--   SELECT id, email, type, status, roleId FROM users
+--   puis SELECT COUNT(*) FROM permissions
