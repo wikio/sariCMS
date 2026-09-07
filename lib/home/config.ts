@@ -98,7 +98,7 @@ export interface HomeBuilder {
 }
 
 export interface HomeStyle {
-  background?: 'inherit' | 'white' | 'gray' | 'blue' | 'dark' | 'lime' | 'custom';
+  background?: 'inherit' | 'white' | 'gray' | 'sariGray' | 'blue' | 'dark' | 'lime' | 'custom';
   backgroundColor?: string;
   /** Image de fond (bandeau, parallaxe). */
   backgroundImage?: string;
@@ -116,6 +116,8 @@ export interface HomeStyle {
   /** Texte clair (fonds sombres). */
   invert?: boolean;
   shadow?: boolean;
+  /** Motif quadrillé en filigrane, comme sur les bandeaux de la version précédente. */
+  pattern?: boolean;
   /** CSS libre, appliqué à l'intérieur du bloc uniquement. */
   customCss?: string;
 }
@@ -151,6 +153,12 @@ export interface HomeSnapshot {
   api: boolean;
   order: HomeSectionKey[];
   sections: HomeSections;
+  /**
+   * Blocs dont le contenu vient des fichiers du site (slider, catalogue,
+   * chiffres, traductions) et qui n'ont **aucun** enregistrement d'administration :
+   * le studio le signale, et « Importer » l'écrit tel quel.
+   */
+  seeded?: HomeSectionKey[];
 }
 
 /** Fichier `data/{langue}/home.json`. */
@@ -209,7 +217,7 @@ export const HOME_DEFAULTS: Record<HomeSectionKey, HomeSectionConfig> = {
   navigation: section('navigation', {
     selection: { ...EMPTY_SELECTION, limit: 6 },
     settings: { columns: 3 },
-    style: { columns: 3, gap: 24, showHeader: true },
+    style: { columns: 3, gap: 32, showHeader: true, background: 'sariGray', paddingY: 96, align: 'center' },
   }),
   mission: section('mission', {
     settings: { ctaHref: '/about', parallax: true, height: 480, overlay: 88 },
@@ -222,16 +230,18 @@ export const HOME_DEFAULTS: Record<HomeSectionKey, HomeSectionConfig> = {
   }),
   blocks: section('blocks', {
     settings: { imageHeight: 400, animate: true, startWith: 'image' },
-    style: { background: 'gray', paddingY: 96, gap: 48, radius: 16 },
+    // Le bloc d'origine n'avait pas de titre au-dessus de la liste : les visées
+    // s'enchaînaient directement. L'en-tête reste disponible, mais éteint.
+    style: { background: 'gray', paddingY: 96, gap: 48, radius: 16, shadow: true, showHeader: false },
   }),
   stats: section('stats', {
     settings: { animate: true, fromConfig: true, suffixes: {} },
-    style: { background: 'blue', paddingY: 96, columns: 4, gap: 32, align: 'center', invert: true },
+    style: { background: 'blue', paddingY: 96, columns: 4, gap: 32, align: 'center', invert: true, pattern: true },
   }),
   testimonials: section('testimonials', {
     selection: { ...EMPTY_SELECTION, limit: 5, sort: 'rating-desc' },
     settings: { layout: 'slider', autoplay: true, interval: 5000, showRating: true, showAvatar: true, showClinic: true },
-    style: { background: 'gray', paddingY: 96, columns: 3, gap: 24, showHeader: true, align: 'center' },
+    style: { background: 'sariGray', paddingY: 96, columns: 3, gap: 24, showHeader: true, align: 'center' },
   }),
   events: section('events', {
     selection: { ...EMPTY_SELECTION, limit: 3, sort: 'date-asc', upcomingOnly: true },
@@ -254,8 +264,9 @@ export const HOME_DEFAULTS: Record<HomeSectionKey, HomeSectionConfig> = {
     style: { background: 'white', paddingY: 96, columns: 6, gap: 32, showHeader: true, align: 'center' },
   }),
   cta: section('cta', {
-    settings: { primaryHref: '/contact', secondaryHref: '/products', showSecondary: true, pattern: true },
-    style: { background: 'dark', paddingY: 96, align: 'center', invert: true, titleSize: 'xl' },
+    // `default` : l'habillage d'origine — bouton bleu dégradé, second bouton vert SARI.
+    settings: { primaryHref: '/contact', secondaryHref: '/products', showSecondary: true, accent: 'default' },
+    style: { background: 'dark', paddingY: 96, align: 'center', invert: true, titleSize: 'xl', pattern: true },
   }),
 };
 
@@ -351,13 +362,28 @@ export function mergeLocale(
 }
 
 /** Reconstruit un dictionnaire de blocs complet, trois couches fusionnées. */
+/**
+ * Morceaux de configuration repris des fichiers du site (voir `lib/home/legacy.ts`) :
+ * les seuls champs que la reprise connaît, fusionnés par-dessus les défauts du
+ * bloc — jamais au-dessus d'un enregistrement de l'administration.
+ */
+export type HomeLegacySections = Partial<Record<HomeSectionKey, Partial<HomeSectionConfig>>>;
+
 export function resolveHomeSections(input: {
   locale: string;
   ref?: HomeFile | null;
   current?: HomeFile | null;
   apiRows?: Array<Partial<HomeSectionConfig> & { key: string; locale?: string }>;
+  /**
+   * Contenu repris des fichiers du site (`lib/home/legacy.ts`), pour la langue
+   * demandée et pour la langue de référence. Plus bas que les fichiers `home.json`
+   * et que les lignes de l'API : ce n'est qu'un point de départ, jamais une
+   * valeur qui écrase un enregistrement de l'administration.
+   */
+  legacy?: HomeLegacySections | null;
+  legacyRef?: HomeLegacySections | null;
 }): { order: HomeSectionKey[]; sections: HomeSections } {
-  const { locale, ref, current, apiRows = [] } = input;
+  const { locale, ref, current, apiRows = [], legacy = null, legacyRef = null } = input;
   const sameLocale = locale === HOME_REF_LOCALE;
 
   const fileLayer = (file?: HomeFile | null): HomeSections => file?.sections || {};
@@ -379,8 +405,10 @@ export function resolveHomeSections(input: {
 
   const sections: HomeSections = {};
   for (const key of Object.keys(HOME_DEFAULTS) as HomeSectionKey[]) {
-    const refLayer = mergeSection(mergeSection(HOME_DEFAULTS[key], refFile[key]), refApi[key]);
-    const curLayer = mergeSection(mergeSection(HOME_DEFAULTS[key], curFile[key]), curApi[key]);
+    const baseRef = mergeSection(HOME_DEFAULTS[key], legacyRef?.[key] || legacy?.[key]);
+    const baseCur = mergeSection(HOME_DEFAULTS[key], legacy?.[key]);
+    const refLayer = mergeSection(mergeSection(baseRef, refFile[key]), refApi[key]);
+    const curLayer = mergeSection(mergeSection(baseCur, curFile[key]), curApi[key]);
     sections[key] = mergeLocale(refLayer, sameLocale ? undefined : curLayer, sameLocale);
   }
 
@@ -580,7 +608,10 @@ export function applySelection<T extends Identifiable>(
     }
     // Une sélection plus longue que la limite reste bornée : le champ
     // « nombre d'éléments » garde la main.
-    return picked.slice(0, limit);
+    if (picked.length) return picked.slice(0, limit);
+    // Les fiches choisies ont pu être supprimées entre-temps (ou porter un autre
+    // identifiant depuis que l'API fait foi). Un bloc dont la sélection ne pointe
+    // sur rien retombe sur le choix automatique plutôt que de disparaître.
   }
 
   const sorted = [...pool];
@@ -649,6 +680,8 @@ export const BACKGROUND_CLASS: Record<NonNullable<HomeStyle['background']>, stri
   inherit: '',
   white: 'bg-white dark:bg-[#1a1a1a]',
   gray: 'bg-gray-50 dark:bg-[#111111]',
+  /** Le gris du corps de page, plus soutenu que `gray-50` — celui des blocs hérités. */
+  sariGray: 'bg-sari-gray dark:bg-[#111111]',
   blue: 'bg-sari-blue text-white',
   lime: 'bg-sari-lime',
   dark: 'bg-sari-dark text-white',

@@ -22,7 +22,7 @@ import {
   txt,
   type HomeSectionConfig,
 } from '@/lib/home/config';
-import SectionFrame, { HS_CARD_RADIUS } from '@/components/sections/SectionFrame';
+import SectionFrame, { HS_CARD_RADIUS, gridProps } from '@/components/sections/SectionFrame';
 
 interface PartnersSectionProps {
   partners: Partner[];
@@ -53,11 +53,8 @@ export default function PartnersSection({ partners, config }: PartnersSectionPro
       }}
     >
       <div
-        className="grid grid-cols-2 sm:grid-cols-3 lg:[grid-template-columns:repeat(var(--hs-cols,6),minmax(0,1fr))] gap-[var(--hs-gap,32px)] items-center stagger-children"
-        style={{
-          ['--hs-cols' as string]: String(columns),
-          ['--hs-gap' as string]: `${config?.style?.gap ?? 32}px`,
-        }}
+        {...gridProps(config, columns, 32)}
+        className={`${gridProps(config, columns, 32).className} items-center stagger-children`}
       >
         {selected.map((partner) => {
           const card = (

@@ -16,7 +16,8 @@ propre écran, **Administration → Newsletter**, avec un vrai CRUD en base.
 | Ordre des blocs | Ordre JSX figé | Listes réordonnables (glisser ou flèches), enregistré |
 | Témoignages, événements, actualités, partenaires | Premier arrivé, premier affiché | Sélection manuelle des fiches, ordre libre, ou automatique avec tri |
 | Blocs en alternance, chiffres, tuiles de navigation | Trois blocs codés en dur dans le composant | Listes administrables : ajouter, dupliquer, masquer, réordonner |
-| Newsletter | `setState` local, rien d’enregistré | Inscription serveur, liste filtrable, corbeille, export CSV |
+| Newsletter | `setState` local, rien d’enregistré | Inscription serveur en deux temps (fenêtre de confirmation, question anti-spam), liste filtrable, corbeille, export CSV |
+| Blocs vierges à la première ouverture | Formulaire vide alors que la page, elle, affichait bien le contenu du site | Le contenu publié est **repris** dans la configuration (voir plus bas) et l’action « Reprendre » l’enregistre |
 | Multilingue | Réglage unique pour trois langues | **Textes par langue**, structure commune (voir plus bas) |
 | Constructeur de page | `localStorage` du navigateur seulement | Le HTML produit peut être rattaché à un bloc et servi à sa place |
 
@@ -94,11 +95,70 @@ ne change pas les produits retenus pour la version française, et un titre oubli
 en anglais retombe sur la traduction du site, jamais sur le texte français.
 L’interface du studio verrouille d’elle-même les onglets concernés et l’explique.
 
+## Reprendre le contenu déjà publié
+
+La vitrine montre depuis longtemps des fiches qui n’habitent pas le studio : les
+diapositives de `data/{langue}/hero.json`, les produits, témoignages, événements,
+actualités et partenaires du catalogue, les chiffres de `data/{langue}/config.json`,
+les libellés de `messages/{langue}.json`. Le studio, lui, ne pouvait montrer que
+ce qui avait été enregistré — un formulaire vide pour un bloc pourtant plein.
+
+`lib/home/legacy.ts` lit ces mêmes sources et les **traduit en configuration de
+bloc**. Cette reprise n’est pas une couche de plus dans la page, c’est un point
+de départ, inscrit entre les défauts du bloc et ce qui a été réellement
+enregistré :
+
+```
+HOME_DEFAULTS  →  reprise des fichiers du site  →  data/{langue}/home.json  →  lignes de l’API
+   (forme)             (le contenu publié)              (secours)               (foi)
+```
+
+Conséquences :
+
+- les sélecteurs du studio partent des **fiches réellement affichées**, dans le
+  **même ordre** — la reprise passe par `applySelection`, la fonction des blocs
+  eux-mêmes, et non par une liste recopiée à la main ;
+- **la page ne change pas d’un pixel** quand un bloc est importé : on écrit la
+  configuration qui était déjà rendue par repli ;
+- une ligne enregistrée a toujours le dessus sur la reprise, et un contenu repris
+  reste supprimable — vider un champ puis enregistrer fait disparaître le texte,
+  la reprise ne le « ramène » jamais ;
+- si les fiches choisies ne correspondent à rien (fiche supprimée du catalogue,
+  autre identifiant après une reprise MySQL), le bloc **retombe sur sa sélection
+  automatique** au lieu de rendre une section vide.
+
+Dans le studio, un bloc dont le contenu vient des fichiers du site est marqué
+`repris du site` dans la liste ; sa bannière propose **« Reprendre ce bloc »**, et
+le bouton de bandeau **« Reprendre les données du site (n) »** traite les n blocs
+concernés d’un coup. Côté serveur, la même chose s’appelle :
+
+```
+POST /api/admin/home  { "action": "import", "locale": "fr", "keys": ["blocks"], "force": false }
+```
+
+`keys` est optionnel (tous les blocs repris sans enregistrement), `force` impose
+la reprise même si le bloc a déjà été enregistré — à n’utiliser que pour repartir
+du contenu publié. L’action écrit ligne par ligne via le chemin d’enregistrement
+normal : langue de référence = structure complète, autres langues = textes,
+éléments, constructeur et statut.
+
 ## Newsletter
 
+- `GET /api/newsletter?action=captcha` — délivre une question anti-spam
+  (`id`, `question`, `expiresIn`). La réponse attendue ne quitte jamais le
+  serveur, le jeton est à usage unique et expire au bout de dix minutes.
 - `POST /api/newsletter` — inscription (`email`, `locale`, `source`, `consent`,
-  `topics`). Un **champ piège** `website` rempli fait répondre « ok » sans rien
-  enregistrer.
+  `topics`, `name`, `notes`, `captchaId`, `captchaAnswer`). Trois gardes, toutes
+  côté serveur : le **champ piège** `website` (rempli → « ok » sans rien
+  enregistrer), une **limite de débit** par adresse (6 inscriptions par 5
+  minutes) et la **question anti-spam**, obligatoire — sauf pour les formulaires
+  qui ont déjà leur propre contrôle, aujourd’hui `contact`, et qui doivent alors
+  apporter un `consent: true` explicite.
+- La réponse porte un `status` qui décrit ce qui vient de se passer **pour cette
+  adresse** : `created`, `already-subscribed` (déjà dans la liste — le message le
+  dit au lieu d’annoncer une inscription), `reactivated` (elle en avait été
+  retirée), `pending-confirmation` (double opt-in). En cas de refus :
+  `captcha-failed`, `invalid-email`, `rate-limited`.
 - `POST /api/newsletter` avec `action: "unsubscribe"` — désinscription par
   adresse ou par jeton.
 - `GET /api/newsletter?action=confirm&token=…` — confirmation du double opt-in.
@@ -112,6 +172,35 @@ d’origine. Le `source` enregistre d’où vient l’adresse : `home.newsletter
 `news.detail`, `contact`. Ces trois points d’entrée utilisent le même
 composant, `components/shared/NewsletterSignup.tsx`, donc le même
 enregistrement serveur.
+
+### Fenêtre de confirmation
+
+Le premier clic sur « S’inscrire » n’inscrit personne : il ouvre une fenêtre qui
+
+- relit l’adresse saisie, avec un lien **« Modifier l’adresse »** qui rouvre le
+  champ sans rien perdre ;
+- propose deux champs **facultatifs**, le nom et une note libre (`notes`, mille
+  caractères maximum) — la note est enregistrée avec l’adresse, visible et
+  modifiable dans l’écran Newsletter, reprise dans l’export CSV ;
+- rappelle les thèmes cochés, si le bloc en propose ;
+- demande la **réponse anti-spam**, avec un bouton « Nouvelle question » ;
+- envoie seulement là le `POST`, sur « Confirmer mon inscription ».
+
+La fenêtre est accessible : `role="dialog"`, titre associé, fermeture par Échap
+ou clic sur le fond, défilement de la page bloqué le temps de la saisie, focus
+posé sur le premier champ puis rendu au bouton qui l’a ouverte. Une réponse
+incorrecte ne ferme rien : une nouvelle question est demandée et le message
+l’explique. Un `already-subscribed` s’affiche dans la fenêtre, qui reste ouverte
+pour permettre de saisir une autre adresse.
+
+## Réinitialiser puis re-enregistrer
+
+« Réinitialiser » met la ligne du bloc à la corbeille (`deletedAt`), pas à la
+poubelle : l’historique reste, la vitrine repart des valeurs par défaut. Comme la
+contrainte d’unicité `(key, locale)` compte toujours cette ligne, un
+enregistrement ultérieur **ranime** la fiche au lieu d’échouer — le comportement
+est le même en JSON qu’en MySQL, et c’est ce qui rend l’enchaînement
+réinitialisation → « Reprendre le contenu du site » sans accroc.
 
 ## Constructeur de page
 

@@ -34,6 +34,26 @@ function cx(...parts: Array<string | false | null | undefined>): string {
   return parts.filter(Boolean).join(' ');
 }
 
+/**
+ * Classes de grille pour `columns` colonnes.
+ *
+ * Les points de rupture sont écrits en toutes lettres, et non calculés :
+ * Tailwind ne compile que les classes littérales, un `grid-cols-${n}` construit
+ * à l'exécution n'existerait pas dans la feuille de style. Ils reprennent la
+ * page d'avant — une colonne jusqu'à `md`, deux à `md`, `n` à `lg` — pour
+ * qu'aucun bloc ne se retrouve plus à l'étroit qu'auparavant. Au-delà de six
+ * colonnes, on retombe sur la grille pilotée par `--hs-cols`.
+ */
+export function gridClassFor(columns: number): string {
+  if (columns <= 1) return 'grid grid-cols-1';
+  if (columns === 2) return 'grid grid-cols-1 md:grid-cols-2';
+  if (columns === 3) return 'grid grid-cols-1 md:grid-cols-3';
+  if (columns === 4) return 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4';
+  if (columns === 5) return 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5';
+  if (columns === 6) return 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6';
+  return `grid ${HS_GRID_CLASS}`;
+}
+
 export function sectionInlineStyle(config: HomeSectionConfig | undefined): React.CSSProperties {
   const style = config?.style || {};
   const vars = styleVars(config);
@@ -83,8 +103,8 @@ export function SectionHeader({ config, fallbacks = {}, action, align }: HeaderP
   return (
     <div
       className={cx(
-        'mb-12 gap-4 flex flex-col',
-        centered ? 'items-center text-center' : 'md:flex-row md:items-end md:justify-between',
+        'gap-4 flex flex-col mb-12',
+        centered ? 'items-center text-center md:mb-16' : 'md:flex-row md:items-end md:justify-between',
       )}
     >
       <div className={cx('space-y-1', centered && 'mx-auto max-w-3xl')}>
@@ -179,6 +199,7 @@ export default function SectionFrame({
           dangerouslySetInnerHTML={{ __html: [scopeCss(customCss || '', `.${scoped}`), scopeCss(builderCss || '', `.${scoped}`)].join('\n') }}
         />
       ) : null}
+      {style.pattern ? <div className="absolute inset-0 grid-pattern-bg opacity-10" aria-hidden /> : null}
       {style.overlay && style.backgroundImage ? (
         <div className="absolute inset-0 bg-sari-dark" style={{ opacity: Number(style.overlay) / 100 }} aria-hidden />
       ) : null}
@@ -222,8 +243,9 @@ export function BuilderBlock({
 /** Grille alignée sur le nombre de colonnes réglé dans le studio. */
 export function gridProps(config: HomeSectionConfig | undefined, fallbackColumns = 3, fallbackGap = 24) {
   const style = config?.style || {};
+  const columns = style.columns || fallbackColumns;
   return {
-    className: HS_GRID_CLASS,
+    className: gridClassFor(columns),
     style: {
       '--hs-cols': String(style.columns || fallbackColumns),
       '--hs-gap': `${style.gap ?? fallbackGap}px`,

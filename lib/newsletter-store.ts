@@ -68,6 +68,13 @@ async function writeStore(store: Store): Promise<void> {
 const ACTIVE_STATUSES = new Set<SubscriberStatus>(['pending', 'subscribed']);
 
 /** Inscription / réinscription. Une adresse connue est réactivée, pas dupliquée. */
+/**
+ * Inscription / réinscription. Une adresse connue est réactivée, pas dupliquée.
+ *
+ * `duplicate` signale que l'adresse était déjà active (le formulaire doit le
+ * dire plutôt qu'annoncer une nouvelle inscription), `reactivated` qu'elle avait
+ * été retirée et revient.
+ */
 export async function subscribe(input: {
   email: string;
   name?: string;
@@ -75,9 +82,10 @@ export async function subscribe(input: {
   source?: string;
   consent?: boolean;
   topics?: string[];
+  notes?: string;
   ip?: string;
   userAgent?: string;
-}): Promise<{ created: boolean; row: SubscriberRow }> {
+}): Promise<{ created: boolean; duplicate: boolean; reactivated: boolean; row: SubscriberRow }> {
   const store = await readStore();
   const email = normalizeEmail(input.email);
   const now = new Date().toISOString();
@@ -90,6 +98,7 @@ export async function subscribe(input: {
     source: input.source || existing?.source || 'form',
     consent: input.consent ?? existing?.consent ?? true,
     topics: input.topics?.length ? input.topics : existing?.topics,
+    notes: input.notes?.trim() || existing?.notes || null,
     ip: input.ip ?? existing?.ip ?? null,
     userAgent: input.userAgent ?? existing?.userAgent ?? null,
     subscribedAt: now,
@@ -98,22 +107,22 @@ export async function subscribe(input: {
   };
 
   if (existing) {
+    const wasActive = existing.status === 'subscribed' || existing.status === 'pending';
     Object.assign(existing, fields, { deleted: false });
     await writeStore(store);
-    return { created: false, row: existing };
+    return { created: false, duplicate: wasActive, reactivated: !wasActive, row: existing };
   }
 
   const row: SubscriberRow = {
     id: randomUUID(),
     token: randomUUID(),
     createdAt: now,
-    notes: null,
     ...fields,
     subscribedAt: now,
   } as SubscriberRow;
   store.rows.unshift(row);
   await writeStore(store);
-  return { created: true, row };
+  return { created: true, duplicate: false, reactivated: false, row };
 }
 
 export async function unsubscribe(input: { email?: string; token?: string }) {

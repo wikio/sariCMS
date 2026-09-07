@@ -4,14 +4,21 @@
  *
  *   GET  /api/admin/home?locale=fr        configuration fusionnée pour la langue
  *   PUT  /api/admin/home                  enregistre un bloc { key, locale, config }
- *   POST /api/admin/home                  { action: "reorder" | "copy" | "reset" }
+ *   POST /api/admin/home                  { action: "reorder" | "copy" | "reset" | "import" }
  *
  * L'écran n'a pas à savoir où vit la donnée : la passerelle choisit le CMS ou
  * le fichier de secours et renvoie `stored` pour qu'on l'affiche.
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { bearer, cmsOr } from '@/lib/server/cms-or';
-import { copyHomeStructure, loadHome, reorderHome, resetHomeSection, saveHomeSection } from '@/lib/home/store';
+import {
+  copyHomeStructure,
+  importHomeLegacy,
+  loadHome,
+  reorderHome,
+  resetHomeSection,
+  saveHomeSection,
+} from '@/lib/home/store';
 import type { HomeSectionConfig, HomeSectionKey } from '@/lib/home/config';
 
 export const runtime = 'nodejs';
@@ -52,6 +59,8 @@ export async function POST(req: NextRequest) {
     from?: string;
     to?: string[];
     key?: HomeSectionKey;
+    keys?: HomeSectionKey[];
+    force?: boolean;
     withTexts?: boolean;
   };
 
@@ -73,6 +82,18 @@ export async function POST(req: NextRequest) {
         () => copyHomeStructure({ from: body.from || 'fr', to: body.to || [], key: body.key, withTexts: body.withTexts }),
       );
       return NextResponse.json({ ok: true, stored: result.value.stored, result: result.value.result });
+    }
+    // « Importer les données actuelles du site » : le contenu qui vit dans
+    // `data/{langue}/*.json` et les traductions devient une configuration
+    // enregistrée, donc modifiable et supprimable comme les autres.
+    case 'import': {
+      const result = await importHomeLegacy({
+        locale: body.locale || 'fr',
+        keys: body.keys,
+        force: body.force,
+        token,
+      });
+      return NextResponse.json({ ok: true, ...result });
     }
     case 'reset': {
       if (!body.key) return NextResponse.json({ ok: false, message: 'Bloc manquant' }, { status: 400 });

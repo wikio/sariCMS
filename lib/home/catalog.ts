@@ -121,6 +121,7 @@ const layoutFields: HomeField[] = [
   { key: 'background', label: 'Fond', kind: 'select', scope: 'style', options: [
     { value: 'white', label: 'Blanc' },
     { value: 'gray', label: 'Gris clair' },
+    { value: 'sariGray', label: 'Gris du fond de page' },
     { value: 'blue', label: 'Bleu SARI' },
     { value: 'dark', label: 'Sombre' },
     { value: 'lime', label: 'Vert SARI' },
@@ -145,6 +146,7 @@ const layoutFields: HomeField[] = [
   ] },
   { key: 'invert', label: 'Texte clair (fond sombre)', kind: 'toggle', scope: 'style' },
   { key: 'shadow', label: 'Ombre portée', kind: 'toggle', scope: 'style' },
+  { key: 'pattern', label: 'Motif quadrillé en filigrane', kind: 'toggle', scope: 'style' },
 ];
 
 const ctaField = (hrefHint: string): HomeField[] => [
@@ -546,8 +548,13 @@ export const HOME_CATALOG: HomeCatalogEntry[] = [
       { key: 'primaryHref', label: 'Lien du bouton principal', kind: 'text', scope: 'settings', placeholder: '/contact' },
       { key: 'secondaryHref', label: 'Lien du bouton secondaire', kind: 'text', scope: 'settings', placeholder: '/products' },
       { key: 'showSecondary', label: 'Afficher le second bouton', kind: 'toggle', scope: 'settings' },
-      { key: 'pattern', label: 'Motif quadrillé en fond', kind: 'toggle', scope: 'settings' },
-      { key: 'accent', label: 'Couleur d’accent', kind: 'color', scope: 'settings' },
+      { key: 'pattern', label: 'Motif quadrillé en fond', kind: 'toggle', scope: 'style' },
+      { key: 'accent', label: 'Couleur des boutons', kind: 'select', scope: 'settings', options: [
+        { value: 'default', label: 'Du site (bleu et vert)' },
+        { value: 'lime', label: 'Vert SARI' },
+        { value: 'white', label: 'Blanc' },
+        { value: 'blue', label: 'Bleu SARI' },
+      ] },
       { key: 'background', label: 'Fond', kind: 'select', scope: 'style', options: [
         { value: 'dark', label: 'Sombre' },
         { value: 'blue', label: 'Bleu SARI' },

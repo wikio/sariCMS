@@ -11,6 +11,7 @@
  * enregistré, le bloc retombe sur les trois visées historiques issues des
  * traductions, pour que la page ne se vide pas au premier déploiement.
  */
+import { useEffect } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { ArrowRight, CheckCircle2 } from 'lucide-react';
@@ -97,6 +98,23 @@ export default function AlternatingSections({ config }: AlternatingSectionsProps
 
   if (!items.length) return null;
 
+  // Les éléments image/texte entrent en scène au défilement, comme avant : la
+  // feuille de style masque `.reveal`, `.reveal-left` et `.reveal-right` tant
+  // que `.visible` n'est pas ajouté. Sans cet observateur, la page resterait
+  // correcte (les classes ne sont pas posées) mais entièrement fixe.
+  useEffect(() => {
+    const targets = document.querySelectorAll(
+      '#home-blocks .reveal, #home-blocks .reveal-left, #home-blocks .reveal-right',
+    );
+    if (!targets.length) return;
+    const observer = new IntersectionObserver(
+      (entries) => entries.forEach((entry) => entry.target.classList.add('visible')),
+      { threshold: 0.15 },
+    );
+    targets.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [items.length]);
+
   const renderChecks = (checks: string[], withIcon: boolean) => {
     if (!checks.length) return null;
     return (
@@ -110,6 +128,8 @@ export default function AlternatingSections({ config }: AlternatingSectionsProps
       </ul>
     );
   };
+
+  const startRight = String(setting(config, 'startWith', 'image')) === 'image-right';
 
   return (
     <SectionFrame
@@ -125,39 +145,62 @@ export default function AlternatingSections({ config }: AlternatingSectionsProps
         ) : null,
       }}
     >
-      <div className="space-y-[var(--hs-gap,60px)]" style={{ ['--hs-gap' as string]: `${gap}px` }}>
+      <div style={{ ['--hs-gap' as string]: `${gap}px` }}>
         {items.map((item: HomeItem, index: number) => {
-          const imageFirst = itemField(item, 'position') === 'image-right' ? index % 2 === 0 : index % 2 !== 0;
-          const checks = itemField(item, 'mode') === 'list' ? itemChecks(item) : [];
+          const position = itemField(item, 'position');
+          const imageOnRight = position
+            ? position === 'image-right'
+            : startRight
+              ? index % 2 === 0
+              : index % 2 !== 0;
+          const checks = itemChecks(item);
           const radius = config?.style?.radius ?? 16;
+          const shadow = config?.style?.shadow !== false;
+          const imageHeight = numberSetting(config, 'imageHeight', 400);
           const media = (
-            <div className={`w-full lg:w-1/2 ${imageFirst ? 'lg:order-first' : 'lg:order-last'}`}>
-              <div className={`relative overflow-hidden ${HS_CARD_RADIUS}`} style={{ borderRadius: `${radius}px` }}>
-                <ImageWithFallback
-                  src={itemField(item, 'image') || PLACEHOLDER[index % PLACEHOLDER.length].image}
-                  alt={itemField(item, 'title') || t('title')}
-                  className="w-full h-96 object-cover"
-                  aspectRatio="4:3"
-                />
+            <div className={`w-full lg:w-1/2 ${imageOnRight ? 'reveal-right' : 'reveal-left'}`}>
+              <div
+                className={`relative overflow-hidden ${HS_CARD_RADIUS} ${shadow ? 'shadow-2xl' : ''}`}
+                style={{ borderRadius: `${radius}px` }}
+              >
+                {/* La hauteur de l'image se règle dans le studio ; `ImageWithFallback`
+                    pose ses classes sur son conteneur, qui prend toute la place. */}
+                <div style={{ height: `${imageHeight}px` }}>
+                  <ImageWithFallback
+                    src={itemField(item, 'image') || PLACEHOLDER[index % PLACEHOLDER.length].image}
+                    alt={itemField(item, 'title') || t('title')}
+                    className="w-full h-full"
+                  />
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-sari-blue/20 to-transparent" />
               </div>
             </div>
           );
           return (
-            <div key={String(item.id ?? index)} className="flex flex-col lg:flex-row gap-12 items-center">
+            <div
+              key={String(item.id ?? index)}
+              className={`flex flex-col items-center gap-12 mb-[var(--hs-gap,48px)] last:mb-0 ${
+                imageOnRight ? 'lg:flex-row-reverse' : 'lg:flex-row'
+              }`}
+            >
               {media}
-              <div className="w-full lg:w-1/2">
-                <span className="inline-block px-4 py-2 bg-sari-lime/20 border border-sari-lime/30 text-sari-lime font-semibold text-sm uppercase tracking-wider mb-6">
+              <div className="w-full lg:w-1/2 reveal">
+                <span className={`font-bold uppercase tracking-wider text-sm ${invert ? 'text-sari-lime' : 'text-sari-lime'}`}>
                   {itemField(item, 'badge') || txt(config, 'subtitle', t('subtitle'))}
                 </span>
-                <h2 className={`text-4xl font-bold mb-6 ${invert ? 'text-white' : 'text-sari-dark dark:text-white'}`}>
+                <h3 className={`text-3xl md:text-4xl font-bold mt-4 mb-6 ${invert ? 'text-white' : 'text-sari-dark dark:text-white'}`}>
                   {itemField(item, 'title') || t('title')}
-                </h2>
-                <p className={`text-xl mb-8 ${invert ? 'text-blue-50' : 'text-gray-600 dark:text-gray-400'}`}>
+                </h3>
+                <p className={`text-lg leading-relaxed mb-8 ${invert ? 'text-blue-50' : 'text-gray-600 dark:text-gray-400'}`}>
                   {itemField(item, 'description') || t('description')}
                 </p>
                 {renderChecks(checks, true)}
                 <Link
-                  href={localizeHref(itemField(item, 'ctaHref') || String(config?.settings?.ctaHref || ''), locale, `/${locale}/solutions`)}
+                  href={localizeHref(
+                    itemField(item, 'ctaHref') || String(config?.settings?.ctaHref || ''),
+                    locale,
+                    `/${locale}/solutions`,
+                  )}
                   className="btn-primary text-white px-8 py-4 font-semibold inline-flex items-center gap-2"
                 >
                   {itemField(item, 'ctaLabel') || ctaLabel}

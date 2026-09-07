@@ -82,9 +82,13 @@ export default function NewsletterSection({ config, source = 'home.newsletter', 
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-white/5 rounded-full translate-x-1/2 translate-y-1/2" />
         <div className="container mx-auto px-6 relative z-10">
           <div className="max-w-4xl mx-auto text-center">
-            <span className="text-sari-lime font-bold uppercase tracking-wider text-sm">
-              {txt(config, 'subtitle', t('subtitle'))}
-            </span>
+            {/* Le bandeau d'origine ne portait pas de sus-titre : on n'en affiche
+                un que si le studio l'a saisi, pour ne pas déformer la page. */}
+            {txt(config, 'subtitle', '') ? (
+              <span className="text-sari-lime font-bold uppercase tracking-wider text-sm">
+                {txt(config, 'subtitle', '')}
+              </span>
+            ) : null}
             {form}
             {showFeatures && features.length ? (
               <div className="grid md:grid-cols-3 gap-6 mt-16">

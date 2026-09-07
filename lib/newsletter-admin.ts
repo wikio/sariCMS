@@ -135,6 +135,16 @@ export async function downloadSubscribersCsv(filters: SubscriberFilters = {}) {
 
 /* ------------------------------------------------------------ côté vitrine */
 
+/** Ce que la passerelle publique dit de CE qui vient de se passer pour l'adresse. */
+export type NewsletterStatus =
+  | 'created'
+  | 'already-subscribed'
+  | 'reactivated'
+  | 'pending-confirmation'
+  | 'captcha-failed'
+  | 'invalid-email'
+  | 'rate-limited';
+
 export interface SubscribePayload {
   email: string;
   name?: string;
@@ -143,6 +153,23 @@ export interface SubscribePayload {
   source?: string;
   consent?: boolean;
   topics?: string[];
+  /** Mot laissé par le visiteur à l'étape de confirmation. */
+  notes?: string;
+  /** Question anti-spam délivrée par `GET /api/newsletter?action=captcha`. */
+  captchaId?: string;
+  captchaAnswer?: string;
+}
+
+/**
+ * Question anti-spam pour le formulaire : l'énoncé et un identifiant, rien de
+ * plus. La réponse est comparée côté serveur et le jeton ne sert qu'une fois.
+ */
+export async function fetchNewsletterCaptcha(): Promise<{ id: string; question: string } | null> {
+  const res = await fetch('/api/newsletter?action=captcha', { cache: 'no-store' }).catch(() => null);
+  if (!res?.ok) return null;
+  const body = (await res.json().catch(() => null)) as { id?: string; question?: string } | null;
+  if (!body?.id || !body.question) return null;
+  return { id: String(body.id), question: String(body.question) };
 }
 
 /**
@@ -154,7 +181,7 @@ export interface SubscribePayload {
  */
 export async function subscribeToNewsletter(
   payload: SubscribePayload,
-): Promise<{ ok: boolean; created: boolean; message?: string }> {
+): Promise<{ ok: boolean; created: boolean; status?: NewsletterStatus; message?: string }> {
   const res = await fetch('/api/newsletter', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -163,12 +190,18 @@ export async function subscribeToNewsletter(
   const body = (await res.json().catch(() => null)) as {
     ok?: boolean;
     message?: string;
+    status?: NewsletterStatus;
     result?: { created?: boolean };
   } | null;
   if (!res.ok || !body?.ok) {
-    return { ok: false, created: false, message: body?.message || 'Inscription impossible. Réessayez.' };
+    return {
+      ok: false,
+      created: false,
+      status: body?.status,
+      message: body?.message || 'Inscription impossible. Réessayez.',
+    };
   }
-  return { ok: true, created: Boolean(body.result?.created) };
+  return { ok: true, created: Boolean(body.result?.created), status: body.status };
 }
 
 export async function unsubscribeFromNewsletter(payload: { email?: string; token?: string; locale?: string }) {

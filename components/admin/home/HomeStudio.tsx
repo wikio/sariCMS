@@ -12,7 +12,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import {
-  ArrowDown, ArrowUp, Check, Copy, Database, FileJson, GripVertical, Loader2,
+  ArrowDown, ArrowUp, Check, Copy, Database, Download, FileJson, GripVertical, Loader2,
   RefreshCcw, Save, TriangleAlert,
 } from 'lucide-react';
 import IconMark from '@/components/admin/IconMark';
@@ -21,6 +21,8 @@ import {
   copyHome,
   fetchHome,
   type HomeSnapshot,
+  importHomeLegacy,
+  invalidateHomeOptions,
   reorderHome,
   resetHome,
   saveHomeSection,
@@ -48,6 +50,7 @@ export default function HomeStudio() {
   const [copyTargets, setCopyTargets] = useState<string[]>([]);
   const [copyTexts, setCopyTexts] = useState(false);
   const [drag, setDrag] = useState<number | null>(null);
+  const [importing, setImporting] = useState(false);
 
   const apply = useCallback((next: HomeSnapshot) => {
     setSnapshot(next);
@@ -158,6 +161,36 @@ export default function HomeStudio() {
     [order, locale, structureLocked, showToast],
   );
 
+  /**
+   * Blocs dont le contenu est lu dans les fichiers du site (slider, catalogue,
+   * chiffres, traductions) faute d'enregistrement : le studio le signale et
+   * propose de le reprendre tels quels dans la configuration.
+   */
+  const seededKeys = useMemo(() => snapshot?.seeded || [], [snapshot]);
+
+  const importBlocks = useCallback(
+    async (keys?: HomeSectionKey[]) => {
+      const targets = keys?.length ? keys : seededKeys;
+      if (!targets.length) {
+        showToast(t('importNone'), 'warning');
+        return;
+      }
+      if (!window.confirm(t('confirmImport', { count: targets.length }))) return;
+      setImporting(true);
+      try {
+        const result = await importHomeLegacy({ locale, keys: targets });
+        invalidateHomeOptions();
+        await load();
+        showToast(t('importDone', { count: result.imported.length }), 'success');
+      } catch (err) {
+        showToast(err instanceof Error ? err.message : String(err), 'error');
+      } finally {
+        setImporting(false);
+      }
+    },
+    [seededKeys, locale, load, showToast, t],
+  );
+
   const resetBlock = useCallback(
     async (key: HomeSectionKey) => {
       if (!window.confirm(t('confirmReset'))) return;
@@ -223,6 +256,16 @@ export default function HomeStudio() {
         <button type="button" className="ad-btn ad-btn-ghost text-xs" onClick={() => void load()} disabled={loading}>
           <RefreshCcw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} /> {t('reload')}
         </button>
+        <button
+          type="button"
+          className="ad-btn ad-btn-ghost text-xs"
+          onClick={() => void importBlocks()}
+          disabled={importing}
+          title={t('importHint')}
+        >
+          {importing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+          {t('importAction', { count: seededKeys.length })}
+        </button>
         <button type="button" className="ad-btn ad-btn-ghost text-xs" onClick={() => setCopyOpen(true)}>
           <Copy className="w-3.5 h-3.5" /> {t('copyStructure')}
         </button>
@@ -277,6 +320,7 @@ export default function HomeStudio() {
                   <span className="block text-[10px] truncate" style={{ color: 'var(--ad-muted)' }}>
                     {off ? t('hiddenChip') : t('shownChip')}
                     {isDirty ? ` · ${t('modifiedChip')}` : ''}
+                    {seededKeys.includes(key) ? ` · ${t('seededChip')}` : ''}
                   </span>
                 </span>
                 <button
@@ -326,6 +370,23 @@ export default function HomeStudio() {
         </div>
 
         <div className="ad-card min-h-[560px] flex flex-col overflow-hidden">
+          {entry && config && seededKeys.includes(selected) ? (
+            <div
+              className="px-4 py-2.5 text-[11px] leading-relaxed flex flex-wrap items-center gap-2 border-b"
+              style={{ color: 'var(--ad-muted)', borderColor: 'var(--ad-line)', background: 'rgba(59,130,246,.06)' }}
+            >
+              <Download className="w-3.5 h-3.5 shrink-0" />
+              <span className="min-w-0 flex-1">{t('importBanner')}</span>
+              <button
+                type="button"
+                className="ad-btn ad-btn-ghost text-[11px]"
+                disabled={importing}
+                onClick={() => void importBlocks([selected])}
+              >
+                {t('importAction', { count: 1 })}
+              </button>
+            </div>
+          ) : null}
           {entry && config ? (
             <HomeSectionEditor
               entry={entry}

@@ -10,12 +10,14 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import { CmsError, cmsFetch } from '@/lib/cms';
+import { legacyHomeConfig } from './legacy';
 import {
   EMPTY_SELECTION,
   HOME_LANGS,
   HOME_REF_LOCALE,
   resolveHomeSections,
   type HomeFile,
+  type HomeLegacySections,
   type HomeSectionConfig,
   type HomeOption,
   type HomeOptionResource,
@@ -32,6 +34,28 @@ import {
 export type { HomeOption, HomeOptionResource };
 
 const DATA_DIR = path.join(process.cwd(), 'data');
+
+/**
+ * La reprise du contenu du site (slider, catalogue, chiffres, libellés des
+ * traductions) demande plusieurs lectures de fichiers. Elle est mémoïsée le
+ * temps d'une requête groupée — trois langues lues d'affilée — et purgée à
+ * chaque écriture, avec le cache de la vitrine.
+ */
+const LEGACY_TTL_MS = 30_000;
+const legacyCache = new Map<string, { value: HomeLegacySections; expiresAt: number }>();
+
+async function memoizedLegacy(locale: string): Promise<HomeLegacySections> {
+  const hit = legacyCache.get(locale);
+  if (hit && hit.expiresAt > Date.now()) return hit.value;
+  const value = await legacyHomeConfig(locale);
+  legacyCache.set(locale, { value, expiresAt: Date.now() + LEGACY_TTL_MS });
+  return value;
+}
+
+/** À faire après toute écriture : la configuration enregistrée prime désormais. */
+export function clearLegacyCache(): void {
+  legacyCache.clear();
+}
 
 function safeLocale(locale: string | undefined): string {
   return (HOME_LANGS as readonly string[]).includes(locale || '') ? String(locale) : HOME_REF_LOCALE;
@@ -86,10 +110,14 @@ async function readApiRows(locale: string, token?: string | null) {
  */
 export async function loadHome(locale: string, token?: string | null): Promise<HomeSnapshot> {
   const safe = safeLocale(locale);
-  const ref = safe === HOME_REF_LOCALE ? null : await readHomeFile(HOME_REF_LOCALE);
-  const current = await readHomeFile(safe);
-  const apiRef = safe === HOME_REF_LOCALE ? null : await readApiRows(HOME_REF_LOCALE, token);
-  const apiCurrent = await readApiRows(safe, token);
+  const [ref, current, apiRef, apiCurrent, legacy, legacyRef] = await Promise.all([
+    safe === HOME_REF_LOCALE ? Promise.resolve(null) : readHomeFile(HOME_REF_LOCALE),
+    readHomeFile(safe),
+    safe === HOME_REF_LOCALE ? Promise.resolve(null) : readApiRows(HOME_REF_LOCALE, token),
+    readApiRows(safe, token),
+    legacyHomeConfig(safe),
+    safe === HOME_REF_LOCALE ? Promise.resolve<HomeLegacySections | null>(null) : memoizedLegacy(HOME_REF_LOCALE),
+  ]);
 
   const apiRows = [...(apiRef || []), ...(apiCurrent || [])];
   const resolved = resolveHomeSections({
@@ -97,13 +125,26 @@ export async function loadHome(locale: string, token?: string | null): Promise<H
     ref,
     current,
     apiRows,
+    legacy,
+    legacyRef,
   });
+
+  // Un bloc est « repris des fichiers du site » dès qu'aucune ligne — API ou
+  // `home.json` — ne le décrit : c'est ce qui permet au studio de le dire à
+  // l'administrateur au lieu de lui montrer un formulaire vide.
+  const saved = new Set<string>([
+    ...apiRows.map((row) => String(row.key)),
+    ...Object.keys((current?.sections || {}) as Record<string, unknown>),
+    ...Object.keys((ref?.sections || {}) as Record<string, unknown>),
+  ]);
+  const seeded = (Object.keys(legacy) as HomeSectionKey[]).filter((key) => !saved.has(key));
 
   return {
     locale: safe,
     ref: HOME_REF_LOCALE,
     api: apiRef !== null || apiCurrent !== null,
     ...resolved,
+    seeded,
   };
 }
 
@@ -302,6 +343,43 @@ export async function resetHomeSection(input: { key: HomeSectionKey; locale: str
 }
 
 /** Fiches proposées aux sélecteurs du studio. */
+/**
+ * Copie le contenu repris des fichiers du site dans la configuration
+ * enregistrée, bloc par bloc. Une fois l'opération faite, le studio édite des
+ * lignes comme les autres et la vitrine ne dépend plus de ces fichiers.
+ *
+ * Les blocs déjà enregistrés sont ignorés sauf demande explicite (`force`) :
+ * un réglage de l'administration ne doit pas être écrasé par une reprise.
+ */
+export async function importHomeLegacy(input: {
+  locale: string;
+  keys?: HomeSectionKey[];
+  force?: boolean;
+  token?: string | null;
+}): Promise<{ stored: 'api' | 'file'; imported: HomeSectionKey[]; skipped: HomeSectionKey[] }> {
+  const locale = safeLocale(input.locale);
+  const snapshot = await loadHome(locale, input.token);
+  const seeded = new Set(snapshot.seeded || []);
+  const wanted = (input.keys?.length ? input.keys : (Object.keys(snapshot.sections) as HomeSectionKey[])).filter(
+    (key) => input.force || seeded.has(key),
+  );
+  const imported: HomeSectionKey[] = [];
+  const skipped: HomeSectionKey[] = [];
+
+  for (const key of wanted) {
+    const config = snapshot.sections[key];
+    if (!config) {
+      skipped.push(key);
+      continue;
+    }
+    await saveHomeSection({ key, locale, config, token: input.token });
+    imported.push(key);
+  }
+
+  await touchStorefrontCache();
+  return { stored: snapshot.api ? 'api' : 'file', imported, skipped };
+}
+
 export async function homeOptions(resource: HomeOptionResource, locale: string, token?: string | null): Promise<HomeOption[]> {
   const safe = safeLocale(locale);
   if (token) {
@@ -372,6 +450,7 @@ async function localOptions(locale: string, resource: HomeOptionResource): Promi
  */
 function touchStorefrontCache() {
   clearHomeCache();
+  clearLegacyCache();
   // Le cache du rendu est une optimisation : son échec n'est pas une erreur.
   return import('@/lib/data')
     .then((mod) => mod.clearCache())

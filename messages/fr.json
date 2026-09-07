@@ -2026,7 +2026,14 @@
         "newsletterArgs": "Arguments affichés",
         "partnersPick": "Partenaires",
         "tuneSlide": "Régler ce slide pour la page d’accueil"
-      }
+      },
+      "importAction": "{count, plural, =0 {Aucune donnée à reprendre} one {Reprendre ce bloc} other {Reprendre les données du site (#)}}",
+      "importHint": "Copie le contenu déjà publié — fiches du catalogue, chiffres du fichier de configuration, libellés traduits — dans la configuration enregistrée du bloc. Ce que l’administration a déjà enregistré n’est jamais écrasé.",
+      "importNone": "Aucun bloc ne puise son contenu dans les fichiers du site pour l’instant.",
+      "confirmImport": "{count, plural, one {Reprendre le contenu du site dans ce bloc ? Il sera écrit dans la configuration et deviendra modifiable.} other {Reprendre le contenu du site dans les # blocs concernés ? Il sera écrit dans la configuration et deviendra modifiable.}}",
+      "importDone": "{count, plural, one {# bloc repris.} other {# blocs repris.}}",
+      "seededChip": "repris du site",
+      "importBanner": "Ce bloc affiche pour l’instant le contenu des fichiers du site : rien n’a encore été enregistré ici. Enregistrer le bloc fige ce contenu ; « Reprendre » l’écrit tel quel dans la configuration, où vous pouvez le modifier puis le supprimer."
     },
     "newsletter": {
       "title": "Abonnés à la newsletter",
@@ -2674,7 +2681,25 @@
         "emailRequired": "Indiquez une adresse électronique.",
         "consentRequired": "Merci de cocher la case de consentement.",
         "topicsLabel": "Ce qui vous intéresse",
-        "checkYourInbox": "Un courriel de confirmation vient de partir : validez-le pour finaliser."
+        "checkYourInbox": "Un courriel de confirmation vient de partir : validez-le pour finaliser.",
+        "confirmTitle": "Confirmez votre inscription",
+        "confirmIntro": "Dernière étape avant d’inscrire {email} à la liste.",
+        "editEmail": "Modifier l’adresse",
+        "nameLabel": "Nom (facultatif)",
+        "namePlaceholder": "Nom et prénom, ou raison sociale",
+        "notesLabel": "Note (facultatif)",
+        "notesPlaceholder": "Une précision sur votre besoin, votre établissement, un délai…",
+        "captchaLabel": "Vérification anti-spam",
+        "captchaHelp": "Répondez à la question pour prouver que vous n’êtes pas un robot.",
+        "captchaLoading": "Préparation de la question…",
+        "captchaPlaceholder": "Votre réponse",
+        "newQuestion": "Nouvelle question",
+        "captchaWrong": "Réponse incorrecte. Une nouvelle question vous est proposée.",
+        "confirmCta": "Confirmer mon inscription",
+        "sendingCta": "Confirmation…",
+        "cancelCta": "Annuler",
+        "alreadySubscribed": "Cette adresse est déjà inscrite à notre liste : rien de plus à faire.",
+        "reactivated": "Votre adresse avait été retirée de la liste : elle y est de nouveau inscrite."
       }
     },
     "ui": {

@@ -49,8 +49,16 @@ export class HomeSectionsService extends BaseCrudService<HomeSectionEntity> {
     return data;
   }
 
-  async findByKeyAndLocale(key: string, locale: string): Promise<HomeSectionEntity | null> {
-    return this.repository.findOne({ key, locale });
+  /**
+   * Ligne d'un bloc pour une langue.
+   *
+   * `includeDeleted` sert au chemin d'écriture : un bloc « réinitialisé » n'est
+   * que mis à la corbeille, et la contrainte d'unicité (key, locale) continue de
+   * compter. Recréer la ligne échouerait donc après un reset — `upsert` cherche
+   * aussi dans la corbeille et ranime la fiche.
+   */
+  async findByKeyAndLocale(key: string, locale: string, includeDeleted = false): Promise<HomeSectionEntity | null> {
+    return this.repository.findOne({ key, locale }, includeDeleted);
   }
 
   /**
@@ -61,7 +69,7 @@ export class HomeSectionsService extends BaseCrudService<HomeSectionEntity> {
    * corriger) fonctionner sans vider le reste.
    */
   async upsert(key: string, locale: string, dto: Partial<HomeSectionEntity>, actor?: ActorContext) {
-    const existing = await this.findByKeyAndLocale(key, locale);
+    const existing = await this.findByKeyAndLocale(key, locale, true);
     const payload: Partial<HomeSectionEntity> = {
       key,
       locale,
@@ -78,7 +86,9 @@ export class HomeSectionsService extends BaseCrudService<HomeSectionEntity> {
     };
 
     if (existing) {
-      const updated = await this.repository.update(existing.id, payload);
+      // `deletedAt: null` : un enregistrement après une réinitialisation sort la
+      // fiche de la corbeille au lieu de heurter l'unicité (key, locale).
+      const updated = await this.repository.update(existing.id, { ...payload, deletedAt: null });
       await this.invalidateCache();
       await this.audit.record({
         actorId: actor?.id,
@@ -179,22 +189,25 @@ export class HomeSectionsService extends BaseCrudService<HomeSectionEntity> {
     for (const [index, key] of keys.entries()) {
       const row = byKey.get(key);
       if (!row) {
-        await this.repository.create({
+        // `upsert` plutôt qu'un `create` brut : le bloc a pu être réinitialisé,
+        // sa ligne dort dans la corbeille et l'unicité (key, locale) s'y oppose.
+        await this.upsert(
           key,
           locale,
-          label: null,
-          enabled: true,
-          sortOrder: index,
-          status: 'published',
-          texts: {},
-          selection: {},
-          settings: {},
-          style: {},
-          items: [],
-          builder: {},
-          createdBy: actor?.id ?? null,
-          updatedBy: actor?.id ?? null,
-        } as Partial<HomeSectionEntity>);
+          {
+            label: null,
+            enabled: true,
+            sortOrder: index,
+            status: 'published',
+            texts: {},
+            selection: {},
+            settings: {},
+            style: {},
+            items: [],
+            builder: {},
+          } as Partial<HomeSectionEntity>,
+          actor,
+        );
         touched += 1;
         continue;
       }

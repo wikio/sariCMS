@@ -2026,7 +2026,14 @@
         "newsletterArgs": "Arguments shown",
         "partnersPick": "Partners",
         "tuneSlide": "Tune this slide for the home page"
-      }
+      },
+      "importAction": "{count, plural, =0 {Nothing to take over} one {Take over this block} other {Take over site data (#)}}",
+      "importHint": "Copies the content already published — catalogue records, figures from the configuration file, translated labels — into the block's saved configuration. Anything the back-office has already saved is never overwritten.",
+      "importNone": "No block is currently reading its content from the site's files.",
+      "confirmImport": "{count, plural, one {Take over the site content into this block? It will be written into the configuration and become editable.} other {Take over the site content into the # affected blocks? It will be written into the configuration and become editable.}}",
+      "importDone": "{count, plural, one {# block taken over.} other {# blocks taken over.}}",
+      "seededChip": "from the site",
+      "importBanner": "This block currently shows content read from the site's files: nothing has been saved here yet. Saving the block freezes that content; “Take over” writes it into the configuration, where you can edit or remove it."
     },
     "newsletter": {
       "title": "Newsletter subscribers",
@@ -2674,7 +2681,25 @@
         "emailRequired": "Please enter an email address.",
         "consentRequired": "Please tick the consent box.",
         "topicsLabel": "What interests you",
-        "checkYourInbox": "A confirmation email is on its way: click it to finish."
+        "checkYourInbox": "A confirmation email is on its way: click it to finish.",
+        "confirmTitle": "Confirm your subscription",
+        "confirmIntro": "One last step before adding {email} to the list.",
+        "editEmail": "Change address",
+        "nameLabel": "Name (optional)",
+        "namePlaceholder": "Full name or company",
+        "notesLabel": "Note (optional)",
+        "notesPlaceholder": "Anything about your needs, your facility, a deadline…",
+        "captchaLabel": "Anti-spam check",
+        "captchaHelp": "Answer the question to show you are not a robot.",
+        "captchaLoading": "Preparing the question…",
+        "captchaPlaceholder": "Your answer",
+        "newQuestion": "New question",
+        "captchaWrong": "Wrong answer — here is a new question.",
+        "confirmCta": "Confirm my subscription",
+        "sendingCta": "Confirming…",
+        "cancelCta": "Cancel",
+        "alreadySubscribed": "This address is already on our list: nothing else to do.",
+        "reactivated": "Your address had been removed from the list: it is subscribed again."
       }
     },
     "ui": {

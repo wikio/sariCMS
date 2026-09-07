@@ -72,6 +72,7 @@ export class NewsletterService extends BaseCrudService<NewsletterSubscriberEntit
       source: dto.source || 'form',
       consent: dto.consent !== false,
       topics: Array.isArray(dto.topics) ? dto.topics : undefined,
+      notes: dto.notes?.trim() || undefined,
       ip: actor?.ip,
       userAgent: actor?.userAgent,
       subscribedAt: now,
@@ -81,6 +82,11 @@ export class NewsletterService extends BaseCrudService<NewsletterSubscriberEntit
 
     const existing = await this.repository.findOne({ email }, true);
     if (existing) {
+      // L'adresse était déjà de la liste : on garde la trace du cas pour que le
+      // formulaire puisse le dire au visiteur au lieu d'annoncer une
+      // « nouvelle » inscription. Une adresse retirée revient, elle, comme une
+      // réactivation.
+      const wasActive = existing.status === 'subscribed' || existing.status === 'pending';
       const revived = await this.repository.update(existing.id, {
         ...fields,
         token: existing.token || token,
@@ -96,7 +102,12 @@ export class NewsletterService extends BaseCrudService<NewsletterSubscriberEntit
         ip: actor?.ip,
         userAgent: actor?.userAgent,
       });
-      return { created: false, subscriber: this.toView(revived, 'block') };
+      return {
+        created: false,
+        reactivated: !wasActive,
+        duplicate: wasActive,
+        subscriber: this.toView(revived, 'block'),
+      };
     }
 
     const created = await this.repository.create({
@@ -115,7 +126,7 @@ export class NewsletterService extends BaseCrudService<NewsletterSubscriberEntit
       ip: actor?.ip,
       userAgent: actor?.userAgent,
     });
-    return { created: true, subscriber: this.toView(created, 'block') };
+    return { created: true, reactivated: false, duplicate: false, subscriber: this.toView(created, 'block') };
   }
 
   /** Désinscription — par jeton (lien du mail) ou par adresse (bloc du site). */

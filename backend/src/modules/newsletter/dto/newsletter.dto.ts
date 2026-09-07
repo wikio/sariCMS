@@ -68,6 +68,16 @@ export class SubscribeDto {
   topics?: string[];
 
   /**
+   * Mot laissé par le visiteur à la confirmation (étape facultative du
+   * formulaire) : une précision sur son besoin, sa structure, un délai.
+   */
+  @ApiPropertyOptional({ description: 'Note libre du visiteur (facultatif)' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  notes?: string;
+
+  /**
    * Adresse du visiteur, transmise par la passerelle du site.
    *
    * Le back-office et la vitrine appellent l'API à travers Next : `req.ip` y

@@ -19,6 +19,8 @@ export interface HomeSnapshot {
   stored: 'api' | 'local';
   order: HomeSectionKey[];
   sections: HomeSections;
+  /** Blocs dont le contenu vient des fichiers du site, non encore enregistrés. */
+  seeded?: HomeSectionKey[];
 }
 
 async function json<T>(res: Response): Promise<T> {
@@ -75,6 +77,24 @@ export function copyHome(input: { from: string; to: string[]; key?: HomeSectionK
 
 export function resetHome(key: HomeSectionKey, locale: string) {
   return homeAction({ action: 'reset', key, locale });
+}
+
+/**
+ * « Reprendre le contenu du site » : copie les textes, éléments et sélections
+ * lus dans `data/{langue}/*.json` et les traductions vers la configuration
+ * enregistrée du bloc. Sans `keys`, tous les blocs concernés sont importés.
+ */
+export async function importHomeLegacy(input: {
+  locale: string;
+  keys?: HomeSectionKey[];
+  force?: boolean;
+}): Promise<{ stored: 'api' | 'local'; imported: HomeSectionKey[]; skipped: HomeSectionKey[] }> {
+  const res = await fetch('/api/admin/home', {
+    method: 'POST',
+    headers: headers(),
+    body: JSON.stringify({ action: 'import', ...input }),
+  });
+  return json(res);
 }
 
 const optionsCache = new Map<string, { at: number; options: HomeOption[] }>();

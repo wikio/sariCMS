@@ -113,11 +113,11 @@ export default function StatsSection({ config, home }: StatsSectionProps) {
 
   return (
     <SectionFrame sectionKey="stats" config={home} header={{ align: 'center', fallbacks: { subtitle: t('subtitle'), title: t('title') } }}>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-8 stagger-children">
         {stats.map((stat, i) => {
           const IconComponent = stat.icon as React.ComponentType<{ className?: string }>;
           return (
-            <div key={i} className="text-center stagger-children">
+            <div key={i} className="text-center">
               <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 rounded-full mb-4">
                 <IconComponent className="w-8 h-8 text-white" />
               </div>
