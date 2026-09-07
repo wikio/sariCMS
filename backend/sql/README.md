@@ -13,6 +13,7 @@ Ce dossier contient le schéma MySQL et les données de démarrage du CMS
 | `extract-auth.mjs`         | Extrait `auth-only.mysql.sql` depuis le seed                    |
 | `migrate-data.mysql.sql`   | **Reprise** des jeux `data/{fr,en,ar}/*.json` — 333 lignes      |
 | `fix-zero-dates.mysql.sql`   | **Répar**e les dates à jour ou mois zéro, partout, puis durcit les colonnes |
+| `generate-fix-zero-dates.mjs` | Générateur du fichier ci-dessus, à partir de `schema.mysql.sql` |
 | `migrate-data.mjs`         | Générateur de la reprise (dates converties, `legacyId` posés)   |
 | `migrate-commerce.mysql.sql` | **Migration additive** : tables `orders`, `quotes`, `job_applications` |
 | `migrate-authors.mysql.sql`  | **Migration additive** : table `authors` + `news_articles.authorId`    |
@@ -49,7 +50,13 @@ UPDATE `pages` SET `updatedAt` = COALESCE(`createdAt`, NOW(3))
     OR CAST(`updatedAt` AS CHAR) LIKE '%-00-%' OR CAST(`updatedAt` AS CHAR) LIKE '%-00 %');
 ```
 
-Le fichier compte les lignes fautives table par table, les répare (`createdAt`
+Le fichier — généré par `generate-fix-zero-dates.mjs` (`npm run sql:fix-zero-dates`
+quand le schéma bouge), et fait de SQL écrit exprès pour être jouable dans un client
+graphique : pas de procédure, pas de `DELIMITER`, pas de table temporaire — un script
+qui en générait une vient de tomber, sous HeidiSQL, sur un `Unknown column 't'` qui
+laissait la base intacte et l'erreur intacte aussi.
+
+Il compte les lignes fautives table par table, les répare (`createdAt`
 reprend l'`updatedAt` et réciproquement, `deletedAt` devient « maintenant » pour ne
 pas ressusciter une ligne supprimée, une date facultative devient `NULL` plutôt
 qu'une date inventée), rejoue le contrôle, puis remet les défauts
