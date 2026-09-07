@@ -19,7 +19,7 @@ import type {
 } from '@/types';
 import { cmsPublicList, cmsPublicOne, cmsPublicTranslations, cmsFetch } from '@/lib/cms';
 import { decodeBuilderDoc } from '@/lib/builder-doc';
-import { LEGAL_DOC_TYPES, legalDocTypeOf, type LegalDocType } from '@/lib/legal-docs';
+import { LEGAL_DOC_TYPES, isLegalDocRow, legalDocTypeOf, type LegalDocType } from '@/lib/legal-docs';
 import { loadFicheLocale } from '@/lib/fiche-i18n';
 import { asPublicId, matchesEntity } from '@/lib/ids';
 import { findByRouteKey } from '@/lib/entity-url';
@@ -687,6 +687,9 @@ export async function getLegal(locale: string): Promise<Legal> {
   }
 
   for (const row of rows) {
+    // Une page « À propos » rédigée dans l'administration n'est pas le document
+    // légal du même nom : voir `isLegalDocRow`.
+    if (!isLegalDocRow(row)) continue;
     const type = legalDocTypeOf(row) as LegalDocType;
     const title = String(row.title ?? '').trim();
     const content = String(row.content ?? '').trim();
@@ -700,6 +703,47 @@ export async function getLegal(locale: string): Promise<Legal> {
   }
 
   return cacheSet(locale, 'legal', merged);
+}
+
+/**
+ * La page « À propos » rédigée dans l'administration, quand elle existe.
+ *
+ * La page publique est écrite dans les traductions (`pages.about`) : chaque
+ * paragraphe y a sa clé, et l'écran « Traductions » les modifie en direct. Ce que
+ * cette fiche apporte, ce sont les deux champs que le modèle de traduction ne
+ * peut pas porter — un texte long, avec ses titres et ses liens. Elle est donc en
+ * complément, jamais en remplacement : sans fiche publiée, la page reste celle
+ * des fichiers, et une fiche sans titre ne vide pas l'en-tête de la page.
+ */
+export interface AboutPageContent {
+  title: string;
+  subtitle: string;
+  content: string;
+  lastUpdate?: string;
+}
+
+export async function getAboutPage(locale: string): Promise<AboutPageContent | null> {
+  const cached = cacheGet(`${locale}_about_page`);
+  if (cached !== undefined) return cached as AboutPageContent | null;
+
+  let row: Record<string, unknown> | null = null;
+  try {
+    const rows = await cmsPublicList<Record<string, unknown>>('pages', locale, {
+      filter: JSON.stringify({ kind: 'about' }),
+    });
+    row = rows.find((r) => String(r.content ?? '').trim() || String(r.title ?? '').trim()) ?? null;
+  } catch {
+    row = null;
+  }
+
+  if (!row) return cacheSet(locale, 'about_page', null);
+  const found: AboutPageContent = {
+    title: String(row.title ?? '').trim(),
+    subtitle: String(row.subtitle ?? '').trim(),
+    content: String(row.content ?? '').trim(),
+    lastUpdate: pickLastUpdate(row),
+  };
+  return cacheSet(locale, 'about_page', found);
 }
 export async function getGenericContent(locale: string): Promise<GenericContent[]> {
   return fromCmsOrJson(locale, 'genericContent', [], async () => {

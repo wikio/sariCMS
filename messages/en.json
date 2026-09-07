@@ -3026,7 +3026,8 @@
       "commitment": "Commitment",
       "commitmentDesc": "At the service of our clients",
       "home": "Home",
-      "about": "About"
+      "about": "About",
+      "lastUpdate": "Last updated"
     },
     "careers": {
       "heroTitle": "Join the SARI Team",

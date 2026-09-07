@@ -49,6 +49,22 @@ export function legalDocTypeOf(row: Record<string, unknown>): LegalDocType {
   return 'mentions';
 }
 
+/**
+ * La ligne de la collection `pages` est-elle un document légal ?
+ *
+ * Le filtre côté base retient `kind IN ('legal','about')` parce que la fiche À
+ * propos, elle aussi, vient de `data/{langue}/legal.json`. Du coup une page « À
+ * propos » créée dans l'administration — `kind = 'about'`, sans `category` —
+ * serait passée pour le document légal du même nom et l'aurait remplacé. On ne
+ * retient donc que ce qui est marqué « legal », ou ce qui porte une catégorie de
+ * document explicite.
+ */
+export function isLegalDocRow(row: Record<string, unknown>): boolean {
+  const kind = String(row.kind ?? '').trim().toLowerCase();
+  if (kind === 'legal') return true;
+  return isLegalDocType(String(row.category ?? '').trim().toLowerCase());
+}
+
 /** Adresse publique du document, langue comprise. */
 export function legalDocPath(locale: string, row: Record<string, unknown>): string {
   return `/${locale}/legal/${legalDocTypeOf(row)}`;

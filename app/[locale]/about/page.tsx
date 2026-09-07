@@ -1,8 +1,9 @@
-// app/[locale]/a-propos/page.tsx
+// app/[locale]/about/page.tsx
 import { getTranslations } from 'next-intl/server';
 import type { Locale } from '@/lib/i18n';
 import Link from 'next/link';
 import { Heart, Shield, Users } from 'lucide-react';
+import { getAboutPage } from '@/lib/data';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import SectionTitle from '@/components/ui/SectionTitle';
 import Divider from '@/components/shared/Divider';
@@ -11,15 +12,18 @@ import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
 export async function generateMetadata({ params }: { params: Promise<{ locale: Locale }> }) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'pages.about' });
+  const page = await getAboutPage(locale);
   return {
-    title: `${t('title')} | SARI Système`,
-    description: t('subtitle'),
+    title: `${page?.title || t('title')} | SARI Système`,
+    description: page?.subtitle || t('subtitle'),
   };
 }
 
 export default async function AboutPage({ params }: { params: Promise<{ locale: Locale }> }) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'pages.about' });
+  // Ce qu'un rédacteur a posé dans l'administration, s'il en a posé.
+  const page = await getAboutPage(locale);
 
   const breadcrumbItems = [
     { label: t('home', { defaultMessage: 'Accueil' }), href: '/' },
@@ -43,10 +47,10 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
         <div className="absolute inset-0 bg-sari-dark/80"></div>
         <div className="relative z-10 container mx-auto px-6">
           <h1 className="text-5xl md:text-6xl font-bold mb-4">
-            {t('title')}
+            {page?.title || t('title')}
           </h1>
           <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-            {t('subtitle')}
+            {page?.subtitle || t('subtitle')}
           </p>
         </div>
       </div>
@@ -67,6 +71,25 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
             {t('qualityLink')}
           </Link>
         </div>
+
+        {/*
+          Le texte long rédigé dans l'administration se pose ici, après
+          l'introduction traduite : les deux vivent l'un à côté de l'autre plutôt
+          que l'un sur l'autre, pour qu'une fiche à moitié remplie ne fasse pas
+          disparaître le texte du fichier. Le HTML est celui du champ « Contenu
+          HTML », nettoyé par les mêmes règles qu'un document légal.
+        */}
+        {page?.content && (
+          <div className="mb-12">
+            {page.lastUpdate && (
+              <p className="text-sm text-gray-400 mb-3">{t('lastUpdate')} : {page.lastUpdate}</p>
+            )}
+            <div
+              className="prose dark:prose-invert max-w-none text-gray-600 dark:text-gray-400 leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: page.content }}
+            />
+          </div>
+        )}
 
         <Divider text={t('valuesTitle')} />
 

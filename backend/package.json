@@ -26,7 +26,9 @@
     "sql:fix-permissions": "node sql/generate-fix-permissions.mjs",
     "sql:schema": "node sql/generate-schema.mjs",
     "sql:seed": "node sql/generate-seed.mjs",
-    "sql:data": "node sql/migrate-data.mjs"
+    "sql:data": "node sql/migrate-data.mjs",
+    "sql:seed-legal": "node sql/generate-seed-legal.mjs",
+    "sql:test-legal": "node sql/test-seed-legal-sql.mjs"
   },
   "dependencies": {
     "@nestjs/cache-manager": "^2.3.0",

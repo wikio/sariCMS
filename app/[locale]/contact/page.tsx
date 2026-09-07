@@ -511,7 +511,7 @@ export default function ContactPage() {
                   />
                   <label htmlFor="acceptTerms" className="text-sm text-gray-600 dark:text-gray-400">
                     {t('acceptTerms')}{' '}
-                    <Link href={`/${locale}/confidentialite`} className="text-sari-blue hover:underline">
+                    <Link href={`/${locale}/legal/privacy`} className="text-sari-blue hover:underline">
                       {t('privacyPolicy')}
                     </Link>{' '}
                     <span className="text-red-500">*</span>

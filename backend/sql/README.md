@@ -15,6 +15,9 @@ Ce dossier contient le schéma MySQL et les données de démarrage du CMS
 | `fix-zero-dates.mysql.sql`   | **Répar**e les dates à jour ou mois zéro, partout, puis durcit les colonnes |
 | `generate-fix-zero-dates.mjs` | Générateur du fichier ci-dessus, à partir de `schema.mysql.sql` |
 | `migrate-data.mjs`         | Générateur de la reprise (dates converties, `legacyId` posés)   |
+| `seed-legal-pages.mysql.sql`   | **Douze documents légaux** dans `pages` — sans rien toucher d'autre |
+| `generate-seed-legal.mjs`  | Générateur du fichier ci-dessus, depuis `data/{langue}/legal.json` |
+| `test-seed-legal-sql.mjs`  | Vérifie ce seed (rejeu sur SQLite, contenu préservé)             |
 | `migrate-commerce.mysql.sql` | **Migration additive** : tables `orders`, `quotes`, `job_applications` |
 | `migrate-authors.mysql.sql`  | **Migration additive** : table `authors` + `news_articles.authorId`    |
 | `setup-env.mjs`            | Crée `backend/.env` (pilote MySQL + secrets JWT aléatoires)     |
@@ -389,6 +392,40 @@ avoir ajouté une ressource au backend, relancez `npm run sql:fix-permissions`
 **et** `npm run sql:seed`, puis redémarrez le backend (les permissions sont
 mises en cache avec la session).
 
+## 3 quater. L'écran « Pages légales » est vide
+
+Symptôme : les quatre documents existent dans le dépôt — `data/fr/legal.json`
+et ses deux traductions — la vitrine les publie, mais l'écran
+**Administration → Pages légales** ne listerait rien, et une fiche créée à la
+main n'apparaît pas non plus là où on l'attend. Dans une base reprise à la main,
+les lignes `pages` des documents légaux sont soit absentes, soit présentes sous
+une famille que l'écran filtre mal (`kind` autre que `legal`, `category` laissé
+vide ou rempli d'un libellé en toutes lettres).
+
+    cd backend
+    npm run sql:seed-legal           # régénère seed-legal-pages.mysql.sql
+    mysql -u utilisateur -p base < sql/seed-legal-pages.mysql.sql
+
+Un fichier pour ces douze lignes seulement, et non un rappel de
+`migrate-data.mysql.sql` : la reprise complète réécrit produits, actualités et
+visuels. Celui-ci ne touche que la table `pages`, uniquement les lignes dont
+l'`slug` est `mentions`, `privacy`, `conditions` ou `about`, et **jamais un texte
+déjà rédigé** — `ON DUPLICATE KEY UPDATE` ne remplit `title` et `content` qu'ils
+sont vides. Il se relance donc sans risque ; il remet à plat la famille et le
+type, ce qui suffit à faire réapparaître une fiche qui était là, publiée, et
+invisible.
+
+La section 1 compte ce que l'administration voit, la 2 répare les lignes
+mal classées, la 3 insère les douze documents, la 4 les contrôle, la 5 explique
+les liens courts du pied de page. Vérification sans serveur MySQL :
+
+    node sql/test-seed-legal-sql.mjs      # ou npm run sql:test-legal
+
+Côté site, les adresses sont `/fr/legal/mentions`, `/fr/legal/privacy`,
+`/fr/legal/conditions`, `/fr/legal/about` — et `/fr/legal` en liste les quatre.
+Les formes courtes (`/fr/privacy`, `/fr/terms`, `/fr/mentions`…), que le pied de
+page a gardées en base, sont renvoyées sur le document par `next.config.mjs`.
+
 ## 4. Contenu inclus (contexte algérien)
 
 - **Identité** : SARI Système SARL — 17 Lot ONAB, Cité SONELGAZ, Gué de
@@ -418,6 +455,7 @@ node sql/generate-seed.mjs          # seed.mysql.sql (contenu de démonstration)
 node sql/migrate-data.mjs           # migrate-data.mysql.sql (reprise des JSON)
 node sql/generate-fix-zero-dates.mjs # fix-zero-dates.mysql.sql (dates au zéro)
 node sql/generate-fix-permissions.mjs # fix-permissions.mysql.sql (rôles verrouillés)
+node sql/generate-seed-legal.mjs      # seed-legal-pages.mysql.sql (documents légaux)
 ```
 
 Après toute modification de `prisma/schema.prisma`, régénérez le schéma :
