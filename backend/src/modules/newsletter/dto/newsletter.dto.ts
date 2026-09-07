@@ -3,7 +3,7 @@ import { Transform, Type } from 'class-transformer';
 import {
   IsArray, IsBoolean, IsEmail, IsIn, IsInt, IsOptional, IsString, MaxLength, Min,
 } from 'class-validator';
-import { NEWSLETTER_STATUSES } from '../entities/newsletter.entity';
+import { NEWSLETTER_STATUSES, NEWSLETTER_UNSUBSCRIBE_REASONS } from '../entities/newsletter.entity';
 
 function toBool(value: unknown): boolean | undefined {
   if (value === undefined || value === null || value === '') return undefined;
@@ -103,6 +103,22 @@ export class UnsubscribeDto extends SubscribeDto {
   @IsString()
   @MaxLength(80)
   token?: string;
+
+  /**
+   * Motif choisi dans le formulaire de désinscription. Un code court, jamais un
+   * libellé : la traduction appartient au site, pas à la donnée.
+   */
+  @ApiPropertyOptional({ enum: NEWSLETTER_UNSUBSCRIBE_REASONS })
+  @IsOptional()
+  @IsIn([...NEWSLETTER_UNSUBSCRIBE_REASONS])
+  reason?: string;
+
+  /** Commentaire libre qui accompagne le motif (`reason: 'other'`, notamment). */
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  reasonNote?: string;
 }
 
 export class CreateNewsletterSubscriberDto extends SubscribeDto {

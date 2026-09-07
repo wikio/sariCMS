@@ -11,14 +11,17 @@
  *
  * `variant` adapte seulement l'habillage ; le comportement est commun :
  * - premier clic sur « S'inscrire » : rien n'est encore envoyé, une fenêtre de
- *   confirmation s'ouvre (adresse relue, nom et note facultatifs, question
- *   anti-spam) — c'est là que l'inscription part réellement ;
+ *   confirmation s'ouvre (adresse relue, nom et note facultatifs, captcha en
+ *   image) — c'est là que l'inscription part réellement ;
  * - le champ piège (`website`) rempli par les robots → la demande est ignorée ;
  * - l'adresse déjà présente dans la liste est signalée au visiteur au lieu
  *   d'annoncer une nouvelle inscription, une adresse retirée est réactivée ;
- * - message de confirmation propre à la langue de la page.
+ * - message de confirmation propre à la langue de la page ;
+ * - un petit lien de désabonnement sous le champ, qui ouvre le formulaire public
+ *   en reprenant l'adresse saisie (`showUnsubscribeLink`).
  */
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import {
   AlertCircle, CheckCircle, Loader2, Mail, Pencil, RefreshCcw, Send, ShieldQuestion,
@@ -48,6 +51,8 @@ interface NewsletterSignupProps {
   /** Double opt-in : on prévient qu'un courriel de confirmation va suivre. */
   doubleOptIn?: boolean;
   className?: string;
+  /** Petit lien « Se désabonner » sous le champ — la loi le demande, autant le rendre visible. */
+  showUnsubscribeLink?: boolean;
   /** Petits textes additionnels affichés sous le champ (bandeau de confiance). */
   children?: React.ReactNode;
 }
@@ -65,6 +70,7 @@ export default function NewsletterSignup({
   requireConsent = false,
   doubleOptIn = false,
   className = '',
+  showUnsubscribeLink = true,
   children,
 }: NewsletterSignupProps) {
   const locale = useLocale();
@@ -105,6 +111,8 @@ export default function NewsletterSignup({
     captchaLabel: t('captchaLabel'),
     captchaHelp: t('captchaHelp'),
     captchaPlaceholder: t('captchaPlaceholder'),
+    captchaImageAlt: t('captchaImageAlt'),
+    captchaRetry: t('captchaRetry'),
     newQuestion: t('newQuestion'),
     confirmCta: t('confirmCta'),
     sendingCta: t('sendingCta'),
@@ -293,6 +301,23 @@ export default function NewsletterSignup({
         </form>
       )}
 
+      {showUnsubscribeLink ? (
+        // Lien discret mais présent partout où le formulaire s'affiche : le
+        // désabonnement ne doit pas être plus difficile à trouver que l'inscription.
+        <p
+          className={`text-xs mt-4 ${dark ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'} ${
+            variant === 'band' ? 'text-center' : 'text-center sm:text-start'
+          }`}
+        >
+          <Link
+            href={`/${locale}/newsletter/unsubscribe${email.trim() ? `?email=${encodeURIComponent(email.trim())}` : ''}`}
+            className={`underline decoration-dotted underline-offset-4 ${dark ? 'hover:text-white' : 'hover:text-sari-blue'}`}
+          >
+            {t('unsubscribeLink')}
+          </Link>
+        </p>
+      ) : null}
+
       {confirming ? (
         <ConfirmDialog
           email={email}
@@ -320,11 +345,11 @@ export default function NewsletterSignup({
 
 /**
  * Fenêtre de confirmation : relire l'adresse, ajouter un nom et une note
- * facultatifs, répondre à la question anti-spam, puis inscrire vraiment.
+ * facultatifs, recopier le captcha en image, puis inscrire vraiment.
  *
  * Fermeture au clavier (Échap), au clic sur le fond, et retour du focus sur le
- * bouton qui l'a ouverte ; la question est délivrée par le serveur et d'un seul
- * usage, une mauvaise réponse en provoque une nouvelle.
+ * bouton qui l'a ouverte ; le code est dessiné par le serveur et d'un seul
+ * usage, une mauvaise recopie en provoque un nouveau.
  */
 function ConfirmDialog({
   email,
@@ -356,17 +381,20 @@ function ConfirmDialog({
   const firstFieldRef = useRef<HTMLInputElement | null>(null);
   const [name, setName] = useState('');
   const [notes, setNotes] = useState('');
-  const [captcha, setCaptcha] = useState<{ id: string; question: string } | null>(null);
+  const [captcha, setCaptcha] = useState<{ id: string; imageUrl: string } | null>(null);
   const [answer, setAnswer] = useState('');
   const [captchaError, setCaptchaError] = useState('');
   const [notice, setNotice] = useState('');
   const [sending, setSending] = useState(false);
   const [loadingCaptcha, setLoadingCaptcha] = useState(false);
 
+  /** Demande un code : à l'ouverture, sur « Nouveau code », et après une erreur. */
   const askQuestion = useCallback(async () => {
     setLoadingCaptcha(true);
     const issue = await fetchNewsletterCaptcha();
-    setCaptcha(issue);
+    // Une réponse vide (serveur injoignable) laisse la fenêtre utilisable : le
+    // bouton de reprise permet de redemander sans tout recharger.
+    setCaptcha((current) => (issue ? issue : current));
     setAnswer('');
     setCaptchaError('');
     setLoadingCaptcha(false);
@@ -378,7 +406,7 @@ function ConfirmDialog({
 
   // Fermeture, verrou du défilement et retour du focus : montés une seule fois,
   // pour qu'un simple changement d'état dans la fenêtre ne redemande pas de
-  // question anti-spam ni ne vole le focus du champ en cours de saisie.
+  // code anti-spam ni ne vole le focus du champ en cours de saisie.
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
   useEffect(() => {
@@ -553,31 +581,51 @@ function ConfirmDialog({
                   {copy.newQuestion}
                 </button>
               </div>
-              <p className="text-xs text-gray-500 mb-2">{copy.captchaHelp}</p>
+              <p className="text-xs text-gray-500 mb-2" id={`${id}-captcha-help`}>
+                {copy.captchaHelp}
+              </p>
               {captcha ? (
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <p
-                    className="flex-1 px-4 py-3 rounded-lg bg-sari-gray font-semibold text-sm select-none"
-                    key={captcha.id}
-                  >
-                    {captcha.question}
-                  </p>
+                <div className="flex flex-col sm:flex-row sm:items-start gap-3">
+                  {/* Le code n'existe que dans cette image : rien dans le HTML,
+                      rien dans l'`alt`, rien dans la réponse JSON de l'émission.
+                      Un rechargement montre le même code tant que le jeton vit. */}
+                  <img
+                    src={captcha.imageUrl}
+                    alt={copy.captchaImageAlt}
+                    width={200}
+                    height={68}
+                    onClick={() => void askQuestion()}
+                    title={copy.newQuestion}
+                    className="rounded-lg border border-gray-200 cursor-pointer flex-shrink-0 self-center sm:self-start"
+                  />
                   <input
                     id={`${id}-captcha`}
                     type="text"
                     inputMode="text"
                     autoComplete="off"
+                    spellCheck={false}
                     value={answer}
                     onChange={(e) => setAnswer(e.target.value)}
                     placeholder={copy.captchaPlaceholder}
+                    aria-describedby={`${id}-captcha-help`}
                     aria-invalid={captchaError ? 'true' : undefined}
-                    className="sm:w-40 px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-sari-blue/40"
+                    className="sm:flex-1 px-4 py-3 rounded-lg border border-gray-300 font-mono tracking-[0.3em] uppercase focus:outline-none focus:ring-2 focus:ring-sari-blue/40"
                   />
                 </div>
               ) : (
-                <p className="text-sm text-gray-500 inline-flex items-center gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin" /> {copy.captchaLoading}
-                </p>
+                <div className="flex flex-wrap items-center gap-3">
+                  <p className="text-sm text-gray-500 inline-flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" /> {copy.captchaLoading}
+                  </p>
+                  <button
+                    type="button"
+                    className="text-xs font-semibold text-sari-blue hover:underline disabled:opacity-60"
+                    onClick={() => void askQuestion()}
+                    disabled={loadingCaptcha}
+                  >
+                    {copy.captchaRetry}
+                  </button>
+                </div>
               )}
               {captchaError ? (
                 <p role="alert" className="text-sm mt-2 text-red-600 inline-flex items-center gap-2">

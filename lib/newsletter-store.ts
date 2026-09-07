@@ -31,6 +31,10 @@ export interface SubscriberRow {
   userAgent?: string | null;
   subscribedAt?: string | null;
   unsubscribedAt?: string | null;
+  /** Motif choisi au désabonnement (`no-longer-wants`, `too-many-emails`…). */
+  unsubscribeReason?: string | null;
+  /** Commentaire libre qui accompagne le motif. */
+  unsubscribeNote?: string | null;
   createdAt: string;
   updatedAt: string;
   deleted?: boolean;
@@ -125,7 +129,12 @@ export async function subscribe(input: {
   return { created: true, duplicate: false, reactivated: false, row };
 }
 
-export async function unsubscribe(input: { email?: string; token?: string }) {
+export async function unsubscribe(input: {
+  email?: string;
+  token?: string;
+  reason?: string;
+  reasonNote?: string;
+}) {
   const store = await readStore();
   const email = input.email ? normalizeEmail(input.email) : '';
   const row = store.rows.find(
@@ -133,8 +142,13 @@ export async function unsubscribe(input: { email?: string; token?: string }) {
   );
   if (!row) return { done: false as const };
   const now = new Date().toISOString();
+  // Le motif et le commentaire sont enregistrés avec le statut : un retrait sans
+  // explication ne sert à rien, et c'est le seul moment où le visiteur veut bien
+  // dire pourquoi il part.
   row.status = 'unsubscribed';
   row.unsubscribedAt = now;
+  row.unsubscribeReason = input.reason || 'unspecified';
+  if (input.reasonNote?.trim()) row.unsubscribeNote = input.reasonNote.trim();
   row.updatedAt = now;
   await writeStore(store);
   return { done: true as const, row };
@@ -234,7 +248,7 @@ export async function restoreSubscriber(id: string): Promise<boolean> {
   return true;
 }
 
-export async function bulkStatus(ids: string[], status: string): Promise<number> {
+export async function bulkStatus(ids: string[], status: string, reason?: string): Promise<number> {
   const store = await readStore();
   const now = new Date().toISOString();
   let done = 0;
@@ -245,7 +259,12 @@ export async function bulkStatus(ids: string[], status: string): Promise<number>
     } else {
       row.status = status;
       if (status === 'subscribed') row.subscribedAt = now;
-      if (status === 'unsubscribed') row.unsubscribedAt = now;
+      if (status === 'unsubscribed') {
+        row.unsubscribedAt = now;
+        // Un retrait déclenché de l'écran n'a pas de motif visiteur : on note
+        // l'origine administrative, ou celle transmise par l'écran.
+        row.unsubscribeReason = reason || 'unsubscribed-by-admin';
+      }
     }
     row.updatedAt = now;
     done += 1;
@@ -261,8 +280,35 @@ export async function subscriberStats() {
   return out;
 }
 
-export function toCsv(rows: SubscriberRow[]): string {
-  const head = ['email', 'name', 'locale', 'status', 'source', 'consent', 'topics', 'subscribedAt', 'unsubscribedAt', 'notes'];
+/**
+ * Les centres d'intérêt déjà vus, du plus fréquent au plus rare : c'est ce qui
+ * alimente l'autocomplétion de l'écran d'administration, sans imposer une liste
+ * fermée (le visiteur peut très bien écrire « IRM » une seule fois).
+ */
+export async function distinctTopics(): Promise<Array<{ topic: string; count: number }>> {
+  const rows = await listSubscribers();
+  const counts = new Map<string, number>();
+  for (const row of rows) {
+    for (const raw of row.topics || []) {
+      const topic = String(raw).trim();
+      if (!topic) continue;
+      counts.set(topic, (counts.get(topic) || 0) + 1);
+    }
+  }
+  return [...counts.entries()]
+    .map(([topic, count]) => ({ topic, count }))
+    .sort((a, b) => b.count - a.count || a.topic.localeCompare(b.topic));
+}
+
+/**
+ * Une ligne de la base comme une ligne du fichier : les colonnes sont les mêmes,
+ * et l'appelant n'a pas à convertir son type pour exporter.
+ */
+export function toCsv<T extends object>(rows: readonly T[]): string {
+  const head = [
+    'email', 'name', 'locale', 'status', 'source', 'consent', 'topics',
+    'subscribedAt', 'unsubscribedAt', 'notes', 'unsubscribeReason', 'unsubscribeNote',
+  ];
   const esc = (v: unknown) => {
     const text = Array.isArray(v) ? v.join('|') : v === null || v === undefined ? '' : String(v);
     return /[",\n;]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;

@@ -4,6 +4,20 @@ export const NEWSLETTER_STATUSES = ['pending', 'subscribed', 'unsubscribed', 'bo
 export type NewsletterStatus = (typeof NEWSLETTER_STATUSES)[number];
 
 /**
+ * Motifs proposés au visiteur qui se désinscrit. Des codes courts, stables :
+ * c'est eux qui sont enregistrés, l'écran d'administration traduit le libellé.
+ * `other` s'accompagne alors du texte libre `unsubscribeNote`.
+ */
+export const NEWSLETTER_UNSUBSCRIBE_REASONS = [
+  'no-longer-wants',
+  'too-many-emails',
+  'not-relevant',
+  'never-subscribed',
+  'other',
+] as const;
+export type NewsletterUnsubscribeReason = (typeof NEWSLETTER_UNSUBSCRIBE_REASONS)[number];
+
+/**
  * Abonné·e à la newsletter.
  *
  * Une seule liste pour tout le site : le bloc newsletter de la page d'accueil,
@@ -32,4 +46,8 @@ export interface NewsletterSubscriberEntity extends BaseEntity {
   userAgent?: string | null;
   subscribedAt?: string | null;
   unsubscribedAt?: string | null;
+  /** Motif du retrait, choisi par le visiteur (`NEWSLETTER_UNSUBSCRIBE_REASONS`). */
+  unsubscribeReason?: string | null;
+  /** Commentaire libre qui accompagne le motif. */
+  unsubscribeNote?: string | null;
 }

@@ -5,21 +5,34 @@
  *
  * Toutes les inscriptions du site (bandeau de l'accueil, article, formulaire de
  * contact, pied de page) arrivent ici, filtrables par langue, statut et origine.
- * La suppression va dans une corbeille, d'où l'on peut restaurer ou purger ;
- * l'export CSV reprend exactement la liste filtrée à l'écran.
+ * La suppression va dans une corbeille, d'où l'on peut restaurer ou purger.
+ *
+ * Trois choses méritent une ligne : la **date d'abonnement** est un texte statique
+ * (elle est posée par le site, pas par l'écran), la **note** laissée par le
+ * visiteur est la colonne `notes` — la même que celle que le formulaire de la
+ * vitrine alimente — et les **centres d'intérêt** se saisissent en étiquettes
+ * autocomplete, séparées à la virgule, sans liste fermée.
+ *
+ * L'export prend deux formes : la liste filtrée à l'écran, ou la sélection
+ * d'un clic par ligne (« Exporter la sélection ») pour traiter un lot précis.
+ * Le nombre de lignes par page se règle en bas du tableau et se retient.
  *
  * Les données viennent de `/api/admin/newsletter`, qui lit l'API CMS quand elle
  * répond et le fichier `data/newsletter.json` sinon — l'écran affiche le mode
  * utilisé pour qu'on sache où l'on écrit.
  */
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import {
-  Download, Inbox, Loader2, Pencil, Plus, RefreshCcw, RotateCcw, Search,
+  Download, Eye, Inbox, Loader2, Pencil, Plus, RefreshCcw, RotateCcw, Search,
   Send, ThumbsDown, Trash2, Undo2, X,
 } from 'lucide-react';
 import Drawer from '@/components/admin/Drawer';
 import { useToast } from '@/components/admin/Toast';
+import TopicsPicker from '@/components/admin/newsletter/TopicsPicker';
+import { reasonLabel } from '@/lib/newsletter-reasons';
 import {
   bulkSubscribers,
   createSubscriber,
@@ -28,6 +41,8 @@ import {
   listSubscribers,
   restoreSubscriber,
   subscriberStats,
+  topicSuggestions,
+  type TopicSuggestion,
   updateSubscriber,
   type Subscriber,
   type SubscriberFilters,
@@ -36,15 +51,39 @@ import { formatDateWith, type SupportedLocale } from '@/lib/date-format';
 
 const STATUSES = ['subscribed', 'pending', 'unsubscribed'] as const;
 const LOCALES = ['fr', 'en', 'ar'] as const;
-const PAGE_SIZE = 25;
 
-const EMPTY_FORM: Partial<Subscriber> = { email: '', name: '', locale: 'fr', status: 'subscribed', source: 'admin', notes: '', consent: true };
+/**
+ * Lignes par page : réglable, parce qu'une liste de 400 adresses se relit
+ * rarement 25 par 25 quand on cherche un lot. `0` = tout afficher.
+ */
+const PAGE_SIZES = [10, 25, 50, 100, 0] as const;
+const PAGE_SIZE_KEY = 'sari.newsletter.pageSize';
+const DEFAULT_PAGE_SIZE = 25;
+
+function readStoredPageSize(): number {
+  try {
+    const raw = window.localStorage.getItem(PAGE_SIZE_KEY);
+    const value = Number(raw);
+    if (raw !== null && Number.isFinite(value) && (PAGE_SIZES as readonly number[]).includes(value)) return value;
+  } catch {
+    /* navigation privée, stockage indisponible : le défaut suffit */
+  }
+  return DEFAULT_PAGE_SIZE;
+}
+
+const EMPTY_FORM: Partial<Subscriber> = {
+  email: '', name: '', locale: 'fr', status: 'subscribed', source: 'admin',
+  notes: '', topics: [], consent: true,
+};
 
 export default function AdminNewsletterPage() {
   const locale = useLocale();
   const t = useTranslations('admin.newsletter');
+  /** Les motifs de retrait se traduisent depuis un dictionnaire partagé. */
+  const tr = useTranslations('common.newsletterReasons');
   const { showToast } = useToast();
 
+  const searchParams = useSearchParams();
   const [rows, setRows] = useState<Subscriber[]>([]);
   const [stats, setStats] = useState<Record<string, number>>({});
   const [stored, setStored] = useState<'api' | 'local'>('local');
@@ -55,10 +94,9 @@ export default function AdminNewsletterPage() {
   const [picked, setPicked] = useState<string[]>([]);
   const [editing, setEditing] = useState<{ mode: 'create' | 'edit'; row: Partial<Subscriber> } | null>(null);
   const [form, setForm] = useState<Partial<Subscriber>>(EMPTY_FORM);
-  // Les centres d'intérêt sont une liste en base mais se saisissent en une
-  // ligne séparée par des virgules : l'état d'édition reste donc textuel.
-  const [topicsText, setTopicsText] = useState('');
   const [savingForm, setSavingForm] = useState(false);
+  const [pageSize, setPageSize] = useState<number>(DEFAULT_PAGE_SIZE);
+  const [topics, setTopics] = useState<TopicSuggestion[]>([]);
 
   const query = useMemo(() => ({ ...filters }), [filters]);
 
@@ -82,11 +120,49 @@ export default function AdminNewsletterPage() {
   }, [refresh]);
 
   useEffect(() => {
-    setPage(0);
-  }, [filters]);
+    setPageSize(readStoredPageSize());
+    // Les suggestions de thèmes sont les mêmes d'une fiche à l'autre : une seule
+    // lecture par ouverture de l'écran suffit.
+    void topicSuggestions(locale).then(setTopics).catch(() => setTopics([]));
+  }, [locale]);
 
-  const paged = useMemo(() => rows.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE), [rows, page]);
-  const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  useEffect(() => {
+    setPage(0);
+    // Une sélection vit dans le filtre courant : changer de filtre et laisser des
+    // lignes cochées ferait exporter ou désabonner des adresses que l'on ne voit
+    // plus à l'écran.
+    setPicked([]);
+  }, [filters, pageSize]);
+
+  const changePageSize = useCallback((value: number) => {
+    setPageSize(value);
+    try {
+      window.localStorage.setItem(PAGE_SIZE_KEY, String(value));
+    } catch {
+      /* stockage indisponible : le réglage ne survivra pas à la page, rien de grave */
+    }
+  }, []);
+
+  const size = pageSize > 0 ? pageSize : rows.length || 1;
+  const paged = useMemo(() => rows.slice(page * size, page * size + size), [rows, page, size]);
+  const pageCount = Math.max(1, Math.ceil(rows.length / size));
+
+  /**
+   * L'écran de consultation renvoie ici avec `?edit=<id>` pour ouvrir la fiche
+   * directement en édition — pas besoin de retrouver la ligne dans la liste.
+   */
+  const editApplied = useRef('');
+  useEffect(() => {
+    const editId = searchParams?.get('edit') || '';
+    if (!editId || loading || editApplied.current === editId) return;
+    const row = rows.find((item) => String(item.id) === editId);
+    if (!row) return;
+    // Une seule fois par identifiant : sinon, refermer le tiroir puis rafraîchir
+    // la liste le rouvrirait sans demande de l'administrateur.
+    editApplied.current = editId;
+    setForm({ ...row });
+    setEditing({ mode: 'edit', row });
+  }, [rows, searchParams, loading]);
   const sources = useMemo(() => Array.from(new Set(rows.map((row) => row.source).filter(Boolean))) as string[], [rows]);
 
   const patchRow = useCallback(
@@ -159,7 +235,7 @@ export default function AdminNewsletterPage() {
         source: form.source || 'admin',
         consent: form.consent !== false,
         notes: form.notes || undefined,
-        topics: topicsText.split(',').map((value) => value.trim()).filter(Boolean),
+        topics: form.topics || [],
       };
       if (editing?.mode === 'edit' && editing.row.id) await updateSubscriber(String(editing.row.id), payload);
       else await createSubscriber(payload as { email: string });
@@ -200,8 +276,7 @@ export default function AdminNewsletterPage() {
           type="button"
           className="ad-btn ad-btn-primary text-xs"
           onClick={() => {
-            setForm({ ...EMPTY_FORM, locale });
-            setTopicsText('');
+            setForm({ ...EMPTY_FORM, locale, topics: [] });
             setEditing({ mode: 'create', row: {} });
           }}
         >
@@ -276,6 +351,13 @@ export default function AdminNewsletterPage() {
           <button type="button" className="ad-btn ad-btn-ghost text-xs" onClick={() => void runBulk('unsubscribed')}>
             <ThumbsDown className="w-3.5 h-3.5" /> {t('markUnsubscribed')}
           </button>
+          <button
+            type="button"
+            className="ad-btn ad-btn-ghost text-xs"
+            onClick={() => void downloadSubscribersCsv(filters, picked).catch((err: Error) => showToast(err.message, 'error'))}
+          >
+            <Download className="w-3.5 h-3.5" /> {t('exportSelection', { count: picked.length })}
+          </button>
           <button type="button" className="ad-btn ad-btn-danger text-xs" onClick={() => void runBulk('delete')}>
             <Trash2 className="w-3.5 h-3.5" /> {t('trashSelected')}
           </button>
@@ -315,21 +397,22 @@ export default function AdminNewsletterPage() {
                 <th className="px-3 py-2 text-start font-black">{t('colLocale')}</th>
                 <th className="px-3 py-2 text-start font-black">{t('colStatus')}</th>
                 <th className="px-3 py-2 text-start font-black">{t('colSource')}</th>
-                <th className="px-3 py-2 text-start font-black">{t('colDate')}</th>
+                <th className="px-3 py-2 text-start font-black">{t('colNotes')}</th>
+                <th className="px-3 py-2 text-start font-black whitespace-nowrap">{t('colDate')}</th>
                 <th className="px-3 py-2 text-end font-black">{t('colActions')}</th>
               </tr>
             </thead>
             <tbody>
               {loading && !rows.length ? (
                 <tr>
-                  <td colSpan={8} className="px-3 py-10 text-center">
+                  <td colSpan={9} className="px-3 py-10 text-center">
                     <Loader2 className="w-4 h-4 animate-spin inline" /> {t('loading')}
                   </td>
                 </tr>
               ) : null}
               {!loading && !paged.length ? (
                 <tr>
-                  <td colSpan={8} className="px-3 py-10 text-center text-sm" style={{ color: 'var(--ad-muted)' }}>
+                  <td colSpan={9} className="px-3 py-10 text-center text-sm" style={{ color: 'var(--ad-muted)' }}>
                     {t('empty')}
                   </td>
                 </tr>
@@ -355,8 +438,28 @@ export default function AdminNewsletterPage() {
                     </span>
                   </td>
                   <td className="px-3 py-2 text-xs" style={{ color: 'var(--ad-muted)' }}>{row.source || '—'}</td>
-                  <td className="px-3 py-2 text-xs whitespace-nowrap">
+                  {/* La note est celle que le visiteur a laissée dans la fenêtre de
+                      confirmation (colonne `notes`) : tronquée ici, entière sur la fiche. */}
+                  <td className="px-3 py-2 text-xs max-w-[220px]">
+                    {row.notes ? (
+                      <span className="block truncate" title={row.notes}>{row.notes}</span>
+                    ) : (
+                      <span style={{ color: 'var(--ad-muted)' }}>—</span>
+                    )}
+                  </td>
+                  <td
+                    className="px-3 py-2 text-xs whitespace-nowrap"
+                    title={`${t('colDate')} · ${formatDateWith(row.subscribedAt || row.createdAt, locale as SupportedLocale, { fallback: '—' })}`}
+                  >
                     {formatDateWith(row.subscribedAt || row.createdAt, locale as SupportedLocale, { dateOnly: true, fallback: '—' })}
+                    {row.status === 'unsubscribed' && row.unsubscribedAt ? (
+                      // La date de retrait et son motif, lues là où la liste se
+                      // parcourt : c'est ce qui explique une ligne en rouge.
+                      <span className="block text-[10px]" style={{ color: 'var(--ad-muted)' }}>
+                        {formatDateWith(row.unsubscribedAt, locale as SupportedLocale, { dateOnly: true, fallback: '—' })}
+                        {row.unsubscribeReason ? ` · ${reasonLabel(row.unsubscribeReason, tr)}` : ''}
+                      </span>
+                    ) : null}
                   </td>
                   <td className="px-3 py-2">
                     <div className="flex items-center justify-end gap-0.5">
@@ -371,6 +474,14 @@ export default function AdminNewsletterPage() {
                         </>
                       ) : (
                         <>
+                          <Link
+                            href={`/${locale}/admin/newsletter/${row.id}`}
+                            className="ad-btn-icon"
+                            title={t('view')}
+                            aria-label={t('view')}
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                          </Link>
                           <button
                             type="button"
                             className="ad-btn-icon"
@@ -384,8 +495,7 @@ export default function AdminNewsletterPage() {
                             className="ad-btn-icon"
                             title={t('edit')}
                             onClick={() => {
-                              setForm({ ...row });
-                              setTopicsText((row.topics || []).join(', '));
+                              setForm({ ...row, topics: row.topics || [] });
                               setEditing({ mode: 'edit', row });
                             }}
                           >
@@ -405,6 +515,21 @@ export default function AdminNewsletterPage() {
         </div>
         <div className="px-3 py-2 border-t flex items-center gap-3 text-xs" style={{ borderColor: 'var(--ad-line)', color: 'var(--ad-muted)' }}>
           <span>{t('countShown', { shown: paged.length, total: rows.length })}</span>
+          <label className="flex items-center gap-1.5">
+            <span>{t('pageSize')}</span>
+            <select
+              className="ad-input w-auto text-xs py-1"
+              value={String(pageSize)}
+              onChange={(e) => changePageSize(Number(e.target.value))}
+              aria-label={t('pageSize')}
+            >
+              {PAGE_SIZES.map((value) => (
+                <option key={value} value={String(value)}>
+                  {value === 0 ? t('pageSizeAll') : value}
+                </option>
+              ))}
+            </select>
+          </label>
           <div className="ms-auto flex items-center gap-1">
             <button type="button" className="ad-btn-icon" disabled={page === 0} onClick={() => setPage((p) => Math.max(0, p - 1))} aria-label={t('previousPage')}>
               ‹
@@ -465,23 +590,75 @@ export default function AdminNewsletterPage() {
             <span className="text-[11px] font-black uppercase tracking-[0.14em]" style={{ color: 'var(--ad-muted)' }}>{t('fieldSource')}</span>
             <input className="ad-input" value={form.source || ''} placeholder="home.newsletter" onChange={(e) => setForm((prev) => ({ ...prev, source: e.target.value }))} />
           </label>
-          <label className="block space-y-1.5">
-            <span className="text-[11px] font-black uppercase tracking-[0.14em]" style={{ color: 'var(--ad-muted)' }}>{t('fieldTopics')}</span>
-            <input className="ad-input" value={topicsText} placeholder="produits, evenements" onChange={(e) => setTopicsText(e.target.value)} />
-            <p className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>{t('topicsHint')}</p>
-          </label>
+          <TopicsPicker
+            label={t('fieldTopics')}
+            help={t('topicsHint')}
+            placeholder="produits, evenements"
+            addLabel={t('topicsAdd')}
+            removeLabel={t('topicsRemove')}
+            value={form.topics || []}
+            suggestions={topics}
+            onChange={(next) => setForm((prev) => ({ ...prev, topics: next }))}
+          />
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={form.consent !== false} onChange={(e) => setForm((prev) => ({ ...prev, consent: e.target.checked }))} />
             {t('fieldConsent')}
           </label>
           <label className="block space-y-1.5">
             <span className="text-[11px] font-black uppercase tracking-[0.14em]" style={{ color: 'var(--ad-muted)' }}>{t('fieldNotes')}</span>
-            <textarea className="ad-input min-h-[80px]" value={form.notes || ''} onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))} />
+            <textarea
+              className="ad-input min-h-[80px]"
+              value={form.notes || ''}
+              placeholder={t('fieldNotesPlaceholder')}
+              onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))}
+            />
+            <p className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>{t('fieldNotesHint')}</p>
           </label>
-          {editing?.mode === 'edit' && editing.row.ip ? (
-            <p className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>
-              {t('trace')}: {editing.row.ip} · {editing.row.userAgent || '—'}
-            </p>
+
+          {/* Journal de la fiche : dates, motif de retrait, empreinte réseau.
+              Tout est écrit par le site à l'inscription ou au désabonnement —
+              l'écran ne fait que le montrer, sans champ à corriger. */}
+          {editing?.mode === 'edit' ? (
+            <div
+              className="rounded-lg border px-3 py-2.5 space-y-1 text-[11px]"
+              style={{ borderColor: 'var(--ad-line)', color: 'var(--ad-muted)' }}
+            >
+              <p className="text-[10px] font-black uppercase tracking-[0.14em]">{t('trace')}</p>
+              <p>
+                {t('fieldSubscribedAt')} :{' '}
+                <span className="font-semibold" style={{ color: 'var(--ad-ink)' }}>
+                  {formatDateWith(editing.row.subscribedAt || editing.row.createdAt, locale as SupportedLocale, { fallback: t('unknown') })}
+                </span>
+              </p>
+              {editing.row.unsubscribedAt ? (
+                <p>
+                  {t('fieldUnsubscribedAt')} :{' '}
+                  <span className="font-semibold" style={{ color: 'var(--ad-ink)' }}>
+                    {formatDateWith(editing.row.unsubscribedAt, locale as SupportedLocale, { fallback: t('unknown') })}
+                  </span>
+                  {editing.row.unsubscribeReason ? (
+                    <>
+                      {' · '}
+                      {t('fieldUnsubscribeReason')} :{' '}
+                      <span className="font-semibold" style={{ color: 'var(--ad-ink)' }}>
+                        {reasonLabel(editing.row.unsubscribeReason, tr)}
+                      </span>
+                    </>
+                  ) : null}
+                </p>
+                ) : null}
+              {editing.row.unsubscribeNote ? (
+                <p className="text-[11px] leading-5" style={{ color: 'var(--ad-ink)' }}>
+                  {editing.row.unsubscribeNote}
+                </p>
+              ) : null}
+              {editing.row.ip || editing.row.userAgent ? (
+                <p title={`${editing.row.ip || ''} ${editing.row.userAgent || ''}`.trim()}>
+                  {editing.row.ip || '—'} · {editing.row.userAgent ? `${editing.row.userAgent.slice(0, 60)}${editing.row.userAgent.length > 60 ? '…' : ''}` : '—'}
+                </p>
+              ) : null}
+              <p>{t('traceHint')}</p>
+            </div>
           ) : null}
         </div>
       </Drawer>

@@ -87,7 +87,7 @@ On n'importe **pas** le schéma complet, on applique la partie additive.
 **Option 1 — Prisma, propre (recommandée).** Les migrations antérieures ne sont
 pas toujours inscrites dans le registre `_prisma_migrations` (base créée à la
 main, ou import partiel). On aligne le registre sans rien exécuter, puis on
-applique la seule migration qui manque :
+applique les migrations qui manquent :
 
 ```bash
 cd backend
@@ -99,9 +99,12 @@ done
 npx prisma migrate deploy
 ```
 
-`migrate deploy` ne lance alors que
-`20260906_add_home_sections_and_newsletter`, qui est strictement additive (deux
-`CREATE TABLE`) : aucune donnée existante n'est touchée.
+`migrate deploy` ne lance alors que les deux dernières, toutes deux strictement
+additives : `20260906_add_home_sections_and_newsletter` (deux `CREATE TABLE`,
+`home_sections` et `newsletter_subscribers`) puis
+`20260907_add_newsletter_unsubscribe_reason` (deux colonnes et un index sur
+`newsletter_subscribers` — le motif et le commentaire saisis dans le formulaire
+public de désabonnement). Aucune donnée existante n'est touchée.
 
 **Option 2 — sans Prisma (hébergement mutualisé).** Le fichier de migration est
 du SQL autonome, il s'importe dans la base déjà sélectionnée et ne contient pas
@@ -109,10 +112,14 @@ de `USE` :
 
 ```bash
 mysql -u root -p sari_cms < backend/prisma/migrations/20260906_add_home_sections_and_newsletter/migration.sql
+mysql -u root -p sari_cms < backend/prisma/migrations/20260907_add_newsletter_unsubscribe_reason/migration.sql
 ```
 
-Attention : des `CREATE TABLE` simples, pas d'`IF NOT EXISTS`. À ne lancer
-qu'une fois — ou relisez le fichier et remplacez-les par
+Dans cet ordre : la seconde ajoute des colonnes à la table créée par la
+première.
+
+Attention : des `CREATE TABLE` et `ALTER TABLE` simples, pas d'`IF NOT EXISTS`. À
+ne lancer qu'une fois — ou relisez le fichier et remplacez-les par
 `CREATE TABLE IF NOT EXISTS` avant.
 
 **Option 3 — `prisma db push`.** Crée les tables et colonnes manquantes d'après

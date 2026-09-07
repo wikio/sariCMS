@@ -16,7 +16,7 @@ propre écran, **Administration → Newsletter**, avec un vrai CRUD en base.
 | Ordre des blocs | Ordre JSX figé | Listes réordonnables (glisser ou flèches), enregistré |
 | Témoignages, événements, actualités, partenaires | Premier arrivé, premier affiché | Sélection manuelle des fiches, ordre libre, ou automatique avec tri |
 | Blocs en alternance, chiffres, tuiles de navigation | Trois blocs codés en dur dans le composant | Listes administrables : ajouter, dupliquer, masquer, réordonner |
-| Newsletter | `setState` local, rien d’enregistré | Inscription serveur en deux temps (fenêtre de confirmation, question anti-spam), liste filtrable, corbeille, export CSV |
+| Newsletter | `setState` local, rien d’enregistré | Inscription serveur en deux temps (fenêtre de confirmation, **captcha en image**), liste filtrable avec lignes par page réglables, fiche de consultation, corbeille, motifs de désabonnement, export de la sélection ou de la liste |
 | Blocs vierges à la première ouverture | Formulaire vide alors que la page, elle, affichait bien le contenu du site | Le contenu publié est **repris** dans la configuration (voir plus bas) et l’action « Reprendre » l’enregistre |
 | Multilingue | Réglage unique pour trois langues | **Textes par langue**, structure commune (voir plus bas) |
 | Constructeur de page | `localStorage` du navigateur seulement | Le HTML produit peut être rattaché à un bloc et servi à sa place |
@@ -144,15 +144,22 @@ normal : langue de référence = structure complète, autres langues = textes,
 
 ## Newsletter
 
-- `GET /api/newsletter?action=captcha` — délivre une question anti-spam
-  (`id`, `question`, `expiresIn`). La réponse attendue ne quitte jamais le
-  serveur, le jeton est à usage unique et expire au bout de dix minutes.
+- `GET /api/newsletter?action=captcha` — délivre un **captcha en image** :
+  `{ id, imageUrl, expiresIn }`. `imageUrl` vaut `/api/newsletter/captcha?id=…`.
+- `GET /api/newsletter/captcha?id=…` — le fichier lui‑même, `image/svg+xml`,
+  `Cache-Control: no-store`. Tant que le jeton vit, la même image est servie ;
+  un jeton inconnu ou périmé répond `410` avec un rectangle « Code expiré », que
+  le navigateur peut afficher comme image cassée sans texte trompeur.
+  Le code (cinq caractères pris dans un alphabet sans `I`, `L`, `O`, `0`, `1`)
+  n’existe que dessiné dans le SVG : ni dans le JSON, ni dans l’`alt`, ni dans le
+  HTML. Seule son **empreinte SHA‑256** est conservée côté serveur, dix minutes,
+  et un jeton ne sert qu’une fois — réponse juste ou fausse.
 - `POST /api/newsletter` — inscription (`email`, `locale`, `source`, `consent`,
   `topics`, `name`, `notes`, `captchaId`, `captchaAnswer`). Trois gardes, toutes
   côté serveur : le **champ piège** `website` (rempli → « ok » sans rien
   enregistrer), une **limite de débit** par adresse (6 inscriptions par 5
-  minutes) et la **question anti-spam**, obligatoire — sauf pour les formulaires
-  qui ont déjà leur propre contrôle, aujourd’hui `contact`, et qui doivent alors
+  minutes) et le **captcha en image**, obligatoire — sauf pour les formulaires qui
+  ont déjà leur propre contrôle, aujourd’hui `contact`, et qui doivent alors
   apporter un `consent: true` explicite.
 - La réponse porte un `status` qui décrit ce qui vient de se passer **pour cette
   adresse** : `created`, `already-subscribed` (déjà dans la liste — le message le
@@ -160,11 +167,35 @@ normal : langue de référence = structure complète, autres langues = textes,
   retirée), `pending-confirmation` (double opt-in). En cas de refus :
   `captcha-failed`, `invalid-email`, `rate-limited`.
 - `POST /api/newsletter` avec `action: "unsubscribe"` — désinscription par
-  adresse ou par jeton.
+  adresse ou par jeton, avec `reason` (motif, code court) et `reasonNote`
+  (commentaire libre, mille caractères). Réponse : `status: "unsubscribed"` ou
+  `status: "not-found"` quand l’adresse n’est pas de la liste — le visiteur est
+  prévenu au lieu d’être poliment menti. Débit relevé à 12 par 5 minutes, pas de
+  captcha : cette requête ne crée rien.
 - `GET /api/newsletter?action=confirm&token=…` — confirmation du double opt-in.
+- `GET /api/newsletter?action=confirm&token=…` — confirmation du double opt-in.
+
+### Écrans d’administration
+
 - `app/[locale]/admin/newsletter` — liste, recherche, filtres langue / statut /
-  origine, sélection multiple (activer, désabonner, corbeille), édition,
-  restauration, purge définitive, export CSV de la liste filtrée.
+  origine, sélection multiple (activer, désabonner avec motif, corbeille),
+  édition, restauration, purge définitive. Le **nombre de lignes par page** se
+  règle en pied de tableau (10, 25, 50, 100, « Toutes ») et se retient dans le
+  navigateur (`localStorage`, clé `sari.newsletter.pageSize`).
+- `app/[locale]/admin/newsletter/[id]` — **fiche de consultation**, en lecture
+  seule : l’abonné (adresse, nom, langue, origine, consentement, thèmes) puis le
+  journal (dates, motif et commentaire du retrait, IP, navigateur, création et
+  dernière modification) et le lien de retrait personnel, copiable. Deux sorties
+  seulement : « Modifier », qui rouvre le tiroir de la liste sur cette fiche
+  (`/admin/newsletter?edit=<id>`), et « Corbeille ».
+- `app/[locale]/newsletter/unsubscribe` — formulaire public de désabonnement,
+  joint par le petit lien sous chaque bloc d’inscription. `?email=` préremplit
+  l’adresse, `?token=` (lien reçu par courriel) dispense de la retaper.
+- Passerelle `app/api/admin/newsletter` : `?id=` (une fiche), `?action=stats`,
+  `?action=topics&locale=fr` (suggestions du champ thèmes), `?action=export`
+  (liste filtrée) ou `?action=export&ids=1,2,3` (**la sélection uniquement**),
+  `?action=bulk` avec `reason`. Les deux exports écrivent les mêmes colonnes, que
+  la donnée vienne du CMS ou du fichier de secours.
 
 Une adresse est normalisée (minuscule, sans espace) et unique : une réinscription
 réactive la ligne existante plutôt que de la dupliquer, en conservant sa date
@@ -183,15 +214,40 @@ Le premier clic sur « S’inscrire » n’inscrit personne : il ouvre une fenê
   caractères maximum) — la note est enregistrée avec l’adresse, visible et
   modifiable dans l’écran Newsletter, reprise dans l’export CSV ;
 - rappelle les thèmes cochés, si le bloc en propose ;
-- demande la **réponse anti-spam**, avec un bouton « Nouvelle question » ;
+- fait recopier le **code de l’image**, avec un bouton « Nouveau code » — la
+  vignette elle‑même en redemande un autre au clic ;
 - envoie seulement là le `POST`, sur « Confirmer mon inscription ».
 
 La fenêtre est accessible : `role="dialog"`, titre associé, fermeture par Échap
 ou clic sur le fond, défilement de la page bloqué le temps de la saisie, focus
 posé sur le premier champ puis rendu au bouton qui l’a ouverte. Une réponse
-incorrecte ne ferme rien : une nouvelle question est demandée et le message
+incorrecte ne ferme rien : un nouveau code est demandé et le message
 l’explique. Un `already-subscribed` s’affiche dans la fenêtre, qui reste ouverte
 pour permettre de saisir une autre adresse.
+
+### Motifs de désabonnement
+
+Le retrait d’une adresse enregistre un **code court et stable**, jamais un texte
+traduit : la liste est la même en français, en anglais et en arabe, et elle se
+filtre sans ambiguïté. Cinq motifs sont proposés au visiteur, plus deux codes
+posés par le serveur :
+
+| Code | Qui l’écrit | Sens |
+| --- | --- | --- |
+| `no-longer-wants` | formulaire public | ne souhaite plus ces courriels |
+| `too-many-emails` | formulaire public | trop de courriels |
+| `not-relevant` | formulaire public | contenu non concerné |
+| `never-subscribed` | formulaire public | ne se souvient pas de l’inscription |
+| `other` | formulaire public | autre motif — le commentaire porte le détail |
+| `unspecified` | formulaire public sans choix | le visiteur a sauté les motifs |
+| `unsubscribed-by-admin` | sélection multiple du back‑office | retrait décidé dans l’administration |
+
+Les libellés vivent une seule fois, sous `common.newsletterReasons` : la vitrine
+et l’administration traduisent le même code avec le même dictionnaire, et un code
+inconnu s’affiche tel quel plutôt que de disparaître de la fiche. Le commentaire
+libre est la colonne `unsubscribeNote`. En base (`backend/prisma/migrations/20260907_add_newsletter_unsubscribe_reason`)
+ce sont `unsubscribeReason VARCHAR(255)` et `unsubscribeNote TEXT`, avec un index
+sur le motif pour compter les retraits sans balayer la table.
 
 ## Réinitialiser puis re-enregistrer
 

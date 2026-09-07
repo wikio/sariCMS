@@ -36,7 +36,7 @@ export class NewsletterController extends BaseCrudController<NewsletterSubscribe
   @RequirePermissions(perm('newsletter', 'update'))
   @ApiOperation({ summary: 'Applique un statut (ou une suppression) à une sélection' })
   bulk(@Body() dto: BulkNewsletterDto, @Actor() actor: ActorContext) {
-    return this.newsletter.bulk(dto.ids, dto.status || 'subscribed', actor);
+    return this.newsletter.bulk(dto.ids, dto.status || 'subscribed', actor, dto.reason);
   }
 
   @Get('report/stats')

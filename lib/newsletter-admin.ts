@@ -23,6 +23,12 @@ export interface Subscriber {
   userAgent?: string;
   subscribedAt?: string | null;
   unsubscribedAt?: string | null;
+  /** Motif laissé au désabonnement (`no-longer-wants`…) — traduit à l'écran. */
+  unsubscribeReason?: string;
+  /** Commentaire libre qui accompagne le motif. */
+  unsubscribeNote?: string;
+  /** Jeton des liens de confirmation et de désinscription. */
+  token?: string;
   createdAt?: string;
   updatedAt?: string;
   deleted?: boolean;
@@ -107,18 +113,52 @@ export async function restoreSubscriber(id: string) {
   });
 }
 
-export async function bulkSubscribers(ids: string[], status: string) {
+export async function bulkSubscribers(ids: string[], status: string, reason?: string) {
   return send<{ ok: boolean; result: unknown }>('/api/admin/newsletter?action=bulk', {
     method: 'POST',
     headers: headers(),
-    body: JSON.stringify({ ids, status }),
+    body: JSON.stringify({ ids, status, ...(reason ? { reason } : {}) }),
   });
 }
 
+/** Une fiche, pour l'écran de consultation : pas la liste entière du filtre. */
+export async function fetchSubscriber(id: string) {
+  return send<{ ok: boolean; row: Subscriber | null; stored: 'api' | 'local' }>(
+    `/api/admin/newsletter?id=${encodeURIComponent(id)}`,
+    { headers: headers() },
+  );
+}
+
+export interface TopicSuggestion {
+  topic: string;
+  count: number;
+  /** Vient du bloc newsletter (thème proposé aux visiteurs) et non d'une fiche. */
+  proposed: boolean;
+}
+
+/**
+ * Suggestions du champ « centres d'intérêt » : thèmes déjà portés par des
+ * fiches, plus ceux que le bloc de la vitrine propose. Le champ reste libre —
+ * rien n'empêche d'écrire un thème qui n'y figure pas encore.
+ */
+export async function topicSuggestions(locale: string): Promise<TopicSuggestion[]> {
+  const payload = await send<{ topics?: TopicSuggestion[] }>(
+    `/api/admin/newsletter?action=topics&locale=${encodeURIComponent(locale)}`,
+    { headers: headers() },
+  );
+  return Array.isArray(payload.topics) ? payload.topics : [];
+}
+
 /** Téléchargement du CSV dans le navigateur, jeton d'administration en en-tête. */
-export async function downloadSubscribersCsv(filters: SubscriberFilters = {}) {
+/**
+ * Export CSV. Sans `ids`, c'est la liste filtrée à l'écran ; avec, uniquement la
+ * sélection de l'administrateur — pratique pour traiter un lot (les adresses
+ * d'un salon, les rebonds d'une campagne) sans toucher au reste.
+ */
+export async function downloadSubscribersCsv(filters: SubscriberFilters = {}, ids?: string[]) {
   const token = readAdminAccess();
-  const res = await fetch(`/api/admin/newsletter?action=export${queryFrom(filters).replace(/^\?/, '&')}`, {
+  const selection = ids && ids.length ? `&ids=${ids.join(',')}` : '';
+  const res = await fetch(`/api/admin/newsletter?action=export${queryFrom(filters).replace(/^\?/, '&')}${selection}`, {
     headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
   });
   if (!res.ok) throw new Error('Export impossible');
@@ -155,21 +195,22 @@ export interface SubscribePayload {
   topics?: string[];
   /** Mot laissé par le visiteur à l'étape de confirmation. */
   notes?: string;
-  /** Question anti-spam délivrée par `GET /api/newsletter?action=captcha`. */
+  /** Captcha en image délivré par `GET /api/newsletter?action=captcha`. */
   captchaId?: string;
   captchaAnswer?: string;
 }
 
 /**
- * Question anti-spam pour le formulaire : l'énoncé et un identifiant, rien de
- * plus. La réponse est comparée côté serveur et le jeton ne sert qu'une fois.
+ * Captcha en image du formulaire : un identifiant et l'URL du fichier, rien de
+ * plus. Le code n'est jamais transmis au navigateur — seule son empreinte est
+ * conservée côté serveur, et le jeton ne sert qu'une fois.
  */
-export async function fetchNewsletterCaptcha(): Promise<{ id: string; question: string } | null> {
+export async function fetchNewsletterCaptcha(): Promise<{ id: string; imageUrl: string } | null> {
   const res = await fetch('/api/newsletter?action=captcha', { cache: 'no-store' }).catch(() => null);
   if (!res?.ok) return null;
-  const body = (await res.json().catch(() => null)) as { id?: string; question?: string } | null;
-  if (!body?.id || !body.question) return null;
-  return { id: String(body.id), question: String(body.question) };
+  const body = (await res.json().catch(() => null)) as { id?: string; imageUrl?: string } | null;
+  if (!body?.id || !body.imageUrl) return null;
+  return { id: String(body.id), imageUrl: String(body.imageUrl) };
 }
 
 /**
@@ -204,12 +245,23 @@ export async function subscribeToNewsletter(
   return { ok: true, created: Boolean(body.result?.created), status: body.status };
 }
 
-export async function unsubscribeFromNewsletter(payload: { email?: string; token?: string; locale?: string }) {
+/**
+ * Désinscription depuis la vitrine. `reason` (motif choisi) et `reasonNote`
+ * (commentaire) sont enregistrés avec le statut : c'est la seule information
+ * qu'un visiteur qui part accepte de laisser.
+ */
+export async function unsubscribeFromNewsletter(payload: {
+  email?: string;
+  token?: string;
+  locale?: string;
+  reason?: string;
+  reasonNote?: string;
+}): Promise<{ ok: boolean; status?: string }> {
   const res = await fetch('/api/newsletter', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ...payload, action: 'unsubscribe' }),
   });
-  const body = (await res.json().catch(() => null)) as { ok?: boolean } | null;
-  return { ok: Boolean(body?.ok) };
+  const body = (await res.json().catch(() => null)) as { ok?: boolean; status?: string } | null;
+  return { ok: Boolean(body?.ok), status: body?.status };
 }

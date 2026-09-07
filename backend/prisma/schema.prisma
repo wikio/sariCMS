@@ -810,6 +810,10 @@ model NewsletterSubscriber {
   userAgent     String?   @db.Text
   subscribedAt  DateTime?
   unsubscribedAt DateTime?
+  /// Motif laissé au désabonnement (see NO_REASON…) — voir `NEWSLETTER_UNSUBSCRIBE_REASONS`.
+  unsubscribeReason String?
+  /// Commentaire libre qui accompagne le motif.
+  unsubscribeNote   String?   @db.Text
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   deletedAt     DateTime?
@@ -817,6 +821,7 @@ model NewsletterSubscriber {
   updatedBy     Int?
 
   @@unique([email])
+  @@index([unsubscribeReason])
   @@index([status, locale])
   @@index([source])
   @@index([deletedAt])

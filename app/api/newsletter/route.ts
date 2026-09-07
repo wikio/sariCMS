@@ -7,10 +7,11 @@
  * contact, bandeau construit dans le constructeur de page…).
  *
  * Trois gardes, côté serveur uniquement : le piège à miel `website` (un champ
- * que l'interface ne montre pas), une limite de débit par adresse IP et une
- * question anti-spam à usage unique délivrée par `?action=captcha`. Le
- * formulaire du site passe par ces trois filtres ; un bandeau écrit à la main
- * dans le constructeur de page doit donc demander une question avant d'envoyer.
+ * que l'interface ne montre pas), une limite de débit par adresse IP et un
+ * **captcha en image** à usage unique, émis par `?action=captcha` et dessiné par
+ * `/api/newsletter/captcha?id=…`. Le formulaire du site passe par ces trois
+ * filtres ; un bandeau écrit à la main dans le constructeur de page doit donc
+ * demander un code avant d'envoyer.
  *
  * La réponse porte un `status` — `created`, `already-subscribed`, `reactivated`
  * ou `pending-confirmation` — pour que le visiteur sache ce qui vient de se
@@ -65,7 +66,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, created: false, silenced: true });
   }
 
-  if (action !== 'unsubscribe' && rateLimited(ip)) {
+  // Le désabonnement accepte un motif et une note : il est compté aussi.
+  if (rateLimited(ip, action === 'unsubscribe' ? 12 : 6)) {
     return NextResponse.json(
       { ok: false, status: 'rate-limited', message: 'Trop de tentatives. Réessayez dans quelques minutes.' },
       { status: 429 },
@@ -89,25 +91,49 @@ export async function POST(req: NextRequest) {
   };
 
   if (action === 'unsubscribe') {
+    // Le formulaire public joint le motif choisi et, le cas échéant, son
+    // commentaire : c'est la seule information qu'un visiteur qui part accepte
+    // de laisser, elle est donc enregistrée avec le statut.
+    const unsub = {
+      ...payload,
+      reason: body.reason ? String(body.reason) : undefined,
+      reasonNote: body.reasonNote ? String(body.reasonNote) : undefined,
+    };
     const result = await cmsOr(
-      () => cmsFetch('/public/newsletter/unsubscribe', { method: 'POST', json: payload, timeoutMs: 8000 }),
-      () => unsubscribe({ email, token: body.token ? String(body.token) : undefined }),
+      () => cmsFetch('/public/newsletter/unsubscribe', { method: 'POST', json: unsub, timeoutMs: 8000 }),
+      () => unsubscribe({
+        email,
+        token: body.token ? String(body.token) : undefined,
+        reason: body.reason ? String(body.reason) : undefined,
+        reasonNote: body.reasonNote ? String(body.reasonNote) : undefined,
+      }),
     );
-    return NextResponse.json({ ok: true, action, stored: result.via, result: result.value });
+    return NextResponse.json({
+      ok: true,
+      action,
+      stored: result.via,
+      // Le visiteur doit savoir si son adresse a été trouvée : « désinscrit »
+      // alors que l'adresse n'était pas dans la liste serait un mensonge poli.
+      status: (result.value as { done?: boolean } | null)?.done === false ? 'not-found' : 'unsubscribed',
+      result: result.value,
+    });
   }
 
   if (!EMAIL_RE.test(email)) {
     return NextResponse.json({ ok: false, status: 'invalid-email', message: 'Adresse e-mail invalide' }, { status: 400 });
   }
 
-  // Question anti-spam : vérifiée ici, jamais dans le navigateur. Une réponse
-  // juste est consommée ; la suivante doit être redemandée.
+  // Captcha : vérifié ici, jamais dans le navigateur. Une réponse juste est
+  // consommée ; la suivante doit être redemandée.
   //
   // Quelques formulaires ont leur propre preuve d'humanité (la page contact
   // calcule sa question et son quota de tentatives) : ils sont listés ici pour
   // qu'on ne leur demande pas deux fois la même chose. Ils gardent le piège à
   // miel et la limite de débit, et `consent` doit rester explicitement vrai.
-  const exemptSource = EXEMPT_SOURCES.has(String(payload.source || ''));
+  // Le désabonnement n'exige pas de captcha : on y arrive par le lien du site ou
+  // du courriel, et demander une preuve d'humanité pour partir produirait
+  // l'effet inverse — des adresses coincées dans la liste, donc des plaintes.
+  const exemptSource = EXEMPT_SOURCES.has(String(payload.source || '')) || action === 'unsubscribe';
   if (!exemptSource) {
     const captchaId = String(body.captchaId || '').trim();
     const captchaAnswer = String(body.captchaAnswer ?? '').trim();
@@ -173,8 +199,8 @@ export async function GET(req: NextRequest) {
   const token = req.nextUrl.searchParams.get('token') || '';
   const locale = req.nextUrl.searchParams.get('locale') || 'fr';
 
-  // Question anti-spam du formulaire : le navigateur ne reçoit que l'énoncé et
-  // l'identifiant, jamais la réponse.
+  // Captcha du formulaire : le navigateur ne reçoit qu'un identifiant et l'URL
+  // de l'image ; le code, lui, ne quitte jamais le serveur.
   if (action === 'captcha') {
     return NextResponse.json({ ok: true, ...issueCaptcha() });
   }

@@ -30,10 +30,14 @@ export class NewsletterService extends BaseCrudService<NewsletterSubscriberEntit
     resource: 'newsletter',
     searchFields: ['email', 'name', 'notes', 'source'],
     sortableFields: ['createdAt', 'updatedAt', 'email', 'status', 'source', 'subscribedAt', 'locale'],
-    listFields: ['email', 'name', 'locale', 'status', 'source', 'consent', 'topics', 'subscribedAt', 'unsubscribedAt', 'notes'],
+    listFields: [
+      'email', 'name', 'locale', 'status', 'source', 'consent', 'topics',
+      'subscribedAt', 'unsubscribedAt', 'notes', 'unsubscribeReason',
+    ],
     cardFields: [
       'email', 'name', 'locale', 'status', 'source', 'consent', 'topics', 'notes',
-      'subscribedAt', 'unsubscribedAt', 'ip', 'userAgent',
+      'subscribedAt', 'unsubscribedAt', 'unsubscribeReason', 'unsubscribeNote',
+      'ip', 'userAgent', 'token',
     ],
     uniqueFields: ['email'],
     // Une adresse n'est pas une fiche traduite : pas de lien multi-langue.
@@ -136,9 +140,14 @@ export class NewsletterService extends BaseCrudService<NewsletterSubscriberEntit
     if (!row && email) row = await this.repository.findOne({ email });
     if (!row) return { done: false, reason: 'unknown' };
 
+    // Le motif et le commentaire accompagnent le statut : un retrait sans
+    // explication ne sert à rien, et c'est le seul moment où le visiteur veut
+    // bien dire pourquoi il part.
     const updated = await this.repository.update(row.id, {
       status: 'unsubscribed',
       unsubscribedAt: new Date().toISOString(),
+      unsubscribeReason: dto.reason || 'unspecified',
+      unsubscribeNote: dto.reasonNote?.trim() || undefined,
     } as Partial<NewsletterSubscriberEntity>);
     await this.invalidateCache();
     await this.audit.record({
@@ -146,7 +155,7 @@ export class NewsletterService extends BaseCrudService<NewsletterSubscriberEntit
       action: 'newsletter_unsubscribe',
       resource: this.options.resource,
       resourceId: row.id,
-      payload: { source: dto.source || 'link' },
+      payload: { source: dto.source || 'link', reason: dto.reason || 'unspecified' },
       ip: actor?.ip,
       userAgent: actor?.userAgent,
     });
@@ -172,6 +181,7 @@ export class NewsletterService extends BaseCrudService<NewsletterSubscriberEntit
     ids: number[],
     action: string,
     actor?: ActorContext,
+    reason?: string,
   ): Promise<{ done: number; failed: number }> {
     let done = 0;
     let failed = 0;
@@ -182,7 +192,12 @@ export class NewsletterService extends BaseCrudService<NewsletterSubscriberEntit
         } else {
           const patch: Partial<NewsletterSubscriberEntity> = { status: action };
           if (action === 'subscribed') patch.subscribedAt = new Date().toISOString();
-          if (action === 'unsubscribed') patch.unsubscribedAt = new Date().toISOString();
+          if (action === 'unsubscribed') {
+            patch.unsubscribedAt = new Date().toISOString();
+            // Un retrait de masse déclenché depuis l'écran n'a pas de motif
+            // visiteur : on note l'origine administrative, ou celle transmise.
+            patch.unsubscribeReason = reason || 'unsubscribed-by-admin';
+          }
           await this.update(id, patch, actor);
         }
         done += 1;
@@ -218,7 +233,12 @@ export class NewsletterService extends BaseCrudService<NewsletterSubscriberEntit
       sortOrder: 'desc',
       limit: 5000,
     });
-    const head = ['email', 'name', 'locale', 'status', 'source', 'consent', 'topics', 'subscribedAt', 'unsubscribedAt'];
+    // Les mêmes colonnes que l'export du magasin de secours : un CSV téléchargé
+    // de l'un ou de l'autre côté doit se lire pareil.
+    const head = [
+      'email', 'name', 'locale', 'status', 'source', 'consent', 'topics',
+      'subscribedAt', 'unsubscribedAt', 'notes', 'unsubscribeReason', 'unsubscribeNote',
+    ];
     const esc = (v: unknown) => {
       const text = Array.isArray(v) ? v.join('|') : v === null || v === undefined ? '' : String(v);
       return /[",\n;]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;

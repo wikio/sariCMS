@@ -1,31 +1,39 @@
 /**
- * Question anti-spam du formulaire d'inscription à la newsletter.
+ * Captcha d'image du formulaire d'inscription à la newsletter.
  *
  * Un formulaire ouvert au public reçoit des robots : ils remplissent le champ
- * visible et cochent la case. Deux defenses, toutes deux server-side :
+ * visible et cochent la case. Trois gardes, toutes côté serveur :
  *
- * 1. le piège à miel (`website`, déjà en place) ;
- * 2. une question dont la réponse n'est pas dans le code source de la page —
- *    seule son empreinte est conservée ici, le navigateur ne reçoit jamais la
- *    réponse attendue.
+ * 1. le piège à miel (`website`, champ que l'interface ne montre pas) ;
+ * 2. une limite de débit par adresse ;
+ * 3. un **code dessiné dans une image** : le texte n'apparaît nulle part dans le
+ *    HTML — ni la réponse, ni l'empreinte lisible — seule sa somme de contrôle
+ *    est conservée ici. Le navigateur ne reçoit qu'un identifiant et l'image.
  *
- * Les questions sont émises en mémoire, avec une durée de vie courte et un seul
- * usage : une réponse volée ne sert pas deux fois, et un redémarrage du serveur
- * vide simplement le carnet — le formulaire en redemande une.
+ * Les codes sont émis en mémoire, avec une durée de vie courte et un seul usage :
+ * un code volé ne sert pas deux fois, et un redémarrage du serveur vide
+ * simplement le carnet — le formulaire en redemande.
  */
-import { createHash, randomUUID } from 'crypto';
+import { createHash, randomBytes, randomUUID } from 'crypto';
 
 export interface CaptchaIssue {
   id: string;
-  question: string;
+  /** Le fichier d'image, servi par la route du site (même origine, donc). */
+  imageUrl: string;
   expiresIn: number;
 }
 
 const TTL_MS = 10 * 60 * 1000;
 const MAX_ISSUED = 800;
+const CODE_LENGTH = 5;
+/** Sans `I`, `L`, `O`, `0`, `1` : ces glyphes se confondent à l'écran. */
+const ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 
 interface Entry {
+  /** Empreinte du code attendu — la comparaison se fait dessus. */
   hash: string;
+  /** Image rendue à l'émission : recharger la page ne change pas le code. */
+  svg: string;
   expiresAt: number;
 }
 
@@ -51,59 +59,112 @@ function prune(entries: Map<string, Entry>) {
   }
 }
 
-function digit(len: number) {
-  return Math.floor(Math.random() * 9 * 10 ** (len - 1)) + 10 ** (len - 1);
+function makeCode(): string {
+  const bytes = randomBytes(CODE_LENGTH);
+  let out = '';
+  for (let i = 0; i < CODE_LENGTH; i += 1) out += ALPHABET[bytes[i] % ALPHABET.length];
+  return out;
 }
 
 /**
- * Les questions possibles. Réponses courtes, sans accent ni casse à deviner :
- * ce qui compte est de bloquer un robot, pas de piéger un humain.
+ * Le code comparé « à l'oreille » : casse et espaces ignorés, les deux glyphes
+ * qui se ressemblent le plus tolérés (`S`/`5`, `B`/`8` ne le sont pas — ils sont
+ * distincts dans l'image). Une réponse en minuscules passe donc.
  */
-function pickQuestion(): { question: string; answer: string } {
-  const kind = Math.floor(Math.random() * 4);
-  if (kind === 0) {
-    const a = digit(1) + 2;
-    const b = Math.floor(a / 2);
-    return { question: `Combien font ${a} moins ${b} ?`, answer: String(a - b) };
-  }
-  if (kind === 1) {
-    const a = 2 + Math.floor(Math.random() * 7);
-    const b = 2 + Math.floor(Math.random() * 7);
-    return { question: `Combien font ${a} × ${b} ?`, answer: String(a * b) };
-  }
-  if (kind === 2) {
-    const words = ['clinique', 'rapport', 'imagerie', 'bloc', 'stock', 'formation'];
-    const word = words[Math.floor(Math.random() * words.length)];
-    return { question: `Écris le mot « ${word.toUpperCase()} » en minuscules.`, answer: word };
-  }
-  const months = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet'];
-  const index = Math.floor(Math.random() * (months.length - 1));
-  return {
-    question: `Quel mois vient juste après « ${months[index]} » ?`,
-    answer: months[index + 1],
-  };
-}
-
-/** Comparaison tolérante : casse, espaces, accents et points de suspension en moins. */
 export function normalizeCaptchaAnswer(value: string): string {
   return String(value || '')
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[\s.'’"«»]/g, '');
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '');
 }
 
-function fingerprint(answer: string): string {
-  return createHash('sha256').update(normalizeCaptchaAnswer(answer)).digest('hex');
+function fingerprint(code: string): string {
+  return createHash('sha256').update(normalizeCaptchaAnswer(code)).digest('hex');
+}
+
+/**
+ * Image SVG du code : lettres inclinées et espacées irrégulièrement, ligne de
+ * bruit, points épars, sans trame régulière qu'un robot pourrait soustraire.
+ * Du SVG et pas de PNG parce qu'aucune dépendance graphique n'est nécessaire
+ * et que le rendu reste net sur un écran haute densité.
+ */
+export function renderCaptchaSvg(code: string): string {
+  const bytes = randomBytes(code.length * 6 + 24);
+  let cursor = 0;
+  const take = (max: number) => {
+    const value = bytes[cursor % bytes.length] / 255 * max;
+    cursor += 1;
+    return value;
+  };
+
+  const width = 200;
+  const height = 68;
+  const parts: string[] = [];
+
+  // Fond : deux bandes lavées, pour casser la platitude du blanc.
+  parts.push(`<rect width="${width}" height="${height}" fill="#f4f7fb"/>`);
+  parts.push(`<rect y="${take(20) + 6}" width="${width}" height="${take(18) + 10}" fill="#e6efff" opacity=".7"/>`);
+
+  // Lettres.
+  const step = (width - 34) / Math.max(1, code.length);
+  for (let i = 0; i < code.length; i += 1) {
+    const x = 16 + i * step + take(6) - 3;
+    const y = 40 + take(12) - 6;
+    const rotate = take(34) - 17;
+    const size = 30 + take(8);
+    const hue = 205 + Math.round(take(60)) - 30;
+    parts.push(
+      `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" font-family="ui-monospace, 'Courier New', monospace" ` +
+        `font-size="${size.toFixed(1)}" font-weight="700" fill="hsl(${hue} 62% 30%)" ` +
+        `transform="rotate(${rotate.toFixed(1)} ${x.toFixed(1)} ${y.toFixed(1)})">${code[i]}</text>`,
+    );
+  }
+
+  // Gabarit de confusion : deux courbes et des points, dessinés après les
+  // lettres pour les recouper partiellement.
+  for (let i = 0; i < 2; i += 1) {
+    const y0 = take(height);
+    const y1 = take(height);
+    parts.push(
+      `<path d="M0 ${y0.toFixed(1)} C ${(width / 3).toFixed(1)} ${y1.toFixed(1)}, ${(2 * width / 3).toFixed(1)} ${y0.toFixed(1)}, ${width} ${y1.toFixed(1)}" ` +
+        `stroke="hsl(${Math.round(take(360))} 45% 55%)" stroke-width="1.4" fill="none" opacity=".65"/>`,
+    );
+  }
+  const dots: string[] = [];
+  for (let i = 0; i < 90; i += 1) dots.push(`${take(width).toFixed(0)},${take(height).toFixed(0)}`);
+  parts.push(`<g fill="#5b6b86" opacity=".5">${dots.map((p) => `<circle cx="${p.split(',')[0]}" cy="${p.split(',')[1]}" r="1"/>`).join('')}</g>`);
+
+  return (
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" ` +
+    `role="img" aria-label="Code de verification">` +
+    `<title>Code de verification</title>${parts.join('')}</svg>`
+  );
 }
 
 export function issueCaptcha(): CaptchaIssue {
   const entries = book();
   prune(entries);
-  const { question, answer } = pickQuestion();
+  const code = makeCode();
   const id = randomUUID();
-  entries.set(id, { hash: fingerprint(answer), expiresAt: Date.now() + TTL_MS });
-  return { id, question, expiresIn: Math.floor(TTL_MS / 1000) };
+  entries.set(id, {
+    hash: fingerprint(code),
+    svg: renderCaptchaSvg(code),
+    expiresAt: Date.now() + TTL_MS,
+  });
+  return { id, imageUrl: `/api/newsletter/captcha?id=${encodeURIComponent(id)}`, expiresIn: Math.floor(TTL_MS / 1000) };
+}
+
+/**
+ * Image d'un code émis, `null` si l'identifiant est inconnu ou périmé.
+ *
+ * Le code en clair n'est jamais conservé : l'image a été dessinée à
+ * l'émission, et seule son empreinte sert à la comparaison. Recharger l'image
+ * (bouton « Nouveau code » du formulaire, ou simple rechargement de la page)
+ * montre donc toujours le même code, tant que le jeton vit.
+ */
+export function captchaImage(id: string): string | null {
+  const entry = book().get(String(id || '').trim());
+  if (!entry || entry.expiresAt <= Date.now()) return null;
+  return entry.svg;
 }
 
 /** Vrai si la réponse est attendue, correcte et pas encore utilisée. */
@@ -114,7 +175,7 @@ export function verifyCaptcha(id: string, answer: string): boolean {
   const entry = entries.get(key);
   if (!entry) return false;
   const ok = entry.expiresAt > Date.now() && entry.hash === fingerprint(answer);
-  // Un jeton ne sert qu'une fois : après une réponse juste, il est brûlé, que
+  // Un code ne sert qu'une fois : après une réponse juste, il est brûlé, que
   // l'inscription aboutisse ou non — un robot ne peut pas le rejouer.
   if (ok) entries.delete(key);
   return ok;
