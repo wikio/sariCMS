@@ -7,6 +7,32 @@ import {
 } from '../../../common/crud/interfaces/repository.interface';
 import { PrismaService } from './prisma.service';
 
+/**
+ * Colonnes de date : elles se reconnaissent à leur nom — `date` nu, ou un suffixe
+ * `At` / `Date`. C'est là que le piège se referme : une valeur vide ou fausse y
+ * devient un « 0000-00-00 » que plus personne ne relit ensuite. Ni `readTime` ni
+ * `deliveryTime` n'y passent : ce sont des durées en minutes, pas des dates. Un
+ * texte (`title`, `subtitle`, `content`) garde sa valeur vide, qui veut dire « effacé ».
+ */
+const DATE_COLUMN = /(^date$|At$|Date$)/;
+const NOT_NULL_DATES = new Set(['createdAt', 'updatedAt', 'expiresAt']);
+
+/** `0000-00-00`, `2026-00-11`, `2026-07-00` : MySQL les accepte, Prisma les lit mal. */
+function isBrokenDate(value: unknown): boolean {
+  if (value === '' || value === null) return true;
+  if (value instanceof Date) return Number.isNaN(value.getTime());
+  const text = String(value).trim();
+  if (!text) return true;
+  if (/^\d{4}-0?0-\d{2}/.test(text) || /^\d{4}-\d{2}-0?0\b/.test(text) || /^0000/.test(text)) return true;
+  // Une date lisible pour MySQL ne l'est pas forcément pour nous : `2026-13-45`.
+  const iso = /^\d{4}-\d{2}-\d{2}/.exec(text);
+  if (iso) {
+    const parsed = new Date(text);
+    if (Number.isNaN(parsed.getTime())) return true;
+  }
+  return false;
+}
+
 export class PrismaRepository<T extends BaseEntity> implements ICrudRepository<T> {
   constructor(
     public readonly collection: string,
@@ -26,12 +52,14 @@ export class PrismaRepository<T extends BaseEntity> implements ICrudRepository<T
 
     const [total, rows] = await Promise.all([
       this.db.count({ where }),
-      this.db.findMany({
-        where,
-        orderBy,
-        skip: (page - 1) * limit,
-        take: limit,
-      }),
+      this.db
+        .findMany({
+          where,
+          orderBy,
+          skip: (page - 1) * limit,
+          take: limit,
+        })
+        .catch((error: unknown) => this.explainDate(error)),
     ]);
 
     return {
@@ -46,19 +74,21 @@ export class PrismaRepository<T extends BaseEntity> implements ICrudRepository<T
   }
 
   async findById(id: number, includeDeleted = false): Promise<T | null> {
-    const row = await this.db.findUnique({ where: { id } });
+    const row = await this.db.findUnique({ where: { id } }).catch((error: unknown) => this.explainDate(error));
     if (!row) return null;
     if (row.deletedAt && !includeDeleted) return null;
     return row as T;
   }
 
   async findOne(where: Record<string, unknown>, includeDeleted = false): Promise<T | null> {
-    const row = await this.db.findFirst({
+    const row = await this.db
+      .findFirst({
       where: {
         ...where,
         ...(includeDeleted ? {} : { deletedAt: null }),
       },
-    });
+    })
+      .catch((error: unknown) => this.explainDate(error));
     return (row as T) ?? null;
   }
 
@@ -192,10 +222,39 @@ export class PrismaRepository<T extends BaseEntity> implements ICrudRepository<T
     return where;
   }
 
+  /**
+   * Un PrismaClientKnownRequestError P2023 sur une liste ne disait rien d'utile :
+   * « The column `updatedAt` contained an invalid datetime value… », sans table,
+   * sans ligne, et avec l'air d'un bug de la requête en cours — alors qu'une seule
+   * ligne date-au-zéro pourrit la lecture de toute la table. Le message renvoyé
+   * porte désormais le diagnostic et la correction.
+   */
+  private explainDate(error: unknown): never {
+    const code = (error as { code?: string } | null)?.code;
+    const message = (error as { message?: string } | null)?.message || String(error);
+    if (code === 'P2023' || /invalid datetime|out of range for the type/i.test(message)) {
+      throw new Error(
+        `${this.collection}: une ligne porte une date illisible (jour ou mois à zéro, « 0000-00-00 »), ` +
+          `ce qui fait échouer la lecture de toute la table. Diagnostic et réparation : ` +
+          `backend/sql/fix-zero-dates.mysql.sql (${message.split('\n')[0]})`,
+      );
+    }
+    throw error as Error;
+  }
+
   private toPrisma(data: Partial<T>): Record<string, unknown> {
     const out: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(data as Record<string, unknown>)) {
-      if (v !== undefined) out[k] = v;
+      if (v === undefined) continue;
+      // Une date vide, nulle ou fausse ne part pas en base : MySQL en ferait un
+      // « 0000-00-00 », que l'ORM ne sait plus relire ensuite. Une colonne facultative
+      // reçoit NULL — c'est ce que « pas de date » veut dire ; une colonne NOT NULL est
+      // simplement omise, et son défaut (ou `@updatedAt`) s'applique.
+      if (DATE_COLUMN.test(k) && isBrokenDate(v)) {
+        if (!NOT_NULL_DATES.has(k)) out[k] = null;
+        continue;
+      }
+      out[k] = v;
     }
     return out;
   }

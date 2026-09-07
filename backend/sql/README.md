@@ -12,6 +12,7 @@ Ce dossier contient le schéma MySQL et les données de démarrage du CMS
 | `auth-only.mysql.sql`      | **Comptes, rôles et permissions seuls** — sans catalogue        |
 | `extract-auth.mjs`         | Extrait `auth-only.mysql.sql` depuis le seed                    |
 | `migrate-data.mysql.sql`   | **Reprise** des jeux `data/{fr,en,ar}/*.json` — 333 lignes      |
+| `fix-zero-dates.mysql.sql`   | **Répar**e les dates à jour ou mois zéro, partout, puis durcit les colonnes |
 | `migrate-data.mjs`         | Générateur de la reprise (dates converties, `legacyId` posés)   |
 | `migrate-commerce.mysql.sql` | **Migration additive** : tables `orders`, `quotes`, `job_applications` |
 | `migrate-authors.mysql.sql`  | **Migration additive** : table `authors` + `news_articles.authorId`    |
@@ -19,6 +20,33 @@ Ce dossier contient le schéma MySQL et les données de démarrage du CMS
 | `test-auth-sql.mjs`        | Vérifie hachages, types de comptes et rejeu de `auth-only`      |
 | `test-commerce-sql.mjs`    | Vérifie la migration commerce (rejeu sur SQLite)                |
 | `test-authors-sql.mjs`     | Vérifie la migration auteurs (rejeu sur SQLite)                 |
+
+## Une liste administrative tombe en 500 « invalid datetime value »
+
+`PrismaClientKnownRequestError: … The column `updatedAt` contained an invalid
+datetime value with either day or month set to zero` sur un `GET /api/v1/{ressource}`
+n'a rien à voir avec la requête, le filtre ou l'écran ouvert : **une seule ligne**
+portant `0000-00-00`, `2026-00-11` ou `2026-07-00` suffit à faire échouer la lecture
+de toute la table, parce que l'ORM hydrate la ligne entière. Ces valeurs entrent par
+une reprise de données en SQL brut (ou un import de l'ancien site) quand le mode
+`NO_ZERO_DATE` n'est pas actif, ou par un `INSERT` qui omet une colonne `NOT NULL`
+sans défaut.
+
+```bash
+mysql -u utilisateur -p base < backend/sql/fix-zero-dates.mysql.sql
+```
+
+Le fichier compte les lignes fautives table par table, les répare (`createdAt`
+reprend l'`updatedAt` et réciproquement, `deletedAt` devient « maintenant » pour ne
+pas ressusciter une ligne supprimée, une date facultative devient `NULL` plutôt
+qu'une date inventée), rejoue le contrôle, puis remet les défauts
+`DEFAULT CURRENT_TIMESTAMP(3)` sur les colonnes de date `NOT NULL` qui n'en ont pas.
+Rejouable : sans ligne fautive, il ne fait rien.
+
+Côté serveur, la même erreur est maintenant nommée (`P2023` → message disant quelle
+table et quel fichier passer), et une date vide ou fausse ne part plus en base : elle
+devient `NULL` sur une colonne facultative, ou est omise sur une colonne `NOT NULL`,
+où son défaut joue (`backend/src/database/adapters/prisma/prisma-repository.ts`).
 
 > 🩹 **Base déjà en production ?** N'exécutez pas `schema.mysql.sql`, qui
 > commence par `DROP TABLE`. Les fichiers `migrate-*.mysql.sql` ajoutent les

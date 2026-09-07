@@ -74,9 +74,17 @@ export class NewsService extends BaseCrudService<NewsEntity> {
    * Comptage des articles d'un auteur. L'identifiant arrive en chaîne depuis
    * l'URL alors qu'il est stocké en entier : sans conversion, la comparaison
    * échoue et le total renvoyé est toujours nul.
+   *
+   * Mais tous les identifiants ne sont pas des entiers — une fiche reprise de
+   * l'ancien site garde un `legacyId` de la forme `author-1`, et le magasin JSON
+   * les accepte tels quels. `Number('author-1')` vaudrait NaN : la requête
+   * retournerait zéro article et l'API répondrait un `authorId` illisible (NaN
+   * n'a pas d'équivalent en JSON, il devient `null`). On ne convertit donc que
+   * ce qui est écrit comme un nombre, et le reste est rendu inchangé.
    */
   async statsByAuthor(authorId: string | number) {
-    const id = Number(authorId);
+    const raw = typeof authorId === 'number' ? authorId : String(authorId ?? '').trim();
+    const id = typeof raw === 'number' || /^\d+$/.test(String(raw)) ? Number(raw) : raw;
     const published = await this.repository.count({ authorId: id, status: 'published' });
     const drafts = await this.repository.count({ authorId: id, status: 'draft' });
     return { authorId: id, published, drafts, total: published + drafts };
