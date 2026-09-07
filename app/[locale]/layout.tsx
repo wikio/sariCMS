@@ -13,6 +13,10 @@ import { CartProvider } from '@/contexts/CartContext';
 import { OrdersProvider } from '@/contexts/OrdersContext';
 import { ApplicationsProvider } from '@/contexts/ApplicationsContext';
 import '@/app/globals.css';
+// Les classes des pages construites dans l'administration (`sari-*`) vivent dans
+// leur propre feuille : un HTML enregistré en base ne peut pas dépendre de
+// classes utilitaires que le compilateur Tailwind n'aurait jamais vues.
+import '@/app/builder-kit.css';
 
 export const viewport = {
   width: 'device-width',

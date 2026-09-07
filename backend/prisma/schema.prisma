@@ -138,7 +138,7 @@ model Page {
   slug        String
   locale      String    @default("fr")
   kind        String // legal | about | generic
-  subtype     String    @default("simple") // simple | gallery | flyer | slide | scroll | full
+  subtype     String    @default("simple") // simple | gallery | flyer | slide | scroll | full | constructor
   title       String
   subtitle    String?
   category    String?

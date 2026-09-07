@@ -18,6 +18,7 @@ import Footer from './Footer';
 import FloatingCartButton from './FloatingCartButton';
 import FloatingApplicationsButton from './FloatingApplicationsButton';
 import type { Config, Menu } from '@/types';
+import { isStandalonePath } from '@/lib/standalone-page';
 
 /** Pose `--site-header-h` à la hauteur réelle du bandeau fixe. */
 function HeaderOffset() {
@@ -69,8 +70,14 @@ export default function SiteWrapper({ children, config, menu }: SiteWrapperProps
   // ✅ Détection des routes admin : on n'affiche PAS le Header/Footer du site public
   const isAdminRoute = pathname?.includes('/admin');
 
-  if (isAdminRoute) {
-    // Interface admin pure, le menu admin sera géré par app/[locale]/admin/layout.tsx
+  // Une page construite dans le constructeur de l'admin est autonome : elle est
+  // faite pour être envoyée seule (campagne, QR code) et n'a donc ni menu ni pied
+  // de page — sinon le visiteur sort de la page avant l'appel à l'action. Le test
+  // porte sur le chemin (`/{langue}/p/{slug}`, voir `lib/standalone-page.ts`) et
+  // non sur le type de la page : la coque se décide avant de connaître la fiche.
+  if (isAdminRoute || isStandalonePath(pathname)) {
+    // Interface admin pure (le menu admin est géré par app/[locale]/admin/layout.tsx)
+    // et page construite : la même sortie sans coque, pour des raisons différentes.
     return <>{children}</>;
   }
 

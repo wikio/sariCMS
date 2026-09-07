@@ -8,7 +8,7 @@ import {
 } from '@dnd-kit/core';
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Archive, ArrowDown, ArrowUp, CheckCircle2, Copy, Download, Eye, FileEdit, Filter, GripVertical, LayoutGrid, List as ListIcon, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Archive, ArrowDown, ArrowUp, CheckCircle2, Copy, Download, Eye, FileEdit, Filter, GripVertical, LayoutGrid, List as ListIcon, Pencil, Plus, Trash2, Wand2 } from 'lucide-react';
 import PixelGridLoader from '@/components/admin/PixelGridLoader';
 import SearchField from '@/components/admin/SearchField';
 import IconMark from '@/components/admin/IconMark';
@@ -480,6 +480,7 @@ function ListTable({
               <div className="flex justify-end gap-1">
                 <Link href={`/${locale}/admin/${mod.path}/${row.id}?consult=1`} className="ad-btn ad-btn-icon ad-btn-ghost" title={t("consult")}><Eye className="w-4 h-4" /></Link>
                 <Link href={`/${locale}/admin/${mod.path}/${row.id}`} className="ad-btn ad-btn-ghost"><Pencil className="w-4 h-4" /> {t("editBtn")}</Link>
+                <ModuleRowAction mod={mod} row={row} locale={locale} />
                 <button className="ad-btn ad-btn-icon ad-btn-ghost" onClick={() => onDuplicate(row)}><Copy className="w-4 h-4" /></button>
                 <button className="ad-btn ad-btn-danger ad-btn-icon" onClick={() => onDelete(String(row.id))}><Trash2 className="w-4 h-4" /></button>
               </div>
@@ -550,6 +551,7 @@ function CardCanvas({
           <div className="flex gap-1 pt-2">
             <Link href={`/${locale}/admin/${mod.path}/${row.id}?consult=1`} className="ad-btn ad-btn-icon ad-btn-ghost"><Eye className="w-4 h-4" /></Link>
             <Link href={`/${locale}/admin/${mod.path}/${row.id}`} className="ad-btn ad-btn-ghost"><Pencil className="w-4 h-4" /> {t("editBtn")}</Link>
+            <ModuleRowAction mod={mod} row={row} locale={locale} compact />
             <button className="ad-btn ad-btn-icon ad-btn-ghost" onClick={() => onDuplicate(row)}><Copy className="w-4 h-4" /></button>
             <button className="ad-btn ad-btn-danger ad-btn-icon ml-auto" onClick={() => onDelete(String(row.id))}><Trash2 className="w-4 h-4" /></button>
           </div>
@@ -581,6 +583,42 @@ function SortableCard({ id, disabled, children }: { id: string; disabled?: boole
     <div ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.6 : 1 }} {...attributes} {...listeners}>
       {children}
     </div>
+  );
+}
+
+/**
+ * Le bouton que le module demande sur ses lignes. Une fiche « Constructeur » ne se
+ * remplit pas dans le formulaire : elle se dessine ; la liste doit donc ouvrir
+ * l'éditeur visuel directement. Le module décide de la cible et de la condition
+ * d'affichage, la liste ne fait que poser le bouton.
+ */
+function ModuleRowAction({
+  mod,
+  row,
+  locale,
+  compact = false,
+}: {
+  mod: CmsModule;
+  row: Record<string, unknown>;
+  locale: string;
+  compact?: boolean;
+}) {
+  const action = mod.rowAction;
+  if (!action) return null;
+  if (action.when && String(row[action.when.field] ?? '') !== action.when.equals) return null;
+  const title = action.hint || action.label;
+  const icon = <Wand2 className="h-4 w-4" />;
+  if (compact) {
+    return (
+      <Link href={action.href(row, locale)} className="ad-btn ad-btn-icon ad-btn-ghost" title={title} aria-label={title}>
+        {icon}
+      </Link>
+    );
+  }
+  return (
+    <Link href={action.href(row, locale)} className="ad-btn ad-btn-ghost" title={title}>
+      {icon} {action.label}
+    </Link>
   );
 }
 
