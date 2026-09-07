@@ -72,10 +72,24 @@ async function fetchAll(resource: SyncResource): Promise<Row[]> {
 /** Champs internes à ne pas renvoyer au serveur. */
 const STRIP = new Set(['id', 'createdAt', 'updatedAt', 'deletedAt', 'createdBy', 'updatedBy', 'legacyId']);
 
+/**
+ * Une colonne date de l'API est un DATETIME : une valeur « 2026-07-15 », telle
+ * que le cache local la garde, était refusée par Prisma avant même la base —
+ * `POST /applications` répondait 500 et la rangée entière restait perdue. Les
+ * écrans CRM écrivent donc un horodatage complet ; minuit UTC, parce que la
+ * liste affiche un jour, pas une heure.
+ */
+const DATE_KEY = /(^date$|At$|Date$)/;
+const SHORT_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
 function toPayload(row: Row): Row {
   const out: Row = {};
   for (const [k, v] of Object.entries(row)) {
     if (STRIP.has(k) || v === undefined || v === null) continue;
+    if (DATE_KEY.test(k) && typeof v === 'string' && SHORT_DATE.test(v.trim())) {
+      out[k] = `${v.trim()}T00:00:00.000Z`;
+      continue;
+    }
     // Les écrans nomment `offerId` le lien vers l'offre d'emploi ; la colonne
     // s'appelle `careerId` (clé étrangère vers `careers`).
     if (k === 'offerId') {

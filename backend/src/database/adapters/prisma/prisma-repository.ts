@@ -33,6 +33,28 @@ function isBrokenDate(value: unknown): boolean {
   return false;
 }
 
+/**
+ * « 2026-07-15 » (un `input type="date"`) et « 2026-07-15T10:30 » (un
+ * `input type="datetime-local"`) ne sont PAS des DateTime pour Prisma : il veut
+ * un objet `Date` ou un horodatage complet avec fuseau. La valeur était refusée
+ * avant même d'atteindre MySQL — « Invalid value for argument `date`: premature
+ * end of input » — et faisait tomber en 500 toute une reprise de catalogue, où
+ * chaque fichier JSON porte des dates sans heure. Une date seule vaut donc
+ * minuit UTC, une heure sans fuseau se lit aussi en UTC : le fuseau d'affichage
+ * regarde le front, pas la colonne.
+ */
+const DATE_ONLY_RE = /^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2})(?::(\d{2}))?(?:[.,](\d{1,3}))?)?$/;
+function toPrismaDate(value: unknown): unknown {
+  if (typeof value !== 'string') return value;
+  const parts = DATE_ONLY_RE.exec(value.trim());
+  if (!parts) return value; // ISO complet, fuseau déjà là, ou texte libre
+  const clock = parts[2]
+    ? `${parts[2]}:${parts[3] ?? '00'}.${(parts[4] ?? '0').padEnd(3, '0')}`
+    : '00:00:00.000';
+  const date = new Date(`${parts[1]}T${clock}Z`);
+  return Number.isNaN(date.getTime()) ? value : date;
+}
+
 export class PrismaRepository<T extends BaseEntity> implements ICrudRepository<T> {
   constructor(
     public readonly collection: string,
@@ -167,28 +189,36 @@ export class PrismaRepository<T extends BaseEntity> implements ICrudRepository<T
 
     for (const clause of options.filters ?? []) {
       const op = clause.op ?? 'eq';
+      // Une date au format court dans un filtre serait rejetée par Prisma avant
+      // même que la requête parte : on lui applique la même remise en forme qu'à
+      // l'écriture. Un tableau (`between`, `in`) se traite case par case.
+      const value = DATE_COLUMN.test(clause.field)
+        ? Array.isArray(clause.value)
+          ? clause.value.map(toPrismaDate)
+          : toPrismaDate(clause.value)
+        : clause.value;
       switch (op) {
         case 'eq':
-          and.push({ [clause.field]: clause.value });
+          and.push({ [clause.field]: value });
           break;
         case 'neq':
-          and.push({ [clause.field]: { not: clause.value } });
+          and.push({ [clause.field]: { not: value } });
           break;
         case 'gt':
-          and.push({ [clause.field]: { gt: clause.value } });
+          and.push({ [clause.field]: { gt: value } });
           break;
         case 'gte':
-          and.push({ [clause.field]: { gte: clause.value } });
+          and.push({ [clause.field]: { gte: value } });
           break;
         case 'lt':
-          and.push({ [clause.field]: { lt: clause.value } });
+          and.push({ [clause.field]: { lt: value } });
           break;
         case 'lte':
-          and.push({ [clause.field]: { lte: clause.value } });
+          and.push({ [clause.field]: { lte: value } });
           break;
         case 'in':
           and.push({
-            [clause.field]: { in: Array.isArray(clause.value) ? clause.value : [clause.value] },
+            [clause.field]: { in: Array.isArray(value) ? value : [value] },
           });
           break;
         case 'contains':
@@ -201,8 +231,8 @@ export class PrismaRepository<T extends BaseEntity> implements ICrudRepository<T
           and.push({ [clause.field]: { endsWith: String(clause.value) } });
           break;
         case 'between':
-          if (Array.isArray(clause.value) && clause.value.length >= 2) {
-            and.push({ [clause.field]: { gte: clause.value[0], lte: clause.value[1] } });
+          if (Array.isArray(value) && value.length >= 2) {
+            and.push({ [clause.field]: { gte: value[0], lte: value[1] } });
           }
           break;
         default:
@@ -249,9 +279,14 @@ export class PrismaRepository<T extends BaseEntity> implements ICrudRepository<T
       // Une date vide, nulle ou fausse ne part pas en base : MySQL en ferait un
       // « 0000-00-00 », que l'ORM ne sait plus relire ensuite. Une colonne facultative
       // reçoit NULL — c'est ce que « pas de date » veut dire ; une colonne NOT NULL est
-      // simplement omise, et son défaut (ou `@updatedAt`) s'applique.
-      if (DATE_COLUMN.test(k) && isBrokenDate(v)) {
-        if (!NOT_NULL_DATES.has(k)) out[k] = null;
+      // simplement omise, et son défaut (ou `@updatedAt`) s'applique. Sinon la valeur
+      // est remise au format que Prisma attend.
+      if (DATE_COLUMN.test(k)) {
+        if (isBrokenDate(v)) {
+          if (!NOT_NULL_DATES.has(k)) out[k] = null;
+          continue;
+        }
+        out[k] = toPrismaDate(v);
         continue;
       }
       out[k] = v;
