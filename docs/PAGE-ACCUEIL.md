@@ -142,6 +142,57 @@ du contenu publié. L’action écrit ligne par ligne via le chemin d’enregist
 normal : langue de référence = structure complète, autres langues = textes,
 éléments, constructeur et statut.
 
+## Espacements et bandeau de navigation
+
+Le bandeau principal est en `position: fixed` : il survole la page au lieu de la
+pousser. Sa hauteur dépend de la langue (la barre de contact prend une ligne de
+plus en arabe) comme du point de rupture (`h-16`, `lg:h-20`). Plutôt que de la
+deviner, `SiteWrapper` la **mesure** sur le bandeau réel et l’écrit dans la
+variable `--site-header-h` ; `app/globals.css` en porte le repli avant mesure
+(122 px, 138 px à partir de `lg`). Deux choses en découlent :
+
+- `html { scroll-padding-top }` — un lien d’ancrage (`#contact`, `#newsletter`,
+  les menus) s’arrête sous le bandeau, plus dessus ;
+- le slider cède la place du menu quand son texte est collé en haut.
+
+### Slider : le texte ne touche plus le menu
+
+« Position verticale » (`En haut | Au centre | En bas`) est un réglage distinct de
+l’alignement du texte, et le défaut est **Au centre** — le rendu d’origine du
+site, où le titre était centré dans la hauteur du slider et jamais sous le bandeau.
+Choisir « En haut » applique `padding-top: calc(var(--site-header-h) + marge sous
+le menu)` : la hauteur du menu est déjà déduite, le champ « Marge sous le menu »
+(24 px par défaut) n’ajoute que le surplus. Le réglage ne concerne que le bloc de
+tête — un slider descendu plus bas dans la page n’a rien à céder.
+
+### Grilles : l’« Espacement » du studio est enfin appliqué
+
+Produits, Événements, Actualités, Partenaires, Chiffres clés, Témoignages et blocs
+impairs proposaient déjà un champ « Espacement » (0 à 96 px) : il écrivait la
+variable `--hs-gap`, qu’aucune classe ne lisait — les cartes se collaient.
+`gridClassFor` porte maintenant `gap-[var(--hs-gap,32px)]` sur chacune de ses
+branches, donc l’air entre deux cartes suit le réglage, en lignes comme en
+colonnes et sur mobile. Le défaut des produits passe de 24 à 32 px, comme les
+trois autres grilles. Le réglage « Hauteur verticale » (`paddingY`) du bandeau de
+partenaires était dans le même cas ; il s’applique désormais.
+
+### Bandeau des partenaires : logos, noms, secours
+
+Le logo vient de la fiche partenaire (`logo`) — ou de l’étiquette enregistrée dans
+le bloc en mode manuel, la fiche servant de secours. Quatre réglages : « Afficher
+les logos », « Afficher le nom à côté du logo », « Hauteur des logos » (40 px) et
+« Espace entre les logos » (32 px, en propriété logique, donc elle se retourne
+avec la page en arabe).
+
+Une image qui ne charge pas est **retirée du rendu** et remplacée par un
+monogramme aux initiales de la marque, jamais par un cadre cassé. C’était
+précisément le cas des partenaires de démonstration : leurs logos pointent vers
+`via.placeholder.com`, service aujourd’hui arrêté, et le bandeau paraissait vide
+alors que la liste, elle, était bien chargée. Un logo réel (médiathèque)
+s’affiche normalement ; un lien mort laisse défiler le nom, comme avant. Le nombre
+de marques qui défilent se règle dans le sélecteur du bloc (« Partenaires
+affichés », douze par défaut).
+
 ## Newsletter
 
 - `GET /api/newsletter?action=captcha` — délivre un **captcha en image** :

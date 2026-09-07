@@ -131,7 +131,7 @@ const layoutFields: HomeField[] = [
   { key: 'backgroundColor', label: 'Couleur de fond', kind: 'color', scope: 'style', showIf: { key: 'background', equals: 'custom' } },
   { key: 'paddingY', label: 'Hauteur verticale', kind: 'number', scope: 'style', min: 0, max: 240, step: 8, suffix: 'px' },
   { key: 'columns', label: 'Colonnes', kind: 'number', scope: 'style', min: 1, max: 8 },
-  { key: 'gap', label: 'Espacement', kind: 'number', scope: 'style', min: 0, max: 96, step: 4, suffix: 'px' },
+  { key: 'gap', label: 'Espacement entre les cartes', kind: 'number', scope: 'style', min: 0, max: 96, step: 4, suffix: 'px', hint: 'Air laissé entre deux cartes, en lignes comme en colonnes.' },
   { key: 'radius', label: 'Arrondi des cartes', kind: 'number', scope: 'style', min: 0, max: 40, step: 2, suffix: 'px' },
   { key: 'align', label: 'Alignement', kind: 'select', scope: 'style', options: [
     { value: 'start', label: 'Gauche' },
@@ -202,6 +202,12 @@ export const HOME_CATALOG: HomeCatalogEntry[] = [
         { value: 'center', label: 'Centré' },
         { value: 'end', label: 'Droite' },
       ] },
+      { key: 'vertical', label: 'Position verticale', kind: 'select', scope: 'settings', options: [
+        { value: 'top', label: 'En haut' },
+        { value: 'middle', label: 'Au centre' },
+        { value: 'bottom', label: 'En bas' },
+      ], hint: 'Le menu principal survole la page : « Au centre » ne le touche jamais.' },
+      { key: 'topGap', label: 'Marge sous le menu', kind: 'number', scope: 'settings', min: 0, max: 200, step: 4, suffix: 'px', showIf: { key: 'vertical', equals: 'top' }, hint: 'En plus de la hauteur du bandeau, déjà déduite.' },
     ],
   },
   {
@@ -225,7 +231,10 @@ export const HOME_CATALOG: HomeCatalogEntry[] = [
         { value: 'left', label: 'Vers la gauche' },
         { value: 'right', label: 'Vers la droite' },
       ] },
-      { key: 'showLogos', label: 'Afficher les logos (sinon les noms)', kind: 'toggle', scope: 'settings' },
+      { key: 'showLogos', label: 'Afficher les logos', kind: 'toggle', scope: 'settings', hint: 'Sans fichier logo lisible, le nom de la marque reste affiché.' },
+      { key: 'showNames', label: 'Afficher le nom à côté du logo', kind: 'toggle', scope: 'settings' },
+      { key: 'logoHeight', label: 'Hauteur des logos', kind: 'number', scope: 'settings', min: 16, max: 96, step: 4, suffix: 'px' },
+      { key: 'logoGap', label: 'Espace entre les logos', kind: 'number', scope: 'settings', min: 0, max: 96, step: 4, suffix: 'px' },
       { key: 'pauseOnHover', label: 'Pause au survol', kind: 'toggle', scope: 'settings' },
       { key: 'separator', label: 'Séparateur', kind: 'text', scope: 'settings', max: 3 },
     ],

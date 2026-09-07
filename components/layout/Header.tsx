@@ -146,7 +146,7 @@ export default function Header({ config, menu }: { config: Config; menu: MenuTyp
   };
 
   return (
-    <header className="fixed w-full top-0 z-50">
+    <header id="site-header" className="fixed w-full top-0 z-50">
       {/* BANDEAU SUPÉRIEUR */}
       <div className={`relative z-50 w-full transition-all duration-500 border-b border-white/10 ${isScrolled ? 'bg-gray-900/90 backdrop-blur-xl shadow-2xl' : 'bg-stone-800/70 backdrop-blur-xl'}`}>
         <div className="container mx-auto px-6">

@@ -44,7 +44,7 @@ export default function FeaturedProducts({ products, count = 4, config }: Featur
   const showAll = setting(config, 'showViewAll', true);
   const viewAllHref = localizeHref(config?.settings?.ctaHref, locale, `/${locale}/products`);
   const variant = (setting(config, 'cardVariant', 'featured') as 'featured' | 'standard' | 'compact') || 'featured';
-  const grid = gridProps(config, limitOf(config, count) >= 4 ? 4 : limitOf(config, count), 24);
+  const grid = gridProps(config, limitOf(config, count) >= 4 ? 4 : limitOf(config, count), 32);
 
   if (featured.length === 0) return null;
 

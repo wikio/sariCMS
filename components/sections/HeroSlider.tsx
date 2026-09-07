@@ -23,6 +23,12 @@ interface HeroSliderProps {
   slides: HeroSlide[];
   /** Réglages du bloc « Slider » enregistrés dans le studio de la page d'accueil. */
   config?: HomeSectionConfig;
+  /**
+   * Le slider est-il le premier bloc de la page ? Le bandeau de navigation est
+   * en `position: fixed` : seul le premier bloc doit lui céder de la place, les
+   * autres sont déjà repoussés par ce qui les précède.
+   */
+  firstOnPage?: boolean;
 }
 
 const HEIGHT_CLASS: Record<string, string> = {
@@ -32,13 +38,26 @@ const HEIGHT_CLASS: Record<string, string> = {
   short: 'h-[48vh] min-h-[380px]',
 };
 
-const ALIGN_CLASS: Record<string, string> = {
-  start: 'items-start text-start',
-  center: 'items-center text-center',
-  end: 'items-end text-end',
+/** Alignement horizontal du bloc de texte. */
+const H_ALIGN_CLASS: Record<string, string> = {
+  start: 'justify-start text-start',
+  center: 'justify-center text-center',
+  end: 'justify-end text-end',
 };
 
-export default function HeroSlider({ slides, config }: HeroSliderProps) {
+/**
+ * Alignement vertical. `middle` est le rendu d'origine du site : le texte est
+ * centré dans la hauteur du slider, donc jamais sous le bandeau de navigation.
+ * `top` colle le texte en haut du bloc — ce qui n'est possible qu'en lui
+ * laissant la place du menu (voir `topGap`).
+ */
+const V_ALIGN_CLASS: Record<string, string> = {
+  top: 'items-start',
+  middle: 'items-center',
+  bottom: 'items-end',
+};
+
+export default function HeroSlider({ slides, config, firstOnPage = true }: HeroSliderProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [paused, setPaused] = useState(false);
   const locale = useLocale();
@@ -51,6 +70,10 @@ export default function HeroSlider({ slides, config }: HeroSliderProps) {
   const height = String(setting(config, 'height', 'screen'));
   const overlay = numberSetting(config, 'overlay', 80);
   const align = String(setting(config, 'align', 'start'));
+  const vertical = String(setting(config, 'vertical', 'middle'));
+  // Marge au-dessus du texte quand il est collé en haut : la hauteur du bandeau
+  // est déjà déduite par `--site-header-h`, `topGap` n'ajoute que le surplus.
+  const topGap = numberSetting(config, 'topGap', 24);
   const badge = txt(config, 'badge', t('excellence'));
   const ctaFallback = txt(config, 'ctaLabel', t('discover'));
 
@@ -103,7 +126,16 @@ export default function HeroSlider({ slides, config }: HeroSliderProps) {
               <div className="absolute inset-0 bg-sari-dark" style={{ opacity: overlay / 100 }} />
             </div>
             <div className="absolute inset-0 grid-pattern-bg opacity-20" />
-            <div className={`relative z-10 h-full container mx-auto px-6 flex ${ALIGN_CLASS[align] || ALIGN_CLASS.start}`}>
+            <div
+              className={`relative z-10 h-full container mx-auto px-6 flex ${
+                H_ALIGN_CLASS[align] || H_ALIGN_CLASS.start
+              } ${V_ALIGN_CLASS[vertical] || V_ALIGN_CLASS.middle}`}
+              style={
+                vertical === 'top' && firstOnPage
+                  ? { paddingTop: `calc(var(--site-header-h, 122px) + ${Math.max(0, topGap)}px)` }
+                  : undefined
+              }
+            >
               <div className="max-w-3xl text-white">
                 {badge ? (
                   <span className="inline-block px-4 py-2 bg-sari-lime/20 border border-sari-lime/30 text-sari-lime font-semibold text-sm uppercase tracking-wider mb-6 animate-fade-in-up">

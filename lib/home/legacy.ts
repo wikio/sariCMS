@@ -184,8 +184,11 @@ export async function legacyHomeConfig(locale: string): Promise<HomeLegacySectio
 
   // ── Bandeau défilant des partenaires ─────────────────────────────────────
   if (partners.length) {
-    const limit = HOME_DEFAULTS['partners-marquee'].settings.limit ?? 8;
-    const marqueeRows = partners.slice(0, Number(limit) || partners.length);
+    // Le bandeau lit son nombre de marques dans `selection.limit` (comme la
+    // vitrine, via `limitOf`) : lire un `settings.limit` qui n'existe pas lui
+    // faisait reprendre huit noms sur douze.
+    const limit = Number(HOME_DEFAULTS['partners-marquee'].selection.limit) || 12;
+    const marqueeRows = partners.slice(0, limit > 0 ? limit : partners.length);
     out['partners-marquee'] = {
       texts: { label: text(messages, 'MarqueePartners', 'label') },
       selection: selectionOf(marqueeRows),

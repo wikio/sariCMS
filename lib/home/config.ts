@@ -207,12 +207,19 @@ export const HOME_DEFAULTS: Record<HomeSectionKey, HomeSectionConfig> = {
       height: 'screen',
       overlay: 80,
       align: 'start',
+      // Le rendu d'origine : texte centré dans la hauteur du slider. Collé en
+      // haut, il passerait sous le bandeau de navigation, qui survole la page.
+      vertical: 'middle',
+      topGap: 24,
     },
   }),
   'partners-marquee': section('partners-marquee', {
     selection: { ...EMPTY_SELECTION, limit: 12 },
-    settings: { speed: 30, direction: 'left', showLogos: false, pauseOnHover: true, separator: '•' },
-    style: { background: 'blue', paddingY: 32, invert: true },
+    settings: {
+      speed: 30, direction: 'left', showLogos: true, showNames: true,
+      logoHeight: 40, logoGap: 32, pauseOnHover: true, separator: '•',
+    },
+    style: { background: 'blue', paddingY: 32, gap: 32, invert: true },
   }),
   navigation: section('navigation', {
     selection: { ...EMPTY_SELECTION, limit: 6 },
@@ -226,7 +233,7 @@ export const HOME_DEFAULTS: Record<HomeSectionKey, HomeSectionConfig> = {
   products: section('products', {
     selection: { ...EMPTY_SELECTION, limit: 4 },
     settings: { ctaHref: '/products', showPrice: true, showStock: true, cardVariant: 'featured' },
-    style: { background: 'white', columns: 4, gap: 24, paddingY: 96, showHeader: true },
+    style: { background: 'white', columns: 4, gap: 32, paddingY: 96, showHeader: true },
   }),
   blocks: section('blocks', {
     settings: { imageHeight: 400, animate: true, startWith: 'image' },

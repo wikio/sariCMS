@@ -60,6 +60,31 @@
    1. BASE — polices auto-hébergées Inter / Cairo
    ========================================== */
 @layer base {
+  /*
+   * Hauteur réelle du bandeau de navigation, posée par `SiteWrapper` à la
+   * mesure (barre de contact + barre principale, au repos comme à la mise à
+   * l'échelle d'une fenêtre). Ces deux valeurs servent de repli côté serveur et
+   * tant que la mesure n'a pas eu lieu : 56px + 1px de bordure pour la barre de
+   * contact, 64px (mobile) ou 80px (à partir de `lg`) pour la principale.
+   *
+   * Le bandeau est `fixed` : la vitrine ne le pousse pas, elle doit lui laisser
+   * la place — c'est ce recalcul qui évite qu'un titre de slider ou qu'une
+   * ancre (`#newsletter`) se retrouve dessous.
+   */
+  :root {
+    --site-header-h: 122px;
+  }
+  @media (min-width: 1024px) {
+    :root {
+      --site-header-h: 138px;
+    }
+  }
+
+  html {
+    /* Les liens d'ancrage s'arrêtent sous le bandeau, pas dessus. */
+    scroll-padding-top: calc(var(--site-header-h) + 16px);
+  }
+
   body {
     font-family: Inter, Cairo, sans-serif;
     transition: background-color 0.3s, color 0.3s;

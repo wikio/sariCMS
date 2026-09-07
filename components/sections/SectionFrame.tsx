@@ -35,6 +35,14 @@ function cx(...parts: Array<string | false | null | undefined>): string {
 }
 
 /**
+ * Espacement entre les cartes, en une seule classe : la valeur vient du studio
+ * (`style.gap`, porté par `gridProps` dans `--hs-gap`) et 32px sert de défaut
+ * pour qu'aucune grille ne revienne collée. Écrit en toutes lettres parce que
+ * Tailwind ne compile que les classes littérales.
+ */
+export const HS_GAP_CLASS = 'gap-[var(--hs-gap,32px)]';
+
+/**
  * Classes de grille pour `columns` colonnes.
  *
  * Les points de rupture sont écrits en toutes lettres, et non calculés :
@@ -43,14 +51,17 @@ function cx(...parts: Array<string | false | null | undefined>): string {
  * page d'avant — une colonne jusqu'à `md`, deux à `md`, `n` à `lg` — pour
  * qu'aucun bloc ne se retrouve plus à l'étroit qu'auparavant. Au-delà de six
  * colonnes, on retombe sur la grille pilotée par `--hs-cols`.
+ *
+ * Chaque branche porte `HS_GAP_CLASS` : sans lui, le réglage « Espacement » du
+ * studio posait la variable sans jamais l'utiliser et les cartes se touchaient.
  */
 export function gridClassFor(columns: number): string {
-  if (columns <= 1) return 'grid grid-cols-1';
-  if (columns === 2) return 'grid grid-cols-1 md:grid-cols-2';
-  if (columns === 3) return 'grid grid-cols-1 md:grid-cols-3';
-  if (columns === 4) return 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4';
-  if (columns === 5) return 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5';
-  if (columns === 6) return 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6';
+  if (columns <= 1) return `grid grid-cols-1 ${HS_GAP_CLASS}`;
+  if (columns === 2) return `grid grid-cols-1 md:grid-cols-2 ${HS_GAP_CLASS}`;
+  if (columns === 3) return `grid grid-cols-1 md:grid-cols-3 ${HS_GAP_CLASS}`;
+  if (columns === 4) return `grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 ${HS_GAP_CLASS}`;
+  if (columns === 5) return `grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 ${HS_GAP_CLASS}`;
+  if (columns === 6) return `grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 ${HS_GAP_CLASS}`;
   return `grid ${HS_GRID_CLASS}`;
 }
 
@@ -240,8 +251,8 @@ export function BuilderBlock({
   );
 }
 
-/** Grille alignée sur le nombre de colonnes réglé dans le studio. */
-export function gridProps(config: HomeSectionConfig | undefined, fallbackColumns = 3, fallbackGap = 24) {
+/** Grille alignée sur le nombre de colonnes et l'espacement réglés dans le studio. */
+export function gridProps(config: HomeSectionConfig | undefined, fallbackColumns = 3, fallbackGap = 32) {
   const style = config?.style || {};
   const columns = style.columns || fallbackColumns;
   return {

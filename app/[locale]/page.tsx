@@ -46,11 +46,21 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: L
  * Les données du catalogue sont chargées une seule fois pour la page : chaque
  * bloc y puise selon sa sélection, ce qui évite N requêtes pour N blocs.
  */
-function renderSection(key: HomeSectionKey, sections: HomeSections, data: Record<string, unknown>): ReactNode {
+/**
+ * `firstOnPage` : le bandeau de navigation est en `position: fixed`, il survole
+ * la page. Seul le bloc de tête doit donc lui céder de la place — et il le fait
+ * par la variable `--site-header-h`, mesurée sur le bandeau réel.
+ */
+function renderSection(
+  key: HomeSectionKey,
+  sections: HomeSections,
+  data: Record<string, unknown>,
+  firstOnPage = false,
+): ReactNode {
   const config = sections[key];
   switch (key) {
     case 'hero':
-      return <HeroSlider slides={data.hero as never} config={config} />;
+      return <HeroSlider slides={data.hero as never} config={config} firstOnPage={firstOnPage} />;
     case 'partners-marquee':
       return <MarqueePartners partners={data.partners as never} config={config} />;
     case 'navigation':
@@ -100,8 +110,8 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
 
   return (
     <div>
-      {order.map((key) => {
-        const element = renderSection(key, home.sections, data);
+      {order.map((key, index) => {
+        const element = renderSection(key, home.sections, data, index === 0);
         if (!element) return null;
         return (
           <VisibleSection key={key} visibilityKey={catalogEntry(key)?.visibilityKey || `section.${key}`}>
