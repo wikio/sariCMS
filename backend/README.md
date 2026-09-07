@@ -122,6 +122,24 @@ POST   /{resource}/:id/purge               → { confirm, expiresIn }
 DELETE /{resource}/:id/purge?confirm=
 ```
 
+**Écriture d'une clé étrangère.** Une colonne qui supporte une relation dans
+`prisma/schema.prisma` (`careerId` + `career Career? @relation(fields: [careerId]…)`)
+ne s'écrit pas directement : l'ORM la refuse au `create` — « Unknown argument
+`careerId`. Did you mean `career`? » — et veut `career: { connect: { id } }`. Elle se
+lit, elle, normalement, et tous nos émetteurs l'ignorent : le formulaire
+d'administration, `Importer le catalogue`, `crm-sync` et les fichiers JSON reprennent
+la fiche telle quelle. L'adaptateur Prisma traduit donc à l'entrée
+(`relation-scalars.ts`, généré), pour les neuf ressources concernées —
+candidatures, commandes, devis, actualités, utilisateurs, journaux d'audit :
+
+```bash
+cd backend
+npm run prisma:relations    # régénère relation-scalars.ts après un changement de schéma
+```
+
+Un contrôle (`relation-scalars.spec.ts`) recalcule la liste depuis le schéma et échoue
+si le fichier a pris du retard — la classe d'erreurs ne peut plus revenir en silence.
+
 Filtres dynamiques :
 
 ```

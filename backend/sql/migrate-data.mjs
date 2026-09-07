@@ -732,7 +732,19 @@ if (EXECUTE) {
     console.error('❌ --execute requiert --url ou la variable DATABASE_URL.');
     process.exit(1);
   }
-  const { createConnection } = await import('mysql2/promise');
+  // `mysql2` n'est pas une dépendance du backend : l'import direct est un usage
+  // d'atelier, pas de serveur. Le dire vaut mieux qu'un `ERR_MODULE_NOT_FOUND` —
+  // et le `.sql` généré se joue de toute façon dans n'importe quel client.
+  let createConnection;
+  try {
+    ({ createConnection } = await import('mysql2/promise'));
+  } catch {
+    console.error(
+      '❌ --execute demande le pilote mysql2 : npm install --no-save mysql2, ou jouez le fichier généré\n' +
+      '   mysql -u utilisateur -p base < ' + OUT,
+    );
+    process.exit(1);
+  }
   const conn = await createConnection({ uri: URL, multipleStatements: true });
   await conn.query(sql);
   await conn.end();

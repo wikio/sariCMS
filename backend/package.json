@@ -28,7 +28,9 @@
     "sql:seed": "node sql/generate-seed.mjs",
     "sql:data": "node sql/migrate-data.mjs",
     "sql:seed-legal": "node sql/generate-seed-legal.mjs",
-    "sql:test-legal": "node sql/test-seed-legal-sql.mjs"
+    "sql:test-legal": "node sql/test-seed-legal-sql.mjs",
+    "prisma:relations": "node scripts/generate-relation-scalars.mjs",
+    "db:fix-dates": "node scripts/fix-zero-dates.mjs"
   },
   "dependencies": {
     "@nestjs/cache-manager": "^2.3.0",

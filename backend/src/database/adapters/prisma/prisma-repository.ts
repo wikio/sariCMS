@@ -6,6 +6,7 @@ import {
   QueryOptions,
 } from '../../../common/crud/interfaces/repository.interface';
 import { PrismaService } from './prisma.service';
+import { RELATION_SCALARS } from './relation-scalars';
 
 /**
  * Colonnes de date : elles se reconnaissent à leur nom — `date` nu, ou un suffixe
@@ -263,10 +264,14 @@ export class PrismaRepository<T extends BaseEntity> implements ICrudRepository<T
     const code = (error as { code?: string } | null)?.code;
     const message = (error as { message?: string } | null)?.message || String(error);
     if (code === 'P2023' || /invalid datetime|out of range for the type/i.test(message)) {
+      const detail = (message.split('\n').find((line) => /column|datetime/i.test(line)) || '').trim();
       throw new Error(
         `${this.collection}: une ligne porte une date illisible (jour ou mois à zéro, « 0000-00-00 »), ` +
-          `ce qui fait échouer la lecture de toute la table. Diagnostic et réparation : ` +
-          `backend/sql/fix-zero-dates.mysql.sql (${message.split('\n')[0]})`,
+          `ce qui fait échouer la lecture de toute la table. Réparation, au choix : ` +
+          `« npm run db:fix-dates » dans backend/ (via la connexion déjà réglée du CMS), ` +
+          `ou le fichier backend/sql/fix-zero-dates.mysql.sql dans votre client SQL. ` +
+          `Les lignes concernées sont comptées à la section 1 de ce fichier.` +
+          (detail ? ` (${detail})` : ''),
       );
     }
     throw error as Error;
@@ -274,8 +279,38 @@ export class PrismaRepository<T extends BaseEntity> implements ICrudRepository<T
 
   private toPrisma(data: Partial<T>): Record<string, unknown> {
     const out: Record<string, unknown> = {};
+    const scalars = RELATION_SCALARS[String(this.model || '').toLowerCase()] ?? {};
+    const provided = new Set(Object.keys(data as Record<string, unknown>));
     for (const [k, v] of Object.entries(data as Record<string, unknown>)) {
       if (v === undefined) continue;
+      // Une clé étrangère de relation ne s'écrit pas à la main : depuis que le
+      // schéma déclare `career Career? @relation(fields: [careerId]…)`, Prisma
+      // refuse `careerId` au `create` (« Unknown argument `careerId`. Did you mean
+      // `career`? ») et veut `career: { connect: { id } }`. La colonne se lit,
+      // elle ne s'écrit pas — et tous nos émetteurs l'ignorent : le formulaire
+      // d'administration, la reprise de catalogue, `crm-sync`, les JSON reprennent
+      // la fiche telle quelle, `careerId` compris. Un 500 sur une candidature, un
+      // lot abandonné, et rien dans le message qui ressemble au lien métier.
+      // Alors la traduction se fait ici, pour toute colonne marquée par le schéma.
+      const rel = scalars[k];
+      if (rel) {
+        // La relation a été fournie telle quelle : elle a raison, on n'y touche pas.
+        if (provided.has(rel.relation)) continue;
+        if (v === null || v === '') {
+          // Déconnecter une relation obligatoire serait une autre 500 ; une colonne
+          // NOT NULL ne se vide pas, elle garde ce qu'elle a.
+          if (rel.nullable && rel.optionalRelation) out[rel.relation] = { disconnect: true };
+          continue;
+        }
+        const raw = typeof v === 'object' && v !== null ? (v as { id?: unknown }).id : v;
+        // Un id numérique passé en chaîne (« "12" », un champ select de formulaire)
+        // est refusé tel quel par une colonne Int : le rendre avant de partir.
+        const id = typeof raw === 'string' && /^\d+$/.test(raw.trim()) ? Number(raw.trim()) : raw;
+        if (id !== null && (typeof id === 'number' || typeof id === 'string' || typeof id === 'bigint')) {
+          out[rel.relation] = { connect: { [rel.references]: id } };
+        }
+        continue;
+      }
       // Une date vide, nulle ou fausse ne part pas en base : MySQL en ferait un
       // « 0000-00-00 », que l'ORM ne sait plus relire ensuite. Une colonne facultative
       // reçoit NULL — c'est ce que « pas de date » veut dire ; une colonne NOT NULL est

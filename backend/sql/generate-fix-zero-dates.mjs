@@ -25,7 +25,7 @@ const outFile = path.join(here, 'fix-zero-dates.mysql.sql');
 const DATE_TYPES = new Set(['datetime', 'timestamp', 'date']);
 
 /** Les colonnes de date d'une table, avec leur faculté et leur défaut. */
-function parseSchema(sql) {
+export function parseSchema(sql) {
   const tables = [];
   const block = /CREATE TABLE `(\w+)` \(([\s\S]*?)\n\)\s*ENGINE/gi;
   for (const m of sql.matchAll(block)) {
@@ -57,7 +57,7 @@ function parseSchema(sql) {
  * et `DAY()` rendent NULL sur une date illisible d'où le `COALESCE` — une date juste
  * n'a jamais ni mois ni jour à zéro, donc rien de correct n'est touché.
  */
-function badWhere(column) {
+export function badWhere(column) {
   const c = `\`${column}\``;
   return (
     `${c} IS NOT NULL AND (CAST(${c} AS CHAR) LIKE '0000%' ` +
@@ -69,7 +69,7 @@ function badWhere(column) {
  * Par quoi remplacer. L'ordre des écritures compte : le fichier répare `createdAt`
  * avant `updatedAt`, pour que celui-ci ait une date juste à copier.
  */
-function fallbackFor(column) {
+export function fallbackFor(column) {
   switch (column.name) {
     case 'createdAt':
       // Rien à copier en confiance : `updatedAt` est peut-être faux de la même façon.
@@ -99,7 +99,7 @@ function fallbackFor(column) {
   }
 }
 
-const schema = fs.readFileSync(schemaFile, 'utf8');
+export function renderFile(schema) {
 const tables = parseSchema(schema);
 
 // `createdAt` et `updatedAt` d'abord dans chaque table : la seconde copie le premier.
@@ -187,50 +187,59 @@ const header = `-- backend/sql/fix-zero-dates.mysql.sql
 -- le CMS n'écrit plus de date vide depuis que l'adaptateur Prisma la refuse.
 `;
 
-const parts = [];
-parts.push(header);
-parts.push(`-- ——— 1. Diagnostic : ${all.length} colonnes de date balayées ———`);
-parts.push(countQuery('lignes'));
-parts.push('');
-parts.push(`-- ——— 2. Réparation (${updates.length} écritures possibles, chacune gardée par son WHERE) ———`);
-parts.push(`-- Sur une colonne \`ON UPDATE CURRENT_TIMESTAMP\`, MySQL reprend la main : la\n` +
+  const parts = [];
+  parts.push(header);
+  parts.push(`-- ——— 1. Diagnostic : ${all.length} colonnes de date balayées ———`);
+  parts.push(countQuery('lignes'));
+  parts.push('');
+  parts.push(`-- ——— 2. Réparation (${updates.length} écritures possibles, chacune gardée par son WHERE) ———`);
+  parts.push(`-- Sur une colonne \`ON UPDATE CURRENT_TIMESTAMP\`, MySQL reprend la main : la\n` +
             `-- date réparée devient l'heure de la réparation. C'est le rôle d'un tampon de\n` +
             `-- modification, et c'est ce que le site affiche de toute façon.\n`);
-parts.push(updates.join('\n'));
-parts.push('');
-parts.push("-- ——— 3. Contrôle : le même comptage, rejoué — il ne doit sortir aucune ligne ———");
-parts.push("-- Un résultat vide ici veut dire que les listes de l'administration se reliront.");
-parts.push(countQuery('reste'));
-parts.push('');
-parts.push('-- ——— 4. Prévention : les colonnes NOT NULL sans défaut ———');
-parts.push(
-  '-- Ce que la base a réellement, d\'abord : un \`INSERT\` brut qui omet une colonne de\n' +
-  '-- date NOT NULL sans défaut y écrit un zéro, et c\'est précisément ainsi qu\'une table\n' +
-  '-- se retrouve illisible. Cette requête liste les colonnes à durcir chez vous — la\n' +
-  '-- liste peut différer du fichier, si la table a été créée avant les défauts du schéma.\n' +
-  'SELECT TABLE_NAME AS `table`, COLUMN_NAME AS `colonne`, DATA_TYPE AS `type`\n' +
-  '  FROM information_schema.COLUMNS\n' +
-  '  WHERE TABLE_SCHEMA = DATABASE()\n' +
-  '    AND DATA_TYPE IN (\'datetime\', \'timestamp\', \'date\')\n' +
-  '    AND IS_NULLABLE = \'NO\'\n' +
-  '    AND COLUMN_DEFAULT IS NULL\n' +
-  '  ORDER BY TABLE_NAME, COLUMN_NAME;',
-);
-parts.push(
-  hardening.length
-    ? [
-        '-- Les mêmes, côté schéma du dépôt (si la requête ci-dessus en liste d\'autres,\n' +
-        '-- c\'est que la base a été créée avant ces défauts : ajouter les ALTER qui\n' +
-        '-- manquent, table par table, sur le même modèle).',
-        hardening.join('\n'),
-      ].join('\n')
-    : '-- (aucune : toutes les colonnes de date NOT NULL du schéma ont déjà un défaut)',
-);
-parts.push('');
+  parts.push(updates.join('\n'));
+  parts.push('');
+  parts.push("-- ——— 3. Contrôle : le même comptage, rejoué — il ne doit sortir aucune ligne ———");
+  parts.push("-- Un résultat vide ici veut dire que les listes de l'administration se reliront.");
+  parts.push(countQuery('reste'));
+  parts.push('');
+  parts.push('-- ——— 4. Prévention : les colonnes NOT NULL sans défaut ———');
+  parts.push(
+    '-- Ce que la base a réellement, d\'abord : un \`INSERT\` brut qui omet une colonne de\n' +
+    '-- date NOT NULL sans défaut y écrit un zéro, et c\'est précisément ainsi qu\'une table\n' +
+    '-- se retrouve illisible. Cette requête liste les colonnes à durcir chez vous — la\n' +
+    '-- liste peut différer du fichier, si la table a été créée avant les défauts du schéma.\n' +
+    'SELECT TABLE_NAME AS `table`, COLUMN_NAME AS `colonne`, DATA_TYPE AS `type`\n' +
+    '  FROM information_schema.COLUMNS\n' +
+    '  WHERE TABLE_SCHEMA = DATABASE()\n' +
+    "    AND DATA_TYPE IN ('datetime', 'timestamp', 'date')\n" +
+    "    AND IS_NULLABLE = 'NO'\n" +
+    '    AND COLUMN_DEFAULT IS NULL\n' +
+    '  ORDER BY TABLE_NAME, COLUMN_NAME;',
+  );
+  parts.push(
+    hardening.length
+      ? [
+          '-- Les mêmes, côté schéma du dépôt (si la requête ci-dessus en liste d\'autres,\n' +
+          '-- c\'est que la base a été créée avant ces défauts : ajouter les ALTER qui\n' +
+          '-- manquent, table par table, sur le même modèle).',
+          hardening.join('\n'),
+        ].join('\n')
+      : '-- (aucune : toutes les colonnes de date NOT NULL du schéma ont déjà un défaut)',
+  );
+  parts.push('');
+  return parts.join('\n');
+}
 
-fs.writeFileSync(outFile, parts.join('\n'), 'utf8');
-const lines = parts.join('\n').split('\n').length;
-console.log(
-  `fix-zero-dates.mysql.sql écrit : ${tables.length} tables, ${all.length} colonnes de date, ` +
-    `${updates.length} UPDATE, ${hardening.length} ALTER — ${lines} lignes`,
-);
+const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (isMain) {
+  const schema = fs.readFileSync(schemaFile, 'utf8');
+  const file = renderFile(schema);
+  fs.writeFileSync(outFile, file, 'utf8');
+  const lines = file.split('\n').length;
+  const tables = parseSchema(schema);
+  const all = tables.flatMap((t) => t.columns.map((column) => ({ table: t.table, column })));
+  console.log(
+    `fix-zero-dates.mysql.sql écrit : ${tables.length} tables, ${all.length} colonnes de date, ` +
+      `${all.length} UPDATE, ${all.filter((e) => !e.column.nullable && !e.column.hasDefault).length} ALTER — ${lines} lignes`,
+  );
+}

@@ -37,6 +37,19 @@ une reprise de données en SQL brut (ou un import de l'ancien site) quand le mod
 sans défaut.
 
 ```bash
+cd backend
+npm run db:fix-dates -- --check     # compter, sans rien écrire
+npm run db:fix-dates                # compter, réparer, recontrôler
+```
+
+`scripts/fix-zero-dates.mjs` prend la connexion déjà réglée du CMS (`DATABASE_URL`
+de `backend/.env`) et applique les mêmes `UPDATE`, colonne par colonne, en annonçant
+chacun avant de l'écrire — utile quand on n'a pas de console MySQL sous la main, ou
+sur un mutualisé où le client n'est pas installé. Il lit les colonnes dans
+`information_schema`, donc il répare aussi une table ajoutée à la main. Le fichier,
+lui, se relit avant de se jouer et ne demande aucun secret :
+
+```bash
 mysql -u utilisateur -p base < backend/sql/fix-zero-dates.mysql.sql
 ```
 
@@ -52,6 +65,9 @@ UPDATE `pages` SET `updatedAt` = COALESCE(`createdAt`, NOW(3))
  WHERE `updatedAt` IS NOT NULL AND (CAST(`updatedAt` AS CHAR) LIKE '0000%'
     OR CAST(`updatedAt` AS CHAR) LIKE '%-00-%' OR CAST(`updatedAt` AS CHAR) LIKE '%-00 %');
 ```
+
+Les deux partagent la même règle (`badWhere`, `fallbackFor` exportés par le
+générateur) : ils réparent à l'identique, et l'un ne diverge pas de l'autre.
 
 Le fichier — généré par `generate-fix-zero-dates.mjs` (`npm run sql:fix-zero-dates`
 quand le schéma bouge), et fait de SQL écrit exprès pour être jouable dans un client
