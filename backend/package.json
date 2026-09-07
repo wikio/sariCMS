@@ -22,7 +22,11 @@
     "prisma:push": "prisma db push",
     "seed": "ts-node -r tsconfig-paths/register prisma/seed.ts",
     "postinstall": "prisma generate || true",
-    "sql:fix-zero-dates": "node sql/generate-fix-zero-dates.mjs"
+    "sql:fix-zero-dates": "node sql/generate-fix-zero-dates.mjs",
+    "sql:fix-permissions": "node sql/generate-fix-permissions.mjs",
+    "sql:schema": "node sql/generate-schema.mjs",
+    "sql:seed": "node sql/generate-seed.mjs",
+    "sql:data": "node sql/migrate-data.mjs"
   },
   "dependencies": {
     "@nestjs/cache-manager": "^2.3.0",

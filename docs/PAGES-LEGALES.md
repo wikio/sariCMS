@@ -74,6 +74,22 @@ Après import, la page « Pages légales » doit lister douze lignes — quatre
 documents × trois langues. C'est le nombre à contrôler : un import qui écrit
 moins que ça a sauté quelque chose, et le rapport le dit.
 
+## Reprise d'une base déjà importée
+
+Avant ce changement, le document « à propos » était écrit avec `kind = 'about'`
+et les trois autres avec `kind = 'legal'` : la liste « Pages légales » du
+back-office, qui filtre sur `kind = 'legal'`, ne montrait donc que trois lignes,
+et la vitrine ne lisait `about` que dans le fichier. Le site lit les deux sortes
+de lignes, mais pour que la fiche soit éditable il faut la ramener dans la liste :
+
+```sql
+UPDATE `pages` SET `kind` = 'legal', `category` = 'about'
+ WHERE `kind` = 'about' AND `category` IS NULL;
+```
+
+Rejouable : une ligne déjà conforme ne change pas. Elle garde son id, donc son
+slug et ses liens existants restent valides.
+
 ## Ajouter un cinquième document
 
 1. `lib/legal-docs.ts` : la clé dans `LEGAL_DOC_TYPES`, son libellé, et un

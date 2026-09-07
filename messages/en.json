@@ -422,6 +422,7 @@
       "delete": "Delete",
       "deleteConfirm": "Delete this role? Affected users will lose their rights.",
       "systemRole": "System role: cannot be modified",
+      "systemRoleHint": "This role is redefined by the repository, so boxes can’t be ticked here. To grant a resource added after the seed (authors, homepage, newsletter), run backend/sql/fix-permissions.mysql.sql.",
       "saved": "Permissions updated",
       "created": "Role created",
       "deleted": "Role deleted",

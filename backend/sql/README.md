@@ -271,9 +271,16 @@ Options : `--truncate` (vide les tables avant l'import), `--out CHEMIN`
 | **Dates littérales** | « 15 Janvier 2024 », « 15 يناير 2024 » ou la plage « 15-18 Mars 2024 » deviennent des `DATETIME`. Une plage alimente `startDate` **et** `endDate`. Le libellé d'origine reste affiché par la vitrine. |
 | **Rejouable** | `ON DUPLICATE KEY UPDATE` : réimporter met à jour au lieu d'échouer. |
 
-Volume repris : **333 lignes** sur 11 tables — services (12), solutions (27),
+Volume repris : **350 lignes** sur 11 tables — services (12), solutions (27),
 produits (45), auteurs (42), actualités (45), événements (45), carrières (45),
-partenaires (18), témoignages (12), carrousel (12), pages (30).
+partenaires (18), témoignages (12), carrousel (12), pages (47).
+
+Les 47 pages comprennent les 12 documents légaux de `legal.json` (quatre par
+langue : mentions, confidentialité, conditions, à propos), rangés sous
+`kind = 'legal'` avec leur type dans `category` — voir
+`docs/PAGES-LEGALES.md`. Une page importée avec `kind = 'content'`, valeur qui
+ne figure dans aucun écran, restait en base sans jamais s'afficher ni se
+modifie.
 
 ### Slugs et legacyId dans les fichiers JSON
 
@@ -348,6 +355,40 @@ SELECT COUNT(*) FROM role_permissions;  -- attendu : 237
 
 ---
 
+## 3 ter. Une ressource n'apparaît pas dans « Rôles et permissions »
+
+Symptôme : un écran du back-office est listé dans le menu mais répond 403, et
+la grille des permissions ne montre aucune ligne pour cette ressource — ou ne
+la montre que pour les rôles créés à la main. Ce n'est pas un bug d'affichage :
+les lignes manquent dans la table `permissions`.
+
+Le cas se présente à chaque ressource ajoutée depuis le dernier seed — `authors`
+(fiches auteurs des actualités), `home` (blocs de la page d'accueil),
+`newsletter` — et il est particulièrement tordu pour les **rôles verrouillés**
+(`super-admin`, `admin`, `editor`, `viewer`, `isSystem = 1`) : l'écran refuse d'y
+cocher une case, à juste titre, puisque leur barème est redéfini par le dépôt.
+Une ressource qui leur manque ne peut donc pas leur être accordée à la main, ni
+jamais.
+
+    cd backend
+    npm run sql:fix-permissions        # régénère fix-permissions.mysql.sql
+    mysql -u utilisateur -p base < sql/fix-permissions.mysql.sql
+
+Le fichier est écrit, pas calculé : ni procédure, ni table temporaire, ni
+`PREPARE`, ni `DELIMITER` — il se joue tel quel dans HeidiSQL ou phpMyAdmin, en
+un bloc ou section par section. Il est rejouable. La section 1 diagnostique
+(permissions absentes, liens manquants, liens en trop, écart entre
+`role_permissions` et `roles.permissionIds`), la section 2 insère ce qui manque,
+la 3 applique le barème aux quatre rôles verrouillés, la 4 remet le JSON du rôle
+à l'heure, la 5 contrôle. Les rôles que vous avez créés ne sont pas touchés.
+
+Le barème vit dans `sql/permissions-catalog.mjs`, qui lit
+`src/common/constants/permissions.ts` : la liste des ressources ne peut plus
+rester en arrière du code, la génération échoue si les deux divergent. Après
+avoir ajouté une ressource au backend, relancez `npm run sql:fix-permissions`
+**et** `npm run sql:seed`, puis redémarrez le backend (les permissions sont
+mises en cache avec la session).
+
 ## 4. Contenu inclus (contexte algérien)
 
 - **Identité** : SARI Système SARL — 17 Lot ONAB, Cité SONELGAZ, Gué de
@@ -372,9 +413,11 @@ SELECT COUNT(*) FROM role_permissions;  -- attendu : 237
 
 ```bash
 cd backend
-node sql/generate-schema.mjs   # schema.mysql.sql, depuis prisma/schema.prisma
-node sql/generate-seed.mjs     # seed.mysql.sql (contenu de démonstration)
-node sql/migrate-data.mjs      # migrate-data.mysql.sql (reprise des JSON)
+node sql/generate-schema.mjs        # schema.mysql.sql, depuis prisma/schema.prisma
+node sql/generate-seed.mjs          # seed.mysql.sql (contenu de démonstration)
+node sql/migrate-data.mjs           # migrate-data.mysql.sql (reprise des JSON)
+node sql/generate-fix-zero-dates.mjs # fix-zero-dates.mysql.sql (dates au zéro)
+node sql/generate-fix-permissions.mjs # fix-permissions.mysql.sql (rôles verrouillés)
 ```
 
 Après toute modification de `prisma/schema.prisma`, régénérez le schéma :
