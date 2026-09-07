@@ -36,6 +36,19 @@ sans défaut.
 mysql -u utilisateur -p base < backend/sql/fix-zero-dates.mysql.sql
 ```
 
+Pour une seule table sous les yeux, une écriture courte suffit — et c'est exactement
+ce que fait le fichier, pour toutes les tables à la fois :
+
+```sql
+SELECT id, slug, createdAt, updatedAt FROM `pages`
+ WHERE `updatedAt` IS NOT NULL AND (CAST(`updatedAt` AS CHAR) LIKE '0000%'
+    OR CAST(`updatedAt` AS CHAR) LIKE '%-00-%' OR CAST(`updatedAt` AS CHAR) LIKE '%-00 %');
+
+UPDATE `pages` SET `updatedAt` = COALESCE(`createdAt`, NOW(3))
+ WHERE `updatedAt` IS NOT NULL AND (CAST(`updatedAt` AS CHAR) LIKE '0000%'
+    OR CAST(`updatedAt` AS CHAR) LIKE '%-00-%' OR CAST(`updatedAt` AS CHAR) LIKE '%-00 %');
+```
+
 Le fichier compte les lignes fautives table par table, les répare (`createdAt`
 reprend l'`updatedAt` et réciproquement, `deletedAt` devient « maintenant » pour ne
 pas ressusciter une ligne supprimée, une date facultative devient `NULL` plutôt
