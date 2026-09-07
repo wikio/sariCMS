@@ -8,7 +8,7 @@ import {
 } from '@dnd-kit/core';
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Archive, ArrowDown, ArrowUp, CheckCircle2, Copy, Download, Eye, FileEdit, Filter, GripVertical, LayoutGrid, List as ListIcon, Pencil, Plus, Trash2, Wand2 } from 'lucide-react';
+import { Archive, ArrowDown, ArrowUp, CheckCircle2, Copy, Download, ExternalLink, Eye, FileEdit, Filter, GripVertical, LayoutGrid, List as ListIcon, Pencil, Plus, Trash2, Wand2 } from 'lucide-react';
 import PixelGridLoader from '@/components/admin/PixelGridLoader';
 import SearchField from '@/components/admin/SearchField';
 import IconMark from '@/components/admin/IconMark';
@@ -604,21 +604,40 @@ function ModuleRowAction({
   compact?: boolean;
 }) {
   const action = mod.rowAction;
-  if (!action) return null;
-  if (action.when && String(row[action.when.field] ?? '') !== action.when.equals) return null;
-  const title = action.hint || action.label;
-  const icon = <Wand2 className="h-4 w-4" />;
-  if (compact) {
-    return (
-      <Link href={action.href(row, locale)} className="ad-btn ad-btn-icon ad-btn-ghost" title={title} aria-label={title}>
-        {icon}
-      </Link>
-    );
-  }
+  const consult = mod.publicAction;
+  const editable =
+    !!action && (!action.when || String(row[action.when.field] ?? '') === action.when.equals);
+  if (!editable && !consult) return null;
+
+  const openLabel = consult?.hint || consult?.label || 'Consulter';
+  const editLabel = action && editable ? action.hint || action.label : '';
+  const iconClass = compact ? 'h-4 w-4' : 'w-4 h-4';
+
   return (
-    <Link href={action.href(row, locale)} className="ad-btn ad-btn-ghost" title={title}>
-      {icon} {action.label}
-    </Link>
+    <>
+      {consult ? (
+        <Link
+          href={consult.href(row, locale)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="ad-btn ad-btn-icon ad-btn-ghost"
+          title={openLabel}
+          aria-label={openLabel}
+        >
+          <ExternalLink className={iconClass} />
+        </Link>
+      ) : null}
+      {action && editable ? (
+        <Link
+          href={action.href(row, locale)}
+          className={compact ? 'ad-btn ad-btn-icon ad-btn-ghost' : 'ad-btn ad-btn-ghost'}
+          title={editLabel}
+        >
+          <Wand2 className={iconClass} />
+          {compact ? null : <span>{action.label}</span>}
+        </Link>
+      ) : null}
+    </>
   );
 }
 

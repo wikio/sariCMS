@@ -207,6 +207,14 @@ function load(locale, file) {
   return Array.isArray(parsed) ? parsed : [];
 }
 
+/** Même lecture pour les fichiers indexés par clé (legal.json, menu.json…). */
+function loadObject(locale, file) {
+  const path = resolve(DATA, locale, file);
+  if (!existsSync(path)) return {};
+  const parsed = JSON.parse(readFileSync(path, 'utf8'));
+  return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+}
+
 const nowSql = 'CURRENT_TIMESTAMP(3)';
 
 /** Identifiant numérique décalé par langue (voir la note 1 en tête). */
@@ -556,27 +564,69 @@ tables.push({
   });
 }
 
-/** pages — issues de genericContent.json */
+/**
+ * pages — les pages génériques de `genericContent.json` et les documents
+ * légaux de `legal.json`.
+ *
+ * `kind` porte la famille attendue par le back-office et par la vitrine :
+ * « generic » pour une page ordinaire, « legal » pour un document juridique,
+ * « about » pour la fiche À propos (c'est la clé que lit la page /about). Une
+ * valeur d'un autre genre — « content », par exemple — écrit des lignes que
+ * l'admin « Pages génériques » ne montre pas et que le site ne rend pas : la
+ * fiche est en base et invisible, ce qui est pire qu'une absence.
+ *
+ * Les documents légaux portent en plus leur type dans `category`
+ * (mentions / privacy / conditions / about) : c'est ce qui décide de la page
+ * publique où ils se lisent, et non le seul slug, que l'éditeur peut changer.
+ */
+const LEGAL_KEYS = ['mentions', 'privacy', 'conditions', 'about'];
+const legalRows = [];
+for (const locale of LOCALES) {
+  const docs = loadObject(locale, 'legal.json');
+  LEGAL_KEYS.forEach((key, index) => {
+    const doc = docs[key];
+    if (!doc || typeof doc !== 'object') return;
+    legalRows.push({
+      // Plage réservée, hors des ids de genericContent, stable d'un jeu à l'autre.
+      id: 9000 + index + 1 + OFFSET[locale],
+      slug: key,
+      locale,
+      kind: 'legal',
+      subtype: 'simple',
+      title: doc.title ?? key,
+      subtitle: null,
+      category: key,
+      content: doc.content ?? '',
+      media: null,
+      sortOrder: index,
+      status: 'published',
+    });
+  });
+}
+
 tables.push({
   name: 'pages',
   columns: [
     'id', 'slug', 'locale', 'kind', 'subtype', 'title', 'subtitle', 'category',
     'content', 'media', 'sortOrder', 'status',
   ],
-  rows: collect('genericContent.json', 'pag', (item, locale, id) => ({
-    id,
-    slug: item.slug,
-    locale,
-    kind: 'content',
-    subtype: item.type ?? 'simple',
-    title: item.title,
-    subtitle: item.subtitle ?? null,
-    category: item.category ?? null,
-    content: item.content ?? null,
-    media: item.media ?? null,
-    sortOrder: Number(item.id) || 0,
-    status: 'published',
-  })),
+  rows: [
+    ...collect('genericContent.json', 'pag', (item, locale, id) => ({
+      id,
+      slug: item.slug,
+      locale,
+      kind: 'generic',
+      subtype: item.type ?? 'simple',
+      title: item.title,
+      subtitle: item.subtitle ?? null,
+      category: item.category ?? null,
+      content: item.content ?? null,
+      media: item.media ?? null,
+      sortOrder: Number(item.id) || 0,
+      status: 'published',
+    })),
+    ...legalRows,
+  ],
 });
 
 // --------------------------------------------------------------------------

@@ -19,6 +19,7 @@ import type {
 } from '@/types';
 import { cmsPublicList, cmsPublicOne, cmsPublicTranslations, cmsFetch } from '@/lib/cms';
 import { decodeBuilderDoc } from '@/lib/builder-doc';
+import { LEGAL_DOC_TYPES, legalDocTypeOf, type LegalDocType } from '@/lib/legal-docs';
 import { loadFicheLocale } from '@/lib/fiche-i18n';
 import { asPublicId, matchesEntity } from '@/lib/ids';
 import { findByRouteKey } from '@/lib/entity-url';
@@ -650,46 +651,56 @@ export async function getPartners(locale: string): Promise<Partner[]> {
   });
 }
 
+/**
+ * Les documents légaux se lisent dans le CMS, puis se complètent du fichier.
+ *
+ * Le remplacement se fait document par document, et non pour le lot entier : une
+ * page « mentions » rédigée dans l'administration ne doit pas faire disparaître la
+ * politique de confidentialité, qui n'a encore été écrite nulle part en base. Un
+ * tout-ou-rien répondait « page introuvable » sur `/legal/privacy` dès la première
+ * fiche créée — le pire des résultats, parce que le texte existait, lui.
+ *
+ * Le type du document vient de `category` (voir `lib/legal-docs.ts`) ; `kind`
+ * vaut « legal » pour les trois documents juridiques et « about » pour la fiche
+ * À propos, qui partage le même fichier source. Une ligne sans titre ni texte est
+ * ignorée : une fiche vidée dans l'admin ne remplace pas le fichier, elle le
+ * laisse en place — effacer un document légal publié s'écrit explicitement.
+ */
 export async function getLegal(locale: string): Promise<Legal> {
-  const fallback: Legal = {
-    mentions: { title: '', content: '' },
-    privacy: { title: '', content: '' },
-    conditions: { title: '', content: '' },
-    about: { title: '', content: '' },
-  };
-  return fromCmsOrJson(locale, 'legal', fallback, async () => {
-    const rows = (await cmsPublicList<Record<string, unknown>>('pages', locale)).filter(
-      (r) => String(r.kind ?? '') === 'legal' && rowMatchesLocale(r, locale),
-    );
-    if (!rows.length) return null;
-    const pick = (...slugParts: string[]) => {
-      const row = rows.find((r) => {
-        const slug = String(r.slug ?? '').toLowerCase();
-        const subtype = String(r.subtype ?? '').toLowerCase();
-        const category = String(r.category ?? '').toLowerCase();
-        return slugParts.some(
-          (part) => slug.includes(part) || subtype === part || category === part,
-        );
-      });
-      return {
-        title: String(row?.title ?? ''),
-        content: String(row?.content ?? ''),
-        lastUpdate: pickLastUpdate(row),
-      };
-    };
-    const mapped: Legal = {
-      mentions: pick('mention', 'legal-notice', 'mentions'),
-      privacy: pick('privacy', 'confidential'),
-      conditions: pick('condition', 'cgv', 'conditions', 'terms'),
-      about: pick('about'),
-    };
-    if (!mapped.mentions.title && !mapped.privacy.title && !mapped.conditions.title && !mapped.about.title) {
-      return null;
-    }
-    return mapped;
-  });
-}
+  const cacheKey = `${locale}_legal`;
+  const cached = cacheGet(cacheKey);
+  if (cached !== undefined) return cached as Legal;
 
+  const empty = {} as Legal;
+  for (const type of LEGAL_DOC_TYPES) empty[type] = { title: '', content: '' };
+  const merged: Legal = { ...empty, ...(await loadData<Legal>(locale, 'legal', empty)) };
+
+  let rows: Array<Record<string, unknown>> = [];
+  try {
+    // Le filtre se passe en base : la liste publique est plafonnée à cent lignes,
+    // et une page de plus dans le CMS aurait pu pousser un document hors du champ.
+    rows = await cmsPublicList<Record<string, unknown>>('pages', locale, {
+      filter: JSON.stringify({ kind: { in: ['legal', 'about'] } }),
+    });
+  } catch {
+    rows = [];
+  }
+
+  for (const row of rows) {
+    const type = legalDocTypeOf(row) as LegalDocType;
+    const title = String(row.title ?? '').trim();
+    const content = String(row.content ?? '').trim();
+    if (!title && !content) continue;
+    const before = merged[type] ?? { title: '', content: '' };
+    merged[type] = {
+      title: title || before.title,
+      content: content || before.content,
+      lastUpdate: pickLastUpdate(row) ?? before.lastUpdate,
+    };
+  }
+
+  return cacheSet(locale, 'legal', merged);
+}
 export async function getGenericContent(locale: string): Promise<GenericContent[]> {
   return fromCmsOrJson(locale, 'genericContent', [], async () => {
     const rows = (await cmsPublicList<Record<string, unknown>>('pages', locale)).filter(

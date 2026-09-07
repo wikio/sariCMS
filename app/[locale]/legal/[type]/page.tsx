@@ -1,13 +1,22 @@
 // app/[locale]/legal/[type]/page.tsx
 import { notFound } from 'next/navigation';
+import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import { getLegal } from '@/lib/data';
+import { LEGAL_DOC_TYPES, type LegalDocType } from '@/lib/legal-docs';
 import type { Locale } from '@/lib/i18n';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import Divider from '@/components/shared/Divider';
 import { FileText, Shield, FileCheck } from 'lucide-react';
 import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
+
+const DOC_ICONS: Record<LegalDocType, ReactNode> = {
+  mentions: <FileText className="w-8 h-8 text-sari-blue mb-3" />,
+  privacy: <Shield className="w-8 h-8 text-sari-blue mb-3" />,
+  conditions: <FileCheck className="w-8 h-8 text-sari-blue mb-3" />,
+  about: <FileText className="w-8 h-8 text-sari-blue mb-3" />,
+};
 
 interface LegalPageProps {
   params: Promise<{ locale: Locale; type: string }>;
@@ -73,30 +82,24 @@ export default async function LegalPage({ params }: LegalPageProps) {
 
           <Divider text={t('otherLegalDocs')} />
 
+          {/*
+            La navigation entre documents se construit sur ce qui a un titre, et
+            non sur trois cartes écrites à la main. Un document ajouté dans
+            l'administration y figurait donc sans jamais apparaître ici, et un
+            document vidé y restait affiché. Les titres viennent de la source en
+            cours : le CMS quand la fiche existe, le fichier sinon.
+          */}
           <div className="grid md:grid-cols-3 gap-6 mt-8">
-            <Link 
-              href={`/${locale}/legal/mentions`} 
-              className={`p-6 border-2 rounded-xl transition-all ${type === 'mentions' ? 'border-sari-blue bg-sari-blue/5' : 'border-gray-200 dark:border-gray-800 hover:border-sari-blue'}`}
-            >
-              <FileText className="w-8 h-8 text-sari-blue mb-3" />
-              <h3 className="font-bold text-sari-dark dark:text-white mb-2">{t('mentions')}</h3>
-            </Link>
-
-            <Link 
-              href={`/${locale}/legal/privacy`} 
-              className={`p-6 border-2 rounded-xl transition-all ${type === 'privacy' ? 'border-sari-blue bg-sari-blue/5' : 'border-gray-200 dark:border-gray-800 hover:border-sari-blue'}`}
-            >
-              <Shield className="w-8 h-8 text-sari-blue mb-3" />
-              <h3 className="font-bold text-sari-dark dark:text-white mb-2">{t('privacy')}</h3>
-            </Link>
-
-            <Link 
-              href={`/${locale}/legal/conditions`} 
-              className={`p-6 border-2 rounded-xl transition-all ${type === 'conditions' ? 'border-sari-blue bg-sari-blue/5' : 'border-gray-200 dark:border-gray-800 hover:border-sari-blue'}`}
-            >
-              <FileCheck className="w-8 h-8 text-sari-blue mb-3" />
-              <h3 className="font-bold text-sari-dark dark:text-white mb-2">{t('conditions')}</h3>
-            </Link>
+            {LEGAL_DOC_TYPES.filter((docType) => docType !== type && legal[docType]?.title).map((docType) => (
+              <Link
+                key={docType}
+                href={`/${locale}/legal/${docType}`}
+                className="p-6 border-2 rounded-xl transition-all border-gray-200 dark:border-gray-800 hover:border-sari-blue"
+              >
+                {DOC_ICONS[docType]}
+                <h3 className="font-bold text-sari-dark dark:text-white mb-2">{legal[docType].title}</h3>
+              </Link>
+            ))}
           </div>
         </div>
       </div>

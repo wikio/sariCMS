@@ -2,6 +2,7 @@ import {
   Package, Wrench, Briefcase, Newspaper, Calendar, MessageCircle, Handshake,
   Layers, Image as ImageIcon, FileText, Images, Mail, FolderOpen, Scale, Menu, User,
 } from 'lucide-react';
+import { LEGAL_DOC_LABELS, LEGAL_DOC_TYPES, legalDocPath } from '@/lib/legal-docs';
 
 export type FieldKind =
   | 'text' | 'textarea' | 'html' | 'slug' | 'email' | 'phone' | 'url'
@@ -61,6 +62,17 @@ export interface CmsModule {
     label: string;
     hint?: string;
     when?: { field: string; equals: string };
+    href: (row: Record<string, unknown>, locale: string) => string;
+  };
+  /**
+   * Bouton de consultation : la liste ouvre la fiche telle que le site la sert.
+   * Un document légal comme une page construite s'écrivent ici mais se lisent
+   * ailleurs — vérifier le résultat sans changer d'onglet évite de deviner si la
+   * mise en page a suivi.
+   */
+  publicAction?: {
+    label?: string;
+    hint?: string;
     href: (row: Record<string, unknown>, locale: string) => string;
   };
 }
@@ -377,9 +389,27 @@ export const CMS_MODULES: CmsModule[] = [
     searchKeys: ['title', 'slug'],
     filterKeys: [{ key: 'status', label: 'Statut', options: STATUS.map((s) => s.value) }],
     filter: { kind: 'legal' },
-    defaults: { title: 'Page légale', slug: 'mentions', kind: 'legal', subtype: 'simple', status: 'draft', locale: 'fr' },
+    defaults: {
+      title: 'Page légale', slug: 'mentions', kind: 'legal', subtype: 'simple',
+      category: 'mentions', status: 'draft', locale: 'fr',
+    },
+    publicAction: {
+      label: 'Consulter',
+      hint: 'Ouvrir le document tel que le site le publie',
+      href: (row, locale) => legalDocPath(locale, row),
+    },
     fields: [
       { key: 'title', label: 'Titre', kind: 'text', group: 'Légal' },
+      {
+        key: 'category',
+        label: 'Type de document',
+        kind: 'select',
+        options: LEGAL_DOC_TYPES.map((value) => ({ value, label: LEGAL_DOC_LABELS[value] })),
+        group: 'Légal',
+        hint:
+          'Ce champ décide de la page publique où se lit le document : /legal/mentions, ' +
+          '/legal/privacy, /legal/conditions ou /legal/about. Le slug, lui, reste libre.',
+      },
       { key: 'slug', label: 'Slug', kind: 'slug', slugFrom: 'title', group: 'Légal' , i18n: true },
       { key: 'locale', label: 'Langue', kind: 'radio', options: LOCALES, group: 'Légal' },
       { key: 'status', label: 'Statut', kind: 'radio', options: STATUS, group: 'Légal' },
