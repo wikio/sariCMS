@@ -22,7 +22,13 @@ import HomeFieldControl from '@/components/admin/home/HomeField';
 import HomePickerPanel from '@/components/admin/home/HomePickerPanel';
 import HomeRepeaterEditor from '@/components/admin/home/HomeRepeaterEditor';
 
-const SELECTION_SETTING_KEYS = ['limit', 'count', 'upcomingOnly', 'sort'];
+/**
+ * Réglages rangés dans l'onglet « Sélection », à côté du panneau qui parcourt
+ * les fiches : ceux qui décident *quoi* afficher plutôt que *comment* le poser.
+ * `source` y figure parce que le module parcouru en dépend — les deux réglages
+ * doivent se toucher dans le même écran.
+ */
+const SELECTION_SETTING_KEYS = ['limit', 'count', 'upcomingOnly', 'sort', 'source', 'mixedSources', 'itemKind'];
 
 type TabId = 'texts' | 'options' | 'selection' | 'style' | 'builder';
 
@@ -82,6 +88,14 @@ export default function HomeSectionEditor({
     const source = field.showIf.key;
     const current =
       config.settings?.[source] ?? config.style?.[source as keyof HomeSectionConfig['style']] ?? config.texts?.[source];
+    // « truthy » : le champ doit être rempli (ou coché, ou supérieur à zéro) —
+    // c'est ce qu'on veut pour faire apparaître un réglage dépendant d'une
+    // case ou d'une largeur, sans avoir à énumérer les valeurs possibles.
+    if (field.showIf.truthy) {
+      if (typeof current === 'boolean') return current;
+      if (typeof current === 'number') return current > 0;
+      return String(current ?? '').trim() !== '' && String(current) !== 'false';
+    }
     return String(current ?? '') === String(field.showIf.equals ?? '');
   };
 

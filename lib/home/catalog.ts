@@ -34,7 +34,7 @@ export interface HomeField {
   wide?: boolean;
   options?: Array<{ value: string; label: string }>;
   /** Le champ n'apparaît que si un autre réglage a telle valeur. */
-  showIf?: { key: string; equals: unknown };
+  showIf?: { key: string; equals?: unknown; truthy?: boolean };
 }
 
 export interface HomeRepeaterField {
@@ -62,9 +62,21 @@ export interface HomeRepeater {
   defaults: Record<string, unknown>;
 }
 
+/** Ressources que le panneau de sélection sait parcourir. */
+export type HomePickerResource = 'hero' | 'products' | 'testimonials' | 'events' | 'news' | 'partners' | 'careers' | 'pages';
+
 export interface HomePicker {
   /** Ressource du CMS à parcourir pour choisir les fiches. */
-  resource: 'hero' | 'products' | 'testimonials' | 'events' | 'news' | 'partners' | 'pages';
+  resource: HomePickerResource;
+  /**
+   * Touche de réglage qui choisit la ressource parcourue (bandeau défilant : le
+   * module à afficher est une config du bloc, pas une entrée de catalogue par module).
+   */
+  resourceFrom?: string;
+  /** Ressources proposées quand le réglage vaut `mixed`. */
+  resourceList?: HomePickerResource[];
+  /** Valeur du réglage qui retire toute liste de fiches (le bloc ne vit plus que de ses blocs libres). */
+  resourceHide?: string;
   label: string;
   labelKey?: string;
   /** Ce qui identifie une fiche dans la liste (champ de la ressource). */
@@ -87,6 +99,24 @@ export interface HomePicker {
   /** Libellé du panneau de réglage par fiche. */
   overrideLabel?: string;
   overrideLabelKey?: string;
+}
+
+/**
+ * Ce que le panneau de sélection doit parcourir : la ressource prévue au
+ * catalogue, ou celle que le réglage du bloc est en train de viser.
+ */
+export function pickerResources(
+  picker: HomePicker,
+  config: { settings?: Record<string, unknown> } | undefined,
+): { current: HomePickerResource | null; browse: HomePickerResource[] } {
+  if (!picker.resourceFrom) return { current: picker.resource, browse: [] };
+  const value = String(config?.settings?.[picker.resourceFrom] ?? '');
+  if (picker.resourceHide && value === picker.resourceHide) return { current: null, browse: [] };
+  if (value === 'mixed') {
+    const list = picker.resourceList || [];
+    return { current: list[0] ?? null, browse: list };
+  }
+  return { current: (value || picker.resource) as HomePickerResource, browse: [] };
 }
 
 export interface HomeCatalogEntry {
@@ -212,33 +242,237 @@ export const HOME_CATALOG: HomeCatalogEntry[] = [
   },
   {
     key: 'partners-marquee',
-    label: 'Bandeau partenaires défilant',
+    label: 'Bandeau défilant (marques, actualités, blocs libres)',
     labelKey: 'marquee',
-    description: 'Le fil defilement continu des logos, sous le slider.',
+    description:
+      "Ce qui défile se choisit ici : logos de partenaires, actualités, événements, offres d'emploi, produits, un mélange de ces modules, ou les blocs saisis dans le studio (texte, image, texte + image). Titre facultatif, marges, hauteur des éléments et largeur automatique.",
     descriptionKey: 'marqueeDesc',
-    icon: 'MoveHorizontal',
+    icon: 'MoveRight',
     visibilityKey: 'section.marquee',
     hasBackground: true,
-    picker: {
-      resource: 'partners', label: 'Partenaires affichés', labelKey: 'partners', titleField: 'name',
-      imageField: 'logo', sortable: true, allowAuto: true, defaultLimit: 12,
-      sorts: [{ value: 'manual', label: 'Ordre du module' }, { value: 'title-asc', label: 'Nom (A→Z)' }],
-    },
     fields: [
-      { key: 'label', label: 'Accroche du bandeau', kind: 'text', scope: 'texts', i18n: true, max: 120, hint: LANG_NOTE },
-      { key: 'speed', label: 'Vitesse de défilement', kind: 'number', scope: 'settings', min: 5, max: 120, step: 5, suffix: 's' },
-      { key: 'direction', label: 'Sens', kind: 'select', scope: 'settings', options: [
-        { value: 'left', label: 'Vers la gauche' },
-        { value: 'right', label: 'Vers la droite' },
-      ] },
-      { key: 'showLogos', label: 'Afficher les logos', kind: 'toggle', scope: 'settings', hint: 'Sans fichier logo lisible, le nom de la marque reste affiché.' },
-      { key: 'showNames', label: 'Afficher le nom à côté du logo', kind: 'toggle', scope: 'settings' },
-      { key: 'logoHeight', label: 'Hauteur des logos', kind: 'number', scope: 'settings', min: 16, max: 96, step: 4, suffix: 'px' },
-      { key: 'logoGap', label: 'Espace entre les logos', kind: 'number', scope: 'settings', min: 0, max: 96, step: 4, suffix: 'px' },
+      { key: 'label', label: 'Accroche au-dessus du bandeau', kind: 'text', scope: 'texts', i18n: true, max: 120, hint: LANG_NOTE },
+      {
+        key: 'source',
+        label: "Ce qui défile",
+        kind: 'select',
+        scope: 'settings',
+        options: [
+          { value: 'partners', label: 'Les partenaires' },
+          { value: 'news', label: 'Les actualités' },
+          { value: 'events', label: 'Les événements' },
+          { value: 'careers', label: "Les offres d'emploi" },
+          { value: 'products', label: 'Les produits' },
+          { value: 'mixed', label: 'Un mélange de ces modules' },
+          { value: 'custom', label: 'Seulement les blocs du studio' },
+        ],
+        hint: "Les fiches ne sont pas recopiées dans le bloc : le bandeau lit le module choisi au moment d'afficher la page.",
+      },
+      {
+        key: 'mixedSources',
+        label: 'Modules du mélange',
+        kind: 'text',
+        scope: 'settings',
+        showIf: { key: 'source', equals: 'mixed' },
+        hint: 'Liste séparée par des virgules — partners, news, events, careers, products.',
+      },
+      {
+        key: 'itemKind',
+        label: "Type d'élément",
+        kind: 'select',
+        scope: 'settings',
+        options: [
+          { value: 'auto', label: 'Automatique (selon ce que la fiche contient)' },
+          { value: 'image-text', label: 'Texte + image' },
+          { value: 'image', label: 'Image seule' },
+          { value: 'text', label: 'Texte seul' },
+        ],
+        hint: "Le réglage d'un bloc saisi dans le studio passe devant celui-ci.",
+      },
+      { key: 'appendFree', label: 'Blocs du studio après la liste', kind: 'toggle', scope: 'settings' },
+      {
+        key: 'showImage',
+        label: "Afficher l'image",
+        kind: 'toggle',
+        scope: 'settings',
+        hint: "Sans fichier image lisible, le titre de l'élément prend sa place (ou les initiales de la marque).",
+      },
+      { key: 'showTitle', label: 'Afficher le titre', kind: 'toggle', scope: 'settings' },
+      { key: 'showText', label: 'Afficher le texte', kind: 'toggle', scope: 'settings' },
+      {
+        key: 'itemHeight',
+        label: "Hauteur d'un élément",
+        kind: 'number',
+        scope: 'settings',
+        min: 16,
+        max: 240,
+        step: 4,
+        suffix: 'px',
+        hint: "Le bandeau prend cette hauteur, augmentée de la marge intérieure. Les images se règlent dessus.",
+      },
+      {
+        key: 'mediaWidth',
+        label: "Largeur de l'image",
+        kind: 'number',
+        scope: 'settings',
+        min: 0,
+        max: 480,
+        step: 8,
+        suffix: 'px',
+        hint: "0 = largeur automatique : l'image garde son ratio à la hauteur choisie. Une valeur fixe impose une boîte identique pour tous les éléments.",
+      },
+      {
+        key: 'mediaFit',
+        label: 'Cadrage dans la boîte',
+        kind: 'select',
+        scope: 'settings',
+        options: [
+          { value: 'contain', label: 'Image entière' },
+          { value: 'cover', label: 'Remplir la boîte' },
+        ],
+        showIf: { key: 'mediaWidth', truthy: true },
+      },
+      { key: 'mediaRadius', label: "Arrondi de l'image", kind: 'number', scope: 'settings', min: 0, max: 48, step: 2, suffix: 'px' },
+      { key: 'mediaGap', label: 'Espace image / texte', kind: 'number', scope: 'settings', min: 0, max: 64, step: 2, suffix: 'px' },
+      {
+        key: 'textSize',
+        label: 'Taille du texte',
+        kind: 'select',
+        scope: 'settings',
+        options: [
+          { value: 'xs', label: 'Très petit' },
+          { value: 'sm', label: 'Petit' },
+          { value: 'base', label: 'Normal' },
+          { value: 'lg', label: 'Grand' },
+          { value: 'xl', label: 'Très grand' },
+        ],
+      },
+      {
+        key: 'textLines',
+        label: 'Lignes de texte conservées',
+        kind: 'number',
+        scope: 'settings',
+        min: 0,
+        max: 4,
+        step: 1,
+        hint: '0 = sans borne ; au-delà, le texte est tronqué sur les lignes indiquées.',
+      },
+      { key: 'itemGap', label: 'Espace entre les éléments', kind: 'number', scope: 'settings', min: 0, max: 128, step: 4, suffix: 'px' },
+      { key: 'itemPadding', label: "Marge intérieure d'un élément", kind: 'number', scope: 'settings', min: 0, max: 48, step: 2, suffix: 'px' },
+      { key: 'marginTop', label: 'Marge au-dessus du bandeau', kind: 'number', scope: 'settings', min: 0, max: 160, step: 4, suffix: 'px' },
+      { key: 'marginBottom', label: 'Marge sous le bandeau', kind: 'number', scope: 'settings', min: 0, max: 160, step: 4, suffix: 'px' },
+      {
+        key: 'valign',
+        label: 'Alignement vertical',
+        kind: 'select',
+        scope: 'settings',
+        options: [
+          { value: 'top', label: 'En haut' },
+          { value: 'middle', label: 'Au milieu' },
+          { value: 'bottom', label: 'En bas' },
+        ],
+      },
+      {
+        key: 'cardStyle',
+        label: "Présentation d'un élément",
+        kind: 'select',
+        scope: 'settings',
+        options: [
+          { value: 'plain', label: 'À plat' },
+          { value: 'chip', label: 'Pastille' },
+          { value: 'card', label: 'Carte' },
+        ],
+      },
+      { key: 'edgeFade', label: 'Fondu sur les bords', kind: 'toggle', scope: 'settings' },
+      {
+        key: 'linkItems',
+        label: 'Éléments cliquables',
+        kind: 'toggle',
+        scope: 'settings',
+        hint: "Une fiche pointe vers sa page ; un bloc libre vers son lien.",
+      },
+      { key: 'showSeparator', label: 'Séparateur entre les éléments', kind: 'toggle', scope: 'settings' },
+      { key: 'separator', label: 'Caractère du séparateur', kind: 'text', scope: 'settings', max: 3, showIf: { key: 'showSeparator', truthy: true } },
+      { key: 'speed', label: 'Vitesse de défilement', kind: 'number', scope: 'settings', min: 5, max: 120, step: 5, suffix: 's', hint: 'Durée d\'un tour complet.' },
+      {
+        key: 'direction',
+        label: 'Sens',
+        kind: 'select',
+        scope: 'settings',
+        options: [
+          { value: 'left', label: 'Vers la gauche' },
+          { value: 'right', label: 'Vers la droite' },
+        ],
+        hint: 'Par défaut, le sens suit la langue de la page.',
+      },
       { key: 'pauseOnHover', label: 'Pause au survol', kind: 'toggle', scope: 'settings' },
-      { key: 'separator', label: 'Séparateur', kind: 'text', scope: 'settings', max: 3 },
     ],
+    picker: {
+      resource: 'partners',
+      label: 'Fiches affichées par le bandeau',
+      labelKey: 'marqueePick',
+      titleField: 'name',
+      imageField: 'logo',
+      metaField: 'category',
+      sortable: true,
+      allowAuto: true,
+      defaultLimit: 12,
+      // La ressource parcourue suit le réglage « Ce qui défile » : une seule
+      // entrée de catalogue pour tous les cas, au lieu d'un bloc par module.
+      resourceFrom: 'source',
+      resourceList: ['news', 'events', 'products', 'partners', 'careers'],
+      resourceHide: 'custom',
+      sorts: [
+        { value: 'manual', label: 'Ordre du module' },
+        { value: 'byDate', label: "Plus anciennes d'abord" },
+        { value: 'byDateDesc', label: "Plus récentes d'abord" },
+        { value: 'title-asc', label: 'Titre (A→Z)' },
+      ],
+      overrideLabel: "Régler cet élément pour la page d'accueil",
+      overrideFields: [
+        {
+          key: 'kind',
+          label: "Type d'élément",
+          kind: 'select',
+          options: [
+            { value: 'auto', label: 'Automatique' },
+            { value: 'image-text', label: 'Texte + image' },
+            { value: 'image', label: 'Image seule' },
+            { value: 'text', label: 'Texte seul' },
+          ],
+        },
+        { key: 'title', label: 'Titre affiché', kind: 'text', i18n: true, wide: true, hint: 'Vide = titre de la fiche.' },
+        { key: 'text', label: 'Texte affiché', kind: 'textarea', i18n: true, wide: true },
+        { key: 'image', label: 'Image (remplace celle de la fiche)', kind: 'image', wide: true },
+        { key: 'enabled', label: 'Afficher cet élément', kind: 'toggle' },
+      ],
+    },
+    // Les blocs saisis ici, seuls ou en plus d'un module.
+    repeater: {
+      label: 'Blocs du studio',
+      labelKey: 'marqueeItems',
+      titleKey: 'title',
+      defaults: { from: 'free', kind: 'image-text', enabled: true },
+      fields: [
+        {
+          key: 'kind',
+          label: "Type d'élément",
+          kind: 'select',
+          options: [
+            { value: 'image-text', label: 'Texte + image' },
+            { value: 'image', label: 'Image seule' },
+            { value: 'text', label: 'Texte seul' },
+          ],
+        },
+        { key: 'title', label: 'Titre', kind: 'text', i18n: true, wide: true },
+        { key: 'text', label: 'Texte', kind: 'textarea', i18n: true, wide: true },
+        { key: 'image', label: 'Image', kind: 'image', wide: true },
+        { key: 'href', label: 'Lien', kind: 'text', placeholder: '/about' },
+        { key: 'enabled', label: 'Afficher ce bloc', kind: 'toggle' },
+      ],
+    },
   },
+
   {
     key: 'navigation',
     label: 'Grille des univers',

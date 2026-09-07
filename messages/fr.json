@@ -1985,7 +1985,7 @@
       "copyDone": "Copie effectuée vers : {locales}",
       "blocks": {
         "hero": "Slider (bannière)",
-        "marquee": "Bandeau partenaires défilant",
+        "marquee": "Bandeau défilant (marques, actualités, blocs libres)",
         "navigation": "Grille des univers",
         "mission": "Notre mission",
         "products": "Produits phares",
@@ -2000,7 +2000,7 @@
       },
       "hints": {
         "heroDesc": "Choisissez les slides à afficher, réglez-les un par un et le comportement du diaporama.",
-        "marqueeDesc": "Le fil à défilement continu des logos, sous le slider.",
+        "marqueeDesc": "Ce qui défile se choisit ici : logos des partenaires, actualités, événements, offres d'emploi, produits, un mélange de ces modules, ou les blocs saisis dans le studio. Titre facultatif, marges et taille des éléments réglables.",
         "navigationDesc": "Tuiles de navigation (solutions, services, produits, événements, actualités, carrières).",
         "missionDesc": "Bandeau texte sur image de fond avec bouton — textes, style et constructeur de page.",
         "productsDesc": "Titre, description, nombre de produits et sélection des fiches à mettre en avant.",
@@ -2025,7 +2025,9 @@
         "newsPick": "Actualités",
         "newsletterArgs": "Arguments affichés",
         "partnersPick": "Partenaires",
-        "tuneSlide": "Régler ce slide pour la page d’accueil"
+        "tuneSlide": "Régler ce slide pour la page d’accueil",
+        "marqueeItems": "Blocs du studio",
+        "marqueePick": "Fiches affichées par le bandeau"
       },
       "importAction": "{count, plural, =0 {Aucune donnée à reprendre} one {Reprendre ce bloc} other {Reprendre les données du site (#)}}",
       "importHint": "Copie le contenu déjà publié — fiches du catalogue, chiffres du fichier de configuration, libellés traduits — dans la configuration enregistrée du bloc. Ce que l’administration a déjà enregistré n’est jamais écrasé.",
@@ -2033,7 +2035,16 @@
       "confirmImport": "{count, plural, one {Reprendre le contenu du site dans ce bloc ? Il sera écrit dans la configuration et deviendra modifiable.} other {Reprendre le contenu du site dans les # blocs concernés ? Il sera écrit dans la configuration et deviendra modifiable.}}",
       "importDone": "{count, plural, one {# bloc repris.} other {# blocs repris.}}",
       "seededChip": "repris du site",
-      "importBanner": "Ce bloc affiche pour l’instant le contenu des fichiers du site : rien n’a encore été enregistré ici. Enregistrer le bloc fige ce contenu ; « Reprendre » l’écrit tel quel dans la configuration, où vous pouvez le modifier puis le supprimer."
+      "importBanner": "Ce bloc affiche pour l’instant le contenu des fichiers du site : rien n’a encore été enregistré ici. Enregistrer le bloc fige ce contenu ; « Reprendre » l’écrit tel quel dans la configuration, où vous pouvez le modifier puis le supprimer.",
+      "browseSource": "Module parcouru",
+      "freeOnlySource": "Le bandeau est réglé sur « Seulement les blocs du studio » : il n'utilise aucune fiche de module, uniquement les blocs saisis ci-dessous.",
+      "sources": {
+        "news": "Actualités",
+        "events": "Événements",
+        "products": "Produits",
+        "partners": "Partenaires",
+        "careers": "Offres d'emploi"
+      }
     },
     "newsletter": {
       "title": "Abonnés à la newsletter",
@@ -2613,7 +2624,8 @@
         "viewAll": "Voir toutes les actualités"
       },
       "MarqueePartners": {
-        "label": "Ils nous font confiance"
+        "label": "Ils nous font confiance",
+        "ariaLabel": "Éléments défilants"
       },
       "NavigationGrid": {
         "subtitle": "Nos Univers",

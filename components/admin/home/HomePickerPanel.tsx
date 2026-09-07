@@ -17,7 +17,7 @@ import { useTranslations } from 'next-intl';
 import { ArrowDown, ArrowUp, ChevronDown, GripVertical, Plus, Search, Settings2, X } from 'lucide-react';
 import { fetchHomeOptions } from '@/lib/home/client';
 import type { HomeOption } from '@/lib/home/config';
-import type { HomeField, HomePicker } from '@/lib/home/catalog';
+import { pickerResources, type HomeField, type HomePicker, type HomePickerResource } from '@/lib/home/catalog';
 import { limitOf, numberSetting, type HomeItem, type HomeSectionConfig } from '@/lib/home/config';
 import HomeFieldControl from '@/components/admin/home/HomeField';
 import { useToast } from '@/components/admin/Toast';
@@ -41,6 +41,12 @@ export default function HomePickerPanel({ picker, config, locale, onChange, sett
   const [query, setQuery] = useState('');
   const [drag, setDrag] = useState<number | null>(null);
   const [tuning, setTuning] = useState<string | null>(null);
+  /**
+   * Le bandeau défilant parcourt plusieurs modules à la fois : l'onglet choisi
+   * ne change que la liste que l'on feuillette, les identifiants déjà retenus
+   * restent dans la même sélection.
+   */
+  const [browse, setBrowse] = useState<HomePickerResource | null>(null);
 
   /**
    * Réglage d'une fiche sélectionnée (titre d'un slide, par exemple) : il est
@@ -67,10 +73,22 @@ export default function HomePickerPanel({ picker, config, locale, onChange, sett
   const ids = useMemo(() => (config.selection?.ids || []).map(String), [config.selection]);
   const manual = config.selection?.mode === 'manual';
 
+  const resolved = useMemo(() => pickerResources(picker, config), [picker, config]);
+  const browseList = resolved.browse;
+  // L'onglet parcouru ne survit pas à un changement de source : s'il n'est plus
+  // dans la liste proposée, on revient à la ressource du réglage.
+  const resource: HomePickerResource | null =
+    browse && browseList.includes(browse) ? browse : resolved.current;
+
   useEffect(() => {
+    if (!resource) {
+      setOptions([]);
+      setLoading(false);
+      return;
+    }
     let cancelled = false;
     setLoading(true);
-    fetchHomeOptions(picker.resource, locale)
+    fetchHomeOptions(resource, locale)
       .then((rows) => {
         if (!cancelled) setOptions(rows);
       })
@@ -86,7 +104,7 @@ export default function HomePickerPanel({ picker, config, locale, onChange, sett
     return () => {
       cancelled = true;
     };
-  }, [picker.resource, locale, showToast]);
+  }, [resource, locale, showToast]);
 
   const byId = useMemo(() => new Map((options || []).map((option) => [String(option.id), option])), [options]);
 
@@ -121,6 +139,35 @@ export default function HomePickerPanel({ picker, config, locale, onChange, sett
 
   return (
     <div className="space-y-4">
+      {browseList.length > 1 ? (
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-[11px] font-black uppercase tracking-[0.14em]" style={{ color: 'var(--ad-muted)' }}>
+            {t('browseSource')}
+          </span>
+          {browseList.map((item) => (
+            <button
+              key={item}
+              type="button"
+              disabled={disabled}
+              className={`px-2 py-1 text-xs font-bold rounded-md border transition ${resource === item ? '' : 'opacity-70 hover:opacity-100'}`}
+              style={{
+                borderColor: 'var(--ad-line)',
+                background: resource === item ? 'var(--ad-accent)' : 'transparent',
+                color: resource === item ? 'var(--ad-accent-ink)' : 'inherit',
+              }}
+              onClick={() => setBrowse(item)}
+            >
+              {t(`sources.${item}`, { defaultValue: item })}
+            </button>
+          ))}
+        </div>
+      ) : null}
+      {resource === null ? (
+        <p className="text-xs leading-relaxed" style={{ color: 'var(--ad-muted)' }}>
+          {t('freeOnlySource')}
+        </p>
+      ) : null}
+      {resource === null ? null : (
       <div className="flex flex-wrap items-center gap-2">
         <div className="inline-flex rounded-lg overflow-hidden border" style={{ borderColor: 'var(--ad-line)' }}>
           {[
@@ -146,6 +193,7 @@ export default function HomePickerPanel({ picker, config, locale, onChange, sett
           {manual ? t('manualHint', { count: ids.length }) : t('autoHint', { count: limitOf(config, picker.defaultLimit) })}
         </span>
       </div>
+      )}
 
       <div className="grid md:grid-cols-2 gap-3">
         {settingFields.map((field) => (
@@ -153,7 +201,7 @@ export default function HomePickerPanel({ picker, config, locale, onChange, sett
         ))}
       </div>
 
-      {manual ? (
+      {resource === null ? null : manual ? (
         <div className="ad-card p-3 space-y-2">
           <div className="flex items-center justify-between gap-2">
             <h4 className="text-[11px] font-black uppercase tracking-[0.14em]" style={{ color: 'var(--ad-muted)' }}>

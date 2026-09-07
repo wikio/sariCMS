@@ -1,6 +1,6 @@
 // app/[locale]/page.tsx
 import { getTranslations } from 'next-intl/server';
-import { getHero, getProducts, getTestimonials, getPartners, getNews, getEvents, getConfig } from '@/lib/data';
+import { getHero, getProducts, getTestimonials, getPartners, getNews, getEvents, getCareers, getConfig } from '@/lib/data';
 // La configuration des blocs vient du module serveur (il lit les fichiers de
 // secours) : jamais par `lib/data.ts`, que des composants client importent.
 import { getHomeSnapshot } from '@/lib/home/store';
@@ -62,7 +62,21 @@ function renderSection(
     case 'hero':
       return <HeroSlider slides={data.hero as never} config={config} firstOnPage={firstOnPage} />;
     case 'partners-marquee':
-      return <MarqueePartners partners={data.partners as never} config={config} />;
+      // Le bandeau lit les fiches telles quelles : rien n'est recopié dans le
+      // bloc, donc une fiche corrigée dans son module apparaît au prochain rendu.
+      return (
+        <MarqueePartners
+          partners={data.partners as never}
+          pools={{
+            partners: data.partners as never,
+            news: data.news as never,
+            events: data.events as never,
+            careers: data.careers as never,
+            products: data.products as never,
+          }}
+          config={config}
+        />
+      );
     case 'navigation':
       return <NavigationGrid config={config} />;
     case 'mission':
@@ -93,19 +107,23 @@ function renderSection(
 export default async function HomePage({ params }: { params: Promise<{ locale: Locale }> }) {
   const { locale } = await params;
 
-  // ✅ Chargement parallèle de toutes les données, configuration des blocs comprise
-  const [hero, products, testimonials, partners, news, events, config, home] = await Promise.all([
+  // ✅ Chargement parallèle de toutes les données, configuration des blocs comprise.
+  // `careers` n'alimente qu'un seul bloc (le bandeau) mais il est lu ici comme
+  // les autres : un bloc doit pouvoir viser n'importe quel module sans que la
+  // page ait à savoir qui en a besoin.
+  const [hero, products, testimonials, partners, news, events, careers, config, home] = await Promise.all([
     getHero(locale),
     getProducts(locale),
     getTestimonials(locale),
     getPartners(locale),
     getNews(locale),
     getEvents(locale),
+    getCareers(locale),
     getConfig(locale),
     getHomeSnapshot(locale),
   ]);
 
-  const data = { hero, products, testimonials, partners, news, events, config };
+  const data = { hero, products, testimonials, partners, news, events, careers, config };
   const order = (home.order?.length ? home.order : HOME_ORDER) as HomeSectionKey[];
 
   return (

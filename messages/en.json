@@ -1985,7 +1985,7 @@
       "copyDone": "Copied to: {locales}",
       "blocks": {
         "hero": "Slider (banner)",
-        "marquee": "Scrolling partners strip",
+        "marquee": "Scrolling band (brands, news, studio blocks)",
         "navigation": "Universes grid",
         "mission": "Our mission",
         "products": "Featured products",
@@ -2000,7 +2000,7 @@
       },
       "hints": {
         "heroDesc": "Choose which slides appear, tune them one by one and set the slideshow behaviour.",
-        "marqueeDesc": "The continuously scrolling logo strip under the slider.",
+        "marqueeDesc": "What scrolls is chosen here: partner logos, news, events, job offers, products, a mix of those modules, or blocks written in the studio. Title optional, margins and item size configurable.",
         "navigationDesc": "Navigation tiles (solutions, services, products, events, news, careers).",
         "missionDesc": "Text band over a background image with a button — texts, style and page builder.",
         "productsDesc": "Title, description, number of products and which cards to feature.",
@@ -2025,7 +2025,9 @@
         "newsPick": "News",
         "newsletterArgs": "Arguments shown",
         "partnersPick": "Partners",
-        "tuneSlide": "Tune this slide for the home page"
+        "tuneSlide": "Tune this slide for the home page",
+        "marqueeItems": "Studio blocks",
+        "marqueePick": "Records shown by the band"
       },
       "importAction": "{count, plural, =0 {Nothing to take over} one {Take over this block} other {Take over site data (#)}}",
       "importHint": "Copies the content already published — catalogue records, figures from the configuration file, translated labels — into the block's saved configuration. Anything the back-office has already saved is never overwritten.",
@@ -2033,7 +2035,16 @@
       "confirmImport": "{count, plural, one {Take over the site content into this block? It will be written into the configuration and become editable.} other {Take over the site content into the # affected blocks? It will be written into the configuration and become editable.}}",
       "importDone": "{count, plural, one {# block taken over.} other {# blocks taken over.}}",
       "seededChip": "from the site",
-      "importBanner": "This block currently shows content read from the site's files: nothing has been saved here yet. Saving the block freezes that content; “Take over” writes it into the configuration, where you can edit or remove it."
+      "importBanner": "This block currently shows content read from the site's files: nothing has been saved here yet. Saving the block freezes that content; “Take over” writes it into the configuration, where you can edit or remove it.",
+      "browseSource": "Module being browsed",
+      "freeOnlySource": "The band is set to “Studio blocks only”: it uses no module records, only the blocks written below.",
+      "sources": {
+        "news": "News",
+        "events": "Events",
+        "products": "Products",
+        "partners": "Partners",
+        "careers": "Job offers"
+      }
     },
     "newsletter": {
       "title": "Newsletter subscribers",
@@ -2613,7 +2624,8 @@
         "viewAll": "View all news"
       },
       "MarqueePartners": {
-        "label": "They trust us"
+        "label": "They trust us",
+        "ariaLabel": "Scrolling items"
       },
       "NavigationGrid": {
         "subtitle": "Our Universes",

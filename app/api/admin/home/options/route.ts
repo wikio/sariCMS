@@ -13,7 +13,7 @@ import { homeOptions, type HomeOptionResource } from '@/lib/home/store';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const ALLOWED: HomeOptionResource[] = ['hero', 'products', 'testimonials', 'events', 'news', 'partners', 'pages'];
+const ALLOWED: HomeOptionResource[] = ['hero', 'products', 'testimonials', 'events', 'news', 'partners', 'careers', 'pages'];
 
 export async function GET(req: NextRequest) {
   const resource = String(req.nextUrl.searchParams.get('resource') || 'products') as HomeOptionResource;

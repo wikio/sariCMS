@@ -258,7 +258,12 @@
     white-space: nowrap;
   }
   .marquee-content {
-    display: inline-block;
+    /* Éléments alignés les uns à côté des autres, et non posés sur la ligne de
+       base : un élément « image + texte » à côté d'une image seule doit partager
+       le même centrage vertical, sinon le bandeau paraît de travers. */
+    display: flex;
+    align-items: center;
+    width: max-content;
     animation: marquee 30s linear infinite;
   }
 
@@ -500,8 +505,18 @@
 }
 
 .marquee-content {
-  display: inline-block;
+  display: flex;
+  align-items: center;
+  width: max-content;
   animation: marquee 30s linear infinite;
+}
+
+/* Un visiteur qui a demandé « moins de mouvements » est servi : le bandeau
+   reste lisible, il ne défile plus. */
+@media (prefers-reduced-motion: reduce) {
+  .marquee-content {
+    animation: none;
+  }
 }
 
 @keyframes marquee {

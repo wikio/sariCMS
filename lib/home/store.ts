@@ -432,6 +432,7 @@ async function localOptions(locale: string, resource: HomeOptionResource): Promi
     : resource === 'events' ? 'events'
     : resource === 'news' ? 'news'
     : resource === 'partners' ? 'partners'
+    : resource === 'careers' ? 'careers'
     : 'genericContent';
   try {
     const raw = await fs.readFile(path.join(DATA_DIR, locale, `${file}.json`), 'utf8');

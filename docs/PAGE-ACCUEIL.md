@@ -16,6 +16,7 @@ propre écran, **Administration → Newsletter**, avec un vrai CRUD en base.
 | Ordre des blocs | Ordre JSX figé | Listes réordonnables (glisser ou flèches), enregistré |
 | Témoignages, événements, actualités, partenaires | Premier arrivé, premier affiché | Sélection manuelle des fiches, ordre libre, ou automatique avec tri |
 | Blocs en alternance, chiffres, tuiles de navigation | Trois blocs codés en dur dans le composant | Listes administrables : ajouter, dupliquer, masquer, réordonner |
+| Bandeau défilant | Les seuls logos des partenaires, hauteur et espace écrits dans le composant, défilement qui se moquait de la ligne de base | Bandeau **universel** : provenance choisie (partenaires, actualités, événements, offres d’emploi, produits, mélange, blocs libres du studio), type d’élément (texte, image, texte + image) réglable pour le bloc et fiche par fiche, titre facultatif, hauteur d’élément et largeur d’image automatique ou fixée, marges et espacements réglés, sens et vitesse, fondu sur les bords, `prefers-reduced-motion`, exemples en base |
 | Newsletter | `setState` local, rien d’enregistré | Inscription serveur en deux temps (fenêtre de confirmation, **captcha en image**), liste filtrable avec lignes par page réglables, fiche de consultation, corbeille, motifs de désabonnement, export de la sélection ou de la liste |
 | Blocs vierges à la première ouverture | Formulaire vide alors que la page, elle, affichait bien le contenu du site | Le contenu publié est **repris** dans la configuration (voir plus bas) et l’action « Reprendre » l’enregistre |
 | Multilingue | Réglage unique pour trois langues | **Textes par langue**, structure commune (voir plus bas) |
@@ -26,7 +27,7 @@ propre écran, **Administration → Newsletter**, avec un vrai CRUD en base.
 | Bloc | Ce qu’on y règle |
 |---|---|
 | Slider (bannière) | Choix des slides, ordre, réglage fiche par fiche (titre, texte, bouton, image, affichage), autoplay, durée, pastilles, flèches, hauteur, voile, alignement |
-| Bandeau partenaires défilant | Partenaires retenus, vitesse, sens, logos ou noms, séparateur, pause au survol |
+| Bandeau défilant | Ce qui défile (partenaires, actualités, événements, offres d’emploi, produits, mélange, blocs libres du studio), type d’élément (texte, image, texte + image), titre facultatif, hauteur de l’élément, largeur d’image automatique ou fixée, cadrage, arrondi, espacements, marges, séparateur, vitesse, sens, pause au survol |
 | Grille des univers | Tuiles (libellé, description, lien, icône, image), colonnes |
 | Notre mission | Surtitre, titre, texte, bouton + lien, image de fond, voile, hauteur, parallaxe, alignement, CSS libre, constructeur |
 | Produits phares | Titre, description, nombre, fiches sélectionnées, format de carte, prix et disponibilité visibles, bouton « tout voir » |
@@ -176,22 +177,94 @@ colonnes et sur mobile. Le défaut des produits passe de 24 à 32 px, comme les
 trois autres grilles. Le réglage « Hauteur verticale » (`paddingY`) du bandeau de
 partenaires était dans le même cas ; il s’applique désormais.
 
-### Bandeau des partenaires : logos, noms, secours
+### Bandeau défilant : ce qui défile, à quelle taille, avec quel air
 
-Le logo vient de la fiche partenaire (`logo`) — ou de l’étiquette enregistrée dans
-le bloc en mode manuel, la fiche servant de secours. Quatre réglages : « Afficher
-les logos », « Afficher le nom à côté du logo », « Hauteur des logos » (40 px) et
-« Espace entre les logos » (32 px, en propriété logique, donc elle se retourne
-avec la page en arabe).
+Le bloc `partners-marquee` (nom de clé conservé pour ne pas casser les lignes
+déjà enregistrées) n’est plus réservé aux logos. Le réglage **« Ce qui défile »**
+choisit la provenance : les partenaires, les actualités, les événements, les
+offres d’emploi, les produits, **un mélange** de ces modules, ou **les seuls blocs
+saisis dans le studio**. Rien n’est recopié dans le bloc : la configuration ne
+stocke qu’une sélection (`selection` : mode, identifiants, nombre, tri) et des
+réglages, et la page d’accueil relit les fiches du module au moment du rendu. Une
+actualité corrigée dans son module change donc le bandeau sans qu’il faille y
+revenir.
 
-Une image qui ne charge pas est **retirée du rendu** et remplacée par un
-monogramme aux initiales de la marque, jamais par un cadre cassé. C’était
-précisément le cas des partenaires de démonstration : leurs logos pointent vers
-`via.placeholder.com`, service aujourd’hui arrêté, et le bandeau paraissait vide
-alors que la liste, elle, était bien chargée. Un logo réel (médiathèque)
-s’affiche normalement ; un lien mort laisse défiler le nom, comme avant. Le nombre
-de marques qui défilent se règle dans le sélecteur du bloc (« Partenaires
-affichés », douze par défaut).
+**Le type d’élément** (« Automatique », « Texte + image », « Image seule »,
+« Texte seul ») se règle pour tout le bloc et, fiche par fiche, dans le panneau de
+réglage du sélecteur. En mode automatique, c’est la nature de l’élément qui
+décide : un partenaire apporte son logo et son nom (pas sa catégorie, qui a sa
+place dans la grille des partenaires) ; une actualité, un événement, une offre ou
+un produit apportent leur image, leur titre et leur chapeau. Un bloc saisi dans le
+studio vaut ce qu’on en dit : `kind: "text"`, `"image"` ou `"image-text"`.
+
+**Les blocs libres** du studio vivent dans `items`, marqués `from: "free"`, avec
+titre, texte, image (médiathèque) et lien. Ils s’ajoutent à la liste des fiches
+après elle, ou avant si « Blocs du studio après la liste » est décoché ; réglés
+sur « Seulement les blocs du studio », ils sont la seule source. Comme tout le
+reste du module, leur *structure* (nombre, ordre) est portée par la langue de
+référence et leurs *textes* par chaque langue — d’où l’intérêt de garder le même
+`id` d’un bloc d’une langue à l’autre (les exemples livrés le font).
+
+**La taille** se pilote par la hauteur : « Hauteur d’un élément » (40 px par
+défaut, jusqu’à 240) pose l’image à cette hauteur et donne la hauteur minimale du
+bloc. « Largeur de l’image » à **0 = automatique** : l’image garde son ratio,
+aucune déformation, et le bandeau s’adapte à ce qu’on lui donne ; une valeur fixe
+impose une boîte identique à tous les éléments, cadrée « Image entière »
+(`object-fit: contain`) ou « Remplir la boîte » (`cover`). Autour de ça : arrondi,
+espace image/texte, taille du texte, lignes conservées au-delà desquelles le texte
+est tronqué.
+
+**L’air** se règle pour tout ce qui entoure le bandeau : espace entre les
+éléments, marge intérieure d’un élément, marge au-dessus et au-dessous (celles du
+bloc « Bandeau de navigation » étaient demandées ici), alignement vertical,
+présentation (à plat, pastille, carte), fondu sur les bords, vitesse, sens, pause
+au survol, séparateur. Le sens par défaut suit la langue : vers la gauche en
+français et en anglais, vers la droite en arabe — l’espace entre éléments est une
+propriété logique (`margin-inline-end`) et se retourne avec la page. Les éléments
+sont cliquables vers leur fiche (`/news/…`, `/events/…`, `/jobs/…`, `/products/…`)
+ou vers le lien du bloc libre ; `linkItems: false` les rend non cliquables.
+
+Le titre au-dessus du bandeau reste **facultatif** : le bloc n’en prévoit aucun
+par défaut, une simple accroche (`label`) suffit, et l’en-tête complet (surtitre,
+titre, description) reste disponible dans l’onglet Apparence pour qui en veut un.
+
+Une image qui ne charge pas est retirée du rendu, jamais remplacée par un cadre
+cassé : le titre de l’élément prend sa place et, pour un partenaire, les initiales
+de la marque forment un monogramme. C’est ce qui sauvait le bandeau des
+partenaires de démonstration, dont les logos pointent vers `via.placeholder.com`,
+service arrêté.
+
+Le défilement est de la CSS pure (liste dupliquée une fois, `@keyframes marquee`)
+: aucun chargement d’image n’est nécessaire pour que le bandeau ne soit pas vide,
+et `@media (prefers-reduced-motion: reduce)` l’arrête net pour les visiteurs qui
+ont demandé moins de mouvement.
+
+Dans le studio, l’onglet **Sélection** du bloc change de ressource sous les yeux :
+le module parcouru est celui que « Ce qui défile » est en train de viser, et en
+mode mélange une rangée d’onglets (Actualités, Événements, Produits, Partenaires,
+Offres d’emploi) permet de feuilleter chaque module sans quitter la sélection —
+les identifiants retenus, eux, restent dans la même liste. Réglé sur « Seulement
+les blocs du studio », le panneau le dit et ne propose aucune fiche.
+
+**Exemples en base.** `backend/sql/seed-marquee.mysql.sql` insère trois lignes
+`home_sections` pour `partners-marquee`, une par langue, et les met à jour si la
+ligne existe déjà (`ON DUPLICATE KEY UPDATE` sur la clé unique `key`+`locale`) :
+
+    mysql -u utilisateur -p base < backend/sql/seed-marquee.mysql.sql
+
+- **fr** — `source: "mixed"` (`news,events,partners`), six fiches, éléments en
+  cartes de 72 px, image à largeur automatique, deux blocs du studio, pas de
+  titre au-dessus du bandeau ;
+- **en** — `source: "news"`, éléments en « texte + image » dans une boîte de
+  112 px cadrée `cover`, séparateur `/`, en-tête affiché ;
+- **ar** — `source: "custom"`, trois blocs du studio seulement (dont un en « image
+  seule »), pastilles, 56 px, défilement vers la droite.
+
+Les mêmes blocs sont écrits dans `data/fr/home.json`, `data/en/home.json` et
+`data/ar/home.json`, qui servent de secours quand le module serveur n’est pas
+joignable : la configuration est donc lisible dans le dépôt sans base. Les images
+d’exemple sont des SVG du dépôt (`public/media/marquee/`) plutôt que des URLs
+externes, pour que la démonstration fonctionne hors ligne.
 
 ## Newsletter
 

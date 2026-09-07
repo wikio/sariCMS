@@ -32,6 +32,7 @@ export type HomeOptionResource =
   | 'events'
   | 'news'
   | 'partners'
+  | 'careers'
   | 'pages';
 
 export interface HomeOption {
@@ -217,9 +218,34 @@ export const HOME_DEFAULTS: Record<HomeSectionKey, HomeSectionConfig> = {
     selection: { ...EMPTY_SELECTION, limit: 12 },
     settings: {
       speed: 30, direction: 'left', showLogos: true, showNames: true,
-      logoHeight: 40, logoGap: 32, pauseOnHover: true, separator: '•',
+      // Les clés historiques (`logoHeight`, `logoGap`, `showLogos`, `showNames`)
+      // restent les alias des nouvelles : une ligne déjà enregistrée garde son
+      // allure, et les nouveaux réglages s'appliquent à celles qui n'ont rien.
+      source: 'partners',
+      itemKind: 'auto',
+      appendFree: true,
+      showImage: true,
+      showTitle: true,
+      showText: true,
+      logoHeight: 40,
+      itemHeight: 40,
+      mediaWidth: 0,
+      mediaRadius: 8,
+      mediaGap: 12,
+      textSize: 'lg',
+      textLines: 2,
+      logoGap: 32,
+      itemGap: 32,
+      itemPadding: 0,
+      valign: 'middle',
+      cardStyle: 'plain',
+      edgeFade: true,
+      linkItems: true,
+      showSeparator: true,
+      pauseOnHover: true,
+      separator: '•',
     },
-    style: { background: 'blue', paddingY: 32, gap: 32, invert: true },
+    style: { background: 'blue', paddingY: 32, gap: 32, invert: true, showHeader: true },
   }),
   navigation: section('navigation', {
     selection: { ...EMPTY_SELECTION, limit: 6 },
