@@ -124,6 +124,12 @@ export default function BuilderPage() {
   const [newSlug, setNewSlug] = useState('');
   const [newTitle, setNewTitle] = useState('');
   const [templateId, setTemplateId] = useState('landing');
+  // Le point de départ choisi est lu à l'ouverture d'une page vierge. Un `ref`
+  // plutôt que la valeur : sinon changer ce bouton recréerait la fonction de
+  // chargement, qui recréerait l'effet, qui rechargerait la fiche par-dessus le
+  // travail en cours dans le canevas.
+  const templateRef = useRef(templateId);
+  templateRef.current = templateId;
 
   const current = useMemo(() => pages.find((p) => p.id === pageId) || null, [pages, pageId]);
   const key = slug ? builderKey(slug, locale) : '';
@@ -297,7 +303,7 @@ export default function BuilderPage() {
           ed.setComponents(next.html);
           ed.setStyle(next.css || STARTER_CSS);
         } else {
-          const start = starterTemplate(templateId) || STARTER_TEMPLATES[0];
+          const start = starterTemplate(templateRef.current) || STARTER_TEMPLATES[0];
           ed.setComponents(start ? start.html(locale) : '<section class="sari-band"><div class="sari-wrap"><h1>Titre</h1></div></section>');
           ed.setStyle(STARTER_CSS);
         }
@@ -306,7 +312,7 @@ export default function BuilderPage() {
         showToast(t('loadError'), 'error');
       }
     },
-    [locale, showToast, t, templateId],
+    [locale, showToast, t],
   );
 
   useEffect(() => {
@@ -375,7 +381,7 @@ export default function BuilderPage() {
       return;
     }
     try {
-      const start = starterTemplate(templateId) || STARTER_TEMPLATES[0];
+      const start = starterTemplate(templateRef.current) || STARTER_TEMPLATES[0];
       const created = await cmsAdminCreate('pages', {
         kind: 'generic',
         subtype: 'constructor',
