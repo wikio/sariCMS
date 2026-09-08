@@ -489,6 +489,30 @@ await acheck('la liste des médias ne peut pas produire deux clés identiques', 
   assert.match(route, /function mediaRowFromName/, 'la lecture d\'un nom de fichier passe par un seul endroit');
 });
 
+await acheck('un canves d\'atelier est toujours neuf, jamais recyclé', async () => {
+  // « Atelier indisponible : fabric: Trying to initialize a canvas that has already
+  // been initialized » : Fabric pose `data-fabric` sur l'élément et refuse le second
+  // passage sur la même balise. Les deux erreurs de la chaîne de montage — réutiliser le
+  // `<canvas>` trouvé dans l'hôte, et laisser un moteur mort à mi-chemin le récupérer —
+  // sont donc interdites par le texte même du fichier.
+  const studio = await readFile('components/canvas/CanvasStudio.tsx', 'utf8');
+  assert.ok(!/const existing = host\.querySelector\('canvas'\)/.test(studio), 'ensureCanvas ne doit pas recycler un <canvas> existant');
+  assert.ok(/ensureCanvas[\s\S]{0,200}purgeFabricDom\(host\)[\s\S]{0,200}createElement\('canvas'\)/.test(studio), 'ensureCanvas doit purger puis créer un élément neuf');
+  assert.ok(studio.includes('purgeFabricDom(host.current)'), 'un moteur qui échoue doit purger le canves marqué');
+  assert.ok(studio.includes("Redémarrer l{'\u2019'}") && studio.includes('setRetryKey((value) => value + 1)'), "l'échec de démarrage doit être réessayable depuis l'écran");
+});
+
+await acheck('un enregistrement raté ne ferme pas l\'atelier', async () => {
+  // Le geste perdu : « Enregistrer » échoue (fiche refusée, plan trop lourd), l'atelier
+  // se ferme quand même, la planche part avec la fenêtre. `save()` rend `null` et le
+  // bouton « Fermer » exige une confirmation explicite sur une planche modifiée.
+  const studio = await readFile('components/canvas/CanvasStudio.tsx', 'utf8');
+  const body = studio.slice(studio.indexOf('const save = async'), studio.indexOf('const download = async'));
+  assert.ok(!/throw error instanceof/.test(body), 'save() ne doit pas rejeter : plus personne n\'écoute la promesse');
+  assert.match(body, /Enregistrement impossible/, 'la panne doit être annoncée dans la barre d\'état');
+  assert.ok(studio.includes('Fermer quand m') && studio.includes('pas enregistr'), 'fermer sur un travail non enregistré doit être demandé');
+});
+
 /* ------------------------------------------------- le contrat front ↔ backend */
 
 console.log('\nLes routes NestJS rendues par le module ged');

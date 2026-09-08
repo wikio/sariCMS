@@ -112,6 +112,8 @@ export function CanvasStudio({
   const [saving, setSaving] = useState(false);
   /** La référence GED en cours : un état, pas une `ref` — l'en-tête l'affiche. */
   const [currentFile, setCurrentFile] = useState<string | null>(asset || null);
+  /** Relancer l'atelier après un échec de démarrage : une vie neuve du moteur, pas un rafistolage du canvas marqué. */
+  const [retryKey, setRetryKey] = useState(0);
   const [notice, setNotice] = useState<{ kind: 'info' | 'warn'; text: string } | null>(null);
   /** Un fichier du poste survole le plan : on le marque avant le lâcher. */
   const [planOver, setPlanOver] = useState(false);
@@ -168,7 +170,15 @@ export function CanvasStudio({
   // La fenêtre est détruite à la fermeture : un canvas caché qui continue d'écouter
   // la souris et de rendre coûterait du cadre par seconde pour rien.
   useEffect(() => {
-    if (!open || !host.current) return;
+    if (!open) return;
+    if (!host.current) {
+      // Un effet monté avant la pose du `ref` (réordre de React, fenêtre rouverte trop
+      // vite) ne doit pas laisser l'atelier sans moteur : on se redonne un tour.
+      queueMicrotask(() => {
+        if (host.current) setRetryKey((value) => value + 1);
+      });
+      return;
+    }
     let cancelled = false;
     let created: Engine | null = null;
     setFailed('');
@@ -214,6 +224,9 @@ export function CanvasStudio({
         }
         refresh();
       } catch (error) {
+        // Un moteur mort à mi-chemin laisse un canvas marqué derrière lui : sans purge,
+        // l'essai suivant échouerait pour ce seul motif.
+        if (host.current) purgeFabricDom(host.current);
         if (!cancelled) setFailed(error instanceof Error ? error.message : "L'atelier n’a pas pu démarrer.");
       }
     })();
@@ -227,19 +240,27 @@ export function CanvasStudio({
     // Ouverture = une vie de moteur. Tout le reste (sélections, onglets) passe par
     // `refresh`, pour ne pas recréer le canvas pendant une édition.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, asset, templateId]);
+  }, [open, asset, templateId, retryKey]);
 
+  // L'état dont dépend « fermer » (planche modifiée ? panne en cours ?) est lu par le
+  // raccourci `Échap`, monté avant le corps rendu : deux références tenues à jour par un
+  // effet, plutôt qu'une fermeture figée à l'état de son propre montage — écrire dans une
+  // référence pendant le rendu est explicitement interdit.
+  const dirtyRef = useRef(false);
+  const noticeKindRef = useRef<'' | 'info' | 'warn'>('');
   useEffect(() => {
     if (!open) return;
     const onKey = (event: KeyboardEvent) => {
       const instance = engineRef.current;
-      if (!instance) return;
       const typing = /^(INPUT|TEXTAREA|SELECT)$/.test((event.target as HTMLElement)?.tagName || '') || (event.target as HTMLElement)?.isContentEditable;
       if (event.key === 'Escape' && !typing) {
         event.preventDefault();
+        // `Échap` refuse de jeter un travail non enregistré, comme le bouton « Fermer ».
+        if (dirtyRef.current && noticeKindRef.current === 'warn' && !window.confirm('La planche n’est pas enregistrée. Fermer quand même ?')) return;
         onClose();
         return;
       }
+      if (!instance) return;
       if (typing) return;
       const meta = event.ctrlKey || event.metaKey;
       if (meta && event.key.toLowerCase() === 'z') {
@@ -272,6 +293,11 @@ export function CanvasStudio({
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [open, onClose, refresh]);
+
+  useEffect(() => {
+    dirtyRef.current = snap.dirty;
+    noticeKindRef.current = notice?.kind || '';
+  }, [snap.dirty, notice]);
 
   // Redimensionnement de la fenêtre : le canvas suit, le plan garde sa place.
   useEffect(() => {
@@ -337,10 +363,15 @@ export function CanvasStudio({
       refresh();
       return reference;
     } catch (error) {
-      setNotice({ kind: 'warn', text: error instanceof Error ? error.message : 'Enregistrement impossible.' });
+      // Échouer puis laisser l'hôte refermer la fenêtre, c'est jeter la planche : la
+      // panne est annoncée, `null` est rendu, et rien ne se ferme. L'utilisateur garde
+      // sa planche sous les yeux et peut réessayer.
+      setNotice({
+        kind: 'warn',
+        text: `Enregistrement impossible : ${error instanceof Error ? error.message : 'réponse inattendue du serveur'}. La planche reste ouverte.`,
+      });
     } finally {
       setSaving(false);
-      return undefined;
     }
   };
 
@@ -572,10 +603,24 @@ export function CanvasStudio({
   const props = snap.props;
   const selection = snap.selection;
 
+  /**
+   * Fermer, en refusant de jeter un travail non enregistré.
+   *
+   * Deux trous connus : un enregistrement qui échoue laissait l'hôte refermer la fenêtre
+   * quand même (la planche partait avec elle), et `Échap` fermait sans ménagement.
+   */
+  const leave = () => {
+    if (snap.dirty && notice?.kind === 'warn') {
+      if (!window.confirm('La planche n’est pas enregistrée. Fermer quand même ?')) return;
+    }
+    onClose();
+  };
+
+
   const body = (
     <div className="sc-shell" role="dialog" aria-modal="true" aria-label="Atelier graphique">
       <header className="sc-bar">
-        <button type="button" className="sc-btn sc-btn--ghost" title="Fermer (Échap)" onClick={onClose}>
+        <button type="button" className="sc-btn sc-btn--ghost" title="Fermer (Échap)" onClick={leave}>
           <ArrowLeft size={14} /> Fermer
         </button>
         <span className="sc-title">
@@ -753,7 +798,17 @@ export function CanvasStudio({
             }}
             style={planOver ? { outline: '2px dashed rgba(163, 230, 53, 0.85)', outlineOffset: -4 } : undefined}
           >
-            {failed ? <div className="sc-empty">Atelier indisponible : {failed}</div> : null}
+            {failed ? (
+              <div className="sc-host__empty">
+                <span>Atelier indisponible : {failed}</span>
+                <small style={{ color: '#64748b' }}>
+                  Le canves n{'’'}a pas pu démarrer — le fichier, lui, est intact. Redémarrez sans rien perdre.
+                </small>
+                <button type="button" className="sc-btn sc-btn--primary" onClick={() => setRetryKey((value) => value + 1)}>
+                  Redémarrer l{'’'}atelier
+                </button>
+              </div>
+            ) : null}
             {!failed && !snap.layers.length ? (
               <div className="sc-host__empty">
                 <LayoutTemplate size={22} />
@@ -950,13 +1005,32 @@ function SlotField({
   return <TextField label={slot.label} value={slot.current || ''} onChange={onText} />;
 }
 
-/** L'élément sur lequel Fabric s'installe — créé à la demande, une seule fois. */
+/**
+ * L'élément sur lequel Fabric s'installe.
+ *
+ * Un élément **neuf, à chaque moteur**. Le raccourci qui réutilisait le `<canvas>` déjà
+ * présent dans l'hôte produisait `fabric: Trying to initialize a canvas that has already
+ * been initialized. Did you forget to dispose the canvas?` : Fabric marque l'élément d'un
+ * attribut `data-fabric` à l'initialisation et refuse le second passage. Or notre hôte
+ * React, lui, n'est pas démonté entre deux vies de l'atelier (changement d'asset à la
+ * réédition, réouverture sans fermeture, et surtout un moteur mort à mi-chemin :
+ * l'élément marqué restait en place et l'atelier devenait *définitivement* indisponible).
+ * Un élément neuf ne peut pas être marqué — la classe de panne disparaît avec le raccourci.
+ */
 function ensureCanvas(host: HTMLDivElement): HTMLCanvasElement {
-  const existing = host.querySelector('canvas');
-  if (existing) return existing;
+  purgeFabricDom(host);
   const canvas = document.createElement('canvas');
   host.appendChild(canvas);
   return canvas;
+}
+
+/** Détruit les vestiges d'un moteur précédent : conteneurs posés par Fabric, canvas marqués. */
+function purgeFabricDom(host: HTMLDivElement) {
+  host.querySelectorAll('.canvas-container').forEach((node) => node.remove());
+  host.querySelectorAll('canvas[data-fabric]').forEach((node) => {
+    node.removeAttribute('data-fabric');
+    node.remove();
+  });
 }
 
 async function pickSource({ instance, asset, templateId, document: initialDocument }: { instance: Engine; asset?: string | null; templateId?: string | null; document: unknown }) {

@@ -60,6 +60,20 @@ blanc à la place d'un fond en image : le format, les textes, les masques et l'o
 sont conservés, et le bandeau nomme les visuels qui ont sauté. Les images restantes se re-posent
 depuis la GED, cadre par cadre.
 
+**« Atelier indisponible : trying to initialize a canvas that has already been initialized. »**
+Le moteur pose sur son élément un attribut `data-fabric`, et Fabric refuse le second passage
+sur la **même** balise. `ensureCanvas()` réutilisait le `<canvas>` trouvé dans l'hôte : dès
+qu'un moteur mourait à mi-chemin (import d'une image absente, asset introuvable), l'élément
+marqué restait dans un `div` que React ne démonte pas, et l'atelier devenait définitivement
+indisponible — seul un rechargement de page le sauvait. `ensureCanvas()` crée désormais un
+élément **neuf à chaque vie du moteur**, `purgeFabricDom()` efface les vestiges avant
+d'ouvrir comme après un échec, et le bandeau d'erreur offre « Redémarrer l'atelier ».
+
+**Une sauvegarde qui échoue ne ferme plus la fenêtre.** `save()` rend `null` (il ne rejette
+plus : plus personne n'écoute la promesse) et annonce la panne dans la barre d'état ; le
+bouton « Fermer » comme `Échap` demandent une confirmation explicite quand la planche est
+modifiée **et** qu'un avertissement est affiché.
+
 **Un calque figé.** Les gabarits verrouillent leurs cartouches et leur fond : un calque verrouillé
 ne se saisit pas, ce qui se lit « rien n'est déplaçable ». Le panneau **Calques** affiche alors
 « Tout déverrouiller » dans son titre, et l'icône de cadenas reste le geste unitaire.
