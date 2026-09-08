@@ -30,7 +30,10 @@
     "sql:seed-legal": "node sql/generate-seed-legal.mjs",
     "sql:test-legal": "node sql/test-seed-legal-sql.mjs",
     "prisma:relations": "node scripts/generate-relation-scalars.mjs",
-    "db:fix-dates": "node scripts/fix-zero-dates.mjs"
+    "db:fix-dates": "node scripts/fix-zero-dates.mjs",
+    "db:schema-check": "node scripts/schema-sync.mjs",
+    "db:schema-fix": "node scripts/schema-sync.mjs --fix",
+    "db:schema-test": "node scripts/test-schema-sync.mjs"
   },
   "dependencies": {
     "@nestjs/cache-manager": "^2.3.0",

@@ -87,6 +87,20 @@ Passage MySQL → PostgreSQL : types volontairement portables (`String @db.Text`
 
 ---
 
+## La base est en retard sur le schéma
+
+« The column `ma_base.table.colonne` does not exist in the current database » sur
+une liste du back-office : le client Prisma connaît la colonne, la base non.
+
+```bash
+npm run db:schema-check    # l'inventaire des écarts, et sql/schema-sync.mysql.sql
+npm run db:schema-fix      # applique les additions (uniquement des additions)
+```
+
+Le comparateur lit `information_schema` et ne modifie aucune colonne existante, ne
+change aucun type, ne supprime rien. Voir `sql/README.md`, section « Une liste répond
+“The column … does not exist” ».
+
 ## Auth & sécurité
 
 ```

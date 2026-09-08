@@ -26,32 +26,14 @@
  * Rejouable : chaque écriture est gardée par son `WHERE`, une base saine ne
  * change rien et le script ne dit que des zéros.
  */
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import { badWhere, fallbackFor } from '../sql/generate-fix-zero-dates.mjs';
+import { looksLikeMysql, readDatabaseUrl } from './db-url.mjs';
 
-const here = path.dirname(fileURLToPath(import.meta.url));
 const CHECK_ONLY = process.argv.includes('--check');
 const QUIET = process.argv.includes('--quiet');
 
 function log(...args) {
   if (!QUIET) console.log(...args);
-}
-
-/** `--url` d'abord (le même que `migrate-data.mjs --execute`), puis l'environnement, puis `.env`. */
-function readDatabaseUrl() {
-  const at = process.argv.indexOf('--url');
-  if (at !== -1 && process.argv[at + 1]) return process.argv[at + 1];
-  if (process.env.DATABASE_URL) return process.env.DATABASE_URL;
-  const envFile = path.join(here, '../.env');
-  if (!fs.existsSync(envFile)) return null;
-  for (const line of fs.readFileSync(envFile, 'utf8').split(/\r?\n/)) {
-    const m = /^\s*(?:export\s+)?DATABASE_URL\s*=\s*(.*)$/.exec(line);
-    if (!m) continue;
-    return m[1].trim().replace(/^["']|["']$/g, '');
-  }
-  return null;
 }
 
 async function main() {
@@ -64,7 +46,7 @@ async function main() {
     );
     process.exit(1);
   }
-  if (!/^mysql(qlx)?:\/\//i.test(url)) {
+  if (!looksLikeMysql(url)) {
     console.error(
       '✗ DATABASE_URL ne désigne pas MySQL — ce script ne connaît que les dates au zéro de MySQL/MariaDB.\n' +
         '  (Pour PostgreSQL, une date fausse est refusée à l’écriture : le problème ne se pose pas.)',

@@ -25,6 +25,38 @@ Ce dossier contient le schéma MySQL et les données de démarrage du CMS
 | `test-commerce-sql.mjs`    | Vérifie la migration commerce (rejeu sur SQLite)                |
 | `test-authors-sql.mjs`     | Vérifie la migration auteurs (rejeu sur SQLite)                 |
 
+## Une liste répond « The column … does not exist in the current database »
+
+Symptôme : un écran du back-office tombe en 500 sur une colonne précise — par
+exemple `newsletter_subscribers.unsubscribeReason` — alors que cette colonne est
+bien dans `prisma/schema.prisma`, dans le client généré, dans les formulaires.
+C'est la **base** qui est en retard : une migration a été ajoutée au dépôt et
+jouée nulle part. Le cas est fréquent sur un mutualisé, où la base a été créée
+en jouant `schema.mysql.sql` (ou reprise de l'ancien site) et non par `prisma
+migrate`.
+
+    cd backend
+    npm run db:schema-check      # l'inventaire des écarts, sans rien écrire
+    npm run db:schema-fix        # applique les additions
+    npm run db:schema-test       # le contrôle du comparateur, sans base
+
+`db:schema-check` lit ce que la base contient réellement (`information_schema`)
+et compare à `schema.mysql.sql` ; il écrit en plus `sql/schema-sync.mysql.sql`,
+le fichier des mêmes additions, jouable dans un client SQL. Le script **n'ajoute
+que** : aucune colonne modifiée, aucun type changé, rien supprimé — les types
+différents et les colonnes en trop sont signalés, et restent à votre main parce
+qu'ils regardent des données déjà écrites.
+
+`prisma migrate deploy` n'est pas la bonne réponse ici : il exige la table
+`_prisma_migrations` qui garde la trace de ce qui a été joué, et une base
+remplie à la main ne l'a pas — le déploiement voudrait recréer ce qui existe
+déjà. Après `db:schema-fix`, si vous voulez que la trace existe, jouez les
+`ALTER` des migrations manquantes puis `prisma migrate resolve --applied <nom>`.
+
+Le fichier `sql/schema-sync.mysql.sql` dépend de **votre** base, pas du dépôt :
+il est ignoré par git, et il se rejoue sans effet une fois la base au niveau
+(chaque ordre est gardé par son comptage `information_schema`).
+
 ## Une liste administrative tombe en 500 « invalid datetime value »
 
 `PrismaClientKnownRequestError: … The column `updatedAt` contained an invalid
@@ -470,6 +502,7 @@ node sql/generate-schema.mjs        # schema.mysql.sql, depuis prisma/schema.pri
 node sql/generate-seed.mjs          # seed.mysql.sql (contenu de démonstration)
 node sql/migrate-data.mjs           # migrate-data.mysql.sql (reprise des JSON)
 node sql/generate-fix-zero-dates.mjs # fix-zero-dates.mysql.sql (dates au zéro)
+node scripts/schema-sync.mjs          # sql/schema-sync.mysql.sql (base en retard sur le schéma)
 node sql/generate-fix-permissions.mjs # fix-permissions.mysql.sql (rôles verrouillés)
 node sql/generate-seed-legal.mjs      # seed-legal-pages.mysql.sql (documents légaux)
 ```
