@@ -11,5 +11,7 @@
   "verify": "Vérifier",
   "verifying": "Vérification...",
   "reset": "Réinitialiser",
-  "demoCodes": "Codes de démonstration :"
+  "demoCodes": "Codes de démonstration :",
+  "codeMissing": "Il manque le code du document — il figure en haut du document, à côté de la clé.",
+  "keyMissing": "Il manque la clé de vérification — elle figure au bas du document, à côté du code."
 }

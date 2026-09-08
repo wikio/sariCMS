@@ -17,7 +17,7 @@
  * renverrait tombera sous le coup de l'anomalie, ce qui est le comportement
  * voulu quand un code est retiré du service.
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { Check, Eye, EyeOff, Pencil, Plus, RotateCcw, Save, ShieldCheck, Trash2, X } from 'lucide-react';
@@ -214,19 +214,16 @@ export default function VerificationCodesAdminPage() {
       {draft && (
         <CodeEditor
           draft={draft}
-          setDraft={setDraft}
+          isNew={!codes?.some((c) => c.id === draft.id)}
+          others={(codes || []).filter((c) => c.id !== draft.id)}
+          saving={saving}
           onCancel={() => setDraft(null)}
-          onSave={async () => {
-            if (!draft.code.trim()) {
-              showToast(t('editor.needCode'), 'error');
-              return;
-            }
+          onSave={async (next) => {
             const rowsBase = codes || [];
-            const exists = rowsBase.some((r) => r.id === draft.id);
-            const rows = exists ? rowsBase.map((r) => (r.id === draft.id ? draft : r)) : [...rowsBase, draft];
+            const exists = rowsBase.some((r) => r.id === next.id);
+            const rows = exists ? rowsBase.map((r) => (r.id === next.id ? next : r)) : [...rowsBase, next];
             if (await persist(rows, exists ? t('saved') : t('created'))) setDraft(null);
           }}
-          saving={saving}
         />
       )}
     </div>
@@ -235,82 +232,223 @@ export default function VerificationCodesAdminPage() {
 
 function CodeEditor({
   draft,
-  setDraft,
+  isNew,
+  others,
   onSave,
   onCancel,
   saving,
 }: {
   draft: CodeDef;
-  setDraft: (c: CodeDef) => void;
-  onSave: () => void;
+  /** Nouvelle ligne ou édition d'une existante — change le titre et la validation de doublon. */
+  isNew: boolean;
+  /** Les autres lignes du catalogue : deux codes identiques se disputeraient la même réponse. */
+  others: CodeDef[];
+  /** L'appelant ferme la fiche lui-même quand l'enregistrement a passé le serveur. */
+  onSave: (next: CodeDef) => void | Promise<void>;
   onCancel: () => void;
   saving: boolean;
 }) {
   const t = useTranslations('admin.verificationCodes');
-  const set = (patch: Partial<CodeDef>) => setDraft({ ...draft, ...patch });
-  const setLabel = (loc: 'fr' | 'en' | 'ar', v: string) => setDraft({ ...draft, labels: { ...draft.labels, [loc]: v || undefined } });
-  const setDesc = (loc: 'fr' | 'en' | 'ar', v: string) => setDraft({ ...draft, descriptions: { ...draft.descriptions, [loc]: v || undefined } });
+  const [form, setForm] = useState<CodeDef>({ ...draft, labels: { ...draft.labels }, descriptions: { ...(draft.descriptions || {}) } });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const set = (patch: Partial<CodeDef>) => {
+    setForm((f) => ({ ...f, ...patch }));
+    setErrors((e) => {
+      const keys = Object.keys(patch).filter((k) => e[k]);
+      if (!keys.length) return e;
+      const next = { ...e };
+      for (const k of keys) delete next[k];
+      return next;
+    });
+  };
+  const setLabel = (loc: 'fr' | 'en' | 'ar', v: string) => set({ labels: { ...form.labels, [loc]: v || undefined } });
+  const setDesc = (loc: 'fr' | 'en' | 'ar', v: string) => set({ descriptions: { ...form.descriptions, [loc]: v || undefined } });
+
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    if (saving) return;
+    const errs: Record<string, string> = {};
+    const code = form.code.trim();
+    if (!code) {
+      errs.code = t('editor.needCode');
+    } else if (!/^[A-Za-z0-9][A-Za-z0-9._:\/-]{0,23}$/.test(code)) {
+      // borné, sans espace : la clé d'un doublon doit rester lisible dans un tableau
+      errs.code = t('editor.badCode');
+    } else if (others.some((o) => clash(o.code, code))) {
+      errs.code = t('editor.duplicateCode');
+    }
+    if (!(form.labels.fr || '').trim()) errs.labelFr = t('editor.needLabel');
+    if (!(form.labels.en || '').trim()) errs.labelEn = t('editor.needLabelEn');
+    if (!(form.labels.ar || '').trim()) errs.labelAr = t('editor.needLabelAr');
+    const order = Number(form.sortOrder);
+    if (!Number.isInteger(order) || order < 0) errs.sortOrder = t('editor.badSort');
+    if (Object.keys(errs).length) {
+      setErrors(errs);
+      return;
+    }
+    onSave({
+      ...form,
+      code,
+      labels: {
+        fr: (form.labels.fr || '').trim() || undefined,
+        en: (form.labels.en || '').trim() || undefined,
+        ar: (form.labels.ar || '').trim() || undefined,
+      },
+      descriptions: {
+        fr: (form.descriptions?.fr || '').trim() || undefined,
+        en: (form.descriptions?.en || '').trim() || undefined,
+        ar: (form.descriptions?.ar || '').trim() || undefined,
+      },
+      sortOrder: order,
+    });
+  };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true">
-      <div className="ad-card w-full max-w-2xl p-5 space-y-4 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between">
-          <h2 className="ad-section-title">{draft.code ? `${t('editor.titleEdit')} — ${draft.code}` : t('editor.titleNew')}</h2>
-          <button type="button" className="ad-btn ad-btn-ghost !px-2 !py-1" onClick={onCancel}><X className="w-4 h-4" /></button>
-        </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true" aria-label={isNew ? t('editor.titleNew') : t('editor.titleEdit')}>
+      <form onSubmit={submit} className="ad-card w-full max-w-2xl flex flex-col max-h-[92vh] overflow-hidden">
+        <header className="flex items-center justify-between gap-3 px-5 py-4 shrink-0" style={{ borderBottom: '1px solid var(--ad-line)' }}>
+          <div>
+            <h2 className="ad-section-title">{isNew ? t('editor.titleNew') : `${t('editor.titleEdit')} — ${form.code.trim() || '…'}`}</h2>
+            <p className="text-[11px] mt-0.5" style={{ color: 'var(--ad-muted)' }}>{t('editor.intro')}</p>
+          </div>
+          <button type="button" className="ad-btn ad-btn-ghost !px-2 !py-1 shrink-0" onClick={onCancel} aria-label={t('cancel')}>
+            <X className="w-4 h-4" />
+          </button>
+        </header>
 
-        <div className="grid md:grid-cols-2 gap-3">
-          <label className="space-y-1.5 block">
-            <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>{t('editor.code')}</span>
-            <input className="ad-input font-mono" value={draft.code} onChange={(e) => set({ code: e.target.value.trim() })} placeholder="1" />
-            <span className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>{t('editor.codeHelp')}</span>
-          </label>
-          <label className="space-y-1.5 block">
-            <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>{t('editor.semantic')}</span>
-            <select className="ad-select" value={draft.semantic} onChange={(e) => set({ semantic: e.target.value as Semantic })}>
-              {SEMANTICS.map((s) => (
-                <option key={s.id} value={s.id}>{t(`semantics.${s.id}`)}</option>
-              ))}
-            </select>
-            <span className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>{t('editor.semanticHelp')}</span>
-          </label>
+        <div className="px-5 py-4 space-y-4 overflow-y-auto">
+          <div className="grid md:grid-cols-2 gap-3">
+            <EditorField label={t('editor.code')} hint={t('editor.codeHelp')} error={errors.code} htmlFor="vc-code">
+              <input
+                id="vc-code"
+                className="ad-input font-mono"
+                autoFocus
+                maxLength={24}
+                value={form.code}
+                onChange={(e) => set({ code: e.target.value.replace(/\s+/g, '') })}
+                placeholder="1"
+                aria-invalid={errors.code ? true : undefined}
+              />
+            </EditorField>
+            <EditorField label={t('editor.semantic')} hint={t('editor.semanticHelp')} htmlFor="vc-semantic">
+              <select id="vc-semantic" className="ad-select" value={form.semantic} onChange={(e) => set({ semantic: e.target.value as Semantic })}>
+                {SEMANTICS.map((sm) => (
+                  <option key={sm.id} value={sm.id}>{t(`semantics.${sm.id}`)}</option>
+                ))}
+              </select>
+            </EditorField>
+          </div>
 
           {(['fr', 'en', 'ar'] as const).map((loc) => (
-            <label key={loc} className="space-y-1.5 block md:col-span-2">
-              <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>
-                {t('editor.label')} · {loc.toUpperCase()}
-              </span>
-              <input className="ad-input" dir={loc === 'ar' ? 'rtl' : 'ltr'} value={draft.labels[loc] || ''} onChange={(e) => setLabel(loc, e.target.value)} />
-              <span className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>{t('editor.description')} · {loc.toUpperCase()}</span>
-              <textarea className="ad-textarea" rows={2} dir={loc === 'ar' ? 'rtl' : 'ltr'} value={draft.descriptions?.[loc] || ''} onChange={(e) => setDesc(loc, e.target.value)} />
-            </label>
+            <fieldset key={loc} className="space-y-3 rounded-lg p-3" style={{ border: '1px solid var(--ad-line)' }}>
+              <legend className="px-1 text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>
+                {loc === 'fr' ? 'Français' : loc === 'en' ? 'English' : 'العربية'}
+              </legend>
+              <EditorField label={t('editor.label')} error={loc === 'fr' ? errors.labelFr : loc === 'en' ? errors.labelEn : errors.labelAr} htmlFor={`vc-label-${loc}`}>
+                <input
+                  id={`vc-label-${loc}`}
+                  className="ad-input"
+                  dir={loc === 'ar' ? 'rtl' : 'ltr'}
+                  maxLength={160}
+                  value={form.labels[loc] || ''}
+                  onChange={(e) => setLabel(loc, e.target.value)}
+                  placeholder={t('editor.labelPlaceholder')}
+                  aria-invalid={(loc === 'fr' ? errors.labelFr : loc === 'en' ? errors.labelEn : errors.labelAr) ? true : undefined}
+                />
+              </EditorField>
+              <EditorField label={t('editor.description')} hint={loc === 'fr' ? t('editor.descriptionHelp') : undefined} htmlFor={`vc-desc-${loc}`}>
+                <textarea
+                  id={`vc-desc-${loc}`}
+                  className="ad-textarea"
+                  rows={2}
+                  dir={loc === 'ar' ? 'rtl' : 'ltr'}
+                  maxLength={400}
+                  value={form.descriptions?.[loc] || ''}
+                  onChange={(e) => setDesc(loc, e.target.value)}
+                />
+              </EditorField>
+            </fieldset>
           ))}
 
-          <label className="space-y-1.5 block">
-            <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>{t('editor.sortOrder')}</span>
-            <input className="ad-input" type="number" value={draft.sortOrder} onChange={(e) => set({ sortOrder: Number(e.target.value) || 0 })} />
-          </label>
-          <div className="space-y-2 pt-5">
-            <label className="flex items-center gap-2 text-sm font-semibold cursor-pointer">
-              <input type="checkbox" checked={draft.showDetails} onChange={(e) => set({ showDetails: e.target.checked })} />
-              {t('editor.showDetails')}
-            </label>
-            <p className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>{t('editor.showDetailsHelp')}</p>
-            <label className="flex items-center gap-2 text-sm font-semibold cursor-pointer">
-              <input type="checkbox" checked={draft.active} onChange={(e) => set({ active: e.target.checked })} />
-              {t('editor.active')}
-            </label>
+          <div className="grid md:grid-cols-[9rem_1fr] gap-3 items-start">
+            <EditorField label={t('editor.sortOrder')} error={errors.sortOrder} htmlFor="vc-order">
+              <input
+                id="vc-order"
+                className="ad-input"
+                type="number"
+                min={0}
+                step={1}
+                value={form.sortOrder}
+                onChange={(e) => set({ sortOrder: Number(e.target.value) })}
+                aria-invalid={errors.sortOrder ? true : undefined}
+              />
+            </EditorField>
+            <div className="space-y-2 pt-1">
+              <label className="flex items-start gap-2 text-sm cursor-pointer">
+                <input type="checkbox" className="mt-0.5" checked={form.showDetails} onChange={(e) => set({ showDetails: e.target.checked })} />
+                <span>
+                  <span className="font-bold">{t('editor.showDetails')}</span>
+                  <span className="block text-[11px]" style={{ color: 'var(--ad-muted)' }}>{t('editor.showDetailsHelp')}</span>
+                </span>
+              </label>
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <input type="checkbox" checked={form.active} onChange={(e) => set({ active: e.target.checked })} />
+                <span className="font-bold">{t('editor.active')}</span>
+              </label>
+            </div>
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 pt-1">
+        <footer className="flex items-center justify-end gap-2 px-5 py-4 shrink-0" style={{ borderTop: '1px solid var(--ad-line)' }}>
+          <span className="mr-auto text-[11px]" style={{ color: 'var(--ad-muted)' }}>{t('editor.saveNote')}</span>
           <button type="button" className="ad-btn ad-btn-ghost" onClick={onCancel}>{t('cancel')}</button>
-          <button type="button" className="ad-btn ad-btn-primary inline-flex items-center gap-2" onClick={onSave} disabled={saving}>
+          <button type="submit" className="ad-btn ad-btn-primary inline-flex items-center gap-2" disabled={saving}>
             <Save className="w-4 h-4" />
             {saving ? t('saving') : t('save')}
           </button>
-        </div>
-      </div>
+        </footer>
+      </form>
+    </div>
+  );
+}
+
+/** Deux codes qui « se disputent » la même réponse de l'API — même règle que le serveur. */
+function clash(a: string, b: string): boolean {
+  const x = String(a || '').trim().toLowerCase();
+  const y = String(b || '').trim().toLowerCase();
+  if (x === y) return true;
+  const nx = Number(x);
+  const ny = Number(y);
+  return x !== '' && y !== '' && Number.isFinite(nx) && Number.isFinite(ny) && nx === ny;
+}
+
+function EditorField({
+  label,
+  hint,
+  error,
+  htmlFor,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  error?: string;
+  htmlFor?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <label htmlFor={htmlFor} className="block text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>
+        {label}
+      </label>
+      {children}
+      {error ? (
+        <p className="text-[11px] font-semibold text-red-600 dark:text-red-400" role="alert">
+          {error}
+        </p>
+      ) : hint ? (
+        <p className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>{hint}</p>
+      ) : null}
     </div>
   );
 }

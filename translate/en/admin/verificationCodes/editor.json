@@ -11,5 +11,15 @@
   "showDetails": "Show Type + Issuer",
   "showDetailsHelp": "When the API returns the document type and issuer alongside the code.",
   "active": "Active",
-  "needCode": "The value returned by the API is required."
+  "needCode": "The value returned by the API is required.",
+  "intro": "The code as the API returns it, and what the page does with it.",
+  "badCode": "Letters, digits, - . _ : / — no spaces, 24 characters at most.",
+  "duplicateCode": "Another code in this catalogue already answers to that value.",
+  "needLabel": "The French label is required — it is the fallback for every language.",
+  "needLabelEn": "Fill in the English label (shown on /en/verification).",
+  "needLabelAr": "Fill in the Arabic label (shown on /ar/verification).",
+  "labelPlaceholder": "e.g. Valid document",
+  "descriptionHelp": "Optional — shown under the label, inside the verdict frame.",
+  "badSort": "A whole number, 0 or above.",
+  "saveNote": "Saving replaces the whole catalogue."
 }

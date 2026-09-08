@@ -11,5 +11,15 @@
   "showDetails": "Afficher Type + Émetteur",
   "showDetailsHelp": "Quand l'API renvoie le type du document et son émetteur à côté du code.",
   "active": "Actif",
-  "needCode": "La valeur renvoyée par l'API est obligatoire."
+  "needCode": "La valeur renvoyée par l'API est obligatoire.",
+  "intro": "Le code tel que l'API le renvoie, et ce que la page en fait.",
+  "badCode": "Lettres, chiffres, - . _ : / — sans espaces, 24 caractères au plus.",
+  "duplicateCode": "Un autre code de ce catalogue répond déjà à cette valeur.",
+  "needLabel": "Le libellé en français est requis — c'est le repli de toutes les langues.",
+  "needLabelEn": "Renseignez le libellé anglais (affiché sur /en/verification).",
+  "needLabelAr": "Renseignez le libellé arabe (affiché sur /ar/verification).",
+  "labelPlaceholder": "Ex. : Document valide",
+  "descriptionHelp": "Facultatif — affiché sous le libellé, dans le cadre du verdict.",
+  "badSort": "Un nombre entier, 0 ou plus.",
+  "saveNote": "Enregistrer remplace le catalogue entier."
 }

@@ -17,8 +17,8 @@ import {
   Shield, ShieldCheck, ShieldAlert, ShieldX, AlertCircle, AlertTriangle,
   CheckCircle, Lock, RefreshCw, Search, FileText, QrCode,
   HelpCircle, Phone, Mail, ChevronDown, ChevronUp, Scale,
-  Package, Truck, Users, CreditCard, ClipboardList, Calendar,
-  Briefcase, Inbox, ArrowLeft
+  Package, Truck, Users, CreditCard, ClipboardList,
+  Briefcase
 } from 'lucide-react';
 import { getVerificationCodes } from '@/lib/data';
 import type { VerificationCode } from '@/types';
@@ -168,10 +168,17 @@ export default function VerificationExperience({
 
     const inputCode = code.trim();
     const inputKey = key.trim();
+    // Un lien peut n'amener que le code (certains QR ne portent pas la clé,
+    // elle se lit au bas du document) : c'est le champ manquant qu'on réclame,
+    // pas un message d'erreur générique.
     if (!inputCode || !inputKey) {
       setResult({
         status: 'error',
-        message: t('results.errorMessage')
+        message: !inputCode && !inputKey
+          ? t('results.errorMessage')
+          : !inputCode
+            ? t('form.codeMissing')
+            : t('form.keyMissing')
       });
       return;
     }
@@ -273,6 +280,10 @@ export default function VerificationExperience({
   // Sous chaque résultat : d'où vient la réponse et quel code brut l'API a renvoyé.
   const renderMeta = (r: VerificationResult) => {
     if (!r || (!r.apiCode && !r.notice && !r.source)) return null;
+    // Sous un feu vert, pas de récépissé : le code renvoyé et la source de la
+    // réponse sont un détail de conducteurs. Sauf le repli local — lui, justement,
+    // doit rester visible de tous.
+    if (r.status === 'valid' && !r.notice) return null;
     return (
       <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
         {r.apiCode ? (
@@ -652,7 +663,7 @@ export default function VerificationExperience({
                       </div>
                       )}
                       {result.description && (
-                        <div className="bg-green-100 dark:bg-green-900/30 border-l-4 border-green-500 p-4 rounded">
+                        <div className="bg-green-100 dark:bg-green-900/30 border-l-4 border-green-500 p-4 rounded mt-6">
                           <p className="text-sm text-green-800 dark:text-green-300">{result.description}</p>
                         </div>
                       )}

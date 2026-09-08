@@ -195,18 +195,39 @@ ok('le mode est public sans exposer d\'URL ni de clés', () => {
 console.log('la chaîne, du QR à l\'écran');
 
 const rootPage = read('app/[locale]/verification/page.tsx');
+const segCode = read('app/[locale]/verification/[code]/page.tsx');
 const segPage = read('app/[locale]/verification/[code]/[hash]/page.tsx');
 const experience = read('components/verification/VerificationExperience.tsx');
 const settings = read('components/admin/VerificationSettingsSection.tsx');
 const crud = read('app/[locale]/admin/verification-codes/page.tsx');
 
-ok('les deux routes publiques montent la même expérience, sans juger dans le routeur', () => {
+ok('les trois routes publiques montent la même expérience, sans juger dans le routeur', () => {
   assert.match(rootPage, /VerificationExperience/);
   assert.match(segPage, /VerificationExperience/);
+  // le QR qui ne porte que le code ne doit plus tomber sur la 404 du site
+  assert.match(segCode, /VerificationExperience/);
+  assert.match(segCode, /decodeSegmentParam\(params\.code\)/);
+  assert.match(segCode, /fromQr=\{Boolean\(code\)\}/);
   assert.match(segPage, /decodeSegmentParam\(params\.code\)/);
   assert.match(segPage, /decodeSegmentParam\(params\.hash\)/);
   assert.ok(!/verifyLocally|callVerificationApi/.test(segPage), 'le segment ne décide rien : c\'est /api/verification/check qui juge');
   assert.match(rootPage, /sp\.hash\)? \|\| decodeSegmentParam\(sp\.key\)/, '?code&key (les liens historiques) continue d\'être accepté');
+});
+
+ok('un lien sans clé réclame la clé, pas une page d\'erreur', () => {
+  const guards = experience.slice(experience.indexOf('const inputCode'), experience.indexOf('if (!captcha'));
+  assert.match(guards, /form\.keyMissing/);
+  assert.match(guards, /form\.codeMissing/);
+});
+
+ok('sous un feu vert, plus de récépissé — le repli local reste seul visible', () => {
+  const meta = experience.slice(experience.indexOf('const renderMeta'), experience.indexOf('const renderMeta') + 900);
+  assert.match(meta, /r\.status === 'valid' && !r\.notice/);
+  assert.match(meta, /return null/);
+});
+
+ok('la description du verdict respire sous le bloc Type + Émetteur', () => {
+  assert.match(experience, /border-l-4 border-green-500 p-4 rounded mt-6/);
 });
 
 ok('le pré-remplissage ne saute jamais le contrôle anti-robot', () => {
@@ -237,6 +258,23 @@ ok('réglages et catalogue écrivent dans le même magasin, par la même route',
   assert.match(crud, /'\/api\/admin\/verification'/);
   assert.match(settings, /method: 'PUT'[\s\S]{0,220}body: JSON\.stringify\(\{ api \}\)/);
   assert.match(crud, /body: JSON\.stringify\(\{ codes: rows \}\)/);
+});
+
+ok('la fiche d\'édition scrolle, valide et referme proprement', () => {
+  const editor = crud.slice(crud.indexOf('function CodeEditor('));
+  assert.match(editor, /max-h-\[92vh\] overflow-hidden/, 'la carte est bornée…');
+  assert.match(editor, /px-5 py-4 space-y-4 overflow-y-auto/, '…et son corps défile');
+  assert.match(editor, /onSubmit=\{submit\}/, 'Entrée = enregistrer, avec les gardes');
+  assert.match(editor, /type="submit"/);
+  assert.match(editor, /t\('editor\.needCode'\)/);
+  assert.match(editor, /t\('editor\.badCode'\)/);
+  assert.match(editor, /t\('editor\.duplicateCode'\)/);
+  assert.match(editor, /t\('editor\.needLabel'\)/);
+  assert.match(editor, /t\('editor\.badSort'\)/);
+  assert.match(editor, /clash\(o\.code, code\)/, 'le doublon se juge comme le serveur : casse et 01≡1');
+  assert.match(editor, /role="alert"/, 'les erreurs sont annoncées aux lecteurs d\'écran');
+  assert.match(editor, /aria-invalid/, 'et rattachées au champ fautif');
+  assert.match(crud, /others=\{\(codes \|\| \[\]\)\.filter\(\(c\) => c\.id !== draft\.id\)\}/, 'le contrôle de doublon ignore la ligne éditée');
 });
 
 ok('le test de l\'onglet n\'exige pas l\'enregistrement préalable', () => {
