@@ -2290,7 +2290,9 @@
         "descriptionHelp": "Optional — shown under the label, inside the verdict frame.",
         "badSort": "A whole number, 0 or above.",
         "saveNote": "Saving replaces the whole catalogue."
-      }
+      },
+      "activated": "Code re-enabled.",
+      "deactivated": "Code disabled — the API must no longer return it, or the page will report an anomaly."
     }
   },
   "common": {

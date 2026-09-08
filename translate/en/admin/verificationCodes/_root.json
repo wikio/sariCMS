@@ -18,5 +18,7 @@
   "delete": "Delete",
   "activate": "Re-enable",
   "deactivate": "Disable",
-  "footnote": "A code returned by the API but missing here is never defaulted to “valid”: the public page reports the anomaly and the administrator adds the row. Saving replaces the whole catalogue."
+  "footnote": "A code returned by the API but missing here is never defaulted to “valid”: the public page reports the anomaly and the administrator adds the row. Saving replaces the whole catalogue.",
+  "activated": "Code re-enabled.",
+  "deactivated": "Code disabled — the API must no longer return it, or the page will report an anomaly."
 }

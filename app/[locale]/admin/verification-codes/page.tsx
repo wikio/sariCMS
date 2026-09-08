@@ -181,7 +181,7 @@ export default function VerificationCodesAdminPage() {
                         type="button"
                         title={c.active ? t('deactivate') : t('activate')}
                         className="ad-btn ad-btn-ghost !px-2 !py-1"
-                        onClick={() => persist(codes.map((r) => (r.id === c.id ? { ...r, active: !r.active } : r)), '')}
+                        onClick={() => persist(codes.map((r) => (r.id === c.id ? { ...r, active: !r.active } : r)), c.active ? t('deactivated') : t('activated'))}
                       >
                         {c.active ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                       </button>
@@ -317,7 +317,7 @@ function CodeEditor({
           </button>
         </header>
 
-        <div className="px-5 py-4 space-y-4 overflow-y-auto">
+        <div className="ad-scroll flex-1 min-h-0 px-5 py-4 space-y-4 overflow-y-auto">
           <div className="grid md:grid-cols-2 gap-3">
             <EditorField label={t('editor.code')} hint={t('editor.codeHelp')} error={errors.code} htmlFor="vc-code">
               <input

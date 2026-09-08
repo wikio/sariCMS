@@ -18,5 +18,7 @@
   "delete": "Supprimer",
   "activate": "Réactiver",
   "deactivate": "Désactiver",
-  "footnote": "Un code renvoyé par l'API mais absent d'ici n'est jamais traduit en « valide » par défaut : la page publique signale l'anomalie et l'administrateur ajoute la ligne. Enregistrer remplace le catalogue entier."
+  "footnote": "Un code renvoyé par l'API mais absent d'ici n'est jamais traduit en « valide » par défaut : la page publique signale l'anomalie et l'administrateur ajoute la ligne. Enregistrer remplace le catalogue entier.",
+  "activated": "Code réactivé.",
+  "deactivated": "Code désactivé — l’API ne doit plus le renvoyer, sinon la page signalera une anomalie."
 }

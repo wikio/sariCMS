@@ -2290,7 +2290,9 @@
         "descriptionHelp": "Facultatif — affiché sous le libellé, dans le cadre du verdict.",
         "badSort": "Un nombre entier, 0 ou plus.",
         "saveNote": "Enregistrer remplace le catalogue entier."
-      }
+      },
+      "activated": "Code réactivé.",
+      "deactivated": "Code désactivé — l’API ne doit plus le renvoyer, sinon la page signalera une anomalie."
     }
   },
   "common": {
