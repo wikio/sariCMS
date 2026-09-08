@@ -87,6 +87,12 @@ ERP) ; l'écran est derrière l'accès administrateur.
 
 ## Le catalogue des codes de vérification
 
+La fiche d'édition suit le gabarit des formulaires admin : `ad-overlay` (clic
+dehors = fermeture), carte `ad-card ad-sheet` bornée à `92dvh` avec entrée `ad-rise`,
+corps `ad-modal-body ad-scroll` qui défile, barre d'actions collante en bas — la même
+que `UserForm`. Une erreur de validation habille le champ via `aria-invalid`
+(`--ad-danger`, donc à la teinte de chaque thème) et le nomme en `role="alert"`.
+
 **Admin → Codes de vérification** (`app/[locale]/admin/verification-codes`) :
 une ligne = une valeur renvoyée par l'API, mariée à un comportement d'écran.
 

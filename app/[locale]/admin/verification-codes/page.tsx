@@ -305,19 +305,26 @@ function CodeEditor({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true" aria-label={isNew ? t('editor.titleNew') : t('editor.titleEdit')}>
-      <form onSubmit={submit} className="ad-card w-full max-w-2xl flex flex-col max-h-[92vh] overflow-hidden">
-        <header className="flex items-center justify-between gap-3 px-5 py-4 shrink-0" style={{ borderBottom: '1px solid var(--ad-line)' }}>
-          <div>
-            <h2 className="ad-section-title">{isNew ? t('editor.titleNew') : `${t('editor.titleEdit')} — ${form.code.trim() || '…'}`}</h2>
+    <div className="ad-overlay" onClick={onCancel}>
+      <form
+        onSubmit={submit}
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label={isNew ? t('editor.titleNew') : t('editor.titleEdit')}
+        className="ad-card ad-sheet w-full max-w-2xl max-h-[92dvh] ad-rise"
+      >
+        <header className="flex items-center justify-between gap-2 p-4 sm:p-6 pb-3 border-b shrink-0" style={{ borderColor: 'var(--ad-line)' }}>
+          <div className="min-w-0">
+            <h2 className="text-lg sm:text-xl font-black truncate">{isNew ? t('editor.titleNew') : `${t('editor.titleEdit')} — ${form.code.trim() || '…'}`}</h2>
             <p className="text-[11px] mt-0.5" style={{ color: 'var(--ad-muted)' }}>{t('editor.intro')}</p>
           </div>
-          <button type="button" className="ad-btn ad-btn-ghost !px-2 !py-1 shrink-0" onClick={onCancel} aria-label={t('cancel')}>
+          <button type="button" className="ad-btn ad-btn-icon ad-btn-ghost shrink-0" onClick={onCancel} aria-label={t('cancel')}>
             <X className="w-4 h-4" />
           </button>
         </header>
 
-        <div className="ad-scroll flex-1 min-h-0 px-5 py-4 space-y-4 overflow-y-auto">
+        <div className="ad-modal-body ad-scroll p-4 sm:p-6 space-y-4">
           <div className="grid md:grid-cols-2 gap-3">
             <EditorField label={t('editor.code')} hint={t('editor.codeHelp')} error={errors.code} htmlFor="vc-code">
               <input
@@ -398,16 +405,26 @@ function CodeEditor({
               </label>
             </div>
           </div>
-        </div>
+          <p className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>{t('editor.saveNote')}</p>
 
-        <footer className="flex items-center justify-end gap-2 px-5 py-4 shrink-0" style={{ borderTop: '1px solid var(--ad-line)' }}>
-          <span className="mr-auto text-[11px]" style={{ color: 'var(--ad-muted)' }}>{t('editor.saveNote')}</span>
-          <button type="button" className="ad-btn ad-btn-ghost" onClick={onCancel}>{t('cancel')}</button>
-          <button type="submit" className="ad-btn ad-btn-primary inline-flex items-center gap-2" disabled={saving}>
-            <Save className="w-4 h-4" />
-            {saving ? t('saving') : t('save')}
-          </button>
-        </footer>
+          {/*
+            Barre d'actions collante en bas du corps défilant — le modèle des
+            fiches d'édition de l'admin (UserForm) : « Enregistrer » reste sous
+            les yeux sans avoir à atteindre le bout du formulaire. `-mx`/`-mb`
+            compensent le remplissage pour que la barre occupe toute la largeur.
+          */}
+          <div
+            className="sticky bottom-0 z-10 flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-3 pb-1 border-t -mx-4 sm:-mx-6 px-4 sm:px-6 -mb-4 sm:-mb-6"
+            style={{ borderColor: 'var(--ad-line)', background: 'var(--ad-sheet-surface, var(--ad-surface))' }}
+          >
+            <button type="button" className="ad-btn ad-btn-ghost w-full sm:w-auto justify-center" onClick={onCancel}>
+              <X className="w-4 h-4" /> {t('cancel')}
+            </button>
+            <button type="submit" className="ad-btn ad-btn-primary w-full sm:w-auto justify-center" disabled={saving}>
+              <Save className="w-4 h-4" /> {saving ? t('saving') : t('save')}
+            </button>
+          </div>
+        </div>
       </form>
     </div>
   );
@@ -443,7 +460,7 @@ function EditorField({
       </label>
       {children}
       {error ? (
-        <p className="text-[11px] font-semibold text-red-600 dark:text-red-400" role="alert">
+        <p className="text-[11px] font-semibold" style={{ color: 'var(--ad-danger)' }} role="alert">
           {error}
         </p>
       ) : hint ? (

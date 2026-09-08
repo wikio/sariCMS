@@ -262,8 +262,11 @@ ok('réglages et catalogue écrivent dans le même magasin, par la même route',
 
 ok('la fiche d\'édition scrolle, valide et referme proprement', () => {
   const editor = crud.slice(crud.indexOf('function CodeEditor('));
-  assert.match(editor, /max-h-\[92vh\] overflow-hidden/, 'la carte est bornée…');
-  assert.match(editor, /px-5 py-4 space-y-4 overflow-y-auto/, '…et son corps défile');
+  // le gabarit d\'une fiche d\'édition admin, c\'est ad-overlay + ad-sheet + ad-modal-body — pas un flex bricolé
+  assert.match(editor, /className="ad-overlay"/, 'le voile suit la convention admin');
+  assert.match(editor, /onClick=\{onCancel\}/, 'un clic hors de la carte la ferme');
+  assert.match(editor, /ad-card ad-sheet w-full max-w-2xl max-h-\[92dvh\] ad-rise/, 'carte bornée, surface pleine, entrée animée');
+  assert.match(editor, /className="ad-modal-body ad-scroll p-4 sm:p-6 space-y-4"/, '…et son corps défile');
   assert.match(editor, /onSubmit=\{submit\}/, 'Entrée = enregistrer, avec les gardes');
   assert.match(editor, /type="submit"/);
   assert.match(editor, /t\('editor\.needCode'\)/);
@@ -278,8 +281,11 @@ ok('la fiche d\'édition scrolle, valide et referme proprement', () => {
   // l'aria-invalid doit être STYLÉ quelque part, sinon la validation est invisible
   const css = read('app/admin.css');
   assert.match(css, /\[aria-invalid='true'\]/);
-  // et le corps défilant doit l'être pour de vrai : le motif flex canonique
-  assert.match(editor, /flex-1 min-h-0[^"]*overflow-y-auto/);
+  // la mécanique de défilement vit dans le CSS de la convention, pas dans la source :
+  assert.match(css, /\.ad-sheet\s*\{[^}]*overflow: hidden/s, 'ad-sheet borne la carte');
+  assert.match(css, /\.ad-modal-body\s*\{[^}]*min-height: 0/s, 'ad-modal-body laisse le corps rétrécir et défiler');
+  assert.match(editor, /sticky bottom-0 z-10/, 'les actions restent sous les yeux, comme dans UserForm');
+  assert.match(editor, /var\(--ad-danger\)/, 'l\'erreur est à la couleur du thème, pas à un rouge Tailwind aveugle au thème');
 });
 
 ok('le test de l\'onglet n\'exige pas l\'enregistrement préalable', () => {
