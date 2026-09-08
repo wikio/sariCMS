@@ -275,6 +275,11 @@ ok('la fiche d\'édition scrolle, valide et referme proprement', () => {
   assert.match(editor, /role="alert"/, 'les erreurs sont annoncées aux lecteurs d\'écran');
   assert.match(editor, /aria-invalid/, 'et rattachées au champ fautif');
   assert.match(crud, /others=\{\(codes \|\| \[\]\)\.filter\(\(c\) => c\.id !== draft\.id\)\}/, 'le contrôle de doublon ignore la ligne éditée');
+  // l'aria-invalid doit être STYLÉ quelque part, sinon la validation est invisible
+  const css = read('app/admin.css');
+  assert.match(css, /\[aria-invalid='true'\]/);
+  // et le corps défilant doit l'être pour de vrai : le motif flex canonique
+  assert.match(editor, /flex-1 min-h-0[^"]*overflow-y-auto/);
 });
 
 ok('le test de l\'onglet n\'exige pas l\'enregistrement préalable', () => {

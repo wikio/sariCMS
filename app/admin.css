@@ -853,6 +853,17 @@
   background: color-mix(in srgb, var(--ad-accent) 6%, transparent);
 }
 
+/* Un champ marqué invalide doit se voir — l'`aria-invalid` posé par les
+   formulaires (fiche des codes de vérification, et tous ceux qui viendront)
+   habille ici sa bordure à la couleur du thème actif, sans classe à recopier
+   champ par champ ni variante par thème : `--ad-danger` existe partout. */
+.ad-input[aria-invalid='true'],
+.ad-select[aria-invalid='true'],
+.ad-textarea[aria-invalid='true'] {
+  border-color: var(--ad-danger);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ad-danger) 16%, transparent);
+}
+
 .ad-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
 .ad-scroll::-webkit-scrollbar-thumb {
   background: color-mix(in srgb, var(--ad-accent) 55%, var(--ad-line));
