@@ -149,31 +149,33 @@ console.log('\n— URLs générées —');
   check('id textuel : slug seul', textual[0].href === '/fr/solutions/diagnostic-imagerie', textual[0].href);
 }
 
-console.log('\n— Header : pas de double préfixe de langue —');
+console.log('\n— Lien de menu : une règle pour le bandeau et le pied de page —');
 
 {
-  const locales = new Set(['fr', 'en', 'ar']);
-  const locale = 'fr';
-  const getLinkHref = (href) => {
-    const raw = String(href || '');
-    if (/^(https?:)?\/\//i.test(raw) || /^(mailto|tel):/i.test(raw)) return raw;
-    const cleanPath = raw.replace(/^[#/]+/, '');
-    if (/^[a-z]{2}(-[A-Za-z]{2})?(\/|$)/.test(cleanPath)) {
-      const [first, ...rest] = cleanPath.split('/');
-      if (locales.has(first)) return `/${locale}/${rest.join('/')}`.replace(/\/+$/, '') || `/${locale}`;
-    }
-    return `/${locale}/${cleanPath}`;
-  };
+  // La règle n'est plus réécrite ici : `lib/link-kind.mjs` ne dépend de rien et se
+  // charge tel quel par `node`, donc le test porte la même logique que le site,
+  // pas une copie libre de dériver. Le pied de page, lui, avait la sienne :
+  // « je préfixe tout », ce qui transformait une URL externe en
+  // `/fr/https://exemple.com`. Les deux emplacements appellent maintenant `menuHref`.
+  const { menuHref, externalLinkAttrs, isExternalLink } = await import(resolve(ROOT, 'lib/link-kind.mjs'));
+  const locales = ['fr', 'en', 'ar'];
+  const href = (h, locale = 'fr') => menuHref(h, locale, locales);
 
-  check('URL déjà localisée non re-préfixée', getLinkHref('/fr/solutions/diagnostic-imagerie') === '/fr/solutions/diagnostic-imagerie', getLinkHref('/fr/solutions/diagnostic-imagerie'));
-  check('lien relatif préfixé', getLinkHref('/solutions') === '/fr/solutions');
-  check('ancre préfixée', getLinkHref('#contact') === '/fr/contact');
-  check('autre langue ramenée à la langue courante', getLinkHref('/ar/news/12-t') === '/fr/news/12-t');
-  check('lien externe intact', getLinkHref('https://example.com') === 'https://example.com');
-  check('mailto intact', getLinkHref('mailto:a@b.c') === 'mailto:a@b.c');
+  check('URL déjà localisée non re-préfixée', href('/fr/solutions/diagnostic-imagerie') === '/fr/solutions/diagnostic-imagerie', href('/fr/solutions/diagnostic-imagerie'));
+  check('lien relatif préfixé', href('/solutions') === '/fr/solutions');
+  check('ancre préfixée', href('#contact') === '/fr/contact');
+  check('autre langue ramenée à la langue courante', href('/ar/news/12-t') === '/fr/news/12-t');
+  check('lien externe intact', href('https://example.com') === 'https://example.com');
+  check('mailto intact', href('mailto:a@b.c') === 'mailto:a@b.c');
+  check('hors du site : un onglet, et une relation qui ne fuit pas', externalLinkAttrs('https://example.com').rel === 'noopener noreferrer');
+  check('un contact direct reste sans attribut de cible', Object.keys(externalLinkAttrs('tel:+2136000000')).length === 0);
 
-  const headerSrc = readFileSync(resolve(ROOT, 'components/layout/Header.tsx'), 'utf8');
-  check('le Header applique bien ce garde-fou', /LOCALE_SEGMENTS\.has\(first\)/.test(headerSrc));
+  for (const [nom, fichier] of [['Header', 'components/layout/Header.tsx'], ['Footer', 'components/layout/Footer.tsx']]) {
+    const src = readFileSync(resolve(ROOT, fichier), 'utf8');
+    check(`${nom} passe par la règle commune`, /menuHref\(href, locale, locales\)/.test(src) && !/const cleanPath = href\.replace/.test(src));
+    check(`${nom} ouvre les liens sortants à côté`, /externalLinkAttrs\(/.test(src));
+  }
+  check('la règle ne devine pas une langue au pif', isExternalLink('/france') === false);
 }
 
 console.log('\n— Contrat backend —');
@@ -442,10 +444,23 @@ console.log('\n— Choix de la cible d’un lien (SlugPicker) —');
 {
   const picker = readFileSync(resolve(ROOT, 'components/admin/SlugPicker.tsx'), 'utf8');
 
-  // Un lien libre doit rester saisissable à la main.
+  // Un lien libre doit rester saisissable à la main — et le champ doit se montrer
+  // de lui-même : l'ancienne icône, `pointer-events: none`, ne répondait à aucun clic.
   check(
     'le mode « lien libre » expose un champ URL éditable',
-    /kind === 'free' \? \([\s\S]{0,400}placeholder="\/chemin-ou-url"/.test(picker),
+    /kind === 'free' \? \([\s\S]{0,900}<input[\s\S]{0,120}ref=\{freeInput\}/.test(picker),
+  );
+  check(
+    'choisir « lien libre » pose le curseur dans le champ',
+    /freeInput\.current\?\.focus\(\)/.test(picker),
+  );
+  check(
+    'les deux natures du lien libre sont choisissables',
+    /Lien interne/.test(picker) && /URL externe/.test(picker) && (picker.match(/aria-pressed=\{freeMode/g) || []).length === 2,
+  );
+  check(
+    'le lien libre normalise à la sortie du champ',
+    /onBlur=\{\(e\) => commitFree\(e\.target\.value\)\}/.test(picker),
   );
 
   // Chaque module doit pouvoir viser sa page liste OU une fiche précise.
@@ -469,10 +484,13 @@ console.log('\n— Choix de la cible d’un lien (SlugPicker) —');
     (picker.match(/— liste ou/g) || []).length >= 5,
   );
 
-  // Un chemin proposé par l'admin doit exister dans l'app.
+  // Un chemin proposé par l'admin doit exister dans l'app. `app/[locale]/legal/page.tsx`
+  // est un sommaire qui répond (il énumère les documents) : le proposer est correct,
+  // et `/verification` doit y figurer — la page existe, l'atelier ne la faisait pas
+  // choisir. `npm run routes:check` vérifie ces deux points contre le disque.
   check(
-    '/legal (404, la route est legal/[type]) n’est plus proposé',
-    !/path: '\/legal',/.test(picker),
+    'le sommaire légal et la vérification sont proposés',
+    ['/legal', '/verification'].every((p) => picker.includes(`path: '${p}'`)),
   );
   check(
     'les trois pages légales réelles sont proposées',
@@ -545,7 +563,8 @@ console.log('\n— Choix de la cible d’un lien (SlugPicker) —');
   );
   check(
     'le champ de lien libre occupe aussi la moitié',
-    /className="ad-search sm:w-1\/2 min-w-0"/.test(picker),
+    /className="sm:w-1\/2 min-w-0 space-y-1\.5"/.test(picker),
+    'et non la classe .ad-search elle-même : admin.css, chargé après Tailwind, lui impose width:100% et la rangée se serrait sur le sélecteur',
   );
   check(
     'le champ de recherche n’enferme plus le panneau',

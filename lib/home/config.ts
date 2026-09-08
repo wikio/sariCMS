@@ -15,6 +15,8 @@
  * par-dessus la langue de référence, champ par champ.
  */
 
+import { isExternalLink, stripLocalePrefix } from '@/lib/link-kind.mjs';
+import { locales } from '@/lib/i18n';
 export const HOME_REF_LOCALE = 'fr';
 export const HOME_LANGS = ['fr', 'en', 'ar'] as const;
 export type HomeLang = (typeof HOME_LANGS)[number];
@@ -692,10 +694,12 @@ export function applySelection<T extends Identifiable>(
 export function localizeHref(link: unknown, locale: string, fallback = ''): string {
   const raw = String(link ?? '').trim();
   if (!raw) return fallback;
-  if (/^(https?:)?\/\//i.test(raw) || /^(mailto:|tel:)/i.test(raw)) return raw;
+  if (isExternalLink(raw)) return raw;
   const clean = raw.replace(/^#/, '/').replace(/^\/+/, '/');
-  if (clean.startsWith('/')) return `/${locale}${clean === '/' ? '' : clean}`;
-  return `/${locale}/${clean}`;
+  // Une valeur déjà préfixée par une langue (un lien repris d'un export, d'une reprise
+  // de données) se range sur la langue courante au lieu de doubler le préfixe.
+  const path = clean.startsWith('/') ? stripLocalePrefix(clean, locales).path : `/${clean}`;
+  return `/${locale}${path === '/' ? '' : path}`;
 }
 
 /** Classes/attributs du conteneur selon le style choisi. */

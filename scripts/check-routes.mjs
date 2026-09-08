@@ -15,7 +15,7 @@
  * qu'un seul, sans avertir, et le second passe alors inaperçu.
  */
 
-import { existsSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -89,6 +89,72 @@ function routesOnDisk() {
   return out.sort();
 }
 
+/* ---------------------------------- le sélecteur de liens offert à l'admin */
+
+/** Les chemins que `SlugPicker` propose comme pages statiques. */
+function pickerStaticPaths() {
+  const file = join(ROOT, 'components', 'admin', 'SlugPicker.tsx');
+  if (!existsSync(file)) return null;
+  const src = readFileSync(file, 'utf8');
+  const start = src.indexOf('const STATIC_PATHS');
+  if (start < 0) return null;
+  const body = src.slice(start, src.indexOf('];', start));
+  return [...body.matchAll(/path:\s*'([^']+)'/g)].map((m) => m[1]);
+}
+
+/**
+ * Un chemin du sélecteur existe-t-il comme page ?
+ *
+ * Contrairement à `routesOnDisk`, on laisse traverser un segment dynamique :
+ * `/legal/mentions` vit dans `app/[locale]/legal/[type]/page.tsx`, et le
+ * sélecteur a raison de le proposer — c'est `check-routes` qui ne peut pas
+ * tester une route sans identifiant.
+ */
+function pageOnDisk(path) {
+  const segments = path.split('/').filter(Boolean);
+  let dir = join(ROOT, 'app', '[locale]');
+  if (!segments.length) return existsSync(join(dir, 'page.tsx')) || existsSync(join(dir, 'page.ts'));
+  for (const seg of segments) {
+    let entries = [];
+    try { entries = readdirSync(dir); } catch { return false; }
+    const next = entries.includes(seg) ? seg : entries.find((e) => e.startsWith('[') && !e.startsWith('[...'));
+    if (!next) return false;
+    dir = join(dir, next);
+  }
+  return existsSync(join(dir, 'page.tsx')) || existsSync(join(dir, 'page.ts'));
+}
+
+/** Pages de la vitrine que le sélecteur ne propose pas — une note, pas une faute. */
+const PICKER_HORS_MENU = new Set(['admin', 'dashboard', 'connexion', 'inscription', 'cart', 'payment', 'p', 'content', 'search', 'newsletter']);
+
+function checkPicker() {
+  head('Sélecteur de liens de l’administration');
+  const paths = pickerStaticPaths();
+  if (!paths) {
+    warn('STATIC_PATHS introuvable dans components/admin/SlugPicker.tsx — contrôle passé sans rien dire.');
+    return;
+  }
+  const cassés = paths.filter((p) => !pageOnDisk(p));
+  if (cassés.length) {
+    for (const p of cassés) fail(`le sélecteur propose ${p} : aucune page derrière, un menu qui le choisit mènera à un 404.`);
+  } else {
+    ok(`${paths.length} chemins proposés, tous adossés à une page du disque.`);
+  }
+  const offres = new Set(paths);
+  const absentes = routesOnDisk()
+    .map((r) => r.split('/').filter(Boolean))
+    .filter((segs) => segs.length === 1 && !PICKER_HORS_MENU.has(segs[0]))
+    .map((segs) => `/${segs[0]}`)
+    .filter((p) => !offres.has(p));
+  if (absentes.length) {
+    line(`  ${C.y}!${C.x} pages de vitrine non proposées par le sélecteur : ${absentes.join(', ')}`);
+    line(`      ${C.d}Ce n'est pas une faute — une page sans entrée de menu est normale.${C.x}`);
+    line(`      ${C.d}Si un menu doit y mener, ajoutez-la dans STATIC_PATHS.${C.x}`);
+  }
+  const doublons = paths.filter((p, i) => paths.indexOf(p) !== i);
+  if (doublons.length) fail(`chemins proposés deux fois dans le sélecteur : ${[...new Set(doublons)].join(', ')}`);
+}
+
 /* ------------------------------------------------------ interrogation HTTP */
 
 /**
@@ -120,6 +186,10 @@ async function main() {
   const routes = routesOnDisk();
   head('Routes déclarées dans app/[locale]');
   line(`  ${routes.length} page(s) : ${routes.slice(0, 8).map((r) => r.slice(1)).join(', ')}${routes.length > 8 ? '…' : ''}`);
+
+  // Indépendant du serveur : une promesse cassée du sélecteur se voit aussi bien
+  // à froid, et c'est justement quand le serveur est éteint qu'on prépare un menu.
+  checkPicker();
 
   const vivant = await status(`${SITE}/${LOCALES[0]}`);
   if (!vivant) {

@@ -1,4 +1,9 @@
 // components/ui/PixelGridLoader.tsx
+/**
+ * Le damier de la vitrine. `components/admin/PixelGridLoader` porte le même nom et un
+ * usage voisin, mais se dessine avec `app/admin.css`, que la vitrine ne charge pas :
+ * les deux vivent séparément, et se ressemblent volontairement.
+ */
 'use client';
 
 /**

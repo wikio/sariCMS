@@ -19,7 +19,8 @@
     "quote:test": "node scripts/test-quote-checkout.mjs",
     "users:test": "node scripts/test-user-admin.mjs",
     "users:seed": "node scripts/seed-test-users.mjs",
-    "builder:check": "node scripts/check-builder-kit.mjs"
+    "builder:check": "node scripts/check-builder-kit.mjs",
+    "links:test": "node scripts/test-link-kind.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

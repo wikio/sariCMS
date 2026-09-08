@@ -140,6 +140,46 @@ normalisation s'applique à tous les emplacements, et l'affichage teste la
 longueur plutôt que la présence. `menus:check` signale les entrées encore
 concernées en base ; `menus:sync` les nettoie en recopiant.
 
+## Ce que peut être un `href` de menu
+
+Deux formes, et une seule règle pour les deux (`lib/link-kind.mjs`) :
+
+| Saisie | Enregistré | Servi par la vitrine |
+|---|---|---|
+| `contact`, `/fr/contact`, `/contact/` | `/contact` | `/fr/contact`, `/en/contact`, `/ar/contact` |
+| `https://exemple.com/campagne`, `//cdn…` | tel quel | tel quel, dans un nouvel onglet |
+| `mailto:` `tel:` `sms:` `whatsapp:` | tel quel | tel quel, **sans** nouvel onglet |
+| `#resultats` | `#resultats` | `/fr/resultats` (une ancre ne se préfixe pas deux fois) |
+
+Le chemin interne s'enregistre **sans préfixe de langue** : la langue affichée est
+celle du visiteur, pas celle de l'administrateur qui a saisi le lien. Réciproquement,
+une adresse externe ne doit jamais en recevoir un — `/fr/https://exemple.com` n'est
+pas un lien, c'est une page introuvable.
+
+L'atelier applique la même règle que la vitrine, au lieu d'en avoir une sienne :
+`components/admin/SlugPicker.tsx` normalise à la sortie du champ (barre initiale,
+préfixe de langue en trop retiré, `https://` ajouté à une adresse nue) et le dit à
+l'écran ; `components/layout/Header.tsx` et `Footer.tsx` résolvent via `menuHref`.
+Avant ce lot, le bandeau laissait une URL externe intacte et le pied de page la
+préfixait : le même menu marchait en haut, cassait en bas.
+
+Au clavier, dans le champ « Lien libre (URL manuelle) » : **Entrée** fige la valeur
+et referme, **Tab** passe au champ suivant. L'icône de lien à droite du champ n'est
+pas décorative — elle replace le curseur dans le champ, et le curseur y va déjà tout
+seul quand on choisit ce type de lien.
+
+Deux contrôles, et aucun des deux connecté à une base :
+
+```bash
+npm run links:test    # la règle, à plat, 10 assertions sans serveur
+npm run routes:check  # confronte les chemins proposés par le sélecteur aux pages du disque
+```
+
+`routes:check` échoue si le sélecteur offre une page qui n'existe pas (un 404 prêt à
+l'emploi) et signale, sans bloquer, les pages de la vitrine qu'il ne propose pas
+encore — c'est ainsi qu'a été repérée l'absence de la **Vérification de garantie**
+(`/verification`), désormais dans la liste, avec le sommaire `/legal`.
+
 ## Visibilité du pied de page
 
 Les interrupteurs de **Administration → Visibilité** sont enregistrés dans le
