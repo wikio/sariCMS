@@ -324,8 +324,15 @@ export default function SlugPicker({
       {label && (
         <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>{label}</span>
       )}
-      <div className="relative flex flex-col sm:flex-row gap-2">
-        <select className="ad-select sm:w-1/2 sm:min-w-0 shrink-0" value={kind} onChange={(e) => {
+      {/* Une colonne, pas deux moitiés. `app/admin.css` est chargé après Tailwind et
+          impose `width: 100%` à `.ad-select` comme à `.ad-search` : à spécificité
+          égale c'est lui qui gagne, donc un `sm:w-1/2` sur ces classes ne se voit
+          jamais — le sélecteur prenait la ligne entière et le champ, serré à sa
+          droite, disparaissait. Le type de lien sur sa ligne, le champ et ses notes
+          en dessous : c'est la largeur réelle du conteneur, pas une promesse de
+          Tailwind, qui décide. */}
+      <div className="flex flex-col gap-2">
+        <select className="ad-select" value={kind} onChange={(e) => {
           const k = e.target.value as SlugKind;
           setKind(k);
           setQ('');
@@ -341,7 +348,7 @@ export default function SlugPicker({
         </select>
 
         {kind === 'free' ? (
-          <div className="sm:w-1/2 min-w-0 space-y-1.5">
+          <div className="space-y-1.5">
             <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>
               {freeMode === 'external' ? 'Adresse du lien' : 'Chemin sur le site'}
             </span>
@@ -401,7 +408,11 @@ export default function SlugPicker({
             </p>
           </div>
         ) : (
-          <div className="sm:w-1/2 min-w-0">
+          /* Le panneau de résultats s'ancre ici : en absolu, il se cale sur le plus
+             proche ancêtre positionné. Pleine largeur et sous le champ, les deux
+             d'un coup — l’ancrer à la rangée le détachait du champ, l'ancher au seul
+             champ dans une rangée à deux colonnes le bridait à 224 px. */
+          <div className="relative">
             <div className="ad-search">
               {kind === 'static' ? <Globe className="ad-search-ico w-4 h-4" style={{ color: 'var(--ad-accent)' }} /> : <FileText className="ad-search-ico w-4 h-4" style={{ color: 'var(--ad-accent)' }} />}
               <input

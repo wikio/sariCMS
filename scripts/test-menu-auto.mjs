@@ -545,26 +545,32 @@ console.log('\n— Choix de la cible d’un lien (SlugPicker) —');
     /<Suspense[\s\S]{0,200}<MenuStudioInner \/>/.test(studio),
   );
 
-  // Le panneau de résultats est en position absolue : il se cale sur le plus
-  // proche ancêtre positionné. Ancré au seul champ de recherche, il n'occupait
-  // que le reliquat de largeur laissé par le select (224 px fixes), d'où un
-  // affichage écrasé sur desktop — correct en mobile où la rangée s'empile.
+  // La mise en page, et pourquoi elle est empilée. `app/admin.css` est chargé après
+  // Tailwind et impose `width:100%` à `.ad-select` comme à `.ad-search` : à
+  // spécificité égale, c'est lui qui gagne — un `sm:w-1/2` posé sur ces classes ne
+  // se voit donc jamais. La rangée à deux colonnes donnait un sélecteur pleine
+  // largeur et un champ serré contre le bord droit : inutilisable en desktop,
+  // correct par accident en mobile où la rangée s'empile.
   check(
-    'la rangée sert de repère au panneau de résultats',
-    /<div className="relative flex flex-col sm:flex-row gap-2">/.test(picker),
+    'le sélecteur et le champ sont empilés, pleine largeur',
+    /<div className="flex flex-col gap-2">/.test(picker) && !/sm:flex-row/.test(picker),
   );
   check(
-    'le select occupe la moitié de la largeur',
-    /className="ad-select sm:w-1\/2 sm:min-w-0 shrink-0"/.test(picker),
+    'aucune largeur Tailwind n’est posée sur .ad-select ou .ad-search',
+    !/className="ad-select [^"]*w-/.test(picker) && !/className="ad-search [^"]*w-/.test(picker),
+    'admin.css gagne à spécificité égale : la promesse de Tailwind serait silencieuse',
   );
   check(
-    'la recherche occupe l’autre moitié',
-    /<div className="sm:w-1\/2 min-w-0">\s*\n\s*<div className="ad-search">/.test(picker),
+    'le champ de lien libre est sous le sélecteur',
+    /kind === 'free' \? \(\s*\n\s*<div className="space-y-1\.5">/.test(picker),
   );
+  // Le panneau de résultats est en absolu : il se cale sur le plus proche ancêtre
+  // positionné. Ancré à la recherche, il la suit de près ET prend la largeur de la
+  // colonne ; ancré à la rangée, il se détachait du champ ; ancré au champ dans une
+  // rangée à deux colonnes, il restait à 224 px.
   check(
-    'le champ de lien libre occupe aussi la moitié',
-    /className="sm:w-1\/2 min-w-0 space-y-1\.5"/.test(picker),
-    'et non la classe .ad-search elle-même : admin.css, chargé après Tailwind, lui impose width:100% et la rangée se serrait sur le sélecteur',
+    'le panneau de résultats s’ancre à la recherche, pas à la rangée',
+    /<div className="relative">\s*\n\s*<div className="ad-search">/.test(picker),
   );
   check(
     'le champ de recherche n’enferme plus le panneau',
