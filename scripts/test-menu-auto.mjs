@@ -5,8 +5,9 @@
  * ATTENTION — portée réelle de ce script : il n'exécute pas l'application et
  * n'interroge aucun serveur. Il relit les fichiers source et vérifie, par
  * expressions régulières, que certaines décisions n'ont pas été défaites ; la
- * résolution des règles y est réimplémentée à l'identique pour tester la
- * logique elle-même. Il ne peut donc PAS détecter un menu absent en base, une
+ * résolution des règles est importée du module réel (lib/link-kind.mjs, sans
+ * dépendance) quand elle est isolable, réimplémentée à l'identique ailleurs. Il ne
+ * peut donc PAS détecter un menu absent en base, une
  * langue qui diverge, ni un problème d'affichage.
  *
  * Pour contrôler ce que votre serveur sert réellement :
@@ -33,9 +34,9 @@
  * Usage : node scripts/test-menu-auto.mjs
  */
 
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -157,7 +158,12 @@ console.log('\n— Lien de menu : une règle pour le bandeau et le pied de page 
   // pas une copie libre de dériver. Le pied de page, lui, avait la sienne :
   // « je préfixe tout », ce qui transformait une URL externe en
   // `/fr/https://exemple.com`. Les deux emplacements appellent maintenant `menuHref`.
-  const { menuHref, externalLinkAttrs, isExternalLink } = await import(resolve(ROOT, 'lib/link-kind.mjs'));
+  // `pathToFileURL` n'est pas un détail de style : le chargeur ESM refuse un chemin
+  // absolu brut (`d:\works\…` → ERR_UNSUPPORTED_ESM_URL_SCHEME). Sous Linux le
+  // script partait, sur le poste de travail il tombait ici.
+  const { menuHref, externalLinkAttrs, isExternalLink } = await import(
+    pathToFileURL(resolve(ROOT, 'lib/link-kind.mjs')).href
+  );
   const locales = ['fr', 'en', 'ar'];
   const href = (h, locale = 'fr') => menuHref(h, locale, locales);
 
@@ -698,6 +704,24 @@ console.log('\n— Harmonisation des menus entre langues —');
   check(
     'les menus statiques de repli ont la même structure dans les 3 langues',
     shapes[0] === shapes[1] && shapes[1] === shapes[2],
+  );
+}
+
+console.log('\n— Portabilité des scripts —');
+
+{
+  // Ces scripts sont lus sur le poste de travail, en Windows, autant que dans un
+  // bac à sable Linux : un `import()` dynamique y doit une URL, pas un chemin.
+  const dir = resolve(ROOT, 'scripts');
+  const offenders = [];
+  for (const f of readdirSync(dir).filter((n) => n.endsWith('.mjs'))) {
+    const src = readFileSync(resolve(dir, f), 'utf8');
+    if (/await import\(\s*(?:resolve|join|path\.resolve)\s*\(/.test(src)) offenders.push(f);
+  }
+  check(
+    'tout import() dynamique d’un script passe par une URL file://',
+    offenders.length === 0,
+    offenders.length ? `${offenders.join(', ')} — remplacer par import(pathToFileURL(resolve(…)).href)` : '',
   );
 }
 
