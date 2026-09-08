@@ -1,0 +1,14 @@
+{
+  "icon": "heart-pulse",
+  "color": "red-500",
+  "title": "Cardiology",
+  "desc": "ECG, defibrillators, cardiac monitors and holters",
+  "cta": "Discover",
+  "link": "#solutions/cardiology",
+  "features": [
+    "12-lead ECG",
+    "AED defibrillators",
+    "Cardiac monitors",
+    "Holter ECG"
+  ]
+}

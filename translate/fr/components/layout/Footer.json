@@ -2,7 +2,7 @@
   "navigation": "Navigation",
   "legalSecurity": "Légal & Sécurité",
   "legalNotice": "Mentions Légales",
-  "privacy": "Politique de confidentialité",
+  "privacy": "Confidentialité",
   "terms": "CGV",
   "verification": "Vérification d'authenticité",
   "contact": "Contact",
@@ -10,7 +10,5 @@
   "designedWith": "Conçu avec passion pour les professionnels de santé",
   "contactUs": "Nous contacter",
   "logoFallback": "Logo",
-  "companyName": "Solution SARI Systeme",
-  "mentions": "Mentions légales",
-  "conditions": "Conditions d’utilisation"
+  "companyName": "Solution SARI Systeme"
 }

@@ -26,7 +26,8 @@
  * en garde-fou avant un déploiement.
  */
 
-import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { planSync } from '../lib/intl-tree.mjs';
 import { dirname, extname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -161,93 +162,66 @@ if (!ONLY_MISSING) {
   for (const locale of LOCALES) console.log(`  ${locale} : ${messages[locale].size} clés`);
 }
 
-// --------------------------------------------------------------------------
-// L'arborescence que parcourt l'écran « Traductions »
-// --------------------------------------------------------------------------
-// `translate/{locale}/` est ce que l'administration liste pour éditer les chaînes.
-// Un même namespace peut s'y trouver deux fois : `admin.json`, le fichier plat
-// hérité de l'ancien export, et `admin/`, le dossier par écran. Les deux contenus
-// diffèrent — l'un a 65 namespaces, l'autre en découpe 46 — et aucun des deux n'est
-// décrété gagnant. L'écran affichait donc deux lignes « admin » (React le criait),
-// et surtout un traducteur qui ouvre « la bonne » ne tombe pas sur les mêmes clés
-// selon le bouton poussé. On signale, on ne corrige pas ici : supprimer le plat
-// emporterait dix-neuf namespaces que le dossier n'a pas (menu, login, dataManager,
-// users, orders…). Les identifiants de l'arbre ont été rendus uniques côté API.
+// ---------------------------------------------------------------------------
+// L'atelier de traduction : `translate/` doit suivre `messages/`
+// ---------------------------------------------------------------------------
+// La règle de découpage vit dans `lib/intl-tree.mjs`, `npm run intl:sync` l'applique,
+// ce contrôle vérifie qu'elle tient des deux côtés. Sans cette exigence, l'écran
+// « Traductions » rejoue l'accident qui lui a valu son avertissement React — un
+// namespace en deux exemplaires, `admin.json` à côté de `admin/`, deux contenus qui
+// ne se ressemblent pas — et, plus grave, enregistrer le fichier plat écraserait
+// d'un coup toute la branche `admin` des messages.
 
-function countKeys(value) {
-  return flatten(value).size;
-}
-
-function countTree(dir) {
-  let total = 0;
-  for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    const full = join(dir, entry.name);
-    if (entry.isDirectory()) total += countTree(full);
-    else if (entry.name.endsWith('.json')) {
-      try {
-        total += countKeys(JSON.parse(readFileSync(full, 'utf8')));
-      } catch {
-        /* un JSON illisible se fera déjà remarquer à l'usage */
-      }
-    }
-  }
-  return total;
-}
-
-const collisions = [];
-
-/** Un étage de `translate/{locale}/`, puis ses dossiers : le doublon n'est pas rare plus bas. */
-function scanCollisions(dir, trail) {
-  let names;
-  try {
-    names = readdirSync(dir);
-  } catch {
-    return;
-  }
-  for (const name of names) {
-    if (!name.endsWith('.json')) continue;
-    const stem = name.slice(0, -'.json'.length);
-    const folder = join(dir, stem);
-    if (names.includes(stem) && existsSync(folder) && statSync(folder).isDirectory()) {
-      let flat = 0;
-      let deep = 0;
-      try {
-        flat = countKeys(JSON.parse(readFileSync(join(dir, name), 'utf8')));
-        deep = countTree(folder);
-      } catch {
-        /* même parti : le compte reste à zéro, la doublure est signalée quand même */
-      }
-      collisions.push({ trail: trail ? `${trail}/${stem}` : stem, flat, deep });
-    }
-  }
-  for (const name of names) {
-    const full = join(dir, name);
-    if (statSync(full).isDirectory()) scanCollisions(full, trail ? `${trail}/${name}` : name);
-  }
-}
-
+const atelier = [];
+let treeDrift = 0;
 for (const locale of LOCALES) {
-  const dir = resolve(ROOT, 'translate', locale);
-  if (!existsSync(dir)) continue;
-  scanCollisions(dir, locale);
+  const plan = planSync(ROOT, locale);
+  if (plan.missing) continue;
+  atelier.push(plan);
+  treeDrift += plan.toWrite.length ? 1 : 0;
+  treeDrift += plan.runtimeStale ? 1 : 0;
 }
 
-if (collisions.length && !SOFT) {
-  console.log('\n⚠️  Écran « Traductions » : des namespaces en double exemplaire\n');
-  for (const c of collisions) {
-    console.log(`  ${c.trail} : ${c.flat} clés en fichier plat, ${c.deep} en dossier`);
-  }
+const duplicates = atelier.flatMap((plan) => plan.duplicates.map((d) => `${plan.locale}/${d}`));
+if (duplicates.length) {
+  console.log('\n⚠️  Écran « Traductions » : un namespace en double exemplaire\n');
+  for (const trail of duplicates) console.log(`  ${trail}.json côtoie le dossier ${trail}/`);
   console.log(
-    '\n  Les deux sont listés dans l\'arbre de l\'administration (le fichier garde son\n' +
-    '  `.json` pour qu\'on les distingue). Réunir les deux en un seul endroit est un\n' +
-    '  choix de données, pas un contrôle : ce script ne le bloque pas.\n',
+    "\n  « npm run intl:sync » range l'atelier : les fichiers que la règle ne produit\n" +
+    "  plus sont déplacés sous `translate/<locale>/_legacy/`, rien n'est supprimé.\n",
   );
 }
 
-const total = missingEverywhere.length + missingSome.length;
-console.log(
-  total
-    ? `\n${total} clé(s) appelée(s) par le code et introuvable(s).${SOFT ? ' — le dev continue, le build refuserait.' : ''}`
-    : '\n✅ Toutes les clés appelées par le code existent dans les trois langues.',
-);
-process.exit(total && !SOFT ? 1 : 0);
+if (treeDrift) {
+  console.log("\n⚠️  Atelier en retard sur les messages\n");
+  for (const plan of atelier) {
+    const bits = [];
+    if (plan.toWrite.length) bits.push(`${plan.toWrite.length} fichier(s) à reprendre`);
+    if (plan.runtimeStale) bits.push(`translate/${plan.locale}.json obsolète`);
+    if (plan.extra.length) bits.push(`${plan.extra.length} vestige(s) à ranger sous _legacy/`);
+    console.log(`  ${plan.locale} — ${bits.join(', ')}`);
+    for (const rel of plan.toWrite.slice(0, 6)) console.log(`     ~ ${rel}`);
+    if (plan.toWrite.length > 6) console.log(`     … ${plan.toWrite.length - 6} autres`);
+  }
+  console.log(
+    "\n  « npm run intl:sync » remet les trois langues d'aplomb. C'est une écriture,\n" +
+    "  pas un contrôle : laissez-la faire, puis relancez celui-ci.\n",
+  );
+}
+
+const missingKeys = missingEverywhere.length + missingSome.length;
+const blocking = missingKeys + treeDrift;
+if (missingKeys) {
+  console.log(
+    `\n${missingKeys} clé(s) appelée(s) par le code et introuvable(s) dans les messages.`,
+  );
+}
+if (!blocking) {
+  console.log('\n✅ Toutes les clés appelées par le code existent dans les trois langues, atelier compris.');
+} else if (SOFT) {
+  console.log(
+    "   Mode avertissement : le serveur démarre quand même. « npm run intl:sync » range\n" +
+    "   l'atelier ; « npm run intl:check » est le réglage bloquant qu'utilise le build.",
+  );
+}
+process.exit(blocking && !SOFT ? 1 : 0);

@@ -30,7 +30,6 @@
   "createClientAccount": "إنشاء حساب عميل",
   "becomePartner": "أن تصبح شريكًا",
   "createCandidateAccount": "إنشاء حساب مرشح",
-  "createAccount": "إنشاء حساب ",
   "spaceBenefits": "مزايا فضاءك",
   "secureConnection": "اتصال آمن",
   "sslProtection": "بياناتك محمية بتشفير SSL ومتوافقة مع القانون الجزائري لحماية البيانات الشخصية.",
@@ -59,12 +58,13 @@
     "تنبيهات للوظائف الجديدة",
     "تواصل مباشر مع الموارد البشرية"
   ],
-  "title": "الدخول",
-  "remember": "تذكرني",
-  "loginButton": "الدخول",
+  "title": "تسجيل الدخول",
   "email": "البريد الإلكتروني",
-  "loginError": "معلومات الدخول خاطئة",
-  "loggingIn": " يتم الدخول...",
-  "captchaError": "يرجى إدخال رمز التحقق الصحيح.",
-  "demoHint": "حسابات تجريبية: client@sari.dz / partner@sari.dz / candidate@sari.dz · كلمة المرور demo123"
+  "remember": "تذكرني",
+  "loginButton": "تسجيل الدخول",
+  "loggingIn": "جارٍ تسجيل الدخول…",
+  "loginError": "بيانات الاعتماد غير صحيحة",
+  "captchaError": "يرجى إكمال رمز التحقق",
+  "createAccount": "إنشاء حساب",
+  "demoHint": "حساب تجريبي"
 }

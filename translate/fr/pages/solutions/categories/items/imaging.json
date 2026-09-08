@@ -1,0 +1,14 @@
+{
+  "icon": "scan",
+  "color": "purple-500",
+  "title": "Imagerie",
+  "desc": "Scanners, IRM, radiologie numérique et échographie",
+  "cta": "Découvrir",
+  "link": "#solutions/imagerie",
+  "features": [
+    "Scanners CT",
+    "IRM haute résolution",
+    "Radiologie numérique",
+    "Échographes fixes"
+  ]
+}

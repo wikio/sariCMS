@@ -7,5 +7,6 @@
   "csvExport": "تصدير CSV",
   "byPaymentMethod": "حسب طريقة الدفع",
   "finalized": "منتهية",
-  "taxesCollected": "الضرائب المحصلة"
+  "taxesCollected": "الضرائب المحصلة",
+  "cancelled": "ملغاة"
 }

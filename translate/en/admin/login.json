@@ -1,0 +1,18 @@
+{
+  "title": "Administration",
+  "subtitle": "Access reserved for administrators",
+  "passwordLabel": "Administrator password",
+  "passwordPlaceholder": "••••••••",
+  "submit": "Log in",
+  "backToSite": "Back to site",
+  "tooManyAttempts": "Too many attempts. Try again in 15 minutes.",
+  "wrongPassword": "Incorrect password.",
+  "attemptsLeft": "attempt(s) remaining.",
+  "accessBlocked": "Access temporarily blocked",
+  "tryLater": "Try again in a few minutes.",
+  "phase1": "Phase 1 Mode - Local Authentication",
+  "emailPlaceholder": "you@example.com",
+  "apiUnreachable": "The API is unreachable. Check that it is running.",
+  "verifyTotp": "Verify code",
+  "notAdmin": "This account is not an administrator account. Please use your personal dashboard."
+}

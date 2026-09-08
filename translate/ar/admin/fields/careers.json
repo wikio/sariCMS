@@ -1,0 +1,16 @@
+{
+  "title": "عنوان المنصب",
+  "image": "الصورة",
+  "type": "العقد",
+  "location": "المكان",
+  "salary": "الأجر",
+  "typeTravail": "نمط العمل",
+  "contact": "جهة اتصال الموارد البشرية",
+  "mission": "المهمة",
+  "objectifs": "الأهداف",
+  "prerequis": "المتطلبات",
+  "experience": "الخبرة",
+  "workflow": "مسار التوظيف",
+  "benefits": "المزايا",
+  "applyAuth": "تسجيل الدخول للتقديم"
+}

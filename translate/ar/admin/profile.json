@@ -10,5 +10,6 @@
   "twoFactorEnabled": "يتطلب تسجيل الدخول الآن رمز TOTP مكون من 6 أرقام.",
   "twoFactorDesc": "فعّل المصادقة الثنائية لتأمين حسابك.",
   "showProfile": "عرض الملف الشخصي",
-  "updateProfile": "تحديث الملف الشخصي"
+  "updateProfile": "تحديث الملف الشخصي",
+  "informations": "المعلومات"
 }

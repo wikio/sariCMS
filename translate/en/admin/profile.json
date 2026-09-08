@@ -10,5 +10,6 @@
   "twoFactorEnabled": "Login now requires a 6-digit TOTP code.",
   "twoFactorDesc": "Enable 2FA to secure your account with an authenticator app.",
   "showProfile": "Show profile",
-  "updateProfile": "Update profile"
+  "updateProfile": "Update profile",
+  "informations": "Information"
 }

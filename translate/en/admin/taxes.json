@@ -7,5 +7,6 @@
   "added": "Added",
   "rate": "Rate",
   "zone": "Zone",
-  "target": "Target"
+  "target": "Target",
+  "name": "Name"
 }

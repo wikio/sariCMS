@@ -1,0 +1,43 @@
+{
+  "title": "Laboratoire",
+  "desc": "Analyseurs d'hématologie, biochimie, microscopes, centrifugeuses",
+  "icon": "flask-conical",
+  "image": "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=1920",
+  "productIds": [],
+  "features": [
+    {
+      "icon": "flask-conical",
+      "text": "Analyseurs d'hématologie"
+    },
+    {
+      "icon": "test-tube",
+      "text": "Analyseurs de biochimie"
+    },
+    {
+      "icon": "microscope",
+      "text": "Microscopes de laboratoire"
+    },
+    {
+      "icon": "rotate-3d",
+      "text": "Centrifugeuses"
+    },
+    {
+      "icon": "thermometer",
+      "text": "Étuves et incubateurs"
+    },
+    {
+      "icon": "droplets",
+      "text": "Réactifs et consommables"
+    }
+  ],
+  "faq": [
+    {
+      "q": "Quels types d'analyseurs proposez-vous ?",
+      "a": "Nous proposons des analyseurs d'hématologie, biochimie, immunologie et coagulation, de l'entrée de gamme au haut débit."
+    },
+    {
+      "q": "Les réactifs sont-ils inclus ?",
+      "a": "Les réactifs de démarrage sont inclus avec chaque analyseur. Nous proposons ensuite des contrats de fourniture à tarifs préférentiels."
+    }
+  ]
+}

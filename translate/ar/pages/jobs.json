@@ -56,6 +56,7 @@
   "whyJoin2": "فريق ديناميكي ومهتم",
   "whyJoin3": "تدريب مستمر",
   "whyJoin4": "تطور مهني",
-  "startJourney": "ابدأ رحلة التقديم",
-  "applyDisabled": "التقديم مغلق حالياً."
+  "applicationsClosed": "التقديم مغلق حالياً.",
+  "startJourney": "ابدأ الرحلة",
+  "applyDisabled": "باب الترشح مغلق لهذا العرض."
 }

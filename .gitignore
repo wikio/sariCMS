@@ -25,7 +25,11 @@ yarn-error.log*
 /public/uploads/*
 !/public/uploads/.gitkeep
 
-# JSON i18n fusionnés (générés par npm run merge:translations)
+# JSON i18n fusionnés — copies de messages/<locale>.json fabriquées par
+# `npm run intl:sync` et à chaque enregistrement depuis l'écran « Traductions »
+# (lib/translate-store.ts). La source de vérité suivie par git est messages/*.json ;
+# le site ne lit ces copies qu'en repli. Les vues de l'atelier, /translate/<locale>/**,
+# sont suivies, elles.
 /translate/fr.json
 /translate/en.json
 /translate/ar.json

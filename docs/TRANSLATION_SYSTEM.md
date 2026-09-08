@@ -349,59 +349,89 @@ WHERE deletedAt IS NULL;
 3. **Ne pas modifier le `legacyId`** après création
 4. **Ne pas supprimer le parent** sans supprimer ou réassigner les enfants
 
-## Les chaînes de l’interface — `messages/`, `translate/`, et le contrôle
+## Les chaînes de l’interface — `messages/`, l’atelier `translate/`, le contrôle
 
-Deux arbres, deux rôles, et ils ne se ressemblent pas :
+### Qui lit quoi, depuis ce lot
 
 | Endroit | Qui le lit | Rôle |
 |---|---|---|
-| `messages/{fr,en,ar}.json` | le site, via `next-intl` | la source de vérité de l’interface |
-| `translate/{locale}/…json` | l’écran d’administration « Traductions » | l’atelier où l’on retouche les chaînes |
+| `messages/{fr,en,ar}.json` | le site, à chaque requête (`i18n/request.ts`) | la source, suivie par git |
+| `translate/<locale>/**.json` | l’écran d’administration « Traductions » | l’atelier : une vue par écran, dérivée des messages |
+| `translate/<locale>.json` | repli du site si le déploiement n’embarque que la copie | fichier généré, ignoré par git |
 
-`npm run merge:translations` copie `messages/<locale>.json` vers `translate/<locale>.json`
-— dans ce sens-là, jamais l’inverse. **`scripts/build-messages.js` fait l’inverse : il
-ne faut pas le lancer.** `translate/` est en retard sur `messages/` (l’espace
-`admin.newsletter`, apparu avec l’écran d’abonnement, n’y existe pas), et régénérer les
-messages depuis l’atelier effacerait des namespaces entiers du site.
+Avant : le site chargeait `translate/<locale>.json`, une copie fabriquée par `npm run
+merge:translations` au démarrage du serveur ; l’atelier écrivait dans
+`translate/<locale>/`, que personne ne relisait. Une retouche validée depuis
+l’administration ne changeait donc **rien** en ligne, un `git pull` ajoutant des clés
+restait invisible tant que le script n’était pas rejoué, et `translate/fr/admin.json`
+(1 655 clés, ancien export plat) faisait de l’ombre au dossier `translate/fr/admin/`
+(965 clés) — l’écran listait les deux sous le même nom, et React s’en plaignait.
 
-À savoir, du même coup : l’écran « Traductions » de l’administration enregistre ses
-retouches dans `translate/` (`app/api/admin/translations/file/route.ts`), que le site ne
-lit pas. Une chaîne modifiée là reste **sans effet en ligne** tant qu’elle n’est pas
-reprise dans `messages/<locale>.json`. Il faudra fermer la boucle — faire lire
-`translate/` par le site, ou faire écrire l’écran dans `messages/` — mais pas les deux :
-l’atelier contient déjà deux représentations du même namespace, et elles ne disent pas
-la même chose.
+Depuis :
 
-**La règle.** Une clé appelée par le code — `useTranslations('admin.newsletter')` puis
-`t('consentYes')` — doit exister dans les trois fichiers. Sinon rien ne casse à
-l’écriture du composant : c’est à l’affichage que le navigateur crache
-`MISSING_MESSAGE: Could not resolve admin.newsletter.consentYes`, et la place reste vide.
-L’écran de détail d’un abonné à la newsletter a précisément montré ce couple
-(`consentYes` / `consentNo`, absents des trois langues).
+- **le site lit la source** : `i18n/request.ts` charge `messages/<locale>.json` à la
+  requête, avec un cache par date de modification (une `stat`, pas un parsing de
+  4 037 clés), puis `translate/<locale>.json` en repli et l’`import()` compilé en
+  dernier recours. Aucun script de concaténation, aucun redémarrage.
+- **enregistrer depuis l’écran écrit aux trois endroits**, dans l’ordre : le fichier de
+  l’atelier, la branche correspondante de `messages/<locale>.json`, puis la copie
+  `translate/<locale>.json` régénérée à l’identique (`lib/translate-store.ts`). Si le
+  disque est en lecture seule, la réponse le dit et le bandeau de l’écran le répète
+  au lieu de sourire pour rien.
+- **`npm run intl:sync`** remet l’atelier d’aplomb quand `messages/` a bougé à la main
+  (un ajout de clés, un `git pull`) ; la règle de découpage est dans
+  `lib/intl-tree.mjs`, ~250 fichiers par langue.
 
-**Le contrôle.**
+### La règle de découpage, et pourquoi une règle
+
+Un objet dont aucune valeur n’est un objet tient dans un fichier :
+`admin/newsletter.json` ⇄ `admin.newsletter`. Un objet qui a des enfants-objets devient
+un dossier, et ses valeurs feuilles se ramassent dans `_root.json` — sinon elles
+n’auraient nulle part où vivre. Les tableaux restent des feuilles (`faq.0.q` est une
+clé comme une autre). Le mapping est donc bijectif dans les deux sens : c’est ce qui
+permet à l’écran d’écrire un fichier et de savoir exactement quelle branche des
+messages il représente. `npm run intl:test` (32 assertions) rejoue l’aller-retour sur
+les trois langues, vérifie qu’un enregistrement ne mange jamais les voisins, et
+qu’aucun doublon fichier/dossier ne peut sortir de la règle.
+
+`scripts/build-messages.js`, l’ancien « régénérer les messages depuis l’atelier », est
+mort : il écraserait `admin.newsletter` et consorts, absents de l’export plat. Il
+refuse désormais de tourner sans `--force`.
+
+### Un namespace en double exemplaire va dans `_legacy/`
+
+Les fichiers que la règle ne produit plus — l’export plat, un namespace rebaptisé — ne
+sont pas supprimés : le dépôt en porte 8 par langue, dont 1 644 clés d’`admin.menu`,
+`admin.login`, `admin.dataManager` que `messages/` ignore, et les jeter serait effacer
+du texte sans que personne ne l’ait décidé. `npm run intl:sync` les range sous
+`translate/<locale>/_legacy/` (arborescence conservée), où ils ne font plus de l’ombre
+au dossier du même nom. L’API refuse d’y écrire : un vestige se reprend dans
+`messages/<locale>.json`, puis se resynchronise. Et si un fichier plat d’un namespace
+qui a déjà son dossier était enregistré, il écraserait d’un coup toute la branche —
+l’API répond 409 avec la phrase qui va bien, plutôt que de le faire.
+
+### Le contrôle
 
 ```bash
-npm run intl:check   # bloquant : code de sortie 1 si une clé manque (c’est ce que fait `npm run build`)
-npm run intl:warn    # le même rapport, sans bloquer — `npm run dev` l’appelle à chaque démarrage
+npm run intl:check   # bloquant (sortie 1) : c’est ce qu’appelle `npm run build`
+npm run intl:warn    # le même rapport sans bloquer : `npm run dev` le joue à chaque démarrage
+npm run intl:sync    # remet l’atelier d’aplomb (écrit)
+npm run intl:test    # la règle de découpage, 32 assertions, sans serveur
 ```
 
-Il part du code, pas des fichiers : comparer le *nombre* de clés de trois fichiers ne
-prouve rien, ils peuvent être identiques et passer à côté d’une clé que l’interface
-réclame. Le script relève les espaces déclarés, les appels `t('…')`, vérifie dans les
-trois langues, puis signale les doublons de l’atelier (ci-dessous). Les clés construites
-à la volée (`t('field' + x)`, un nom de champ dans une variable) lui échappent
-volontairement — il ne devine pas la portée des variables.
+Le contrôle part du code, pas des fichiers : comparer le *nombre* de clés de trois
+fichiers ne prouve rien, ils peuvent être identiques et passer à côté d’une clé que
+l’interface réclame. Il relève les espaces déclarés par `useTranslations`, les appels
+`t('…')`, vérifie dans les trois langues, puis exige que l’atelier et la copie du site
+soient d’aplomb avec les messages. Les clés construites à la volée
+(`t('field' + x)`, un nom de champ dans une variable) lui échappent volontairement — il
+ne devine pas la portée des variables.
 
-**Un namespace, deux exemplaires.** L’atelier liste `translate/<locale>/`, et le dépôt y
-contient deux héritages du même espace : le fichier plat `admin.json` (1 655 clés) et le
-dossier `admin/` (965), dont les contenus diffèrent. L’arbre de l’écran doit donc les
-montrer tous les deux — supprimer l’un emporterait des namespaces que l’autre n’a pas —
-et l’API `app/api/admin/translations/tree/route.ts` rend leurs identifiants uniques (le
-fichier garde son `.json`, dans l’`id` comme dans le libellé quand le dossier du même nom
-existe). Sans cette distinction, `admin` apparaissait deux fois sous la même clé React :
-« Encountered two children with the same key », et le dossier choisi dans l’arbre
-n’était plus le même selon l’étage où l’on cliquait.
+Une clé appelée par le code qui n’existe dans aucun fichier ne casse rien à
+l’écriture du composant : le navigateur crache `MISSING_MESSAGE: Could not resolve
+admin.newsletter.consentYes` et la place reste vide à l’écran. C’est exactement comme
+cela s’est présenté sur le détail d’un abonné à la newsletter (`consentYes` /
+`consentNo`, absents des trois langues).
 
 ## Dépannage
 

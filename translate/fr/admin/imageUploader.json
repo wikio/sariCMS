@@ -1,0 +1,9 @@
+{
+  "dropHere": "Déposez une image ici",
+  "orUrl": "ou collez une URL",
+  "formats": "JPG, PNG, WebP ou SVG — 5 Mo maximum",
+  "preview": "Aperçu",
+  "remove": "Retirer l'image",
+  "invalidType": "Format de fichier non pris en charge",
+  "tooLarge": "Fichier trop volumineux"
+}

@@ -3,5 +3,7 @@
   "check": "شيك",
   "cashOnDelivery": "الدفع عند التسليم",
   "fees": "الرسوم",
-  "clientInstructions": "تعليمات العميل"
+  "clientInstructions": "تعليمات العميل",
+  "name": "الاسم",
+  "type": "النوع"
 }

@@ -1,0 +1,12 @@
+{
+  "label": "Layout",
+  "icon": "layout",
+  "files": [
+    "FloatingCartButton",
+    "Footer",
+    "header",
+    "LoadingSpinner",
+    "NotFound",
+    "SearchHeader"
+  ]
+}

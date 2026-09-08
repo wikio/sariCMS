@@ -1,0 +1,15 @@
+{
+  "title": "Formulaire de vérification",
+  "codeLabel": "Code du document",
+  "codePlaceholder": "Ex: SARI-FAC24-00001",
+  "keyLabel": "Clé de vérification",
+  "keyPlaceholder": "Ex: CTdxXe6ZdFVzWQ==",
+  "captchaLabel": "Vérification anti-robot",
+  "captchaPlaceholder": "?",
+  "newCaptcha": "Nouveau CAPTCHA",
+  "captchaHelp": "Résolvez cette opération pour prouver que vous êtes humain",
+  "verify": "Vérifier",
+  "verifying": "Vérification...",
+  "reset": "Réinitialiser",
+  "demoCodes": "Codes de démonstration :"
+}

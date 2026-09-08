@@ -49,7 +49,8 @@
   "captchaHelp": "Résolvez cette opération pour prouver que vous êtes humain",
   "captchaError": "Réponse CAPTCHA incorrecte. Veuillez réessayer.",
   "captchaBlocked": "Trop de tentatives. Veuillez rafraîchir la page dans 5 minutes.",
-  "quoteCtaText": "Pour une demande de devis plus détaillée (plusieurs produits, suivi de votre demande), créez un compte client et connectez-vous à votre dashboard.",
+  "loading": "Chargement...",
+  "quoteCtaText": "Pour une demande de devis plus détaillée (plusieurs produits, spécifications personnalisées, etc.), connectez-vous à votre compte client.",
   "quoteCtaLogin": "Se connecter",
   "quoteCtaRegister": "Créer un compte"
 }

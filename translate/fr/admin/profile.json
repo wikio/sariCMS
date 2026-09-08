@@ -10,5 +10,6 @@
   "twoFactorEnabled": "La connexion exige désormais un code TOTP à 6 chiffres.",
   "twoFactorDesc": "Activez la 2FA pour sécuriser votre compte avec une appli d'authentification.",
   "showProfile": "Afficher le profil",
-  "updateProfile": "Mettre à jour le profil"
+  "updateProfile": "Mettre à jour le profil",
+  "informations": "Informations"
 }

@@ -5,9 +5,11 @@
   "scripts": {
     "merge:translations": "node scripts/merge-translations.mjs",
     "intl:check": "node scripts/check-translations.mjs",
+    "intl:sync": "node scripts/intl-sync.mjs",
+    "intl:test": "node scripts/test-intl-tree.mjs",
     "intl:warn": "node scripts/check-translations.mjs --warn",
-    "dev": "npm run merge:translations && npm run intl:warn && next dev -p 5000",
-    "build": "npm run merge:translations && npm run intl:check && next build",
+    "dev": "npm run intl:warn && next dev -p 5000",
+    "build": "npm run intl:check && next build",
     "start": "next start",
     "lint": "next lint",
     "menus:check": "node scripts/check-menus.mjs",

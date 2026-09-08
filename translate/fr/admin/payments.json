@@ -3,5 +3,7 @@
   "check": "Chèque",
   "cashOnDelivery": "Paiement à la livraison",
   "fees": "Frais",
-  "clientInstructions": "Instructions client"
+  "clientInstructions": "Instructions client",
+  "name": "Nom",
+  "type": "Type"
 }
