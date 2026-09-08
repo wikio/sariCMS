@@ -11,12 +11,24 @@ export interface ImportCatalogOptions {
   locales?: string[];
 }
 
+/** Lot importé par une collection : les lignes acceptées et les rejets. */
+export interface ImportBatch {
+  imported: number;
+  failures: string[];
+}
+
 export interface ImportCatalogResult {
   path: string;
   locales: string[];
   replace: boolean;
   imported: Record<string, number>;
   skipped: Record<string, string>;
+  /**
+   * Lignes refusées par la base, par collection. Sans ce champ, un import qui
+   * s'arrêtait sur la première ligne invalide ne le disait pas : l'écran
+   * affichait « 0 fiche importée » et l'opérateur ne savait plus quoi corriger.
+   */
+  failed: Record<string, { count: number; first: string }>;
 }
 
 const DEFAULT_LOCALES = ['fr', 'en', 'ar'];
@@ -36,8 +48,14 @@ export class CatalogImportService {
     const root = this.resolveDataRoot();
     const imported: Record<string, number> = {};
     const skipped: Record<string, string> = {};
-    const bump = (key: string, n: number) => {
-      imported[key] = (imported[key] ?? 0) + n;
+    const failed: ImportCatalogResult['failed'] = {};
+    const bump = (key: string, batch: number | ImportBatch) => {
+      const value = typeof batch === 'number' ? { imported: batch, failures: [] } : batch;
+      imported[key] = (imported[key] ?? 0) + value.imported;
+      if (value.failures.length) {
+        failed[key] = { count: (failed[key]?.count ?? 0) + value.failures.length, first: failed[key]?.first ?? value.failures[0] };
+        this.logger.warn(`Import ${key}: ${value.failures.length} ligne(s) rejetée(s) — ${value.failures[0]}`);
+      }
     };
 
     for (const locale of locales) {
@@ -200,7 +218,7 @@ export class CatalogImportService {
     }
 
     this.logger.log(`Catalog import done from ${root}: ${JSON.stringify(imported)}`);
-    return { path: root, locales, replace, imported, skipped };
+    return { path: root, locales, replace, imported, skipped, failed };
   }
 
   async counts(): Promise<Record<string, number>> {
@@ -251,14 +269,15 @@ export class CatalogImportService {
     raw: unknown,
     replace: boolean,
     map: (row: Record<string, unknown>, slug: string) => Record<string, unknown>,
-  ): Promise<number> {
-    if (!Array.isArray(raw) || raw.length === 0) return 0;
+  ): Promise<ImportBatch> {
+    if (!Array.isArray(raw) || raw.length === 0) return { imported: 0, failures: [] };
     const repo = this.factory(collection);
     const existing = await this.localeCount(repo, locale);
-    if (existing > 0 && !replace) return 0;
+    if (existing > 0 && !replace) return { imported: 0, failures: [] };
     if (replace && existing > 0) await this.deleteLocale(repo, locale);
 
     const used = new Set<string>();
+    const failures: string[] = [];
     let n = 0;
     for (const item of raw) {
       if (!item || typeof item !== 'object') continue;
@@ -268,47 +287,92 @@ export class CatalogImportService {
       let i = 2;
       while (used.has(slug)) slug = `${base}-${i++}`;
       used.add(slug);
-      await repo.create({
-        ...map(row, slug),
-      } as Partial<BaseEntity>);
-      n += 1;
+      if (await this.safeCreate(repo, collection, locale, slug, { ...map(row, slug) }, failures)) n += 1;
     }
-    return n;
+    return { imported: n, failures };
   }
 
-  private async importLegal(locale: string, raw: unknown, replace: boolean): Promise<number> {
-    if (!raw || typeof raw !== 'object') return 0;
+  /**
+   * Une ligne refusée ne doit pas emporter les suivantes. Un `date` écrit
+   * « 2026-07-15 » faisait échouer `Prisma` et, avec lui, toute la reprise du
+   * catalogue : la collection suivante n'était même pas tentée. Ici la ligne est
+   * consignée et sautée, l'import continue, et le rapport dit quoi corriger.
+   */
+  private async safeCreate(
+    repo: ICrudRepository<BaseEntity>,
+    collection: string,
+    locale: string,
+    slug: string,
+    data: Record<string, unknown>,
+    failures: string[],
+  ): Promise<boolean> {
+    try {
+      await repo.create(data as Partial<BaseEntity>);
+      return true;
+    } catch (error) {
+      const message = error instanceof Error ? error.message.split('\n')[0] : String(error);
+      failures.push(`${collection} · ${locale}/${slug} : ${message}`);
+      return false;
+    }
+  }
+
+  /**
+   * Les documents légaux (`legal.json`) sont une page par type de document.
+   * `category` porte le type lui-même — « mentions », « privacy », « conditions »,
+   * « about » — parce que la vitrine range les lignes par ce champ : un slug
+   * laissé libre (« mentions-legales », « cgv-2026 ») ne doit pas décider seul de
+   * quel document s'affiche sous `/legal/mentions`.
+   */
+  private async importLegal(locale: string, raw: unknown, replace: boolean): Promise<ImportBatch> {
+    if (!raw || typeof raw !== 'object') return { imported: 0, failures: [] };
     const repo = this.factory(COLLECTIONS.pages);
-    const existing = await repo.count({ locale, kind: 'legal' });
-    if (existing > 0 && !replace) return 0;
-    if (replace && existing > 0) await this.deleteWhere(repo, { locale, kind: 'legal' });
+    // « about » est rangé sous `kind: 'about'` (c'est la page À propos de la
+    // vitrine) mais il vient du même fichier : le compter seul dans le test de
+    // présence ferait rejouer son insertion, et l'unicité (slug, locale) la
+    // refuserait. Les deux sortes de lignes sont donc pesées ensemble.
+    const alreadyImported = async (loc: string) =>
+      (await repo.count({ locale: loc, kind: 'legal' })) +
+      (await repo.count({ locale: loc, kind: 'about', category: 'about' }));
+    const existing = await alreadyImported(locale);
+    if (existing > 0 && !replace) return { imported: 0, failures: [] };
+    if (replace && existing > 0) {
+      await this.deleteWhere(repo, { locale, kind: 'legal' });
+      await this.deleteWhere(repo, { locale, kind: 'about', category: 'about' });
+    }
+    const failures: string[] = [];
     let n = 0;
     for (const [key, value] of Object.entries(raw as Record<string, Record<string, unknown>>)) {
       if (!value || typeof value !== 'object') continue;
       const slug = slugify(key) || key;
-      await repo.create({
+      const ok = await this.safeCreate(repo, 'pages', locale, slug, {
         locale,
         slug,
-        kind: key === 'about' ? 'about' : 'legal',
+        // Les quatre documents relèvent tous de la famille « legal » : c'est elle
+        // que l'admin « Pages légales » liste. Le distinguo d'autrefois sur
+        // `about` envoyait la fiche hors de la liste, sans que la page /about lise
+        // jamais cette ligne — le document était donc éditable nulle part.
+        kind: 'legal',
         subtype: 'simple',
+        category: key,
         title: String(value.title ?? key),
         content: String(value.content ?? ''),
         status: 'published',
         publishedAt: new Date().toISOString(),
         sortOrder: n,
-      } as Partial<BaseEntity>);
-      n += 1;
+      }, failures);
+      if (ok) n += 1;
     }
-    return n;
+    return { imported: n, failures };
   }
 
-  private async importGeneric(locale: string, raw: unknown, replace: boolean): Promise<number> {
-    if (!Array.isArray(raw)) return 0;
+  private async importGeneric(locale: string, raw: unknown, replace: boolean): Promise<ImportBatch> {
+    if (!Array.isArray(raw)) return { imported: 0, failures: [] };
     const repo = this.factory(COLLECTIONS.pages);
     const existing = await repo.count({ locale, kind: 'generic' });
-    if (existing > 0 && !replace) return 0;
+    if (existing > 0 && !replace) return { imported: 0, failures: [] };
     if (replace && existing > 0) await this.deleteWhere(repo, { locale, kind: 'generic' });
     const used = new Set<string>();
+    const failures: string[] = [];
     let n = 0;
     for (const item of raw) {
       const row = item as Record<string, unknown>;
@@ -320,7 +384,7 @@ export class CatalogImportService {
       const subtype = ['simple', 'gallery', 'flyer', 'slide', 'scroll', 'full', 'about'].includes(String(row.type))
         ? String(row.type)
         : 'simple';
-      await repo.create({
+      const ok = await this.safeCreate(repo, 'pages', locale, slug, {
         locale,
         slug,
         kind: 'generic',
@@ -335,10 +399,10 @@ export class CatalogImportService {
         status: 'published',
         publishedAt: new Date().toISOString(),
         sortOrder: typeof row.id === 'number' ? row.id : n,
-      } as Partial<BaseEntity>);
-      n += 1;
+      }, failures);
+      if (ok) n += 1;
     }
-    return n;
+    return { imported: n, failures };
   }
 
   private async importMenus(locale: string, raw: unknown, replace: boolean): Promise<number> {

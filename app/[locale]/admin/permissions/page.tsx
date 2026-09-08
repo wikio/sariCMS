@@ -243,8 +243,15 @@ export default function AdminPermissionsPage() {
             <span style={{ color: 'var(--ad-muted)' }}>
               {t('permissionCount', { count: granted.size })}
             </span>
+            {/* Le verrou se lit mal sans explication : on croit à un écran muet,
+                alors que c'est le dépôt qui fixe le barème de ces quatre rôles — et
+                une ressource parue après le seed ne peut donc s'accorder qu'en base. */}
             {isSystem ? (
-              <span className="inline-flex items-center gap-1" style={{ color: 'var(--ad-muted)' }}>
+              <span
+                className="inline-flex items-center gap-1"
+                style={{ color: 'var(--ad-muted)' }}
+                title={t('systemRoleHint')}
+              >
                 <Lock className="w-3.5 h-3.5" /> {t('systemRole')}
               </span>
             ) : (

@@ -60,6 +60,31 @@
    1. BASE — polices auto-hébergées Inter / Cairo
    ========================================== */
 @layer base {
+  /*
+   * Hauteur réelle du bandeau de navigation, posée par `SiteWrapper` à la
+   * mesure (barre de contact + barre principale, au repos comme à la mise à
+   * l'échelle d'une fenêtre). Ces deux valeurs servent de repli côté serveur et
+   * tant que la mesure n'a pas eu lieu : 56px + 1px de bordure pour la barre de
+   * contact, 64px (mobile) ou 80px (à partir de `lg`) pour la principale.
+   *
+   * Le bandeau est `fixed` : la vitrine ne le pousse pas, elle doit lui laisser
+   * la place — c'est ce recalcul qui évite qu'un titre de slider ou qu'une
+   * ancre (`#newsletter`) se retrouve dessous.
+   */
+  :root {
+    --site-header-h: 122px;
+  }
+  @media (min-width: 1024px) {
+    :root {
+      --site-header-h: 138px;
+    }
+  }
+
+  html {
+    /* Les liens d'ancrage s'arrêtent sous le bandeau, pas dessus. */
+    scroll-padding-top: calc(var(--site-header-h) + 16px);
+  }
+
   body {
     font-family: Inter, Cairo, sans-serif;
     transition: background-color 0.3s, color 0.3s;
@@ -233,7 +258,12 @@
     white-space: nowrap;
   }
   .marquee-content {
-    display: inline-block;
+    /* Éléments alignés les uns à côté des autres, et non posés sur la ligne de
+       base : un élément « image + texte » à côté d'une image seule doit partager
+       le même centrage vertical, sinon le bandeau paraît de travers. */
+    display: flex;
+    align-items: center;
+    width: max-content;
     animation: marquee 30s linear infinite;
   }
 
@@ -475,8 +505,18 @@
 }
 
 .marquee-content {
-  display: inline-block;
+  display: flex;
+  align-items: center;
+  width: max-content;
   animation: marquee 30s linear infinite;
+}
+
+/* Un visiteur qui a demandé « moins de mouvements » est servi : le bandeau
+   reste lisible, il ne défile plus. */
+@media (prefers-reduced-motion: reduce) {
+  .marquee-content {
+    animation: none;
+  }
 }
 
 @keyframes marquee {
@@ -571,5 +611,93 @@
 @media (max-width: 768px) {
   .parallax-bg {
     background-attachment: scroll;
+  }
+}
+
+/* ============================================
+   PRÉCHARGEMENT — damier de pixels
+   ============================================
+   L'animation d'attente de la vitrine : 15 cases, une impulsion en diagonale.
+   Elle reprend le grain des visuels du site (des pixels, une grille) au lieu d'un
+   spinner générique, et elle reste sous le seuil du clinquant : 90 ms de décalage
+   par case, une opacité qui ne descend jamais à zéro.
+   Le conteneur ne capte aucun clic — un voile qui bloque pendant qu'il attend
+   aurait fait perdre la page autant que l'absence de signe. */
+.pixel-grid-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  background: rgba(255, 255, 255, 0.62);
+  backdrop-filter: blur(1.5px);
+}
+
+.dark .pixel-grid-veil {
+  background: rgba(17, 17, 17, 0.55);
+}
+
+.pixel-grid-wrap {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.pixel-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 10px);
+  grid-auto-rows: 10px;
+  gap: 4px;
+}
+
+.pixel-grid__cell {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: rgb(var(--color-sari-blue, 37 99 235));
+  opacity: 0.18;
+  animation: pixelPulse 1.05s ease-in-out infinite;
+  animation-delay: var(--pixel-delay, 0ms);
+}
+
+.pixel-grid__label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgb(71 85 105);
+}
+
+.dark .pixel-grid__label {
+  color: rgb(203 213 225);
+}
+
+@keyframes pixelPulse {
+  0%,
+  100% {
+    opacity: 0.18;
+    transform: scale(0.86);
+  }
+  45% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Un visiteur qui demande peu de mouvement n'a pas à subir une grille qui clignote :
+   les cases s'allument une fois, ensemble, puis restent. */
+@media (prefers-reduced-motion: reduce) {
+  .pixel-grid__cell {
+    animation: none;
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .pixel-grid__cell {
+    background: rgb(96 165 250);
   }
 }

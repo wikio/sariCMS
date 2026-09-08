@@ -1,0 +1,38 @@
+{
+  "title": "How to verify?",
+  "desc": "All official SARI Système documents contain a unique code in the format",
+  "format": "SARI-XXX##-#####",
+  "andKey": "and an encrypted verification key.",
+  "steps": [
+    {
+      "number": "1",
+      "title": "Locate the codes",
+      "desc": "Find the code and key on your document or scan the QR code"
+    },
+    {
+      "number": "2",
+      "title": "Enter the information",
+      "desc": "Enter the code and key in the form below"
+    },
+    {
+      "number": "3",
+      "title": "Get the result",
+      "desc": "Instant authenticity verification"
+    }
+  ],
+  "verifiableTypes": "Verifiable document types:",
+  "types": [
+    "Invoices (purchase/sale)",
+    "Quotes",
+    "Purchase orders",
+    "Delivery notes",
+    "Certificates",
+    "Products",
+    "Clients",
+    "Suppliers",
+    "Inventories",
+    "NIF / NIS / NAI",
+    "G50",
+    "Tax documents"
+  ]
+}

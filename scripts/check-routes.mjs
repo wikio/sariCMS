@@ -15,20 +15,31 @@
  * qu'un seul, sans avertir, et le second passe alors inaperçu.
  */
 
-import { existsSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 const argv = process.argv.slice(2);
+
+/*
+ * Une option, trois écritures : `--nom valeur`, `--nom=valeur`, et — pour
+ * l'URL seulement — la valeur nue en argument positionnel. Cette dernière
+ * était acceptée pour tous les noms, et `--locales` héritait donc de l'URL :
+ * le contrôle partait interroger `/http://hote:port/...` et affichait un 404
+ * partout. Un nom d'option ne doit jamais tomber sur la valeur d'un autre.
+ */
 const argOf = (name, fallback) => {
   const i = argv.indexOf(`--${name}`);
-  if (i >= 0 && argv[i + 1]) return argv[i + 1];
+  if (i >= 0 && argv[i + 1] && !argv[i + 1].startsWith('--')) return argv[i + 1];
   const eq = argv.find((a) => a.startsWith(`--${name}=`));
   if (eq) return eq.slice(name.length + 3);
-  const nu = argv.find((a) => /^https?:\/\//.test(a));
-  return nu || fallback;
+  if (name === 'url') {
+    const nue = argv.find((a) => /^https?:\/\//.test(a));
+    if (nue) return nue;
+  }
+  return fallback;
 };
 
 const SITE = argOf('url', 'http://localhost:5000').replace(/\/$/, '');
@@ -89,6 +100,72 @@ function routesOnDisk() {
   return out.sort();
 }
 
+/* ---------------------------------- le sélecteur de liens offert à l'admin */
+
+/** Les chemins que `SlugPicker` propose comme pages statiques. */
+function pickerStaticPaths() {
+  const file = join(ROOT, 'components', 'admin', 'SlugPicker.tsx');
+  if (!existsSync(file)) return null;
+  const src = readFileSync(file, 'utf8');
+  const start = src.indexOf('const STATIC_PATHS');
+  if (start < 0) return null;
+  const body = src.slice(start, src.indexOf('];', start));
+  return [...body.matchAll(/path:\s*'([^']+)'/g)].map((m) => m[1]);
+}
+
+/**
+ * Un chemin du sélecteur existe-t-il comme page ?
+ *
+ * Contrairement à `routesOnDisk`, on laisse traverser un segment dynamique :
+ * `/legal/mentions` vit dans `app/[locale]/legal/[type]/page.tsx`, et le
+ * sélecteur a raison de le proposer — c'est `check-routes` qui ne peut pas
+ * tester une route sans identifiant.
+ */
+function pageOnDisk(path) {
+  const segments = path.split('/').filter(Boolean);
+  let dir = join(ROOT, 'app', '[locale]');
+  if (!segments.length) return existsSync(join(dir, 'page.tsx')) || existsSync(join(dir, 'page.ts'));
+  for (const seg of segments) {
+    let entries = [];
+    try { entries = readdirSync(dir); } catch { return false; }
+    const next = entries.includes(seg) ? seg : entries.find((e) => e.startsWith('[') && !e.startsWith('[...'));
+    if (!next) return false;
+    dir = join(dir, next);
+  }
+  return existsSync(join(dir, 'page.tsx')) || existsSync(join(dir, 'page.ts'));
+}
+
+/** Pages de la vitrine que le sélecteur ne propose pas — une note, pas une faute. */
+const PICKER_HORS_MENU = new Set(['admin', 'dashboard', 'connexion', 'inscription', 'cart', 'payment', 'p', 'content', 'search', 'newsletter']);
+
+function checkPicker() {
+  head('Sélecteur de liens de l’administration');
+  const paths = pickerStaticPaths();
+  if (!paths) {
+    warn('STATIC_PATHS introuvable dans components/admin/SlugPicker.tsx — contrôle passé sans rien dire.');
+    return;
+  }
+  const cassés = paths.filter((p) => !pageOnDisk(p));
+  if (cassés.length) {
+    for (const p of cassés) fail(`le sélecteur propose ${p} : aucune page derrière, un menu qui le choisit mènera à un 404.`);
+  } else {
+    ok(`${paths.length} chemins proposés, tous adossés à une page du disque.`);
+  }
+  const offres = new Set(paths);
+  const absentes = routesOnDisk()
+    .map((r) => r.split('/').filter(Boolean))
+    .filter((segs) => segs.length === 1 && !PICKER_HORS_MENU.has(segs[0]))
+    .map((segs) => `/${segs[0]}`)
+    .filter((p) => !offres.has(p));
+  if (absentes.length) {
+    line(`  ${C.y}!${C.x} pages de vitrine non proposées par le sélecteur : ${absentes.join(', ')}`);
+    line(`      ${C.d}Ce n'est pas une faute — une page sans entrée de menu est normale.${C.x}`);
+    line(`      ${C.d}Si un menu doit y mener, ajoutez-la dans STATIC_PATHS.${C.x}`);
+  }
+  const doublons = paths.filter((p, i) => paths.indexOf(p) !== i);
+  if (doublons.length) fail(`chemins proposés deux fois dans le sélecteur : ${[...new Set(doublons)].join(', ')}`);
+}
+
 /* ------------------------------------------------------ interrogation HTTP */
 
 /**
@@ -121,6 +198,10 @@ async function main() {
   head('Routes déclarées dans app/[locale]');
   line(`  ${routes.length} page(s) : ${routes.slice(0, 8).map((r) => r.slice(1)).join(', ')}${routes.length > 8 ? '…' : ''}`);
 
+  // Indépendant du serveur : une promesse cassée du sélecteur se voit aussi bien
+  // à froid, et c'est justement quand le serveur est éteint qu'on prépare un menu.
+  checkPicker();
+
   const vivant = await status(`${SITE}/${LOCALES[0]}`);
   if (!vivant) {
     head('Serveur');
@@ -133,10 +214,13 @@ async function main() {
   // Une route absente dans UNE langue seulement trahit un cache partiel :
   // c'est le symptôme qu'on cherche à isoler.
   const parRoute = new Map();
+  const racines = {};
+  const absentesParLangue = [];
 
   for (const locale of LOCALES) {
     head(`Langue « ${locale} »`);
     const racine = await status(`${SITE}/${locale}`);
+    racines[locale] = racine;
     if (racine === 0) fail(`/${locale} sans réponse (délai dépassé)`);
     else if (racine >= 400) fail(`/${locale} → HTTP ${racine}`);
     else ok(`/${locale} → HTTP ${racine}`);
@@ -151,9 +235,40 @@ async function main() {
       if (code === 404) manquantes.push(route);
       else if (code === 0) muettes.push(route);
     }
-    if (manquantes.length) fail(`${manquantes.length} route(s) en 404 : ${manquantes.join(', ')}`);
+    if (manquantes.length) fail(`${manquantes.length} route(s) en 404 : ${manquantes.slice(0, 6).join(', ')}${manquantes.length > 6 ? '…' : ''}`);
     if (muettes.length) fail(`${muettes.length} route(s) sans réponse — serveur saturé ou arrêté`);
     if (!manquantes.length && !muettes.length) ok(`les ${routes.length} routes répondent`);
+    absentesParLangue.push(manquantes.length);
+  }
+
+  /*
+   * Le cas « plus rien ne répond, sinon le serveur lui-même ».
+   *
+   * Toutes les routes du disque en 404, ou presque, n'est pas un problème de
+   * routes : c'est que le processus qui occupe le port ne sert pas ce dossier,
+   * ou le sert avec un manifeste plus vieux que le disque. Le dire ici évite
+   * deux heures à chercher dans le code — le code, lui, est bon.
+   */
+  const toutAbsentes = routes.length > 0 && absentesParLangue.every((n) => n >= routes.length);
+  if (toutAbsentes) {
+    head('Aucune route du disque n’est servie');
+    const vivace = LOCALES.some((l) => racines[l] > 0 && racines[l] < 400);
+    line(`  ${C.r}✗${C.x} ${SITE} répond, mais ne connaît aucune des ${routes.length} pages de ce dépôt${vivace ? ' — la racine, elle, répond' : ''}.`);
+    line();
+    line('  Dans cet ordre, parce que ce sont les causes réellement observées :');
+    line(`  ${C.d}1. un autre serveur occupe le port (une instance précédente, ou une${C.x}`);
+    line(`  ${C.d}   copie du projet lancée depuis un autre dossier) :${C.x}`);
+    line(`       PowerShell : ${C.d}Get-NetTCPConnection -LocalPort 5000 | Select-Object OwningProcess${C.x}`);
+    line(`       ${C.d}Get-Process -Id <pid> | Select-Object Path${C.x}  → le dossier du processus`);
+    line(`  ${C.d}2. un cache de développement périmé — redémarrer proprement :${C.x}`);
+    line(`       ${C.d}rmdir /s /q .next${C.x}  puis  ${C.d}npm run dev${C.x}`);
+    line(`  ${C.d}3. le serveur lancé depuis un sous-dossier : next dev doit tourner là où${C.x}`);
+    line(`  ${C.d}   se trouve ${C.x}${C.d}app/[locale]${C.x} — la racine du dépôt, pas un de ses dossiers.${C.x}`);
+    if (vivace) {
+      line();
+      line(`  ${C.d}La racine répond et les pages enfants sont en 404 : c'est le signe d'un${C.x}`);
+      line(`  ${C.d}manifeste de routes plus ancien que le disque — le point 2.${C.x}`);
+    }
   }
 
   head('Cohérence entre les langues');

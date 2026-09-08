@@ -56,6 +56,7 @@
   "whyJoin2": "Équipe dynamique et bienveillante",
   "whyJoin3": "Formation continue",
   "whyJoin4": "Évolution de carrière",
-  "startJourney": "Démarrer le parcours de candidature",
-  "applyDisabled": "Les candidatures sont actuellement fermées."
+  "applicationsClosed": "Les candidatures sont actuellement fermées.",
+  "startJourney": "Commencer le parcours",
+  "applyDisabled": "Les candidatures sont closes pour cette offre."
 }

@@ -49,7 +49,8 @@
   "captchaHelp": "Solve this operation to prove you are human",
   "captchaError": "Incorrect CAPTCHA answer. Please try again.",
   "captchaBlocked": "Too many attempts. Please refresh the page in 5 minutes.",
-  "quoteCtaText": "For a more detailed quote request (multiple products, request tracking), create a client account and sign in to your dashboard.",
-  "quoteCtaLogin": "Sign in",
+  "loading": "Loading...",
+  "quoteCtaText": "For a more detailed quote request (multiple products, custom specifications, etc.), please log in to your customer account.",
+  "quoteCtaLogin": "Log in",
   "quoteCtaRegister": "Create an account"
 }

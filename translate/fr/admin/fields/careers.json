@@ -1,0 +1,16 @@
+{
+  "title": "Intitulé du poste",
+  "image": "Portrait",
+  "type": "Contrat",
+  "location": "Lieu",
+  "salary": "Rémunération",
+  "typeTravail": "Rythme",
+  "contact": "Contact RH",
+  "mission": "Mission",
+  "objectifs": "Objectifs",
+  "prerequis": "Prérequis",
+  "experience": "Expérience",
+  "workflow": "Processus de recrutement",
+  "benefits": "Avantages",
+  "applyAuth": "Connexion pour postuler"
+}

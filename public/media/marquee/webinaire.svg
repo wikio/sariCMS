@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Webinaire">
+  <rect width="640" height="360" fill="#F2F6F8"/>
+  <rect x="40" y="36" width="560" height="248" rx="16" fill="#0E2A38"/>
+  <path d="M296 118l72 42-72 42z" fill="#C6DA34"/>
+  <rect x="40" y="296" width="560" height="10" rx="5" fill="#169EC9"/>
+  <rect x="40" y="318" width="300" height="10" rx="5" fill="#169EC9" opacity=".35"/>
+</svg>

@@ -1,0 +1,15 @@
+{
+  "heroDesc": "Choisissez les slides à afficher, réglez-les un par un et le comportement du diaporama.",
+  "marqueeDesc": "Ce qui défile se choisit ici : logos des partenaires, actualités, événements, offres d'emploi, produits, un mélange de ces modules, ou les blocs saisis dans le studio. Titre facultatif, marges et taille des éléments réglables.",
+  "navigationDesc": "Tuiles de navigation (solutions, services, produits, événements, actualités, carrières).",
+  "missionDesc": "Bandeau texte sur image de fond avec bouton — textes, style et constructeur de page.",
+  "productsDesc": "Titre, description, nombre de produits et sélection des fiches à mettre en avant.",
+  "blocksDesc": "Blocs image / texte alternés : ajoutez-en, modifiez-les, ou reprenez le bloc au constructeur de page.",
+  "statsDesc": "Valeurs et libellés modifiables directement dans le bloc.",
+  "testimonialsDesc": "Choisissez les témoignages, réglez les images et triez-les.",
+  "eventsDesc": "Sélection des événements à mettre sur la page d’accueil, avec leur ordre.",
+  "newsDesc": "Sélection des articles à mettre sur la page d’accueil, avec leur ordre.",
+  "newsletterDesc": "Textes du bloc et inscription réelle des adresses (liste gérée dans Newsletter).",
+  "partnersDesc": "Sélection des partenaires mis en avant sur la page d’accueil.",
+  "ctaDesc": "Le bloc « Prêt à démarrer votre projet ? » : textes, boutons et couleurs, langue par langue."
+}

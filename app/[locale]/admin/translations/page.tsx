@@ -78,10 +78,23 @@ export default function AdminTranslationEditorPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-      if (!res.ok) throw new Error('save');
-      showToast('Traductions enregistrées', 'success');
-    } catch {
-      showToast('Écriture impossible', 'error');
+      const json = (await res.json().catch(() => null)) as
+        | { error?: string; synced?: { messages?: boolean; runtime?: boolean; reason?: string } }
+        | null;
+      if (!res.ok) {
+        // Le serveur sait de quoi il s'agit — un namespace en double exemplaire, un
+        // vestige, un disque en lecture seule. Le message passe tel quel : c'est
+        // exactement ce que l'opérateur a besoin de lire pour corriger.
+        throw new Error(json?.error || 'Écriture impossible');
+      }
+      if (json?.synced && json.synced.messages === false) {
+        showToast(`Enregistré dans l'atelier seul — ${json.synced.reason ?? 'messages/ en lecture seule'}`, 'error');
+      } else {
+        showToast('Traductions enregistrées (atelier et messages)', 'success');
+      }
+      loadTree();
+    } catch (error) {
+      showToast((error as Error).message || 'Écriture impossible', 'error');
     }
   };
 

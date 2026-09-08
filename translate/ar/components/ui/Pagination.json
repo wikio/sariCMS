@@ -1,4 +1,5 @@
 {
   "previousPage": "الصفحة السابقة",
-  "nextPage": "الصفحة التالية"
+  "nextPage": "الصفحة التالية",
+  "pageInfo": "الصفحة {current} من {total}"
 }

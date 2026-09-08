@@ -2,6 +2,7 @@ import {
   Package, Wrench, Briefcase, Newspaper, Calendar, MessageCircle, Handshake,
   Layers, Image as ImageIcon, FileText, Images, Mail, FolderOpen, Scale, Menu, User,
 } from 'lucide-react';
+import { LEGAL_DOC_LABELS, LEGAL_DOC_TYPES, legalDocPath } from '@/lib/legal-docs';
 
 export type FieldKind =
   | 'text' | 'textarea' | 'html' | 'slug' | 'email' | 'phone' | 'url'
@@ -51,6 +52,29 @@ export interface CmsModule {
   defaults: Record<string, unknown>;
   filter?: Record<string, string>;
   orderField?: string;
+  /**
+   * Bouton de ligne supplémentaire, pour les fiches qui se travaillent ailleurs
+   * que dans le formulaire (le constructeur de page, par exemple). `when` limite
+   * l'affichage aux lignes concernées ; le lien est construit par le module, qui
+   * seul sait ce qu'il ouvre.
+   */
+  rowAction?: {
+    label: string;
+    hint?: string;
+    when?: { field: string; equals: string };
+    href: (row: Record<string, unknown>, locale: string) => string;
+  };
+  /**
+   * Bouton de consultation : la liste ouvre la fiche telle que le site la sert.
+   * Un document légal comme une page construite s'écrivent ici mais se lisent
+   * ailleurs — vérifier le résultat sans changer d'onglet évite de deviner si la
+   * mise en page a suivi.
+   */
+  publicAction?: {
+    label?: string;
+    hint?: string;
+    href: (row: Record<string, unknown>, locale: string) => string;
+  };
 }
 
 const STATUS = [
@@ -68,6 +92,21 @@ const LOCALES = [
 const CATEGORIES = ['Diagnostic', 'Cardiologie', 'Imagerie', 'Chirurgie', 'Pédiatrie', 'Urgence', 'Laboratoire', 'Consommables'].map((v) => ({ value: v, label: v }));
 const CONTRACTS = ['CDI', 'CDD', 'Stage', 'Alternance', 'Freelance', 'Intérim'].map((v) => ({ value: v, label: v }));
 const EVENT_TYPES = ['Salon', 'Formation', 'Conférence', 'Webinar', 'Atelier', 'Lancement', 'Portes Ouvertes'].map((v) => ({ value: v, label: v }));
+/**
+ * Mises en page d'une page générique. `constructor` est la fiche dessinée dans le
+ * constructeur de page de l'admin : son HTML vit dans `content` (avec le style de
+ * la page en préambule) et la page se visite sans le menu du site ni son pied.
+ */
+export const PAGE_SUBTYPES = [
+  { value: 'simple', label: 'Simple' },
+  { value: 'gallery', label: 'Galerie' },
+  { value: 'flyer', label: 'Flyer' },
+  { value: 'slide', label: 'Slider d’images' },
+  { value: 'scroll', label: 'Défilement par sections' },
+  { value: 'full', label: 'Pleine page' },
+  { value: 'constructor', label: 'Constructeur de page' },
+];
+
 const ICONS = ['package', 'heart-pulse', 'stethoscope', 'wrench', 'users', 'shopping-cart', 'briefcase', 'activity', 'hospital', 'syringe', 'microscope'].map((v) => ({ value: v, label: v }));
 
 export const CMS_MODULES: CmsModule[] = [
@@ -299,7 +338,19 @@ export const CMS_MODULES: CmsModule[] = [
     key: 'pages', resource: 'pages', path: 'pages', label: 'Pages CMS', singular: 'page',
     icon: FileText, layout: 'docs', titleKey: 'title', subtitleKey: 'kind', badgeKey: 'status',
     searchKeys: ['title', 'slug', 'kind'],
-    filterKeys: [{ key: 'status', label: 'Statut', options: STATUS.map((s) => s.value) }, { key: 'kind', label: 'Type' }],
+    filterKeys: [
+      { key: 'status', label: 'Statut', options: STATUS.map((s) => s.value) },
+      { key: 'kind', label: 'Type' },
+      { key: 'subtype', label: 'Mise en page', options: PAGE_SUBTYPES.map((v) => v.value) },
+    ],
+    // Une page « Constructeur » ne s'écrit pas dans le formulaire : elle se
+    // construit. Le bouton mène à l'éditeur visuel, qui retrouve la fiche.
+    rowAction: {
+      label: 'Construire',
+      hint: 'Ouvrir le constructeur de page (rendu sans menu ni pied de page)',
+      when: { field: 'subtype', equals: 'constructor' },
+      href: (row, locale) => `/${locale}/admin/builder?page=${encodeURIComponent(String(row.id ?? row.slug ?? ''))}`,
+    },
     defaults: { title: 'Nouvelle page', slug: 'nouvelle-page', kind: 'generic', subtype: 'simple', status: 'draft', locale: 'fr', slides: [], sections: [] },
     fields: [
       { key: 'title', label: 'Titre', kind: 'text', group: 'Page' },
@@ -307,11 +358,27 @@ export const CMS_MODULES: CmsModule[] = [
       { key: 'locale', label: 'Langue', kind: 'radio', options: LOCALES, group: 'Page' },
       { key: 'status', label: 'Statut', kind: 'radio', options: STATUS, group: 'Page' },
       { key: 'kind', label: 'Famille', kind: 'select', options: [{ value: 'generic', label: 'Générique' }, { value: 'legal', label: 'Légal' }, { value: 'about', label: 'À propos' }], group: 'Page' },
-      { key: 'subtype', label: 'Mise en page', kind: 'select', options: ['simple', 'gallery', 'flyer', 'slide', 'scroll', 'full'].map((v) => ({ value: v, label: v })), group: 'Page' },
+      {
+        key: 'subtype',
+        label: 'Mise en page',
+        kind: 'select',
+        options: PAGE_SUBTYPES,
+        group: 'Page',
+        hint:
+          '« Constructeur de page » : la page se dessine dans l’éditeur visuel et se visite sans le menu du site, à l’adresse /{langue}/p/{slug}.',
+      },
       { key: 'subtitle', label: 'Sous-titre', kind: 'text', group: 'Page' },
       { key: 'category', label: 'Catégorie', kind: 'text', group: 'Page' },
       { key: 'media', label: 'Médias', kind: 'gallery', wide: true, group: 'Média' },
-      { key: 'content', label: 'Contenu HTML', kind: 'html', wide: true, group: 'Contenu' },
+      {
+        key: 'content',
+        label: 'Contenu HTML',
+        kind: 'html',
+        wide: true,
+        group: 'Contenu',
+        hint:
+          'Pour une page « Constructeur », ce champ porte la construction elle-même : le style de la page en préambule <style>, puis le HTML. Le constructeur de page lit et réécrit ce couple — le modifier ici se voit dans la page.',
+      },
       { key: 'slides', label: 'Slides', kind: 'slides', wide: true, group: 'Blocs' },
       { key: 'sections', label: 'Sections scroll', kind: 'sections', wide: true, group: 'Blocs' },
     ],
@@ -322,9 +389,27 @@ export const CMS_MODULES: CmsModule[] = [
     searchKeys: ['title', 'slug'],
     filterKeys: [{ key: 'status', label: 'Statut', options: STATUS.map((s) => s.value) }],
     filter: { kind: 'legal' },
-    defaults: { title: 'Page légale', slug: 'mentions', kind: 'legal', subtype: 'simple', status: 'draft', locale: 'fr' },
+    defaults: {
+      title: 'Page légale', slug: 'mentions', kind: 'legal', subtype: 'simple',
+      category: 'mentions', status: 'draft', locale: 'fr',
+    },
+    publicAction: {
+      label: 'Consulter',
+      hint: 'Ouvrir le document tel que le site le publie',
+      href: (row, locale) => legalDocPath(locale, row),
+    },
     fields: [
       { key: 'title', label: 'Titre', kind: 'text', group: 'Légal' },
+      {
+        key: 'category',
+        label: 'Type de document',
+        kind: 'select',
+        options: LEGAL_DOC_TYPES.map((value) => ({ value, label: LEGAL_DOC_LABELS[value] })),
+        group: 'Légal',
+        hint:
+          'Ce champ décide de la page publique où se lit le document : /legal/mentions, ' +
+          '/legal/privacy, /legal/conditions ou /legal/about. Le slug, lui, reste libre.',
+      },
       { key: 'slug', label: 'Slug', kind: 'slug', slugFrom: 'title', group: 'Légal' , i18n: true },
       { key: 'locale', label: 'Langue', kind: 'radio', options: LOCALES, group: 'Légal' },
       { key: 'status', label: 'Statut', kind: 'radio', options: STATUS, group: 'Légal' },

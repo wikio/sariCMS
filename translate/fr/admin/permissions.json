@@ -1,5 +1,26 @@
 {
   "title": "Rôles & permissions",
   "rbac": "RBAC",
-  "resource": "Ressource"
+  "resource": "Ressource",
+  "subtitle": "Cochez les permissions accordées à chaque rôle. Chaque clic est enregistré immédiatement.",
+  "newRole": "Nouveau rôle",
+  "roleName": "Nom du rôle",
+  "roleSlug": "Identifiant (slug)",
+  "roleDescription": "Description",
+  "create": "Créer",
+  "cancel": "Annuler",
+  "delete": "Supprimer",
+  "deleteConfirm": "Supprimer ce rôle ? Les utilisateurs concernés perdront leurs droits.",
+  "systemRole": "Rôle système : non modifiable",
+  "systemRoleHint": "Rôle redéfini par le dépôt : les cases ne se cochent pas ici. Pour accorder une ressource parue après le seed (auteurs, page d’accueil, newsletter), jouez backend/sql/fix-permissions.mysql.sql.",
+  "saved": "Permissions mises à jour",
+  "created": "Rôle créé",
+  "deleted": "Rôle supprimé",
+  "loadError": "Impossible de charger les rôles",
+  "saveError": "Enregistrement impossible",
+  "selectAll": "Tout cocher",
+  "clearAll": "Tout décocher",
+  "permissionCount": "{count} permission(s)",
+  "noRole": "Aucun rôle. Créez-en un pour commencer.",
+  "nameRequired": "Le nom et l'identifiant sont obligatoires."
 }

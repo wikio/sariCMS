@@ -578,6 +578,55 @@
   width: 2.75rem;
   height: 2.75rem;
   padding: 0;
+  flex: 0 0 auto; /* dans une rangée d'actions, il ne se laisse pas écraser */
+}
+/*
+ * Un bouton d'icône posé seul dans une cellule — sans la classe `ad-btn` —
+ * n'avait ni centrage, ni bordure, ni état survol : l'icône se collait en haut à
+ * gauche et la rangée semblait décrochée. Il vaut mieux réparer le motif que
+ * pourvoir chaque page d'un `ad-btn` oublié.
+ */
+.ad-btn-icon:not(.ad-btn) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--ad-line);
+  border-radius: var(--ad-radius-sm);
+  background: var(--ad-surface);
+  color: var(--ad-ink);
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+.ad-btn-icon:not(.ad-btn):hover { background: color-mix(in srgb, var(--ad-ink) 7%, var(--ad-surface)); }
+.ad-btn-icon:not(.ad-btn).ad-btn-danger {
+  color: var(--ad-danger);
+  border-color: color-mix(in srgb, var(--ad-danger) 40%, var(--ad-line));
+}
+/*
+ * Format dense des listes : une rangée d'actions ne doit pas faire grandir la
+ * ligne plus que le texte qu'elle contient. Les icônes y prennent la même
+ * largeur qu'ailleurs — un bouton « œil » étroit à côté d'un bouton carré
+ * faisait sauter le rythme de la colonne.
+ */
+.ad-btn-sm {
+  height: 2.25rem;
+  padding: 0 0.7rem;
+  font-size: 0.78rem;
+  gap: 0.35rem;
+}
+.ad-btn-icon.ad-btn-sm { width: 2.25rem; padding: 0; }
+/* Barre d'actions au-dessus d'une liste, et groupe d'actions dans une ligne. */
+.ad-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+.ad-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.35rem;
 }
 
 /* Éditeur d'images : l'interface est toujours sombre — on force des boutons

@@ -87,6 +87,20 @@ Passage MySQL → PostgreSQL : types volontairement portables (`String @db.Text`
 
 ---
 
+## La base est en retard sur le schéma
+
+« The column `ma_base.table.colonne` does not exist in the current database » sur
+une liste du back-office : le client Prisma connaît la colonne, la base non.
+
+```bash
+npm run db:schema-check    # l'inventaire des écarts, et sql/schema-sync.mysql.sql
+npm run db:schema-fix      # applique les additions (uniquement des additions)
+```
+
+Le comparateur lit `information_schema` et ne modifie aucune colonne existante, ne
+change aucun type, ne supprime rien. Voir `sql/README.md`, section « Une liste répond
+“The column … does not exist” ».
+
 ## Auth & sécurité
 
 ```
@@ -121,6 +135,45 @@ POST   /{resource}/:id/restore
 POST   /{resource}/:id/purge               → { confirm, expiresIn }
 DELETE /{resource}/:id/purge?confirm=
 ```
+
+**Écriture d'une clé étrangère.** Une colonne qui supporte une relation dans
+`prisma/schema.prisma` (`careerId` + `career Career? @relation(fields: [careerId]…)`)
+ne s'écrit pas directement : l'ORM la refuse au `create` — « Unknown argument
+`careerId`. Did you mean `career`? » — et veut `career: { connect: { id } }`. Elle se
+lit, elle, normalement, et tous nos émetteurs l'ignorent : le formulaire
+d'administration, `Importer le catalogue`, `crm-sync` et les fichiers JSON reprennent
+la fiche telle quelle. L'adaptateur Prisma traduit donc à l'entrée
+(`relation-scalars.ts`, généré), pour les neuf ressources concernées —
+candidatures, commandes, devis, actualités, utilisateurs, journaux d'audit :
+
+```bash
+cd backend
+npm run prisma:maps    # régénère relation-scalars.ts et model-fields.ts après un changement de schéma
+```
+
+(`prisma:relations` reste un alias de la même commande.) Un contrôle
+(`relation-scalars.spec.ts`) recalcule la liste depuis le schéma et échoue si le
+fichier a pris du retard — la classe d'erreurs ne peut plus revenir en silence.
+
+**Un champ que le modèle ne déclare pas.** L'autre moitié du même 500 : une clé que
+le modèle Prisma ne connaît pas du tout — `legacyId` sur une candidature, par exemple,
+que le service CRUD ajoute d'office parce que les autres fiches, elles, sont
+traduites. Prisma ne laisse rien passer : il rejette **la ligne entière**, et avec
+elle les huit candidatures postées, le lot d'import en cours, et l'écran qui les
+listait. Deux garde-fous, tous deux issus du schéma :
+
+- le service ne l'invente pas. Le `legacyId` n'est ajouté que si le modèle a la
+  colonne ; `hasLegacyId: false` le déclare pour les tables qui ne sont pas
+  traduites — candidatures, messages reçus, coordonnées, journal d'audit ;
+- si un émetteur l'envoie quand même (formulaire d'administration, JSON repris,
+  `Importer le catalogue`), l'adaptateur écarte la clé et **avertit une fois** au lieu
+  de tout rejeter.
+
+`model-fields.ts` — les champs de chaque modèle, générés par la même commande — sert
+à ces deux questions, et son contrôle (`model-fields.spec.ts`) refait le calcul depuis
+`schema.prisma`. Le avertissement nomme la ressource, le champ, et dit quoi faire :
+ajouter la colonne au schéma (`npm run sql:schema` puis `npm run db:schema-fix`, qui
+la crée en base) ou retirer le champ de l'expédition.
 
 Filtres dynamiques :
 

@@ -1,0 +1,16 @@
+{
+  "title": "Job title",
+  "image": "Portrait",
+  "type": "Contract",
+  "location": "Location",
+  "salary": "Salary",
+  "typeTravail": "Work pace",
+  "contact": "HR contact",
+  "mission": "Mission",
+  "objectifs": "Objectives",
+  "prerequis": "Prerequisites",
+  "experience": "Experience",
+  "workflow": "Recruitment process",
+  "benefits": "Benefits",
+  "applyAuth": "Login to apply"
+}

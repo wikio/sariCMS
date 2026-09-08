@@ -50,10 +50,11 @@ export default function CurrenciesPage() {
         <button className="ad-btn ad-btn-primary" onClick={() => { setMode('edit'); setDraft(empty()); }}><Plus className="w-4 h-4" /> Ajouter</button>
       </header>
       {selected.length > 0 && (
-        <div className="flex gap-2">
-          <button className="ad-btn ad-btn-ghost" onClick={() => persist(rows.map((r) => selected.includes(r.id) ? { ...r, active: true } : r))}>Activer</button>
-          <button className="ad-btn ad-btn-ghost" onClick={() => persist(rows.map((r) => selected.includes(r.id) ? { ...r, active: false } : r))}>Désactiver</button>
-          <button className="ad-btn ad-btn-danger" onClick={() => persist(rows.filter((r) => !selected.includes(r.id)))}>Supprimer</button>
+        <div className="ad-card ad-toolbar px-3 py-2">
+          <span className="text-xs font-bold">{selected.length} sélectionnée{selected.length > 1 ? 's' : ''}</span>
+          <button className="ad-btn ad-btn-sm ad-btn-ghost ms-auto" onClick={() => persist(rows.map((r) => selected.includes(r.id) ? { ...r, active: true } : r))}>Activer</button>
+          <button className="ad-btn ad-btn-sm ad-btn-ghost" onClick={() => persist(rows.map((r) => selected.includes(r.id) ? { ...r, active: false } : r))}>Désactiver</button>
+          <button className="ad-btn ad-btn-sm ad-btn-danger" onClick={() => persist(rows.filter((r) => !selected.includes(r.id)))}>Supprimer</button>
         </div>
       )}
       <div className="ad-card overflow-x-auto">
@@ -75,7 +76,7 @@ export default function CurrenciesPage() {
                     </span>
                   ) : (
                     <button
-                      className="ad-btn ad-btn-ghost"
+                      className="ad-btn ad-btn-icon ad-btn-ghost ad-btn-sm"
                       title={c.active ? t('setDefault') : t('setDefaultInactive')}
                       disabled={!c.active}
                       onClick={() => persist(setDefaultCurrency(rows, c.id), t('defaultChanged', { code: c.code }))}
@@ -84,10 +85,12 @@ export default function CurrenciesPage() {
                     </button>
                   )}
                 </td>
-                <td className="text-right">
-                  <button className="ad-btn ad-btn-ghost" onClick={() => { setMode('consult'); setDraft({ ...c }); }}><Eye className="w-4 h-4" /></button>
-                  <button className="ad-btn ad-btn-ghost" onClick={() => { setMode('edit'); setDraft({ ...c }); }}><Pencil className="w-4 h-4" /></button>
-                  <button className="ad-btn ad-btn-icon ad-btn-danger" onClick={() => persist(rows.filter((x) => x.id !== c.id))}><Trash2 className="w-4 h-4" /></button>
+                <td>
+                  <div className="ad-row-actions">
+                    <button className="ad-btn ad-btn-icon ad-btn-ghost ad-btn-sm" title="Consulter" onClick={() => { setMode('consult'); setDraft({ ...c }); }}><Eye className="w-4 h-4" /></button>
+                    <button className="ad-btn ad-btn-icon ad-btn-ghost ad-btn-sm" title="Modifier" onClick={() => { setMode('edit'); setDraft({ ...c }); }}><Pencil className="w-4 h-4" /></button>
+                    <button className="ad-btn ad-btn-icon ad-btn-danger ad-btn-sm" title="Supprimer" onClick={() => persist(rows.filter((x) => x.id !== c.id))}><Trash2 className="w-4 h-4" /></button>
+                  </div>
                 </td>
               </tr>
             ))}

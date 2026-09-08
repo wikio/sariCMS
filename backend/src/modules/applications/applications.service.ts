@@ -11,6 +11,11 @@ export class ApplicationsService extends BaseCrudService<ApplicationEntity> {
   protected readonly repository: ICrudRepository<ApplicationEntity>;
   protected readonly options: CrudServiceOptions = {
     resource: 'applications',
+    // Le modèle `JobApplication` n'a pas de colonne `legacyId` : une candidature
+    // n'existe que dans une langue. Sans ce drapeau, la création injectait le sien
+    // et Prisma rejetait l'argument — huit candidatures postées, huit 500.
+    hasLegacyId: false,
+
     searchFields: ['reference', 'candidate', 'email', 'jobTitle', 'phone'],
     sortableFields: ['createdAt', 'updatedAt', 'date', 'status', 'score', 'rating'],
     listFields: ['id', 'reference', 'candidate', 'email', 'jobTitle', 'date', 'status', 'score', 'rating', 'userId', 'careerId'],

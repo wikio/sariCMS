@@ -8,7 +8,9 @@ import { useLocale, useTranslations } from 'next-intl';
 import { ChevronLeft, ChevronRight, FileText, Download, Play, Image as ImageIcon } from 'lucide-react';
 import { getGenericContent } from '@/lib/data';
 import { matchesEntity } from '@/lib/ids';
-import type { GenericContent } from '@/types';
+import type { ConstructorPage, GenericContent } from '@/types';
+import { decodeBuilderDoc } from '@/lib/builder-doc';
+import BuiltPage from '@/components/builder/BuiltPage';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import CTAButton from '@/components/ui/CTAButton';
 
@@ -116,6 +118,32 @@ export default function GenericContentDetailPage() {
   const mainMedia = typeof content.media === 'string' ? content.media : (content.media && content.media[0]);
 
   // TYPE: FULL
+  // Une page dessinée dans le constructeur de l'administration, rattrapée ici par
+  // son slug ou son identifiant : même rendu, mais à l'intérieur du site — avec son
+  // menu et son pied de page, puisque c'est une page du site. La version autonome
+  // (`/{langue}/p/{slug}`) est la même page sans coque ; le contenu, lui, n'est
+  // écrit qu'une fois.
+  if (content.type === 'constructor') {
+    const doc = decodeBuilderDoc(content.content);
+    const page: ConstructorPage = {
+      id: content.id,
+      slug: String(content.slug ?? content.id),
+      locale,
+      title: content.title,
+      subtitle: content.subtitle,
+      category: content.category,
+      status: content.status,
+      html: doc.html,
+      css: doc.css,
+      media: Array.isArray(content.media) ? content.media[0] : content.media,
+    };
+    return (
+      <div className="pt-32 pb-24 page-enter">
+        <BuiltPage page={page} />
+      </div>
+    );
+  }
+
   if (content.type === 'full') {
     return (
       <div className="pt-32 pb-24 min-h-screen page-enter">

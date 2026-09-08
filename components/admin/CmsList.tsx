@@ -8,7 +8,7 @@ import {
 } from '@dnd-kit/core';
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Archive, ArrowDown, ArrowUp, CheckCircle2, Copy, Download, Eye, FileEdit, Filter, GripVertical, LayoutGrid, List as ListIcon, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Archive, ArrowDown, ArrowUp, CheckCircle2, Copy, Download, ExternalLink, Eye, FileEdit, Filter, GripVertical, LayoutGrid, List as ListIcon, Pencil, Plus, Trash2, Wand2 } from 'lucide-react';
 import PixelGridLoader from '@/components/admin/PixelGridLoader';
 import SearchField from '@/components/admin/SearchField';
 import IconMark from '@/components/admin/IconMark';
@@ -480,6 +480,7 @@ function ListTable({
               <div className="flex justify-end gap-1">
                 <Link href={`/${locale}/admin/${mod.path}/${row.id}?consult=1`} className="ad-btn ad-btn-icon ad-btn-ghost" title={t("consult")}><Eye className="w-4 h-4" /></Link>
                 <Link href={`/${locale}/admin/${mod.path}/${row.id}`} className="ad-btn ad-btn-ghost"><Pencil className="w-4 h-4" /> {t("editBtn")}</Link>
+                <ModuleRowAction mod={mod} row={row} locale={locale} />
                 <button className="ad-btn ad-btn-icon ad-btn-ghost" onClick={() => onDuplicate(row)}><Copy className="w-4 h-4" /></button>
                 <button className="ad-btn ad-btn-danger ad-btn-icon" onClick={() => onDelete(String(row.id))}><Trash2 className="w-4 h-4" /></button>
               </div>
@@ -548,8 +549,9 @@ function CardCanvas({
             </div>
           )}
           <div className="flex gap-1 pt-2">
-            <Link href={`/${locale}/admin/${mod.path}/${row.id}?consult=1`} className="ad-btn ad-btn-icon ad-btn-ghost"><Eye className="w-4 h-4" /></Link>
+            <Link href={`/${locale}/admin/${mod.path}/${row.id}?consult=1`} className="ad-btn ad-btn-icon ad-btn-ghost" title={t("consult")}><Eye className="w-4 h-4" /></Link>
             <Link href={`/${locale}/admin/${mod.path}/${row.id}`} className="ad-btn ad-btn-ghost"><Pencil className="w-4 h-4" /> {t("editBtn")}</Link>
+            <ModuleRowAction mod={mod} row={row} locale={locale} compact />
             <button className="ad-btn ad-btn-icon ad-btn-ghost" onClick={() => onDuplicate(row)}><Copy className="w-4 h-4" /></button>
             <button className="ad-btn ad-btn-danger ad-btn-icon ml-auto" onClick={() => onDelete(String(row.id))}><Trash2 className="w-4 h-4" /></button>
           </div>
@@ -581,6 +583,61 @@ function SortableCard({ id, disabled, children }: { id: string; disabled?: boole
     <div ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.6 : 1 }} {...attributes} {...listeners}>
       {children}
     </div>
+  );
+}
+
+/**
+ * Le bouton que le module demande sur ses lignes. Une fiche « Constructeur » ne se
+ * remplit pas dans le formulaire : elle se dessine ; la liste doit donc ouvrir
+ * l'éditeur visuel directement. Le module décide de la cible et de la condition
+ * d'affichage, la liste ne fait que poser le bouton.
+ */
+function ModuleRowAction({
+  mod,
+  row,
+  locale,
+  compact = false,
+}: {
+  mod: CmsModule;
+  row: Record<string, unknown>;
+  locale: string;
+  compact?: boolean;
+}) {
+  const action = mod.rowAction;
+  const consult = mod.publicAction;
+  const editable =
+    !!action && (!action.when || String(row[action.when.field] ?? '') === action.when.equals);
+  if (!editable && !consult) return null;
+
+  const openLabel = consult?.hint || consult?.label || 'Consulter';
+  const editLabel = action && editable ? action.hint || action.label : '';
+  const iconClass = compact ? 'h-4 w-4' : 'w-4 h-4';
+
+  return (
+    <>
+      {consult ? (
+        <Link
+          href={consult.href(row, locale)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="ad-btn ad-btn-icon ad-btn-ghost"
+          title={openLabel}
+          aria-label={openLabel}
+        >
+          <ExternalLink className={iconClass} />
+        </Link>
+      ) : null}
+      {action && editable ? (
+        <Link
+          href={action.href(row, locale)}
+          className={compact ? 'ad-btn ad-btn-icon ad-btn-ghost' : 'ad-btn ad-btn-ghost'}
+          title={editLabel}
+        >
+          <Wand2 className={iconClass} />
+          {compact ? null : <span>{action.label}</span>}
+        </Link>
+      ) : null}
+    </>
   );
 }
 

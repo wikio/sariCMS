@@ -1,59 +1,70 @@
 // components/sections/LatestNews.tsx
 'use client';
 
+/**
+ * Dernières actualités de la page d'accueil : fiches choisies dans le studio,
+ * ou les N plus récentes quand la sélection reste en mode automatique.
+ */
 import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import NewsCard from '@/components/cards/NewsCard';
 import type { News } from '@/types';
+import {
+  applySelection,
+  limitOf,
+  localizeHref,
+  setting,
+  selectionFor,
+  txt,
+  type HomeSectionConfig,
+} from '@/lib/home/config';
+import SectionFrame, { gridProps } from '@/components/sections/SectionFrame';
 
 interface LatestNewsProps {
   news: News[];
   count?: number;
+  config?: HomeSectionConfig;
 }
 
-export default function LatestNews({ news, count = 3 }: LatestNewsProps) {
+export default function LatestNews({ news, count = 3, config }: LatestNewsProps) {
   const locale = useLocale();
   const t = useTranslations('components.sections.LatestNews');
 
-  const latest = news.slice(0, count);
+  const source = Array.isArray(news) ? news : [];
+  const latest = applySelection(source, selectionFor(config, count), {
+    dateOf: (item) => item.publicationDate || item.date,
+    titleKey: 'title',
+  });
 
   if (latest.length === 0) return null;
 
+  const grid = gridProps(config, limitOf(config, count), 32);
+
   return (
-    <section className="py-24 bg-gray-50 dark:bg-[#111111]">
-      <div className="container mx-auto px-6">
-        {/* Titre de section */}
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-12 gap-4">
-          <div>
-            <span className="text-sari-lime font-bold uppercase tracking-wider text-sm">
-              {t('subtitle')}
-            </span>
-            <h2 className="text-4xl md:text-5xl font-bold text-sari-dark dark:text-white mt-4 mb-4">
-              {t('title')}
-            </h2>
-            <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl">
-              {t('description')}
-            </p>
-          </div>
+    <SectionFrame
+      sectionKey="news"
+      config={config}
+      header={{
+        fallbacks: { subtitle: t('subtitle'), title: t('title'), description: t('description') },
+        action: setting(config, 'showViewAll', true) ? (
           <Link
-            href={`/${locale}/news`}
+            href={localizeHref(config?.settings?.ctaHref, locale, `/${locale}/news`)}
             className="btn-primary text-white px-6 py-3 font-semibold inline-flex items-center gap-2 whitespace-nowrap"
           >
-            {t('viewAll')}
+            {txt(config, 'viewAllLabel', t('viewAll'))}
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M5 12h14"></path>
               <path d="m12 5 7 7-7 7"></path>
             </svg>
           </Link>
-        </div>
-
-        {/* Grille d'actualités */}
-        <div className="grid md:grid-cols-3 gap-8">
-          {latest.map((item) => (
-            <NewsCard key={item.id} news={item} />
-          ))}
-        </div>
+        ) : null,
+      }}
+    >
+      <div {...grid} className={`${grid.className} stagger-children`}>
+        {latest.map((item) => (
+          <NewsCard key={String(item.id)} news={item} />
+        ))}
       </div>
-    </section>
+    </SectionFrame>
   );
 }

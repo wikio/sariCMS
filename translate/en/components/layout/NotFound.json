@@ -3,5 +3,14 @@
   "message": "Sorry, the page you are looking for does not exist or has been moved.",
   "whatToDo": "What would you like to do?",
   "backHome": "Back to Home",
-  "contactUs": "Contact Us"
+  "contactUs": "Contact Us",
+  "description": "The page you are looking for does not exist or has been moved.",
+  "backToHome": "Back to home",
+  "goBack": "Go back",
+  "suggestions": "You may be looking for",
+  "browseProducts": "Browse the catalogue",
+  "ourServices": "Our services",
+  "ourSolutions": "Our solutions",
+  "needHelp": "Need help?",
+  "contactSupport": "Contact support"
 }

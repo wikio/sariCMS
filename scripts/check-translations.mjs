@@ -13,7 +13,10 @@
  *
  *   1. il relève les `useTranslations('espace')` de chaque fichier ;
  *   2. il relève les `t('clé')` qui s'y rattachent ;
- *   3. il vérifie `espace.clé` dans les trois langues.
+ *   3. il vérifie `espace.clé` dans les trois langues ;
+ *   4. il regarde l'arborescence que parcourt l'écran « Traductions » (`translate/`),
+ *      où un même namespace peut exister deux fois — le signal est une perte de
+ *      temps pour qui traduit, et une clé React dupliquée pour l'écran.
  *
  * Usage :
  *   node scripts/check-translations.mjs            # rapport complet
@@ -24,12 +27,17 @@
  */
 
 import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { planSync } from '../lib/intl-tree.mjs';
 import { dirname, extname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const LOCALES = ['fr', 'en', 'ar'];
 const ONLY_MISSING = process.argv.includes('--missing');
+// `--warn` : le même rapport, mais le code de sortie reste 0. C'est ce que `npm run
+// dev` appelle — prévenir sans empêcher de travailler. `npm run build`, lui, échoue :
+// une clé que personne n'a écrite ne doit pas partir en production.
+const SOFT = process.argv.includes('--warn');
 
 const SCAN_DIRS = ['app', 'components', 'contexts', 'lib'];
 const SKIP = new Set(['node_modules', '.next', '.git', 'dist', 'build']);
@@ -154,10 +162,66 @@ if (!ONLY_MISSING) {
   for (const locale of LOCALES) console.log(`  ${locale} : ${messages[locale].size} clés`);
 }
 
-const total = missingEverywhere.length + missingSome.length;
-console.log(
-  total
-    ? `\n${total} clé(s) appelée(s) par le code et introuvable(s).`
-    : '\n✅ Toutes les clés appelées par le code existent dans les trois langues.',
-);
-process.exit(total ? 1 : 0);
+// ---------------------------------------------------------------------------
+// L'atelier de traduction : `translate/` doit suivre `messages/`
+// ---------------------------------------------------------------------------
+// La règle de découpage vit dans `lib/intl-tree.mjs`, `npm run intl:sync` l'applique,
+// ce contrôle vérifie qu'elle tient des deux côtés. Sans cette exigence, l'écran
+// « Traductions » rejoue l'accident qui lui a valu son avertissement React — un
+// namespace en deux exemplaires, `admin.json` à côté de `admin/`, deux contenus qui
+// ne se ressemblent pas — et, plus grave, enregistrer le fichier plat écraserait
+// d'un coup toute la branche `admin` des messages.
+
+const atelier = [];
+let treeDrift = 0;
+for (const locale of LOCALES) {
+  const plan = planSync(ROOT, locale);
+  if (plan.missing) continue;
+  atelier.push(plan);
+  treeDrift += plan.toWrite.length ? 1 : 0;
+  treeDrift += plan.runtimeStale ? 1 : 0;
+}
+
+const duplicates = atelier.flatMap((plan) => plan.duplicates.map((d) => `${plan.locale}/${d}`));
+if (duplicates.length) {
+  console.log('\n⚠️  Écran « Traductions » : un namespace en double exemplaire\n');
+  for (const trail of duplicates) console.log(`  ${trail}.json côtoie le dossier ${trail}/`);
+  console.log(
+    "\n  « npm run intl:sync » range l'atelier : les fichiers que la règle ne produit\n" +
+    "  plus sont déplacés sous `translate/<locale>/_legacy/`, rien n'est supprimé.\n",
+  );
+}
+
+if (treeDrift) {
+  console.log("\n⚠️  Atelier en retard sur les messages\n");
+  for (const plan of atelier) {
+    const bits = [];
+    if (plan.toWrite.length) bits.push(`${plan.toWrite.length} fichier(s) à reprendre`);
+    if (plan.runtimeStale) bits.push(`translate/${plan.locale}.json obsolète`);
+    if (plan.extra.length) bits.push(`${plan.extra.length} vestige(s) à ranger sous _legacy/`);
+    console.log(`  ${plan.locale} — ${bits.join(', ')}`);
+    for (const rel of plan.toWrite.slice(0, 6)) console.log(`     ~ ${rel}`);
+    if (plan.toWrite.length > 6) console.log(`     … ${plan.toWrite.length - 6} autres`);
+  }
+  console.log(
+    "\n  « npm run intl:sync » remet les trois langues d'aplomb. C'est une écriture,\n" +
+    "  pas un contrôle : laissez-la faire, puis relancez celui-ci.\n",
+  );
+}
+
+const missingKeys = missingEverywhere.length + missingSome.length;
+const blocking = missingKeys + treeDrift;
+if (missingKeys) {
+  console.log(
+    `\n${missingKeys} clé(s) appelée(s) par le code et introuvable(s) dans les messages.`,
+  );
+}
+if (!blocking) {
+  console.log('\n✅ Toutes les clés appelées par le code existent dans les trois langues, atelier compris.');
+} else if (SOFT) {
+  console.log(
+    "   Mode avertissement : le serveur démarre quand même. « npm run intl:sync » range\n" +
+    "   l'atelier ; « npm run intl:check » est le réglage bloquant qu'utilise le build.",
+  );
+}
+process.exit(blocking && !SOFT ? 1 : 0);

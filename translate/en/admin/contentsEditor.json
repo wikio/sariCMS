@@ -1,0 +1,16 @@
+{
+  "metadata": "Metadata",
+  "type": "Type",
+  "subtitle": "Subtitle",
+  "typeSpecific": "Type-specific fields",
+  "features": "Features",
+  "gallery": "Image gallery",
+  "pdf": "PDF file",
+  "slides": "Carousel slides",
+  "sections": "Scrollable sections",
+  "addImage": "Add an image",
+  "addSlide": "Add a slide",
+  "addSection": "Add a section",
+  "fullJson": "Full file content",
+  "singleJson": "Single element content"
+}

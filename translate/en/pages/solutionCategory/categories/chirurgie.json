@@ -1,0 +1,46 @@
+{
+  "title": "Surgery",
+  "desc": "Surgical instruments, autoclaves, LED surgical lights",
+  "icon": "syringe",
+  "image": "https://images.unsplash.com/photo-1551076805-e1869033e561?w=1920",
+  "productIds": [
+    3,
+    9
+  ],
+  "features": [
+    {
+      "icon": "scissors",
+      "text": "Stainless steel surgical instruments"
+    },
+    {
+      "icon": "flame",
+      "text": "Class B autoclaves"
+    },
+    {
+      "icon": "lightbulb",
+      "text": "LED surgical lights"
+    },
+    {
+      "icon": "bed",
+      "text": "Electric operating tables"
+    },
+    {
+      "icon": "shield-check",
+      "text": "Certified sterilisation"
+    },
+    {
+      "icon": "wrench",
+      "text": "Maintenance and after-sales service"
+    }
+  ],
+  "faq": [
+    {
+      "q": "Are your autoclaves class B?",
+      "a": "Yes, all compliant with EN 13060 standards with vacuum drying cycle."
+    },
+    {
+      "q": "Are the surgical lights LED?",
+      "a": "Yes, all our surgical lights are LED with a 50,000-hour lifespan, a CRI above 95 and intensity up to 150,000 lux."
+    }
+  ]
+}

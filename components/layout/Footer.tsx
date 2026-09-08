@@ -2,6 +2,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { locales } from '@/lib/i18n';
+import { externalLinkAttrs, menuHref } from '@/lib/link-kind.mjs';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { Mail, Phone, MapPin, Compass, Shield, Send, Heart } from 'lucide-react';
@@ -77,12 +79,9 @@ export default function Footer({ config, menu }: { config: Config; menu: MenuTyp
     try { setLogo(loadAdminSettings().siteLogo || config.meta?.logo || ''); } catch { /* */ }
   }, [config]);
 
-  // ✅ Fonction utilitaire pour nettoyer et formater les liens avec la locale
-  const getLinkHref = (href: string) => {
-    // Supprime les '#' ou '/' au début pour éviter les doubles slashes ou les mots collés
-    const cleanPath = href.replace(/^[#\/]+/, '');
-    return `/${locale}/${cleanPath}`;
-  };
+  // Même règle que le bandeau : un lien externe du pied de page doit sortir du site,
+  // pas devenir un chemin préfixé par la langue.
+  const getLinkHref = (href: string) => menuHref(href, locale, locales);
 
   /*
     Libellé d'une entrée de menu.
@@ -185,7 +184,7 @@ export default function Footer({ config, menu }: { config: Config; menu: MenuTyp
               {navigation.map((item, i) => (
                 <li key={i}>
                   <Link 
-                    href={getLinkHref(item.href)}
+                    href={getLinkHref(item.href)} {...externalLinkAttrs(item.href)}
                     className="hover:text-sari-lime transition-colors inline-flex items-center gap-2 group"
                   >
                     <span className="w-0 group-hover:w-2 h-0.5 bg-sari-lime transition-all"></span>
@@ -208,7 +207,7 @@ export default function Footer({ config, menu }: { config: Config; menu: MenuTyp
               {legal.map((item, i) => (
                 <li key={i}>
                   <Link 
-                    href={getLinkHref(item.href)}
+                    href={getLinkHref(item.href)} {...externalLinkAttrs(item.href)}
                     className="hover:text-sari-lime transition-colors inline-flex items-center gap-2 group"
                   >
                     <span className="w-0 group-hover:w-2 h-0.5 bg-sari-lime transition-all"></span>

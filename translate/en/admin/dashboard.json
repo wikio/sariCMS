@@ -9,5 +9,6 @@
   "loadDemo": "Load demo data",
   "delivered": "Delivered",
   "cancelled": "Cancelled",
-  "events": "Events"
+  "events": "Events",
+  "statistics": "Statistics"
 }

@@ -7,5 +7,6 @@
   "csvExport": "Export CSV",
   "byPaymentMethod": "Par mode de paiement",
   "finalized": "Finalisées",
-  "taxesCollected": "Taxes collectées"
+  "taxesCollected": "Taxes collectées",
+  "cancelled": "Annulées"
 }

@@ -231,10 +231,20 @@ export interface Legal {
 
 export interface GenericContent {
   id: number | string;
+  /** Identifiant de reprise des données du site (`pag-1`), quand il existe. */
+  legacyId?: string;
+  /** Slug de la page — c'est par lui qu'une page construite est demandée. */
+  slug?: string;
+  /** Brouillon ou publié : la page construite n'est servie que publiée. */
+  status?: string;
   title: string;
   subtitle?: string;
   category?: string;
-  type?: 'full' | 'simple' | 'about' | 'gallery' | 'flyer' | 'slide' | 'scroll';
+  /**
+   * `constructor` : la page est construite dans le constructeur de l'admin et
+   * rendue sans bandeau de navigation ni pied de page, à partir de `content`.
+   */
+  type?: 'full' | 'simple' | 'about' | 'gallery' | 'flyer' | 'slide' | 'scroll' | 'constructor';
   content?: string;
   media?: string | string[];
   slides?: Array<{
@@ -255,6 +265,25 @@ export interface GenericContent {
     cta?: string;
     ctaLink?: string;
   }>;
+}
+
+/**
+ * Une page « Constructeur » telle que la vitrine la consomme : le HTML et le CSS
+ * sortie du constructeur de page, séparés, et de quoi titrer la page.
+ */
+export interface ConstructorPage {
+  id: number | string;
+  slug: string;
+  locale: string;
+  title: string;
+  subtitle?: string;
+  category?: string;
+  status?: string;
+  html: string;
+  css: string;
+  /** Visuel de partage (celui de la fiche, s'il y en a un). */
+  media?: string;
+  updatedAt?: string;
 }
 
 export interface VerificationCode {

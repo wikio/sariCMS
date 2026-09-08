@@ -3,8 +3,11 @@
   "backHome": "Retour à l'accueil",
   "lastUpdate": "Dernière mise à jour",
   "otherLegalDocs": "Autres documents légaux",
-  "mentions": "Mentions Légales",
+  "legalNotice": "Mentions Légales",
   "privacy": "Confidentialité",
-  "conditions": "Conditions d'utilisation",
-  "verification": "Vérification d'authenticité"
+  "cgv": "CGV",
+  "verification": "Vérification d'authenticité",
+  "legalDoc": "Document légal",
+  "mentions": "Mentions légales",
+  "conditions": "Conditions générales"
 }

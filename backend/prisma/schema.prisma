@@ -138,7 +138,7 @@ model Page {
   slug        String
   locale      String    @default("fr")
   kind        String // legal | about | generic
-  subtype     String    @default("simple") // simple | gallery | flyer | slide | scroll | full
+  subtype     String    @default("simple") // simple | gallery | flyer | slide | scroll | full | constructor
   title       String
   subtitle    String?
   category    String?
@@ -757,4 +757,73 @@ model Author {
   @@index([parentId])
   @@index([deletedAt])
   @@map("authors")
+}
+
+/// Configuration d'un bloc de la page d'accueil, par langue.
+/// Une ligne = un bloc (`key`) + une langue (`locale`).
+model HomeSection {
+  id        Int      @id @default(autoincrement())
+  key       String
+  locale    String   @default("fr")
+  label     String?
+  enabled   Boolean  @default(true)
+  sortOrder Int      @default(0)
+  /// Textes vus par le visiteur (titre, sous-titre, description, boutons…).
+  texts     Json?
+  /// Sélection des fiches à afficher (mode auto/manuel, ids, limite, tri).
+  selection Json?
+  /// Réglages du bloc : colonnes, animation, couleurs…
+  settings  Json?
+  /// Apparence du bloc (fond, hauteur, alignement, grille, CSS libre).
+  style     Json?
+  /// Blocs répétables (chiffres clés, blocs alternés, arguments newsletter…).
+  items     Json?
+  /// Constructeur de page : mode natif ou HTML/CSS produit par GrapesJS.
+  builder   Json?
+  status    String   @default("published")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+  createdBy Int?
+  updatedBy Int?
+
+  @@unique([key, locale])
+  @@index([locale, status, sortOrder])
+  @@index([deletedAt])
+  @@map("home_sections")
+}
+
+/// Abonné·e à la newsletter — liste unique pour tout le site.
+model NewsletterSubscriber {
+  id            Int       @id @default(autoincrement())
+  email         String
+  name          String?
+  locale        String    @default("fr")
+  status        String    @default("subscribed")
+  /// Bloc d'origine : home.newsletter, news.detail, contact, footer…
+  source        String?
+  consent       Boolean   @default(false)
+  topics        Json?
+  notes         String?   @db.Text
+  token         String?
+  ip            String?
+  userAgent     String?   @db.Text
+  subscribedAt  DateTime?
+  unsubscribedAt DateTime?
+  /// Motif laissé au désabonnement (see NO_REASON…) — voir `NEWSLETTER_UNSUBSCRIBE_REASONS`.
+  unsubscribeReason String?
+  /// Commentaire libre qui accompagne le motif.
+  unsubscribeNote   String?   @db.Text
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+  createdBy     Int?
+  updatedBy     Int?
+
+  @@unique([email])
+  @@index([unsubscribeReason])
+  @@index([status, locale])
+  @@index([source])
+  @@index([deletedAt])
+  @@map("newsletter_subscribers")
 }

@@ -14,6 +14,8 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import bcrypt from 'bcryptjs';
 
+import { ACTIONS, RESOURCES, SYSTEM_ROLES, permDescription, permKey, permKeysFor } from './permissions-catalog.mjs';
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // ---------------------------------------------------------------------------
@@ -49,48 +51,21 @@ function json(v) {
 }
 
 // ---------------------------------------------------------------------------
-// Permissions (aligné sur backend/src/common/constants/permissions.ts)
+// Permissions et rôles système — le catalogue partagé avec la réparation SQL.
+//
+// La liste était recopiée ici, et le recopiage a dérivé : `home` et `newsletter`,
+// ajoutés au backend, n'ont jamais atteint le seed. Les quatre rôles verrouillés
+// se sont retrouvés sans droit sur ces écrans — et comme `isSystem` interdit de
+// cocher une case à la main, l'impasse était définitive. `permissions-catalog.mjs`
+// lit `src/common/constants/permissions.ts` et échoue si les deux listes ne se
+// recouvrent pas : la dérive se signale à la génération, plus en production.
+//
+// Les nouvelles ressources se placent EN FIN de `SEED_ORDER` : les ids de
+// permission sont séquentiels et `role_permissions` les référence déjà.
 // ---------------------------------------------------------------------------
-const ACTIONS = ['create', 'read', 'update', 'delete', 'admin'];
-// Les nouvelles ressources sont ajoutées EN FIN DE LISTE : les identifiants de
-// permission sont attribués séquentiellement, insérer au milieu décalerait
-// ceux déjà référencés par la table de liaison des rôles.
-const RESOURCES = [
-  'users', 'roles', 'permissions', 'pages', 'faqs', 'testimonials', 'menus',
-  'contact', 'translations', 'audit', 'settings', 'news', 'events', 'products',
-  'services', 'partners', 'careers', 'solutions', 'hero', 'dashboard',
-  'orders', 'quotes', 'applications', 'authors',
-];
-const permKey = (r, a) => `${r}:${a}`;
-const permId = (r, a) => id('perm', permKey(r, a));
-
-const CONTENT_RESOURCES = [
-  'pages', 'faqs', 'testimonials', 'menus', 'news', 'events', 'products',
-  'services', 'partners', 'careers', 'solutions', 'hero', 'translations',
-  'authors',
-];
-
-function permSetOf(pred) {
-  const out = [];
-  for (const r of RESOURCES) for (const a of ACTIONS) if (pred(r, a)) out.push(permKey(r, a));
-  return out;
-}
-const rolePermKeys = {
-  'super-admin': permSetOf(() => true),
-  admin: permSetOf((r, a) => !['users', 'roles', 'permissions'].includes(r) && !(r === 'audit' && a !== 'read')),
-  editor: permSetOf((r, a) => (CONTENT_RESOURCES.includes(r) && ['create', 'read', 'update'].includes(a)) || (r === 'dashboard' && a === 'read')),
-  viewer: permSetOf((r, a) => (CONTENT_RESOURCES.includes(r) || ['contact', 'audit', 'dashboard'].includes(r)) && a === 'read'),
-};
-
-// ---------------------------------------------------------------------------
-// Rôles
-// ---------------------------------------------------------------------------
-const ROLES = [
-  { slug: 'super-admin', name: 'Super Administrateur', desc: 'Accès complet au système (contourne le contrôle de permissions).', system: 1 },
-  { slug: 'admin', name: 'Administrateur', desc: 'Gestion du contenu, du catalogue et des commandes.', system: 1 },
-  { slug: 'editor', name: 'Éditeur de contenu', desc: 'Rédaction et mise à jour du contenu de la vitrine.', system: 1 },
-  { slug: 'viewer', name: 'Lecteur', desc: 'Accès en lecture seule au back-office.', system: 1 },
-];
+const permId = (resource, action) => id('perm', permKey(resource, action));
+const ROLE_PERMS = Object.fromEntries(SYSTEM_ROLES.map((role) => [role.slug, permKeysFor(role.slug)]));
+const ROLES = SYSTEM_ROLES.map((role) => ({ ...role, system: 1 }));
 
 // ---------------------------------------------------------------------------
 // Utilisateurs — mot de passe de démo identique pour tous (voir README)
@@ -701,9 +676,8 @@ push('-- Permissions');
 push('-- ---------------------------------------------------------------------------');
 push('INSERT IGNORE INTO `permissions` (`id`, `resource`, `action`, `description`, `createdAt`, `updatedAt`) VALUES');
 const permRows = [];
-const PERM_DESC = { create: 'Créer', read: 'Consulter', update: 'Modifier', delete: 'Supprimer', admin: 'Administrer' };
 for (const r of RESOURCES) for (const a of ACTIONS) {
-  permRows.push(`(${num(permId(r, a))}, ${esc(r)}, ${esc(a)}, ${esc(PERM_DESC[a] + ' ' + r)}, ${esc(now)}, ${esc(now)})`);
+  permRows.push(`(${num(permId(r, a))}, ${esc(r)}, ${esc(a)}, ${esc(permDescription(r, a))}, ${esc(now)}, ${esc(now)})`);
 }
 push(permRows.join(',\n') + ';');
 push('');
@@ -714,7 +688,7 @@ push('-- -----------------------------------------------------------------------
 push('INSERT IGNORE INTO `roles` (`id`, `name`, `slug`, `description`, `isSystem`, `permissionIds`, `createdAt`, `updatedAt`) VALUES');
 const roleRows = ROLES.map((role) => {
   const rid = id('role', role.slug);
-  const perms = rolePermKeys[role.slug];
+  const perms = ROLE_PERMS[role.slug];
   const permIds = perms.map((k) => { const [rr, aa] = k.split(':'); return permId(rr, aa); });
   return `(${num(rid)}, ${esc(role.name)}, ${esc(role.slug)}, ${esc(role.desc)}, ${role.system}, ${json(permIds)}, ${esc(now)}, ${esc(now)})`;
 });
@@ -728,7 +702,7 @@ push('INSERT IGNORE INTO `role_permissions` (`roleId`, `permissionId`) VALUES');
 const rpRows = [];
 for (const role of ROLES) {
   const rid = id('role', role.slug);
-  for (const k of rolePermKeys[role.slug]) {
+  for (const k of ROLE_PERMS[role.slug]) {
     const [rr, aa] = k.split(':');
     rpRows.push(`(${num(rid)}, ${num(permId(rr, aa))})`);
   }

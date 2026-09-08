@@ -9,6 +9,7 @@ import {
   RefreshCw, Send, Loader, Shield, Users
 } from 'lucide-react';
 import { getConfig, getMenu } from '@/lib/data';
+import { subscribeToNewsletter } from '@/lib/newsletter-admin';
 import type { Config, Menu } from '@/types';
 import SocialLinks from '@/components/shared/SocialLinks';
 import ImageCaptcha from '@/components/ImageCaptcha';
@@ -106,6 +107,11 @@ export default function ContactPage() {
       return;
     }
 
+    // La case « newsletter » est lue avant l'envoi : le formulaire sera
+    // réinitialisé juste après, et l'adresse doit partir dans la liste
+    // d'abonnement (même magasin que le bandeau de la page d'accueil).
+    const wantsNewsletter = Boolean(formData.newsletter) && String(formData.email || '').includes('@');
+
     setIsSubmitting(true);
     // Envoi au backend Nest (POST /contact/messages) — fallback local si hors-ligne.
     fetch('/api/v1/contact/messages', {
@@ -119,6 +125,15 @@ export default function ContactPage() {
         message: formData.message,
       }),
     }).catch(() => undefined).finally(() => {
+      if (wantsNewsletter) {
+        void subscribeToNewsletter({
+          email: String(formData.email).trim().toLowerCase(),
+          name: formData.name || undefined,
+          locale,
+          source: 'contact',
+          consent: true,
+        });
+      }
       setIsSubmitting(false);
       setSubmitted(true);
       setFormData({
@@ -496,7 +511,7 @@ export default function ContactPage() {
                   />
                   <label htmlFor="acceptTerms" className="text-sm text-gray-600 dark:text-gray-400">
                     {t('acceptTerms')}{' '}
-                    <Link href={`/${locale}/confidentialite`} className="text-sari-blue hover:underline">
+                    <Link href={`/${locale}/legal/privacy`} className="text-sari-blue hover:underline">
                       {t('privacyPolicy')}
                     </Link>{' '}
                     <span className="text-red-500">*</span>

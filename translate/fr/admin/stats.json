@@ -3,5 +3,8 @@
   "title": "Statistiques",
   "viewLogs": "Voir les journaux",
   "publishedContent": "Contenu publié",
-  "orderPipeline": "Pipeline commandes"
+  "orderPipeline": "Pipeline commandes",
+  "events": "Événements",
+  "delivered": "Livrées",
+  "cancelled": "Annulées"
 }

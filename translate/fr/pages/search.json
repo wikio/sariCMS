@@ -23,5 +23,9 @@
   "tipsTitle": "💡 Astuces de recherche :",
   "tipOr": "= Recherche OU (plusieurs termes)",
   "tipAnd": "= Recherche ET (tous les termes)",
-  "tipExample": "Exemple : \"échographe, tensiomètre\" OU \"lit + électrique\""
+  "tipExample": "Exemple : \"échographe, tensiomètre\" OU \"lit + électrique\"",
+  "home": "Accueil",
+  "loading": "Recherche en cours…",
+  "startSearching": "Lancez une recherche",
+  "startSearchingDesc": "Saisissez un mot-clé pour trouver un produit, un service ou une actualité."
 }

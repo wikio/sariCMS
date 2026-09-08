@@ -12,11 +12,14 @@ import type {
   Partner,
   Legal,
   GenericContent,
+  ConstructorPage,
   VerificationCode,
   HeroSlide,
   SolutionCategory,
 } from '@/types';
 import { cmsPublicList, cmsPublicOne, cmsPublicTranslations, cmsFetch } from '@/lib/cms';
+import { decodeBuilderDoc } from '@/lib/builder-doc';
+import { LEGAL_DOC_TYPES, isLegalDocRow, legalDocTypeOf, type LegalDocType } from '@/lib/legal-docs';
 import { loadFicheLocale } from '@/lib/fiche-i18n';
 import { asPublicId, matchesEntity } from '@/lib/ids';
 import { findByRouteKey } from '@/lib/entity-url';
@@ -648,46 +651,100 @@ export async function getPartners(locale: string): Promise<Partner[]> {
   });
 }
 
+/**
+ * Les documents légaux se lisent dans le CMS, puis se complètent du fichier.
+ *
+ * Le remplacement se fait document par document, et non pour le lot entier : une
+ * page « mentions » rédigée dans l'administration ne doit pas faire disparaître la
+ * politique de confidentialité, qui n'a encore été écrite nulle part en base. Un
+ * tout-ou-rien répondait « page introuvable » sur `/legal/privacy` dès la première
+ * fiche créée — le pire des résultats, parce que le texte existait, lui.
+ *
+ * Le type du document vient de `category` (voir `lib/legal-docs.ts`) ; `kind`
+ * vaut « legal » pour les trois documents juridiques et « about » pour la fiche
+ * À propos, qui partage le même fichier source. Une ligne sans titre ni texte est
+ * ignorée : une fiche vidée dans l'admin ne remplace pas le fichier, elle le
+ * laisse en place — effacer un document légal publié s'écrit explicitement.
+ */
 export async function getLegal(locale: string): Promise<Legal> {
-  const fallback: Legal = {
-    mentions: { title: '', content: '' },
-    privacy: { title: '', content: '' },
-    conditions: { title: '', content: '' },
-    about: { title: '', content: '' },
-  };
-  return fromCmsOrJson(locale, 'legal', fallback, async () => {
-    const rows = (await cmsPublicList<Record<string, unknown>>('pages', locale)).filter(
-      (r) => String(r.kind ?? '') === 'legal' && rowMatchesLocale(r, locale),
-    );
-    if (!rows.length) return null;
-    const pick = (...slugParts: string[]) => {
-      const row = rows.find((r) => {
-        const slug = String(r.slug ?? '').toLowerCase();
-        const subtype = String(r.subtype ?? '').toLowerCase();
-        const category = String(r.category ?? '').toLowerCase();
-        return slugParts.some(
-          (part) => slug.includes(part) || subtype === part || category === part,
-        );
-      });
-      return {
-        title: String(row?.title ?? ''),
-        content: String(row?.content ?? ''),
-        lastUpdate: pickLastUpdate(row),
-      };
+  const cacheKey = `${locale}_legal`;
+  const cached = cacheGet(cacheKey);
+  if (cached !== undefined) return cached as Legal;
+
+  const empty = {} as Legal;
+  for (const type of LEGAL_DOC_TYPES) empty[type] = { title: '', content: '' };
+  const merged: Legal = { ...empty, ...(await loadData<Legal>(locale, 'legal', empty)) };
+
+  let rows: Array<Record<string, unknown>> = [];
+  try {
+    // Le filtre se passe en base : la liste publique est plafonnée à cent lignes,
+    // et une page de plus dans le CMS aurait pu pousser un document hors du champ.
+    rows = await cmsPublicList<Record<string, unknown>>('pages', locale, {
+      filter: JSON.stringify({ kind: { in: ['legal', 'about'] } }),
+    });
+  } catch {
+    rows = [];
+  }
+
+  for (const row of rows) {
+    // Une page « À propos » rédigée dans l'administration n'est pas le document
+    // légal du même nom : voir `isLegalDocRow`.
+    if (!isLegalDocRow(row)) continue;
+    const type = legalDocTypeOf(row) as LegalDocType;
+    const title = String(row.title ?? '').trim();
+    const content = String(row.content ?? '').trim();
+    if (!title && !content) continue;
+    const before = merged[type] ?? { title: '', content: '' };
+    merged[type] = {
+      title: title || before.title,
+      content: content || before.content,
+      lastUpdate: pickLastUpdate(row) ?? before.lastUpdate,
     };
-    const mapped: Legal = {
-      mentions: pick('mention', 'legal-notice', 'mentions'),
-      privacy: pick('privacy', 'confidential'),
-      conditions: pick('condition', 'cgv', 'conditions', 'terms'),
-      about: pick('about'),
-    };
-    if (!mapped.mentions.title && !mapped.privacy.title && !mapped.conditions.title && !mapped.about.title) {
-      return null;
-    }
-    return mapped;
-  });
+  }
+
+  return cacheSet(locale, 'legal', merged);
 }
 
+/**
+ * La page « À propos » rédigée dans l'administration, quand elle existe.
+ *
+ * La page publique est écrite dans les traductions (`pages.about`) : chaque
+ * paragraphe y a sa clé, et l'écran « Traductions » les modifie en direct. Ce que
+ * cette fiche apporte, ce sont les deux champs que le modèle de traduction ne
+ * peut pas porter — un texte long, avec ses titres et ses liens. Elle est donc en
+ * complément, jamais en remplacement : sans fiche publiée, la page reste celle
+ * des fichiers, et une fiche sans titre ne vide pas l'en-tête de la page.
+ */
+export interface AboutPageContent {
+  title: string;
+  subtitle: string;
+  content: string;
+  lastUpdate?: string;
+}
+
+export async function getAboutPage(locale: string): Promise<AboutPageContent | null> {
+  const cached = cacheGet(`${locale}_about_page`);
+  if (cached !== undefined) return cached as AboutPageContent | null;
+
+  let row: Record<string, unknown> | null = null;
+  try {
+    const rows = await cmsPublicList<Record<string, unknown>>('pages', locale, {
+      filter: JSON.stringify({ kind: 'about' }),
+    });
+    row = rows.find((r) => String(r.content ?? '').trim() || String(r.title ?? '').trim()) ?? null;
+  } catch {
+    row = null;
+  }
+
+  if (!row) return cacheSet(locale, 'about_page', null);
+  const found: AboutPageContent = {
+    title: String(row.title ?? '').trim(),
+    subtitle: String(row.subtitle ?? '').trim(),
+    content: String(row.content ?? '').trim(),
+    lastUpdate: pickLastUpdate(row),
+  };
+  return cacheSet(locale, 'about_page', found);
+}
 export async function getGenericContent(locale: string): Promise<GenericContent[]> {
   return fromCmsOrJson(locale, 'genericContent', [], async () => {
     const rows = (await cmsPublicList<Record<string, unknown>>('pages', locale)).filter(
@@ -696,6 +753,9 @@ export async function getGenericContent(locale: string): Promise<GenericContent[
     if (!rows.length) return null;
     return rows.map((row) => ({
       id: asPublicId(row),
+      legacyId: row.legacyId ? String(row.legacyId) : undefined,
+      slug: row.slug ? String(row.slug) : undefined,
+      status: row.status ? String(row.status) : undefined,
       title: String(row.title ?? ''),
       subtitle: row.subtitle ? String(row.subtitle) : undefined,
       category: row.category ? String(row.category) : undefined,
@@ -910,4 +970,45 @@ export async function getServiceById(locale: string, id: number | string): Promi
 export async function getGenericContentById(locale: string, id: number | string): Promise<GenericContent | null> {
   const contents = await getGenericContent(locale);
   return contents.find((c) => matchesEntity(c, id)) || null;
+}
+
+/**
+ * Pages construites dans le constructeur de l'admin (`subtype: 'constructor'`).
+ *
+ * Elles vivent dans le même module que les pages génériques — même ressource,
+ * même fichier de secours — et n'en diffèrent que par leur mise en page : le
+ * contenu est la sortie du constructeur, et il se passe du bandeau de navigation
+ * et du pied de page. Le HTML et le CSS sont relus ensemble (voir
+ * `lib/builder-doc.ts`), ce qui garde le champ `content` éditable à la main.
+ */
+export async function getConstructorPages(locale: string): Promise<ConstructorPage[]> {
+  const rows = (await getGenericContent(locale)).filter((row) => row.type === 'constructor');
+  return rows.map((row) => {
+    const doc = decodeBuilderDoc(row.content);
+    const media = Array.isArray(row.media) ? row.media[0] : row.media;
+    return {
+      id: row.id,
+      slug: String(row.slug ?? row.id),
+      locale,
+      title: row.title,
+      subtitle: row.subtitle,
+      category: row.category,
+      status: row.status,
+      html: doc.html,
+      css: doc.css,
+      media,
+    };
+  });
+}
+
+/** Une page construite, désignée par son slug, son identifiant ou son legacyId. */
+export async function getConstructorPage(locale: string, ref: string): Promise<ConstructorPage | null> {
+  const wanted = decodeURIComponent(String(ref || '')).trim().toLowerCase();
+  if (!wanted) return null;
+  const pages = await getConstructorPages(locale);
+  return (
+    pages.find((page) => String(page.slug || '').toLowerCase() === wanted) ||
+    pages.find((page) => matchesEntity(page, wanted)) ||
+    null
+  );
 }

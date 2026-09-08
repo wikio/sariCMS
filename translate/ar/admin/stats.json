@@ -3,5 +3,8 @@
   "title": "الإحصائيات",
   "viewLogs": "عرض السجلات",
   "publishedContent": "المحتوى المنشور",
-  "orderPipeline": "خط أنابيب الطلبات"
+  "orderPipeline": "خط أنابيب الطلبات",
+  "events": "الفعاليات",
+  "delivered": "تم التسليم",
+  "cancelled": "ملغاة"
 }

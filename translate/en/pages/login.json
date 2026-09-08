@@ -30,7 +30,6 @@
   "createClientAccount": "Create a client account",
   "becomePartner": "Become a partner",
   "createCandidateAccount": "Create a candidate account",
-  "createAccount": "Create a account",
   "spaceBenefits": "Your space benefits",
   "secureConnection": "Secure connection",
   "sslProtection": "Your data is protected by SSL encryption and compliant with Algerian data protection law.",
@@ -59,12 +58,13 @@
     "Alerts for new job offers",
     "Direct communication with HR"
   ],
-  "title": "Connexion",
-  "remember": "Remember me",
-  "loginButton": "Connect",
+  "title": "Sign in",
   "email": "Email address",
-  "loginError": "Error on Email ou password",
-  "loggingIn": "Connexion in progress...",
-  "captchaError": "Please enter the correct CAPTCHA code.",
-  "demoHint": "Demo: client@sari.dz / partner@sari.dz / candidate@sari.dz · password demo123"
+  "remember": "Remember me",
+  "loginButton": "Sign in",
+  "loggingIn": "Signing in…",
+  "loginError": "Incorrect credentials",
+  "captchaError": "Please complete the captcha",
+  "createAccount": "Create an account",
+  "demoHint": "Demo account"
 }

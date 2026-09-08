@@ -11,6 +11,7 @@ import {
   Users, UserCog, FileCheck, Globe, Sliders, ExternalLink, LogOut,
   Shield, Search, ChevronDown, ChevronLeft, Palette, BarChart3, ScrollText,
   Tags, UserPlus, UserRound, Paintbrush, Banknote, MessageSquareText, Eye,
+  LayoutTemplate, MailPlus,
 } from 'lucide-react';
 import '@/app/admin.css';
 import { ToastProvider } from '@/components/admin/Toast';
@@ -122,6 +123,7 @@ function Shell({ children }: { children: ReactNode }) {
     { id: 'partners', icon: Handshake, label: t('menu.partners'), href: `/${locale}/admin/partners` },
     { id: 'pages', icon: FileText, label: t('menu.pages'), href: `/${locale}/admin/pages` },
     { type: 'divider', label: t('menu.siteSection') },
+    { id: 'home', icon: LayoutTemplate, label: t('menu.home'), href: `/${locale}/admin/home` },
     { id: 'menu', icon: MenuIcon, label: t('menu.menuNav'), href: `/${locale}/admin/menus` },
     { id: 'hero', icon: ImageIcon, label: t('menu.hero'), href: `/${locale}/admin/hero` },
     { id: 'galleries', icon: FileStack, label: t('menu.galleries'), href: `/${locale}/admin/galleries` },
@@ -131,6 +133,7 @@ function Shell({ children }: { children: ReactNode }) {
     { id: 'clients', icon: Users, label: t('menu.clients'), href: `/${locale}/admin/clients` },
     { id: 'partners-accounts', icon: UserPlus, label: t('menu.partnersAccounts'), href: `/${locale}/admin/partners-accounts` },
     { id: 'applications', icon: FileCheck, label: t('menu.applications'), href: `/${locale}/admin/applications` },
+    { id: 'newsletter', icon: MailPlus, label: t('menu.newsletter'), href: `/${locale}/admin/newsletter` },
     { type: 'divider', label: t('menu.advancedSection') },
     { id: 'taxonomies', icon: Tags, label: t('menu.taxonomies'), href: `/${locale}/admin/taxonomies` },
     { id: 'visibility', icon: Eye, label: t('menu.visibility'), href: `/${locale}/admin/visibility` },

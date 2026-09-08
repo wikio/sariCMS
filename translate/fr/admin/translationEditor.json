@@ -1,0 +1,18 @@
+{
+  "title": "Éditeur de traductions",
+  "editLanguage": "Langue en édition",
+  "selectLanguage": "Sélectionnez la langue à modifier",
+  "treeStructure": "Arborescence",
+  "components": "COMPOSANTS",
+  "pages": "PAGES",
+  "keys": "clé(s)",
+  "export": "Exporter",
+  "save": "Sauvegarder",
+  "searchKey": "Rechercher une clé...",
+  "loading": "Chargement...",
+  "noKeys": "Aucune clé trouvée",
+  "fileNotFound": "Fichier non trouvé",
+  "saveSuccess": "Traductions sauvegardées !",
+  "saveError": "Erreur lors de la sauvegarde",
+  "exportSuccess": "Fichier JSON exporté !"
+}

@@ -1,0 +1,23 @@
+{
+  "placeholder": "Search for an author…",
+  "loading": "Loading…",
+  "noResult": "No author found",
+  "change": "Change",
+  "clear": "Remove author",
+  "fallbackBadge": "Default",
+  "createTitle": "New author",
+  "createSubtitle": "The record is created right away and selected for this article.",
+  "name": "Full name",
+  "namePlaceholder": "e.g. Dr. Martin Dupont",
+  "role": "Qualification",
+  "rolePlaceholder": "e.g. Medical Director",
+  "roleHint": "Shown under the author's name on the article page.",
+  "bio": "Description",
+  "bioPlaceholder": "Introduce the author in a few lines…",
+  "bioHint": "Used in the “About the author” block on the website.",
+  "cancel": "Cancel",
+  "save": "Create author",
+  "saving": "Creating…",
+  "nameRequired": "Name is required.",
+  "createFailed": "Could not create the author."
+}

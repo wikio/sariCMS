@@ -1,0 +1,15 @@
+{
+  "title": "نموذج التحقق",
+  "codeLabel": "رمز المستند",
+  "codePlaceholder": "مثال: SARI-FAC24-00001",
+  "keyLabel": "مفتاح التحقق",
+  "keyPlaceholder": "مثال: CTdxXe6ZdFVzWQ==",
+  "captchaLabel": "التحقق من عدم كونك روبوت",
+  "captchaPlaceholder": "?",
+  "newCaptcha": "CAPTCHA جديد",
+  "captchaHelp": "حل هذه العملية لإثبات أنك إنسان",
+  "verify": "تحقق",
+  "verifying": "جاري التحقق...",
+  "reset": "إعادة تعيين",
+  "demoCodes": "رموز العرض التوضيحي:"
+}

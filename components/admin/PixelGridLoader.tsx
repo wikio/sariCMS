@@ -1,5 +1,11 @@
 'use client';
 
+/**
+ * Le damier de l'administration (64 cases, `ad-pixel-grid` dans `app/admin.css`).
+ * Son homologue de la vitrine est `components/ui/PixelGridLoader` : 15 cases, et des
+ * classes posées dans `app/globals.css` — l'admin ne charge pas les mêmes feuilles.
+ */
+
 export default function PixelGridLoader({
   label = 'Chargement',
   compact = false,

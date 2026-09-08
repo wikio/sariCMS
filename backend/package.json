@@ -21,7 +21,20 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:push": "prisma db push",
     "seed": "ts-node -r tsconfig-paths/register prisma/seed.ts",
-    "postinstall": "prisma generate || true"
+    "postinstall": "prisma generate || true",
+    "sql:fix-zero-dates": "node sql/generate-fix-zero-dates.mjs",
+    "sql:fix-permissions": "node sql/generate-fix-permissions.mjs",
+    "sql:schema": "node sql/generate-schema.mjs",
+    "sql:seed": "node sql/generate-seed.mjs",
+    "sql:data": "node sql/migrate-data.mjs",
+    "sql:seed-legal": "node sql/generate-seed-legal.mjs",
+    "sql:test-legal": "node sql/test-seed-legal-sql.mjs",
+    "prisma:maps": "node scripts/generate-schema-maps.mjs",
+    "prisma:relations": "node scripts/generate-schema-maps.mjs",
+    "db:fix-dates": "node scripts/fix-zero-dates.mjs",
+    "db:schema-check": "node scripts/schema-sync.mjs",
+    "db:schema-fix": "node scripts/schema-sync.mjs --fix",
+    "db:schema-test": "node scripts/test-schema-sync.mjs"
   },
   "dependencies": {
     "@nestjs/cache-manager": "^2.3.0",

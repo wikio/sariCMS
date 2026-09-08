@@ -5,8 +5,9 @@
  * ATTENTION — portée réelle de ce script : il n'exécute pas l'application et
  * n'interroge aucun serveur. Il relit les fichiers source et vérifie, par
  * expressions régulières, que certaines décisions n'ont pas été défaites ; la
- * résolution des règles y est réimplémentée à l'identique pour tester la
- * logique elle-même. Il ne peut donc PAS détecter un menu absent en base, une
+ * résolution des règles est importée du module réel (lib/link-kind.mjs, sans
+ * dépendance) quand elle est isolable, réimplémentée à l'identique ailleurs. Il ne
+ * peut donc PAS détecter un menu absent en base, une
  * langue qui diverge, ni un problème d'affichage.
  *
  * Pour contrôler ce que votre serveur sert réellement :
@@ -33,9 +34,9 @@
  * Usage : node scripts/test-menu-auto.mjs
  */
 
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -149,31 +150,38 @@ console.log('\n— URLs générées —');
   check('id textuel : slug seul', textual[0].href === '/fr/solutions/diagnostic-imagerie', textual[0].href);
 }
 
-console.log('\n— Header : pas de double préfixe de langue —');
+console.log('\n— Lien de menu : une règle pour le bandeau et le pied de page —');
 
 {
-  const locales = new Set(['fr', 'en', 'ar']);
-  const locale = 'fr';
-  const getLinkHref = (href) => {
-    const raw = String(href || '');
-    if (/^(https?:)?\/\//i.test(raw) || /^(mailto|tel):/i.test(raw)) return raw;
-    const cleanPath = raw.replace(/^[#/]+/, '');
-    if (/^[a-z]{2}(-[A-Za-z]{2})?(\/|$)/.test(cleanPath)) {
-      const [first, ...rest] = cleanPath.split('/');
-      if (locales.has(first)) return `/${locale}/${rest.join('/')}`.replace(/\/+$/, '') || `/${locale}`;
-    }
-    return `/${locale}/${cleanPath}`;
-  };
+  // La règle n'est plus réécrite ici : `lib/link-kind.mjs` ne dépend de rien et se
+  // charge tel quel par `node`, donc le test porte la même logique que le site,
+  // pas une copie libre de dériver. Le pied de page, lui, avait la sienne :
+  // « je préfixe tout », ce qui transformait une URL externe en
+  // `/fr/https://exemple.com`. Les deux emplacements appellent maintenant `menuHref`.
+  // `pathToFileURL` n'est pas un détail de style : le chargeur ESM refuse un chemin
+  // absolu brut (`d:\works\…` → ERR_UNSUPPORTED_ESM_URL_SCHEME). Sous Linux le
+  // script partait, sur le poste de travail il tombait ici.
+  const { menuHref, externalLinkAttrs, isExternalLink } = await import(
+    pathToFileURL(resolve(ROOT, 'lib/link-kind.mjs')).href
+  );
+  const locales = ['fr', 'en', 'ar'];
+  const href = (h, locale = 'fr') => menuHref(h, locale, locales);
 
-  check('URL déjà localisée non re-préfixée', getLinkHref('/fr/solutions/diagnostic-imagerie') === '/fr/solutions/diagnostic-imagerie', getLinkHref('/fr/solutions/diagnostic-imagerie'));
-  check('lien relatif préfixé', getLinkHref('/solutions') === '/fr/solutions');
-  check('ancre préfixée', getLinkHref('#contact') === '/fr/contact');
-  check('autre langue ramenée à la langue courante', getLinkHref('/ar/news/12-t') === '/fr/news/12-t');
-  check('lien externe intact', getLinkHref('https://example.com') === 'https://example.com');
-  check('mailto intact', getLinkHref('mailto:a@b.c') === 'mailto:a@b.c');
+  check('URL déjà localisée non re-préfixée', href('/fr/solutions/diagnostic-imagerie') === '/fr/solutions/diagnostic-imagerie', href('/fr/solutions/diagnostic-imagerie'));
+  check('lien relatif préfixé', href('/solutions') === '/fr/solutions');
+  check('ancre préfixée', href('#contact') === '/fr/contact');
+  check('autre langue ramenée à la langue courante', href('/ar/news/12-t') === '/fr/news/12-t');
+  check('lien externe intact', href('https://example.com') === 'https://example.com');
+  check('mailto intact', href('mailto:a@b.c') === 'mailto:a@b.c');
+  check('hors du site : un onglet, et une relation qui ne fuit pas', externalLinkAttrs('https://example.com').rel === 'noopener noreferrer');
+  check('un contact direct reste sans attribut de cible', Object.keys(externalLinkAttrs('tel:+2136000000')).length === 0);
 
-  const headerSrc = readFileSync(resolve(ROOT, 'components/layout/Header.tsx'), 'utf8');
-  check('le Header applique bien ce garde-fou', /LOCALE_SEGMENTS\.has\(first\)/.test(headerSrc));
+  for (const [nom, fichier] of [['Header', 'components/layout/Header.tsx'], ['Footer', 'components/layout/Footer.tsx']]) {
+    const src = readFileSync(resolve(ROOT, fichier), 'utf8');
+    check(`${nom} passe par la règle commune`, /menuHref\(href, locale, locales\)/.test(src) && !/const cleanPath = href\.replace/.test(src));
+    check(`${nom} ouvre les liens sortants à côté`, /externalLinkAttrs\(/.test(src));
+  }
+  check('la règle ne devine pas une langue au pif', isExternalLink('/france') === false);
 }
 
 console.log('\n— Contrat backend —');
@@ -442,10 +450,23 @@ console.log('\n— Choix de la cible d’un lien (SlugPicker) —');
 {
   const picker = readFileSync(resolve(ROOT, 'components/admin/SlugPicker.tsx'), 'utf8');
 
-  // Un lien libre doit rester saisissable à la main.
+  // Un lien libre doit rester saisissable à la main — et le champ doit se montrer
+  // de lui-même : l'ancienne icône, `pointer-events: none`, ne répondait à aucun clic.
   check(
     'le mode « lien libre » expose un champ URL éditable',
-    /kind === 'free' \? \([\s\S]{0,400}placeholder="\/chemin-ou-url"/.test(picker),
+    /kind === 'free' \? \([\s\S]{0,900}<input[\s\S]{0,120}ref=\{freeInput\}/.test(picker),
+  );
+  check(
+    'choisir « lien libre » pose le curseur dans le champ',
+    /freeInput\.current\?\.focus\(\)/.test(picker),
+  );
+  check(
+    'les deux natures du lien libre sont choisissables',
+    /Lien interne/.test(picker) && /URL externe/.test(picker) && (picker.match(/aria-pressed=\{freeMode/g) || []).length === 2,
+  );
+  check(
+    'le lien libre normalise à la sortie du champ',
+    /onBlur=\{\(e\) => commitFree\(e\.target\.value\)\}/.test(picker),
   );
 
   // Chaque module doit pouvoir viser sa page liste OU une fiche précise.
@@ -469,10 +490,13 @@ console.log('\n— Choix de la cible d’un lien (SlugPicker) —');
     (picker.match(/— liste ou/g) || []).length >= 5,
   );
 
-  // Un chemin proposé par l'admin doit exister dans l'app.
+  // Un chemin proposé par l'admin doit exister dans l'app. `app/[locale]/legal/page.tsx`
+  // est un sommaire qui répond (il énumère les documents) : le proposer est correct,
+  // et `/verification` doit y figurer — la page existe, l'atelier ne la faisait pas
+  // choisir. `npm run routes:check` vérifie ces deux points contre le disque.
   check(
-    '/legal (404, la route est legal/[type]) n’est plus proposé',
-    !/path: '\/legal',/.test(picker),
+    'le sommaire légal et la vérification sont proposés',
+    ['/legal', '/verification'].every((p) => picker.includes(`path: '${p}'`)),
   );
   check(
     'les trois pages légales réelles sont proposées',
@@ -527,25 +551,32 @@ console.log('\n— Choix de la cible d’un lien (SlugPicker) —');
     /<Suspense[\s\S]{0,200}<MenuStudioInner \/>/.test(studio),
   );
 
-  // Le panneau de résultats est en position absolue : il se cale sur le plus
-  // proche ancêtre positionné. Ancré au seul champ de recherche, il n'occupait
-  // que le reliquat de largeur laissé par le select (224 px fixes), d'où un
-  // affichage écrasé sur desktop — correct en mobile où la rangée s'empile.
+  // La mise en page, et pourquoi elle est empilée. `app/admin.css` est chargé après
+  // Tailwind et impose `width:100%` à `.ad-select` comme à `.ad-search` : à
+  // spécificité égale, c'est lui qui gagne — un `sm:w-1/2` posé sur ces classes ne
+  // se voit donc jamais. La rangée à deux colonnes donnait un sélecteur pleine
+  // largeur et un champ serré contre le bord droit : inutilisable en desktop,
+  // correct par accident en mobile où la rangée s'empile.
   check(
-    'la rangée sert de repère au panneau de résultats',
-    /<div className="relative flex flex-col sm:flex-row gap-2">/.test(picker),
+    'le sélecteur et le champ sont empilés, pleine largeur',
+    /<div className="flex flex-col gap-2">/.test(picker) && !/sm:flex-row/.test(picker),
   );
   check(
-    'le select occupe la moitié de la largeur',
-    /className="ad-select sm:w-1\/2 sm:min-w-0 shrink-0"/.test(picker),
+    'aucune largeur Tailwind n’est posée sur .ad-select ou .ad-search',
+    !/className="ad-select [^"]*w-/.test(picker) && !/className="ad-search [^"]*w-/.test(picker),
+    'admin.css gagne à spécificité égale : la promesse de Tailwind serait silencieuse',
   );
   check(
-    'la recherche occupe l’autre moitié',
-    /<div className="sm:w-1\/2 min-w-0">\s*\n\s*<div className="ad-search">/.test(picker),
+    'le champ de lien libre est sous le sélecteur',
+    /kind === 'free' \? \(\s*\n\s*<div className="space-y-1\.5">/.test(picker),
   );
+  // Le panneau de résultats est en absolu : il se cale sur le plus proche ancêtre
+  // positionné. Ancré à la recherche, il la suit de près ET prend la largeur de la
+  // colonne ; ancré à la rangée, il se détachait du champ ; ancré au champ dans une
+  // rangée à deux colonnes, il restait à 224 px.
   check(
-    'le champ de lien libre occupe aussi la moitié',
-    /className="ad-search sm:w-1\/2 min-w-0"/.test(picker),
+    'le panneau de résultats s’ancre à la recherche, pas à la rangée',
+    /<div className="relative">\s*\n\s*<div className="ad-search">/.test(picker),
   );
   check(
     'le champ de recherche n’enferme plus le panneau',
@@ -673,6 +704,24 @@ console.log('\n— Harmonisation des menus entre langues —');
   check(
     'les menus statiques de repli ont la même structure dans les 3 langues',
     shapes[0] === shapes[1] && shapes[1] === shapes[2],
+  );
+}
+
+console.log('\n— Portabilité des scripts —');
+
+{
+  // Ces scripts sont lus sur le poste de travail, en Windows, autant que dans un
+  // bac à sable Linux : un `import()` dynamique y doit une URL, pas un chemin.
+  const dir = resolve(ROOT, 'scripts');
+  const offenders = [];
+  for (const f of readdirSync(dir).filter((n) => n.endsWith('.mjs'))) {
+    const src = readFileSync(resolve(dir, f), 'utf8');
+    if (/await import\(\s*(?:resolve|join|path\.resolve)\s*\(/.test(src)) offenders.push(f);
+  }
+  check(
+    'tout import() dynamique d’un script passe par une URL file://',
+    offenders.length === 0,
+    offenders.length ? `${offenders.join(', ')} — remplacer par import(pathToFileURL(resolve(…)).href)` : '',
   );
 }
 

@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import { locales, isRtl, type Locale } from '@/lib/i18n';
 import { getConfig, getMenu } from '@/lib/data';
 import SiteWrapper from '@/components/layout/SiteWrapper';
+import RoutePreloadGate from '@/components/layout/RoutePreloadGate';
 import VisibilityProvider from '@/components/layout/VisibilityProvider';
 import { fetchVisibility } from '@/lib/visibility-server';
 import { AuthProvider } from '@/contexts/AuthContext';
@@ -13,6 +14,10 @@ import { CartProvider } from '@/contexts/CartContext';
 import { OrdersProvider } from '@/contexts/OrdersContext';
 import { ApplicationsProvider } from '@/contexts/ApplicationsContext';
 import '@/app/globals.css';
+// Les classes des pages construites dans l'administration (`sari-*`) vivent dans
+// leur propre feuille : un HTML enregistré en base ne peut pas dépendre de
+// classes utilitaires que le compilateur Tailwind n'aurait jamais vues.
+import '@/app/builder-kit.css';
 
 export const viewport = {
   width: 'device-width',
@@ -95,6 +100,10 @@ export default async function LocaleLayout({
         suppressHydrationWarning
       >
         <NextIntlClientProvider messages={messages}>
+          {/* Le préchargement à la souris et le damier d'attente : posés avant le
+              contenu, parce qu'ils regardent la navigation — mais après le provider
+              i18n, car leur libellé passe par `useTranslations`. */}
+          <RoutePreloadGate />
           <ThemeProvider>
             <AuthProvider>
               <CartProvider>

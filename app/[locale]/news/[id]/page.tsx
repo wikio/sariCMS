@@ -13,6 +13,7 @@ import { useDateUtils } from '@/lib/use-date-format';
 import type { News, Author } from '@/types';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
+import NewsletterSignup from '@/components/shared/NewsletterSignup';
 import ImageWithFallback from '@/components/ui/ImageWithFallback';
 import LanguageIndicator from '@/components/ui/LanguageIndicator';
 
@@ -36,8 +37,6 @@ export default function NewsDetailPage() {
   const [prevArticle, setPrevArticle] = useState<News | null>(null);
   const [nextArticle, setNextArticle] = useState<News | null>(null);
   const [scrollProgress, setScrollProgress] = useState(0);
-  const [newsletterEmail, setNewsletterEmail] = useState('');
-  const [newsletterSubmitted, setNewsletterSubmitted] = useState(false);
 
   useEffect(() => {
     const loadArticle = async () => {
@@ -92,15 +91,6 @@ export default function NewsDetailPage() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  const handleNewsletterSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newsletterEmail) {
-      setNewsletterSubmitted(true);
-      setNewsletterEmail('');
-      setTimeout(() => setNewsletterSubmitted(false), 3000);
-    }
-  };
 
   if (!item) {
     return (
@@ -362,26 +352,15 @@ export default function NewsDetailPage() {
               <p className="text-blue-100 mb-6 text-sm text-center">
                 {t('newsletterDesc')}
               </p>
-              {newsletterSubmitted ? (
-                <div className="bg-white/10 p-4 text-center rounded-lg">
-                  <CheckCircle className="w-8 h-8 mx-auto mb-2" />
-                  <p className="text-sm">{t('subscriptionSuccess')}</p>
-                </div>
-              ) : (
-                <form onSubmit={handleNewsletterSubmit}>
-                  <input 
-                    type="email" 
-                    required 
-                    placeholder={t('yourEmail')} 
-                    value={newsletterEmail} 
-                    onChange={(e) => setNewsletterEmail(e.target.value)} 
-                    className="w-full px-4 py-3 mb-4 text-sari-dark focus:outline-none rounded-lg" 
-                  />
-                  <button type="submit" className="w-full bg-sari-lime text-sari-dark font-semibold py-3 hover:bg-white transition-colors rounded-lg">
-                    {t('subscribe')}
-                  </button>
-                </form>
-              )}
+              <NewsletterSignup
+                variant="card"
+                source="news.detail"
+                labels={{
+                  placeholder: t('yourEmail'),
+                  submit: t('subscribe'),
+                  successDesc: t('subscriptionSuccess'),
+                }}
+              />
             </div>
 
             <div className="bg-white dark:bg-[#1a1a1a] p-8 border border-gray-200 dark:border-gray-800 shadow-xl rounded-xl">

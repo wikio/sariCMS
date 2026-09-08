@@ -7,5 +7,6 @@
   "added": "Ajoutée",
   "rate": "Taux",
   "zone": "Zone",
-  "target": "Cible"
+  "target": "Cible",
+  "name": "Nom"
 }
