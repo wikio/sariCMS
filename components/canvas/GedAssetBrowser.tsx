@@ -35,6 +35,7 @@ export function GedAssetBrowser({
   allowImport = true,
   allowOpenInStudio,
   onOpenInStudio,
+  onImportAsset,
   height = 320,
   selectedFile,
   initialSearch = '',
@@ -48,6 +49,11 @@ export function GedAssetBrowser({
   allowImport?: boolean;
   onOpenInStudio?: (asset: GedAssetSummary) => void;
   allowOpenInStudio?: boolean;
+  /**
+   * Le double-clic : « pose-moi direct ». Un simple clic prépare l'asset (c'est le geste
+   * du sélecteur de champ), le double-clic l'amène sur la planche sans autre dialogue.
+   */
+  onImportAsset?: (asset: GedAssetSummary) => void;
   height?: number;
   selectedFile?: string;
   initialSearch?: string;
@@ -253,6 +259,7 @@ export function GedAssetBrowser({
                 asset={asset}
                 selected={selectedFile === asset.file}
                 onOpen={onSelect ? () => onSelect(asset) : undefined}
+                onImport={onImportAsset ? () => onImportAsset(asset) : undefined}
                 onStudio={allowOpenInStudio && onOpenInStudio ? () => onOpenInStudio(asset) : undefined}
               />
             ))}
@@ -284,7 +291,7 @@ export function GedAssetBrowser({
 
 }
 
-function AssetTile({ asset, selected, onOpen, onStudio }: { asset: GedAssetSummary; selected?: boolean; onOpen?: () => void; onStudio?: () => void }) {
+function AssetTile({ asset, selected, onOpen, onImport, onStudio }: { asset: GedAssetSummary; selected?: boolean; onOpen?: () => void; onImport?: () => void; onStudio?: () => void }) {
   const isPlan = asset.kind === 'canvas';
   return (
     <div
@@ -293,9 +300,23 @@ function AssetTile({ asset, selected, onOpen, onStudio }: { asset: GedAssetSumma
       tabIndex={onOpen ? 0 : undefined}
       aria-selected={selected}
       onClick={onOpen}
+      onDoubleClick={(event) => {
+        // Les boutons posés sur la vignette (télécharger, ouvrir dans l'atelier) gardent
+        // leur propre geste : sans ce filtre, un double-clic malchanceux poserait l'asset
+        // ET déclencherait le bouton dessous.
+        if ((event.target as HTMLElement | null)?.closest('a,button')) return;
+        onImport?.();
+      }}
+      title={onImport ? 'Clic : préparer · double-clic : poser sur la planche' : undefined}
       onKeyDown={(event) => {
         if (onOpen && event.key === 'Enter') onOpen();
-        if (event.key === ' ') event.preventDefault();
+        // `Espace` = le même geste que le double-clic : poser. Un sélecteur de champ a
+        // déjà « Entrée » pour valider, l'atelier a besoin des deux.
+        if (event.key === ' ') {
+          event.preventDefault();
+          if (onImport) onImport();
+          else onOpen?.();
+        }
       }}
       draggable
       onDragStart={(event) => {
@@ -308,6 +329,9 @@ function AssetTile({ asset, selected, onOpen, onStudio }: { asset: GedAssetSumma
           : `<img src="${asset.url}" alt="${(asset.title || asset.alt || '').replace(/"/g, '&quot;')}">`;
         event.dataTransfer.setData('text/html', html);
         event.dataTransfer.setData('text/plain', asset.url);
+        // Le geste d'à côté : glisser une vignette sur le plan doit la POSER, et non
+        // naviguer vers son URL. La clé est la référence GED, lue par l'atelier au dépôt.
+        event.dataTransfer.setData('application/x-sari-ged', JSON.stringify({ file: asset.file, url: asset.url, kind: asset.kind }));
         event.dataTransfer.effectAllowed = 'copy';
       }}
     >

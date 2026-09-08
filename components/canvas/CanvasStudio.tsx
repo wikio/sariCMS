@@ -25,8 +25,8 @@ import {
   ArrowLeft,
   Brush,
   Check,
-  Copy,
   Download,
+  Eraser,
   Grid3x3,
   Image as ImageIcon,
   Layers,
@@ -61,7 +61,7 @@ const TOOLS: { id: ToolId; label: string; icon: React.ReactNode }[] = [
   { id: 'hand', label: 'Déplacer le plan', icon: <MoveHorizontal size={16} /> },
   { id: 'text', label: 'Texte', icon: <Type size={16} /> },
   { id: 'brush', label: 'Pinceau', icon: <Brush size={16} /> },
-  { id: 'eraser', label: 'Gomme', icon: <Copy size={16} /> },
+  { id: 'eraser', label: 'Gomme', icon: <Eraser size={16} /> },
 ];
 
 const SHAPES: { id: ToolId; label: string }[] = [
@@ -413,6 +413,14 @@ export function CanvasStudio({
   const openTemplates = async () => {
     setSheet('gabarits');
     if (templates.length) return;
+    // Le catalogue peut être muet (backend partiel) : on relit `index.json` en statique
+    // avant de conclure à un magasin vide, sinon l'écran affiche « Catalogue vide » alors
+    // que les cinq gabarits livrés sont sur le disque.
+    const guessed = await guessTemplates();
+    if (guessed.length) {
+      setTemplates(guessed);
+      return;
+    }
     try {
       const result = await listGedTemplates();
       if (result.templates.length) {
@@ -424,12 +432,18 @@ export function CanvasStudio({
       setNotice({ kind: 'warn', text: 'Catalogue injoignable : les gabarits sont relus un à un depuis public/canvas/templates.' });
       const guessed = await guessTemplates();
       if (guessed.length) setTemplates(guessed);
+      else setNotice({ kind: 'warn', text: 'Aucun gabarit trouvé : ni le catalogue, ni public/canvas/templates/index.json n’ont répondu. Vérifiez que le dossier est déployé.' });
     }
   };
 
   const applyTemplate = async (id: string) => {
     const instance = engineRef.current;
-    if (!instance) return;
+    if (!instance) {
+      // Un « rien ne se passe » est le pire des diagnostics : ici, l'atelier n'a pas de
+      // moteur (démarrage raté) — et sans ce message, le clic sur la vignette ne dit rien.
+      setNotice({ kind: 'warn', text: "Aucun atelier ouvert : l'application d'un gabarit demande un moteur en vie. Redémarrez l'atelier." });
+      return;
+    }
     try {
       const { meta, template } = await readGedTemplate(id);
       instance.setArtboard(meta.format.width, meta.format.height);
@@ -551,18 +565,63 @@ export function CanvasStudio({
   };
 
   /**
+   * Le dépôt sur le plan : un fichier du poste, ou une vignette de la GED.
+   *
+   * Les deux passent par le même chemin et atterrissent SOUS LE CURSEUR — un dépôt qui
+   * pose son objet ailleurs que là où la main l'a lâché est un dépôt raté. La vignette
+   * GED voyage en `application/x-sari-ged` (voir `GedAssetBrowser`) ; à défaut, on lit
+   * `Files`, et un lien simple est ignoré.
+   */
+  const dropOnPlan = async (event: React.DragEvent) => {
+    const instance = engineRef.current;
+    if (!instance) return;
+    const at = instance.pointerFromEvent(event.nativeEvent);
+    const raw = event.dataTransfer?.getData('application/x-sari-ged');
+    if (raw) {
+      event.preventDefault();
+      setPlanOver(false);
+      try {
+        const ref = JSON.parse(raw) as { file?: string; url?: string; kind?: string };
+        if (ref.kind === 'canvas' && ref.file) {
+          void openAsset(ref.file);
+          return;
+        }
+        if (ref.url) {
+          if (/\.svg$/i.test(ref.url)) await instance.addSvg(await fetchSvgText(ref.url), { at });
+          else await instance.addImage(ref.url, { fit: 'contain', insetSize: true, at });
+          setNotice({ kind: 'info', text: `« ${ref.file || ref.url} » posé sur la planche.` });
+          refresh();
+        }
+      } catch (error) {
+        setNotice({ kind: 'warn', text: error instanceof Error ? error.message : 'Dépôt impossible.' });
+      }
+      return;
+    }
+    const file = Array.from(event.dataTransfer?.files || [])[0];
+    if (!file) return;
+    event.preventDefault();
+    setPlanOver(false);
+    void importFromDesk(file, at);
+  };
+
+  /**
    * Importer depuis ce poste, sans passer par la liste : le fichier est écrit dans la
    * GED (donc réutilisable ailleurs) puis posé sur la planche. Un SVG est importé en
    * objets, comme depuis le navigateur.
    */
-  const importFromDesk = async (file: File | undefined) => {
+  /**
+   * Importer depuis ce poste, sans passer par la liste : le fichier est écrit dans la
+   * GED (donc réutilisable ailleurs) puis posé sur la planche. Un SVG est importé en
+   * objets, comme depuis le navigateur.
+   */
+  const importFromDesk = async (file: File | undefined, at?: { x: number; y: number }) => {
     const instance = engineRef.current;
     if (!instance || !file) return;
     setNotice({ kind: 'info', text: `Import de « ${file.name} » dans la GED…` });
     try {
       const asset = await uploadGedAsset({ file, kind: /\.svg$/i.test(file.name) ? 'svg' : 'image', title: file.name.replace(/\.[^.]+$/, ''), tags: ['import'] });
-      if (/\.svg$/i.test(asset.url)) await instance.addSvg(await fetchSvgText(asset.url));
-      else await instance.addImage(asset.url, { fit: 'contain', insetSize: true });
+      if (/\.svg$/i.test(asset.url)) await instance.addSvg(await fetchSvgText(asset.url), { at });
+      else await instance.addImage(asset.url, { fit: 'contain', insetSize: true, at });
       setNotice({ kind: 'info', text: `« ${asset.title || asset.name} » importé et posé (${asset.file}) — il est sélectionné : glissez-le, ou servez-vous des poignées.` });
     } catch (error) {
       setNotice({ kind: 'warn', text: error instanceof Error ? error.message : 'Import impossible.' });
@@ -572,6 +631,35 @@ export function CanvasStudio({
       refresh();
     }
   };
+
+  const dropRef = useRef<(event: React.DragEvent) => Promise<void>>(async () => undefined);
+  // Le dépôt n'a pas besoin d'une visée parfaite : si la fenêtre porte le fichier (et que
+  // la zone du plan ne l'a pas réclamé), on pose au dernier pointeur connu du plan. La
+  // fonction est relue à chaque rendu — la déclarer dans un `useEffect` plus haut la
+  // figerait sur un closure périmé, et le lint du projet le refuse à juste titre.
+  useEffect(() => {
+    dropRef.current = dropOnPlan;
+  });
+  useEffect(() => {
+    if (!open) return;
+    const onDragOver = (event: DragEvent) => {
+      if (!Array.from(event.dataTransfer?.types || []).some((t) => t === 'Files' || t === 'application/x-sari-ged')) return;
+      event.preventDefault();
+    };
+    const onDrop = (event: DragEvent) => {
+      if (event.defaultPrevented) return;
+      const has = Array.from(event.dataTransfer?.types || []).some((t) => t === 'Files' || t === 'application/x-sari-ged');
+      if (!has) return;
+      event.preventDefault();
+      void dropRef.current({ dataTransfer: event.dataTransfer, nativeEvent: event, preventDefault: () => undefined } as unknown as React.DragEvent);
+    };
+    window.addEventListener('dragover', onDragOver);
+    window.addEventListener('drop', onDrop);
+    return () => {
+      window.removeEventListener('dragover', onDragOver);
+      window.removeEventListener('drop', onDrop);
+    };
+  }, [open]);
 
   const publishTemplate = async () => {
     const instance = engineRef.current;
@@ -706,12 +794,18 @@ export function CanvasStudio({
               </button>
             ))}
             <Menu label="" icon={<Shapes size={16} />}>
-              <MenuLabel>Formes</MenuLabel>
+              <MenuLabel>Formes — un clic pose la forme</MenuLabel>
               {SHAPES.map((shape) => (
                 <MenuItem
                   key={shape.id}
+                  // `setTool('rect')` ne fabriquait rien du tout : les formes ne sont pas
+                  // des outils, et l'atelier se retrouvait avec un outil inconnu — plus de
+                  // sélection, plus de rectangle pointé-étendu, une planche morte. Un clic
+                  // pose donc la forme, sous le curseur si l'atelier en a un.
                   onClick={() => {
-                    engine?.setTool(shape.id);
+                    const instance = engineRef.current;
+                    if (!instance) return;
+                    instance.addShape(shape.id as 'rect', instance.pointer());
                     refresh();
                   }}
                 >
@@ -722,6 +816,20 @@ export function CanvasStudio({
           </div>
           <div className="sc-rail__group">
             <span className="sc-rail__label">Poser</span>
+            <button
+              type="button"
+              className="sc-tool"
+              title="Zone de texte — ou l'outil Texte, puis un clic n'importe où sur le plan"
+              onClick={() => {
+                const instance = engineRef.current;
+                if (!instance) return;
+                instance.addText('Votre texte', instance.pointer());
+                refresh();
+              }}
+            >
+              <Type size={16} />
+              <span>Texte</span>
+            </button>
             <button type="button" className="sc-tool" title="Image de la GED" onClick={() => setSheet(sheet === 'ged' ? '' : 'ged')}>
               <ImageIcon size={16} />
               <span>GED</span>
@@ -748,8 +856,31 @@ export function CanvasStudio({
           <div className="sc-stage__head">
             {snap.tool === 'brush' || snap.tool === 'eraser' ? (
               <>
-                <SliderField label="Taille" value={snap.brush.size} min={1} max={80} onChange={(size) => engine?.setBrush({ size })} onCommit={(size) => engine?.setBrush({ size })} unit="px" />
-                <SliderField label="Fluidité" value={snap.brush.smoothing} min={0} max={1} step={0.05} onChange={(smoothing) => engine?.setBrush({ smoothing })} onCommit={(smoothing) => engine?.setBrush({ smoothing })} />
+                <SliderField
+                  label="Taille"
+                  value={snap.brush.size}
+                  min={1}
+                  max={160}
+                  onChange={(size) => engine?.setBrush({ size })}
+                  onCommit={(size) => engine?.setBrush({ size })}
+                  unit="px"
+                />
+                <span
+                  title={`Pointe de ${snap.brush.size} px${snap.tool === 'eraser' ? ` — la gomme gratte à ${Math.round(snap.brush.size * 1.6)} px` : ''}`}
+                  style={{ width: 26, height: 26, display: 'grid', placeItems: 'center' }}
+                >
+                  <span
+                    style={{
+                      display: 'block',
+                      width: Math.max(3, Math.min(22, snap.brush.size / 6)),
+                      height: Math.max(3, Math.min(22, snap.brush.size / 6)),
+                      borderRadius: '50%',
+                      background: snap.tool === 'eraser' ? 'transparent' : snap.brush.color,
+                      border: snap.tool === 'eraser' ? '1px dashed #94a3b8' : 'none',
+                    }}
+                  />
+                </span>
+                <SliderField label="Fluidité" value={snap.brush.smoothing} min={0} max={90} step={5} onChange={(smoothing) => engine?.setBrush({ smoothing })} onCommit={(smoothing) => engine?.setBrush({ smoothing })} />
                 <ColorField label="Couleur" value={snap.brush.color} onChange={(color) => engine?.setBrush({ color })} onCommit={(color) => engine?.setBrush({ color })} />
               </>
             ) : (
@@ -789,13 +920,7 @@ export function CanvasStudio({
               if (event.currentTarget.contains(event.relatedTarget as Node | null)) return;
               setPlanOver(false);
             }}
-            onDrop={(event) => {
-              const file = Array.from(event.dataTransfer?.files || [])[0];
-              if (!file) return;
-              event.preventDefault();
-              setPlanOver(false);
-              void importFromDesk(file);
-            }}
+            onDrop={(event) => void dropOnPlan(event)}
             style={planOver ? { outline: '2px dashed rgba(163, 230, 53, 0.85)', outlineOffset: -4 } : undefined}
           >
             {failed ? (
@@ -847,7 +972,15 @@ export function CanvasStudio({
           {tab === 'calques' && engine ? <LayerPanel engine={engine} layers={snap.layers} /> : null}
           {tab === 'fond' && engine ? <BackgroundPanel engine={engine} background={snap.background} /> : null}
           {tab === 'graphique' && engine ? <ChartPanel engine={engine} props={props} /> : null}
-          {tab === 'ged' ? <GedAssetBrowser height={520} onSelect={(asset) => void openGed(asset)} types={['image', 'svg', 'canvas']} allowImport /> : null}
+          {tab === 'ged' ? (
+            <GedAssetBrowser
+              height={520}
+              onSelect={(asset) => void openGed(asset)}
+              onImportAsset={(asset) => void openGed(asset)}
+              types={['image', 'svg', 'canvas']}
+              allowImport
+            />
+          ) : null}
           {slots.length && engine ? (
             <Card title="Zones du gabarit" icon={<Layers size={12} />}>
               {slots.map((slot) => (
@@ -878,6 +1011,10 @@ export function CanvasStudio({
         <div className="sc-sheet">
           <Card title="Gabarits" icon={<LayoutTemplate size={12} />} actions={<Icon label="Fermer" onClick={() => setSheet('')}>✕</Icon>}>
             <div className="sc-grid" style={{ maxHeight: '58vh', width: 520 }}>
+              <p className="sc-slot" style={{ color: '#64748b', fontSize: 12, margin: 0 }}>
+                Un clic applique le gabarit sur la planche ouverte ; les zones modifiables se remplissent ensuite
+                à droite, cadre par cadre.
+              </p>
               {templates.map((template) => (
                 <button key={template.id} type="button" className="sc-tile" onClick={() => void applyTemplate(template.id)}>
                   <span className="sc-tile__media">
@@ -887,7 +1024,7 @@ export function CanvasStudio({
                   <span className="sc-tile__caption">
                     {template.title}
                     <small>
-                      {template.format.width}×{template.format.height} · {template.category}
+                      {template.format.width}×{template.format.height} · {template.category} · {template.slots?.length || 0} zone(s)
                     </small>
                   </span>
                 </button>
@@ -900,11 +1037,12 @@ export function CanvasStudio({
 
       {sheet === 'ged' ? (
         <div className="sc-sheet">
-          <Card title="Importer depuis la GED" icon={<ImageIcon size={12} />} actions={<Icon label="Fermer" onClick={() => setSheet('')}>✕</Icon>}>
+          <Card title="Importer depuis la GED — double-clic pour poser" icon={<ImageIcon size={12} />} actions={<Icon label="Fermer" onClick={() => setSheet('')}>✕</Icon>}>
             <GedAssetBrowser
               height={440}
               types={['image', 'svg', 'canvas']}
               onSelect={(asset) => void openGed(asset)}
+              onImportAsset={(asset) => void openGed(asset)}
               allowOpenInStudio
               onOpenInStudio={(asset) => void openAsset(asset.file)}
               allowImport

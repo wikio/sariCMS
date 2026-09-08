@@ -111,6 +111,12 @@ const EXTRA_PROPS = ['slotId', 'slotLabel', 'sariRole', 'sariCurve', 'locked', '
 /** Étiquette commune aux objets d'aide : poignées d'ancrage, cadre de recadrage. */
 const HELPER = 'sari-helper';
 
+/** Le fond, quand il est un vrai objet (voir `applyBackground`). */
+const BACKGROUND_RECT = `${HELPER}-background`;
+
+/** Les « formes » du rail : ce ne sont pas des outils, ce sont des fabrications. */
+const SHAPE_KINDS = ['rect', 'ellipse', 'line', 'triangle', 'polygon', 'star', 'arrow'];
+
 export interface CropRect {
   left: number;
   top: number;
@@ -186,6 +192,8 @@ export interface Engine {
   selectAll(): void;
   /** Le pointeur, en coordonnées du plan de travail — là où poser un objet importé. */
   pointer(): { x: number; y: number };
+  /** Le point d'un événement glisser-déposer, converti dans le repère du plan. */
+  pointerFromEvent(event: MouseEvent | TouchEvent | PointerEvent): { x: number; y: number };
   /** Verrouille ou déverrouille toute la planche, et dit si des calques sont figés. */
   setLockedAll(locked: boolean): void;
   anyLocked(): boolean;
@@ -232,6 +240,23 @@ class EraserBrush extends PencilBrush {
     });
     return path;
   }
+}
+
+/**
+ * Les deux brosses de l'atelier, configurées une fois pour toutes.
+ *
+ * `strokeLinecap/Linejoin` ronds : un coup de pinceau taillé en biseau donne des angles
+ * cassés qui se voient à l'export. `findTarget: 'path'` (option Fabric 6) : sans elle, un
+ * tracé au trait seul est quasi impossible à rattraper au clic, et le seul moyen de le
+ * sélectionner restait la liste des calques.
+ */
+function configureBrush(brush: PencilBrush) {
+  brush.strokeLineCap = 'round';
+  brush.strokeLineJoin = 'round';
+  // Une pointe trop fine est invisible à l'écran comme au clic : 1 px reste le minimum,
+  // mais le réglage part de 3 pour que le premier geste se voie.
+  brush.width = Math.max(3, brush.width);
+  return brush;
 }
 
 export interface EngineOptions {
@@ -294,8 +319,8 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
   let draggedAnchor = -1;
 
   const history = createHistory('');
-  const pencil = new PencilBrush(canvas);
-  const eraser = new EraserBrush(canvas);
+  const pencil = configureBrush(new PencilBrush(canvas));
+  const eraser = configureBrush(new EraserBrush(canvas));
 
   /* ------------------------------------------------------------------- rendu, état */
 
@@ -314,6 +339,11 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
   // `locked` disparaîtraient de l'enregistrement — donc de la réédition.
   function state(): Record<string, unknown> {
     const json = canvas.toObject(EXTRA_PROPS) as unknown as Record<string, unknown>;
+    // L'objet de service est retiré de l'état : c'est `sariStudio.background` qui porte le
+    // fond, et un document qui emporterait les deux les superposerait à la relecture.
+    if (Array.isArray(json.objects)) {
+      json.objects = (json.objects as Record<string, unknown>[]).filter((object) => object[HELPER] === undefined);
+    }
     // L'enveloppe maison. `toObject` ne dit pas la taille du plan de travail, et ne dit
     // le fond que si c'est une couleur : sans elle, une story 1080×1920 se réouvrirait
     // en carré 1080 et un fond en dégradé ou en image redeviendrait blanc. Le PNG de la
@@ -355,7 +385,13 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
     if (envelope?.background) background = envelope.background;
     // Les images servies par le même serveur n'ont rien à négocier en CORS : la clé
     // héritée d'un ancien enregistrement ferait échouer `loadFromJSON` tout entier.
-    const json = JSON.stringify(normalizeDocumentCrossOrigin(source));
+    const cleaned = normalizeDocumentCrossOrigin({ ...(source as Record<string, unknown>) } as Record<string, unknown>);
+    delete cleaned.background;
+    delete cleaned.backgroundColor;
+    if (Array.isArray(cleaned.objects)) {
+      cleaned.objects = (cleaned.objects as Record<string, unknown>[]).filter((object) => object[HELPER] === undefined && object.type !== 'background');
+    }
+    const json = JSON.stringify(cleaned);
     endPathEdit();
     canvas.discardActiveObject();
     await canvas.loadFromJSON(json, (serialized: Record<string, unknown>, object: unknown) => {
@@ -364,6 +400,15 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
       if ((serialized as Record<string, unknown>)[HELPER]) {
         instance.set({ visible: false, selectable: false, evented: false, enterDelay: 0 } as never);
         (instance as unknown as Record<string, unknown>)[HELPER] = 'loaded';
+      }
+      // Un fond posé par un éditeur tiers (clé `background` d'un JSON Fabric brut) : on le
+      // reconnaît comme objet de service, pas comme calque.
+      if (String(instance.type || '') === 'background') {
+        const raw = instance as unknown as Record<string, unknown>;
+        raw[HELPER] = 'background';
+        raw[BACKGROUND_RECT] = true;
+        raw.excludeFromExport = true;
+        instance.set({ selectable: false, evented: false, hasControls: false } as never);
       }
       const curveHolder = instance as unknown as { sariCurve?: CurveData };
       if (instance instanceof FabricText && !isFabricPath(instance.path)) {
@@ -430,13 +475,56 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
   /* ------------------------------------------------------------------------ le fond */
 
   async function applyBackground(spec: BackgroundSpec, strict = false) {
-    canvas.backgroundColor = undefined as never;
     canvas.backgroundImage = undefined as never;
-    if (spec.mode === 'solid') {
-      canvas.backgroundColor = (normalizeColor(spec.color) || '#ffffff') as never;
-    } else if (spec.mode === 'gradient') {
-      const built = gradientToFabric(spec.gradient);
-      if (built) canvas.backgroundColor = new Gradient(built as never) as never;
+    const existing = canvas.getObjects().find(isBackgroundRect);
+    const dropExisting = () => {
+      if (existing) canvas.remove(existing as never);
+    };
+    if (spec.mode === 'solid' || spec.mode === 'gradient') {
+      // Le fond devient un VRAI objet, et non `canvas.backgroundColor`. C'est ce qui fait
+      // marcher la gomme : Fabric peint le fond du canvas dans un chemin séparé, où la
+      // composition `destination-out` des objets n'a aucune prise — un coup de gomme sur
+      // un fond couleur ne trouait donc rien du tout. L'attribut `background` du JSON reste
+      // la source (il est écrit par `state()`), l'objet, lui, est marqué comme aide : il
+      // ne pollue ni l'état, ni les calques, ni la sélection.
+      const paint =
+        spec.mode === 'solid'
+          ? normalizeColor(spec.color) || '#ffffff'
+          : (() => {
+              const built = gradientToFabric(spec.gradient);
+              return built ? new Gradient(built as never) : '#ffffff';
+            })();
+      canvas.backgroundColor = undefined as never;
+      if (existing) {
+        existing.set({ fill: paint as never, visible: true } as never);
+      } else {
+        const rect = new Rect({
+          left: 0,
+          top: 0,
+          width: canvas.getWidth(),
+          height: canvas.getHeight(),
+          originX: 'left',
+          originY: 'top',
+          fill: paint as never,
+          selectable: false,
+          evented: false,
+          lockMovementX: true,
+          lockMovementY: true,
+          hasControls: false,
+          hoverCursor: 'default',
+        } as never);
+        (rect as unknown as Record<string, unknown>)[HELPER] = 'background';
+        (rect as unknown as Record<string, unknown>)[BACKGROUND_RECT] = true;
+        rect.excludeFromExport = true;
+        canvas.add(rect as never);
+        canvas.sendObjectToBack(rect as never);
+      }
+      // Un fond qui change de taille suit le plan : `setArtboard` redimensionne, et un
+      // rectangle figé à sa largeur d'origine laisserait une bande blanche.
+      existing?.set({ width: canvas.getWidth(), height: canvas.getHeight() } as never);
+    } else if (existing) {
+      dropExisting();
+      canvas.backgroundColor = '#ffffff' as never;
     } else {
       try {
         const image = await FabricImage.fromURL(spec.src, { crossOrigin: crossOriginFor(spec.src) });
@@ -472,22 +560,60 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
 
   /* -------------------------------------------------------------------------- outils */
 
+  /** Un fond de service n'est ni un calque, ni une cible de clic, ni un objet à sélectionner. */
+  function isBackgroundRect(object: unknown): boolean {
+    return (object as unknown as Record<string, unknown>)[BACKGROUND_RECT] === true;
+  }
+
   function applyTool() {
+    // Un outil inconnu laissait la planche morte : ni brosse (`drawing` faux), ni clic
+    // (aucun objet marqué interactif par la règle ci-dessous). Une forme demandée comme
+    // outil n'est pas un outil — elle fabrique un objet et rend la main à la sélection.
+    if (SHAPE_KINDS.includes(tool)) {
+      const kind = tool as unknown as 'rect';
+      tool = 'select';
+      addShape(kind);
+      emit({ type: 'tool', tool });
+      render();
+      return;
+    }
     const drawing = tool === 'brush' || tool === 'eraser';
+    const isSelect = tool === 'select';
     canvas.isDrawingMode = drawing;
     if (drawing) canvas.freeDrawingBrush = tool === 'eraser' ? eraser : pencil;
-    canvas.selection = tool === 'select';
+    // TOUJOURS vrai : voir le commentaire ci-dessous.
+    canvas.selection = true;
+    // LA règle qui gouverne le clic sur un calque. Dans `Canvas._onMouseDownInNormalMode`,
+    // Fabric ne regarde un objet sous le curseur que si `selection` est vrai ; le couper
+    // hors de l'outil Sélection (et le couper *systématiquement* dès qu'un id inconnu
+    // arrivait ici — le menu Formes posait `rect` comme outil) rendait tous les calques
+    // ingouvernables au clic, et la liste des calques devenait le seul moyen de sélectionner
+    // quoi que ce soit. On le garde donc toujours vrai : le rectangle pointé-étendu ne peut
+    // partir que d'une zone vide, et une zone vide ne renvoie pas d'objet cliquable.
     canvas.defaultCursor = tool === 'hand' ? 'grab' : drawing ? 'crosshair' : tool === 'text' ? 'text' : 'default';
     canvas.forEachObject((object) => {
-      if ((object as unknown as Record<string, unknown>)[HELPER]) return;
+      if ((object as unknown as Record<string, unknown>)[HELPER] || isBackgroundRect(object)) return;
       const locked = Boolean((object as unknown as Record<string, unknown>).locked);
-      object.selectable = !locked && tool === 'select';
+      object.selectable = !locked && isSelect;
       object.evented = !locked && tool !== 'hand';
       object.lockMovementX = tool === 'hand';
       object.lockMovementY = tool === 'hand';
     });
+    syncBrushes();
     emit({ type: 'tool', tool });
     render();
+  }
+
+  /**
+   * Les réglages du pinceau, appliqués aux DEUX brosses.
+   *
+   * Le `size` de la gomme est un dérivé de celui du pinceau : si on ne le resynchronisait
+   * qu'au moment où `setBrush` tombe, un changement d'épaisseur pendant que la gomme était
+   * active ne servait à rien — « la taille ne marche pas dans le pinceau ».
+   */
+  function syncBrushes() {
+    eraser.width = Math.max(2, Math.round(pencil.width * 1.6));
+    eraser.color = pencil.color;
   }
 
   /* ----------------------------------------------------------------- la sélection */
@@ -591,6 +717,11 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
   function place(object: FabricObject, at?: { x: number; y: number }) {
     const point = at ? new Point(at.x, at.y) : new Point(canvas.getWidth() / 2, canvas.getHeight() / 2);
     ensureSelectTool();
+    // Un aplat (forme, texte) se saisit au pixel près : cliquer dans le trou d'une étoile
+    // ne doit pas la traverser ; une image garde la boîte entière, plus sûre au toucher.
+    if (!(object instanceof FabricImage) && !(object instanceof Group)) {
+      object.set({ perPixelTargetFind: true, targetFindTolerance: 6 } as never);
+    }
     object.set({ originX: 'center', originY: 'center', left: point.x, top: point.y });
     canvas.add(object as never);
     canvas.setActiveObject(object);
@@ -870,7 +1001,7 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
     const active = selected();
     return canvas
       .getObjects()
-      .filter((object) => !(object as unknown as Record<string, unknown>)[HELPER])
+      .filter((object) => !(object as unknown as Record<string, unknown>)[HELPER] && !isBackgroundRect(object))
       .map((object, index) => {
         const raw = object as unknown as LooseObject;
         return {
@@ -1417,7 +1548,8 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
   async function withHelpersHidden<T>(run: () => T | Promise<T>): Promise<T> {
     const hidden: FabricObject[] = [];
     canvas.forEachObject((object) => {
-      if ((object as unknown as Record<string, unknown>)[HELPER] && object.visible) {
+      // Les aides se masquent pour l'export ; le fond, lui, doit rester à l'image.
+      if ((object as unknown as Record<string, unknown>)[HELPER] && !isBackgroundRect(object) && object.visible) {
         hidden.push(object);
         object.visible = false;
       }
@@ -1493,6 +1625,28 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
   /* ------------------------------------------------------------------- evenements */
 
   function wireEvents() {
+    // L'outil Texte se tenait debout tout seul : le curseur passait en `text`, mais rien
+    // ne créait de zone — « le texte ne marche pas ». Un clic pose donc un Textbox, et il
+    // entre immédiatement en édition, comme n'importe quel outil de lettrage.
+    canvas.on('mouse:down', (event: { scenePoint?: Point; target?: FabricObject }) => {
+      if (tool !== 'text' || event.target) return;
+      const at = event.scenePoint ? { x: Math.round(event.scenePoint.x), y: Math.round(event.scenePoint.y) } : undefined;
+      const box = addText('Votre texte', at);
+      canvas.setActiveObject(box);
+      (box as unknown as { enterEditing?: () => void }).enterEditing?.();
+      render();
+    });
+    // Poignées : le curseur doit dire ce qu'il fait. `e` n'est pas typé partout de la
+    // même façon selon la version de Fabric, d'où le cast en bout de course.
+    canvas.on('mouse:down', ((event: { transform?: { action?: string } | null }) => {
+      const action = String(event.transform?.action || '');
+      if (action.includes('rotate')) canvas.setCursor('alias');
+      else if (action.includes('scale')) canvas.setCursor('nesw-resize');
+      else if (action.includes('skew')) canvas.setCursor('ew-resize');
+    }) as never);
+    canvas.on('mouse:up', () => {
+      canvas.setCursor(canvas.defaultCursor as never);
+    });
     canvas.on('selection:created', emitSelection);
     canvas.on('selection:updated', emitSelection);
     canvas.on('selection:cleared', emitSelection);
@@ -1509,7 +1663,15 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
 
     // Le tracé sort du pinceau : on le note dans l'historique. Fabric l'a déjà ajouté,
     // il ne faut surtout pas le rajouter une deuxième fois ici.
-    canvas.on('path:created', () => {
+    canvas.on('path:created', (event: { path?: FabricObject }) => {
+      const path = event.path;
+      if (path) {
+        // Un coup de pinceau doit se rattraper au clic comme n'importe quel calque : la
+        // boîte englobante suffit (une `Path` n'a pas de cache par objet, et `perPixel`
+        // sur un objet sans cache ne répond jamais), mais l'interactivité, elle, doit être
+        // posée maintenant — l'outil est encore « brosse », `applyTool()` ne l'a pas marquée.
+        path.set({ perPixelTargetFind: false, selectable: true, evented: true } as never);
+      }
       render();
       commit('tracé');
       emitSelection();
@@ -1615,6 +1777,10 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
     },
     setArtboard(nextWidth, nextHeight) {
       canvas.setDimensions({ width: sanitizeSide(nextWidth), height: sanitizeSide(nextHeight) });
+      // Le fond est un objet : sans cette ligne, un 1080 carré devenu A3 garderait un
+      // rectangle de 1080 px et une bande blanche à droite.
+      const bg = canvas.getObjects().find(isBackgroundRect);
+      if (bg) bg.set({ width: canvas.getWidth(), height: canvas.getHeight() } as never);
       render();
       commit('plan de travail');
     },
@@ -1646,7 +1812,7 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
         .getObjects()
         .filter((object) => {
           const raw = object as unknown as LooseObject;
-          return !raw[HELPER] && !raw.locked && object.visible !== false && object.selectable !== false;
+          return !raw[HELPER] && !isBackgroundRect(object) && !raw.locked && object.visible !== false && object.selectable !== false;
         });
       canvas.discardActiveObject();
       if (objects.length > 1) canvas.setActiveObject(selectionOf(objects));
@@ -1680,18 +1846,18 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
     },
     getTool: () => tool,
     setBrush(next) {
-      if (next.size) {
-        pencil.width = Math.max(1, next.size);
-        eraser.width = Math.max(2, next.size * 1.6);
-      }
+      if (next.size) pencil.width = Math.max(1, Math.min(400, Number(next.size) || 1));
       if (next.color) pencil.color = next.color;
       if (next.smoothing !== undefined) {
         // `decimate` est le vrai réglage de lissage de Fabric : il jette les points
-        // trop proches. 0 = tracé fidèle au geste, 1 = tracé très lissé.
-        const value = bound(Number(next.smoothing) / 100, 0, 0.9);
+        // trop proches. 0 = tracé fidèle au geste, 1 = tracé très lissé. L'UI envoie une
+        // fraction (`0.05`..`1`) — un pourcentage would have été inaudible à l'écran.
+        const raw = Number(next.smoothing);
+        const fraction = raw > 1 ? raw / 100 : raw;
+        const value = bound(fraction, 0, 0.9);
         pencil.decimate = value;
-        eraser.decimate = value;
       }
+      syncBrushes();
       render();
     },
     getBrush: () => ({ size: pencil.width, color: pencil.color, smoothing: Math.round(pencil.decimate * 100) }),
@@ -1828,6 +1994,12 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
     pointer() {
       const at = lastScenePoint || { x: canvas.getWidth() / 2, y: canvas.getHeight() / 2 };
       return { x: Math.round(at.x), y: Math.round(at.y) };
+    },
+    pointerFromEvent(event) {
+      // Un dépôt n'est pas un `mouse:move` : le pointeur connu date d'avant le glisser,
+      // et poser l'image « au centre » retombe sur le reproche d'origine.
+      const point = canvas.getScenePoint(event as globalThis.MouseEvent);
+      return { x: Math.round(point.x), y: Math.round(point.y) };
     },
     setOpacityFor(index, opacity) {
       const object = canvas.getObjects()[index];

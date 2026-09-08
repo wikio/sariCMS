@@ -469,7 +469,8 @@ await acheck('un média importé se pose là où est le pointeur, et reste saisi
   // pose au pointeur, et garde une marge pour qu\'on puisse attraper les poignées.
   const engine = await readFile('lib/canvas/engine.ts', 'utf8');
   assert.match(engine, /function ensureSelectTool\(\)/, 'le moteur doit ramener l\'outil « select »');
-  assert.match(engine, /ensureSelectTool\(\);\n\s*object\.set\(\{ originX/, 'place() doit rendre l\'objet saisissable');
+  const placeBody = engine.slice(engine.indexOf('function place(object'), engine.indexOf('function addText'));
+  assert.ok(placeBody.includes("ensureSelectTool();") && placeBody.includes("originX: "), "place() doit rendre l'objet saisissable");
   assert.match(engine, /insetSize\s*\?\s*\{ width: Math\.round\(canvas\.getWidth\(\) \* 0\.8\)/, 'un posé par défaut doit garder une marge');
   const studio = await readFile('components/canvas/CanvasStudio.tsx', 'utf8');
   assert.ok((studio.match(/insetSize: true/g) || []).length >= 3, 'les importations (GED, poste, réédition d\'un rendu) doivent utiliser la marge');
@@ -511,6 +512,64 @@ await acheck('un enregistrement raté ne ferme pas l\'atelier', async () => {
   assert.ok(!/throw error instanceof/.test(body), 'save() ne doit pas rejeter : plus personne n\'écoute la promesse');
   assert.match(body, /Enregistrement impossible/, 'la panne doit être annoncée dans la barre d\'état');
   assert.ok(studio.includes('Fermer quand m') && studio.includes('pas enregistr'), 'fermer sur un travail non enregistré doit être demandé');
+});
+
+console.log('\nLes gestes de l\'atelier (pinceau, formes, texte, gomme, sélection)');
+
+await acheck('un clic de la liste des calques n\'est pas le seul moyen de saisir un objet', async () => {
+  // Le garde-fou qui a coûté le plus cher : `canvas.selection = false` ne coupe pas que
+  // le rectangle pointé-étendu. Dans `Canvas._onMouseDownInNormalMode`, Fabric ne regarde
+  // la cible sous le curseur QUE si `selection` est vrai — le couper rendait chaque calque
+  // ingouvernable au clic, et la liste des calques devenait le seul chemin pour
+  // sélectionner quoi que ce soit.
+  const engine = await readFile('lib/canvas/engine.ts', 'utf8');
+  assert.ok(engine.includes('canvas.selection = true'), 'la sélection au clic doit rester ouverte hors de l\'outil Sélection');
+  assert.ok(!/canvas\.selection = tool === 'select'/.test(engine), 'et ne doit jamais être refermée selon l\'outil');
+  // Un outil inconnu ne doit pas laisser la planche sans règle de saisie.
+  assert.ok(engine.includes('SHAPE_KINDS.includes(tool)'), 'une forme demandée comme outil doit fabriquer, pas geler l\'atelier');
+});
+
+await acheck('le pinceau règle la pointe des deux brosses', async () => {
+  const engine = await readFile('lib/canvas/engine.ts', 'utf8');
+  const brush = engine.slice(engine.indexOf('setBrush(next) {'), engine.indexOf('getBrush: () =>'));
+  assert.ok(brush.includes('syncBrushes()'), 'le réglage doit être appliqué à la gomme aussi');
+  assert.ok(engine.includes('eraser.width = Math.max(2, Math.round(pencil.width * 1.6))'), 'la gomme dérive son diamètre du pinceau');
+  assert.ok(engine.includes('pencil.decimate = value'), 'la fluidité est le `decimate` de Fabric, pas un cosmétique');
+  assert.ok(!/eraser\.decimate = value/.test(brush), 'et se lit sur la brosse active, une seule fois');
+});
+
+await acheck('la gomme creuse le fond : le fond est un objet, pas une couleur de canvas', async () => {
+  // Fabric peint `backgroundColor` dans un chemin séparé où `destination-out` n'a aucune
+  // prise : sur un fond uni, un coup de gomme ne trouait rien. Le fond devient donc un
+  // Rect marqué comme aide — exclu de l'état, des calques et de la sélection, mais gardé
+  // à l'export.
+  const engine = await readFile('lib/canvas/engine.ts', 'utf8');
+  assert.ok(engine.includes('[BACKGROUND_RECT] = true'), 'applyBackground doit poser un objet de fond');
+  const hidden = engine.slice(engine.indexOf('async function withHelpersHidden'), engine.indexOf('async function toPngDataUrl'));
+  assert.ok(hidden.includes('!isBackgroundRect(object)'), 'l\'export ne doit pas masquer le fond');
+  const state = engine.slice(engine.indexOf('function state(): Record'), engine.indexOf('function commit('));
+  assert.ok(state.includes('object[HELPER] === undefined'), 'l\'objet de fond ne doit pas entrer dans l\'état écrit sur le disque');
+});
+
+await acheck('les formes et le texte se posent, et le texte s\'édite tout de suite', async () => {
+  const engine = await readFile('lib/canvas/engine.ts', 'utf8');
+  const ui = await readFile('components/canvas/CanvasStudio.tsx', 'utf8');
+  assert.ok(ui.includes('instance.addShape(shape.id as'), 'le menu Formes doit fabriquer un objet');
+  assert.ok(!/setTool\(shape\.id\)/.test(ui), 'et non choisir un outil inexistant');
+  assert.ok(ui.includes("instance.addText('Votre texte', instance.pointer())"), 'le rail doit poser une zone de texte');
+  assert.ok(engine.includes("if (tool !== 'text' || event.target) return;"), "l'outil Texte doit créer au clic sur le plan");
+  assert.ok(engine.includes('enterEditing?.()'), 'et ouvrir l\'édition immédiatement');
+});
+
+await acheck('un dépôt se pose sous le curseur, de la GED comme du poste', async () => {
+  const engine = await readFile('lib/canvas/engine.ts', 'utf8');
+  const ui = await readFile('components/canvas/CanvasStudio.tsx', 'utf8');
+  const browser = await readFile('components/canvas/GedAssetBrowser.tsx', 'utf8');
+  assert.ok(engine.includes('pointerFromEvent'), 'le moteur doit convertir un événement de dépôt en point du plan');
+  assert.ok(ui.includes("getData('application/x-sari-ged')"), 'le dépôt depuis la liste GED doit être reconnu');
+  assert.ok(browser.includes("setData('application/x-sari-ged'"), 'et la vignette doit voyager avec sa référence');
+  assert.ok(ui.includes('importFromDesk(file, at)'), 'un fichier du poste se pose où la main l\'a lâché');
+  assert.ok(browser.includes('onDoubleClick=') && ui.includes('onImportAsset='), 'double-clic sur une vignette = poser');
 });
 
 /* ------------------------------------------------- le contrat front ↔ backend */

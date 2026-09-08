@@ -74,6 +74,43 @@ plus : plus personne n'écoute la promesse) et annonce la panne dans la barre d'
 bouton « Fermer » comme `Échap` demandent une confirmation explicite quand la planche est
 modifiée **et** qu'un avertissement est affiché.
 
+## Les gestes du rail : pinceau, gomme, formes, texte
+
+| Geste | Ce qui se passe | Ce qui a été cassé, et pourquoi |
+|---|---|---|
+| **Pinceau** (rail) | `isDrawingMode`, tracé `Path` au doigt. Le curseur de la barre d'état règle la **pointe des deux brosses** (1–160 px) et la couleur ; un aperçu rond montre l'épaisseur. | `setBrush` ne resynchronisait pas la gomme, et `Fluidité` était envoyé en fraction à un code qui divisait par 100 : le réglage partait dans le vide. |
+| **Gomme** | Le même geste, en `destination-out` : elle **troue ce qu'elle recouvre**, fond compris. | Elle ne creusait pas les fonds : Fabric peint `backgroundColor` dans un chemin séparé, hors de portée de la composition des objets. Le fond est devenu un **objet** `Rect` marqué comme aide — jamais dans l'état, jamais dans les calques, mais présent à l'export PNG/SVG. |
+| **Formes** (menu du rail) | Un clic **pose la forme** sous le curseur, sélectionnée, dans les calques. | Le menu appelait `setTool('rect')` : une forme n'est pas un outil. L'outil inconnu gelait l'atelier (ni brosse, ni saisie) — « les formes ne s'affichent pas ». `applyTool()` les accepte maintenant par tolérance. |
+| **Texte** | Soit le bouton « Texte » du rail (une zone au curseur), soit l'outil Texte **puis un clic n'importe où sur le plan** : la zone est créée et entre en édition. | L'outil ne posait rien : le curseur passait en `text`, sans écouteur de création. |
+| **Sélection directe** | Un clic sur un objet le saisit, poignées comprises. `perPixelTargetFind` pour les aplats (on ne traverse pas le trou d'une étoile), boîte entière pour les images, détection au trait pour les tracés de pinceau. | `canvas.selection = tool === 'select'` — et Fabric ne consulte la cible sous le curseur **que si** `selection` est vrai (Canvas._onMouseDownInNormalMode). Tous les calques étaient ingouvernables au clic, la liste des calques restait le seul chemin. |
+| **Poignées** | Rotation et mise à l'échelle ont des **curseurs dédiés** pendant la main (`alias` en rotation, `nesw-resize` aux coins, `ew-resize` en cisaillement). | — |
+
+## Les gabarits, pas à pas
+
+1. Rail de gauche → **Gabarit** : la liste vient de `/api/admin/ged/templates`, et si l'API est muette, de
+   `public/canvas/templates/index.json` relu en statique (`guessTemplates`). Les cinq gabarits livrés sont
+   `post-carre`, `story-verte`, `banniere-web`, `affiche-a3`, `carte-visite`.
+2. **Un clic sur une vignette applique** le gabarit : le plan de travail prend son format, ses calques entrent
+   dans la pile, son fond (uni, dégradé ou image) est rejoué.
+3. **Les zones modifiables** apparaissent en bas du panneau de droite (« Zones du gabarit ») : texte, couleur,
+   image. Pour une zone d'image ou de couleur, **« Choisir dans la GED »** ouvre le navigateur en mode
+   *ce cadre* — le média pris y atterrit, il ne s'ajoute pas en vrac.
+4. Le fond en image d'un gabarit dont le fichier a disparu **ne vide plus la planche** : `loadResilient()`
+   rejoue sans ses images et le bandeau nomme ce qui a sauté.
+5. Publier le travail en gabarit : « Réglages » → *Publier comme gabarit* écrit
+   `public/canvas/templates/<id>.json` et met `index.json` à jour.
+
+## Déposer, importeur, double-clic
+
+- **Glisser une vignette de la GED sur le plan** : `GedAssetBrowser` écrit
+  `application/x-sari-ged` (`{file,url,kind}`) dans la `DataTransfer` ; au dépôt, l'atelier la lit et **pose le
+  média sous le curseur** (`pointerFromEvent`). Une planche (`kind: canvas`) s'*ouvre* en réédition plutôt que
+  de se coller comme image.
+- **Glisser un fichier du poste** sur le plan, sur la fenêtre, ou la liste : il est écrit dans la GED puis posé
+  au point de dépôt — un SVG en objets modifiables, jamais rastérisé.
+- **Double-clic sur une vignette** = poser tout de suite (simple clic = préparer, le geste du sélecteur de
+  champ ; `Espace` fait aussi le geste). Dans le navigateur de la GED en panneau latéral, la même règle vaut.
+
 **Un calque figé.** Les gabarits verrouillent leurs cartouches et leur fond : un calque verrouillé
 ne se saisit pas, ce qui se lit « rien n'est déplaçable ». Le panneau **Calques** affiche alors
 « Tout déverrouiller » dans son titre, et l'icône de cadenas reste le geste unitaire.
