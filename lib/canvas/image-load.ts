@@ -1,102 +1,112 @@
 /**
- * lib/canvas/image-load.ts — charger une image de la GED sans la rendre injouable.
+ * lib/canvas/image-load.ts — charger une image sans se battre avec le CORS.
  *
- * Le besoin, en une phrase : une image posée dans l'atelier (fond, planche ouverte
- * depuis la médiathèque, détourage) doit se CHARGER, et son rendu doit pouvoir être
- * exporté en PNG. Les deux tiennent à un seul attribut, `crossOrigin`, et il est
- * mal aisé de le mettre bien :
+ * Le besoin tient en une ligne : un visuel posé dans l'atelier doit s'afficher,
+ * qu'il vienne de `public/uploads` (même origine) ou d'un CDN (origine différente).
  *
- * - le mettre alors que le fichier est servi par le même serveur — ce qui est le cas
- *   de tout `public/uploads/…` — ajoute une exigence de en-têtes CORS à une requête
- *   qui n'en a pas besoin. Un proxy d'admin, un `localhost` vs `127.0.0.1`, un
- *   hôtes de dev qui changent de port, et l'image ne répond plus : « image non
- *   chargeable », alors que le `<img>` de la page, lui, s'affiche très bien ;
- * - ne pas le mettre sur une image VRAIMENT distante tache le canvas : `toDataURL`
- *   lève et l'export devient impossible.
+ * Et c'est précisément là que Fabric 6 est piégeux : `FabricImage.fromURL(url, options)`
+ * fait `this.setOptions(options)` — donc `crossOrigin: undefined` n'est **pas** « ne pas
+ * mettre d'attribut », c'est un `undefined` qui masque l'héritage et laisse l'élément
+ * `<img>` sans CORS. Le canvas devient « souillé » (`tainted`), `toDataURL` de l'export
+ * lève une SecurityError, et l'image disparaît de l'aperçu. À l'inverse, exiger
+ * `crossOrigin: 'anonymous'` sur une image servie par le **même** serveur sans en-tête
+ * `Access-Control-Allow-Origin` fait échouer le chargement — c'est le « Image non
+ * chargeable » que produisaient les planches dont l'URL avait été reconstruite de
+ * travers, et ce que produit encore tout média local chargé par un composant qui pose
+ * l'attribut par défaut (`components/admin/ImageEditor.tsx` le faisait).
  *
- * La règle est donc tranchée à un seul endroit : même origine ⇒ on ne demande pas
- * CORS (rien à tacher, rien à refuser) ; origine différente ⇒ `anonymous`, et on le
- * dit à l'utilisateur quand l'image refuse de se charger.
+ * Une règle unique, donc, déduite de l'URL :
+ *
+ * - **même origine** (chemin relatif, `blob:`, `data:` ou URL dont l'origine est la
+ *   nôtre) → aucun attribut, aucun en-tête, aucun échec possible ;
+ * - **origine différente** → `anonymous`, comme le veut un CDN qui renvoie
+ *   `Access-Control-Allow-Origin: *`.
  */
 
-/** Une URL est-elle servie par le même serveur que la page ? (chemin relatif compris) */
+/** L'origine d'un document, tolérante au serveur sans rendu (tests, SSG). */
+function currentOrigin(): string | null {
+  if (typeof window === 'undefined' || !window.location) return null;
+  return window.location.origin || null;
+}
+
+/** Une URL est-elle servie par la même origine que l'atelier (ou n'en sort-elle jamais) ? */
 export function isSameOrigin(src: string): boolean {
-  if (typeof window === 'undefined') return true;
-  const raw = String(src || '').trim();
-  if (!raw || raw.startsWith('data:') || raw.startsWith('blob:')) return true;
-  if (!/^[a-z][a-z0-9+.-]*:\/\//i.test(raw)) return true; // `/uploads/…`, `./x.png`
+  const value = String(src || '').trim();
+  if (!value) return true;
+  if (value.startsWith('data:') || value.startsWith('blob:')) return true;
+  if (value.startsWith('//')) {
+    // Protocole relatif : même origine que la page, par définition.
+    return true;
+  }
+  if (!/^[a-z][a-z0-9+.-]*:\/\//i.test(value)) return true; // `/uploads/...`, `photo.png`
+  const origin = currentOrigin();
+  if (!origin) return false; // pas de fenêtre : on suppose l'extérieur, plus sûr
   try {
-    return new URL(raw, window.location.href).origin === window.location.origin;
+    return new URL(value, origin).origin === origin;
   } catch {
     return false;
   }
 }
 
 /**
- * La valeur de `crossOrigin` à demander pour `src` : `null` = ne rien demander,
- * ce qu'il faut pour un fichier du même serveur.
+ * La valeur de `crossOrigin` à demander pour cette source, ou `undefined` pour ne rien
+ * demander du tout. `undefined` n'est jamais passé explicitement à Fabric : le
+ * composant omet la clé (voir le commentaire d'en-tête sur `setOptions`).
  */
-export function crossOriginFor(src: string): 'anonymous' | 'use-credentials' | null {
-  return isSameOrigin(src) ? null : 'anonymous';
+export function crossOriginFor(src: string): 'anonymous' | 'use-credentials' | undefined {
+  return isSameOrigin(src) ? undefined : 'anonymous';
 }
 
 /**
- * Un message d'erreur qui dit quoi faire, plutôt que « non chargeable ».
- *
- * Les trois causes réelles d'un échec sur un média du projet sont faciles à confondre
- * depuis le navigateur ; les distinguer est ce qui fait gagner le temps.
+ * Les options d'un `FabricImage.fromURL`, prêtes à être éparpillées dans l'appel :
+ * la clé `crossOrigin` n'existe que si elle a une valeur réelle.
  */
-export function imageLoadHint(src: string, status?: number): string {
-  const raw = String(src || '');
-  if (!raw) return 'Aucune adresse d’image à charger.';
-  if (/^https?:\/\//i.test(raw) && !isSameOrigin(raw)) {
-    return `Image distante : ${raw.slice(0, 80)} n’autorise pas la lecture par le canvas (CORS). Copie-la dans la GED pour la retoucher.`;
-  }
-  if (status === 404 || status === 403) {
-    return `Image introuvable sur le serveur (${status}) : ${raw}. Le fichier a été renommé ou déplacé — vérifie le chemin dans la GED.`;
-  }
-  return `Image introuvable ou illisible : ${raw}. Si le fichier vit hors de public/uploads, dépose-le d’abord dans la GED.`;
-}
-
-/**
- * Charger une image en demandant le compte pour savoir ce qui a cassé.
- *
- * `HTMLImageElement` ne dit pas pourquoi il a échoué — et un 404 derrière un proxy
- * renvoie parfois du HTML, ce qui n'est pas davantage lisible. On suit donc la même
- * piste qu'un navigateur : d'abord une `GET` (qui voit le code HTTP), puis le décodage
- * par l'`<img>` lui-même.
- */
-export async function loadHtmlImage(src: string): Promise<{ image: HTMLImageElement; status: number | null }> {
-  let status: number | null = null;
-  if (!src.startsWith('data:') && !src.startsWith('blob:')) {
-    try {
-      const head = await fetch(src, { method: 'GET', mode: 'cors', credentials: 'omit', cache: 'no-store' });
-      status = head.status;
-    } catch {
-      status = null;
-    }
-  }
-  const image = new Image();
+export function imageLoadHint(src: string): { crossOrigin?: 'anonymous' | 'use-credentials' } {
   const crossOrigin = crossOriginFor(src);
-  if (crossOrigin) image.crossOrigin = crossOrigin;
-  image.decoding = 'async';
-  await new Promise<void>((resolve, reject) => {
-    image.onload = () => resolve();
-    image.onerror = () => reject(new Error(imageLoadHint(src, status ?? undefined)));
+  return crossOrigin ? { crossOrigin } : {};
+}
+
+/**
+ * Un `<img>` de DOM, chargé selon la même règle.
+ *
+ * Utilisé hors du canvas (mesure d'une image, prévisualisation) ; les promesses de
+ * `FabricImage.fromURL` ne se rattrapent pas, celle-ci non plus, mais l'appelant garde
+ * la main sur le message d'erreur.
+ */
+export function loadHtmlImage(src: string, signal?: AbortSignal): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    const crossOrigin = crossOriginFor(src);
+    if (crossOrigin) image.crossOrigin = crossOrigin;
+    image.decoding = 'async';
+    const abort = () => {
+      image.src = '';
+      reject(new DOMException('aborted', 'AbortError'));
+    };
+    if (signal) {
+      if (signal.aborted) return abort();
+      signal.addEventListener('abort', abort, { once: true });
+    }
+    image.onload = () => {
+      signal?.removeEventListener('abort', abort);
+      resolve(image);
+    };
+    image.onerror = () => {
+      signal?.removeEventListener('abort', abort);
+      reject(new Error(`Image non chargeable : ${src}`));
+    };
     image.src = src;
   });
-  return { image, status };
 }
 
 /**
- * Un document (JSON Fabric) dont on retire la mention de CORS des images du serveur.
+ * Nettoie un document sérialisé des exigences CORS inutiles.
  *
- * Fabric écrit `crossOrigin: "anonymous"` dans le JSON de toute image chargée avec
- * cet attribut — et le relit tel quel. Conséquence vérifiée : un gabarit livré avec
- * son logo `/canvas/placeholder.svg` devient CHARGÉ-D'ÉCHEC chez quiconque sert le
- * site derrière un proxy ou sous un autre nom d'hôte, et `loadFromJSON` rejette le
- * document entier (tous les gabarits « ne marchent pas », sans un mot d'erreur).
- * Une image locale n'a rien à négocier : on purge la clé à l'entrée et à la sortie.
+ * Un état enregistré garde la clé `crossOrigin` de chaque image (`toObject` la
+ * sérialise) : rejouer sur un autre serveur — ou rejouer une image qui, entre-temps,
+ * est servie en local — peut donc faire échouer `loadFromJSON` **entier**, sans un mot
+ * sur l'objet fautif. On retire la clé pour toute source qui est aujourd'hui de la
+ * même origine ; le reste garde ce qu'il avait demandé.
  */
 export function normalizeDocumentCrossOrigin<T>(value: T): T {
   if (!value || typeof value !== 'object') return value;
@@ -110,4 +120,61 @@ export function normalizeDocumentCrossOrigin<T>(value: T): T {
     return next;
   };
   return walk(value) as T;
+}
+
+/**
+ * Un document allégé de ses images : le plan de repli quand `loadFromJSON` a échoué.
+ *
+ * Pourquoi ce remède plutôt qu'un try/catch objet par objet : Fabric 6 ne fournit pas
+ * de chargement sélectif — un seul objet d'image illisible fait rejeter la promesse du
+ * document tout entier, et l'atelier se retrouve vide sans que rien ne dise quel
+ * fichier est en cause. Perdre les visuels et garder les calques, les textes, les
+ * masques et le format, c'est encore pouvoir travailler ; le message qui accompagne le
+ * repli nomme l'étape, et l'utilisateur n'a plus qu'à re-poser les images.
+ *
+ * `keepBackground` : on peut vouloir garder le fond en dégradé ou en couleur — un fond
+ * **image** est toujours retiré, c'est souvent lui qui casse.
+ */
+export function withoutImages<T>(value: T, options: { keepBackground?: boolean } = {}): { document: T; dropped: string[] } {
+  const dropped: string[] = [];
+  if (!value || typeof value !== 'object') return { document: value, dropped };
+  const source = value as Record<string, unknown>;
+
+  const walk = (nodes: unknown): unknown[] => {
+    const kept: unknown[] = [];
+    for (const node of Array.isArray(nodes) ? nodes : []) {
+      if (!node || typeof node !== 'object') continue;
+      const record = node as Record<string, unknown>;
+      if (record.type === 'image') {
+        dropped.push(String(record.src || '(sans source)'));
+        continue; // un image de Fabric n'a pas d'enfants ; le groupe, si, est traité plus bas
+      }
+      const next: Record<string, unknown> = { ...record };
+      if (Array.isArray(next.objects)) {
+        const children = walk(next.objects);
+        // Un groupe vidé de tous ses enfants n'a plus rien à peindre, et Fabric n'aime
+        // pas les groupes vides : on le laisse tomber avec eux.
+        if (!children.length) {
+          dropped.push(String(record.type || 'groupe'));
+          continue;
+        }
+        next.objects = children;
+      }
+      kept.push(next);
+    }
+    return kept;
+  };
+
+  const next: Record<string, unknown> = { ...source, objects: walk(source.objects) };
+  if (!options.keepBackground) {
+    delete next.backgroundImage;
+    if (source.sariStudio && typeof source.sariStudio === 'object') {
+      const studio = source.sariStudio as Record<string, unknown>;
+      if (studio.background && typeof studio.background === 'object' && (studio.background as Record<string, unknown>).mode === 'image') {
+        dropped.push(String((studio.background as Record<string, unknown>).src || '(fond sans source)'));
+        next.sariStudio = { ...studio, background: { mode: 'solid', color: '#ffffff' } };
+      }
+    }
+  }
+  return { document: next as unknown as T, dropped };
 }

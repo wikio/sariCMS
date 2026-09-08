@@ -70,7 +70,7 @@ import {
 } from '@/lib/canvas/document';
 import { createHistory } from '@/lib/canvas/history';
 import { ensureFonts, fontStackOf, waitForFont } from '@/lib/canvas/fonts';
-import { crossOriginFor, normalizeDocumentCrossOrigin } from '@/lib/canvas/image-load';
+import { crossOriginFor, normalizeDocumentCrossOrigin, withoutImages } from '@/lib/canvas/image-load';
 import type {
   BackgroundSpec,
   ChartSpec,
@@ -138,6 +138,8 @@ export interface Engine {
 
   serialize(): string;
   load(state: unknown): Promise<void>;
+  /** Rejoue un document en tolérant les images manquantes (voir `loadResilient`). */
+  loadResilient(state: unknown): Promise<{ ok: boolean; partial: boolean; dropped: string[] }>;
   isDirty(): boolean;
   markSaved(): void;
   undo(): void;
@@ -154,8 +156,8 @@ export interface Engine {
 
   addText(text?: string, at?: { x: number; y: number }): FabricObject;
   addShape(kind: 'rect' | 'ellipse' | 'line' | 'triangle' | 'polygon' | 'star' | 'arrow', at?: { x: number; y: number }): FabricObject;
-  addImage(src: string, options?: { fit?: 'contain' | 'cover'; slotId?: string; at?: { x: number; y: number } }): Promise<FabricObject>;
-  addSvg(svg: string, options?: { as?: 'objects' | 'image'; width?: number; height?: number }): Promise<FabricObject | null>;
+  addImage(src: string, options?: { fit?: 'contain' | 'cover'; slotId?: string; at?: { x: number; y: number }; insetSize?: boolean }): Promise<FabricObject>;
+  addSvg(svg: string, options?: { as?: 'objects' | 'image'; width?: number; height?: number; at?: { x: number; y: number } }): Promise<FabricObject | null>;
   addChart(spec: ChartSpec, mode?: 'objects' | 'image'): Promise<FabricObject | null>;
 
   selected(): FabricObject[];
@@ -182,6 +184,11 @@ export interface Engine {
   selectIndex(index: number): void;
   /** Tous les calques sélectionnés, sauf les aides et les verrous : `Ctrl+A`. */
   selectAll(): void;
+  /** Le pointeur, en coordonnées du plan de travail — là où poser un objet importé. */
+  pointer(): { x: number; y: number };
+  /** Verrouille ou déverrouille toute la planche, et dit si des calques sont figés. */
+  setLockedAll(locked: boolean): void;
+  anyLocked(): boolean;
   setOpacityFor(index: number, opacity: number): void;
 
   applyFilter(name: string, value: number): Promise<void>;
@@ -281,6 +288,9 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
   let dirty = false;
   let disposing = false;
   let anchors: { object: FabricObject | null; circles: Circle[] } = { object: null, circles: [] };
+  // Le dernier pointeur connu, en coordonnées du plan : c'est là qu'un objet importé
+  // depuis une liste ou une boîte de dialogue doit atterrir, et non immuablement au centre.
+  let lastScenePoint: { x: number; y: number } | null = null;
   let draggedAnchor = -1;
 
   const history = createHistory('');
@@ -336,7 +346,7 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
    * l'écran. La fiche garde donc aussi `sariCurve` (la description du tracé), et c'est
    * elle qui reconstruit l'objet `Path`.
    */
-  async function load(stateValue: unknown) {
+  async function load(stateValue: unknown, options: { strict?: boolean } = {}) {
     const source = typeof stateValue === 'string' ? parseState(stateValue) : ((stateValue ?? {}) as Record<string, unknown>);
     const envelope = source.sariStudio as { width?: number; height?: number; background?: BackgroundSpec } | undefined;
     if (envelope?.width && envelope?.height) {
@@ -374,7 +384,7 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
     });
     applyTool();
     render();
-    await applyBackground(background);
+    await applyBackground(background, options.strict);
     const snapshot = JSON.stringify(state());
     history.reset(snapshot);
     dirty = false;
@@ -387,9 +397,39 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
     return value instanceof Path;
   }
 
+  /**
+   * Rejoue un document sans jamais le laisser vide.
+   *
+   * Un seul objet image illisible fait rejeter `loadFromJSON` **en entier** : avant ce
+   * repli, un plan dont un média avait été nettoyé du disque ouvrait une fenêtre blanche
+   * et muette — le pire des diagnostics. On retente donc sans les images (ni le fond en
+   * image), ce qui conserve le format, les textes, les masques et l'ordre des calques,
+   * et on nomme ce qui a sauté.
+   */
+  async function loadResilient(stateValue: unknown): Promise<{ ok: boolean; partial: boolean; dropped: string[] }> {
+    try {
+      await load(stateValue, { strict: true });
+      return { ok: true, partial: false, dropped: [] };
+    } catch (firstError) {
+      const stripped = withoutImages((typeof stateValue === 'string' ? parseState(stateValue) : (stateValue ?? {})) as Record<string, unknown>);
+      if (!stripped.dropped.length) throw firstError instanceof Error ? firstError : new Error(String(firstError));
+      try {
+        await load(stripped.document);
+      } catch (secondError) {
+        // Deux échecs : le document lui-même est illisible, pas seulement une image.
+        throw secondError instanceof Error ? secondError : new Error(String(secondError));
+      }
+      emit({
+        type: 'error',
+        message: `${stripped.dropped.length} visuel${stripped.dropped.length > 1 ? 's' : ''} inaccessible${stripped.dropped.length > 1 ? 's' : ''} : ${stripped.dropped.slice(0, 3).join(', ')}${stripped.dropped.length > 3 ? ', …' : ''}. Le plan reste éditable, mais ces images ne reviendront pas — repassez par « Importer » pour les reposer.`,
+      });
+      return { ok: true, partial: true, dropped: stripped.dropped };
+    }
+  }
+
   /* ------------------------------------------------------------------------ le fond */
 
-  async function applyBackground(spec: BackgroundSpec) {
+  async function applyBackground(spec: BackgroundSpec, strict = false) {
     canvas.backgroundColor = undefined as never;
     canvas.backgroundImage = undefined as never;
     if (spec.mode === 'solid') {
@@ -417,11 +457,14 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
           evented: false,
         });
         canvas.backgroundImage = image as never;
-      } catch {
-        // Une image de fond inaccessible ne doit pas empêcher d'éditer le reste :
-        // on garde un fond blanc, et c'est le panneau qui le dira à l'utilisateur.
+      } catch (cause) {
+        // `strict` = on remonte : c'est `loadResilient` qui décide du repli, et sans
+        // exception ici il ne saurait pas qu'il faut alléger le document.
+        if (strict) throw cause instanceof Error ? cause : new Error(String(cause));
+        // Ailleurs, une image de fond inaccessible ne doit pas empêcher d'éditer le
+        // reste : on garde un fond blanc, et c'est le panneau qui le dit à l'utilisateur.
         canvas.backgroundColor = '#ffffff' as never;
-        emit({ type: 'error', message: `Image de fond illisible ou protégée : le fond est resté blanc (${spec.src}).` });
+        emit({ type: 'error', message: `Image de fond illisible ou protégée : le fond est resté blanc (${spec.src || '(source absente)'}).` });
       }
     }
     render();
@@ -530,8 +573,24 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
 
   /* ------------------------------------------------------------------- créations */
 
+  /**
+   * Ramène l'atelier en mode sélection quand un objet vient d'être posé.
+   *
+   * Hors outil « Sélection », `applyTool()` rend les objets non sélectionnables : un
+   * visuel importé pendant que le pinceau ou la main était actif se trouvait donc posé,
+   * encadré une demi-seconde, puis ingouvernable — « il n'y a pas de possibilité de
+   * déplacer l'image ». La fabrication d'un objet est toujours un geste d'édition : elle
+   * reprend la main.
+   */
+  function ensureSelectTool() {
+    if (tool === 'select') return;
+    tool = 'select';
+    applyTool();
+  }
+
   function place(object: FabricObject, at?: { x: number; y: number }) {
     const point = at ? new Point(at.x, at.y) : new Point(canvas.getWidth() / 2, canvas.getHeight() / 2);
+    ensureSelectTool();
     object.set({ originX: 'center', originY: 'center', left: point.x, top: point.y });
     canvas.add(object as never);
     canvas.setActiveObject(object);
@@ -638,7 +697,7 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
     return `M ${-half} ${-shaft / 2} L ${half * 0.3} ${-shaft / 2} L ${half * 0.3} ${-shaft * 1.7} L ${half} 0 L ${half * 0.3} ${shaft * 1.7} L ${half * 0.3} ${shaft / 2} L ${-half} ${shaft / 2} Z`;
   }
 
-  async function addImage(src: string, imageOptions: { fit?: 'contain' | 'cover'; slotId?: string; at?: { x: number; y: number } } = {}) {
+  async function addImage(src: string, imageOptions: { fit?: 'contain' | 'cover'; slotId?: string; at?: { x: number; y: number }; insetSize?: boolean } = {}) {
     let image: FabricImage;
     try {
       image = await FabricImage.fromURL(src, { crossOrigin: crossOriginFor(src) });
@@ -650,7 +709,14 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
       emit({ type: 'error', message });
       throw new Error(message);
     }
-    const scale = fitScale({ width: image.width || 1, height: image.height || 1 }, { width: canvas.getWidth(), height: canvas.getHeight() }, imageOptions.fit || 'contain');
+    // Un posé « par défaut » ne doit pas avaler le plan de travail : sans marge, une
+    // image importée remplissait 1080×1080 au pixel près, et le premier geste du
+    // nouvel arrivant était « je ne peux pas la déplacer » — il n'y avait plus où
+    // attraper. `insetSize` laisse la marge ; une case d'image (gabarit) s'en passe.
+    const frame = imageOptions.insetSize
+      ? { width: Math.round(canvas.getWidth() * 0.8), height: Math.round(canvas.getHeight() * 0.8) }
+      : { width: canvas.getWidth(), height: canvas.getHeight() };
+    const scale = fitScale({ width: image.width || 1, height: image.height || 1 }, frame, imageOptions.fit || 'contain');
     image.set({ scaleX: scale, scaleY: scale, opacity: 1, ...(imageOptions.slotId ? { slotId: imageOptions.slotId, slotLabel: imageOptions.slotId } : {}) } as never);
     place(image, imageOptions.at);
     commit('image');
@@ -665,13 +731,13 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
    * que pour les SVG au tracé démesuré, où entretenir cinq cents chemins coûterait plus
    * qu'il ne vaut.
    */
-  async function addSvg(svg: string, svgOptions: { as?: 'objects' | 'image'; width?: number; height?: number } = {}) {
+  async function addSvg(svg: string, svgOptions: { as?: 'objects' | 'image'; width?: number; height?: number; at?: { x: number; y: number } } = {}) {
     const text = String(svg || '').trim();
     if (!text.startsWith('<svg')) return null;
     const frame = { width: Math.round(svgOptions.width || canvas.getWidth() * 0.6), height: Math.round(svgOptions.height || canvas.getHeight() * 0.45) };
     if (svgOptions.as === 'image') {
       const url = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(text)}`;
-      return addImage(url, { fit: 'contain' });
+      return addImage(url, { fit: 'contain', insetSize: true, at: svgOptions.at });
     }
     const parsed = await loadSVGFromString(text);
     const objects = (parsed.objects || []).filter(Boolean);
@@ -680,7 +746,7 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
     const box = group.getBoundingRect();
     const scale = fitScale({ width: box.width || 1, height: box.height || 1 }, frame, 'contain');
     group.set({ scaleX: scale, scaleY: scale });
-    place(group);
+    place(group, svgOptions.at);
     commit('svg');
     return group;
   }
@@ -1467,6 +1533,7 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
       if (draggedAnchor >= 0) canvas.discardActiveObject();
     });
     canvas.on('mouse:move', (event: { e?: MouseEvent | TouchEvent | PointerEvent; scenePoint?: Point }) => {
+      if (event.scenePoint) lastScenePoint = { x: event.scenePoint.x, y: event.scenePoint.y };
       if (draggedAnchor < 0 || !event.scenePoint) return;
       const object = anchors.object;
       if (!object) return;
@@ -1716,6 +1783,23 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
       if (!object) return;
       applyToSelected({ scaleX: Math.max(0.02, (object.scaleX || 1) * factor), scaleY: Math.max(0.02, (object.scaleY || 1) * factor) }, 'échelle');
     },
+    /** Déverrouille (ou verrouille) toute la planche : le geste de rattrapage d'un calque figé. */
+    setLockedAll(locked: boolean) {
+      let touched = 0;
+      canvas.forEachObject((object) => {
+        if ((object as unknown as Record<string, unknown>)[HELPER]) return;
+        if (Boolean((object as unknown as Record<string, unknown>).locked) === locked) return;
+        object.set({ locked, selectable: !locked, evented: !locked } as never);
+        touched += 1;
+      });
+      if (!touched) return;
+      render();
+      commit(locked ? 'tout verrouiller' : 'tout déverrouiller');
+      emitSelection();
+    },
+    anyLocked() {
+      return canvas.getObjects().some((object) => Boolean((object as unknown as Record<string, unknown>).locked));
+    },
     setLocked(locked) {
       selected().forEach((object) => {
         object.set({ locked, selectable: !locked, evented: !locked } as never);
@@ -1733,12 +1817,17 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
       applyToSelected({ name, ...(slotId ? { slotId, slotLabel: slotLabel || name } : {}) }, 'nommer');
     },
     layers,
+    loadResilient,
     selectIndex(index) {
       const object = canvas.getObjects()[index];
       if (!object) return;
       canvas.setActiveObject(object);
       emitSelection();
       render();
+    },
+    pointer() {
+      const at = lastScenePoint || { x: canvas.getWidth() / 2, y: canvas.getHeight() / 2 };
+      return { x: Math.round(at.x), y: Math.round(at.y) };
     },
     setOpacityFor(index, opacity) {
       const object = canvas.getObjects()[index];

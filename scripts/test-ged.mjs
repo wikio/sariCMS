@@ -418,6 +418,77 @@ await acheck('le catalogue livré est jouable tel quel', async () => {
   }
 });
 
+/* ------------------------------------------------- l'atelier : ni vide, ni figé */
+
+console.log('\nL\'atelier ouvre une planche même abîmée');
+
+await acheck('un document dont une image est morte se rejoue sans ses visuels', async () => {
+  // LA panne : `loadFromJSON` est « tout ou rien » — un seul `src` introuvable (fichier
+  // nettoyé du disque, URL reconstruite de travers) faisait rejeter le document entier,
+  // et l\'atelier ouvrait une fenêtre blanche sur un gabarit « vide ». Le repli perd les
+  // images, garde le reste, et le dit.
+  const load = await import('../lib/canvas/image-load.ts').catch(() => null);
+  const withoutImages = load?.withoutImages;
+  assert.ok(typeof withoutImages === 'function', 'image-load.ts doit exporter withoutImages');
+  const document = {
+    version: '6.9.1',
+    objects: [
+      { type: 'rect', left: 10, top: 10, width: 100, height: 40 },
+      { type: 'image', left: 0, top: 0, src: '/uploads/canvas/vole.png' },
+      { type: 'group', objects: [{ type: 'image', src: '/uploads/ged/absente.png' }, { type: 'textbox', text: 'Titre' }] },
+      { type: 'group', objects: [{ type: 'image', src: '/uploads/ged/absente2.png' }] },
+    ],
+    sariStudio: { width: 1080, height: 1080, background: { mode: 'image', src: '/uploads/fond-mort.png' } },
+  };
+  const stripped = withoutImages(document);
+  assert.equal(stripped.document.objects.length, 2, 'le rectangle et le groupe encore vivant restent');
+  assert.equal(stripped.document.objects[1].objects.length, 1, 'un groupe garde ses enfants non-images');
+  // 3 images + le fond + le groupe vidé de son unique enfant : le compte doit tout nommer.
+  assert.equal(stripped.dropped.length, 5, `${stripped.dropped.length} visuel(s) signalé(s), 5 attendus`);
+  assert.ok(stripped.dropped.includes('/uploads/fond-mort.png'), 'le fond en image est signalé aussi');
+  assert.deepEqual(stripped.document.sariStudio.background, { mode: 'solid', color: '#ffffff' }, 'le fond de repli est blanc');
+  assert.ok(document.objects.length === 4, 'le document d\'origine n\'est pas mutilé');
+});
+
+await acheck('l\'atelier ne recharge jamais un document en dur quand un média peut manquer', async () => {
+  // Le repli ne sert à rien si l\'appelant ignore qu\'il existe : chaque lecture d\'un état
+  // ou d\'un gabarit doit passer par `loadResilient`, sinon l\'erreur remonte à l\'effet
+  // d\'ouverture et l\'écran tombe en « L\'atelier n\'a pas pu démarrer ».
+  const engine = await readFile('lib/canvas/engine.ts', 'utf8');
+  assert.match(engine, /loadResilient,/, 'le moteur doit exposer loadResilient');
+  const studio = await readFile('components/canvas/CanvasStudio.tsx', 'utf8');
+  const hard = [...studio.matchAll(/instance\.load\(/g)].length;
+  assert.equal(hard, 0, `${hard} rechargement(s) sans repli dans CanvasStudio`);
+  assert.ok((studio.match(/instance\.loadResilient\(/g) || []).length >= 4, 'les quatre lectures (asset, gabarit, import, page) doivent être tolérantes');
+});
+
+await acheck('un média importé se pose là où est le pointeur, et reste saisissable', async () => {
+  // Deux plaintes d\'un même geste : l\'image tombait centrée, pleine taille, et ne se
+  // laissait plus déplacer si l\'outil actif n\'était pas « Sélection » (applyTool rend
+  // alors tous les objets non sélectionnables). La fabrication reprend donc l\'outil,
+  // pose au pointeur, et garde une marge pour qu\'on puisse attraper les poignées.
+  const engine = await readFile('lib/canvas/engine.ts', 'utf8');
+  assert.match(engine, /function ensureSelectTool\(\)/, 'le moteur doit ramener l\'outil « select »');
+  assert.match(engine, /ensureSelectTool\(\);\n\s*object\.set\(\{ originX/, 'place() doit rendre l\'objet saisissable');
+  assert.match(engine, /insetSize\s*\?\s*\{ width: Math\.round\(canvas\.getWidth\(\) \* 0\.8\)/, 'un posé par défaut doit garder une marge');
+  const studio = await readFile('components/canvas/CanvasStudio.tsx', 'utf8');
+  assert.ok((studio.match(/insetSize: true/g) || []).length >= 3, 'les importations (GED, poste, réédition d\'un rendu) doivent utiliser la marge');
+  const pose = /const at = instance\.pointer\(\);[\s\S]{0,220}addImage\(asset\.url, \{[^}]*\bat[^}]*\}\)/;
+  assert.ok(pose.test(studio), 'le média choisi dans la liste se pose au pointeur');
+});
+
+await acheck('la liste des médias ne peut pas produire deux clés identiques', async () => {
+  // Deux fichiers `1788887908123.png` et `.jpg` portent le même `name` : une liste clavée
+  // sur ce champ dupliquait et supprimait des vignettes au gré des rendus.
+  const studio = await readFile('app/[locale]/admin/media/page.tsx', 'utf8');
+  assert.match(studio, /key=\{f\.file \|\| f\.url \|\| i\}/, 'l\'écran Médias doit clavier sur le chemin');
+  const picker = await readFile('components/admin/GedPicker.tsx', 'utf8');
+  assert.match(picker, /key=\{f\.file \|\| f\.url \|\| i\}/, 'le sélecteur de la page doit clavier sur le chemin');
+  // Et le nom affiché vient du chemin complet, plus de `split('_')` approximatif.
+  const route = await readFile('app/api/admin/upload/route.ts', 'utf8');
+  assert.match(route, /function mediaRowFromName/, 'la lecture d\'un nom de fichier passe par un seul endroit');
+});
+
 /* ------------------------------------------------- le contrat front ↔ backend */
 
 console.log('\nLes routes NestJS rendues par le module ged');

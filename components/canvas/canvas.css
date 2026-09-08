@@ -112,6 +112,13 @@
   height: 30px;
   padding: 0;
 }
+/* Une action de titre (en-tête de panneau) : plus discrète qu'un bouton d'action plein. */
+.sc-btn--sm {
+  height: 24px;
+  padding: 0 8px;
+  font-size: 11px;
+  font-weight: 600;
+}
 .sc-btn--primary {
   background: #2563eb;
   border-color: #3b82f6;
@@ -757,6 +764,16 @@
   border-top: 1px solid #1c2942;
   color: #7f8ba3;
   font-size: 11px;
+}
+/* Une zone du gabarit : le champ, et l'action qui va chercher le média dans la GED. */
+.sc-slot {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.sc-slot > .sc-btn {
+  align-self: flex-end;
 }
 .sc-empty {
   padding: 18px 10px;

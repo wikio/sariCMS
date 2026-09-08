@@ -37,6 +37,37 @@ composant React dans le cadre :
 Étendre `image` est aussi ce qui garantit l'absence de régression : redimensionner,
 remplacer la source, l'alt et le panneau de style restent ceux de l'éditeur.
 
+## Un média qui ne se laisse pas déplacer, ou une planche qui s'ouvre vide
+
+Deux pannes avaient le même goût — « l'image se pose au centre et on ne peut rien en faire »,
+« les gabarits sont vides ». Elles viennent de deux endroits différents, et l'atelier les
+traites maintenant explicitement.
+
+**Le média importé.** Une image posée sur la planche (`Importer depuis la GED`, glisser-déposer,
+réédition d'un simple rendu) arrive **au pointeur, avec 20 % de marge autour**, et l'atelier
+repart en outil « Sélection ». Sans marge, un posé « contain » remplissait le plan de travail au
+pixel près : les poignées de Fabric tombaient hors écran et le calque paraissait scotché. Sans
+retour en mode sélection, un média importé pendant que le pinceau ou « Déplacer le plan » était
+actif restait **non saisissable** — `applyTool()` rend les objets inerte hors de l'outil Sélection.
+Les flèches du clavier (±1 px, ±10 px avec `Maj`) déplacent ce qui est sélectionné.
+
+**Le gabarit ou la planche qui s'ouvre vide.** Fabric 6 ne charge pas un document image par
+image : **un** `src` injoignable (média supprimé du disque, URL d'un ancien dossier, `crossOrigin`
+hérité d'un enregistrement sur un autre serveur) fait rejeter `loadFromJSON` **entier**. L'atelier
+affichait alors une planche blanche, sans un mot sur le fichier fautif. `loadResilient()` tente le
+document complet, et en cas d'échec le rejoue **sans ses images** (`withoutImages()`), avec un fond
+blanc à la place d'un fond en image : le format, les textes, les masques et l'ordre des calques
+sont conservés, et le bandeau nomme les visuels qui ont sauté. Les images restantes se re-posent
+depuis la GED, cadre par cadre.
+
+**Un calque figé.** Les gabarits verrouillent leurs cartouches et leur fond : un calque verrouillé
+ne se saisit pas, ce qui se lit « rien n'est déplaçable ». Le panneau **Calques** affiche alors
+« Tout déverrouiller » dans son titre, et l'icône de cadenas reste le geste unitaire.
+
+**Une zone de gabarit** (« Zones du gabarit », à droite) se remplit maintenant par
+**« Choisir dans la GED »** : le prochain média sélectionné va dans *ce* cadre, il n'est pas ajouté
+en vrac au-dessus de la planche. Taper une URL à la main reste possible, mais n'est plus le seul
+chemin.
 ## Où vit quoi
 
 ```
@@ -223,6 +254,30 @@ et chacune a déjà coûté une panne :
 API Nest), le réglage MySQL (`DB_DRIVER`, `GED_UPLOAD_DIR`, `GED_CANVAS_DIR`,
 `GED_PREFIX_OVERRIDES`), le forçage `localStorage.setItem('sari_ged_surface','next')`
 et une liste « panne par panne ».
+
+## Vérifier
+
+Trois garde-fous sont joués par `node scripts/test-ged.mjs` (section « L'atelier ouvre une
+planche même abîmée ») : `withoutImages()` sur un document à images mortes, l'absence de
+`instance.load(` dur dans `CanvasStudio.tsx`, et les clés de liste de la médiathèque. Pour
+l'état d'un média réel, la vérification à la main reste la plus courte :
+
+```bash
+# 1. un média racine et son jumeau de même nom ne doivent pas collisionner
+curl -s localhost:5000/api/admin/upload | python3 -c "
+import json,sys
+rows=json.load(sys.stdin)['files']
+keys=[r['file'] for r in rows]
+assert len(keys)==len(set(keys)), 'clés dupliquées'
+print('médias', len(rows), '· clés uniques')"
+# 2. un gabarit livré doit avoir ses objets, sans exigence CORS
+curl -s "localhost:5000/api/admin/ged/templates?id=story-verte" | python3 -c "
+import json,sys
+d=json.load(sys.stdin); o=d['template']['objects']
+print(len(o), 'objets ·', sum(1 for x in o if 'crossOrigin' in x), 'crossOrigin')"
+# 3. un plan réédité doit retrouver son état
+curl -s "localhost:5000/api/admin/ged/asset/state?file=canvas/<fichier>.png"
+```
 
 ## Vérifier
 

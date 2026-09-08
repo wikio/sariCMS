@@ -106,6 +106,8 @@ export function CanvasStudio({
   const [failed, setFailed] = useState('');
   const [tab, setTab] = useState<Tab>('objet');
   const [sheet, setSheet] = useState<'' | 'gabarits' | 'ged' | 'stats' | 'calques'>('');
+  /** Un cadre de gabarit en attente d'un média : le prochain choix de la GED le remplit. */
+  const [slotPick, setSlotPick] = useState<{ id: string; type: 'text' | 'image' | 'color' } | null>(null);
   const [name, setName] = useState('Planche sans titre');
   const [saving, setSaving] = useState(false);
   /** La référence GED en cours : un état, pas une `ref` — l'en-tête l'affiche. */
@@ -400,11 +402,16 @@ export function CanvasStudio({
     try {
       const { meta, template } = await readGedTemplate(id);
       instance.setArtboard(meta.format.width, meta.format.height);
-      await instance.load(template);
+      const result = await instance.loadResilient(template);
       setSlots(resolveSlots(template));
       setName(meta.title);
       setSheet('');
-      setNotice({ kind: 'info', text: `Gabarit « ${meta.title} » appliqué. Les zones modifiables sont dans le panneau de droite.` });
+      setNotice({
+        kind: result.partial ? 'warn' : 'info',
+        text: result.partial
+          ? `Gabarit « ${meta.title} » appliqué sans ses images (${result.dropped.length} visuel${result.dropped.length > 1 ? 's' : ''} introuvable${result.dropped.length > 1 ? 's' : ''}) — les calques, textes et formats sont là.`
+          : `Gabarit « ${meta.title} » appliqué. Les zones modifiables sont dans le panneau de droite.`,
+      });
       refresh();
     } catch (error) {
       const direct = await fetchJsonFromStatic(id);
@@ -414,7 +421,7 @@ export function CanvasStudio({
       }
       const size = (direct as { sariStudio?: { width?: number; height?: number } }).sariStudio;
       if (size?.width && size?.height) instance.setArtboard(size.width, size.height);
-      await instance.load(direct);
+      await instance.loadResilient(direct);
       setSlots(resolveSlots(direct));
       setSheet('');
       setName(String(id));
@@ -426,6 +433,23 @@ export function CanvasStudio({
   const openGed = async (asset: GedAssetSummary) => {
     const instance = engineRef.current;
     if (!instance) return;
+    if (slotPick) {
+      // « Poser dans ce cadre » : le média rejoint la zone du gabarit, il ne s'ajoute
+      // pas en vrac au-dessus de tout — c'est ce qui manquait pour remplir un cadre.
+      const index = snap.layers.findIndex((layer) => layer.id === slotPick.id);
+      setSlotPick(null);
+      setSheet('');
+      if (index >= 0) {
+        instance.selectIndex(index);
+        if (slotPick.type === 'color') instance.setPaint('fill', { kind: 'solid', color: asset.url });
+        else if (slotPick.type === 'image') await instance.replaceImage(asset.url);
+        else instance.setText({ text: asset.title || asset.name });
+        setNotice({ kind: 'info', text: `« ${asset.title || asset.name} » posé dans le cadre « ${slotPick.id} ».` });
+        refresh();
+        return;
+      }
+      setNotice({ kind: 'warn', text: `Cadre « ${slotPick.id} » introuvable dans les calques : le visuel est posé sur la planche.` });
+    }
     if (asset.kind === 'canvas') {
       await openAsset(asset.file);
       return;
@@ -433,8 +457,9 @@ export function CanvasStudio({
     try {
       // Un SVG de la GED devient des objets modifiables (dégroupables, repeignables)
       // et non une image rasterisée : c'est le « SVG importé éditable » du besoin.
-      if (/\.svg$/i.test(asset.url)) await instance.addSvg(await fetchSvgText(asset.url));
-      else await instance.addImage(asset.url, { fit: 'contain' });
+      const at = instance.pointer();
+      if (/\.svg$/i.test(asset.url)) await instance.addSvg(await fetchSvgText(asset.url), { at });
+      else await instance.addImage(asset.url, { fit: 'contain', insetSize: true, at });
     } catch (error) {
       setNotice({ kind: 'warn', text: error instanceof Error ? error.message : `Visuel non chargeable : ${asset.url}` });
       return;
@@ -459,8 +484,13 @@ export function CanvasStudio({
       state = null;
     }
     if (state) {
-      await instance.load(state);
-      setNotice({ kind: 'info', text: `Réédition de ${asset.file}${asset.version > 1 ? ` (v${asset.version})` : ''} — l’état éditable est complet.` });
+      const result = await instance.loadResilient(state);
+      setNotice({
+        kind: result.partial ? 'warn' : 'info',
+        text: result.partial
+          ? `Réédition de ${asset.file} — ${result.dropped.length} image(s) du document étaient introuvables sur le disque et ont été retirées de la planche.`
+          : `Réédition de ${asset.file}${asset.version > 1 ? ` (v${asset.version})` : ''} — l’état éditable est complet.`,
+      });
       setCurrentFile(asset.file);
       setName(asset.title || asset.name);
       setSlots(resolveSlots(state));
@@ -471,13 +501,13 @@ export function CanvasStudio({
     if (!size.width || !size.height) {
       // Le fichier n'est pas là où son URL le dit : mieux vaut le dire que poser un
       // fond blanc de 1080×1080 et laisser chercher l'utilisateur.
-      setNotice({ kind: 'warn', text: `Visuel non chargeable : ${asset.url}. Le fichier est absent de public/uploads (ou n’est pas une image).` });
+      setNotice({ kind: 'warn', text: `Visuel non chargeable : ${asset.url}. Le fichier est absent de public/uploads/${asset.file} (ou n’est pas une image) — le récupérer dans la GED, ou le re-poser depuis ce poste.` });
       return;
     }
     instance.setArtboard(size.width || 1080, size.height || 1080);
     try {
       if (/\.svg$/i.test(asset.url)) await instance.addSvg(await fetchSvgText(asset.url));
-      else await instance.addImage(asset.url, { fit: 'cover' });
+      else await instance.addImage(asset.url, { fit: 'contain', insetSize: true });
     } catch (error) {
       setNotice({ kind: 'warn', text: error instanceof Error ? error.message : `Visuel non chargeable : ${asset.url}` });
       return;
@@ -501,8 +531,8 @@ export function CanvasStudio({
     try {
       const asset = await uploadGedAsset({ file, kind: /\.svg$/i.test(file.name) ? 'svg' : 'image', title: file.name.replace(/\.[^.]+$/, ''), tags: ['import'] });
       if (/\.svg$/i.test(asset.url)) await instance.addSvg(await fetchSvgText(asset.url));
-      else await instance.addImage(asset.url, { fit: 'contain' });
-      setNotice({ kind: 'info', text: `« ${asset.title || asset.name} » importé et posé (${asset.file}).` });
+      else await instance.addImage(asset.url, { fit: 'contain', insetSize: true });
+      setNotice({ kind: 'info', text: `« ${asset.title || asset.name} » importé et posé (${asset.file}) — il est sélectionné : glissez-le, ou servez-vous des poignées.` });
     } catch (error) {
       setNotice({ kind: 'warn', text: error instanceof Error ? error.message : 'Import impossible.' });
     } finally {
@@ -744,7 +774,7 @@ export function CanvasStudio({
           ) : (
             <div className="sc-status">
               <span>
-                {selection?.count ? `${selection.count} objet${selection.count > 1 ? 's' : ''}` : 'aucune sélection'} · zoom {Math.round(snap.zoom * 100)}% · grille {snap.grid.size}px{snap.grid.snap ? ' (magnétisme)' : ''}
+                {selection?.count ? `${selection.count} objet${selection.count > 1 ? 's' : ''} · poignées pour redimensionner, flèches pour ajuster` : 'aucune sélection · glissez un calque pour le déplacer, l’outil « Déplacer le plan » de la barre déplace la vue'} · zoom {Math.round(snap.zoom * 100)}% · grille {snap.grid.size}px{snap.grid.snap ? ' (magnétisme)' : ''}
               </span>
             </div>
           )}
@@ -769,6 +799,10 @@ export function CanvasStudio({
                 <SlotField
                   key={slot.id}
                   slot={slot}
+                  onPick={(picked) => {
+                    setSlotPick(picked);
+                    setSheet('ged');
+                  }}
                   onText={(value) => {
                     const index = snap.layers.findIndex((layer) => layer.id === slot.id);
                     if (index < 0) return;
@@ -872,9 +906,47 @@ function Stat({ label, value }: { label: string; value: number | string }) {
   );
 }
 
-function SlotField({ slot, onText }: { slot: { id: string; type: 'text' | 'image' | 'color'; label: string; current: string; maxLength?: string | number }; onText: (value: string) => void }) {
-  if (slot.type === 'color') return <ColorField label={slot.label} value={slot.current || '#0f172a'} onChange={onText} onCommit={onText} />;
-  if (slot.type === 'image') return <TextField label={`${slot.label} (URL GED)`} value={slot.current || ''} onChange={onText} />;
+/**
+ * Un champ de zone du gabarit.
+ *
+ * `onPick` vaut pour les zones d'image et de couleur : taper une URL `/uploads/...` à
+ * la main n'est pas un geste imaginable pour un maquettiste, et c'est pour ça que ces
+ * cadres paraissaient « non modifiables ». Le bouton ouvre le navigateur de la GED en
+ * mode « ce cadre » — le média choisi y atterrit, à la place du calque.
+ */
+function SlotField({
+  slot,
+  onText,
+  onPick,
+}: {
+  slot: { id: string; type: 'text' | 'image' | 'color'; label: string; current: string; maxLength?: string | number };
+  onText: (value: string) => void;
+  onPick?: (slot: { id: string; type: 'text' | 'image' | 'color' }) => void;
+}) {
+  if (slot.type === 'color') {
+    return (
+      <div className="sc-slot">
+        <ColorField label={slot.label} value={slot.current || '#0f172a'} onChange={onText} onCommit={onText} />
+        {onPick ? (
+          <button type="button" className="sc-btn sc-btn--sm" onClick={() => onPick(slot)} title="Prendre une couleur depuis un visuel de la GED">
+            Depuis un visuel
+          </button>
+        ) : null}
+      </div>
+    );
+  }
+  if (slot.type === 'image') {
+    return (
+      <div className="sc-slot">
+        <TextField label={`${slot.label} (URL GED)`} value={slot.current || ''} onChange={onText} />
+        {onPick ? (
+          <button type="button" className="sc-btn sc-btn--sm" onClick={() => onPick(slot)} title="Poser une image de la GED dans ce cadre">
+            Choisir dans la GED
+          </button>
+        ) : null}
+      </div>
+    );
+  }
   return <TextField label={slot.label} value={slot.current || ''} onChange={onText} />;
 }
 
@@ -905,11 +977,11 @@ async function pickSource({ instance, asset, templateId, document: initialDocume
     } catch {
       state = null;
     }
-    if (state) await instance.load(state);
+    if (state) await instance.loadResilient(state);
     else if (summary.url) {
       try {
         if (/\.svg$/i.test(summary.url)) await instance.addSvg(await fetchSvgText(summary.url));
-        else await instance.addImage(summary.url, { fit: 'cover' });
+        else await instance.addImage(summary.url, { fit: 'contain', insetSize: true });
       } catch (error) {
         return {
           title: summary.title || summary.name,
@@ -928,8 +1000,14 @@ async function pickSource({ instance, asset, templateId, document: initialDocume
     try {
       const { meta, template } = await readGedTemplate(templateId);
       instance.setArtboard(meta.format.width, meta.format.height);
-      await instance.load(template);
-      return { title: meta.title, slots: resolveSlots(template), notice: { kind: 'info' as const, text: `Gabarit « ${meta.title} » chargé.` } };
+      const result = await instance.loadResilient(template);
+      return {
+        title: meta.title,
+        slots: resolveSlots(template),
+        notice: result.partial
+          ? { kind: 'warn' as const, text: `Gabarit « ${meta.title} » chargé sans ses images (${result.dropped.length} visuel(s) introuvable(s) sur le disque).` }
+          : { kind: 'info' as const, text: `Gabarit « ${meta.title} » chargé.` },
+      };
     } catch {
       // Repli : `public/canvas` est servi en statique, donc le fichier se lit sans
       // API — c'est le chemin d'un gabarit posé à la main, sans entrée de catalogue.
@@ -939,12 +1017,12 @@ async function pickSource({ instance, asset, templateId, document: initialDocume
       }
       const size = (direct as { sariStudio?: { width?: number; height?: number } }).sariStudio;
       if (size?.width && size?.height) instance.setArtboard(size.width, size.height);
-      await instance.load(direct);
+      await instance.loadResilient(direct);
       return { title: String(templateId), slots: resolveSlots(direct), notice: { kind: 'info' as const, text: 'Gabarit lu directement dans `public/canvas/templates` (catalogue muet).' } };
     }
   }
   if (initialDocument) {
-    await instance.load(initialDocument);
+    await instance.loadResilient(initialDocument);
     return { title: 'Nouvelle planche', slots: resolveSlots(initialDocument), notice: null };
   }
   return { title: 'Nouvelle planche', slots: [], notice: null };

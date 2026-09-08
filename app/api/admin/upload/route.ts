@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { writeFile, mkdir, readdir, unlink, rename, stat } from 'fs/promises';
 import { existsSync } from 'fs';
 import path from 'path';
-import { isManifestFile } from '@/lib/ged/prefix.mjs';
+import { isManifestFile, parseAssetName } from '@/lib/ged/prefix.mjs';
 import { isStateFile } from '@/lib/ged/manifest.mjs';
 import { bufferFromDataUrl, extensionFromDataUrl } from '@/lib/ged/http';
 import { gedStore } from '@/lib/ged/store.mjs';
@@ -67,6 +67,31 @@ function generateFileName(module: string, id: string | number, slug: string, ori
 }
 
 /**
+ * Ce que la médiathèque sait montrer d'un nom de fichier, sans rien lire sur le disque.
+ *
+ * Deux écritures coexistent dans `public/uploads` : l'ancienne (`<module>_<id>_<slug>.ext`,
+ * posée par les formulaires métier) et celle de la GED (`<PRÉFIXE>_<graine>_<slug>[-vN].ext`,
+ * avec un dossier qui n'a rien à voir avec le type). Les décoder à la main par un
+ * `split('_')` produisait des lignes bancales — un `1788887908123.png` à la racine
+ * ressortait sans nom, et deux de ces fichiers se ressemblaient assez pour que l'écran
+ * les confonde. La GED sait déjà faire : `parseAssetName` est le seul endroit qui connaît
+ * la table des préfixes.
+ */
+function mediaRowFromName(folder: string, file: string): { module: string; id: string; name: string } {
+  const parsed = parseAssetName(folder ? `${folder}/${file}` : file);
+  if (parsed.label || parsed.prefix) {
+    // Un nom lisible, sinon le libellé retombe sur le nom de fichier tout entier.
+    return { module: parsed.module || folder || 'ged', id: parsed.stamp || '', name: parsed.label || file };
+  }
+  const stem = file.replace(/\.[^.]+$/, '');
+  const parts = stem.split('_');
+  const legacy = !folder && parts.length >= 3 && /^[a-z][a-z0-9-]*$/i.test(parts[0]);
+  if (legacy) return { module: parts[0], id: parts[1], name: parts.slice(2).join('_') };
+  if (folder && parts.length >= 3) return { module: folder, id: parts[1], name: parts.slice(2).join('_') };
+  return { module: folder || 'ged', id: '', name: stem };
+}
+
+/**
  * Obtient le chemin du dossier pour un module
  * Ex: /public/uploads/solution/, /public/uploads/product/, etc.
  */
@@ -103,10 +128,7 @@ export async function GET() {
         for (const file of moduleFiles) {
           if (file.startsWith('.') || isSidecar(file)) continue;
 
-          const parts = file.split('_');
-          const id = parts[1] || '';
-          const nameWithExt = parts.slice(2).join('_');
-          const name = nameWithExt.replace(/\.[^/.]+$/, '');
+          const { module: rowModule, id, name } = mediaRowFromName(folder, file);
           const fileStats = await stat(path.join(itemPath, file));
 
           files.push({
@@ -115,7 +137,7 @@ export async function GET() {
             file: `${folder}/${file}`,
             originalName: file,
             label: name || file,
-            module: folder,
+            module: rowModule,
             id,
             size: fileStats.size,
             kind: /\.svg$/i.test(file) ? 'svg' : 'image',
@@ -128,11 +150,7 @@ export async function GET() {
         // `1787106474890-e4bafdda.jpg` n'a pas de module, et en inventer un
         // affichait une puce « 1787106474890-e4bafdda.jpg » sur la vignette.
         // L'URL, elle, reste `/uploads/<fichier>` : c'est le seul endroit où il est.
-        const parts = item.split('_');
-        const hasModule = parts.length >= 2 && /^[a-z][a-z0-9-]*$/i.test(parts[0]);
-        const id = hasModule ? parts[1] || '' : '';
-        const nameWithExt = hasModule ? parts.slice(2).join('_') : item;
-        const name = nameWithExt.replace(/\.[^/.]+$/, '');
+        const { module: rowModule, id, name } = mediaRowFromName('', item);
         const statsFile = await stat(itemPath);
 
         files.push({
@@ -141,7 +159,7 @@ export async function GET() {
           file: item,
           originalName: item,
           label: name || item,
-          module: hasModule ? parts[0] : 'ged',
+          module: rowModule,
           id,
           size: statsFile.size,
           kind: /\.svg$/i.test(item) ? 'svg' : 'image',

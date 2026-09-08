@@ -8,7 +8,7 @@ import {
   X, ZoomIn, ZoomOut,
 } from 'lucide-react';
 import { useToast } from '@/components/admin/Toast';
-import { imageLoadHint, isSameOrigin, loadHtmlImage } from '@/lib/canvas/image-load';
+import {  isSameOrigin, loadHtmlImage } from '@/lib/canvas/image-load';
 
 type Tool = 'draw' | 'erase' | 'text' | 'crop' | 'line' | 'arrow' | 'rect' | 'ellipse' | 'fill' | 'picker';
 
@@ -37,19 +37,25 @@ const PRESET_FILTERS: Array<{ key: string; label: string; filter: string }> = [
  * `crossOrigin` n'est donc conservé que pour les images vraiment distantes, où il
  * évite de tacher le canvas (et de rendre l'export impossible).
  */
+/**
+ * Un `<img>` chargé selon la règle du projet (voir `lib/canvas/image-load.ts`) : aucune
+ * exigence CORS pour ce que le même serveur fournit, `anonymous` pour le reste.
+ *
+ * Les deux branches existaient déjà, mais la seconde destructurait `{ image }` d'un
+ * helper qui renvoie l'élément lui-même, et la première passait un objet à `new Error()`
+ * : `tsc` la refusait, ce qui rendait l'écran de retouche inexplicable en production
+ * (une image sur deux « non chargeable » sans un mot d'erreur).
+ */
 async function loadImage(url: string, crossOrigin = true): Promise<HTMLImageElement> {
-  if (!crossOrigin || !isSameOrigin(url)) {
-    const image = new Image();
-    if (crossOrigin && !isSameOrigin(url)) image.crossOrigin = 'anonymous';
-    image.decoding = 'async';
-    await new Promise<void>((resolve, reject) => {
-      image.onload = () => resolve();
-      image.onerror = () => reject(new Error(imageLoadHint(url)));
-      image.src = url;
-    });
-    return image;
-  }
-  const { image } = await loadHtmlImage(url);
+  if (crossOrigin && isSameOrigin(url)) return loadHtmlImage(url);
+  const image = new Image();
+  if (!isSameOrigin(url)) image.crossOrigin = 'anonymous';
+  image.decoding = 'async';
+  await new Promise<void>((resolve, reject) => {
+    image.onload = () => resolve();
+    image.onerror = () => reject(new Error(`Image non chargeable : ${url}`));
+    image.src = url;
+  });
   return image;
 }
 

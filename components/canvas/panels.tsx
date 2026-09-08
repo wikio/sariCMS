@@ -594,8 +594,22 @@ export function PathPanel({ engine, count }: { engine: Engine; count: number }) 
 export function LayerPanel({ engine, layers }: { engine: Engine; layers: LayerInfo[] }) {
   // La liste est VISUELLE (du haut vers le bas) ; `index` reste l'index du canvas.
   const ordered = useMemo(() => [...layers].reverse(), [layers]);
+  const lockedCount = layers.filter((layer) => layer.locked).length;
   return (
-    <Card title={`Calques (${layers.length})`} icon={<Layers size={12} />}>
+    <Card
+      title={`Calques (${layers.length})`}
+      icon={<Layers size={12} />}
+      // Un calque verrouillé ne se saisit plus du tout — et un gabarit en porte souvent
+      // un (le fond, les cartouches). Sans issue visible, l'utilisateur conclut « rien
+      // n'est déplaçable » ; ce bouton est le rattrapage, et il ne s'affiche que si utile.
+      actions={
+        lockedCount ? (
+          <button type="button" className="sc-btn sc-btn--sm" title={`${lockedCount} calque(s) figé(s)`} onClick={() => engine.setLockedAll(false)}>
+            Tout déverrouiller
+          </button>
+        ) : undefined
+      }
+    >
       <div className="sc-layers">
         {ordered.map((layer) => (
           <div key={`${layer.index}-${layer.id}`} className={`sc-layer${layer.selected ? ' sc-layer--on' : ''}`} role="button" tabIndex={0} aria-current={layer.selected} onClick={() => engine.selectIndex(layer.index)} onKeyDown={(event) => event.key === 'Enter' && engine.selectIndex(layer.index)}>

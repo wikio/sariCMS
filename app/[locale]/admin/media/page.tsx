@@ -214,10 +214,13 @@ export default function MediaPage() {
         <div className="ad-card"><PixelGridLoader label="GED" /></div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
-          {shown.map((f) => (
-            // La clé est le chemin, pas l'URL : deux fichiers du même nom dans deux
-            // dossiers produisaient la même clé — React en duplicating/omitting tiles.
-            <div key={f.file || f.url} className="ad-card overflow-hidden flex flex-col">
+          {shown.map((f, i) => (
+            // La clé est le CHEMIN complet, jamais `name` : deux fichiers `x.png` et
+            // `x.jpg` portent le même nom sans extension, et deux dossiers peuvent abriter
+            // le même nom — React perdait alors des vignettes (« two children with the same
+            // key »). L'index en bout de course n'est qu'un filet : deux clés identiques
+            // doivent rester impossibles même sur une liste lue à moitiée.
+            <div key={f.file || f.url || i} className="ad-card overflow-hidden flex flex-col">
               <button type="button" className="relative block w-full" onClick={() => copyUrl(f)} title="Copier l’URL">
                 {isImage(f.url) ? (
                   <img src={f.url} alt={f.title || f.label} className="h-28 w-full object-contain bg-[var(--ad-surface-2)]" />
