@@ -1,0 +1,14 @@
+{
+  "sepia": "Sépia",
+  "arrow": "Flèche",
+  "eyedropper": "Pipette (prélever une couleur)",
+  "displayZoom": "Zoom affichage",
+  "activeTool": "Outil actif",
+  "color": "Couleur",
+  "thickness": "Épaisseur",
+  "insertText": "Texte à insérer…",
+  "fill": "Remplissage",
+  "fillHelp": "Cliquez sur une zone pour la remplir avec la couleur sélectionnée.",
+  "eyedropperHelp": "Cliquez sur un pixel pour prélever sa couleur.",
+  "tolerance": "Tolérance"
+}

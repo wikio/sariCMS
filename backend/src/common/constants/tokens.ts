@@ -16,6 +16,17 @@ export const SETTING_REPOSITORY = Symbol('SETTING_REPOSITORY');
 export const NEWS_REPOSITORY = Symbol('NEWS_REPOSITORY');
 export const EVENT_REPOSITORY = Symbol('EVENT_REPOSITORY');
 export const PRODUCT_REPOSITORY = Symbol('PRODUCT_REPOSITORY');
+export const SERVICE_REPOSITORY = Symbol('SERVICE_REPOSITORY');
+export const PARTNER_REPOSITORY = Symbol('PARTNER_REPOSITORY');
+export const CAREER_REPOSITORY = Symbol('CAREER_REPOSITORY');
+export const SOLUTION_REPOSITORY = Symbol('SOLUTION_REPOSITORY');
+export const HERO_REPOSITORY = Symbol('HERO_REPOSITORY');
+export const ORDER_REPOSITORY = Symbol('ORDER_REPOSITORY');
+export const QUOTE_REPOSITORY = Symbol('QUOTE_REPOSITORY');
+export const APPLICATION_REPOSITORY = Symbol('APPLICATION_REPOSITORY');
+export const AUTHOR_REPOSITORY = Symbol('AUTHOR_REPOSITORY');
+export const HOME_REPOSITORY = Symbol('HOME_REPOSITORY');
+export const NEWSLETTER_REPOSITORY = Symbol('NEWSLETTER_REPOSITORY');
 
 export const COLLECTIONS = {
   users: 'users',
@@ -34,6 +45,17 @@ export const COLLECTIONS = {
   news: 'news_articles',
   events: 'events',
   products: 'products',
+  services: 'services',
+  partners: 'partners',
+  careers: 'careers',
+  solutions: 'solutions',
+  hero: 'hero_slides',
+  orders: 'orders',
+  quotes: 'quotes',
+  applications: 'job_applications',
+  authors: 'authors',
+  homeSections: 'home_sections',
+  newsletter: 'newsletter_subscribers',
 } as const;
 
 export type CollectionName = (typeof COLLECTIONS)[keyof typeof COLLECTIONS];
@@ -55,4 +77,15 @@ export const PRISMA_MODEL_BY_COLLECTION: Record<string, string> = {
   news_articles: 'newsArticle',
   events: 'eventItem',
   products: 'product',
+  services: 'serviceItem',
+  partners: 'partner',
+  careers: 'career',
+  solutions: 'solutionCategory',
+  hero_slides: 'heroSlide',
+  orders: 'order',
+  quotes: 'quote',
+  job_applications: 'jobApplication',
+  authors: 'author',
+  home_sections: 'homeSection',
+  newsletter_subscribers: 'newsletterSubscriber',
 };

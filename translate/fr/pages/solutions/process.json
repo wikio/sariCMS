@@ -1,0 +1,37 @@
+{
+  "subtitle": "Notre Méthode",
+  "title": "Un accompagnement en 5 étapes",
+  "description": "De l'analyse de vos besoins à la maintenance de vos équipements, nous vous accompagnons à chaque étape",
+  "steps": [
+    {
+      "number": "01",
+      "icon": "search",
+      "title": "Analyse des besoins",
+      "desc": "Étude personnalisée de votre établissement et de vos contraintes techniques"
+    },
+    {
+      "number": "02",
+      "icon": "clipboard-list",
+      "title": "Proposition sur mesure",
+      "desc": "Sélection des équipements adaptés avec devis détaillé et planning d'installation"
+    },
+    {
+      "number": "03",
+      "icon": "truck",
+      "title": "Livraison & Installation",
+      "desc": "Livraison sécurisée et installation par nos techniciens certifiés"
+    },
+    {
+      "number": "04",
+      "icon": "graduation-cap",
+      "title": "Formation des équipes",
+      "desc": "Formation complète de vos équipes à l'utilisation des nouveaux équipements"
+    },
+    {
+      "number": "05",
+      "icon": "wrench",
+      "title": "Maintenance & Support",
+      "desc": "Maintenance préventive et support technique 24/7 pour une disponibilité optimale"
+    }
+  ]
+}

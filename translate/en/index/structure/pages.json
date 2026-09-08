@@ -1,0 +1,30 @@
+{
+  "label": "Pages",
+  "icon": "file-text",
+  "files": [
+    "about",
+    "careers",
+    "cart",
+    "contact",
+    "dashboard",
+    "eventDetail",
+    "events",
+    "genericContent",
+    "jobs",
+    "legal",
+    "login",
+    "news",
+    "newsDetail",
+    "payment",
+    "productDetail",
+    "products",
+    "register",
+    "search",
+    "serviceDetail",
+    "services",
+    "solutionCategory",
+    "solutionDetail",
+    "solutions",
+    "verification"
+  ]
+}

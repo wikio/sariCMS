@@ -1,0 +1,12 @@
+{
+  "label": "التخطيط",
+  "icon": "layout",
+  "files": [
+    "FloatingCartButton",
+    "Footer",
+    "header",
+    "LoadingSpinner",
+    "NotFound",
+    "SearchHeader"
+  ]
+}

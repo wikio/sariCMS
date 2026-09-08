@@ -1,6 +1,6 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-The CMS API lives in [`backend/`](./backend/README.md) (NestJS, JWT + 2FA, multi-driver MySQL/PostgreSQL/MongoDB/JSON). Start it with `cd backend && npm install && npm run seed && npm run start:dev` then open `/api/v1/docs`.
+The CMS API lives in [`backend/`](./backend/README.md) (NestJS, JWT + 2FA, multi-driver MySQL/PostgreSQL/MongoDB/JSON, groups 1–3). Start it with `cd backend && npm install && npm run seed && npm run start:dev` then open `/api/v1/docs`. The Next.js storefront reads `/api/v1/public/*` first and falls back to `data/{locale}/*.json`. Admin login uses the seed account `admin@sarisysteme.com` / `ChangeMe_Sari2026!`.
 
 ## Getting Started
 

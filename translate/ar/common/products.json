@@ -1,0 +1,20 @@
+{
+  "title": "منتجاتنا",
+  "catalog": "الكتالوج",
+  "allCategories": "جميع الفئات",
+  "inStock": "متوفر",
+  "outOfStock": "غير متوفر",
+  "onQuote": "حسب العرض",
+  "addToQuote": "أضف إلى العرض",
+  "viewProduct": "عرض المنتج",
+  "specifications": "المواصفات التقنية",
+  "features": "المميزات",
+  "relatedProducts": "منتجات مشابهة",
+  "filter": "تصفية",
+  "sortBy": "ترتيب حسب",
+  "relevance": "الأهمية",
+  "nameAsc": "الاسم (أ-ي)",
+  "nameDesc": "الاسم (ي-أ)",
+  "priceAsc": "السعر تصاعدي",
+  "priceDesc": "السعر تنازلي"
+}

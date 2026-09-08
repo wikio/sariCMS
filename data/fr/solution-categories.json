@@ -1,13 +1,19 @@
 [
   {
     "id": "diagnostic",
+    "slug": "diagnostic-imagerie",
+    "legacyId": "sol-diagnostic",
     "title": "Diagnostic & Imagerie",
     "shortDesc": "Échographes, tensiomètres, stéthoscopes et équipements de diagnostic de haute précision.",
     "fullDesc": "<p>Notre gamme de solutions de diagnostic et d'imagerie est conçue pour offrir une précision inégalée aux professionnels de santé. Nous proposons des équipements certifiés CE et conformes aux normes ISO 13485.</p><p>Que vous soyez un cabinet privé ou un grand hôpital, nous avons la solution adaptée à vos besoins spécifiques.</p>",
     "icon": "stethoscope",
     "color": "sari-blue",
     "image": "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=1920",
-    "productIds": [1, 4, 5],
+    "productIds": [
+      1,
+      4,
+      5
+    ],
     "features": [
       "Imagerie haute résolution 4D",
       "Connectivité WiFi et Bluetooth",
@@ -17,20 +23,45 @@
       "Livraison et installation incluses"
     ],
     "faq": [
-      { "q": "Quels types d'échographes proposez-vous ?", "a": "Nous proposons des échographes portables et fixes, avec différentes configurations de sondes (convexe, linéaire, endocavitaire). Tous nos appareils sont certifiés CE et conformes ISO 13485." },
-      { "q": "Les tensiomètres sont-ils certifiés médicaux ?", "a": "Oui, tous nos tensiomètres sont des dispositifs médicaux de classe IIa, certifiés CE avec validation clinique selon le protocole ESH." },
-      { "q": "Proposez-vous la formation à l'utilisation ?", "a": "Oui, une session de formation de base est incluse avec chaque achat. Des formations avancées sont disponibles en option." }
+      {
+        "q": "Quels types d'échographes proposez-vous ?",
+        "a": "Nous proposons des échographes portables et fixes, avec différentes configurations de sondes (convexe, linéaire, endocavitaire). Tous nos appareils sont certifiés CE et conformes ISO 13485."
+      },
+      {
+        "q": "Les tensiomètres sont-ils certifiés médicaux ?",
+        "a": "Oui, tous nos tensiomètres sont des dispositifs médicaux de classe IIa, certifiés CE avec validation clinique selon le protocole ESH."
+      },
+      {
+        "q": "Proposez-vous la formation à l'utilisation ?",
+        "a": "Oui, une session de formation de base est incluse avec chaque achat. Des formations avancées sont disponibles en option."
+      },
+      {
+        "q": "Proposez-vous une démonstration avant l’achat ?",
+        "a": "Nous organisons une démonstration dans votre service, avec vos propres cas d'usage, ou une visite de site chez un confrère déjà équipé. C'est la meilleure façon de valider l'ergonomie avec les utilisateurs finaux."
+      },
+      {
+        "q": "Quelle garantie couvre ces équipements ?",
+        "a": "La garantie constructeur est de 24 mois pièces et main-d'œuvre, extensible à 60 mois. Elle couvre les défauts de fabrication et inclut les mises à jour logicielles de sécurité."
+      },
+      {
+        "q": "Ces dispositifs s’intègrent-ils à notre système d’information ?",
+        "a": "Les appareils communicants sont compatibles DICOM et HL7, ce qui permet leur raccordement à un PACS ou à un dossier patient informatisé existant. Notre équipe technique valide l'interopérabilité avant la mise en production."
+      }
     ]
   },
   {
     "id": "cardiology",
+    "slug": "cardiologie",
+    "legacyId": "sol-cardiology",
     "title": "Cardiologie",
     "shortDesc": "ECG, défibrillateurs, moniteurs cardiaques et holters pour une surveillance optimale.",
     "fullDesc": "<p>La cardiologie exige une fiabilité absolue. Nos équipements de surveillance cardiaque et de défibrillation sont conçus pour les situations d'urgence comme pour le suivi quotidien.</p>",
     "icon": "heart-pulse",
     "color": "red-500",
     "image": "https://images.unsplash.com/photo-1559757175-5700dde675bc?w=1920",
-    "productIds": [7],
+    "productIds": [
+      7
+    ],
     "features": [
       "ECG 3/5/12 dérivations",
       "Défibrillateurs DSA et DAE",
@@ -40,12 +71,32 @@
       "Support technique 24/7"
     ],
     "faq": [
-      { "q": "Vos ECG sont-ils 12 dérivations ?", "a": "Oui, nous proposons des ECG 3, 6 et 12 dérivations selon vos besoins. Tous nos ECG disposent d'un écran tactile et d'une imprimante thermique intégrée." },
-      { "q": "Les défibrillateurs sont-ils faciles à utiliser ?", "a": "Oui, tous nos DSA sont conçus pour une utilisation simple avec guide vocal pas à pas et analyse automatique du rythme en moins de 10 secondes." }
+      {
+        "q": "Vos ECG sont-ils 12 dérivations ?",
+        "a": "Oui, nous proposons des ECG 3, 6 et 12 dérivations selon vos besoins. Tous nos ECG disposent d'un écran tactile et d'une imprimante thermique intégrée."
+      },
+      {
+        "q": "Les défibrillateurs sont-ils faciles à utiliser ?",
+        "a": "Oui, tous nos DSA sont conçus pour une utilisation simple avec guide vocal pas à pas et analyse automatique du rythme en moins de 10 secondes."
+      },
+      {
+        "q": "Proposez-vous une démonstration avant l’achat ?",
+        "a": "Nous organisons une démonstration dans votre service, avec vos propres cas d'usage, ou une visite de site chez un confrère déjà équipé. C'est la meilleure façon de valider l'ergonomie avec les utilisateurs finaux."
+      },
+      {
+        "q": "Quelle garantie couvre ces équipements ?",
+        "a": "La garantie constructeur est de 24 mois pièces et main-d'œuvre, extensible à 60 mois. Elle couvre les défauts de fabrication et inclut les mises à jour logicielles de sécurité."
+      },
+      {
+        "q": "Ces dispositifs s’intègrent-ils à notre système d’information ?",
+        "a": "Les appareils communicants sont compatibles DICOM et HL7, ce qui permet leur raccordement à un PACS ou à un dossier patient informatisé existant. Notre équipe technique valide l'interopérabilité avant la mise en production."
+      }
     ]
   },
   {
     "id": "imagerie",
+    "slug": "imagerie-medicale",
+    "legacyId": "sol-imagerie",
     "title": "Imagerie Médicale",
     "shortDesc": "Scanners CT, IRM, radiologie numérique et solutions PACS/RIS.",
     "fullDesc": "<p>Nos solutions d'imagerie médicale couvrent l'ensemble des besoins diagnostiques des établissements de santé. Du scanner CT 16 coupes à l'IRM 3T, nous proposons des équipements de dernière génération.</p>",
@@ -62,19 +113,42 @@
       "Maintenance préventive"
     ],
     "faq": [
-      { "q": "Proposez-vous des scanners CT ?", "a": "Oui, nous proposons une gamme complète de scanners CT, de 16 à 128 coupes, avec installation et formation incluses." },
-      { "q": "Les IRM sont-ils compatibles avec tous les patients ?", "a": "Oui, nos IRM sont adaptés à tous les profils de patients, y compris les enfants et les personnes claustrophobes." }
+      {
+        "q": "Proposez-vous des scanners CT ?",
+        "a": "Oui, nous proposons une gamme complète de scanners CT, de 16 à 128 coupes, avec installation et formation incluses."
+      },
+      {
+        "q": "Les IRM sont-ils compatibles avec tous les patients ?",
+        "a": "Oui, nos IRM sont adaptés à tous les profils de patients, y compris les enfants et les personnes claustrophobes."
+      },
+      {
+        "q": "Proposez-vous une démonstration avant l’achat ?",
+        "a": "Nous organisons une démonstration dans votre service, avec vos propres cas d'usage, ou une visite de site chez un confrère déjà équipé. C'est la meilleure façon de valider l'ergonomie avec les utilisateurs finaux."
+      },
+      {
+        "q": "Quelle garantie couvre ces équipements ?",
+        "a": "La garantie constructeur est de 24 mois pièces et main-d'œuvre, extensible à 60 mois. Elle couvre les défauts de fabrication et inclut les mises à jour logicielles de sécurité."
+      },
+      {
+        "q": "Ces dispositifs s’intègrent-ils à notre système d’information ?",
+        "a": "Les appareils communicants sont compatibles DICOM et HL7, ce qui permet leur raccordement à un PACS ou à un dossier patient informatisé existant. Notre équipe technique valide l'interopérabilité avant la mise en production."
+      }
     ]
   },
   {
     "id": "surgery",
+    "slug": "chirurgie",
+    "legacyId": "sol-surgery",
     "title": "Chirurgie",
     "shortDesc": "Instruments chirurgicaux, autoclaves, lampes scialytiques et tables opératoires.",
     "fullDesc": "<p>Notre département chirurgie propose tous les équipements nécessaires aux blocs opératoires modernes, de la stérilisation à l'éclairage, en passant par les instruments de précision.</p>",
     "icon": "syringe",
     "color": "green-500",
     "image": "https://images.unsplash.com/photo-1551076805-e1869033e561?w=1920",
-    "productIds": [3, 9],
+    "productIds": [
+      3,
+      9
+    ],
     "features": [
       "Instruments chirurgicaux inox",
       "Autoclaves classe B",
@@ -84,19 +158,41 @@
       "Maintenance et SAV"
     ],
     "faq": [
-      { "q": "Vos autoclaves sont-ils classe B ?", "a": "Oui, tous nos autoclaves sont classe B, conformes aux normes européennes EN 13060, avec cycle de séchage sous vide et traçabilité complète." },
-      { "q": "Les lampes scialytiques sont-elles LED ?", "a": "Oui, toutes nos lampes scialytiques sont LED avec une durée de vie de 50 000 heures, un IRC > 95 et une intensité jusqu'à 150 000 Lux." }
+      {
+        "q": "Vos autoclaves sont-ils classe B ?",
+        "a": "Oui, tous nos autoclaves sont classe B, conformes aux normes européennes EN 13060, avec cycle de séchage sous vide et traçabilité complète."
+      },
+      {
+        "q": "Les lampes scialytiques sont-elles LED ?",
+        "a": "Oui, toutes nos lampes scialytiques sont LED avec une durée de vie de 50 000 heures, un IRC > 95 et une intensité jusqu'à 150 000 Lux."
+      },
+      {
+        "q": "Proposez-vous une démonstration avant l’achat ?",
+        "a": "Nous organisons une démonstration dans votre service, avec vos propres cas d'usage, ou une visite de site chez un confrère déjà équipé. C'est la meilleure façon de valider l'ergonomie avec les utilisateurs finaux."
+      },
+      {
+        "q": "Quelle garantie couvre ces équipements ?",
+        "a": "La garantie constructeur est de 24 mois pièces et main-d'œuvre, extensible à 60 mois. Elle couvre les défauts de fabrication et inclut les mises à jour logicielles de sécurité."
+      },
+      {
+        "q": "Ces dispositifs s’intègrent-ils à notre système d’information ?",
+        "a": "Les appareils communicants sont compatibles DICOM et HL7, ce qui permet leur raccordement à un PACS ou à un dossier patient informatisé existant. Notre équipe technique valide l'interopérabilité avant la mise en production."
+      }
     ]
   },
   {
     "id": "pediatrics",
+    "slug": "pediatrie",
+    "legacyId": "sol-pediatrics",
     "title": "Pédiatrie",
     "shortDesc": "Couveuses néonatales, balances pédiatriques, photothérapie et matériel adapté.",
     "fullDesc": "<p>Notre gamme pédiatrique est spécialement conçue pour les soins des nouveau-nés et des enfants, avec des équipements adaptés, sécurisés et doux.</p>",
     "icon": "baby",
     "color": "pink-500",
     "image": "https://images.unsplash.com/photo-1583947215259-38e31be8751f?w=1920",
-    "productIds": [12],
+    "productIds": [
+      12
+    ],
     "features": [
       "Couveuses néonatales",
       "Balances pédiatriques 5g",
@@ -106,19 +202,42 @@
       "Matériel adapté enfants"
     ],
     "faq": [
-      { "q": "Les couveuses sont-elles adaptées aux prématurés ?", "a": "Oui, nos couveuses sont adaptées aux prématurés dès 28 semaines de gestation, avec contrôle précis de la température, humidité et oxygène." },
-      { "q": "Les balances sont-elles précises ?", "a": "Oui, nos balances pédiatriques ont une précision de 5g avec fonction maintien (Hold) pour les bébés agités et fonction tare pour les couches." }
+      {
+        "q": "Les couveuses sont-elles adaptées aux prématurés ?",
+        "a": "Oui, nos couveuses sont adaptées aux prématurés dès 28 semaines de gestation, avec contrôle précis de la température, humidité et oxygène."
+      },
+      {
+        "q": "Les balances sont-elles précises ?",
+        "a": "Oui, nos balances pédiatriques ont une précision de 5g avec fonction maintien (Hold) pour les bébés agités et fonction tare pour les couches."
+      },
+      {
+        "q": "Proposez-vous une démonstration avant l’achat ?",
+        "a": "Nous organisons une démonstration dans votre service, avec vos propres cas d'usage, ou une visite de site chez un confrère déjà équipé. C'est la meilleure façon de valider l'ergonomie avec les utilisateurs finaux."
+      },
+      {
+        "q": "Quelle garantie couvre ces équipements ?",
+        "a": "La garantie constructeur est de 24 mois pièces et main-d'œuvre, extensible à 60 mois. Elle couvre les défauts de fabrication et inclut les mises à jour logicielles de sécurité."
+      },
+      {
+        "q": "Ces dispositifs s’intègrent-ils à notre système d’information ?",
+        "a": "Les appareils communicants sont compatibles DICOM et HL7, ce qui permet leur raccordement à un PACS ou à un dossier patient informatisé existant. Notre équipe technique valide l'interopérabilité avant la mise en production."
+      }
     ]
   },
   {
     "id": "emergency",
+    "slug": "urgence-reanimation",
+    "legacyId": "sol-emergency",
     "title": "Urgence & Réanimation",
     "shortDesc": "Défibrillateurs, chariots d'urgence, moniteurs multiparamètres et aspirateurs.",
     "fullDesc": "<p>Le service des urgences nécessite des équipements fiables et disponibles 24h/24. Nos solutions sont conçues pour la rapidité, la robustesse et l'efficacité en situation critique.</p>",
     "icon": "activity",
     "color": "orange-500",
     "image": "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=1920",
-    "productIds": [7, 15],
+    "productIds": [
+      7,
+      15
+    ],
     "features": [
       "Défibrillateurs DSA/DAE",
       "Chariots d'urgence complets",
@@ -128,12 +247,32 @@
       "Support 24/7 garanti"
     ],
     "faq": [
-      { "q": "Les défibrillateurs sont-ils automatiques ?", "a": "Oui, nous proposons des DSA (semi-automatiques) et DAE (entièrement automatiques) avec guide vocal et analyse du rythme en moins de 10 secondes." },
-      { "q": "Les chariots d'urgence sont-ils complets ?", "a": "Oui, nos chariots sont livrés avec tout le matériel nécessaire : défibrillateur, moniteur, aspirateur, oxygène et médicaments d'urgence." }
+      {
+        "q": "Les défibrillateurs sont-ils automatiques ?",
+        "a": "Oui, nous proposons des DSA (semi-automatiques) et DAE (entièrement automatiques) avec guide vocal et analyse du rythme en moins de 10 secondes."
+      },
+      {
+        "q": "Les chariots d'urgence sont-ils complets ?",
+        "a": "Oui, nos chariots sont livrés avec tout le matériel nécessaire : défibrillateur, moniteur, aspirateur, oxygène et médicaments d'urgence."
+      },
+      {
+        "q": "Proposez-vous une démonstration avant l’achat ?",
+        "a": "Nous organisons une démonstration dans votre service, avec vos propres cas d'usage, ou une visite de site chez un confrère déjà équipé. C'est la meilleure façon de valider l'ergonomie avec les utilisateurs finaux."
+      },
+      {
+        "q": "Quelle garantie couvre ces équipements ?",
+        "a": "La garantie constructeur est de 24 mois pièces et main-d'œuvre, extensible à 60 mois. Elle couvre les défauts de fabrication et inclut les mises à jour logicielles de sécurité."
+      },
+      {
+        "q": "Ces dispositifs s’intègrent-ils à notre système d’information ?",
+        "a": "Les appareils communicants sont compatibles DICOM et HL7, ce qui permet leur raccordement à un PACS ou à un dossier patient informatisé existant. Notre équipe technique valide l'interopérabilité avant la mise en production."
+      }
     ]
   },
   {
     "id": "informatics",
+    "slug": "informatique-medicale",
+    "legacyId": "sol-informatics",
     "title": "Informatique Médicale",
     "shortDesc": "DMP, télémédecine, PACS/RIS et cybersécurité HDS.",
     "fullDesc": "<p>Notre département d'informatique médicale propose des solutions complètes et sécurisées pour la digitalisation et la gestion des données des établissements de santé.</p>",
@@ -150,12 +289,32 @@
       "Applications mobiles"
     ],
     "faq": [
-      { "q": "Vos solutions DMP sont-elles conformes HDS ?", "a": "Oui, toutes nos solutions DMP sont certifiées HDS (Hébergeur de Données de Santé) et conformes au RGPD et à la réglementation algérienne." },
-      { "q": "Proposez-vous des solutions de télémédecine ?", "a": "Oui, nous proposons des solutions complètes de téléconsultation, téléexpertise et télésurveillance avec visioconférence HD sécurisée." }
+      {
+        "q": "Vos solutions DMP sont-elles conformes HDS ?",
+        "a": "Oui, toutes nos solutions DMP sont certifiées HDS (Hébergeur de Données de Santé) et conformes au RGPD et à la réglementation algérienne."
+      },
+      {
+        "q": "Proposez-vous des solutions de télémédecine ?",
+        "a": "Oui, nous proposons des solutions complètes de téléconsultation, téléexpertise et télésurveillance avec visioconférence HD sécurisée."
+      },
+      {
+        "q": "Proposez-vous une démonstration avant l’achat ?",
+        "a": "Nous organisons une démonstration dans votre service, avec vos propres cas d'usage, ou une visite de site chez un confrère déjà équipé. C'est la meilleure façon de valider l'ergonomie avec les utilisateurs finaux."
+      },
+      {
+        "q": "Quelle garantie couvre ces équipements ?",
+        "a": "La garantie constructeur est de 24 mois pièces et main-d'œuvre, extensible à 60 mois. Elle couvre les défauts de fabrication et inclut les mises à jour logicielles de sécurité."
+      },
+      {
+        "q": "Ces dispositifs s’intègrent-ils à notre système d’information ?",
+        "a": "Les appareils communicants sont compatibles DICOM et HL7, ce qui permet leur raccordement à un PACS ou à un dossier patient informatisé existant. Notre équipe technique valide l'interopérabilité avant la mise en production."
+      }
     ]
   },
   {
     "id": "laboratory",
+    "slug": "laboratoire",
+    "legacyId": "sol-laboratory",
     "title": "Laboratoire",
     "shortDesc": "Analyseurs d'hématologie, biochimie, microscopes et centrifugeuses.",
     "fullDesc": "<p>Notre gamme de laboratoire couvre tous les besoins des laboratoires d'analyses médicales, de l'entrée de gamme au haut débit, avec une précision analytique garantie.</p>",
@@ -172,19 +331,41 @@
       "Réactifs et consommables"
     ],
     "faq": [
-      { "q": "Quels types d'analyseurs proposez-vous ?", "a": "Nous proposons des analyseurs d'hématologie, biochimie, immunologie et coagulation, de l'entrée de gamme au haut débit." },
-      { "q": "Les réactifs sont-ils inclus ?", "a": "Les réactifs de démarrage sont inclus avec chaque analyseur. Nous proposons ensuite des contrats de fourniture à tarifs préférentiels." }
+      {
+        "q": "Quels types d'analyseurs proposez-vous ?",
+        "a": "Nous proposons des analyseurs d'hématologie, biochimie, immunologie et coagulation, de l'entrée de gamme au haut débit."
+      },
+      {
+        "q": "Les réactifs sont-ils inclus ?",
+        "a": "Les réactifs de démarrage sont inclus avec chaque analyseur. Nous proposons ensuite des contrats de fourniture à tarifs préférentiels."
+      },
+      {
+        "q": "Proposez-vous une démonstration avant l’achat ?",
+        "a": "Nous organisons une démonstration dans votre service, avec vos propres cas d'usage, ou une visite de site chez un confrère déjà équipé. C'est la meilleure façon de valider l'ergonomie avec les utilisateurs finaux."
+      },
+      {
+        "q": "Quelle garantie couvre ces équipements ?",
+        "a": "La garantie constructeur est de 24 mois pièces et main-d'œuvre, extensible à 60 mois. Elle couvre les défauts de fabrication et inclut les mises à jour logicielles de sécurité."
+      },
+      {
+        "q": "Ces dispositifs s’intègrent-ils à notre système d’information ?",
+        "a": "Les appareils communicants sont compatibles DICOM et HL7, ce qui permet leur raccordement à un PACS ou à un dossier patient informatisé existant. Notre équipe technique valide l'interopérabilité avant la mise en production."
+      }
     ]
   },
   {
     "id": "rehabilitation",
+    "slug": "reeducation",
+    "legacyId": "sol-rehabilitation",
     "title": "Rééducation",
     "shortDesc": "Tables de kinésithérapie, électrothérapie, ultrasons thérapeutiques.",
     "fullDesc": "<p>Notre département de rééducation propose des équipements professionnels et ergonomiques pour les centres de kinésithérapie et de réadaptation fonctionnelle.</p>",
     "icon": "accessibility",
     "color": "cyan-500",
     "image": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1920",
-    "productIds": [14],
+    "productIds": [
+      14
+    ],
     "features": [
       "Tables de kinésithérapie",
       "Appareils d'électrothérapie",
@@ -194,8 +375,26 @@
       "Matériel certifié CE"
     ],
     "faq": [
-      { "q": "Proposez-vous du matériel de rééducation neurologique ?", "a": "Oui, nous proposons des plateformes de rééducation neurologique, des exosquelettes et des systèmes de réalité virtuelle." },
-      { "q": "Les appareils d'électrothérapie sont-ils multifonctions ?", "a": "Oui, nos appareils combinent TENS, EMS, ultrasons et laser thérapeutique dans un seul dispositif compact." }
+      {
+        "q": "Proposez-vous du matériel de rééducation neurologique ?",
+        "a": "Oui, nous proposons des plateformes de rééducation neurologique, des exosquelettes et des systèmes de réalité virtuelle."
+      },
+      {
+        "q": "Les appareils d'électrothérapie sont-ils multifonctions ?",
+        "a": "Oui, nos appareils combinent TENS, EMS, ultrasons et laser thérapeutique dans un seul dispositif compact."
+      },
+      {
+        "q": "Proposez-vous une démonstration avant l’achat ?",
+        "a": "Nous organisons une démonstration dans votre service, avec vos propres cas d'usage, ou une visite de site chez un confrère déjà équipé. C'est la meilleure façon de valider l'ergonomie avec les utilisateurs finaux."
+      },
+      {
+        "q": "Quelle garantie couvre ces équipements ?",
+        "a": "La garantie constructeur est de 24 mois pièces et main-d'œuvre, extensible à 60 mois. Elle couvre les défauts de fabrication et inclut les mises à jour logicielles de sécurité."
+      },
+      {
+        "q": "Ces dispositifs s’intègrent-ils à notre système d’information ?",
+        "a": "Les appareils communicants sont compatibles DICOM et HL7, ce qui permet leur raccordement à un PACS ou à un dossier patient informatisé existant. Notre équipe technique valide l'interopérabilité avant la mise en production."
+      }
     ]
   }
 ]

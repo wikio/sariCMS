@@ -1,0 +1,23 @@
+{
+  "title": "Éditeur de pages",
+  "description": "Sélectionnez une page à éditer. Les modifications seront appliquées en temps réel sur le site.",
+  "home": "Accueil",
+  "about": "À propos",
+  "solutions": "Solutions",
+  "services": "Services",
+  "products": "Produits",
+  "careers": "Carrières",
+  "news": "Actualités",
+  "events": "Événements",
+  "contact": "Contact",
+  "editPage": "Éditer :",
+  "phase1Info": "Phase 1 : L'édition inline des pages sera disponible dans la Phase 2 avec le backend. Pour le moment, utilisez les éditeurs de données (Produits, Services, etc.) pour modifier le contenu.",
+  "pageTitle": "Titre de la page",
+  "metaDescription": "Meta description (SEO)",
+  "metaPlaceholder": "Description pour les moteurs de recherche...",
+  "mainContent": "Contenu principal (HTML)",
+  "wysiwygPhase2": "Éditeur WYSIWYG disponible en Phase 2",
+  "cancel": "Annuler",
+  "save": "Sauvegarder",
+  "saveSuccess": "Modifications sauvegardées !"
+}

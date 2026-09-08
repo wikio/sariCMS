@@ -1,0 +1,9 @@
+{
+  "no-longer-wants": "Je ne souhaite plus recevoir ces courriels",
+  "too-many-emails": "Trop de courriels",
+  "not-relevant": "Ce contenu ne me concerne pas",
+  "never-subscribed": "Je ne me souviens pas m’être inscrit",
+  "other": "Autre motif",
+  "unspecified": "Sans motif indiqué",
+  "unsubscribed-by-admin": "Retrait effectué depuis le back-office"
+}

@@ -4,7 +4,9 @@ export type Locale = (typeof locales)[number];
 
 export const defaultLocale: Locale = 'fr';
 
-export function isRtl(locale: Locale): boolean {
+// Accepte une chaîne quelconque : la locale provient souvent des params de
+// route, typés `string`, avant toute validation.
+export function isRtl(locale: Locale | string): boolean {
   return locale === 'ar';
 }
 

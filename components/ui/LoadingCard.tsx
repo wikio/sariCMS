@@ -41,7 +41,7 @@ export default function LoadingCard({ variant = 'product', count = 1 }: LoadingC
     </div>
   );
 
-  const renderers: Record<string, (key: number) => JSX.Element> = {
+  const renderers: Record<string, (key: number) => React.ReactElement> = {
     product: renderProduct,
     event: renderEvent,
     news: renderNews,

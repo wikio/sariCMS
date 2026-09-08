@@ -1,0 +1,14 @@
+{
+  "success": "Succès",
+  "error": "Erreur",
+  "warning": "Attention",
+  "info": "Information",
+  "loading": "Chargement...",
+  "noResults": "Aucun résultat trouvé",
+  "confirm": "Confirmer",
+  "areYouSure": "Êtes-vous sûr ?",
+  "captchaIncorrect": "Réponse CAPTCHA incorrecte",
+  "blocked": "Trop de tentatives. Veuillez rafraîchir la page.",
+  "loginError": "Email, mot de passe ou type de compte incorrect",
+  "connectionError": "Erreur de chargement des données"
+}

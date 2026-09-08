@@ -28,7 +28,6 @@
   "noResults": "No products found",
   "noResultsDesc": "No products match your search criteria.",
   "resetFilters": "Reset filters",
-  "found": "found",
-  "products": "products",
-  "product": "product"
+  "product": "product",
+  "found": "found"
 }

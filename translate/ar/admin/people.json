@@ -1,0 +1,9 @@
+{
+  "crm": "CRM",
+  "active": "نشط",
+  "pending": "قيد الانتظار",
+  "blocked": "محظور",
+  "firstName": "الاسم الأول",
+  "open": "فتح",
+  "company": "الشركة"
+}

@@ -24,5 +24,9 @@
   "optionPayDesc": "Complete payment without creating an account",
   "optionQuote": "Request a Quote",
   "optionQuoteDesc": "Receive a personalized quote within 24 hours",
-  "cancel": "Cancel"
+  "cancel": "Cancel",
+  "preparingPayment": "Preparing payment",
+  "preparingPaymentDesc": "Your order is being created, you will be redirected.",
+  "taxIncluded": "included",
+  "captchaRequired": "Please complete the anti-spam check"
 }

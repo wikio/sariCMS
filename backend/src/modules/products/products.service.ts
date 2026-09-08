@@ -13,7 +13,7 @@ export class ProductsService extends BaseCrudService<ProductEntity> {
   protected readonly options: CrudServiceOptions = {
     resource: 'products',
     searchFields: ['name', 'shortDesc', 'category', 'sku'],
-    sortableFields: ['createdAt', 'updatedAt', 'name', 'category', 'price'],
+    sortableFields: ['createdAt', 'updatedAt', 'name', 'category', 'price', 'sortOrder'],
     listFields: ['id', 'slug', 'name', 'category', 'price', 'inStock', 'status'],
     cardFields: [
       'id',
@@ -42,12 +42,18 @@ export class ProductsService extends BaseCrudService<ProductEntity> {
     op: 'create' | 'update',
   ): Partial<ProductEntity> {
     const out = { ...dto };
+    if (out.slug === '') delete out.slug;
     if (!out.slug && out.name) out.slug = slugify(String(out.name));
     if (op === 'create') {
       out.locale = out.locale || 'fr';
       out.status = out.status || 'draft';
       if (out.inStock === undefined) out.inStock = true;
+      if (!out.sku) {
+        const stamp = Date.now().toString().slice(-5);
+        out.sku = `PRO-${stamp}`;
+      }
     }
     return out;
   }
+
 }

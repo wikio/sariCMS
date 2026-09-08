@@ -1,5 +1,8 @@
 {
   "subtitle": "الشهادات",
   "title": "يثقون بنا",
-  "description": "ماذا يقول عملاؤنا عنا"
+  "description": "ماذا يقول عملاؤنا عنا",
+  "previous": "السابق",
+  "next": "التالي",
+  "testimonialNumber": "الشهادة {number}"
 }

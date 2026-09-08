@@ -1,0 +1,43 @@
+{
+  "title": "Medical IT",
+  "desc": "EMR, telemedicine, PACS/RIS, HDS cybersecurity",
+  "icon": "monitor",
+  "image": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1920",
+  "productIds": [],
+  "features": [
+    {
+      "icon": "file-text",
+      "text": "Electronic Medical Records (EMR)"
+    },
+    {
+      "icon": "video",
+      "text": "Telemedicine and teleconsultation"
+    },
+    {
+      "icon": "image",
+      "text": "PACS/RIS solutions"
+    },
+    {
+      "icon": "lock",
+      "text": "HDS cybersecurity"
+    },
+    {
+      "icon": "database",
+      "text": "Health data hosting"
+    },
+    {
+      "icon": "smartphone",
+      "text": "Mobile applications"
+    }
+  ],
+  "faq": [
+    {
+      "q": "Are your EMR solutions HDS compliant?",
+      "a": "Yes, all HDS certified and GDPR compliant."
+    },
+    {
+      "q": "Do you offer telemedicine solutions?",
+      "a": "Yes, we provide complete teleconsultation, tele-expertise and remote monitoring solutions with secure HD video conferencing."
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "title": "مكتبة وسائط نظام المستندات",
+  "importBtn": "استيراد",
+  "importing": "جار الاستيراد…",
+  "close": "إغلاق",
+  "searchPlaceholder": "البحث عن ملف…",
+  "allModules": "جميع الوحدات",
+  "allCategories": "جميع الفئات",
+  "noFiles": "لا توجد ملفات",
+  "rename": "إعادة تسمية",
+  "replace": "استبدال",
+  "delete": "حذف",
+  "renameFile": "إعادة تسمية الملف",
+  "replaceFile": "استبدال {name}",
+  "selectFile": "اختر ملف",
+  "save": "حفظ",
+  "cancel": "إلغاء"
+}

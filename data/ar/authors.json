@@ -1,0 +1,142 @@
+[
+  {
+    "id": 1,
+    "legacyId": "author-1",
+    "slug": "dr-marie-laurent",
+    "name": "د. ماري لوران",
+    "role": "المديرة الطبية",
+    "bio": "متخصصة في التصوير الطبي، ترافق المؤسسات الصحية في اختيار معدات التشخيص وتشغيلها.",
+    "isFallback": false,
+    "sortOrder": 1
+  },
+  {
+    "id": 2,
+    "legacyId": "author-2",
+    "slug": "jean-dupont",
+    "name": "جون دوبون",
+    "role": "مدير الشراكات",
+    "bio": "يقود التحالفات الصناعية لساري سيستم وتطوير شبكة التوزيع في الجزائر.",
+    "isFallback": false,
+    "sortOrder": 2
+  },
+  {
+    "id": 3,
+    "legacyId": "author-3",
+    "slug": "service-formation",
+    "name": "قسم التدريب",
+    "role": "الفريق التربوي",
+    "bio": "يصمم الفريق برامج التدريب للممارسين والتقنيين الطبيين وينفذها.",
+    "isFallback": false,
+    "sortOrder": 3
+  },
+  {
+    "id": 4,
+    "legacyId": "author-4",
+    "slug": "direction-qualite",
+    "name": "إدارة الجودة",
+    "role": "إدارة الجودة والمطابقة",
+    "bio": "تسهر على احترام معايير الأيزو والمطابقة التنظيمية لكامل الكتالوج.",
+    "isFallback": false,
+    "sortOrder": 4
+  },
+  {
+    "id": 5,
+    "legacyId": "author-5",
+    "slug": "dr-philippe-martin",
+    "name": "د. فيليب مارتان",
+    "role": "استشاري النظافة والتعقيم",
+    "bio": "يقدم المشورة للعيادات حول بروتوكولات التعقيم والوقاية من مخاطر العدوى.",
+    "isFallback": false,
+    "sortOrder": 5
+  },
+  {
+    "id": 6,
+    "legacyId": "author-6",
+    "slug": "service-technique",
+    "name": "الخدمة التقنية",
+    "role": "مكتب الدراسات التقنية",
+    "bio": "يقيّم مكتب الدراسات أداء المعدات ويحرر أدلة التركيب.",
+    "isFallback": false,
+    "sortOrder": 6
+  },
+  {
+    "id": 7,
+    "legacyId": "author-7",
+    "slug": "equipe-sari",
+    "name": "فريق ساري",
+    "role": "تحرير ساري سيستم",
+    "bio": "ينشر فريق تحرير ساري سيستم أخبار الشركة وتقارير الفعاليات وإعلانات المنتجات.",
+    "isFallback": true,
+    "sortOrder": 7
+  },
+  {
+    "id": 8,
+    "legacyId": "author-8",
+    "slug": "service-juridique",
+    "name": "القسم القانوني",
+    "role": "الشؤون التنظيمية",
+    "bio": "يتابع القسم تطور التنظيمات الخاصة بالأجهزة الطبية ويشرح آثارها.",
+    "isFallback": false,
+    "sortOrder": 8
+  },
+  {
+    "id": 9,
+    "legacyId": "author-9",
+    "slug": "service-sav",
+    "name": "خدمة ما بعد البيع",
+    "role": "خدمة ما بعد البيع والصيانة",
+    "bio": "يضمن الفريق الصيانة الوقائية والتصحيحية للمعدات المركبة لدى عملائنا.",
+    "isFallback": false,
+    "sortOrder": 9
+  },
+  {
+    "id": 10,
+    "legacyId": "author-10",
+    "slug": "equipe-rse",
+    "name": "فريق المسؤولية المجتمعية",
+    "role": "المسؤولية المجتمعية للشركة",
+    "bio": "يقود الفريق الالتزامات البيئية للشركة والتصميم البيئي لمجموعات المنتجات.",
+    "isFallback": false,
+    "sortOrder": 10
+  },
+  {
+    "id": 11,
+    "legacyId": "author-11",
+    "slug": "dr-thomas-bernard",
+    "name": "د. توماس برنار",
+    "role": "أخصائي الطب عن بعد",
+    "bio": "يدرس استخدامات الطب عن بعد ويقدم الندوات الإلكترونية المخصصة للممارسة عن بعد.",
+    "isFallback": false,
+    "sortOrder": 11
+  },
+  {
+    "id": 12,
+    "legacyId": "author-12",
+    "slug": "service-rh",
+    "name": "قسم الموارد البشرية",
+    "role": "الموارد البشرية",
+    "bio": "ينشر القسم عروض العمل ويرافق المترشحين طوال مسار التوظيف.",
+    "isFallback": false,
+    "sortOrder": 12
+  },
+  {
+    "id": 13,
+    "legacyId": "author-13",
+    "slug": "service-commercial",
+    "name": "القسم التجاري",
+    "role": "الهندسة التجارية",
+    "bio": "يصمم الفريق حلول التجهيز المتكاملة ويوثق المشاريع المنجزة.",
+    "isFallback": false,
+    "sortOrder": 13
+  },
+  {
+    "id": 14,
+    "legacyId": "author-14",
+    "slug": "direction-innovation",
+    "name": "إدارة الابتكار",
+    "role": "إدارة الابتكار واليقظة التكنولوجية",
+    "bio": "تحلل اتجاهات السوق الطبي وتُعدّ مجموعات المنتجات المستقبلية.",
+    "isFallback": false,
+    "sortOrder": 14
+  }
+]

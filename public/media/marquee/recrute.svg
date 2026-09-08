@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Recrutement">
+  <defs>
+    <linearGradient id="b" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#C6DA34"/><stop offset="1" stop-color="#8FB017"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="360" fill="url(#b)"/>
+  <g fill="#0E2A38">
+    <circle cx="212" cy="132" r="44"/>
+    <path d="M140 268c0-40 32-72 72-72s72 32 72 72z"/>
+    <rect x="340" y="120" width="180" height="16" rx="8"/>
+    <rect x="340" y="156" width="140" height="16" rx="8"/>
+    <rect x="340" y="208" width="200" height="48" rx="24"/>
+  </g>
+</svg>

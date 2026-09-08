@@ -1,0 +1,20 @@
+{
+  "title": "Our Products",
+  "catalog": "Catalog",
+  "allCategories": "All Categories",
+  "inStock": "In Stock",
+  "outOfStock": "Out of Stock",
+  "onQuote": "On Quote",
+  "addToQuote": "Add to Quote",
+  "viewProduct": "View Product",
+  "specifications": "Technical Specifications",
+  "features": "Features",
+  "relatedProducts": "Related Products",
+  "filter": "Filter",
+  "sortBy": "Sort by",
+  "relevance": "Relevance",
+  "nameAsc": "Name (A-Z)",
+  "nameDesc": "Name (Z-A)",
+  "priceAsc": "Price (Low to High)",
+  "priceDesc": "Price (High to Low)"
+}

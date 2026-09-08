@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Query, Post, Patch } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Query, Post, Patch } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Actor } from '../../common/decorators/actor.decorator';
 import { CrudResource } from '../../common/decorators/crud-resource.decorator';
@@ -30,10 +30,11 @@ export class EventsController extends BaseCrudController<EventEntity> {
 
   @Patch(':id')
   override update(
-    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
-    @Body() dto: UpdateEventDto,
+    @Param('id', new ParseIntPipe()) id: number,
+    @Body() body: any,
     @Actor() actor: ActorContext,
   ) {
-    return this.service.update(id, dto as unknown as Partial<EventEntity>, actor);
+    console.log('[EventsController.update] Raw body received:', JSON.stringify(body, null, 2));
+    return this.service.update(id, body as Partial<EventEntity>, actor);
   }
 }

@@ -1,6 +1,5 @@
 {
   "previousPage": "الصفحة السابقة",
   "nextPage": "الصفحة التالية",
-  "pageInfo": "صفحة {current} من {total}",
-  "ellipsis": "..."
+  "pageInfo": "الصفحة {current} من {total}"
 }

@@ -1,0 +1,14 @@
+{
+  "subtitle": "Diagnostic",
+  "title": "La précision au service du diagnostic",
+  "desc": "Nos équipements de diagnostic permettent une détection précoce et précise des pathologies. Échographes portables, tensiomètres digitaux et microscopes de haute qualité pour un diagnostic fiable.",
+  "features": [
+    "Imagerie haute résolution",
+    "Portabilité optimisée",
+    "Connectivité Bluetooth/WiFi",
+    "Conformité CE et ISO"
+  ],
+  "cta": "Explorer le diagnostic",
+  "link": "#solutions/diagnostic",
+  "image": "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=1200"
+}

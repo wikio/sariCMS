@@ -1,0 +1,14 @@
+{
+  "icon": "accessibility",
+  "color": "cyan-500",
+  "title": "Rehabilitation",
+  "desc": "Physiotherapy, electrotherapy, adapted equipment and mobility",
+  "cta": "Discover",
+  "link": "#solutions/reeducation",
+  "features": [
+    "Physiotherapy tables",
+    "Electrotherapy",
+    "Wheelchairs",
+    "Mobility aids"
+  ]
+}

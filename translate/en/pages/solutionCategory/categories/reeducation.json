@@ -1,0 +1,45 @@
+{
+  "title": "Rehabilitation",
+  "desc": "Physiotherapy tables, electrotherapy, therapeutic ultrasound",
+  "icon": "accessibility",
+  "image": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1920",
+  "productIds": [
+    14
+  ],
+  "features": [
+    {
+      "icon": "accessibility",
+      "text": "Physiotherapy tables"
+    },
+    {
+      "icon": "zap",
+      "text": "Electrotherapy devices"
+    },
+    {
+      "icon": "waves",
+      "text": "Therapeutic ultrasound"
+    },
+    {
+      "icon": "dumbbell",
+      "text": "Exercise equipment"
+    },
+    {
+      "icon": "footprints",
+      "text": "Gait training platforms"
+    },
+    {
+      "icon": "shield-check",
+      "text": "CE-certified equipment"
+    }
+  ],
+  "faq": [
+    {
+      "q": "Do you offer neurological rehabilitation equipment?",
+      "a": "Yes, including virtual reality systems and exoskeletons."
+    },
+    {
+      "q": "Are the electrotherapy units multifunctional?",
+      "a": "Yes, our units combine TENS, EMS, ultrasound and therapeutic laser in a single compact device."
+    }
+  ]
+}

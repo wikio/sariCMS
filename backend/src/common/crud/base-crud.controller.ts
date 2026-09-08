@@ -5,7 +5,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
-  ParseUUIDPipe,
+  ParseIntPipe,
   Patch,
   Post,
   Query,
@@ -58,7 +58,7 @@ export abstract class BaseCrudController<T extends BaseEntity> {
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiQuery({ name: 'view', required: false, enum: VIEW_MODES })
   findOne(
-    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Param('id', new ParseIntPipe()) id: number,
     @Query('view') view?: string,
     @Query('includeDeleted') includeDeleted?: string,
   ) {
@@ -78,7 +78,7 @@ export abstract class BaseCrudController<T extends BaseEntity> {
   @Patch(':id')
   @ApiOperation({ summary: 'Mise à jour partielle' })
   update(
-    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Param('id', new ParseIntPipe()) id: number,
     @Body() dto: any,
     @Actor() actor: ActorContext,
   ) {
@@ -88,7 +88,7 @@ export abstract class BaseCrudController<T extends BaseEntity> {
   @Delete(':id')
   @ApiOperation({ summary: 'Suppression douce (envoie en corbeille)' })
   softDelete(
-    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Param('id', new ParseIntPipe()) id: number,
     @Actor() actor: ActorContext,
   ) {
     return this.service.softDelete(id, actor);
@@ -98,7 +98,7 @@ export abstract class BaseCrudController<T extends BaseEntity> {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Restaurer depuis la corbeille' })
   restore(
-    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Param('id', new ParseIntPipe()) id: number,
     @Actor() actor: ActorContext,
   ) {
     return this.service.restore(id, actor);
@@ -110,7 +110,7 @@ export abstract class BaseCrudController<T extends BaseEntity> {
     summary: 'Demander une suppression définitive (renvoie un jeton de confirmation)',
   })
   requestPurge(
-    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Param('id', new ParseIntPipe()) id: number,
     @Actor() actor: ActorContext,
   ) {
     return this.service.requestPurge(id, actor);
@@ -121,7 +121,7 @@ export abstract class BaseCrudController<T extends BaseEntity> {
     summary: 'Confirmer la suppression définitive avec le jeton reçu',
   })
   confirmPurge(
-    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Param('id', new ParseIntPipe()) id: number,
     @Query() query: PurgeConfirmDto,
     @Actor() actor: ActorContext,
   ) {

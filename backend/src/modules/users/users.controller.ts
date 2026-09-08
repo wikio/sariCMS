@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Query, Patch } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Post, Query, Patch } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { perm } from '../../common/constants/permissions';
 import { Actor } from '../../common/decorators/actor.decorator';
@@ -29,7 +29,7 @@ export class UsersController extends BaseCrudController<UserEntity> {
 
   @Patch(':id')
   override update(
-    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Param('id', new ParseIntPipe()) id: number,
     @Body() dto: UpdateUserDto,
     @Actor() actor: ActorContext,
   ) {
@@ -46,7 +46,7 @@ export class UsersController extends BaseCrudController<UserEntity> {
   @RequirePermissions(perm('users', 'admin'))
   @ApiOperation({ summary: 'Générer un mot de passe temporaire' })
   tempPassword(
-    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Param('id', new ParseIntPipe()) id: number,
     @Actor() actor: ActorContext,
   ) {
     return this.service.generateTempPassword(id, actor);
@@ -56,7 +56,7 @@ export class UsersController extends BaseCrudController<UserEntity> {
   @RequirePermissions(perm('users', 'admin'))
   @ApiOperation({ summary: 'Générer code partenaire + clé secrète' })
   partnerCode(
-    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Param('id', new ParseIntPipe()) id: number,
     @Actor() actor: ActorContext,
   ) {
     return this.service.generatePartnerCredentials(id, actor);

@@ -9,6 +9,7 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
+import { SLUG_REGEX, SLUG_MESSAGE } from '../../../common/validation/slug';
 
 export class CreateEventDto {
   @ApiProperty()
@@ -20,7 +21,7 @@ export class CreateEventDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  @Matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+  @Matches(SLUG_REGEX, { message: SLUG_MESSAGE })
   @MaxLength(180)
   slug?: string;
 
@@ -38,10 +39,31 @@ export class CreateEventDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsDateString()
-  date?: string;
+  @IsString()
+  @MaxLength(80)
+  category?: string;
 
   @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  targetAudience?: string;
+
+  @ApiPropertyOptional({ 
+    description: 'DEPRECATED: Utilisez startDate à la place. Gardé pour rétrocompatibilité.',
+    deprecated: true 
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  date?: string;
+
+  @ApiPropertyOptional({ description: 'Date et heure de début (ISO-8601)' })
+  @IsOptional()
+  @IsDateString()
+  startDate?: string;
+
+  @ApiPropertyOptional({ description: 'Date et heure de fin (ISO-8601)' })
   @IsOptional()
   @IsDateString()
   endDate?: string;

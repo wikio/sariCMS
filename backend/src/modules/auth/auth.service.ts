@@ -7,7 +7,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
-import { createHash, randomBytes, randomUUID } from 'crypto';
+import { createHash, randomBytes } from 'crypto';
 import { authenticator } from 'otplib';
 import * as QRCode from 'qrcode';
 import { SUPER_ADMIN_SLUG } from '../../common/constants/permissions';
@@ -25,7 +25,7 @@ import { PermissionEntity, RoleEntity } from '../roles/entities/role.entity';
 import { LoginDto, TwoFaLoginDto } from './dto/auth.dto';
 
 interface RefreshTokenEntity extends BaseEntity {
-  userId: string;
+  userId: number;
   tokenHash: string;
   expiresAt: Date | string;
   revokedAt?: Date | string | null;
@@ -76,7 +76,7 @@ export class AuthService {
   }
 
   async verifyTwoFactor(dto: TwoFaLoginDto, meta: { ip?: string; userAgent?: string }) {
-    let payload: { sub: string; typ?: string };
+    let payload: { sub: string | number; typ?: string };
     try {
       payload = this.jwt.verify(dto.challengeToken, {
         secret: this.config.get('JWT_ACCESS_SECRET'),
@@ -85,7 +85,13 @@ export class AuthService {
       throw new UnauthorizedException('Invalid or expired 2FA challenge');
     }
     if (payload.typ !== '2fa') throw new UnauthorizedException('Invalid token type');
-    const user = await this.users.findById(payload.sub);
+    // `sub` peut être un entier (MySQL/Postgres) ou un UUID (driver JSON) :
+    // Number('c5c1...') vaut NaN et faisait échouer toute requête authentifiée.
+    const rawSub = payload.sub;
+    const subId = (typeof rawSub === 'number' || /^\d+$/.test(String(rawSub))
+      ? Number(rawSub)
+      : rawSub) as unknown as number;
+    const user = await this.users.findById(subId);
     if (!user || !user.totpEnabled) throw new UnauthorizedException('2FA is not enabled');
     this.assertTotp(user, dto.code);
     return this.issueSession(user, meta);
@@ -113,7 +119,7 @@ export class AuthService {
     return { loggedOut: true };
   }
 
-  async me(userId: string) {
+  async me(userId: number) {
     const user = await this.users.findById(userId);
     if (!user) throw new UnauthorizedException();
     const permissions = await this.resolvePermissions(user);
@@ -122,7 +128,53 @@ export class AuthService {
     return { ...safe, role, permissions, totpEnabled: Boolean(user.totpEnabled) };
   }
 
-  async setupTotp(userId: string) {
+  /**
+   * Change le mot de passe d'un compte après vérification de l'ancien.
+   *
+   * Les sessions ouvertes ailleurs sont révoquées : un mot de passe change
+   * en général parce qu'on le croit compromis, laisser les jetons valides
+   * viderait la mesure de son sens.
+   */
+  async changePassword(userId: number, dto: { currentPassword: string; newPassword: string }) {
+    const user = await this.users.findById(userId);
+    if (!user) throw new UnauthorizedException();
+
+    const ok = await bcrypt.compare(dto.currentPassword, user.passwordHash);
+    if (!ok) throw new UnauthorizedException('Current password is incorrect');
+
+    // Un mot de passe identique à l'ancien donnerait une fausse impression
+    // de sécurité : on le refuse explicitement.
+    const identique = await bcrypt.compare(dto.newPassword, user.passwordHash);
+    if (identique) throw new BadRequestException('The new password must differ from the current one');
+
+    await this.users.update(userId, {
+      passwordHash: bcrypt.hashSync(dto.newPassword, 10),
+    } as Partial<UserEntity>);
+
+    // Révocation des sessions ouvertes ailleurs. Un échec ici ne doit pas
+    // annuler le changement de mot de passe, déjà enregistré.
+    try {
+      const { data } = await this.refreshTokens.findMany({
+        limit: 200,
+        filters: [{ field: 'userId', op: 'eq', value: userId }],
+      });
+      await Promise.all(
+        (data || [])
+          .filter((jeton) => !jeton.revokedAt)
+          .map((jeton) =>
+            this.refreshTokens.update(jeton.id, {
+              revokedAt: new Date().toISOString(),
+            } as Partial<RefreshTokenEntity>),
+          ),
+      );
+    } catch {
+      /* Révocation impossible : le mot de passe est changé malgré tout. */
+    }
+
+    return { changed: true };
+  }
+
+  async setupTotp(userId: number) {
     const user = await this.users.findById(userId);
     if (!user) throw new UnauthorizedException();
     const secret = authenticator.generateSecret();
@@ -133,7 +185,7 @@ export class AuthService {
     return { secret, otpauth, qrDataUrl };
   }
 
-  async enableTotp(userId: string, code: string) {
+  async enableTotp(userId: number, code: string) {
     const secret = await this.cache.get<string>(`totp-setup:${userId}`);
     if (!secret) throw new BadRequestException('No TOTP setup in progress');
     const valid = authenticator.verify({ token: code, secret });
@@ -144,7 +196,7 @@ export class AuthService {
     return { totpEnabled: true };
   }
 
-  async disableTotp(userId: string, code: string) {
+  async disableTotp(userId: number, code: string) {
     const user = await this.users.findById(userId);
     if (!user?.totpEnabled || !user.totpSecret) {
       throw new BadRequestException('2FA is not enabled');
@@ -197,7 +249,6 @@ export class AuthService {
     const days = this.parseTtlDays(this.config.get('JWT_REFRESH_TTL') || '7d');
     const expiresAt = new Date(Date.now() + days * 86_400_000);
     await this.refreshTokens.create({
-      id: randomUUID(),
       userId: user.id,
       tokenHash: this.hashToken(refreshRaw),
       expiresAt: expiresAt.toISOString(),

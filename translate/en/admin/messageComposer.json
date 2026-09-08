@@ -1,0 +1,6 @@
+{
+  "clientMessage": "Message to client",
+  "subject": "Subject",
+  "message": "Message",
+  "writePlaceholder": "Write your message to the client…"
+}

@@ -1,0 +1,51 @@
+{
+  "title": "Diagnostic & Imagerie",
+  "desc": "Échographes, tensiomètres, stéthoscopes et équipements de diagnostic",
+  "icon": "stethoscope",
+  "image": "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=1920",
+  "productIds": [
+    1,
+    4,
+    5
+  ],
+  "features": [
+    {
+      "icon": "scan",
+      "text": "Imagerie haute résolution 4D"
+    },
+    {
+      "icon": "wifi",
+      "text": "Connectivité WiFi et Bluetooth"
+    },
+    {
+      "icon": "battery",
+      "text": "Autonomie longue durée"
+    },
+    {
+      "icon": "shield-check",
+      "text": "Certification CE et ISO 13485"
+    },
+    {
+      "icon": "monitor",
+      "text": "Écrans tactiles HD"
+    },
+    {
+      "icon": "truck",
+      "text": "Livraison et installation incluses"
+    }
+  ],
+  "faq": [
+    {
+      "q": "Quels types d'échographes proposez-vous ?",
+      "a": "Nous proposons des échographes portables et fixes, avec différentes configurations de sondes. Tous nos appareils sont certifiés CE et conformes ISO 13485."
+    },
+    {
+      "q": "Les tensiomètres sont-ils certifiés médicaux ?",
+      "a": "Oui, tous nos tensiomètres sont des dispositifs médicaux de classe IIa, certifiés CE avec validation clinique selon le protocole ESH."
+    },
+    {
+      "q": "Proposez-vous la formation à l'utilisation ?",
+      "a": "Oui, une session de formation de base est incluse avec chaque achat. Des formations avancées sont disponibles en option."
+    }
+  ]
+}

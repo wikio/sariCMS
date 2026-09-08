@@ -1,0 +1,5 @@
+{
+  "active": "Peut se connecter",
+  "pending": "En attente de validation",
+  "blocked": "Connexion refusée"
+}

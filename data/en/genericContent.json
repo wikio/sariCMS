@@ -1,6 +1,8 @@
 [
   {
     "id": 1,
+    "slug": "our-quality-commitment",
+    "legacyId": "pag-1",
     "type": "simple",
     "title": "Our Quality Commitment",
     "category": "Company",
@@ -9,6 +11,8 @@
   },
   {
     "id": 2,
+    "slug": "about-sari-systeme",
+    "legacyId": "pag-2",
     "type": "about",
     "title": "About SARI Système",
     "category": "Presentation",
@@ -24,6 +28,8 @@
   },
   {
     "id": 3,
+    "slug": "our-achievements-in-pictures",
+    "legacyId": "pag-3",
     "type": "gallery",
     "title": "Our Achievements in Pictures",
     "category": "Gallery",
@@ -39,6 +45,8 @@
   },
   {
     "id": 4,
+    "slug": "summer-2024-promotion",
+    "legacyId": "pag-4",
     "type": "flyer",
     "title": "Summer 2024 Promotion",
     "subtitle": "Up to 30% off all equipment",
@@ -49,6 +57,8 @@
   },
   {
     "id": 5,
+    "slug": "sari-systeme-in-motion",
+    "legacyId": "pag-5",
     "type": "slide",
     "title": "SARI Système in Motion",
     "category": "Presentation",
@@ -84,6 +94,8 @@
   },
   {
     "id": 6,
+    "slug": "discover-sari-systeme",
+    "legacyId": "pag-6",
     "type": "scroll",
     "title": "Discover SARI Système",
     "category": "Presentation",
@@ -128,6 +140,8 @@
   },
   {
     "id": 7,
+    "slug": "complete-guide-choosing-your-ultrasound-machine",
+    "legacyId": "pag-7",
     "type": "full",
     "title": "Complete Guide: Choosing Your Ultrasound Machine",
     "subtitle": "The ultimate guide for healthcare professionals",
@@ -137,6 +151,8 @@
   },
   {
     "id": 8,
+    "slug": "artificial-intelligence-in-medicine",
+    "legacyId": "pag-8",
     "type": "full",
     "title": "Artificial Intelligence in Medicine",
     "subtitle": "How AI is revolutionizing medical diagnosis",
@@ -146,6 +162,8 @@
   },
   {
     "id": 9,
+    "slug": "our-flagship-equipment",
+    "legacyId": "pag-9",
     "type": "gallery",
     "title": "Our Flagship Equipment",
     "subtitle": "The cream of medical technologies",
@@ -162,6 +180,8 @@
   },
   {
     "id": 10,
+    "slug": "testimonials-from-our-clients",
+    "legacyId": "pag-10",
     "type": "slide",
     "title": "Testimonials from Our Clients",
     "subtitle": "They trust us",
@@ -196,5 +216,29 @@
         "description": "\"The pediatric equipment is perfectly adapted to the needs of children. The SARI team listened to our specificities.\""
       }
     ]
+  },
+  {
+    "id": 11,
+    "slug": "portable-imaging-pack",
+    "legacyId": "pag-11",
+    "type": "constructor",
+    "title": "Portable imaging pack — launch offer",
+    "subtitle": "Wireless probe, unlimited licence, half-day training. Offer open until 31 December.",
+    "category": "Offers",
+    "status": "published",
+    "media": "/media/marquee/atelier.svg",
+    "content": "<style data-sari-builder=\"1\">\n/* Same kit, another skin: the corner radius is a single variable, so the\n   whole page goes from cards to pills in one line. */\n.sari-page { --sari-radius: 999px; }\n</style>\n<section class=\"sari-band\"><div class=\"sari-wrap sari-split\"><div><span class=\"sari-eyebrow\">Section</span><h2>Un titre qui dit ce que fait la page</h2><p class=\"sari-lead\">Le texte reste lisible : une colonne, puis une autre quand la largeur manque.</p><div class=\"sari-actions\"><a class=\"sari-btn\" href=\"/contact\">Continuer</a></div></div><figure class=\"sari-figure\"><img src=\"/media/marquee/recrute.svg\" alt=\"Visuel de la section\"><figcaption>Légende du visuel.</figcaption></figure></div></section><section class=\"sari-band sari-band--gray\"><div class=\"sari-wrap\"><div class=\"sari-carousel\" data-sari-carousel><div class=\"sari-carousel__nav\"><button type=\"button\" class=\"sari-carousel__btn\" data-carousel-prev aria-label=\"Éléments précédents\">‹</button><button type=\"button\" class=\"sari-carousel__btn\" data-carousel-next aria-label=\"Éléments suivants\">›</button></div><div class=\"sari-carousel__track\"><article class=\"sari-carousel__item sari-card\"><h3>Échographe portable</h3><p>Quatre sondes, autonomie 5 h.</p><a class=\"sari-btn sari-btn--sm\" href=\"/products\">Voir</a></article><article class=\"sari-carousel__item sari-card\"><h3>Moniteur patient</h3><p>Écran 15 pouces, 12 paramètres.</p><a class=\"sari-btn sari-btn--sm\" href=\"/products\">Voir</a></article><article class=\"sari-carousel__item sari-card\"><h3>Stérilisateur classe B</h3><p>Cycle vide fractionné, traçabilité.</p><a class=\"sari-btn sari-btn--sm\" href=\"/products\">Voir</a></article><article class=\"sari-carousel__item sari-card\"><h3>Table radiologique</h3><p>Mur mobile, détection numérique.</p><a class=\"sari-btn sari-btn--sm\" href=\"/products\">Voir</a></article></div></div></div></section><section class=\"sari-band\"><div class=\"sari-wrap sari-wrap--narrow\"><blockquote class=\"sari-quote\"><p>« Installation un vendredi, formation le lundi suivant. Nous n'avons pas perdu une journée de consultation. »</p><footer>Dr. Amina Benali — Clinique El Afia</footer></blockquote></div></section><section class=\"sari-band sari-band--blue\"><div class=\"sari-wrap sari-cta-strip\"><div><h2>Besoin d'un conseil technique ?</h2><p class=\"sari-lead\">Nos ingénieurs biomédicaux répondent du lundi au vendredi.</p></div><div class=\"sari-actions\"><a class=\"sari-btn sari-btn--lime\" href=\"tel:+21300000000\">Appeler</a><a class=\"sari-btn sari-btn--outline\" href=\"/contact\">Écrire</a></div></div></section>"
+  },
+  {
+    "id": 12,
+    "slug": "clinic-equipment-guide",
+    "legacyId": "pag-12",
+    "type": "constructor",
+    "title": "Equipment guide for private clinics",
+    "subtitle": "What to buy, in which order, and what it costs. Built as a standalone page for the newsletter.",
+    "category": "Guides",
+    "status": "published",
+    "media": "/media/marquee/atelier.svg",
+    "content": "<style data-sari-builder=\"1\">\n.sari-page { --sari-blue: #1d6fa5; --sari-blue-dark: #134c72; }\n</style>\n<section class=\"sari-band sari-band--tight sari-band--gray\"><div class=\"sari-wrap sari-cta-strip\"><p class=\"sari-note\"><a href=\"/fr\">Accueil</a> · <a href=\"/fr/content\">Pages</a> · <span>Titre de la page</span></p><a class=\"sari-btn sari-btn--sm sari-btn--outline\" href=\"/fr/contact\">Nous écrire</a></div></section><section class=\"sari-band\"><div class=\"sari-wrap\"><h2>Nos univers</h2><div class=\"sari-grid\"><article class=\"sari-card\"><div class=\"sari-card__media\"><img src=\"/media/marquee/webinaire.svg\" alt=\"\"></div><h3>Diagnostic</h3><p>Échographes, moniteurs,读取</p></article><article class=\"sari-card\"><div class=\"sari-card__media\"><img src=\"/media/marquee/atelier.svg\" alt=\"\"></div><h3>Imagerie</h3><p>Radiologie numérique et mur mobile.</p></article><article class=\"sari-card\"><div class=\"sari-card__media\"><img src=\"/media/marquee/recrute.svg\" alt=\"\"></div><h3>Services</h3><p>Maintenance, formation, conseil.</p></article></div></div></section><section class=\"sari-band\"><div class=\"sari-wrap\"><div class=\"sari-frame\"><img src=\"/media/marquee/webinaire.svg\" alt=\"Visuel de la présentation\"></div><p class=\"sari-note\">Remplacez l'image par une vidéo dans le panneau de droite si besoin.</p></div></section><div class=\"sari-actions\"><a class=\"sari-btn sari-btn--arrow\" href=\"/contact\">Demander un devis</a><a class=\"sari-btn sari-btn--outline\" href=\"/products\">Voir le catalogue</a></div>"
   }
 ]

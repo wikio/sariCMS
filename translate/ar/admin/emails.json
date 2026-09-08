@@ -1,0 +1,11 @@
+{
+  "title": "البريد الإلكتروني",
+  "smtpConnected": "SMTP متصل",
+  "subject": "الموضوع",
+  "welcomeSubject": "مرحباً بكم",
+  "quoteSubject": "تأكيد العرض",
+  "applicationSubject": "تم استلام الترشيح",
+  "newsSubject": "أخبار SARI",
+  "hello": "مرحباً،",
+  "thankYou": "شكراً لثقتكم."
+}

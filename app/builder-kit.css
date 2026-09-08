@@ -1,0 +1,915 @@
+/* app/builder-kit.css
+ *
+ * Le « kit » du constructeur de page : les classes que les blocs de
+ * l'éditeur visuel posent dans le HTML, et que la vitrine rend telles quelles.
+ *
+ * Pourquoi un fichier séparé et pas du Tailwind dans les blocs : la page
+ * construite est du HTML enregistré en base, rendu tel quel. Une classe utilitaire
+ * n'existe que si le compilateur l'a vue dans un fichier source — une classe posée
+ * par l'administrateur dans GrapesJS, puis modifiée à la main (une marge, une
+ * couleur), disparaîtrait du CSS à la prochaine compilation sans que personne ne
+ * s'en aperçoive. Le kit est donc du CSS écrit, toujours présent, et les blocs ne
+ * font que le citer.
+ *
+ * Trois règles suivent l'état de la page plutôt qu'un point de rupture : les
+ * colonnes (`--2/3/4`), la largeur des éléments du carrousel (`--half/--third`),
+ * la hauteur des visuels (`--short/--tall`). Le sens de lecture est écrit en
+ * propriétés logiques (`margin-inline`, `inset-inline`, `padding-inline`) pour que
+ * la page en arabe se retourne toute seule. Enfin, tout ce qui bouge s'arrête
+ * quand le visiteur demande « moins de mouvements », et tout ce qui nécessite
+ * JavaScript reste lisible sans lui : les blocs marqués `.is-ready` sont ceux que
+ * le composant a pris en charge, avant cela tout s'affiche empilé.
+ */
+
+/* — — — Échelle et constantes — — — */
+.sari-page {
+  --sari-blue: #169ec9;
+  --sari-blue-dark: #0e6e8c;
+  --sari-lime: #c6da34;
+  --sari-ink: #10222b;
+  --sari-muted: #5c6f79;
+  --sari-line: #e3eef2;
+  --sari-bg: #f4f8fa;
+  --sari-radius: 14px;
+  --sari-pad: clamp(16px, 4vw, 40px);
+  color: var(--sari-ink);
+  font-family: Inter, Cairo, ui-sans-serif, system-ui, sans-serif;
+  line-height: 1.6;
+}
+.sari-page *,
+.sari-page *::before,
+.sari-page *::after {
+  box-sizing: border-box;
+}
+.sari-page img,
+.sari-page video,
+.sari-page svg {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+.sari-page h1,
+.sari-page h2,
+.sari-page h3 {
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  margin: 0 0 0.5em;
+}
+.sari-page p {
+  margin: 0 0 1em;
+}
+.sari-page a {
+  color: var(--sari-blue-dark);
+}
+
+/* — — — Le gabarit d'une page autonome — — — */
+.sari-shell {
+  min-height: 100vh;
+  background: #fff;
+}
+.sari-wrap {
+  width: min(1120px, 100% - (var(--sari-pad) * 2));
+  margin-inline: auto;
+}
+.sari-wrap--narrow {
+  width: min(760px, 100% - (var(--sari-pad) * 2));
+}
+.sari-wrap--wide {
+  width: min(1360px, 100% - (var(--sari-pad) * 2));
+}
+.sari-band {
+  padding-block: clamp(40px, 7vw, 88px);
+}
+.sari-band--tight {
+  padding-block: clamp(20px, 3vw, 36px);
+}
+.sari-band--gray {
+  background: var(--sari-bg);
+}
+.sari-band--blue {
+  background: linear-gradient(135deg, var(--sari-blue) 0%, var(--sari-blue-dark) 100%);
+  color: #fff;
+}
+.sari-band--blue a:not(.sari-btn) {
+  color: #fff;
+}
+.sari-band--ink {
+  background: var(--sari-ink);
+  color: #eaf3f6;
+}
+.sari-band--lime {
+  background: var(--sari-lime);
+  color: #25300a;
+}
+.sari-eyebrow {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--sari-blue-dark);
+  margin-bottom: 0.75rem;
+}
+.sari-band--blue .sari-eyebrow,
+.sari-band--ink .sari-eyebrow {
+  color: var(--sari-lime);
+}
+.sari-lead {
+  font-size: clamp(1.05rem, 1.6vw, 1.3rem);
+  color: var(--sari-muted);
+  max-width: 62ch;
+}
+.sari-band--blue .sari-lead,
+.sari-band--ink .sari-lead {
+  color: rgba(255, 255, 255, 0.86);
+}
+.sari-muted {
+  color: var(--sari-muted);
+}
+.sari-center {
+  text-align: center;
+}
+.sari-center .sari-lead {
+  margin-inline: auto;
+}
+
+/* — — — Boutons, dont le CTA configurable — — — */
+.sari-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+.sari-btn {
+  --sari-btn-bg: var(--sari-blue);
+  --sari-btn-ink: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  padding: 0.8em 1.4em;
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background: var(--sari-btn-bg);
+  color: var(--sari-btn-ink);
+  font-weight: 700;
+  font-size: 1rem;
+  line-height: 1.1;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+.sari-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.16);
+  color: var(--sari-btn-ink);
+}
+.sari-btn:focus-visible {
+  outline: 3px solid var(--sari-lime);
+  outline-offset: 3px;
+}
+.sari-btn--lime {
+  --sari-btn-bg: var(--sari-lime);
+  --sari-btn-ink: #25300a;
+}
+.sari-btn--ink {
+  --sari-btn-bg: var(--sari-ink);
+  --sari-btn-ink: #fff;
+}
+.sari-btn--outline {
+  --sari-btn-bg: transparent;
+  --sari-btn-ink: currentColor;
+  border-color: currentColor;
+}
+.sari-btn--ghost {
+  --sari-btn-bg: rgba(255, 255, 255, 0.14);
+  --sari-btn-ink: currentColor;
+  backdrop-filter: blur(4px);
+}
+.sari-btn--sm {
+  font-size: 0.875rem;
+  padding: 0.6em 1em;
+}
+.sari-btn--lg {
+  font-size: 1.125rem;
+  padding: 1em 1.8em;
+}
+.sari-btn--block {
+  width: 100%;
+}
+.sari-btn--arrow::after {
+  content: "→";
+  font-weight: 800;
+}
+[dir="rtl"] .sari-btn--arrow::after {
+  content: "←";
+}
+
+/* — — — Grilles de cartes — — — */
+.sari-grid {
+  display: grid;
+  gap: clamp(14px, 2vw, 24px);
+  grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+}
+.sari-grid--2 {
+  grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr));
+}
+.sari-grid--3 {
+  grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+}
+.sari-grid--4 {
+  grid-template-columns: repeat(auto-fit, minmax(min(210px, 100%), 1fr));
+}
+.sari-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: clamp(16px, 2vw, 24px);
+  border: 1px solid var(--sari-line);
+  border-radius: var(--sari-radius);
+  background: #fff;
+  box-shadow: 0 8px 26px rgba(15, 23, 42, 0.05);
+}
+.sari-card h3 {
+  font-size: 1.125rem;
+  margin: 0;
+}
+.sari-card p {
+  margin: 0;
+  color: var(--sari-muted);
+}
+.sari-band--gray .sari-card {
+  background: #fff;
+}
+.sari-band--blue .sari-card,
+.sari-band--ink .sari-card {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+.sari-band--blue .sari-card p,
+.sari-band--ink .sari-card p {
+  color: rgba(255, 255, 255, 0.82);
+}
+.sari-card__media {
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: calc(var(--sari-radius) - 4px);
+  background: var(--sari-bg);
+}
+.sari-card__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.sari-num {
+  font-size: clamp(1.9rem, 4vw, 2.75rem);
+  font-weight: 900;
+  line-height: 1;
+  color: var(--sari-blue-dark);
+}
+.sari-band--blue .sari-num,
+.sari-band--ink .sari-num {
+  color: var(--sari-lime);
+}
+
+/* — — — Hero d'une page d'atterrissage — — — */
+.sari-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  color: #fff;
+  display: grid;
+  align-items: center;
+  min-height: clamp(360px, 58vh, 640px);
+  padding-block: clamp(48px, 8vw, 96px);
+  background: linear-gradient(135deg, #12323c 0%, var(--sari-blue-dark) 55%, var(--sari-blue) 100%);
+}
+.sari-hero__bg {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  margin: 0;
+}
+.sari-hero__bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.sari-hero__bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(180deg, rgba(16, 34, 43, 0.55) 0%, rgba(16, 34, 43, 0.82) 100%);
+}
+.sari-hero h1 {
+  font-size: clamp(2rem, 5vw, 3.4rem);
+  max-width: 22ch;
+}
+.sari-hero .sari-lead {
+  color: rgba(255, 255, 255, 0.9);
+}
+.sari-hero--split {
+  min-height: 0;
+  background: #fff;
+  color: var(--sari-ink);
+}
+.sari-hero--split .sari-wrap {
+  display: grid;
+  gap: clamp(20px, 3vw, 44px);
+  align-items: center;
+  grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
+}
+.sari-hero--split .sari-lead {
+  color: var(--sari-muted);
+}
+
+/* — — — Galerie mosaïque + visionneuse — — — */
+.sari-gallery {
+  display: grid;
+  gap: clamp(10px, 1.4vw, 18px);
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+}
+.sari-gallery--2 {
+  grid-template-columns: repeat(auto-fit, minmax(min(360px, 100%), 1fr));
+}
+.sari-gallery--4 {
+  grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr));
+}
+.sari-gallery__item {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  border-radius: calc(var(--sari-radius) - 2px);
+  border: 1px solid var(--sari-line);
+  background: var(--sari-bg);
+  aspect-ratio: 4 / 3;
+}
+.sari-gallery__item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.35s ease;
+}
+.sari-gallery__item:hover img {
+  transform: scale(1.04);
+}
+.sari-gallery__item figcaption,
+.sari-gallery__cap {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  margin: 0;
+  padding: 0.6em 0.8em;
+  font-size: 0.8125rem;
+  color: #fff;
+  background: linear-gradient(180deg, transparent, rgba(16, 34, 43, 0.85));
+}
+.sari-gallery--tall .sari-gallery__item {
+  aspect-ratio: 3 / 4;
+}
+.sari-gallery--wide .sari-gallery__item {
+  aspect-ratio: 16 / 9;
+}
+
+/* La visionneuse est posée par le composant, pas par le HTML enregistré : une
+   page construite ne peut pas embarquer de script. */
+.sari-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: clamp(12px, 4vw, 40px);
+  background: rgba(9, 20, 26, 0.92);
+  color: #fff;
+}
+.sari-lightbox figure {
+  margin: 0;
+  max-width: min(1200px, 100%);
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+}
+.sari-lightbox img {
+  max-height: 76vh;
+  width: auto;
+  border-radius: 12px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+}
+.sari-lightbox figcaption {
+  font-size: 0.9375rem;
+  color: rgba(255, 255, 255, 0.82);
+  text-align: center;
+}
+.sari-lightbox__bar {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px clamp(12px, 3vw, 24px);
+  gap: 12px;
+}
+.sari-lightbox__nav {
+  display: flex;
+  gap: 8px;
+}
+.sari-lightbox__btn {
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  border-radius: 999px;
+  width: 44px;
+  height: 44px;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.sari-lightbox__btn:hover {
+  background: rgba(255, 255, 255, 0.24);
+}
+.sari-lightbox__count {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.875rem;
+  opacity: 0.8;
+}
+
+/* — — — Carrousel (défilement horizontal) — — — */
+.sari-carousel {
+  position: relative;
+}
+.sari-carousel__track {
+  display: flex;
+  gap: clamp(12px, 2vw, 20px);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  padding-block-end: 12px;
+  scrollbar-width: thin;
+}
+.sari-carousel__item {
+  flex: 0 0 min(320px, 82%);
+  scroll-snap-align: start;
+}
+.sari-carousel--half .sari-carousel__item {
+  flex-basis: min(480px, 82%);
+}
+.sari-carousel--third .sari-carousel__item {
+  flex-basis: min(280px, 60%);
+}
+.sari-carousel__nav {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-block-end: 10px;
+}
+.sari-carousel__btn {
+  appearance: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 1px solid var(--sari-line);
+  background: #fff;
+  color: var(--sari-ink);
+  font-size: 1.125rem;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+}
+.sari-carousel__btn:hover {
+  border-color: var(--sari-blue);
+  color: var(--sari-blue-dark);
+}
+.sari-carousel__btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* — — — Slider d'images — — — */
+.sari-slides {
+  position: relative;
+  border-radius: var(--sari-radius);
+  overflow: hidden;
+  background: var(--sari-bg);
+}
+.sari-slide {
+  position: relative;
+  display: block;
+}
+.sari-slides.is-ready .sari-slide {
+  display: none;
+}
+.sari-slides.is-ready .sari-slide.is-active {
+  display: block;
+  animation: sari-fade 0.5s ease both;
+}
+.sari-slide img {
+  width: 100%;
+  height: clamp(240px, 46vh, 520px);
+  object-fit: cover;
+}
+.sari-slide__caption {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  margin: 0;
+  padding: clamp(16px, 3vw, 28px);
+  color: #fff;
+  background: linear-gradient(180deg, transparent, rgba(9, 20, 26, 0.88));
+}
+.sari-slide__caption h3 {
+  margin: 0 0 0.25em;
+  font-size: clamp(1.125rem, 2.4vw, 1.75rem);
+}
+.sari-slides__dots {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 10px;
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+.sari-slides__dot {
+  appearance: none;
+  border: 0;
+  width: 10px;
+  height: 10px;
+  padding: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+  cursor: pointer;
+}
+.sari-slides__dot.is-active {
+  background: #fff;
+  width: 26px;
+}
+.sari-slides__arrow {
+  position: absolute;
+  top: 50%;
+  translate: 0 -50%;
+  appearance: none;
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  border: 0;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--sari-ink);
+  font-size: 1.125rem;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+}
+.sari-slides__arrow--prev {
+  inset-inline-start: 12px;
+}
+.sari-slides__arrow--next {
+  inset-inline-end: 12px;
+}
+.sari-slides--plain img {
+  height: auto;
+  object-fit: contain;
+}
+.sari-slides--plain .sari-slide__caption {
+  position: static;
+  background: none;
+  color: var(--sari-ink);
+}
+
+@keyframes sari-fade {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* — — — Flyer (à l'écran comme à l'impression) — — — */
+.sari-flyer {
+  border: 1px solid var(--sari-line);
+  border-radius: calc(var(--sari-radius) + 4px);
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.1);
+}
+.sari-flyer__head {
+  padding: clamp(20px, 4vw, 40px);
+  background: linear-gradient(135deg, var(--sari-blue) 0%, var(--sari-blue-dark) 100%);
+  color: #fff;
+  display: grid;
+  gap: 10px;
+}
+.sari-flyer__head h2 {
+  margin: 0;
+  font-size: clamp(1.5rem, 3.4vw, 2.4rem);
+}
+.sari-flyer__body {
+  padding: clamp(20px, 4vw, 40px);
+  display: grid;
+  gap: clamp(16px, 3vw, 32px);
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+  align-items: start;
+}
+.sari-flyer__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+.sari-flyer__list li {
+  position: relative;
+  padding-inline-start: 1.6em;
+  color: var(--sari-muted);
+}
+.sari-flyer__list li::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0;
+  top: 0.5em;
+  width: 0.7em;
+  height: 0.7em;
+  border-radius: 2px;
+  background: var(--sari-lime);
+}
+.sari-flyer__callout {
+  border: 1px dashed var(--sari-blue);
+  border-radius: var(--sari-radius);
+  padding: clamp(14px, 2vw, 22px);
+  background: rgba(22, 158, 201, 0.06);
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+.sari-flyer__price {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 900;
+  color: var(--sari-blue-dark);
+}
+.sari-flyer__foot {
+  border-block-start: 1px solid var(--sari-line);
+  padding: clamp(16px, 3vw, 26px);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--sari-bg);
+  font-size: 0.9375rem;
+}
+.sari-flyer__media {
+  margin: 0;
+  border-radius: var(--sari-radius);
+  overflow: hidden;
+}
+.sari-flyer__media img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+/* — — — Morceaux de mise en page — — — */
+.sari-split {
+  display: grid;
+  gap: clamp(18px, 3vw, 40px);
+  align-items: center;
+  grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
+}
+.sari-split--flip > :first-child {
+  order: 2;
+}
+@media (max-width: 720px) {
+  .sari-split--flip > :first-child {
+    order: 0;
+  }
+}
+.sari-frame {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--sari-radius);
+  overflow: hidden;
+  background: var(--sari-ink);
+}
+.sari-frame img,
+.sari-frame video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.sari-figure {
+  margin: 0;
+  display: grid;
+  gap: 10px;
+}
+.sari-figure img {
+  border-radius: var(--sari-radius);
+}
+.sari-figure figcaption {
+  font-size: 0.875rem;
+  color: var(--sari-muted);
+}
+.sari-quote {
+  margin: 0;
+  padding-inline-start: clamp(14px, 2vw, 22px);
+  border-inline-start: 4px solid var(--sari-lime);
+  font-size: clamp(1.05rem, 2vw, 1.375rem);
+  color: var(--sari-ink);
+}
+.sari-quote footer {
+  margin-block-start: 0.6em;
+  font-size: 0.875rem;
+  color: var(--sari-muted);
+  font-style: normal;
+}
+.sari-faq {
+  display: grid;
+  gap: 10px;
+}
+.sari-faq details {
+  border: 1px solid var(--sari-line);
+  border-radius: calc(var(--sari-radius) - 4px);
+  background: #fff;
+  padding: 0.85em 1em;
+}
+.sari-faq summary {
+  cursor: pointer;
+  font-weight: 700;
+  list-style: none;
+}
+.sari-faq summary::-webkit-details-marker {
+  display: none;
+}
+.sari-faq summary::after {
+  content: "+";
+  float: inline-end;
+  color: var(--sari-blue);
+  font-weight: 800;
+}
+.sari-faq details[open] summary::after {
+  content: "−";
+}
+.sari-faq p {
+  margin: 0.75em 0 0;
+  color: var(--sari-muted);
+}
+.sari-logos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(16px, 3vw, 36px);
+  align-items: center;
+  justify-content: center;
+}
+.sari-logos img {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+}
+.sari-spacer {
+  display: block;
+  height: clamp(24px, 5vw, 64px);
+}
+.sari-sep {
+  border: 0;
+  border-block-start: 1px solid var(--sari-line);
+  margin-block: clamp(24px, 5vw, 56px);
+}
+.sari-note {
+  font-size: 0.875rem;
+  color: var(--sari-muted);
+}
+.sari-cta-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(14px, 3vw, 32px);
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* — — — Vocabulaire des blocs historiques — — —
+   Les premiers blocs du constructeur (et les modèles de `lib/page-templates.ts`)
+   écrivaient `.wrap`, `.card`, `.btn`, `.grid`. Ces pages déjà construites
+   doivent continuer de s'afficher : les classes sont relues ici, en renvoyant
+   vers le kit. Uniquement à l'intérieur d'une page construite (`.sari-page`),
+   pour ne rien changer aux feuilles de style du site. */
+.sari-page .wrap {
+  width: min(1120px, 100% - (var(--sari-pad) * 2));
+  margin-inline: auto;
+}
+.sari-page .grid {
+  display: grid;
+  gap: clamp(14px, 2vw, 24px);
+  grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+}
+.sari-page .card {
+  border: 1px solid var(--sari-line);
+  border-radius: var(--sari-radius);
+  padding: clamp(16px, 2vw, 24px);
+  background: #fff;
+  box-shadow: 0 8px 26px rgba(15, 23, 42, 0.05);
+}
+.sari-page .muted {
+  color: var(--sari-muted);
+  font-size: 0.9375rem;
+}
+.sari-page .btn {
+  display: inline-block;
+  background: var(--sari-lime);
+  color: #25300a;
+  padding: 0.75em 1.15em;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: 700;
+}
+.sari-page .badge {
+  display: inline-block;
+  background: rgba(198, 218, 52, 0.22);
+  color: #25300a;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.sari-page .hero {
+  background: linear-gradient(135deg, var(--sari-blue) 0%, var(--sari-blue-dark) 55%, #12323c 100%);
+  color: #fff;
+  padding: clamp(48px, 8vw, 84px) var(--sari-pad);
+}
+
+/* — — — Deux détails d'état — — — */
+@media (prefers-reduced-motion: reduce) {
+  .sari-page *,
+  .sari-page *::before,
+  .sari-page *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* L'impression d'un flyer doit rester propre : pas de bandeau coloré à fonds
+   perdus, pas de navigation de carrousel, une colonne. */
+@media print {
+  .sari-page {
+    background: #fff;
+  }
+  .sari-band,
+  .sari-hero {
+    padding-block: 12mm;
+    background: #fff !important;
+    color: #000 !important;
+  }
+  .sari-carousel__nav,
+  .sari-slides__arrow,
+  .sari-slides__dots,
+  .sari-btn {
+    display: none !important;
+  }
+  .sari-slide {
+    display: block !important;
+    break-inside: avoid;
+  }
+  .sari-card,
+  .sari-flyer {
+    box-shadow: none;
+    border-color: #ccc;
+    break-inside: avoid;
+  }
+}
+
+/* ----------------------------------------------------------------— planche de l'atelier
+   Une planche enregistrée depuis l'atelier graphique est un `<img>` ordinaire : la
+   vitrine n'a rien à savoir de Fabric. Deux choses sont pourtant écrites ici parce
+   qu'elles manquent dès qu'on pose le bloc sans le régler :
+   - `height: auto` avec `width: 100%`, pour que le ratio natif du PNG serve de calcul
+     et que la page ne saute pas au chargement (les attributs width/height sont posés
+     par le plugin, et l'export est à l'échelle 1) ;
+   - le rendu net des aplats de couleur : une planche est dessinée, pas photographiée,
+     et `image-rendering: auto` laisse un voile sur les bords à 100 %. */
+.sari-canvas {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+  border-radius: var(--sari-radius, 14px);
+}
+
+.sari-canvas--framed {
+  border: 1px solid var(--sari-line, #e2e8f0);
+  padding: clamp(0.5rem, 1.5vw, 1rem);
+  background: #fff;
+}
+
+@media print {
+  .sari-canvas {
+    border-radius: 0;
+  }
+}

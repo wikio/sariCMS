@@ -1,0 +1,45 @@
+{
+  "title": "Rééducation",
+  "desc": "Tables de kinésithérapie, électrothérapie, ultrasons thérapeutiques",
+  "icon": "accessibility",
+  "image": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1920",
+  "productIds": [
+    14
+  ],
+  "features": [
+    {
+      "icon": "accessibility",
+      "text": "Tables de kinésithérapie"
+    },
+    {
+      "icon": "zap",
+      "text": "Appareils d'électrothérapie"
+    },
+    {
+      "icon": "waves",
+      "text": "Ultrasons thérapeutiques"
+    },
+    {
+      "icon": "dumbbell",
+      "text": "Équipements de musculation"
+    },
+    {
+      "icon": "footprints",
+      "text": "Plateformes de marche"
+    },
+    {
+      "icon": "shield-check",
+      "text": "Matériel certifié CE"
+    }
+  ],
+  "faq": [
+    {
+      "q": "Proposez-vous du matériel de rééducation neurologique ?",
+      "a": "Oui, nous proposons des plateformes de rééducation neurologique, des exosquelettes et des systèmes de réalité virtuelle."
+    },
+    {
+      "q": "Les appareils d'électrothérapie sont-ils multifonctions ?",
+      "a": "Oui, nos appareils combinent TENS, EMS, ultrasons et laser thérapeutique dans un seul dispositif compact."
+    }
+  ]
+}

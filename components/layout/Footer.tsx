@@ -1,10 +1,15 @@
 // components/layout/Footer.tsx
 'use client';
 
+import { useEffect, useState } from 'react';
+import { locales } from '@/lib/i18n';
+import { externalLinkAttrs, menuHref } from '@/lib/link-kind.mjs';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { Mail, Phone, MapPin, Compass, Shield, Send, Heart } from 'lucide-react';
 import type { Config, Menu as MenuType } from '@/types';
+import { loadAdminSettings } from '@/lib/admin-settings';
+import { useVisibility } from '@/lib/site-visibility';
 
 // ✅ Icônes SVG inline pour éviter les bugs Turbopack
 const FacebookIcon = () => (
@@ -23,15 +28,107 @@ const YoutubeIcon = () => (
 export default function Footer({ config, menu }: { config: Config; menu: MenuType }) {
   const locale = useLocale();
   const t = useTranslations('components.layout.Footer');
+  const tNav = useTranslations('common.nav');
+  const tLegal = useTranslations('pages.legal');
 
-  const navigation = menu.footerMenu?.navigation || [];
-  const legal = menu.footerMenu?.legal || [];
+  const visibility = useVisibility();
 
-  // ✅ Fonction utilitaire pour nettoyer et formater les liens avec la locale
-  const getLinkHref = (href: string) => {
-    // Supprime les '#' ou '/' au début pour éviter les doubles slashes ou les mots collés
-    const cleanPath = href.replace(/^[#\/]+/, '');
-    return `/${locale}/${cleanPath}`;
+  // ✅ Mapping : id de lien → clé de visibilité page/module correspondante.
+  // Si la page ou le module cible est masqué, le lien du footer l'est aussi.
+  const PAGE_MODULE_KEYS: Record<string, string> = {
+    home: '',
+    about: 'page.about',
+    solutions: 'module.solutions',
+    services: 'module.services',
+    products: 'module.products',
+    events: 'module.events',
+    news: 'module.news',
+    careers: 'module.careers',
+    contact: 'module.contact',
+  };
+  const LEGAL_PAGE_KEYS: Record<string, string> = {
+    mentions: 'page.mentions',
+    privacy: 'page.privacy',
+    conditions: 'page.conditions',
+  };
+
+  const navigation = (menu.footerMenu?.navigation || []).filter((item) => {
+    const id = (item as { id?: string }).id;
+    if (!id) return true;
+    // 1) Vérifier la visibilité du lien footer lui-même
+    if (visibility[`footer.${id}`] === false) return false;
+    // 2) Vérifier si la page/module cible est masquée → masquer le lien aussi
+    const targetKey = PAGE_MODULE_KEYS[id];
+    if (targetKey && visibility[targetKey] === false) return false;
+    return true;
+  });
+  const legal = (menu.footerMenu?.legal || []).filter((item) => {
+    const id = (item as { id?: string }).id;
+    if (!id) return true;
+    // 1) Vérifier la visibilité du lien footer lui-même
+    if (visibility[`footer.${id}`] === false) return false;
+    // 2) Vérifier si la page légale cible est masquée → masquer le lien aussi
+    const targetKey = LEGAL_PAGE_KEYS[id];
+    if (targetKey && visibility[targetKey] === false) return false;
+    return true;
+  });
+
+  // Logo du site : le logo configuré dans Paramètres prime sur celui des données CMS.
+  const [logo, setLogo] = useState<string>(config.meta?.logo || '');
+  useEffect(() => {
+    try { setLogo(loadAdminSettings().siteLogo || config.meta?.logo || ''); } catch { /* */ }
+  }, [config]);
+
+  // Même règle que le bandeau : un lien externe du pied de page doit sortir du site,
+  // pas devenir un chemin préfixé par la langue.
+  const getLinkHref = (href: string) => menuHref(href, locale, locales);
+
+  /*
+    Libellé d'une entrée de menu.
+
+    Les menus sont enregistrés par langue en base (contrainte d'unicité
+    location + locale) : le libellé reçu est donc déjà celui de la langue
+    courante et fait autorité. Les clés de traduction ne servent que de
+    repli historique pour les entrées du menu statique d'origine
+    (`home`, `products`…), qui n'ont pas de libellé saisi.
+
+    Deux règles en découlent :
+
+      1. Un libellé non vide l'emporte. Sans cela, renommer une entrée dans
+         l'admin restait sans effet dès que son id correspondait encore à une
+         ancienne clé : la traduction écrasait le nouveau titre.
+
+      2. On ne demande une clé que si elle existe. Les entrées créées dans
+         l'admin portent un identifiant aléatoire (UUID) ; l'interroger
+         faisait journaliser une erreur MISSING_MESSAGE à chaque rendu, pour
+         chaque entrée et à chaque langue.
+  */
+  const translateId = (
+    id: string,
+    ...lookups: Array<{ has?: (key: string) => boolean; (key: never): string }>
+  ) => {
+    for (const lookup of lookups) {
+      if (!lookup.has?.(id)) continue;
+      try {
+        const value = lookup(id as never);
+        if (value && value !== id) return value;
+      } catch {
+        // Clé absente malgré la vérification : on passe au repli suivant.
+      }
+    }
+    return null;
+  };
+
+  const getNavLabel = (item: { id?: string; label: string }) => {
+    if (item.label?.trim()) return item.label;
+    if (!item.id) return item.label;
+    return translateId(item.id, tNav) ?? item.label;
+  };
+
+  const getLegalLabel = (item: { id?: string; label: string }) => {
+    if (item.label?.trim()) return item.label;
+    if (!item.id) return item.label;
+    return translateId(item.id, tLegal, t) ?? item.label;
   };
 
   return (
@@ -44,9 +141,10 @@ export default function Footer({ config, menu }: { config: Config; menu: MenuTyp
           {/* Colonne 1 : À propos */}
           <div>
             <img
-              src={config.meta?.logo || ''}
+              src={logo}
               alt={config.meta?.companyName || 'Logo'}
               className="h-12 mb-6 brightness-0 invert"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
             />
             <p className="text-gray-400 text-sm mb-6">
               {config.meta?.description || ''}
@@ -75,7 +173,8 @@ export default function Footer({ config, menu }: { config: Config; menu: MenuTyp
             </div>
           </div>
 
-          {/* Colonne 2 : Navigation */}
+          {/* Colonne 2 : Navigation (masquée si tous les liens sont masqués) */}
+          {navigation.length > 0 && (
           <div>
             <h4 className="text-lg font-bold mb-6 flex items-center gap-2">
               <Compass className="w-5 h-5 text-sari-blue" />
@@ -85,18 +184,20 @@ export default function Footer({ config, menu }: { config: Config; menu: MenuTyp
               {navigation.map((item, i) => (
                 <li key={i}>
                   <Link 
-                    href={getLinkHref(item.href)}
+                    href={getLinkHref(item.href)} {...externalLinkAttrs(item.href)}
                     className="hover:text-sari-lime transition-colors inline-flex items-center gap-2 group"
                   >
                     <span className="w-0 group-hover:w-2 h-0.5 bg-sari-lime transition-all"></span>
-                    {item.label}
+                    {getNavLabel(item)}
                   </Link>
                 </li>
               ))}
             </ul>
           </div>
+          )}
 
-          {/* Colonne 3 : Légal + Sécurité */}
+          {/* Colonne 3 : Légal + Sécurité (masquée si tous les liens sont masqués) */}
+          {legal.length > 0 && (
           <div>
             <h4 className="text-lg font-bold mb-6 flex items-center gap-2">
               <Shield className="w-5 h-5 text-sari-blue" />
@@ -106,16 +207,17 @@ export default function Footer({ config, menu }: { config: Config; menu: MenuTyp
               {legal.map((item, i) => (
                 <li key={i}>
                   <Link 
-                    href={getLinkHref(item.href)}
+                    href={getLinkHref(item.href)} {...externalLinkAttrs(item.href)}
                     className="hover:text-sari-lime transition-colors inline-flex items-center gap-2 group"
                   >
                     <span className="w-0 group-hover:w-2 h-0.5 bg-sari-lime transition-all"></span>
-                    {item.label}
+                    {getLegalLabel(item)}
                   </Link>
                 </li>
               ))}
             </ul>
           </div>
+          )}
 
           {/* Colonne 4 : Contact */}
           <div>

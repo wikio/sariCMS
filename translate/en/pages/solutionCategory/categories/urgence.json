@@ -1,0 +1,46 @@
+{
+  "title": "Emergency & Resuscitation",
+  "desc": "Defibrillators, emergency carts, multiparameter monitors",
+  "icon": "activity",
+  "image": "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=1920",
+  "productIds": [
+    7,
+    15
+  ],
+  "features": [
+    {
+      "icon": "zap",
+      "text": "AED/DSA defibrillators"
+    },
+    {
+      "icon": "siren",
+      "text": "Complete emergency carts"
+    },
+    {
+      "icon": "monitor",
+      "text": "Multiparameter monitors"
+    },
+    {
+      "icon": "clock",
+      "text": "24/7 guaranteed support"
+    },
+    {
+      "icon": "syringe",
+      "text": "Syringe pumps"
+    },
+    {
+      "icon": "clock",
+      "text": "Guaranteed 24/7 support"
+    }
+  ],
+  "faq": [
+    {
+      "q": "Are defibrillators automatic?",
+      "a": "Yes, we offer semi-automatic and fully automatic AEDs with voice guidance."
+    },
+    {
+      "q": "Do the emergency trolleys come fully equipped?",
+      "a": "Yes, our trolleys ship with everything required: defibrillator, monitor, suction unit, oxygen and emergency drugs."
+    }
+  ]
+}

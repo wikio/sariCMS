@@ -1,0 +1,9 @@
+{
+  "title": "Payment methods",
+  "check": "Check",
+  "cashOnDelivery": "Cash on delivery",
+  "fees": "Fees",
+  "clientInstructions": "Client instructions",
+  "name": "Name",
+  "type": "Type"
+}

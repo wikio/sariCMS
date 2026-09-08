@@ -11,7 +11,10 @@ export interface EventEntity extends BaseEntity {
   slug: string;
   title: string;
   type?: string | null;
+  category?: string | null;
+  targetAudience?: string | null;
   date?: Date | string | null;
+  startDate?: Date | string | null;
   endDate?: Date | string | null;
   location?: string | null;
   shortDesc?: string | null;
@@ -20,4 +23,7 @@ export interface EventEntity extends BaseEntity {
   agenda?: AgendaItem[] | string[] | unknown;
   status: string;
   publishedAt?: Date | string | null;
+  legacyId?: string | null;
+  parentId?: number | null;
+  isDefault?: boolean;
 }

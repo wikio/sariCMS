@@ -5,7 +5,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 
 export interface Application {
   id: number;
-  jobId: number;
+  jobId: number | string;
   title: string;
   image: string;
   location: string;
@@ -26,7 +26,7 @@ interface ApplicationsContextType {
   applicationsCount: number;
   addApplication: (appData: Omit<Application, 'id' | 'appliedAt' | 'status'>) => Application;
   removeApplication: (id: number) => void;
-  hasApplied: (jobId: number) => boolean;
+  hasApplied: (jobId: number | string) => boolean;
 }
 
 const ApplicationsContext = createContext<ApplicationsContextType | undefined>(undefined);
@@ -64,8 +64,8 @@ export function ApplicationsProvider({ children }: { children: ReactNode }) {
     setApplications((prev) => prev.filter((a) => a.id !== id));
   };
 
-  const hasApplied = (jobId: number): boolean => {
-    return applications.some((a) => a.jobId === jobId);
+  const hasApplied = (jobId: number | string): boolean => {
+    return applications.some((a) => String(a.jobId) === String(jobId));
   };
 
   return (

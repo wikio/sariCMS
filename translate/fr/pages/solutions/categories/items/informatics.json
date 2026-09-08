@@ -1,0 +1,14 @@
+{
+  "icon": "monitor",
+  "color": "indigo-500",
+  "title": "Informatique Médicale",
+  "desc": "DMP, logiciels métier, télémédecine, PACS et cybersécurité",
+  "cta": "Découvrir",
+  "link": "#solutions/informatique",
+  "features": [
+    "Dossier Médical Partagé",
+    "Logiciels métier",
+    "Télémédecine",
+    "Solutions PACS"
+  ]
+}

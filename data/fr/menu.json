@@ -104,21 +104,73 @@
   ],
   "footerMenu": {
     "navigation": [
-      { "id": "home", "label": "Accueil", "href": "/" },
-      { "id": "about", "label": "À Propos", "href": "/about" },
-      { "id": "solutions", "label": "Solutions", "href": "/solutions" },
-      { "id": "services", "label": "Services", "href": "/services" },
-      { "id": "products", "label": "Produits", "href": "/products" },
-      { "id": "events", "label": "Événements", "href": "/events" },
-      { "id": "news", "label": "Actualités", "href": "/news" },
-      { "id": "careers", "label": "Carrières", "href": "/careers" },
-      { "id": "contact", "label": "Contact", "href": "/contact" }
+      {
+        "id": "home",
+        "label": "Accueil",
+        "href": "/"
+      },
+      {
+        "id": "about",
+        "label": "À Propos",
+        "href": "/about"
+      },
+      {
+        "id": "solutions",
+        "label": "Solutions",
+        "href": "/solutions"
+      },
+      {
+        "id": "services",
+        "label": "Services",
+        "href": "/services"
+      },
+      {
+        "id": "products",
+        "label": "Produits",
+        "href": "/products"
+      },
+      {
+        "id": "events",
+        "label": "Événements",
+        "href": "/events"
+      },
+      {
+        "id": "news",
+        "label": "Actualités",
+        "href": "/news"
+      },
+      {
+        "id": "careers",
+        "label": "Carrières",
+        "href": "/careers"
+      },
+      {
+        "id": "contact",
+        "label": "Contact",
+        "href": "/contact"
+      }
     ],
     "legal": [
-      { "id": "mentions", "label": "Mentions Légales", "href": "/legal/mentions" },
-      { "id": "privacy", "label": "Confidentialité", "href": "/legal/privacy" },
-      { "id": "conditions", "label": "conditions d'utilisation", "href": "/legal/conditions" },
-      { "id": "verification", "label": "Vérification", "href": "/verification" }
+      {
+        "id": "mentions",
+        "label": "Mentions Légales",
+        "href": "/legal/mentions"
+      },
+      {
+        "id": "privacy",
+        "label": "Confidentialité",
+        "href": "/legal/privacy"
+      },
+      {
+        "id": "conditions",
+        "label": "Conditions d’utilisation",
+        "href": "/legal/conditions"
+      },
+      {
+        "id": "verification",
+        "label": "Vérification",
+        "href": "/verification"
+      }
     ]
   },
   "socialLinks": {

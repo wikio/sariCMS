@@ -1,0 +1,6 @@
+{
+  "api": "Official service",
+  "demo": "Local demo",
+  "apiHelp": "The pair is submitted to the verification API configured by the document issuer.",
+  "demoHelp": "The external API is not enabled: the answer comes from the local demo registry."
+}

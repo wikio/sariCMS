@@ -1,0 +1,87 @@
+{
+  "version": 1,
+  "_comment": "Configuration des blocs de la page d'accueil (langue fr). Enregistrée par l'administration (Studio → Page d'accueil). Les blocs absents gardent les valeurs par défaut du code et les textes des traductions du site. Structure commune aux trois langues : elle se règle en français.",
+  "order": [
+    "hero",
+    "partners-marquee",
+    "navigation",
+    "mission",
+    "products",
+    "blocks",
+    "stats",
+    "testimonials",
+    "events",
+    "news",
+    "newsletter",
+    "partners",
+    "cta"
+  ],
+  "sections": {
+    "partners-marquee": {
+      "_comment": "Exemple livré avec le module : bandeau « mélange » (actualités, événements, partenaires) complété par deux blocs saisis dans le studio. À modifier ou à effacer depuis Studio → Page d'accueil.",
+      "enabled": true,
+      "sortOrder": 1,
+      "texts": {
+        "label": "Ce qui se passe chez SARI"
+      },
+      "selection": {
+        "mode": "auto",
+        "ids": [],
+        "limit": 6,
+        "sort": "byDateDesc"
+      },
+      "settings": {
+        "source": "mixed",
+        "mixedSources": "news,events,partners",
+        "itemKind": "auto",
+        "appendFree": true,
+        "showImage": true,
+        "showTitle": true,
+        "showText": true,
+        "itemHeight": 72,
+        "mediaWidth": 0,
+        "mediaRadius": 10,
+        "mediaGap": 12,
+        "textSize": "base",
+        "textLines": 2,
+        "itemGap": 40,
+        "itemPadding": 12,
+        "marginTop": 24,
+        "marginBottom": 24,
+        "valign": "middle",
+        "cardStyle": "card",
+        "edgeFade": true,
+        "linkItems": true,
+        "showSeparator": false,
+        "speed": 40,
+        "pauseOnHover": true
+      },
+      "style": {
+        "background": "white",
+        "paddingY": 40,
+        "invert": false,
+        "showHeader": false
+      },
+      "items": [
+        {
+          "id": "item-exemple-atelier",
+          "from": "free",
+          "kind": "image-text",
+          "enabled": true,
+          "title": "Atelier CMS, le 14 octobre",
+          "text": "Deux heures pour reprendre la main sur vos pages.",
+          "image": "/media/marquee/atelier.svg",
+          "href": "/events"
+        },
+        {
+          "id": "item-exemple-support",
+          "from": "free",
+          "kind": "text",
+          "enabled": true,
+          "title": "Un numéro de téléphone, pas un ticket.",
+          "href": "/contact"
+        }
+      ]
+    }
+  }
+}

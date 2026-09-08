@@ -1,0 +1,9 @@
+{
+  "crm": "CRM",
+  "active": "Active",
+  "pending": "Pending",
+  "blocked": "Blocked",
+  "firstName": "First name",
+  "open": "Open",
+  "company": "Company"
+}

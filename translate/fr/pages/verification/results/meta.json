@@ -1,0 +1,6 @@
+{
+  "code": "Code renvoyé :",
+  "api": "Réponse du service de vérification officiel",
+  "local": "Réponse du registre local",
+  "apiUnreachable": "Service externe injoignable — repli sur le registre local"
+}

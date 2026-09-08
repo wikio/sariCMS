@@ -31,9 +31,9 @@ export default function EmptyState({
   icon = 'inbox',
   title,
   description,
-  action = null,
+  action = undefined,
   variant = 'default',
-  preset = null
+  preset = undefined
 }: EmptyStateProps) {
   const locale = useLocale();
   const t = useTranslations('components.ui.EmptyState');

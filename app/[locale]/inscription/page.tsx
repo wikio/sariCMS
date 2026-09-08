@@ -11,6 +11,9 @@ import {
   ArrowRight, CheckCircle
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import ImageCaptcha from '@/components/ImageCaptcha';
+import { loadAdminSettings } from '@/lib/admin-settings';
+import { maskPhone } from '@/lib/masks';
 
 export default function RegisterPage() {
   const locale = useLocale();
@@ -31,6 +34,8 @@ export default function RegisterPage() {
   const [captchaAnswer, setCaptchaAnswer] = useState('');
   const [captchaQuestion, setCaptchaQuestion] = useState('');
   const [captchaExpected, setCaptchaExpected] = useState(0);
+  const [captchaOk, setCaptchaOk] = useState(false);
+  const [siteCaptcha, setSiteCaptcha] = useState(true);
   const [partnerCode, setPartnerCode] = useState('');
   const [secretKey, setSecretKey] = useState('');
 
@@ -43,6 +48,7 @@ export default function RegisterPage() {
       setStep(2);
     }
     generateCaptcha();
+    try { setSiteCaptcha(loadAdminSettings().security.siteCaptcha); } catch { /* */ }
   }, [source]);
 
   const generateCaptcha = () => {
@@ -74,7 +80,9 @@ export default function RegisterPage() {
       setError(t('passwordMismatch'));
       return;
     }
-    if (parseInt(captchaAnswer) !== captchaExpected) {
+    if (siteCaptcha) {
+      if (!captchaOk) { setError(t('captchaError')); return; }
+    } else if (parseInt(captchaAnswer) !== captchaExpected) {
       setError(t('captchaError'));
       generateCaptcha();
       return;
@@ -85,12 +93,17 @@ export default function RegisterPage() {
     }
 
     setIsLoading(true);
-    setTimeout(() => {
-      register(formData.email, formData.password, formData.type).then(() => {
-        setIsLoading(false);
-        router.push(`/${locale}/dashboard`);
-      });
-    }, 1000);
+    register({
+      name: formData.name,
+      email: formData.email,
+      password: formData.password,
+      type: formData.type as 'client' | 'partner' | 'candidate',
+      phone: formData.phone,
+      company: formData.company,
+    }).then(() => {
+      setIsLoading(false);
+      router.push(`/${locale}/dashboard`);
+    });
   };
 
   return (
@@ -294,7 +307,7 @@ export default function RegisterPage() {
                       <div>
                         <label className="block text-sm font-bold text-sari-dark dark:text-white mb-2">{t('phone')}</label>
                         <input type="tel" value={formData.phone}
-                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                          onChange={(e) => setFormData({ ...formData, phone: maskPhone(e.target.value) })}
                           className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none rounded-lg"
                           placeholder="+213 21 23 45 67" />
                       </div>
@@ -323,20 +336,24 @@ export default function RegisterPage() {
                           <ShieldCheck className="w-4 h-4 text-sari-blue" />
                           {t('captchaLabel')} <span className="text-red-500">*</span>
                         </label>
-                        <div className="flex items-center gap-4">
-                          <div className="flex-1 bg-white dark:bg-[#1a1a1a] border border-gray-300 dark:border-gray-700 px-4 py-3 text-center rounded-lg">
-                            <span className="text-xl font-bold text-sari-dark dark:text-white font-mono">{captchaQuestion}</span>
+                        {siteCaptcha ? (
+                          <ImageCaptcha onChange={setCaptchaOk} />
+                        ) : (
+                          <div className="flex items-center gap-4">
+                            <div className="flex-1 bg-white dark:bg-[#1a1a1a] border border-gray-300 dark:border-gray-700 px-4 py-3 text-center rounded-lg">
+                              <span className="text-xl font-bold text-sari-dark dark:text-white font-mono">{captchaQuestion}</span>
+                            </div>
+                            <input type="number" value={captchaAnswer}
+                              onChange={(e) => setCaptchaAnswer(e.target.value)}
+                              placeholder="?"
+                              className="w-24 px-4 py-3 border-2 border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none text-center font-bold text-lg rounded-lg"
+                              required />
+                            <button type="button" onClick={generateCaptcha}
+                              className="p-3 bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors rounded-lg">
+                              <RefreshCw className="w-5 h-5 text-sari-dark dark:text-white" />
+                            </button>
                           </div>
-                          <input type="number" value={captchaAnswer}
-                            onChange={(e) => setCaptchaAnswer(e.target.value)}
-                            placeholder="?"
-                            className="w-24 px-4 py-3 border-2 border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none text-center font-bold text-lg rounded-lg"
-                            required />
-                          <button type="button" onClick={generateCaptcha}
-                            className="p-3 bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors rounded-lg">
-                            <RefreshCw className="w-5 h-5 text-sari-dark dark:text-white" />
-                          </button>
-                        </div>
+                        )}
                       </div>
                       <div className="flex items-start gap-2">
                         <input type="checkbox" id="acceptTerms" required
