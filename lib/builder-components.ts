@@ -160,10 +160,10 @@ export const BUILDER_COMPONENTS: BuilderComponent[] = [
   {
     id: 'sari-slider-images', label: 'Slider d\'images',
     category: 'Médias',
-    description: 'Diaporama avec légende, points de navigation et autoplay.',
+    description: 'Diaporama avec légende, points de navigation et autoplay — le rythme se règle par classe, ou par `data-interval` sur le bloc.',
     needs: ['slides'],
     classes: ['.sari-slides--plain', '.sari-slides--auto', '.sari-slides--slow'],
-    html: '<section class="sari-band"><div class="sari-wrap"><div class="sari-slides" data-sari-slides data-interval="5000"><figure class="sari-slide is-active"><img src="/media/marquee/atelier.svg" alt="Atelier"><figcaption class="sari-slide__caption"><h3>Atelier de prise en main</h3><p>Deux heures sur votre site, par groupe de six.</p></figcaption></figure><figure class="sari-slide"><img src="/media/marquee/webinaire.svg" alt="Webinaire"><figcaption class="sari-slide__caption"><h3>Webinaire produit</h3><p>Une heure, en direct, avec questions.</p></figcaption></figure><figure class="sari-slide"><img src="/media/marquee/recrute.svg" alt="Recrutement"><figcaption class="sari-slide__caption"><h3>Nous recrutons</h3><p>Techniciens biomédicaux en CDI.</p></figcaption></figure></div></div></section>',
+    html: '<section class="sari-band"><div class="sari-wrap"><div class="sari-slides" data-sari-slides><figure class="sari-slide is-active"><img src="/media/marquee/atelier.svg" alt="Atelier"><figcaption class="sari-slide__caption"><h3>Atelier de prise en main</h3><p>Deux heures sur votre site, par groupe de six.</p></figcaption></figure><figure class="sari-slide"><img src="/media/marquee/webinaire.svg" alt="Webinaire"><figcaption class="sari-slide__caption"><h3>Webinaire produit</h3><p>Une heure, en direct, avec questions.</p></figcaption></figure><figure class="sari-slide"><img src="/media/marquee/recrute.svg" alt="Recrutement"><figcaption class="sari-slide__caption"><h3>Nous recrutons</h3><p>Techniciens biomédicaux en CDI.</p></figcaption></figure></div></div></section>',
   },
   {
     id: 'sari-flyer-offer', label: 'Flyer d\'offre',
@@ -187,7 +187,7 @@ export const BUILDER_COMPONENTS: BuilderComponent[] = [
     html: '<section class="sari-band"><div class="sari-wrap"><h2>Nos univers</h2><div class="sari-grid"><article class="sari-card"><div class="sari-card__media"><img src="/media/marquee/webinaire.svg" alt=""></div><h3>Diagnostic</h3><p>Échographes, moniteurs, scopes.</p></article><article class="sari-card"><div class="sari-card__media"><img src="/media/marquee/atelier.svg" alt=""></div><h3>Imagerie</h3><p>Radiologie numérique et mur mobile.</p></article><article class="sari-card"><div class="sari-card__media"><img src="/media/marquee/recrute.svg" alt=""></div><h3>Services</h3><p>Maintenance, formation, conseil.</p></article></div></div></section>',
   },
   {
-    id: 'sari-stats', label: 'Chiffres clés',
+    id: 'sari-stats-quad', label: 'Chiffres clés (quatre)',
     category: 'Contenu',
     description: 'Bandeau de trois ou quatre chiffres, gros caractères.',
     classes: ['.sari-band--blue', '.sari-grid--4'],
@@ -242,9 +242,19 @@ export const BUILDER_COMPONENTS: BuilderComponent[] = [
     classes: ['.sari-band--tight'],
     html: '<section class="sari-band sari-band--tight sari-band--gray"><div class="sari-wrap sari-cta-strip"><p class="sari-note"><a href="/fr">Accueil</a> · <a href="/fr/content">Pages</a> · <span>Titre de la page</span></p><a class="sari-btn sari-btn--sm sari-btn--outline" href="/fr/contact">Nous écrire</a></div></section>',
   },
-  // `builderComponentById` est l'accès utilisé par le panneau de composants.
+  // Le panneau de composants n'appelle plus `builderComponentById` : il tient le
+  // bloc en main, et un identifiant qui se répète ne peut plus faire insérer le
+  // mauvais HTML. Les identifiant restent l'adresse des points de départ.
 ];
 
+/**
+ * L'entrée d'identifiant `id`, ou `undefined`.
+ *
+ * Un `id` doit être unique : deux fiches portées par le même nom ne peuvent pas
+ * être atteintes toutes les deux ici (`find` rend la première), et la liste du
+ * panneau les clève par `id`, ce qui fait hurler React. `npm run builder:check`
+ * (scripts/check-builder-kit.mjs) le vérifie, avec les classes de réglage.
+ */
 export function builderComponentById(id: string): BuilderComponent | undefined {
   return BUILDER_COMPONENTS.find((c) => c.id === id);
 }

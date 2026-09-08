@@ -49,9 +49,9 @@ import { cmsAdminCreate, cmsAdminGet, cmsAdminList, cmsAdminUpdate } from '@/lib
 import { decodeBuilderDoc, encodeBuilderDoc, hasBuilderDoc, type BuilderDoc } from '@/lib/builder-doc';
 import {
   BUILDER_COMPONENTS,
+  type BuilderComponent,
   STARTER_CSS,
   STARTER_TEMPLATES,
-  builderComponentById,
   starterTemplate,
 } from '@/lib/builder-components';
 import { builderKey } from '@/lib/page-templates';
@@ -355,8 +355,10 @@ export default function BuilderPage() {
     setShowCode(true);
   };
 
-  const addComponent = (id: string) => {
-    const block = builderComponentById(id);
+  // Le bloc en main, pas son identifiant : le panneau et la bibliothèque portent
+  // les mêmes fiches, les retrouver par `id` ne faisait que prêter le flanc à une
+  // doublure silencieuse (deux blocs du même nom, et `find` rend toujours la première).
+  const addComponent = (block: BuilderComponent) => {
     const ed = editor.current;
     if (!block || !ed) return;
     ed.addComponents(block.html);
@@ -603,7 +605,7 @@ export default function BuilderPage() {
                 <button
                   key={block.id}
                   className="ad-card ad-card-hover w-full p-3 text-left"
-                  onClick={() => addComponent(block.id)}
+                  onClick={() => addComponent(block)}
                 >
                   <span className="flex items-start justify-between gap-2">
                     <span className="min-w-0">

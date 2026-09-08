@@ -103,7 +103,14 @@ export function usePageBehaviors(
         }),
       );
       const reduced = window.matchMedia(REDUCED).matches;
-      const interval = Math.max(2000, Number(box.dataset.interval || 0) || 6000);
+      // Le rythme : un `data-interval` posé sur le bloc décide d'abord — c'est le
+      // réglage fin, celui qui existe pour une raison précise. À défaut, la classe
+      // de fiche `.sari-slides--slow` allonge à 9 s, comme pour le carrousel : sans
+      // elle, la classe serait citée dans le panneau et ne ferait rien.
+      const interval = Math.max(
+        2000,
+        Number(box.dataset.interval || 0) || (box.classList.contains('sari-slides--slow') ? 9000 : 6000),
+      );
       const autoplay = !reduced && box.classList.contains('sari-slides--auto');
       if (autoplay) {
         const start = () => {
