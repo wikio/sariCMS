@@ -572,6 +572,38 @@ await acheck('un dépôt se pose sous le curseur, de la GED comme du poste', asy
   assert.ok(browser.includes('onDoubleClick=') && ui.includes('onImportAsset='), 'double-clic sur une vignette = poser');
 });
 
+await acheck('les dégradés sont écrits en fractions, pas en pourcents', async () => {
+  // LA panne qui faisait tout tomber : `addColorStop(offset, color)` n'accepte qu'une
+  // fraction 0..1. Notre description de dégradé parle en pourcents (le panneau lit et
+  // écrit 0..100) — et `gradientToFabric` passait ces 0..100 tels quels à Fabric. Chaque
+  // rendu levait donc `IndexSizeError: The provided value (100) is outside the range
+  // (0.0, 1.0)` : fond de gabarit, forme, tout le canvas était mort, et les panneaux ne
+  // se rafraîchissaient plus (le réglage de brosse paraissait éteint).
+  const document = await readFile('lib/canvas/document.ts', 'utf8');
+  const cut = (name) => {
+    const from = document.indexOf(`export function ${name}`);
+    const next = document.indexOf('export function', from + 1);
+    return document.slice(from, next < 0 ? undefined : next);
+  };
+  const toFabric = cut('gradientToFabric');
+  assert.ok(toFabric.includes('/ 100'), 'les offsets doivent être divisés par 100 à la sortie vers Fabric');
+  assert.ok(!/offset: clamp\(Math\.round\(Number\(stop\.offset\)/.test(toFabric), 'et plus recopiés tels quels');
+  const fromFabric = cut('fabricGradientToSpec');
+  assert.ok(fromFabric.includes('* 100'), 'le retour depuis Fabric doit remultiplier par 100 (le panneau veut des pourcents)');
+});
+
+await acheck('la main déplace vraiment la vue, et le curseur de brosse montre sa taille', async () => {
+  const engine = await readFile('lib/canvas/engine.ts', 'utf8');
+  assert.ok(engine.includes('let panning'), "l'outil « Déplacer le plan » doit tenir un point de départ");
+  assert.ok(engine.includes('canvas.setCursor(\'grabbing\')'), 'et un curseur qui dit quil tient la vue');
+  assert.ok(/next\[4\] \+= \(event\.scenePoint\.x - panning\.x\) \* zoom/.test(engine), 'la translation doit être à l’échelle du zoom');
+  assert.ok(engine.includes('function toolCursor'), 'le curseur de brosse doit suivre la taille réglée');
+  assert.ok(engine.includes('if (tool === \'brush\' || tool === \'eraser\') canvas.defaultCursor = toolCursor()'), 'syncBrushes doit reposer le curseur');
+  // Un plan plus haut que la fenêtre doit être ajusté au chargement du format.
+  const ui = await readFile('components/canvas/CanvasStudio.tsx', 'utf8');
+  assert.ok(ui.includes('instance.fitTo({ width: rect.width || 900, height: rect.height || 620 });'), 'l\'atelier doit recadrer la vue après avoir lu la source');
+});
+
 /* ------------------------------------------------- le contrat front ↔ backend */
 
 console.log('\nLes routes NestJS rendues par le module ged');

@@ -217,6 +217,10 @@ export function CanvasStudio({
         instance.fitTo({ width: rect.width || 900, height: rect.height || 620 });
 
         const loaded = await pickSource({ instance, asset, templateId, document: initialDocument });
+        // Le format peut avoir changé sous le plan (gabarit A3, story 1080×1920) : sans
+        // ce second ajustement, on ouvrait une affiche par le haut et le bas restait hors
+        // de l'écran — le repositionnement de la vue n'existait pas encore.
+        instance.fitTo({ width: rect.width || 900, height: rect.height || 620 });
         if (loaded) {
           setName(loaded.title);
           setSlots(loaded.slots);
@@ -861,7 +865,12 @@ export function CanvasStudio({
                   value={snap.brush.size}
                   min={1}
                   max={160}
-                  onChange={(size) => engine?.setBrush({ size })}
+                  onChange={(size) => {
+                    engine?.setBrush({ size });
+                    // Le curseur est « contrôlé » : sans relecture immédiate, le pouce
+                    // restait collé à l'ancienne valeur et le réglage paraissait mort.
+                    setSnap((value) => ({ ...value, brush: { ...value.brush, size } }));
+                  }}
                   onCommit={(size) => engine?.setBrush({ size })}
                   unit="px"
                 />
@@ -880,8 +889,27 @@ export function CanvasStudio({
                     }}
                   />
                 </span>
-                <SliderField label="Fluidité" value={snap.brush.smoothing} min={0} max={90} step={5} onChange={(smoothing) => engine?.setBrush({ smoothing })} onCommit={(smoothing) => engine?.setBrush({ smoothing })} />
-                <ColorField label="Couleur" value={snap.brush.color} onChange={(color) => engine?.setBrush({ color })} onCommit={(color) => engine?.setBrush({ color })} />
+                <SliderField
+                  label="Fluidité"
+                  value={snap.brush.smoothing}
+                  min={0}
+                  max={90}
+                  step={5}
+                  onChange={(smoothing) => {
+                    engine?.setBrush({ smoothing });
+                    setSnap((value) => ({ ...value, brush: { ...value.brush, smoothing } }));
+                  }}
+                  onCommit={(smoothing) => engine?.setBrush({ smoothing })}
+                />
+                <ColorField
+                  label="Couleur"
+                  value={snap.brush.color}
+                  onChange={(color) => {
+                    engine?.setBrush({ color });
+                    setSnap((value) => ({ ...value, brush: { ...value.brush, color } }));
+                  }}
+                  onCommit={(color) => engine?.setBrush({ color })}
+                />
               </>
             ) : (
               <>

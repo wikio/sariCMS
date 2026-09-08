@@ -671,6 +671,9 @@
   inset-inline-end: 0;
   top: calc(100% + 6px);
   z-index: 5;
+  /* `position: fixed` est posé par le composant (le rail est un conteneur de 64 px qui
+     couperait le panneau) : sans défilement interne, un menu long dépasserait l'écran. */
+  overflow-y: auto;
   min-width: 232px;
   background: #0e1a2e;
   border: 1px solid #26344d;

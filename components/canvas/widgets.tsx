@@ -17,7 +17,7 @@
  *   plus souvent.
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { GradientSpec } from '@/lib/canvas/types';
 import { normalizeColor } from '@/lib/canvas/document';
@@ -502,6 +502,46 @@ export function GradientEditor({
 export function Menu({ label, icon, children, align = 'end', className }: { label: string; icon?: ReactNode; children: ReactNode | ((close: () => void) => ReactNode); align?: 'start' | 'end'; className?: string }) {
   const [open, setOpen] = useState(false);
   const host = useRef<HTMLDivElement>(null);
+  const list = useRef<HTMLDivElement>(null);
+
+  /**
+   * Positionne le panneau en pixels de viewport.
+   *
+   * Le rail de gauche est une colonne de 64 px en `overflow-y: auto` : un panneau de 232
+   * px, absolu à l'intérieur, y naissait rogné — « les icônes de formes sont décalées à
+   * gauche, on ne les voit pas ». En `fixed`, il s'ouvre À CÔTÉ du rail, recadré à la
+   * fenêtre, avec son propre défilement s'il dépasse du bas de l'écran. Écriture directe du
+   * style, pas d'état : mesurer puis `setState` dans un effet relance un rendu complet, et
+   * React 19 le décourage à juste titre.
+   */
+  const applyPos = useCallback(() => {
+    const anchor = host.current?.getBoundingClientRect();
+    const node = list.current;
+    if (!anchor || !node) return;
+    const width = Math.max(node.offsetWidth, 232);
+    let left = align === 'start' ? anchor.left : anchor.right - width;
+    if (anchor.left + width + 12 < window.innerWidth) left = anchor.left;
+    else if (anchor.right - width > 8) left = anchor.right - width;
+    left = Math.max(8, Math.min(left, window.innerWidth - width - 8));
+    const top = Math.min(anchor.bottom + 6, Math.max(80, window.innerHeight - 48));
+    node.style.position = 'fixed';
+    node.style.top = `${top}px`;
+    node.style.left = `${left}px`;
+    node.style.minWidth = `${width}px`;
+    node.style.maxHeight = `${Math.max(120, window.innerHeight - top - 10)}px`;
+    node.style.zIndex = '80';
+  }, [align]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onReflow = () => applyPos();
+    window.addEventListener('resize', onReflow);
+    window.addEventListener('scroll', onReflow, true);
+    return () => {
+      window.removeEventListener('resize', onReflow);
+      window.removeEventListener('scroll', onReflow, true);
+    };
+  }, [open, applyPos]);
   useEffect(() => {
     if (!open) return;
     const onDown = (event: PointerEvent) => {
@@ -524,7 +564,20 @@ export function Menu({ label, icon, children, align = 'end', className }: { labe
         {label}
       </button>
       {open ? (
-        <div className="sc-menu__list" style={{ [align]: 0 } as React.CSSProperties} role="menu">
+        <div
+          ref={(node) => {
+            list.current = node;
+            if (!node) return;
+            applyPos();
+            // Deuxième mesure à la frame suivante : la largeur dépend du contenu, donc des
+            // styles qu'on vient d'écrire — la recalculer une fois le layout posé évite un
+            // panneau collé au bord gauche de la fenêtre quand il pourrait tenir à droite.
+            window.requestAnimationFrame(applyPos);
+          }}
+          className="sc-menu__list"
+          role="menu"
+          style={{ [align]: 0 } as React.CSSProperties}
+        >
           {typeof children === 'function' ? children(() => setOpen(false)) : children}
         </div>
       ) : null}

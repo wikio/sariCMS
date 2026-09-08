@@ -316,6 +316,8 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
   // Le dernier pointeur connu, en coordonnées du plan : c'est là qu'un objet importé
   // depuis une liste ou une boîte de dialogue doit atterrir, et non immuablement au centre.
   let lastScenePoint: { x: number; y: number } | null = null;
+  // La main qui déplace la vue : un point de départ en coordonnées d'écran.
+  let panning: { x: number; y: number } | null = null;
   let draggedAnchor = -1;
 
   const history = createHistory('');
@@ -590,7 +592,7 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
     // ingouvernables au clic, et la liste des calques devenait le seul moyen de sélectionner
     // quoi que ce soit. On le garde donc toujours vrai : le rectangle pointé-étendu ne peut
     // partir que d'une zone vide, et une zone vide ne renvoie pas d'objet cliquable.
-    canvas.defaultCursor = tool === 'hand' ? 'grab' : drawing ? 'crosshair' : tool === 'text' ? 'text' : 'default';
+    canvas.defaultCursor = toolCursor();
     canvas.forEachObject((object) => {
       if ((object as unknown as Record<string, unknown>)[HELPER] || isBackgroundRect(object)) return;
       const locked = Boolean((object as unknown as Record<string, unknown>).locked);
@@ -614,6 +616,29 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
   function syncBrushes() {
     eraser.width = Math.max(2, Math.round(pencil.width * 1.6));
     eraser.color = pencil.color;
+    if (tool === 'brush' || tool === 'eraser') canvas.defaultCursor = toolCursor();
+  }
+
+  /**
+   * Le curseur de l'outil, à l'échelle près.
+   *
+   * `crosshair` ne dit rien de la taille : un cercle SVG encodé en data-URL montre la
+   * pointe réelle (3 px à 160 px de diamètre, bornés à l'écran), et la gomme se distingue
+   * du pinceau par son contour pointillé. Le dessin du curseur suit donc le réglage — c'est
+   * aussi ce qui rend visible le fait qu'il a bien changé.
+   */
+  function toolCursor() {
+    if (tool === 'hand') return 'grab';
+    if (tool === 'text') return 'text';
+    if (tool !== 'brush' && tool !== 'eraser') return 'default';
+    const d = Math.max(8, Math.min(48, Math.round((tool === 'eraser' ? eraser.width : pencil.width) / 1)));
+    const ring = tool === 'eraser' ? 'rgba(226,232,240,0.95)' : 'rgba(15,23,42,0.9)';
+    const fill = tool === 'eraser' ? 'rgba(148,163,184,0.35)' : 'rgba(163,230,53,0.35)';
+    const svg =
+      `<svg xmlns="http://www.w3.org/2000/svg" width="${d}" height="${d}" viewBox="0 0 ${d} ${d}">` +
+      `<circle cx="${d / 2}" cy="${d / 2}" r="${d / 2 - 1}" fill="${fill}" stroke="${ring}" stroke-width="1.5"${tool === 'eraser' ? ' stroke-dasharray="3 2"' : ''}/>` +
+      `</svg>`;
+    return `url("data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}") ${Math.round(d / 2)} ${Math.round(d / 2)}, crosshair`;
   }
 
   /* ----------------------------------------------------------------- la sélection */
@@ -1688,6 +1713,32 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
       } as never);
     });
 
+    // L'outil « Déplacer le plan » ne se contentait pas d'un curseur `grab` : rien ne
+    // déplaçait la vue. Sur un A3 ou une story, le bas de l'affiche était donc hors
+    // d'atteinte — pas de scroll, pas de panneautage, on ne voyait que le haut.
+    canvas.on('mouse:down', (event: { e?: MouseEvent | TouchEvent | PointerEvent; scenePoint?: Point }) => {
+      if (tool !== 'hand' || !event.e || !event.scenePoint) return;
+      panning = { x: event.scenePoint.x, y: event.scenePoint.y };
+      canvas.setCursor('grabbing');
+    });
+    canvas.on('mouse:move', (event: { e?: MouseEvent | TouchEvent | PointerEvent; scenePoint?: Point }) => {
+      if (!panning || !event.scenePoint) return;
+      const zoom = Math.max(0.05, canvas.getZoom());
+      // Le déplacement est en pixels d'écran, la translation du plan en pixels de scène.
+      const next = [...canvas.viewportTransform] as number[];
+      next[4] += (event.scenePoint.x - panning.x) * zoom;
+      next[5] += (event.scenePoint.y - panning.y) * zoom;
+      canvas.setViewportTransform(next as never);
+      panning = { x: event.scenePoint.x, y: event.scenePoint.y };
+      emit({ type: 'zoom', value: zoom });
+      render();
+    });
+    canvas.on('mouse:up', () => {
+      if (!panning) return;
+      panning = null;
+      canvas.setCursor('grab');
+    });
+
     canvas.on('mouse:down', (event: { e?: MouseEvent | TouchEvent | PointerEvent; target?: FabricObject }) => {
       if (!anchors.circles.length) return;
       const hit = event.target && (event.target as unknown as Record<string, unknown>)[HELPER] === 'anchor' ? event.target : null;
@@ -1846,7 +1897,13 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
     },
     getTool: () => tool,
     setBrush(next) {
-      if (next.size) pencil.width = Math.max(1, Math.min(400, Number(next.size) || 1));
+      // Une taille non numérique (le `onChange` d'un `<input type=range>` peut arriver en
+      // chaîne) retombait sur 1 : le curseur de taille « ne marchait pas » parce qu'il
+      // écrasait le geste. On exige un nombre, sinon on ne touche à rien.
+      if (next.size !== undefined) {
+        const size = Number(next.size);
+        if (Number.isFinite(size) && size > 0) pencil.width = Math.max(1, Math.min(400, Math.round(size)));
+      }
       if (next.color) pencil.color = next.color;
       if (next.smoothing !== undefined) {
         // `decimate` est le vrai réglage de lissage de Fabric : il jette les points

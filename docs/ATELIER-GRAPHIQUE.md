@@ -85,6 +85,36 @@ modifiée **et** qu'un avertissement est affiché.
 | **Sélection directe** | Un clic sur un objet le saisit, poignées comprises. `perPixelTargetFind` pour les aplats (on ne traverse pas le trou d'une étoile), boîte entière pour les images, détection au trait pour les tracés de pinceau. | `canvas.selection = tool === 'select'` — et Fabric ne consulte la cible sous le curseur **que si** `selection` est vrai (Canvas._onMouseDownInNormalMode). Tous les calques étaient ingouvernables au clic, la liste des calques restait le seul chemin. |
 | **Poignées** | Rotation et mise à l'échelle ont des **curseurs dédiés** pendant la main (`alias` en rotation, `nesw-resize` aux coins, `ew-resize` en cisaillement). | — |
 
+## Un dégradé faisait tomber tout le canvas
+
+`CanvasGradient.addColorStop(offset, color)` n'accepte qu'**une fraction entre 0 et 1**.
+Or notre description de dégradé (celle du panneau, celle du JSON, celle des gabarits) parle
+en **pourcents** : `gradientToFabric` recopiait `offset: 100` tel quel, et **chaque rendu**
+levait `IndexSizeError: The provided value (100) is outside the range (0.0, 1.0)` — à
+l'intérieur du `forEach` de Fabric, donc non rattrapable : le canvas ne peignait plus, la
+planche paraissait figée, et les panneaux ne se rafraîchissaient plus (le réglage de taille
+de brosse avait l'air mort, `onChange` ne remontait rien). `gradientToFabric` divise
+maintenant par 100, `fabricGradientToSpec` remultiplie par 100 à la relecture, et
+`test-ged.mjs` vérifie les deux sens. Le `clamp(…, 0, 100)` reste la règle de la
+description — c'est la *sortie vers Fabric* qui change d'unité.
+
+## Voir tout le plan : ajuster, main, défilement
+
+Un A3 (1754×2480) ou une story (1080×1920) est plus haut que la fenêtre de l'atelier. Trois
+choses, maintenant : **l'ajustement** au format (`fitTo`, appelé à l'ouverture **et** après
+lecture d'une source ou d'un gabarit, puisque c'est là que le plan change de taille), l'outil
+**« Déplacer le plan »** — qui n'était qu'un curseur `grab` et ne déplaçait rien ; il tient
+un point de départ, traduit l'écran en pixels de scène à l'échelle du zoom, et passe en
+`grabbing` pendant la main — et le curseur d'objet survolé (`move`), qui dit qu'on attrape un
+calque et non la vue.
+
+Les menus du rail (formes, enregistrer, réglages) s'ouvrent en `position: fixed` **à côté**
+de la colonne : le rail fait 64 px et `overflow-y: auto`, un panneau de 232 px y naissait
+rogne — « les icônes de formes sont décalées à gauche ». La position est écrite sur le nœud
+(mesurée deux fois, une à la pose du `ref` et une à la frame suivante, le temps que la
+largeur du contenu soit connue), pas dans un état : mesurer-then-setState dans un effet
+relance un rendu complet, ce que React 19 décourage.
+
 ## Les gabarits, pas à pas
 
 1. Rail de gauche → **Gabarit** : la liste vient de `/api/admin/ged/templates`, et si l'API est muette, de

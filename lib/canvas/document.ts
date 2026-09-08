@@ -113,8 +113,15 @@ export function isGradientLike(value: unknown): value is GradientSpec & { stops:
 export function gradientToFabric(input: GradientSpec | null | undefined) {
   if (!isGradientLike(input)) return null;
   const gradient = input as GradientSpec & { stops: ColorStop[] };
-  const stops: ColorStop[] = gradient.stops.map((stop) => ({
-    offset: clamp(Math.round(Number(stop.offset) || 0), 0, 100),
+  // LA clé du plantage de rendu : notre description parle en **pourcents** (0–100, c'est
+  // ce que lit et écrit le panneau), mais Fabric écrit ces offsets tels quels dans
+  // `CanvasGradient.addColorStop(offset, color)` — et le DOM n'accepte qu'une fraction
+  // 0..1. Un dégradé posé tel quel faisait lever `IndexSizeError: The provided value (100)
+  // is outside the range (0.0, 1.0)` À CHAQUE RENDU : une planche de gabarit, un fond en
+  // dégradé, une forme — tout le canvas tombait, et les panneaux avec lui (le réglage de
+  // taille de brosse ne remontait plus, faute de rafraîchissement).
+  const stops = gradient.stops.map((stop) => ({
+    offset: clamp(Number(stop.offset) || 0, 0, 100) / 100,
     color: normalizeColor(stop.color) || '#000000',
   }));
   const type = gradient.type === 'radial' ? 'radial' : 'linear';
