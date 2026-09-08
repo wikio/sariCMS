@@ -349,6 +349,60 @@ WHERE deletedAt IS NULL;
 3. **Ne pas modifier le `legacyId`** après création
 4. **Ne pas supprimer le parent** sans supprimer ou réassigner les enfants
 
+## Les chaînes de l’interface — `messages/`, `translate/`, et le contrôle
+
+Deux arbres, deux rôles, et ils ne se ressemblent pas :
+
+| Endroit | Qui le lit | Rôle |
+|---|---|---|
+| `messages/{fr,en,ar}.json` | le site, via `next-intl` | la source de vérité de l’interface |
+| `translate/{locale}/…json` | l’écran d’administration « Traductions » | l’atelier où l’on retouche les chaînes |
+
+`npm run merge:translations` copie `messages/<locale>.json` vers `translate/<locale>.json`
+— dans ce sens-là, jamais l’inverse. **`scripts/build-messages.js` fait l’inverse : il
+ne faut pas le lancer.** `translate/` est en retard sur `messages/` (l’espace
+`admin.newsletter`, apparu avec l’écran d’abonnement, n’y existe pas), et régénérer les
+messages depuis l’atelier effacerait des namespaces entiers du site.
+
+À savoir, du même coup : l’écran « Traductions » de l’administration enregistre ses
+retouches dans `translate/` (`app/api/admin/translations/file/route.ts`), que le site ne
+lit pas. Une chaîne modifiée là reste **sans effet en ligne** tant qu’elle n’est pas
+reprise dans `messages/<locale>.json`. Il faudra fermer la boucle — faire lire
+`translate/` par le site, ou faire écrire l’écran dans `messages/` — mais pas les deux :
+l’atelier contient déjà deux représentations du même namespace, et elles ne disent pas
+la même chose.
+
+**La règle.** Une clé appelée par le code — `useTranslations('admin.newsletter')` puis
+`t('consentYes')` — doit exister dans les trois fichiers. Sinon rien ne casse à
+l’écriture du composant : c’est à l’affichage que le navigateur crache
+`MISSING_MESSAGE: Could not resolve admin.newsletter.consentYes`, et la place reste vide.
+L’écran de détail d’un abonné à la newsletter a précisément montré ce couple
+(`consentYes` / `consentNo`, absents des trois langues).
+
+**Le contrôle.**
+
+```bash
+npm run intl:check   # bloquant : code de sortie 1 si une clé manque (c’est ce que fait `npm run build`)
+npm run intl:warn    # le même rapport, sans bloquer — `npm run dev` l’appelle à chaque démarrage
+```
+
+Il part du code, pas des fichiers : comparer le *nombre* de clés de trois fichiers ne
+prouve rien, ils peuvent être identiques et passer à côté d’une clé que l’interface
+réclame. Le script relève les espaces déclarés, les appels `t('…')`, vérifie dans les
+trois langues, puis signale les doublons de l’atelier (ci-dessous). Les clés construites
+à la volée (`t('field' + x)`, un nom de champ dans une variable) lui échappent
+volontairement — il ne devine pas la portée des variables.
+
+**Un namespace, deux exemplaires.** L’atelier liste `translate/<locale>/`, et le dépôt y
+contient deux héritages du même espace : le fichier plat `admin.json` (1 655 clés) et le
+dossier `admin/` (965), dont les contenus diffèrent. L’arbre de l’écran doit donc les
+montrer tous les deux — supprimer l’un emporterait des namespaces que l’autre n’a pas —
+et l’API `app/api/admin/translations/tree/route.ts` rend leurs identifiants uniques (le
+fichier garde son `.json`, dans l’`id` comme dans le libellé quand le dossier du même nom
+existe). Sans cette distinction, `admin` apparaissait deux fois sous la même clé React :
+« Encountered two children with the same key », et le dossier choisi dans l’arbre
+n’était plus le même selon l’étage où l’on cliquait.
+
 ## Dépannage
 
 ### Problème : Traductions non liées

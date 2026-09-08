@@ -4,8 +4,10 @@
   "private": true,
   "scripts": {
     "merge:translations": "node scripts/merge-translations.mjs",
-    "dev": "npm run merge:translations && next dev -p 5000",
-    "build": "npm run merge:translations && next build",
+    "intl:check": "node scripts/check-translations.mjs",
+    "intl:warn": "node scripts/check-translations.mjs --warn",
+    "dev": "npm run merge:translations && npm run intl:warn && next dev -p 5000",
+    "build": "npm run merge:translations && npm run intl:check && next build",
     "start": "next start",
     "lint": "next lint",
     "menus:check": "node scripts/check-menus.mjs",

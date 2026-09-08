@@ -27,10 +27,22 @@ async function scanDirectory(dir: string, basePath: string = ''): Promise<TreeNo
       return a.name.localeCompare(b.name);
     });
     
+    // Un même nom de namespace peut exister deux fois au même étage : `admin.json`
+    // (le fichier plat) et `admin/` (le dossier détaillé) cohabitent dans
+    // `translate/fr`. L'`id` d'un nœud sert de clé React et de mémoire de sélection ;
+    // en retirant `.json` aux fichiers, les deux naissaient sous l'`id` `admin`, et
+    // React prévenait « Encountered two children with the same key ». Un fichier garde
+    // donc son extension dans son `id` — et dans son libellé quand le conflit existe,
+    // pour que les deux lignes se distinguent à l'écran.
+    const folders = new Set(entries.filter((e) => e.isDirectory()).map((e) => e.name));
+    // Sous Windows, `path.join` sépare avec un antislash : les identifiants sont rendus
+    // avec des `/`, sinon le même arbre change de clés selon la machine qui l'a écrit.
+    const toId = (p: string) => p.split(path.sep).join('/');
+
     for (const entry of sortedEntries) {
       const fullPath = path.join(dir, entry.name);
-      const relativePath = path.join(basePath, entry.name);
-      
+      const relativePath = toId(path.join(basePath, entry.name));
+
       if (entry.isDirectory()) {
         // Dossier
         const children = await scanDirectory(fullPath, relativePath);
@@ -42,12 +54,12 @@ async function scanDirectory(dir: string, basePath: string = ''): Promise<TreeNo
         });
       } else if (entry.name.endsWith('.json')) {
         // Fichier JSON
-        const id = relativePath.replace(/\\/g, '/').replace('.json', '');
+        const stem = entry.name.replace(/\.json$/, '');
         nodes.push({
-          id,
-          label: entry.name.replace('.json', ''),
+          id: relativePath,
+          label: folders.has(stem) ? entry.name : stem,
           type: 'file',
-          path: relativePath.replace(/\\/g, '/')
+          path: relativePath
         });
       }
     }

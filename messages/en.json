@@ -2152,6 +2152,8 @@
       "fieldSource": "Source",
       "fieldTopics": "Interests",
       "fieldConsent": "Consent recorded",
+      "consentYes": "Consent given",
+      "consentNo": "No consent",
       "fieldNotes": "Note",
       "emailLocked": "The address is the row key and cannot change. Delete and recreate the row if it is wrong.",
       "topicsHint": "Type a term and pick a suggestion, or write your own — values are separated by commas.",

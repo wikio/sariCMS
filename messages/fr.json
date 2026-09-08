@@ -2152,6 +2152,8 @@
       "fieldSource": "Origine",
       "fieldTopics": "Centres d’intérêt",
       "fieldConsent": "Consentement enregistré",
+      "consentYes": "Consentement donné",
+      "consentNo": "Pas de consentement",
       "fieldNotes": "Remarque",
       "emailLocked": "L’adresse ne change pas : elle sert de clé à la ligne. Supprimez puis recréez si elle est erronée.",
       "topicsHint": "Tapez un terme et choisissez une suggestion, ou écrivez-le : les valeurs sont séparées à la virgule.",
