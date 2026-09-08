@@ -54,7 +54,9 @@
       "galleries": "Galeries",
       "media": "Médias",
       "home": "Page d'accueil",
-      "newsletter": "Newsletter"
+      "newsletter": "Newsletter",
+      "canvas": "Atelier graphique",
+      "verificationCodes": "Codes de vérification"
     },
     "header": {
       "seeSite": "Voir le site",
@@ -941,7 +943,35 @@
       "added": "« {label} » ajouté à la page",
       "templateConfirm": "Le point de départ remplace le contenu de la page. Continuer ?",
       "noPageTitle": "Aucune page de type Constructeur",
-      "noPageText": "Créez une page, ou passez une page générique existante en mise en page « Constructeur de page » depuis la liste des pages : elle apparaîtra ici."
+      "noPageText": "Créez une page, ou passez une page générique existante en mise en page « Constructeur de page » depuis la liste des pages : elle apparaîtra ici.",
+      "studio": "Atelier"
+    },
+    "canvas": {
+      "breadcrumb": "Site",
+      "title": "Atelier graphique",
+      "hint": "Dessinez une planche — texte, formes, pinceau, graphiques — et rangez-la dans la GED. Elle s’insère ensuite dans une page construite, ou s’affiche où vous voulez par son URL. Chaque enregistrement garde l’image, la SVG si tout est vectoriel, et le JSON rejouable.",
+      "newPlan": "Nouvelle planche",
+      "startFrom": "Partir d’un format",
+      "plans": "Mes planches",
+      "loading": "Lecture de la GED…",
+      "noPlans": "Aucune planche enregistrée pour l’instant. Commencez par un format ou un gabarit.",
+      "noTemplates": "Le catalogue de gabarits est vide. Publiez une planche en gabarit depuis l’atelier, ou déposez un JSON dans public/canvas/templates.",
+      "openInStudio": "Ouvrir dans l’atelier",
+      "copyUrl": "Copier l’URL",
+      "rename": "Renommer",
+      "delete": "Supprimer (planche et versions)",
+      "download": "Télécharger le rendu",
+      "editable": "rééditable",
+      "media": "Médiathèque",
+      "builder": "Constructeur",
+      "loadError": "Lecture de la GED impossible.",
+      "copyError": "Le presse-papiers est refusé par le navigateur.",
+      "deleted": "Planche supprimée.",
+      "deleteError": "Suppression impossible.",
+      "renamed": "Planche renommée — pensez à vérifier les pages qui l’affichent.",
+      "renameError": "Renommage impossible.",
+      "renamePrompt": "Nouveau nom de fichier, sans extension",
+      "confirmDelete": "Supprimer « {name} », ses versions archivées et sa fiche ? Les pages qui l’affichent montreront une image manquante."
     },
     "config": {
       "general": "Général",
@@ -2195,6 +2225,62 @@
       "chipUnsubscribed": "Désinscrit",
       "chipDeleted": "À la corbeille",
       "confirmDelete": "Placer cette fiche à la corbeille ?"
+    },
+    "verificationCodes": {
+      "title": "Codes de vérification",
+      "intro": "Que renvoie l'API externe, et qu'en faire. Chaque ligne marie un code de retour à un comportement de la page publique ; tant que l'API n'est pas activée, ces codes s'appliquent aussi au registre local.",
+      "addNew": "Nouveau code",
+      "backToSettings": "Réglages de l'API",
+      "loading": "Lecture du catalogue…",
+      "restoreDefaults": "Rétablir les quatre codes par défaut",
+      "restored": "Catalogue rétabli.",
+      "saved": "Code enregistré.",
+      "created": "Code ajouté au catalogue.",
+      "deleted": "Code retiré du catalogue.",
+      "saveError": "Enregistrement refusé — le catalogue exige au moins un code « valide », et des valeurs distinctes.",
+      "loadError": "Cataloge illisible — repartissez des valeurs par défaut si nécessaire.",
+      "save": "Enregistrer",
+      "saving": "Enregistrement…",
+      "cancel": "Annuler",
+      "edit": "Modifier",
+      "delete": "Supprimer",
+      "activate": "Réactiver",
+      "deactivate": "Désactiver",
+      "footnote": "Un code renvoyé par l'API mais absent d'ici n'est jamais traduit en « valide » par défaut : la page publique signale l'anomalie et l'administrateur ajoute la ligne. Enregistrer remplace le catalogue entier.",
+      "columns": {
+        "code": "Code API",
+        "semantic": "Comportement",
+        "label": "Libellé affiché",
+        "details": "Type + Émetteur",
+        "active": "Actif",
+        "actions": "Actions"
+      },
+      "semantics": {
+        "valid": "Validé — vert",
+        "forged": "Falsifié — rouge",
+        "expired": "Expiré — ambre",
+        "revoked": "Révoqué — orange",
+        "neutral": "Information — bleu"
+      },
+      "empty": {
+        "title": "Le catalogue est vide.",
+        "hint": "Sans une ligne au comportement « validé », aucun document ne peut afficher de feu vert."
+      },
+      "editor": {
+        "titleNew": "Nouveau code de vérification",
+        "titleEdit": "Modifier le code",
+        "code": "Valeur renvoyée par l'API",
+        "codeHelp": "Comparée en chaîne, sans distinction de casse ; « 01 » et « 1 » comptent comme identiques si les deux sont numériques.",
+        "semantic": "Comportement de la page",
+        "semanticHelp": "Couleur, icône et panneau de résultat — indépendants du libellé.",
+        "label": "Libellé (titre du panneau)",
+        "description": "Description (sous le libellé)",
+        "sortOrder": "Ordre d'affichage",
+        "showDetails": "Afficher Type + Émetteur",
+        "showDetailsHelp": "Quand l'API renvoie le type du document et son émetteur à côté du code.",
+        "active": "Actif",
+        "needCode": "La valeur renvoyée par l'API est obligatoire."
+      }
     }
   },
   "common": {
@@ -4600,7 +4686,18 @@
         "blockedMessage": "Trop de tentatives. Veuillez rafraîchir la page dans 5 minutes.",
         "error": "Erreur",
         "errorMessage": "Veuillez remplir tous les champs.",
-        "invalidFormat": "Format de code invalide. Format attendu : SARI-XXX##-#####"
+        "invalidFormat": "Format de code invalide. Format attendu : SARI-XXX##-#####",
+        "apiError": {
+          "title": "Service de vérification indisponible",
+          "message": "Le service interrogé n'a pas répondu, ou a répondu hors de son protocole. Le document n'est ni validé ni infirmé — réessayez dans un instant ; si le problème persiste, rapprochez-vous de l'émetteur du document.",
+          "retry": "Réessayer"
+        },
+        "meta": {
+          "code": "Code renvoyé :",
+          "api": "Réponse du service de vérification officiel",
+          "local": "Réponse du registre local",
+          "apiUnreachable": "Service externe injoignable — repli sur le registre local"
+        }
       },
       "sidebar": {
         "qrCode": {
@@ -4664,6 +4761,13 @@
         "lawDesc": "relative à la protection des personnes physiques dans le traitement des données à caractère personnel, aucune donnée personnelle n'est conservée lors du processus de vérification.",
         "warning": "Avertissement :",
         "warningDesc": "La falsification de documents officiels est un délit passible de poursuites pénales selon le Code pénal algérien (Articles 214, 217 et 147). En cas de doute sur l'authenticité d'un document, contactez immédiatement nos services ou les autorités judiciaires compétentes."
+      },
+      "prefilled": "Le code et la clé de vérification ont été repris du lien scanné — vérifiez-les, répondez au contrôle anti-robot et lancez la vérification.",
+      "mode": {
+        "api": "Service officiel",
+        "demo": "Démonstration locale",
+        "apiHelp": "Le couple est soumis à l'API de vérification configurée par l'émetteur du document.",
+        "demoHelp": "L'API externe n'est pas activée : la réponse vient du registre local de démonstration."
       }
     },
     "visibility404": {

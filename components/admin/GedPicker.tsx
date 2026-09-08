@@ -68,25 +68,36 @@ export default function GedPicker({
   const [renamingFile, setRenamingFile] = useState<GedFile | null>(null);
   const [newName, setNewName] = useState('');
   const [replacingFile, setReplacingFile] = useState<GedFile | null>(null);
-  const [cacheBuster, setCacheBuster] = useState(Date.now());
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    // Le rendu est réservé au client (portal dans `document.body`) : le gate est un
+    // appel unique après montage, d'où la dérogation — même traitement que
+    // `components/admin/Drawer.tsx`.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
+  }, []);
 
+  /** Rafraîchit la liste et, avec elle, les vignettes (le navigateur garde l'ancien `src`). */
   const load = async () => {
     try {
-      const res = await fetch(`/api/admin/upload?t=${Date.now()}`);
+      const res = await fetch('/api/admin/upload', { cache: 'no-store' });
       if (!res.ok) throw new Error('Failed to load files');
       const json = await res.json();
       const normalized = (json.files || []).map(normalize).filter(Boolean) as GedFile[];
       setFiles(normalized);
-      setCacheBuster(Date.now()); // Update cache buster to refresh images
     } catch (e) {
       console.error('[GedPicker] load error:', e);
       setFiles([]);
     }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    // Une IIFE `async` plutôt qu'un `load()` nu : la liste doit se recharger après une
+    // retouche (`onSaved`) et un simple setState d'effet est découragé par React 19.
+    void (async () => {
+      await load();
+    })();
+  }, []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -244,12 +255,15 @@ export default function GedPicker({
           </select>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 max-h-[50vh] overflow-auto">
-          {shown.map((f) => (
-            <div key={f.url} className="ad-card overflow-hidden text-left relative group">
+          {shown.map((f, i) => (
+            // Le CHEMIN, pas l'URL ni le nom : deux dossiers peuvent porter le même nom
+            // de fichier, et `name` (sans extension) collide entre `x.png` et `x.jpg` —
+            // deux clés identiques font paraitre disparaître une vignette.
+            <div key={f.file || f.url || i} className="ad-card overflow-hidden text-left relative group">
               <button type="button" className="w-full" onClick={() => onPick(f.url)}>
                 {f.url.match(/\.(png|jpe?g|webp|gif|svg)$/i) ? (
                   <img 
-                    src={`${f.url}?v=${cacheBuster}`} 
+                    src={f.url} 
                     alt="" 
                     className="h-24 w-full object-contain bg-[var(--ad-surface-2)]"
                     onError={(e) => {

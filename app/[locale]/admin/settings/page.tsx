@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { FolderOpen, Image as ImageIcon, Save, Search, Upload } from 'lucide-react';
 import { DEFAULT_SETTINGS, loadAdminSettings, saveAdminSettings, type AdminSettings } from '@/lib/admin-settings';
 import { previewCode, DEFAULT_TEMPLATES, type CodeKind } from '@/lib/codes';
+import VerificationSettingsSection from '@/components/admin/VerificationSettingsSection';
 import { testErpConnection } from '@/lib/erp';
 import { useToast } from '@/components/admin/Toast';
 import GedPicker from '@/components/admin/GedPicker';
@@ -11,7 +12,7 @@ import DateFormatPicker from '@/components/admin/DateFormatPicker';
 import { notifyDateSettingsChanged } from '@/lib/use-date-format';
 
 type SectionId = 'general' | 'commerce' | 'security' | 'integrations' | 'seo';
-type TabId = 'general' | 'dates' | 'products' | 'codes' | 'quotes' | 'invoicing' | 'security' | 'smtp' | 'database' | 'seo';
+type TabId = 'general' | 'dates' | 'products' | 'codes' | 'quotes' | 'invoicing' | 'security' | 'smtp' | 'database' | 'verification' | 'seo';
 
 interface TabDef { id: TabId; label: string }
 interface SectionDef { id: SectionId; label: string; tabs: TabDef[] }
@@ -32,6 +33,7 @@ const SECTIONS: SectionDef[] = [
   ] },
   { id: 'integrations', label: 'Intégrations', tabs: [
     { id: 'smtp', label: 'SMTP / Email' },
+    { id: 'verification', label: 'Vérification des documents' },
     { id: 'database', label: 'Base de données' },
   ] },
   { id: 'seo', label: 'SEO', tabs: [
@@ -49,6 +51,7 @@ const SEARCH_INDEX: Record<TabId, string> = {
   invoicing: 'facture facturation erp api clé url upload paiement',
   security: '2fa captcha connexion postuler double authentification sécurité accès',
   smtp: 'smtp hôte port utilisateur mot de passe expéditeur tls ssl email',
+  verification: 'vérification vérif document code clé hash api externe qr anti-robot catalogue expire révoqué falsifié captcha',
   database: 'base de données driver mysql postgresql mongodb json url schéma',
   seo: 'seo titre description mots-clés open graph twitter favicon canonical robots',
 };
@@ -330,6 +333,8 @@ export default function AdminSettingsPage() {
               </button>
             </section>
           )}
+
+          {tab === 'verification' && <VerificationSettingsSection />}
 
           {tab === 'seo' && <SeoSection />}
 

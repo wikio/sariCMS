@@ -18,6 +18,7 @@ import { RolesModule } from './modules/roles/roles.module';
 import { PermissionsModule } from './modules/permissions/permissions.module';
 import { PagesModule } from './modules/pages/pages.module';
 import { FaqsModule } from './modules/faqs/faqs.module';
+import { GedModule } from './modules/ged/ged.module';
 import { TestimonialsModule } from './modules/testimonials/testimonials.module';
 import { MenusModule } from './modules/menus/menus.module';
 import { ContactModule } from './modules/contact/contact.module';
@@ -80,6 +81,7 @@ import { MailModule } from './modules/mail/mail.module';
     PermissionsModule,
     PagesModule,
     FaqsModule,
+    GedModule,
     TestimonialsModule,
     MenusModule,
     ContactModule,

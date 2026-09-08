@@ -242,6 +242,13 @@ export const BUILDER_COMPONENTS: BuilderComponent[] = [
     classes: ['.sari-band--tight'],
     html: '<section class="sari-band sari-band--tight sari-band--gray"><div class="sari-wrap sari-cta-strip"><p class="sari-note"><a href="/fr">Accueil</a> · <a href="/fr/content">Pages</a> · <span>Titre de la page</span></p><a class="sari-btn sari-btn--sm sari-btn--outline" href="/fr/contact">Nous écrire</a></div></section>',
   },
+  {
+    id: 'sari-canvas', label: 'Planche graphique (atelier)',
+    category: 'Atelier',
+    description: 'Visuel dessiné dans l\'atelier : double-cliquez pour le reprendre (texte, formes, pinceau, graphiques), enregistrez pour le ranger dans la GED sous CANVA_.',
+    classes: ['.sari-canvas', '.sari-canvas--framed'],
+    html: '<figure class="sari-figure"><img class="sari-canvas" data-sari-canvas="" src="/canvas/placeholder.svg" alt="Planche graphique — double-cliquez pour l\'ouvrir dans l\'atelier" width="1080" height="1080" loading="lazy" decoding="async"></figure>',
+  },
   // Le panneau de composants n'appelle plus `builderComponentById` : il tient le
   // bloc en main, et un identifiant qui se répète ne peut plus faire insérer le
   // mauvais HTML. Les identifiant restent l'adresse des points de départ.

@@ -1,0 +1,93 @@
+{
+  "api": {
+    "enabled": false,
+    "url": "",
+    "apiKey": "",
+    "authHeader": "X-API-Key",
+    "method": "GET",
+    "timeoutMs": 15000,
+    "codeParam": "code",
+    "hashParam": "hash",
+    "response": {
+      "code": "code",
+      "type": "type",
+      "issuer": "issuer",
+      "message": "message"
+    },
+    "fallbackToLocal": true
+  },
+  "codes": [
+    {
+      "id": "valid",
+      "code": "1",
+      "semantic": "valid",
+      "labels": {
+        "fr": "Document valide",
+        "en": "Valid document",
+        "ar": "مستند صالح"
+      },
+      "descriptions": {
+        "fr": "Le document est authentique et son intégrité est confirmée par l'émetteur.",
+        "en": "The document is authentic and its integrity is confirmed by the issuer.",
+        "ar": "المستند أصلي وسلامته مؤكدة من الجهة المُصدرة."
+      },
+      "showDetails": true,
+      "active": true,
+      "sortOrder": 1
+    },
+    {
+      "id": "forged",
+      "code": "0",
+      "semantic": "forged",
+      "labels": {
+        "fr": "Document falsifié",
+        "en": "Forged document",
+        "ar": "مستند مزوّر"
+      },
+      "descriptions": {
+        "fr": "Le couple code / clé ne correspond à aucun document émis, ou correspond à un document altéré.",
+        "en": "The code / key pair matches no issued document, or matches an altered one.",
+        "ar": "الزوج رمز/مفتاح لا يطابق أي مستند مُصدر، أو يطابق مستندًا معدّلاً."
+      },
+      "showDetails": true,
+      "active": true,
+      "sortOrder": 2
+    },
+    {
+      "id": "expired",
+      "code": "2",
+      "semantic": "expired",
+      "labels": {
+        "fr": "Document expiré",
+        "en": "Expired document",
+        "ar": "مستند منتهي الصلاحية"
+      },
+      "descriptions": {
+        "fr": "Le document était valide ; sa durée de vérification est dépassée.",
+        "en": "The document was valid; its verification window has elapsed.",
+        "ar": "كان المستند صالحًا؛ انتهت مدة التحقق منه."
+      },
+      "showDetails": true,
+      "active": true,
+      "sortOrder": 3
+    },
+    {
+      "id": "revoked",
+      "code": "3",
+      "semantic": "revoked",
+      "labels": {
+        "fr": "Document révoqué",
+        "en": "Revoked document",
+        "ar": "مستند مسحوب"
+      },
+      "descriptions": {
+        "fr": "L'émetteur a retiré ce document ; il ne doit plus être accepté.",
+        "en": "The issuer withdrew this document; it must no longer be accepted.",
+        "ar": "سحبت الجهة المُصدرة هذا المستند؛ يجب عدم قبوله بعد الآن."
+      },
+      "showDetails": true,
+      "active": true,
+      "sortOrder": 4
+    }
+  ]
+}

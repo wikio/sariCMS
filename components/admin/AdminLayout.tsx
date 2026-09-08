@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import {
+  ShieldCheck,
   LayoutDashboard, FileText, Package, Wrench, Briefcase, Newspaper,
   Calendar, Layers, MessageCircle, Handshake, Image as ImageIcon,
   FileStack, Menu as MenuIcon, Compass, Scale, Settings, ShoppingCart,
@@ -145,6 +146,8 @@ function Shell({ children }: { children: ReactNode }) {
     { id: 'emails', icon: Settings, label: t('menu.emails'), href: `/${locale}/admin/emails` },
     { type: 'divider', label: t('menu.vitrineSection') },
     { id: 'builder', icon: Paintbrush, label: t('menu.builder'), href: `/${locale}/admin/builder` },
+    { id: 'canvas', icon: Palette, label: t('menu.canvas'), href: `/${locale}/admin/canvas` },
+    { id: 'verification-codes', icon: ShieldCheck, label: t('menu.verificationCodes'), href: `/${locale}/admin/verification-codes` },
     { id: 'settings', icon: Sliders, label: t('menu.settings'), href: `/${locale}/admin/settings` },
     { id: 'profile', icon: UserRound, label: t('menu.profile'), href: `/${locale}/admin/profile` },
   ], [locale, t]);

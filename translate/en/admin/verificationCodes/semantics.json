@@ -1,0 +1,7 @@
+{
+  "valid": "Validated — green",
+  "forged": "Forged — red",
+  "expired": "Expired — amber",
+  "revoked": "Revoked — orange",
+  "neutral": "Information — blue"
+}

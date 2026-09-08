@@ -1,0 +1,15 @@
+{
+  "titleNew": "Nouveau code de vérification",
+  "titleEdit": "Modifier le code",
+  "code": "Valeur renvoyée par l'API",
+  "codeHelp": "Comparée en chaîne, sans distinction de casse ; « 01 » et « 1 » comptent comme identiques si les deux sont numériques.",
+  "semantic": "Comportement de la page",
+  "semanticHelp": "Couleur, icône et panneau de résultat — indépendants du libellé.",
+  "label": "Libellé (titre du panneau)",
+  "description": "Description (sous le libellé)",
+  "sortOrder": "Ordre d'affichage",
+  "showDetails": "Afficher Type + Émetteur",
+  "showDetailsHelp": "Quand l'API renvoie le type du document et son émetteur à côté du code.",
+  "active": "Actif",
+  "needCode": "La valeur renvoyée par l'API est obligatoire."
+}

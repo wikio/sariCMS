@@ -54,7 +54,9 @@
       "galleries": "Galleries",
       "media": "Media",
       "home": "Home page",
-      "newsletter": "Newsletter"
+      "newsletter": "Newsletter",
+      "canvas": "Graphic studio",
+      "verificationCodes": "Verification codes"
     },
     "header": {
       "seeSite": "View Site",
@@ -941,7 +943,35 @@
       "added": "“{label}” added to the page",
       "templateConfirm": "The starting point replaces the page content. Continue?",
       "noPageTitle": "No page of the builder type",
-      "noPageText": "Create one, or switch an existing generic page to the “Page builder” layout from the pages list: it will show up here."
+      "noPageText": "Create one, or switch an existing generic page to the “Page builder” layout from the pages list: it will show up here.",
+      "studio": "Studio"
+    },
+    "canvas": {
+      "breadcrumb": "Website",
+      "title": "Graphic studio",
+      "hint": "Draw a board — text, shapes, brush, charts — and file it in the media library. It can then be inserted into a built page, or shown anywhere by its URL. Every save keeps the image, the SVG when everything is vector, and the replayable JSON.",
+      "newPlan": "New board",
+      "startFrom": "Start from a format",
+      "plans": "My boards",
+      "loading": "Reading the library…",
+      "noPlans": "No saved board yet. Start from a format or a template.",
+      "noTemplates": "The template catalog is empty. Publish a board as a template from the studio, or drop a JSON in public/canvas/templates.",
+      "openInStudio": "Open in the studio",
+      "copyUrl": "Copy URL",
+      "rename": "Rename",
+      "delete": "Delete (board and versions)",
+      "download": "Download the render",
+      "editable": "re-editable",
+      "media": "Media library",
+      "builder": "Page builder",
+      "loadError": "Cannot read the media library.",
+      "copyError": "The browser refuses clipboard access.",
+      "deleted": "Board deleted.",
+      "deleteError": "Cannot delete.",
+      "renamed": "Board renamed — check the pages that display it.",
+      "renameError": "Cannot rename.",
+      "renamePrompt": "New file name, without extension",
+      "confirmDelete": "Delete “{name}”, its archived versions and its record? Pages showing it will display a missing image."
     },
     "config": {
       "general": "General",
@@ -2195,6 +2225,62 @@
       "chipUnsubscribed": "Unsubscribed",
       "chipDeleted": "In trash",
       "confirmDelete": "Move this record to the trash?"
+    },
+    "verificationCodes": {
+      "title": "Verification codes",
+      "intro": "What the external API returns, and what to do with it. Each row pairs a return code with a public-page behaviour; until the API is enabled, these codes also drive the local registry.",
+      "addNew": "New code",
+      "backToSettings": "API settings",
+      "loading": "Reading the catalogue…",
+      "restoreDefaults": "Restore the four default codes",
+      "restored": "Catalogue restored.",
+      "saved": "Code saved.",
+      "created": "Code added to the catalogue.",
+      "deleted": "Code removed from the catalogue.",
+      "saveError": "Save refused — the catalogue needs at least one “valid” code, and distinct values.",
+      "loadError": "Catalogue unreadable — restore the defaults if needed.",
+      "save": "Save",
+      "saving": "Saving…",
+      "cancel": "Cancel",
+      "edit": "Edit",
+      "delete": "Delete",
+      "activate": "Re-enable",
+      "deactivate": "Disable",
+      "footnote": "A code returned by the API but missing here is never defaulted to “valid”: the public page reports the anomaly and the administrator adds the row. Saving replaces the whole catalogue.",
+      "columns": {
+        "code": "API code",
+        "semantic": "Behaviour",
+        "label": "Displayed label",
+        "details": "Type + Issuer",
+        "active": "Active",
+        "actions": "Actions"
+      },
+      "semantics": {
+        "valid": "Validated — green",
+        "forged": "Forged — red",
+        "expired": "Expired — amber",
+        "revoked": "Revoked — orange",
+        "neutral": "Information — blue"
+      },
+      "empty": {
+        "title": "The catalogue is empty.",
+        "hint": "Without one “validated” row, no document can ever show a green light."
+      },
+      "editor": {
+        "titleNew": "New verification code",
+        "titleEdit": "Edit code",
+        "code": "Value returned by the API",
+        "codeHelp": "Compared as a string, case-insensitive; “01” and “1” match when both are numeric.",
+        "semantic": "Page behaviour",
+        "semanticHelp": "Colour, icon and result panel — independent of the label.",
+        "label": "Label (panel title)",
+        "description": "Description (under the label)",
+        "sortOrder": "Display order",
+        "showDetails": "Show Type + Issuer",
+        "showDetailsHelp": "When the API returns the document type and issuer alongside the code.",
+        "active": "Active",
+        "needCode": "The value returned by the API is required."
+      }
     }
   },
   "common": {
@@ -4600,7 +4686,18 @@
         "blockedMessage": "Too many attempts. Please refresh the page in 5 minutes.",
         "error": "Error",
         "errorMessage": "Please fill in all fields.",
-        "invalidFormat": "Invalid code format. Expected format: SARI-XXX##-#####"
+        "invalidFormat": "Invalid code format. Expected format: SARI-XXX##-#####",
+        "apiError": {
+          "title": "Verification service unavailable",
+          "message": "The queried service did not answer, or answered outside its protocol. The document is neither validated nor denied — try again shortly; if the problem persists, contact the document issuer.",
+          "retry": "Try again"
+        },
+        "meta": {
+          "code": "Returned code:",
+          "api": "Answer from the official verification service",
+          "local": "Answer from the local registry",
+          "apiUnreachable": "External service unreachable — falling back to the local registry"
+        }
       },
       "sidebar": {
         "qrCode": {
@@ -4664,6 +4761,13 @@
         "lawDesc": "relating to the protection of natural persons in the processing of personal data, no personal data is retained during the verification process.",
         "warning": "Warning:",
         "warningDesc": "Forgery of official documents is an offense punishable by criminal prosecution under the Algerian Penal Code (Articles 214, 217 and 147). If in doubt about the authenticity of a document, contact our services immediately or the competent judicial authorities."
+      },
+      "prefilled": "The code and verification key were taken from the scanned link — check them, solve the anti-bot check, then run the verification.",
+      "mode": {
+        "api": "Official service",
+        "demo": "Local demo",
+        "apiHelp": "The pair is submitted to the verification API configured by the document issuer.",
+        "demoHelp": "The external API is not enabled: the answer comes from the local demo registry."
       }
     },
     "visibility404": {

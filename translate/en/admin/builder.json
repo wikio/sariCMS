@@ -38,5 +38,6 @@
   "added": "“{label}” added to the page",
   "templateConfirm": "The starting point replaces the page content. Continue?",
   "noPageTitle": "No page of the builder type",
-  "noPageText": "Create one, or switch an existing generic page to the “Page builder” layout from the pages list: it will show up here."
+  "noPageText": "Create one, or switch an existing generic page to the “Page builder” layout from the pages list: it will show up here.",
+  "studio": "Studio"
 }

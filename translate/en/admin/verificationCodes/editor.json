@@ -1,0 +1,15 @@
+{
+  "titleNew": "New verification code",
+  "titleEdit": "Edit code",
+  "code": "Value returned by the API",
+  "codeHelp": "Compared as a string, case-insensitive; “01” and “1” match when both are numeric.",
+  "semantic": "Page behaviour",
+  "semanticHelp": "Colour, icon and result panel — independent of the label.",
+  "label": "Label (panel title)",
+  "description": "Description (under the label)",
+  "sortOrder": "Display order",
+  "showDetails": "Show Type + Issuer",
+  "showDetailsHelp": "When the API returns the document type and issuer alongside the code.",
+  "active": "Active",
+  "needCode": "The value returned by the API is required."
+}

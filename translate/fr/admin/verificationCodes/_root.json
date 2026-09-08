@@ -1,0 +1,22 @@
+{
+  "title": "Codes de vérification",
+  "intro": "Que renvoie l'API externe, et qu'en faire. Chaque ligne marie un code de retour à un comportement de la page publique ; tant que l'API n'est pas activée, ces codes s'appliquent aussi au registre local.",
+  "addNew": "Nouveau code",
+  "backToSettings": "Réglages de l'API",
+  "loading": "Lecture du catalogue…",
+  "restoreDefaults": "Rétablir les quatre codes par défaut",
+  "restored": "Catalogue rétabli.",
+  "saved": "Code enregistré.",
+  "created": "Code ajouté au catalogue.",
+  "deleted": "Code retiré du catalogue.",
+  "saveError": "Enregistrement refusé — le catalogue exige au moins un code « valide », et des valeurs distinctes.",
+  "loadError": "Cataloge illisible — repartissez des valeurs par défaut si nécessaire.",
+  "save": "Enregistrer",
+  "saving": "Enregistrement…",
+  "cancel": "Annuler",
+  "edit": "Modifier",
+  "delete": "Supprimer",
+  "activate": "Réactiver",
+  "deactivate": "Désactiver",
+  "footnote": "Un code renvoyé par l'API mais absent d'ici n'est jamais traduit en « valide » par défaut : la page publique signale l'anomalie et l'administrateur ajoute la ligne. Enregistrer remplace le catalogue entier."
+}
