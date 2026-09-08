@@ -9,6 +9,29 @@ import { gedStore } from '@/lib/ged/store.mjs';
 
 const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads');
 
+/** Une ligne de la liste : le fichier, plus ce que la fiche GED sait de lui. */
+type MediaEntry = {
+  name: string;
+  url: string;
+  file: string;
+  originalName: string;
+  label: string;
+  module: string;
+  id: string;
+  size?: number;
+  kind?: string;
+  title?: string;
+  description?: string;
+  category?: string;
+  tags?: string[];
+  version?: number;
+  editable?: boolean;
+  width?: number;
+  height?: number;
+  createdAt: string;
+  isLegacy?: boolean;
+};
+
 /**
  * Les fichiers d'à-côté écrits par `lib/ged/store.mjs` — la fiche `.sari.json` et
  * l'état éditable `.sari.canvas.json` — ne sont pas des assets. La boucle ci-dessous
@@ -61,7 +84,7 @@ export async function GET() {
       await mkdir(UPLOAD_DIR, { recursive: true });
     }
 
-    const files: any[] = [];
+    const files: MediaEntry[] = [];
     
     // Parcourir tous les éléments (fichiers et dossiers)
     const items = await readdir(UPLOAD_DIR);
@@ -72,8 +95,10 @@ export async function GET() {
       const stats = await stat(itemPath);
       
       if (stats.isDirectory()) {
-        // C'est un sous-dossier (module)
-        const module = item;
+        // C'est un sous-dossier (module). `folder`, pas `module` : le lint du projet
+        // interdit une liaison qui écrase ce mot, et l'ambiguïté avec un module
+        // ES-module réel est exactement ce qu'il protège.
+        const folder = item;
         const moduleFiles = await readdir(itemPath);
         for (const file of moduleFiles) {
           if (file.startsWith('.') || isSidecar(file)) continue;
@@ -86,11 +111,11 @@ export async function GET() {
 
           files.push({
             name: name || file,
-            url: `/uploads/${module}/${file}`,
-            file: `${module}/${file}`,
+            url: `/uploads/${folder}/${file}`,
+            file: `${folder}/${file}`,
             originalName: file,
             label: name || file,
-            module,
+            module: folder,
             id,
             size: fileStats.size,
             kind: /\.svg$/i.test(file) ? 'svg' : 'image',
@@ -131,7 +156,29 @@ export async function GET() {
     const unique = new Map<string, (typeof files)[number]>();
     for (const entry of files) if (!unique.has(entry.url)) unique.set(entry.url, entry);
 
-    return NextResponse.json({ files: [...unique.values()] });
+    // La fiche `.sari.json` écrite par la GED complète l'entrée : sans elle, l'écran
+    // ne sait pas qu'une planche a un JSON rejouable (ses calques) ni de quelle version
+    // on part, et le titre saisi une fois reste invisible.
+    const withManifest = await Promise.all(
+      [...unique.values()].map(async (entry) => {
+        const manifest = await gedStore.readAssetManifest(entry.file).catch(() => null);
+        if (!manifest) return entry;
+        return {
+          ...entry,
+          title: manifest.title || entry.title,
+          description: manifest.alt || entry.description,
+          category: (manifest.tags || [])[0] || entry.category,
+          tags: manifest.tags || [],
+          version: manifest.history ? 1 + manifest.history.length : 1,
+          editable: Boolean(manifest.editable?.inline || manifest.editable?.file),
+          kind: manifest.kind || entry.kind,
+          width: manifest.width || 0,
+          height: manifest.height || 0,
+        };
+      }),
+    );
+
+    return NextResponse.json({ files: withManifest });
   } catch (error) {
     console.error('[Upload API] GET error:', error);
     return NextResponse.json({ error: 'Failed to list files' }, { status: 500 });
@@ -154,7 +201,7 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File;
-    const module = formData.get('module') as string || 'ged';
+    const folder = (formData.get('module') as string) || 'ged';
     // L'identifiant sert de nom de fichier, pas de clé React ; il doit donc être unique
     // par nature. `Date.now()` seul en produisait deux au même milliseconde — et un
     // écran qui clé sur `id` se mettait à rater « Encountered two children with the
@@ -168,13 +215,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Créer le dossier du module s'il n'existe pas
-    const moduleDir = getModuleDir(module);
+    const moduleDir = getModuleDir(folder);
     if (!existsSync(moduleDir)) {
       await mkdir(moduleDir, { recursive: true });
     }
 
     // Générer le nom de fichier
-    const fileName = generateFileName(module, id, slug, file.name);
+    const fileName = generateFileName(folder, id, slug, file.name);
     const filePath = path.join(moduleDir, fileName);
 
     // Lire et sauvegarder le fichier
@@ -182,13 +229,13 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(bytes);
     await writeFile(filePath, buffer);
 
-    const url = `/uploads/${module}/${fileName}`;
+    const url = `/uploads/${folder}/${fileName}`;
 
     // Une fiche n'est écrite que si l'appelant en demande une : un upload de
     // formulaire métier reste exactement ce qu'il était, fichiers seuls.
     const metadata = readMetadataFields(formData);
     if (metadata) {
-      await gedStore.patchAsset({ file: `${module}/${fileName}`, ...metadata }).catch(() => undefined);
+      await gedStore.patchAsset({ file: `${folder}/${fileName}`, ...metadata }).catch(() => undefined);
     }
 
     return NextResponse.json({
@@ -196,7 +243,7 @@ export async function POST(request: NextRequest) {
       file: `${module}/${fileName}`,
       originalName: file.name,
       label: label || fileName,
-      module,
+      module: folder,
       id,
     });
   } catch (error) {
@@ -390,14 +437,14 @@ export async function PATCH(request: NextRequest) {
     await rename(oldPath, newPath);
 
     // Extraire le module du chemin
-    const module = oldFile.split('/')[0] || 'ged';
+    const folder = oldFile.split('/')[0] || 'ged';
     const newFileName = newFile.split('/').pop() || newFile;
 
     return NextResponse.json({
       success: true,
       oldFile,
       newFile,
-      url: `/uploads/${module}/${newFileName}`,
+      url: `/uploads/${folder}/${newFileName}`,
     });
   } catch (error) {
     console.error('[Upload API] PATCH error:', error);
