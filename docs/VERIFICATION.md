@@ -11,6 +11,7 @@ sans compte et sans compte non plus : c'est la page `/{locale}/verification`.
 | --- | --- |
 | `/{locale}/verification` | saisie manuelle — pour qui n'a pas de QR sous la main |
 | `/{locale}/verification/{code}/{hash}` | le lien court du QR : les deux champs sont **pré-remplis**, le focus va au captcha |
+| `/{locale}/verification/{code}` | le QR qui ne porte que le code : la clé se lit au bas du document — le champ reste vide et le formulaire le réclame, la page ne tombe pas en 404 |
 | `/{locale}/verification?code=…&key=…` | la forme historique, restée acceptée (les QR déjà imprimés gardent leur lien) |
 
 Le pré-remplissage ne **saute jamais le contrôle anti-robot** : le lien amène le
@@ -36,7 +37,13 @@ formulaire ─▶ POST /api/verification/check
 ```
 
 Le code de retour de l'API de référence : **1 valide, 0 falsifié, 2 expiré,
-3 révoqué** — plus toute valeur ajoutée depuis (voir le catalogue). La réponse
+3 révoqué** — plus toute valeur ajoutée depuis (voir le catalogue). Sous un feu vert, la page n'affiche aucun récépissé (ni « code renvoyé », ni
+« registre local ») : un document validé n'a pas à montrer sa cuisine. Les autres
+verdicts gardent la mention d'origine, et un repli sur le registre local est
+toujours signalé — même sous un vert, parce que « validé par le registre, pas par
+le service » se doit d'être su.
+
+La réponse
 HTTP dit tout :
 
 | Réponse | Signification |
