@@ -54,7 +54,8 @@
       "galleries": "Galleries",
       "media": "Media",
       "home": "Home page",
-      "newsletter": "Newsletter"
+      "newsletter": "Newsletter",
+      "canvas": "Graphic studio"
     },
     "header": {
       "seeSite": "View Site",
@@ -941,7 +942,35 @@
       "added": "“{label}” added to the page",
       "templateConfirm": "The starting point replaces the page content. Continue?",
       "noPageTitle": "No page of the builder type",
-      "noPageText": "Create one, or switch an existing generic page to the “Page builder” layout from the pages list: it will show up here."
+      "noPageText": "Create one, or switch an existing generic page to the “Page builder” layout from the pages list: it will show up here.",
+      "studio": "Studio"
+    },
+    "canvas": {
+      "breadcrumb": "Website",
+      "title": "Graphic studio",
+      "hint": "Draw a board — text, shapes, brush, charts — and file it in the media library. It can then be inserted into a built page, or shown anywhere by its URL. Every save keeps the image, the SVG when everything is vector, and the replayable JSON.",
+      "newPlan": "New board",
+      "startFrom": "Start from a format",
+      "plans": "My boards",
+      "loading": "Reading the library…",
+      "noPlans": "No saved board yet. Start from a format or a template.",
+      "noTemplates": "The template catalog is empty. Publish a board as a template from the studio, or drop a JSON in public/canvas/templates.",
+      "openInStudio": "Open in the studio",
+      "copyUrl": "Copy URL",
+      "rename": "Rename",
+      "delete": "Delete (board and versions)",
+      "download": "Download the render",
+      "editable": "re-editable",
+      "media": "Media library",
+      "builder": "Page builder",
+      "loadError": "Cannot read the media library.",
+      "copyError": "The browser refuses clipboard access.",
+      "deleted": "Board deleted.",
+      "deleteError": "Cannot delete.",
+      "renamed": "Board renamed — check the pages that display it.",
+      "renameError": "Cannot rename.",
+      "renamePrompt": "New file name, without extension",
+      "confirmDelete": "Delete “{name}”, its archived versions and its record? Pages showing it will display a missing image."
     },
     "config": {
       "general": "General",

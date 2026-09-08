@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import {
-  Copy, Download, FolderOpen, Image as ImageIcon, Pencil, Trash2, Upload,
+  Copy, Download, FolderOpen, Image as ImageIcon, Palette, Pencil, Trash2, Upload,
 } from 'lucide-react';
 import PixelGridLoader from '@/components/admin/PixelGridLoader';
 import SearchField from '@/components/admin/SearchField';
@@ -10,7 +10,9 @@ import Drawer from '@/components/admin/Drawer';
 import ImageEditor from '@/components/admin/ImageEditor';
 import { useToast } from '@/components/admin/Toast';
 import { CMS_MODULES } from '@/lib/cms-modules';
-import { useTranslations } from 'next-intl';
+import { patchGedAsset, renameGedAsset } from '@/lib/ged/client';
+import { useLocale, useTranslations } from 'next-intl';
+import Link from 'next/link';
 import DateText from '@/components/shared/DateText';
 
 type MediaItem = {
@@ -26,6 +28,11 @@ type MediaItem = {
   createdAt: string;
   updatedAt?: string;
   size: number;
+  /** `svg` | `image` | `canvas` | `doc` — posé par la GED, sinon deviné de l'URL. */
+  kind?: string;
+  /** La planche a-t-elle un JSON rejouable ? (sinon, l'atelier repart du rendu) */
+  editable?: boolean;
+  version?: number;
 };
 
 const isImage = (url: string) => /\.(png|jpe?g|webp|gif|svg)$/i.test(url);
@@ -51,17 +58,26 @@ export default function MediaPage() {
 
   const [editing, setEditing] = useState<MediaItem | null>(null);
   const [form, setForm] = useState({ title: '', description: '', category: '', module: 'ged', label: '' });
-  const [editingImage, setEditingImage] = useState<string | null>(null);
+  const [editingImage, setEditingImage] = useState<{ src: string; folder: string } | null>(null);
+  const locale = useLocale();
+  const canvasHref = `/${locale}/admin/canvas`;
 
   const load = async () => {
-    setLoading(true);
     const res = await fetch('/api/admin/upload');
     const json = await res.json();
     setFiles(json.files || []);
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    // En `async` : poser `loading` avant le premier `await`, dans le corps de l'effet,
+    // est une cascade de rendus que React 19 signale — et le double rendu à
+    // l'ouverture se voyait dans la liste des médias.
+    void (async () => {
+      setLoading(true);
+      await load();
+    })();
+  }, []);
 
   const upload = async (file: File) => {
     setBusy(true);
@@ -101,15 +117,40 @@ export default function MediaPage() {
     });
   };
 
+  /**
+   * Enregistrer la fiche.
+   *
+   * Deux appels, dans cet ordre : le renommage d'abord (il déplace le fichier, sa
+   * fiche `.sari.json` et son état éditable, et rend la nouvelle URL), la fiche
+   * ensuite — l'inverse écrirait des métadonnées sur un chemin qui n'existe plus.
+   * L'appel unique à `PATCH /api/admin/upload`, lui, ne savait que renommer : le
+   * titre et la description saisis ici étaient perdus sans le moindre message.
+   */
   const saveMeta = async () => {
     if (!editing) return;
-    const res = await fetch('/api/admin/upload', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ file: editing.file, ...form }),
-    });
-    const json = await res.json();
-    if (!res.ok) { showToast(json.error || 'Erreur', 'error'); return; }
+    let file = editing.file;
+    const wanted = form.label.trim();
+    const current = file.split('/').pop() || '';
+    if (wanted && wanted !== current && wanted !== file) {
+      try {
+        const renamed = await renameGedAsset(file, wanted.includes('.') ? wanted : `${wanted}${current.slice(current.lastIndexOf('.')) || '.png'}`);
+        file = renamed.file;
+      } catch (error) {
+        showToast(error instanceof Error ? error.message : 'Renommage impossible', 'error');
+        return;
+      }
+    }
+    try {
+      await patchGedAsset({
+        file,
+        title: form.title,
+        alt: form.description,
+        tags: form.category ? [form.category] : [],
+      });
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Fiche non enregistrée', 'error');
+      return;
+    }
     showToast('Métadonnées enregistrées', 'success');
     setEditing(null);
     load();
@@ -174,7 +215,9 @@ export default function MediaPage() {
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
           {shown.map((f) => (
-            <div key={f.url} className="ad-card overflow-hidden flex flex-col">
+            // La clé est le chemin, pas l'URL : deux fichiers du même nom dans deux
+            // dossiers produisaient la même clé — React en duplicating/omitting tiles.
+            <div key={f.file || f.url} className="ad-card overflow-hidden flex flex-col">
               <button type="button" className="relative block w-full" onClick={() => copyUrl(f)} title="Copier l’URL">
                 {isImage(f.url) ? (
                   <img src={f.url} alt={f.title || f.label} className="h-28 w-full object-contain bg-[var(--ad-surface-2)]" />
@@ -199,9 +242,21 @@ export default function MediaPage() {
                   <Download className="w-3.5 h-3.5" />
                 </a>
                 {isImage(f.url) && (
-                  <button type="button" className="ad-btn ad-btn-icon ad-btn-ghost" title="Éditer l’image" onClick={() => setEditingImage(f.url)}>
+                  <button type="button" className="ad-btn ad-btn-icon ad-btn-ghost" title="Retoucher (recadrer, filtres, détourage) — enregistrera une nouvelle image" onClick={() => setEditingImage({ src: f.url, folder: f.module })}>
                     <ImageIcon className="w-3.5 h-3.5" />
                   </button>
+                )}
+                {f.editable ? (
+                  <span className="ad-chip ad-chip-acc" title="Cette planche a un JSON rejouable : ses calques sont conservés">
+                    v{f.version || 1}
+                  </span>
+                ) : null}
+                {isImage(f.url) && (
+                  // Le lien demandé entre la GED et l'atelier : une image posée là
+                  // devient une planche rééditable, avec ses calques.
+                  <Link className="ad-btn ad-btn-icon ad-btn-ghost" href={`${canvasHref}?file=${encodeURIComponent(f.file)}`} title="Détourer, annoter, composer — ouvrir dans l’atelier graphique">
+                    <Palette className="w-3.5 h-3.5" />
+                  </Link>
                 )}
                 <button type="button" className="ad-btn ad-btn-icon ad-btn-ghost" title="Informations / renommer" onClick={() => openEdit(f)}>
                   <Pencil className="w-3.5 h-3.5" />
@@ -278,9 +333,10 @@ export default function MediaPage() {
       {/* Éditeur d’images */}
       {editingImage && (
         <ImageEditor
-          src={editingImage}
+          src={editingImage.src}
+          folder={editingImage.folder}
           onClose={() => setEditingImage(null)}
-          onSaved={(url) => { setEditingImage(null); load(); }}
+          onSaved={(url) => { setEditingImage(null); load(); showToast(`Nouvelle image enregistrée : ${url}`, 'success'); }}
         />
       )}
     </div>

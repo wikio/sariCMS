@@ -38,6 +38,7 @@ import {
   FilePlus2,
   Layers,
   Loader2,
+  Palette,
   Plus,
   Save,
   Sparkles,
@@ -55,6 +56,8 @@ import {
   starterTemplate,
 } from '@/lib/builder-components';
 import { builderKey } from '@/lib/page-templates';
+import { registerSariCanvas, setSariCanvasOptions } from '@/lib/builder/sari-canvas';
+import { CanvasStudioHost } from '@/components/builder/CanvasStudioHost';
 import { standaloneHref } from '@/lib/standalone-page';
 import { isRtl } from '@/lib/i18n';
 
@@ -105,6 +108,10 @@ export default function BuilderPage() {
 
   const host = useRef<HTMLDivElement>(null);
   const editor = useRef<GrapesEditor | null>(null);
+  // Le plugin est monté une fois, la page sélectionnée change souvent : le contexte
+  // d'enregistrement passe par des refs relues à l'ouverture de l'atelier.
+  const pageIdRef = useRef<string>('');
+  const slugRef = useRef<string>('');
   const draftTimer = useRef<number | null>(null);
 
   const [pages, setPages] = useState<PageOption[]>([]);
@@ -174,6 +181,12 @@ export default function BuilderPage() {
     void refreshList();
   }, [refreshList]);
 
+  useEffect(() => {
+    pageIdRef.current = pageId;
+    slugRef.current = current?.slug || '';
+    setSariCanvasOptions({ pageId: pageId || undefined, pageSlug: current?.slug || undefined });
+  }, [pageId, current?.slug]);
+
   // ——— L'éditeur, une seule fois ———
   useEffect(() => {
     let cancelled = false;
@@ -221,6 +234,13 @@ export default function BuilderPage() {
       decorate();
       instance.on('canvas:frame:load', decorate);
       editor.current = instance;
+      // Le bloc « Planche graphique », le sélecteur d'actifs branché sur la GED et le
+      // double-clic qui ouvre l'atelier. Une greffe, pas une réécriture : `registerSariCanvas`
+      // étend le type `image` de GrapesJS et ne remplace aucun composant existant.
+      registerSariCanvas(instance as unknown as Parameters<typeof registerSariCanvas>[0], {
+        pageId: pageIdRef.current || undefined,
+        pageSlug: slugRef.current || undefined,
+      });
       setReady(true);
     })();
     return () => {
@@ -479,6 +499,15 @@ export default function BuilderPage() {
               <ExternalLink className="w-4 h-4" /> {t('seePage')}
             </a>
           )}
+          <Link
+            className="ad-btn ad-btn-ghost"
+            href={`/${locale}/admin/canvas`}
+            target="_blank"
+            rel="noreferrer"
+            title="Ouvrir l’atelier graphique — planches PNG, SVG et HTML prêtes à publier"
+          >
+            <Palette className="w-4 h-4" /> {t('studio')}
+          </Link>
           <button className="ad-btn ad-btn-ghost" disabled={!ready} onClick={toggleCode}>
             <Code className="w-4 h-4" /> {showCode ? t('editor') : t('code')}
           </button>
@@ -637,7 +666,13 @@ export default function BuilderPage() {
           {categories.length === 0 && <div className="text-sm py-4" style={{ color: 'var(--ad-muted)' }}>{t('noComponents')}</div>}
         </aside>
 
-        <div className="min-w-0">
+      <CanvasStudioHost
+        getEditor={() => editor.current as unknown as { getSelected: () => unknown } | null}
+        pageId={pageId || undefined}
+        pageSlug={current?.slug}
+      />
+
+      <div className="min-w-0">
           {/* Le canevas reste monté : l'échangeur Vue/Code ne doit pas démonter
               GrapesJS, qui perdrait son état. */}
           <div className="ad-card overflow-hidden ad-rise-3" ref={host} style={showCode ? { display: 'none' } : undefined} />

@@ -38,5 +38,6 @@
   "added": "« {label} » ajouté à la page",
   "templateConfirm": "Le point de départ remplace le contenu de la page. Continuer ?",
   "noPageTitle": "Aucune page de type Constructeur",
-  "noPageText": "Créez une page, ou passez une page générique existante en mise en page « Constructeur de page » depuis la liste des pages : elle apparaîtra ici."
+  "noPageText": "Créez une page, ou passez une page générique existante en mise en page « Constructeur de page » depuis la liste des pages : elle apparaîtra ici.",
+  "studio": "Atelier"
 }

@@ -885,3 +885,31 @@
     break-inside: avoid;
   }
 }
+
+/* ----------------------------------------------------------------— planche de l'atelier
+   Une planche enregistrée depuis l'atelier graphique est un `<img>` ordinaire : la
+   vitrine n'a rien à savoir de Fabric. Deux choses sont pourtant écrites ici parce
+   qu'elles manquent dès qu'on pose le bloc sans le régler :
+   - `height: auto` avec `width: 100%`, pour que le ratio natif du PNG serve de calcul
+     et que la page ne saute pas au chargement (les attributs width/height sont posés
+     par le plugin, et l'export est à l'échelle 1) ;
+   - le rendu net des aplats de couleur : une planche est dessinée, pas photographiée,
+     et `image-rendering: auto` laisse un voile sur les bords à 100 %. */
+.sari-canvas {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+  border-radius: var(--sari-radius, 14px);
+}
+
+.sari-canvas--framed {
+  border: 1px solid var(--sari-line, #e2e8f0);
+  padding: clamp(0.5rem, 1.5vw, 1rem);
+  background: #fff;
+}
+
+@media print {
+  .sari-canvas {
+    border-radius: 0;
+  }
+}

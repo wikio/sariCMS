@@ -245,7 +245,9 @@ export default function GedPicker({
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 max-h-[50vh] overflow-auto">
           {shown.map((f) => (
-            <div key={f.url} className="ad-card overflow-hidden text-left relative group">
+            // Le chemin, pas l'URL : deux dossiers peuvent porter le même nom de
+            // fichier, et deux clés identiques font disparaître une vignette.
+            <div key={f.file || f.url} className="ad-card overflow-hidden text-left relative group">
               <button type="button" className="w-full" onClick={() => onPick(f.url)}>
                 {f.url.match(/\.(png|jpe?g|webp|gif|svg)$/i) ? (
                   <img 

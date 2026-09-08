@@ -54,7 +54,8 @@
       "galleries": "Galeries",
       "media": "Médias",
       "home": "Page d'accueil",
-      "newsletter": "Newsletter"
+      "newsletter": "Newsletter",
+      "canvas": "Atelier graphique"
     },
     "header": {
       "seeSite": "Voir le site",
@@ -941,7 +942,35 @@
       "added": "« {label} » ajouté à la page",
       "templateConfirm": "Le point de départ remplace le contenu de la page. Continuer ?",
       "noPageTitle": "Aucune page de type Constructeur",
-      "noPageText": "Créez une page, ou passez une page générique existante en mise en page « Constructeur de page » depuis la liste des pages : elle apparaîtra ici."
+      "noPageText": "Créez une page, ou passez une page générique existante en mise en page « Constructeur de page » depuis la liste des pages : elle apparaîtra ici.",
+      "studio": "Atelier"
+    },
+    "canvas": {
+      "breadcrumb": "Site",
+      "title": "Atelier graphique",
+      "hint": "Dessinez une planche — texte, formes, pinceau, graphiques — et rangez-la dans la GED. Elle s’insère ensuite dans une page construite, ou s’affiche où vous voulez par son URL. Chaque enregistrement garde l’image, la SVG si tout est vectoriel, et le JSON rejouable.",
+      "newPlan": "Nouvelle planche",
+      "startFrom": "Partir d’un format",
+      "plans": "Mes planches",
+      "loading": "Lecture de la GED…",
+      "noPlans": "Aucune planche enregistrée pour l’instant. Commencez par un format ou un gabarit.",
+      "noTemplates": "Le catalogue de gabarits est vide. Publiez une planche en gabarit depuis l’atelier, ou déposez un JSON dans public/canvas/templates.",
+      "openInStudio": "Ouvrir dans l’atelier",
+      "copyUrl": "Copier l’URL",
+      "rename": "Renommer",
+      "delete": "Supprimer (planche et versions)",
+      "download": "Télécharger le rendu",
+      "editable": "rééditable",
+      "media": "Médiathèque",
+      "builder": "Constructeur",
+      "loadError": "Lecture de la GED impossible.",
+      "copyError": "Le presse-papiers est refusé par le navigateur.",
+      "deleted": "Planche supprimée.",
+      "deleteError": "Suppression impossible.",
+      "renamed": "Planche renommée — pensez à vérifier les pages qui l’affichent.",
+      "renameError": "Renommage impossible.",
+      "renamePrompt": "Nouveau nom de fichier, sans extension",
+      "confirmDelete": "Supprimer « {name} », ses versions archivées et sa fiche ? Les pages qui l’affichent montreront une image manquante."
     },
     "config": {
       "general": "Général",

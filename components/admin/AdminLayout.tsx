@@ -145,6 +145,7 @@ function Shell({ children }: { children: ReactNode }) {
     { id: 'emails', icon: Settings, label: t('menu.emails'), href: `/${locale}/admin/emails` },
     { type: 'divider', label: t('menu.vitrineSection') },
     { id: 'builder', icon: Paintbrush, label: t('menu.builder'), href: `/${locale}/admin/builder` },
+    { id: 'canvas', icon: Palette, label: t('menu.canvas'), href: `/${locale}/admin/canvas` },
     { id: 'settings', icon: Sliders, label: t('menu.settings'), href: `/${locale}/admin/settings` },
     { id: 'profile', icon: UserRound, label: t('menu.profile'), href: `/${locale}/admin/profile` },
   ], [locale, t]);

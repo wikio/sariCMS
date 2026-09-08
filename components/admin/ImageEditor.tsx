@@ -8,6 +8,7 @@ import {
   X, ZoomIn, ZoomOut,
 } from 'lucide-react';
 import { useToast } from '@/components/admin/Toast';
+import { imageLoadHint, isSameOrigin, loadHtmlImage } from '@/lib/canvas/image-load';
 
 type Tool = 'draw' | 'erase' | 'text' | 'crop' | 'line' | 'arrow' | 'rect' | 'ellipse' | 'fill' | 'picker';
 
@@ -28,24 +29,45 @@ const PRESET_FILTERS: Array<{ key: string; label: string; filter: string }> = [
   { key: 'invert', label: 'Inverser', filter: 'invert(1)' },
 ];
 
-function loadImage(url: string, crossOrigin = true): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    if (crossOrigin) img.crossOrigin = 'anonymous';
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error('image non chargeable'));
-    img.src = url;
-  });
+/**
+ * Un média du serveur du projet n'a rien à négocier en CORS : le demander — l'ancien
+ * comportement inconditionnel — suffisait à faire échouer le chargement derrière un
+ * proxy d'administration ou depuis un autre nom d'hôte (`localhost` vs `127.0.0.1`),
+ * et l'écran répondait « Image non chargeable » pour un fichier parfaitement présent.
+ * `crossOrigin` n'est donc conservé que pour les images vraiment distantes, où il
+ * évite de tacher le canvas (et de rendre l'export impossible).
+ */
+async function loadImage(url: string, crossOrigin = true): Promise<HTMLImageElement> {
+  if (!crossOrigin || !isSameOrigin(url)) {
+    const image = new Image();
+    if (crossOrigin && !isSameOrigin(url)) image.crossOrigin = 'anonymous';
+    image.decoding = 'async';
+    await new Promise<void>((resolve, reject) => {
+      image.onload = () => resolve();
+      image.onerror = () => reject(new Error(imageLoadHint(url)));
+      image.src = url;
+    });
+    return image;
+  }
+  const { image } = await loadHtmlImage(url);
+  return image;
 }
 
 export default function ImageEditor({
   src,
   onClose,
   onSaved,
+  folder,
 }: {
   src: string;
   onClose: () => void;
   onSaved: (url: string) => void;
+  /**
+   * Le dossier GED de l'image d'origine : la retouche y écrit sa copie, au lieu de
+   * tout verser dans `ged/`. Une retouche d'un visuel `product/…` reste donc dans la
+   * collection `product`, là où l'écran qui l'affiche ira la chercher.
+   */
+  folder?: string;
 }) {
   const { showToast } = useToast();
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -66,6 +88,10 @@ export default function ImageEditor({
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
   const [busy, setBusy] = useState(false);
+  /** La cause d'un échec de chargement, affichée dans le corps de la fenêtre. */
+  const [loadError, setLoadError] = useState('');
+  /** Un clic sur « Réessayer » relance l'effet de chargement. */
+  const [attempt, setAttempt] = useState(0);
 
   const undoStack = useRef<string[]>([]);
   const redoStack = useRef<string[]>([]);
@@ -128,6 +154,7 @@ export default function ImageEditor({
   useEffect(() => {
     (async () => {
       try {
+        setLoadError('');
         const img = await loadImage(src);
         const W = Math.min(img.width || 1, 1600);
         const H = Math.max(1, Math.round((img.height || 1) * (W / (img.width || 1))));
@@ -146,13 +173,16 @@ export default function ImageEditor({
         redoStack.current = [];
         snapshot();
         setLoading(false);
-      } catch {
+      } catch (error) {
         setLoading(false);
-        showToast('Image non chargeable', 'error');
+        // La cause est affichée, avec l'URL : sans elle, l'écran est incomestible.
+        const detail = error instanceof Error ? error.message : String(src);
+        setLoadError(detail);
+        showToast(detail || 'Image non chargeable', 'error');
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [src]);
+  }, [src, attempt]);
 
   // -------------------------------------------------------------------------
   // Historique
@@ -605,7 +635,8 @@ export default function ImageEditor({
       const res = await fetch('/api/admin/upload', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dataUrl, filename: `${base}-edite`, module: 'ged' }),
+        // `kind: 'image'` : c'est la GED qui décide du préfixe (`IMG_`) et du rang.
+        body: JSON.stringify({ dataUrl, filename: `${base}-edite`, kind: 'image', ...(folder ? { module: folder } : {}) }),
       });
       const json = await res.json();
       if (json.url) {
@@ -711,7 +742,23 @@ export default function ImageEditor({
 
         {/* Zone canvas */}
         <div className="flex-1 flex items-center justify-center overflow-auto p-6" style={{ background: 'repeating-conic-gradient(#222 0% 25%, #1a1a1a 0% 50%) 0 0 / 24px 24px' }}>
-          {loading ? (
+          {loadError ? (
+            // Un échec de chargement doit être LISIBLE : la cause (fichier absent du
+            // dossier annoncé par l'URL, image distante sans CORS) ne se devine pas
+            // depuis un « Image non chargeable » suivi d'un canvas vide.
+            <div className="max-w-md text-center space-y-3">
+              <div className="text-sm font-bold">Image non chargeable</div>
+              <p className="text-xs text-white/60 break-all">{loadError}</p>
+              <div className="flex items-center justify-center gap-2">
+                <button type="button" className="ad-btn ad-btn-ghost !text-white" onClick={() => setAttempt((value) => value + 1)}>
+                  <RotateCcw className="w-4 h-4" /> Réessayer
+                </button>
+                <a className="ad-btn ad-btn-ghost !text-white" href={src} target="_blank" rel="noreferrer">
+                  <Maximize className="w-4 h-4" /> Ouvrir le fichier
+                </a>
+              </div>
+            </div>
+          ) : loading ? (
             <Loader className="w-8 h-8 animate-spin text-white/40" />
           ) : (
             <canvas
