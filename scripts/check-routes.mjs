@@ -22,13 +22,24 @@ import { fileURLToPath } from 'node:url';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 const argv = process.argv.slice(2);
+
+/*
+ * Une option, trois écritures : `--nom valeur`, `--nom=valeur`, et — pour
+ * l'URL seulement — la valeur nue en argument positionnel. Cette dernière
+ * était acceptée pour tous les noms, et `--locales` héritait donc de l'URL :
+ * le contrôle partait interroger `/http://hote:port/...` et affichait un 404
+ * partout. Un nom d'option ne doit jamais tomber sur la valeur d'un autre.
+ */
 const argOf = (name, fallback) => {
   const i = argv.indexOf(`--${name}`);
-  if (i >= 0 && argv[i + 1]) return argv[i + 1];
+  if (i >= 0 && argv[i + 1] && !argv[i + 1].startsWith('--')) return argv[i + 1];
   const eq = argv.find((a) => a.startsWith(`--${name}=`));
   if (eq) return eq.slice(name.length + 3);
-  const nu = argv.find((a) => /^https?:\/\//.test(a));
-  return nu || fallback;
+  if (name === 'url') {
+    const nue = argv.find((a) => /^https?:\/\//.test(a));
+    if (nue) return nue;
+  }
+  return fallback;
 };
 
 const SITE = argOf('url', 'http://localhost:5000').replace(/\/$/, '');
@@ -203,10 +214,13 @@ async function main() {
   // Une route absente dans UNE langue seulement trahit un cache partiel :
   // c'est le symptôme qu'on cherche à isoler.
   const parRoute = new Map();
+  const racines = {};
+  const absentesParLangue = [];
 
   for (const locale of LOCALES) {
     head(`Langue « ${locale} »`);
     const racine = await status(`${SITE}/${locale}`);
+    racines[locale] = racine;
     if (racine === 0) fail(`/${locale} sans réponse (délai dépassé)`);
     else if (racine >= 400) fail(`/${locale} → HTTP ${racine}`);
     else ok(`/${locale} → HTTP ${racine}`);
@@ -221,9 +235,40 @@ async function main() {
       if (code === 404) manquantes.push(route);
       else if (code === 0) muettes.push(route);
     }
-    if (manquantes.length) fail(`${manquantes.length} route(s) en 404 : ${manquantes.join(', ')}`);
+    if (manquantes.length) fail(`${manquantes.length} route(s) en 404 : ${manquantes.slice(0, 6).join(', ')}${manquantes.length > 6 ? '…' : ''}`);
     if (muettes.length) fail(`${muettes.length} route(s) sans réponse — serveur saturé ou arrêté`);
     if (!manquantes.length && !muettes.length) ok(`les ${routes.length} routes répondent`);
+    absentesParLangue.push(manquantes.length);
+  }
+
+  /*
+   * Le cas « plus rien ne répond, sinon le serveur lui-même ».
+   *
+   * Toutes les routes du disque en 404, ou presque, n'est pas un problème de
+   * routes : c'est que le processus qui occupe le port ne sert pas ce dossier,
+   * ou le sert avec un manifeste plus vieux que le disque. Le dire ici évite
+   * deux heures à chercher dans le code — le code, lui, est bon.
+   */
+  const toutAbsentes = routes.length > 0 && absentesParLangue.every((n) => n >= routes.length);
+  if (toutAbsentes) {
+    head('Aucune route du disque n’est servie');
+    const vivace = LOCALES.some((l) => racines[l] > 0 && racines[l] < 400);
+    line(`  ${C.r}✗${C.x} ${SITE} répond, mais ne connaît aucune des ${routes.length} pages de ce dépôt${vivace ? ' — la racine, elle, répond' : ''}.`);
+    line();
+    line('  Dans cet ordre, parce que ce sont les causes réellement observées :');
+    line(`  ${C.d}1. un autre serveur occupe le port (une instance précédente, ou une${C.x}`);
+    line(`  ${C.d}   copie du projet lancée depuis un autre dossier) :${C.x}`);
+    line(`       PowerShell : ${C.d}Get-NetTCPConnection -LocalPort 5000 | Select-Object OwningProcess${C.x}`);
+    line(`       ${C.d}Get-Process -Id <pid> | Select-Object Path${C.x}  → le dossier du processus`);
+    line(`  ${C.d}2. un cache de développement périmé — redémarrer proprement :${C.x}`);
+    line(`       ${C.d}rmdir /s /q .next${C.x}  puis  ${C.d}npm run dev${C.x}`);
+    line(`  ${C.d}3. le serveur lancé depuis un sous-dossier : next dev doit tourner là où${C.x}`);
+    line(`  ${C.d}   se trouve ${C.x}${C.d}app/[locale]${C.x} — la racine du dépôt, pas un de ses dossiers.${C.x}`);
+    if (vivace) {
+      line();
+      line(`  ${C.d}La racine répond et les pages enfants sont en 404 : c'est le signe d'un${C.x}`);
+      line(`  ${C.d}manifeste de routes plus ancien que le disque — le point 2.${C.x}`);
+    }
   }
 
   head('Cohérence entre les langues');
