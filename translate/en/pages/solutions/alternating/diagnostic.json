@@ -1,0 +1,14 @@
+{
+  "subtitle": "Diagnostic",
+  "title": "Precision at the service of diagnosis",
+  "desc": "Our diagnostic equipment allows early and precise detection of pathologies.",
+  "features": [
+    "High-resolution imaging",
+    "Optimized portability",
+    "Bluetooth/WiFi connectivity",
+    "CE and ISO compliance"
+  ],
+  "cta": "Explore diagnostic",
+  "link": "#solutions/diagnostic",
+  "image": "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=1200"
+}

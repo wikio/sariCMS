@@ -1,5 +1,8 @@
 {
   "subtitle": "Testimonials",
   "title": "They Trust Us",
-  "description": "What our clients say about us"
+  "description": "What our clients say about us",
+  "previous": "Previous",
+  "next": "Next",
+  "testimonialNumber": "Testimonial {number}"
 }

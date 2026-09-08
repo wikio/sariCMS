@@ -1,7 +1,10 @@
 import { BaseEntity } from '../../../common/crud/interfaces/repository.interface';
 
 export const PAGE_KINDS = ['legal', 'about', 'generic'] as const;
-export const PAGE_SUBTYPES = ['simple', 'gallery', 'flyer', 'slide', 'scroll', 'full'] as const;
+// `constructor` : page construite dans le constructeur de page de l'admin, et
+// servie sans bandeau de navigation ni pied de page (voir `lib/builder-doc.ts`
+// pour la façon dont la construction est rangée dans `content`).
+export const PAGE_SUBTYPES = ['simple', 'gallery', 'flyer', 'slide', 'scroll', 'full', 'constructor'] as const;
 export const PAGE_STATUSES = ['draft', 'published', 'archived'] as const;
 
 export type PageKind = (typeof PAGE_KINDS)[number];

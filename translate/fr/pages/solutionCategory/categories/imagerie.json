@@ -1,0 +1,43 @@
+{
+  "title": "Imagerie Médicale",
+  "desc": "Scanners CT, IRM, radiologie numérique et solutions PACS",
+  "icon": "scan",
+  "image": "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=1920",
+  "productIds": [],
+  "features": [
+    {
+      "icon": "scan",
+      "text": "Scanners CT 16 à 128 coupes"
+    },
+    {
+      "icon": "magnet",
+      "text": "IRM 1.5T et 3T"
+    },
+    {
+      "icon": "image",
+      "text": "Radiologie numérique DR/CR"
+    },
+    {
+      "icon": "monitor",
+      "text": "Solutions PACS/RIS"
+    },
+    {
+      "icon": "shield-check",
+      "text": "Conformité HDS"
+    },
+    {
+      "icon": "wrench",
+      "text": "Maintenance préventive"
+    }
+  ],
+  "faq": [
+    {
+      "q": "Proposez-vous des scanners CT ?",
+      "a": "Oui, nous proposons une gamme complète de scanners CT, de 16 à 128 coupes, avec installation et formation incluses."
+    },
+    {
+      "q": "Les IRM sont-ils compatibles avec tous les patients ?",
+      "a": "Oui, nos IRM sont adaptés à tous les profils de patients, y compris les enfants et les personnes claustrophobes (IRM ouverte disponible)."
+    }
+  ]
+}

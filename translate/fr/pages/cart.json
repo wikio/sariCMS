@@ -24,5 +24,9 @@
   "optionPayDesc": "Finaliser le paiement sans créer de compte",
   "optionQuote": "Demander un devis",
   "optionQuoteDesc": "Recevoir un devis personnalisé sous 24h",
-  "cancel": "Annuler"
+  "cancel": "Annuler",
+  "preparingPayment": "Préparation du paiement",
+  "preparingPaymentDesc": "Votre commande est en cours de création, vous allez être redirigé.",
+  "taxIncluded": "incluse",
+  "captchaRequired": "Veuillez valider le contrôle antispam"
 }

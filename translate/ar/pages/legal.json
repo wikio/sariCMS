@@ -3,8 +3,11 @@
   "backHome": "العودة إلى الرئيسية",
   "lastUpdate": "آخر تحديث",
   "otherLegalDocs": "مستندات قانونية أخرى",
-  "mentions": "إشعارات قانونية",
+  "legalNotice": "إشعارات قانونية",
   "privacy": "الخصوصية",
-  "conditions": "شروط وأحكام البيع",
-  "verification": "التحقق من الأصالة"
+  "cgv": "شروط وأحكام البيع",
+  "verification": "التحقق من الأصالة",
+  "legalDoc": "وثيقة قانونية",
+  "mentions": "إشعار قانوني",
+  "conditions": "الشروط والأحكام"
 }

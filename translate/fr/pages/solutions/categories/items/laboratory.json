@@ -1,0 +1,14 @@
+{
+  "icon": "flask-conical",
+  "color": "teal-500",
+  "title": "Laboratoire",
+  "desc": "Analyseurs, centrifugeuses, réactifs et équipements de diagnostic",
+  "cta": "Découvrir",
+  "link": "#solutions/laboratoire",
+  "features": [
+    "Analyseurs automatiques",
+    "Centrifugeuses",
+    "Réactifs de diagnostic",
+    "Microscopes de laboratoire"
+  ]
+}

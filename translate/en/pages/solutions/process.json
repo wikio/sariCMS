@@ -1,0 +1,37 @@
+{
+  "subtitle": "Our Method",
+  "title": "Support in 5 steps",
+  "description": "From analyzing your needs to maintaining your equipment, we support you at every step",
+  "steps": [
+    {
+      "number": "01",
+      "icon": "search",
+      "title": "Needs Analysis",
+      "desc": "Personalized study of your facility and technical constraints"
+    },
+    {
+      "number": "02",
+      "icon": "clipboard-list",
+      "title": "Custom Proposal",
+      "desc": "Selection of adapted equipment with detailed quote"
+    },
+    {
+      "number": "03",
+      "icon": "truck",
+      "title": "Delivery & Installation",
+      "desc": "Secure delivery and installation by certified technicians"
+    },
+    {
+      "number": "04",
+      "icon": "graduation-cap",
+      "title": "Team Training",
+      "desc": "Complete training for your teams on new equipment"
+    },
+    {
+      "number": "05",
+      "icon": "wrench",
+      "title": "Maintenance & Support",
+      "desc": "Preventive maintenance and 24/7 technical support"
+    }
+  ]
+}

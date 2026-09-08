@@ -13,7 +13,7 @@ function inferAction(req: Request): string {
   if (url.includes('/purge')) return 'delete';
   if (url.includes('/restore')) return 'update';
   if (method === 'GET') return 'read';
-  if (method === 'POST' && /\/[0-9a-f-]{36}\//i.test(url)) return 'update';
+  if (method === 'POST' && /\/\d+\//.test(url)) return 'update';
   if (method === 'POST') return 'create';
   if (method === 'PATCH' || method === 'PUT') return 'update';
   if (method === 'DELETE') return 'delete';

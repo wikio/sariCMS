@@ -1,0 +1,25 @@
+{
+  "title": "Questions Fréquentes",
+  "items": [
+    {
+      "q": "Quels sont les délais de livraison ?",
+      "a": "Les délais varient selon le type d'équipement : 24-48h pour les consommables, 1-2 semaines pour les équipements standards, 4-8 semaines pour les équipements lourds (IRM, scanners)."
+    },
+    {
+      "q": "Proposez-vous des solutions de financement ?",
+      "a": "Oui, nous proposons plusieurs options : location, leasing, paiement en plusieurs fois, et accompagnement pour les demandes de subventions régionales."
+    },
+    {
+      "q": "La formation est-elle incluse ?",
+      "a": "Oui, une session de formation de base est incluse pour tout achat d'équipement. Des formations avancées sont disponibles en option."
+    },
+    {
+      "q": "Quelles certifications ont vos équipements ?",
+      "a": "Tous nos équipements sont certifiés CE et conformes aux normes ISO 13485. Certains disposent également de certifications FDA ou HDS."
+    },
+    {
+      "q": "Proposez-vous un service de maintenance ?",
+      "a": "Oui, nous proposons des contrats de maintenance préventive et corrective avec intervention garantie sous 24h sur tout le territoire."
+    }
+  ]
+}

@@ -1,33 +1,70 @@
 // app/api/admin/translations/file/route.ts
+/**
+ * Le fichier d'un écran, lu et enregistré par l'atelier de traduction.
+ *
+ * La logique est ailleurs (`lib/translate-store.ts`) parce qu'un enregistrement ne
+ * vaut plus pour un seul fichier : il doit atteindre les messages que le site lit,
+ * sinon l'écran sourit pour rien. Voir ce module pour le pourquoi du chemin.
+ */
 import { NextRequest, NextResponse } from 'next/server';
-import { promises as fs } from 'fs';
-import path from 'path';
+import {
+  TranslationConflictError,
+  TranslationPathError,
+  readAtelierFile,
+  resolveAtelierFile,
+  saveAtelierFile,
+} from '@/lib/translate-store';
 
-const TRANSLATIONS_DIR = path.join(process.cwd(), 'translate');
+function params(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  return {
+    locale: searchParams.get('locale') || 'fr',
+    path: searchParams.get('path') || '',
+  };
+}
 
 export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const locale = searchParams.get('locale') || 'fr';
-  const filePath = searchParams.get('path');
-  
+  const { locale, path: filePath } = params(request);
   if (!filePath) {
+    return NextResponse.json({ error: 'Paramètre path manquant' }, { status: 400 });
+  }
+  try {
+    return NextResponse.json(await readAtelierFile(resolveAtelierFile(locale, filePath)));
+  } catch (error) {
+    if (error instanceof TranslationPathError) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+    return NextResponse.json({ error: 'Fichier non trouvé' }, { status: 404 });
+  }
+}
+
+export async function PUT(request: NextRequest) {
+  const { locale, path: filePath } = params(request);
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Corps JSON attendu' }, { status: 400 });
+  }
+
+  let target;
+  try {
+    target = resolveAtelierFile(locale, filePath);
+  } catch (error) {
     return NextResponse.json(
-      { error: 'Paramètre path manquant' },
-      { status: 400 }
+      { error: error instanceof TranslationPathError ? error.message : 'Chemin invalide' },
+      { status: 400 },
     );
   }
-  
+
   try {
-    const fullPath = path.join(TRANSLATIONS_DIR, locale, filePath);
-    const content = await fs.readFile(fullPath, 'utf-8');
-    const data = JSON.parse(content);
-    
-    return NextResponse.json(data);
+    const outcome = await saveAtelierFile(target, body);
+    return NextResponse.json(outcome);
   } catch (error) {
-    console.error('Erreur lecture fichier:', error);
-    return NextResponse.json(
-      { error: 'Fichier non trouvé' },
-      { status: 404 }
-    );
+    if (error instanceof TranslationConflictError) {
+      return NextResponse.json({ error: error.message }, { status: 409 });
+    }
+    console.error('Erreur écriture fichier:', error);
+    return NextResponse.json({ error: 'Écriture impossible' }, { status: 500 });
   }
 }

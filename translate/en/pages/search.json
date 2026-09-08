@@ -23,5 +23,9 @@
   "tipsTitle": "💡 Search tips:",
   "tipOr": "= OR search (multiple terms)",
   "tipAnd": "= AND search (all terms)",
-  "tipExample": "Example: \"ultrasound, blood pressure\" OR \"bed + electric\""
+  "tipExample": "Example: \"ultrasound, blood pressure\" OR \"bed + electric\"",
+  "home": "Home",
+  "loading": "Searching…",
+  "startSearching": "Start searching",
+  "startSearchingDesc": "Enter a keyword to find a product, a service or a news item."
 }

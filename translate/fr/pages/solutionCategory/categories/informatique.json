@@ -1,0 +1,43 @@
+{
+  "title": "Informatique Médicale",
+  "desc": "DMP, télémédecine, PACS/RIS, cybersécurité HDS",
+  "icon": "monitor",
+  "image": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1920",
+  "productIds": [],
+  "features": [
+    {
+      "icon": "file-text",
+      "text": "Dossier Médical Partagé (DMP)"
+    },
+    {
+      "icon": "video",
+      "text": "Télémédecine et téléconsultation"
+    },
+    {
+      "icon": "image",
+      "text": "Solutions PACS/RIS"
+    },
+    {
+      "icon": "lock",
+      "text": "Cybersécurité HDS"
+    },
+    {
+      "icon": "database",
+      "text": "Hébergement données santé"
+    },
+    {
+      "icon": "smartphone",
+      "text": "Applications mobiles"
+    }
+  ],
+  "faq": [
+    {
+      "q": "Vos solutions DMP sont-elles conformes HDS ?",
+      "a": "Oui, toutes nos solutions DMP sont certifiées HDS (Hébergeur de Données de Santé) et conformes au RGPD et à la réglementation algérienne."
+    },
+    {
+      "q": "Proposez-vous des solutions de télémédecine ?",
+      "a": "Oui, nous proposons des solutions complètes de téléconsultation, téléexpertise et télésurveillance avec visioconférence HD sécurisée."
+    }
+  ]
+}

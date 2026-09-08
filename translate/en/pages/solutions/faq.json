@@ -1,0 +1,25 @@
+{
+  "title": "Frequently Asked Questions",
+  "items": [
+    {
+      "q": "What are the delivery times?",
+      "a": "Times vary by equipment type: 24-48h for consumables, 1-2 weeks for standard equipment, 4-8 weeks for heavy equipment (MRI, CT scanners)."
+    },
+    {
+      "q": "Do you offer financing solutions?",
+      "a": "Yes, we offer several options: rental, leasing, installment payments, and support for regional grant applications."
+    },
+    {
+      "q": "Is training included?",
+      "a": "Yes, a basic training session is included with any equipment purchase. Advanced training is available as an option."
+    },
+    {
+      "q": "What certifications do your equipment have?",
+      "a": "All our equipment is CE certified and ISO 13485 compliant. Some also have FDA or HDS certifications."
+    },
+    {
+      "q": "Do you offer maintenance services?",
+      "a": "Yes, we offer preventive and corrective maintenance contracts with guaranteed intervention within 24h nationwide."
+    }
+  ]
+}

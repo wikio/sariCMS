@@ -1,0 +1,12 @@
+{
+  "title": "Document Not Recognized",
+  "message": "Document not recognized in our database.",
+  "actions": "Recommended actions:",
+  "steps": [
+    "1. Check the code and key entry",
+    "2. Make sure the document is from SARI Système SARL",
+    "3. Do not make any payment if it's an invoice",
+    "4. Contact our support if in doubt"
+  ],
+  "legal": "Algerian legislation: Document forgery is punishable under Articles 214, 217 and 147 of the Algerian Penal Code."
+}

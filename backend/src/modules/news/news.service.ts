@@ -13,8 +13,8 @@ export class NewsService extends BaseCrudService<NewsEntity> {
   protected readonly options: CrudServiceOptions = {
     resource: 'news',
     searchFields: ['title', 'shortDesc', 'category', 'authorName', 'sujet'],
-    sortableFields: ['createdAt', 'updatedAt', 'date', 'title', 'publishedAt'],
-    listFields: ['id', 'slug', 'title', 'category', 'authorName', 'date', 'status', 'locale'],
+    sortableFields: ['createdAt', 'updatedAt', 'date', 'publicationDate', 'title', 'publishedAt'],
+    listFields: ['id', 'slug', 'title', 'category', 'authorName', 'date', 'publicationDate', 'status', 'locale'],
     cardFields: [
       'id',
       'slug',
@@ -24,6 +24,7 @@ export class NewsService extends BaseCrudService<NewsEntity> {
       'category',
       'authorName',
       'date',
+      'publicationDate',
       'readTime',
       'status',
     ],
@@ -43,22 +44,50 @@ export class NewsService extends BaseCrudService<NewsEntity> {
     op: 'create' | 'update',
     existing?: NewsEntity,
   ): Partial<NewsEntity> {
+    
     const out = { ...dto };
     if (!out.slug && out.title) out.slug = slugify(String(out.title));
     if (op === 'create') {
       out.locale = out.locale || 'fr';
       out.status = out.status || 'draft';
     }
+    
+    // Synchroniser publicationDate et date
+    // publicationDate est le champ principal (ISO-8601)
+    // date est gardé pour rétrocompatibilité
+    if (out.publicationDate && !out.date) {
+      out.date = out.publicationDate;
+    } else if (out.date && !out.publicationDate) {
+      out.publicationDate = out.date;
+    }
+    
     if (out.status === 'published' && !out.publishedAt && !existing?.publishedAt) {
       out.publishedAt = new Date().toISOString();
       out.date = out.date || out.publishedAt;
+      out.publicationDate = out.publicationDate || out.publishedAt;
     }
+    
     return out;
   }
 
-  async statsByAuthor(authorId: string) {
-    const published = await this.repository.count({ authorId, status: 'published' });
-    const drafts = await this.repository.count({ authorId, status: 'draft' });
-    return { authorId, published, drafts, total: published + drafts };
+  /**
+   * Comptage des articles d'un auteur. L'identifiant arrive en chaîne depuis
+   * l'URL alors qu'il est stocké en entier : sans conversion, la comparaison
+   * échoue et le total renvoyé est toujours nul.
+   *
+   * Mais tous les identifiants ne sont pas des entiers — une fiche reprise de
+   * l'ancien site garde un `legacyId` de la forme `author-1`, et le magasin JSON
+   * les accepte tels quels. `Number('author-1')` vaudrait NaN : la requête
+   * retournerait zéro article et l'API répondrait un `authorId` illisible (NaN
+   * n'a pas d'équivalent en JSON, il devient `null`). On ne convertit donc que
+   * ce qui est écrit comme un nombre, et le reste est rendu inchangé.
+   */
+  async statsByAuthor(authorId: string | number) {
+    const raw = typeof authorId === 'number' ? authorId : String(authorId ?? '').trim();
+    const id = typeof raw === 'number' || /^\d+$/.test(String(raw)) ? Number(raw) : raw;
+    const published = await this.repository.count({ authorId: id, status: 'published' });
+    const drafts = await this.repository.count({ authorId: id, status: 'draft' });
+    return { authorId: id, published, drafts, total: published + drafts };
   }
+
 }

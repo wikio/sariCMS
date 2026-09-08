@@ -45,12 +45,18 @@ export default function TestimonialCard({ testimonial }: TestimonialCardProps) {
       {/* Auteur */}
       <div className="flex items-center gap-4">
         <div className="relative">
-          <img
-            src={testimonial.image}
+          {testimonial.image ? (
+            <img
+              src={testimonial.image}
             alt={testimonial.name}
             className="w-14 h-14 rounded-full object-cover border-2 border-sari-blue"
           />
-          <div className="absolute -bottom-1 -right-1 bg-sari-lime rounded-full p-0.5">
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 text-gray-400">
+              <span className="text-4xl font-bold">{testimonial.name?.charAt(0) || 'T'}</span>
+            </div>
+          )}
+<div className="absolute -bottom-1 -right-1 bg-sari-lime rounded-full p-0.5">
             <BadgeCheck className="w-4 h-4 text-sari-dark" />
           </div>
         </div>

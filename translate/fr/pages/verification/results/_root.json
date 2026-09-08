@@ -1,0 +1,9 @@
+{
+  "captchaError": "CAPTCHA incorrect",
+  "captchaMessage": "Réponse CAPTCHA incorrecte. Veuillez réessayer.",
+  "blocked": "Accès temporairement bloqué",
+  "blockedMessage": "Trop de tentatives. Veuillez rafraîchir la page dans 5 minutes.",
+  "error": "Erreur",
+  "errorMessage": "Veuillez remplir tous les champs.",
+  "invalidFormat": "Format de code invalide. Format attendu : SARI-XXX##-#####"
+}

@@ -1,0 +1,95 @@
+{
+  "version": 1,
+  "_comment": "Configuration des blocs de la page d'accueil (langue ar). Enregistrée par l'administration (Studio → Page d'accueil). Les blocs absents gardent les valeurs par défaut du code et les textes des traductions du site. Structure commune aux trois langues : elle se règle en français.",
+  "order": [
+    "hero",
+    "partners-marquee",
+    "navigation",
+    "mission",
+    "products",
+    "blocks",
+    "stats",
+    "testimonials",
+    "events",
+    "news",
+    "newsletter",
+    "partners",
+    "cta"
+  ],
+  "sections": {
+    "partners-marquee": {
+      "_comment": "مثال يأتي مع الوحدة: شريط يعرض كتل الاستوديو فقط (نص، صورة، نص وصورة) مع الاتجاه المعاكس. يمكن تعديله أو حذفه من استوديو ← الصفحة الرئيسية.",
+      "enabled": true,
+      "sortOrder": 1,
+      "texts": {
+        "label": "أخبار مختصرة"
+      },
+      "selection": {
+        "mode": "auto",
+        "ids": [],
+        "limit": 6,
+        "sort": "manual"
+      },
+      "settings": {
+        "source": "custom",
+        "itemKind": "auto",
+        "showImage": true,
+        "showTitle": true,
+        "showText": true,
+        "itemHeight": 56,
+        "mediaWidth": 0,
+        "mediaRadius": 8,
+        "mediaGap": 10,
+        "textSize": "base",
+        "textLines": 2,
+        "itemGap": 32,
+        "itemPadding": 8,
+        "marginTop": 16,
+        "marginBottom": 16,
+        "valign": "middle",
+        "cardStyle": "chip",
+        "edgeFade": true,
+        "linkItems": true,
+        "showSeparator": false,
+        "speed": 35,
+        "direction": "right",
+        "pauseOnHover": true
+      },
+      "style": {
+        "background": "blue",
+        "paddingY": 32,
+        "invert": true,
+        "showHeader": false
+      },
+      "items": [
+        {
+          "id": "item-exemple-atelier",
+          "from": "free",
+          "kind": "image-text",
+          "enabled": true,
+          "title": "ورشة عن نظام إدارة المحتوى",
+          "text": "ساعتان للتحكم الكامل في صفحاتك.",
+          "image": "/media/marquee/webinaire.svg",
+          "href": "/events"
+        },
+        {
+          "id": "item-exemple-support",
+          "from": "free",
+          "kind": "text",
+          "enabled": true,
+          "title": "دعم هاتفي، دون انتظار تذكرة.",
+          "href": "/contact"
+        },
+        {
+          "id": "item-exemple-recrute",
+          "from": "free",
+          "kind": "image",
+          "enabled": true,
+          "title": "نحن نوظف",
+          "image": "/media/marquee/recrute.svg",
+          "href": "/jobs"
+        }
+      ]
+    }
+  }
+}

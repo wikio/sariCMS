@@ -36,5 +36,7 @@
   "signIn": "Se connecter",
   "signUp": "S'inscrire",
   "welcome": "Bienvenue",
-  "guest": "Invité"
+  "guest": "Invité",
+  "user": "Utilisateur",
+  "notSignedIn": "Non connecté"
 }

@@ -1,0 +1,19 @@
+{
+  "title": "Authenticity Verification",
+  "subtitle": "Verify the authenticity of your SARI documents",
+  "howToVerify": "How to verify?",
+  "verificationForm": "Verification Form",
+  "documentCode": "Document Code",
+  "verificationKey": "Verification Key",
+  "antiRobot": "Anti-robot verification",
+  "authentic": "Authentic Document",
+  "expired": "Expired Document",
+  "revoked": "Revoked Document",
+  "forged": "Forged Document",
+  "notFound": "Document not recognized",
+  "legalNotice": "Legal Notice",
+  "scanQR": "Scan QR Code",
+  "faq": "Frequently Asked Questions",
+  "needHelp": "Need help?",
+  "contactSupport": "Contact Support"
+}

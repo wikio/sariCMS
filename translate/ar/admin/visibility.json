@@ -1,0 +1,16 @@
+{
+  "breadcrumb": "إعدادات متقدمة / ظهور الواجهة",
+  "title": "ظهور الواجهة",
+  "description": "إظهار أو إخفاء القوائم والصفحات والوحدات والأقسام والأزرار والإجراءات — {visible}/{total} نشط.",
+  "reset": "إعادة تعيين",
+  "resetSuccess": "تم إعادة تعيين الظهور",
+  "searchPlaceholder": "البحث عن عنصر…",
+  "itemsCount": "{count} عنصر(عناصر)",
+  "hideAll": "إخفاء الكل",
+  "showAll": "إظهار الكل",
+  "visible": "مرئي",
+  "hidden": "مخفي",
+  "noResults": "لا توجد عناصر تطابق « {query} ».",
+  "groupShown": "{group} ظاهر",
+  "groupHidden": "{group} مخفي"
+}

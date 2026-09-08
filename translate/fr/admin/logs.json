@@ -1,0 +1,13 @@
+{
+  "breadcrumb": "Pilotage",
+  "title": "Journaux",
+  "subtitle": "Audit immuable des actions administrateur.",
+  "allResources": "Toutes les ressources",
+  "date": "Date",
+  "action": "Action",
+  "resource": "Ressource",
+  "target": "Cible",
+  "actor": "Acteur",
+  "noEntries": "Aucune entrée",
+  "apiError": "Journal d'audit indisponible. Vérifiez l'API et le droit audit."
+}

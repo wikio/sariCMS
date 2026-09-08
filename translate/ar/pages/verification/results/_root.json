@@ -1,0 +1,9 @@
+{
+  "captchaError": "CAPTCHA غير صحيح",
+  "captchaMessage": "إجابة CAPTCHA غير صحيحة. يرجى المحاولة مرة أخرى.",
+  "blocked": "تم حظر الوصول مؤقتًا",
+  "blockedMessage": "محاولات كثيرة. يرجى تحديث الصفحة بعد 5 دقائق.",
+  "error": "خطأ",
+  "errorMessage": "يرجى ملء جميع الحقول.",
+  "invalidFormat": "تنسيق رمز غير صالح. التنسيق المتوقع: SARI-XXX##-#####"
+}

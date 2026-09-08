@@ -1,0 +1,45 @@
+{
+  "title": "Cardiology",
+  "desc": "ECG, defibrillators, cardiac monitors and holters",
+  "icon": "heart-pulse",
+  "image": "https://images.unsplash.com/photo-1559757175-5700dde675bc?w=1920",
+  "productIds": [
+    7
+  ],
+  "features": [
+    {
+      "icon": "activity",
+      "text": "3/5/12-lead ECG"
+    },
+    {
+      "icon": "zap",
+      "text": "AED and AED defibrillators"
+    },
+    {
+      "icon": "monitor",
+      "text": "Real-time cardiac monitors"
+    },
+    {
+      "icon": "clock",
+      "text": "24/48/72h ECG Holters"
+    },
+    {
+      "icon": "shield-check",
+      "text": "Medical CE compliance"
+    },
+    {
+      "icon": "headphones",
+      "text": "24/7 technical support"
+    }
+  ],
+  "faq": [
+    {
+      "q": "Are your ECGs 12-lead?",
+      "a": "Yes, we offer 3, 6 and 12-lead ECGs with touch screen and built-in thermal printer."
+    },
+    {
+      "q": "Are defibrillators easy to use?",
+      "a": "Yes, all our AEDs feature step-by-step voice guidance and automatic rhythm analysis in under 10 seconds."
+    }
+  ]
+}

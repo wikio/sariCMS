@@ -5,11 +5,11 @@ import {
   IsIn,
   IsOptional,
   IsString,
-  IsUUID,
   Matches,
   MaxLength,
   MinLength,
 } from 'class-validator';
+import { IsEntityId } from '../../../common/validation/entity-id';
 
 export const USER_TYPES = ['admin', 'client', 'partner', 'candidate'] as const;
 export const USER_STATUSES = ['active', 'blocked', 'pending'] as const;
@@ -63,10 +63,10 @@ export class CreateUserDto {
   @IsIn(USER_STATUSES)
   status?: (typeof USER_STATUSES)[number];
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Id du rôle : entier (MySQL) ou UUID (driver JSON)' })
   @IsOptional()
-  @IsUUID()
-  roleId?: string;
+  @IsEntityId()
+  roleId?: string | number;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -121,6 +121,12 @@ export class CreateUserDto {
   @IsString()
   @MaxLength(500)
   cvUrl?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  ip?: string;
 
   @ApiPropertyOptional()
   @IsOptional()

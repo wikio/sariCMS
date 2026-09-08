@@ -1,6 +1,8 @@
 [
   {
     "id": 1,
+    "slug": "portable-ultrasound-pro-x1",
+    "legacyId": "prd-1",
     "name": "Portable Ultrasound Pro X1",
     "category": "Diagnostic",
     "price": "On Quote",
@@ -51,6 +53,8 @@
   },
   {
     "id": 2,
+    "slug": "premium-electric-examination-table",
+    "legacyId": "prd-2",
     "name": "Premium Electric Examination Table",
     "category": "Equipment",
     "price": "€2,450 excl. VAT",
@@ -101,6 +105,8 @@
   },
   {
     "id": 3,
+    "slug": "class-b-autoclave-sterilizer",
+    "legacyId": "prd-3",
     "name": "Class B Autoclave Sterilizer",
     "category": "Surgery",
     "price": "€3,890 excl. VAT",
@@ -149,6 +155,8 @@
   },
   {
     "id": 4,
+    "slug": "digital-pro-blood-pressure-monitor",
+    "legacyId": "prd-4",
     "name": "Digital Pro Blood Pressure Monitor",
     "category": "Diagnostic",
     "price": "€189 excl. VAT",
@@ -189,6 +197,8 @@
   },
   {
     "id": 5,
+    "slug": "led-binocular-microscope",
+    "legacyId": "prd-5",
     "name": "LED Binocular Microscope",
     "category": "Diagnostic",
     "price": "€1,290 excl. VAT",
@@ -228,6 +238,8 @@
   },
   {
     "id": 6,
+    "slug": "starter-consumables-pack",
+    "legacyId": "prd-6",
     "name": "Starter Consumables Pack",
     "category": "Consumables",
     "price": "€299 excl. VAT",
@@ -270,6 +282,8 @@
   },
   {
     "id": 7,
+    "slug": "semi-automatic-defibrillator",
+    "legacyId": "prd-7",
     "name": "Semi-Automatic Defibrillator",
     "category": "Emergency",
     "price": "€1,850 excl. VAT",
@@ -310,6 +324,8 @@
   },
   {
     "id": 8,
+    "slug": "5l-oxygen-concentrator",
+    "legacyId": "prd-8",
     "name": "5L Oxygen Concentrator",
     "category": "Respiratory",
     "price": "€890 excl. VAT",
@@ -350,6 +366,8 @@
   },
   {
     "id": 9,
+    "slug": "mobile-led-surgical-light",
+    "legacyId": "prd-9",
     "name": "Mobile LED Surgical Light",
     "category": "Surgery",
     "price": "€3,200 excl. VAT",
@@ -396,6 +414,8 @@
   },
   {
     "id": 10,
+    "slug": "double-electric-syringe-driver",
+    "legacyId": "prd-10",
     "name": "Double Electric Syringe Driver",
     "category": "Intensive Care",
     "price": "€1,450 excl. VAT",
@@ -437,6 +457,8 @@
   },
   {
     "id": 11,
+    "slug": "portable-suction-unit",
+    "legacyId": "prd-11",
     "name": "Portable Suction Unit",
     "category": "Care",
     "price": "€350 excl. VAT",
@@ -478,6 +500,8 @@
   },
   {
     "id": 12,
+    "slug": "digital-baby-scale",
+    "legacyId": "prd-12",
     "name": "Digital Baby Scale",
     "category": "Pediatrics",
     "price": "€220 excl. VAT",
@@ -519,6 +543,8 @@
   },
   {
     "id": 13,
+    "slug": "compression-nebulizer",
+    "legacyId": "prd-13",
     "name": "Compression Nebulizer",
     "category": "Respiratory",
     "price": "€85 excl. VAT",
@@ -560,6 +586,8 @@
   },
   {
     "id": 14,
+    "slug": "lightweight-aluminum-wheelchair",
+    "legacyId": "prd-14",
     "name": "Lightweight Aluminum Wheelchair",
     "category": "Mobility",
     "price": "€450 excl. VAT",
@@ -609,6 +637,8 @@
   },
   {
     "id": 15,
+    "slug": "multiparameter-vital-signs-monitor",
+    "legacyId": "prd-15",
     "name": "Multiparameter Vital Signs Monitor",
     "category": "Emergency",
     "price": "€2,800 excl. VAT",

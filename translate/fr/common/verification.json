@@ -1,0 +1,19 @@
+{
+  "title": "Vérification d'Authenticité",
+  "subtitle": "Vérifiez l'authenticité de vos documents SARI Système",
+  "howToVerify": "Comment vérifier ?",
+  "verificationForm": "Formulaire de vérification",
+  "documentCode": "Code du document",
+  "verificationKey": "Clé de vérification",
+  "antiRobot": "Vérification anti-robot",
+  "authentic": "Document authentique",
+  "expired": "Document expiré",
+  "revoked": "Document révoqué",
+  "forged": "Document falsifié",
+  "notFound": "Document non reconnu",
+  "legalNotice": "Mentions légales",
+  "scanQR": "Scan QR Code",
+  "faq": "Questions fréquentes",
+  "needHelp": "Besoin d'aide ?",
+  "contactSupport": "Contacter le support"
+}

@@ -1,5 +1,8 @@
 {
   "subtitle": "Témoignages",
   "title": "Ils Nous Font Confiance",
-  "description": "Ce que nos clients disent de nous"
+  "description": "Ce que nos clients disent de nous",
+  "previous": "Précédent",
+  "next": "Suivant",
+  "testimonialNumber": "Témoignage {number}"
 }

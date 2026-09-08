@@ -11,3 +11,5 @@ storage/cache/*
 .DS_Store
 prisma/*.db
 *.sqlite
+storage/mail/*
+!storage/mail/.gitkeep

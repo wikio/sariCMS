@@ -1,59 +1,77 @@
 // components/sections/LatestEvents.tsx
 'use client';
 
+/**
+ * Événements de la page d'accueil.
+ *
+ * Le studio permet de choisir les fiches (dans l'ordre voulu) ou de laisser le
+ * site prendre les N plus récents, d'imposer « à venir seulement », et de régler
+ * titre, description, nombre et bouton « tout voir ».
+ */
 import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import EventCard from '@/components/cards/EventCard';
 import type { Event } from '@/types';
+import {
+  applySelection,
+  boolSetting,
+  limitOf,
+  localizeHref,
+  numberSetting,
+  setting,
+  selectionFor,
+  txt,
+  type HomeSectionConfig,
+} from '@/lib/home/config';
+import SectionFrame, { gridProps } from '@/components/sections/SectionFrame';
 
 interface LatestEventsProps {
   events: Event[];
   count?: number;
+  config?: HomeSectionConfig;
 }
 
-export default function LatestEvents({ events, count = 3 }: LatestEventsProps) {
+export default function LatestEvents({ events, count = 3, config }: LatestEventsProps) {
   const locale = useLocale();
   const t = useTranslations('components.sections.LatestEvents');
 
-  const latest = events.slice(0, count);
+  const source = Array.isArray(events) ? events : [];
+  const selection = { ...selectionFor(config, count), upcomingOnly: boolSetting(config, 'upcomingOnly', false) };
+  const latest = applySelection(source, selection, {
+    dateOf: (event) => event.startDate || event.date,
+    titleKey: 'title',
+  });
 
   if (latest.length === 0) return null;
 
+  const columns = Math.max(1, Math.min(4, latest.length));
+  const grid = gridProps(config, numberSetting(config, 'columns', columns), 32);
+
   return (
-    <section className="py-24 bg-white dark:bg-[#1a1a1a]">
-      <div className="container mx-auto px-6">
-        {/* Titre de section */}
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-12 gap-4">
-          <div>
-            <span className="text-sari-lime font-bold uppercase tracking-wider text-sm">
-              {t('subtitle')}
-            </span>
-            <h2 className="text-4xl md:text-5xl font-bold text-sari-dark dark:text-white mt-4 mb-4">
-              {t('title')}
-            </h2>
-            <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl">
-              {t('description')}
-            </p>
-          </div>
+    <SectionFrame
+      sectionKey="events"
+      config={config}
+      header={{
+        fallbacks: { subtitle: t('subtitle'), title: t('title'), description: t('description') },
+        action: setting(config, 'showViewAll', true) ? (
           <Link
-            href={`/${locale}/events`}
+            href={localizeHref(config?.settings?.ctaHref, locale, `/${locale}/events`)}
             className="btn-primary text-white px-6 py-3 font-semibold inline-flex items-center gap-2 whitespace-nowrap"
           >
-            {t('viewAll')}
+            {txt(config, 'viewAllLabel', t('viewAll'))}
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M5 12h14"></path>
               <path d="m12 5 7 7-7 7"></path>
             </svg>
           </Link>
-        </div>
-
-        {/* Grille d'événements */}
-        <div className="grid md:grid-cols-3 gap-8">
-          {latest.map((event) => (
-            <EventCard key={event.id} event={event} />
-          ))}
-        </div>
+        ) : null,
+      }}
+    >
+      <div {...grid} className={`${grid.className} stagger-children`} style={{ ...grid.style, ['--hs-cols' as string]: String(limitOf(config, count)) }}>
+        {latest.map((event) => (
+          <EventCard key={String(event.id)} event={event} />
+        ))}
       </div>
-    </section>
+    </SectionFrame>
   );
 }

@@ -1,0 +1,11 @@
+{
+  "endMessage": "إجابتك تنهي هذا الترشيح. شكراً لوقتك.",
+  "applicationEnded": "انتهى الترشيح.",
+  "applicationSaved": "شكراً! تم حفظ ترشيحك بنجاح.",
+  "applicationEndedTitle": "انتهى الترشيح",
+  "experiencePlaceholder": "المنصب، الشركة، المدة…",
+  "answerPlaceholder": "إجابتك…",
+  "uploadCV": "إيداع سيرتك الذاتية (PDF, DOCX)",
+  "finish": "إنهاء",
+  "next": "التالي"
+}

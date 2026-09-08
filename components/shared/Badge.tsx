@@ -50,7 +50,7 @@ export default function Badge({
   children,
   variant = 'default',
   size = 'medium',
-  icon = null,
+  icon = undefined,
   dot = false,
   className = ''
 }: BadgeProps) {

@@ -6,13 +6,21 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { Calendar, Clock, ChevronLeft, ChevronRight, Mail, CheckCircle } from 'lucide-react';
-import { getNews } from '@/lib/data';
-import type { News } from '@/types';
+import { getNews, getArticleAuthor, getDefaultAuthor } from '@/lib/data';
+import { matchesEntity } from '@/lib/ids';
+import { extractLegacyId, findNewsTranslation, buildMultilingualUrl } from '@/lib/translation-utils';
+import { useDateUtils } from '@/lib/use-date-format';
+import type { News, Author } from '@/types';
 import Breadcrumb from '@/components/ui/Breadcrumb';
+import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
+import NewsletterSignup from '@/components/shared/NewsletterSignup';
+import ImageWithFallback from '@/components/ui/ImageWithFallback';
+import LanguageIndicator from '@/components/ui/LanguageIndicator';
 
 export default function NewsDetailPage() {
   const params = useParams();
   const locale = useLocale();
+  const { formatDate, hasTime } = useDateUtils();
   const t = useTranslations('pages.newsDetail');
 
   // ✅ CORRECTION : On cible explicitement la clé 'id' de l'objet params
@@ -23,41 +31,56 @@ export default function NewsDetailPage() {
   const numericId = parseInt(idString, 10);
 
   const [item, setItem] = useState<News | null>(null);
+  const [author, setAuthor] = useState<Author | null>(null);
   const [relatedNews, setRelatedNews] = useState<News[]>([]);
   const [latestNews, setLatestNews] = useState<News[]>([]);
   const [prevArticle, setPrevArticle] = useState<News | null>(null);
   const [nextArticle, setNextArticle] = useState<News | null>(null);
   const [scrollProgress, setScrollProgress] = useState(0);
-  const [newsletterEmail, setNewsletterEmail] = useState('');
-  const [newsletterSubmitted, setNewsletterSubmitted] = useState(false);
 
   useEffect(() => {
     const loadArticle = async () => {
       const news = await getNews(locale);
       
-      // ✅ Recherche par l'ID numérique extrait
-      const found = news.find(n => n.id === numericId);
+      // Essayer d'extraire le legacyId de l'URL
+      const legacyId = extractLegacyId(rawIdParam);
+      
+      let found: News | undefined;
+      if (legacyId) {
+        // Rechercher par legacyId d'abord
+        found = news.find((n) => n.legacyId === legacyId);
+      }
+      
+      // Fallback sur la recherche par id/slug si legacyId non trouvé
+      if (!found) {
+        found = news.find((n) => matchesEntity(n, idString) || matchesEntity(n, rawIdParam));
+      }
       
       if (found) {
         setItem(found);
-        const related = news.filter(n => n.id !== found.id && n.category === found.category).slice(0, 3);
-        const latest = news.filter(n => n.id !== found.id).slice(0, 5);
-        const currentIndex = news.findIndex(n => n.id === found.id);
+        const related = news.filter(n => n.id !== found!.id && n.category === found!.category).slice(0, 3);
+        const latest = news.filter(n => n.id !== found!.id).slice(0, 5);
+        const currentIndex = news.findIndex(n => n.id === found!.id);
         
         setRelatedNews(related);
         setLatestNews(latest);
         setPrevArticle(currentIndex > 0 ? news[currentIndex - 1] : null);
         setNextArticle(currentIndex < news.length - 1 ? news[currentIndex + 1] : null);
+
+        // Auteur de l'article ; à défaut, celui marqué par défaut dans la
+        // liste des auteurs. Si aucun des deux n'existe, le bloc reste masqué.
+        const resolved = await getArticleAuthor(locale, found);
+        setAuthor(resolved ?? (await getDefaultAuthor(locale)));
       } else {
         setItem(null);
+        setAuthor(null);
       }
     };
     
-    // Déclenche le chargement si numericId est valide
-    if (!isNaN(numericId)) {
+    if (idString || rawIdParam) {
       loadArticle();
     }
-  }, [numericId, locale]);
+  }, [idString, rawIdParam, locale]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -68,15 +91,6 @@ export default function NewsDetailPage() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  const handleNewsletterSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newsletterEmail) {
-      setNewsletterSubmitted(true);
-      setNewsletterEmail('');
-      setTimeout(() => setNewsletterSubmitted(false), 3000);
-    }
-  };
 
   if (!item) {
     return (
@@ -102,6 +116,10 @@ export default function NewsDetailPage() {
   }
 
   return (
+    <PageVisibilityGuard visibilityKey="module.news">
+    {/* Indicateur de langue si contenu non traduit */}
+    {item?.locale && <LanguageIndicator contentLocale={item.locale} requestedLocale={locale} />}
+    
     <div className="pt-32 pb-24 min-h-screen">
       {/* Barre de progression */}
       <div className="fixed top-0 left-0 w-full h-1 bg-gray-200 dark:bg-gray-800 z-50">
@@ -110,7 +128,13 @@ export default function NewsDetailPage() {
 
       {/* Header avec image */}
       <div className="relative h-[500px] md:h-[600px] overflow-hidden">
-        <img src={item.image} alt={item.title} className="w-full h-full object-cover parallax-slow" />
+        <ImageWithFallback
+          src={item.image}
+          alt={item.title}
+          className="w-full h-full object-cover parallax-slow"
+          fallbackIcon="calendar"
+          placeholderSize="xl"
+        />
         <div className="absolute inset-0 bg-gradient-to-t from-sari-dark via-sari-dark/60 to-transparent"></div>
         <div className="absolute inset-0 grid-pattern-bg opacity-10"></div>
         <div className="absolute bottom-0 left-0 right-0 container mx-auto px-6 pb-12">
@@ -125,18 +149,34 @@ export default function NewsDetailPage() {
               <p className="text-xl text-gray-300 mb-6 italic">{item.sujet}</p>
             )}
             <div className="flex flex-wrap items-center gap-6 text-gray-300">
-              <div className="flex items-center gap-2">
-                <div className="w-10 h-10 bg-sari-blue flex items-center justify-center text-white font-bold rounded-full">
-                  {item.author?.charAt(0) || 'A'}
+              {/* Sans auteur ni auteur par défaut, le bloc n'est pas affiché. */}
+              {author && (
+                <div className="flex items-center gap-2">
+                  <div className="w-10 h-10 bg-sari-blue flex items-center justify-center text-white font-bold rounded-full overflow-hidden">
+                    {author.photo ? (
+                      <ImageWithFallback
+                        src={author.photo}
+                        alt={author.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      author.name.charAt(0)
+                    )}
+                  </div>
+                  <div>
+                    <div className="font-semibold text-white">{author.name}</div>
+                    {/* Qualification de l'auteur, à la place du libellé générique. */}
+                    <div className="text-xs text-gray-400">{author.role || t('author')}</div>
+                  </div>
                 </div>
-                <div>
-                  <div className="font-semibold text-white">{item.author}</div>
-                  <div className="text-xs text-gray-400">{t('author')}</div>
-                </div>
-              </div>
+              )}
               <div className="flex items-center gap-2">
                 <Calendar className="w-5 h-5 text-sari-blue" />
-                <span>{item.date}</span>
+                <span>
+                  {formatDate(item.publicationDate || item.date, locale as any, { 
+                    includeTime: hasTime(item.publicationDate || item.date) 
+                  })}
+                </span>
               </div>
               {item.readTime && (
                 <div className="flex items-center gap-2">
@@ -159,7 +199,7 @@ export default function NewsDetailPage() {
         <div className="grid lg:grid-cols-3 gap-12">
           <div className="lg:col-span-2">
             <article className="bg-white dark:bg-[#1a1a1a] p-8 md:p-12 border border-gray-200 dark:border-gray-800 shadow-xl mb-8 rounded-xl">
-              <div className="prose dark:prose-invert max-w-none text-gray-600 dark:text-gray-400 text-lg leading-relaxed mb-12" dangerouslySetInnerHTML={{ __html: item.fullContent }}></div>
+              <div className="prose dark:prose-invert max-w-none text-gray-600 dark:text-gray-400 text-lg leading-relaxed mb-12" dangerouslySetInnerHTML={{ __html: item.fullContent || '' }}></div>
               
               {item.tags && item.tags.length > 0 && (
                 <div className="border-t border-gray-200 dark:border-gray-800 pt-8 mb-8">
@@ -193,7 +233,7 @@ export default function NewsDetailPage() {
             {(prevArticle || nextArticle) && (
               <div className="grid md:grid-cols-2 gap-6 mb-8">
                 {prevArticle ? (
-                  <Link href={`/${locale}/news/${prevArticle.id}-${encodeURIComponent(prevArticle.title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]/g, ''))}`} className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 p-6 hover:border-sari-blue transition-all group rounded-xl">
+                  <Link href={buildMultilingualUrl(`/${locale}/news`, prevArticle.legacyId || String(prevArticle.id), prevArticle.slug)} className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 p-6 hover:border-sari-blue transition-all group rounded-xl">
                     <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
                       {locale === 'ar' ? <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" /> : <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />}
                       {t('previousArticle')}
@@ -204,7 +244,7 @@ export default function NewsDetailPage() {
                   </Link>
                 ) : <div></div>}
                 {nextArticle ? (
-                  <Link href={`/${locale}/news/${nextArticle.id}-${encodeURIComponent(nextArticle.title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]/g, ''))}`} className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 p-6 hover:border-sari-blue transition-all group text-right rounded-xl">
+                  <Link href={buildMultilingualUrl(`/${locale}/news`, nextArticle.legacyId || String(nextArticle.id), nextArticle.slug)} className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 p-6 hover:border-sari-blue transition-all group text-right rounded-xl">
                     <div className="flex items-center justify-end gap-2 text-sm text-gray-500 mb-2">
                       {t('nextArticle')}
                       {locale === 'ar' ? <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> : <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />}
@@ -222,9 +262,15 @@ export default function NewsDetailPage() {
                 <h2 className="text-3xl font-bold text-sari-dark dark:text-white mb-8">{t('relatedArticles')}</h2>
                 <div className="grid md:grid-cols-3 gap-6">
                   {relatedNews.map(article => (
-                    <Link key={article.id} href={`/${locale}/news/${article.id}-${encodeURIComponent(article.title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]/g, ''))}`} className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 card-hover overflow-hidden group rounded-xl">
+                    <Link key={article.id} href={buildMultilingualUrl(`/${locale}/news`, article.legacyId || String(article.id), article.slug)} className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 card-hover overflow-hidden group rounded-xl">
                       <div className="aspect-video overflow-hidden">
-                        <img src={article.image} alt={article.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                        <ImageWithFallback
+                          src={article.image}
+                          alt={article.title}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                          fallbackIcon="calendar"
+                          placeholderSize="md"
+                        />
                       </div>
                       <div className="p-6">
                         <div className="text-xs text-sari-blue font-bold uppercase mb-2">{article.category}</div>
@@ -239,21 +285,34 @@ export default function NewsDetailPage() {
           </div>
 
           <div className="lg:col-span-1 space-y-8">
-            <div className="bg-white dark:bg-[#1a1a1a] p-8 border border-gray-200 dark:border-gray-800 shadow-xl rounded-xl">
-              <h3 className="text-xl font-bold text-sari-dark dark:text-white mb-6">{t('aboutAuthor')}</h3>
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-16 h-16 bg-sari-blue flex items-center justify-center text-white text-2xl font-bold rounded-full">
-                  {item.author?.charAt(0) || 'A'}
+            {/* Carte auteur : masquée si l'article n'a ni auteur ni auteur par défaut. */}
+            {author && (
+              <div className="bg-white dark:bg-[#1a1a1a] p-8 border border-gray-200 dark:border-gray-800 shadow-xl rounded-xl">
+                <h3 className="text-xl font-bold text-sari-dark dark:text-white mb-6">{t('aboutAuthor')}</h3>
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-16 h-16 bg-sari-blue flex items-center justify-center text-white text-2xl font-bold rounded-full overflow-hidden shrink-0">
+                    {author.photo ? (
+                      <ImageWithFallback
+                        src={author.photo}
+                        alt={author.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      author.name.charAt(0)
+                    )}
+                  </div>
+                  <div>
+                    <div className="font-bold text-sari-dark dark:text-white text-lg">{author.name}</div>
+                    {/* Qualification issue de la fiche auteur (et non la catégorie de l'article). */}
+                    {author.role && <div className="text-sari-blue text-sm">{author.role}</div>}
+                  </div>
                 </div>
-                <div>
-                  <div className="font-bold text-sari-dark dark:text-white text-lg">{item.author}</div>
-                  <div className="text-sari-blue text-sm">{item.category}</div>
-                </div>
+                {/* Présentation saisie dans la fiche auteur, en remplacement du texte figé. */}
+                {author.bio && (
+                  <p className="text-gray-600 dark:text-gray-400 text-sm">{author.bio}</p>
+                )}
               </div>
-              <p className="text-gray-600 dark:text-gray-400 text-sm">
-                Expert dans le domaine médical, {item.author} partage régulièrement ses connaissances et analyses sur les dernières innovations technologiques.
-              </p>
-            </div>
+            )}
 
             <div className="bg-white dark:bg-[#1a1a1a] p-8 border border-gray-200 dark:border-gray-800 shadow-xl rounded-xl">
               <h3 className="text-xl font-bold text-sari-dark dark:text-white mb-6 border-b border-gray-200 dark:border-gray-800 pb-4">
@@ -261,13 +320,23 @@ export default function NewsDetailPage() {
               </h3>
               <div className="space-y-6">
                 {latestNews.map(post => (
-                  <Link key={post.id} href={`/${locale}/news/${post.id}-${encodeURIComponent(post.title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]/g, ''))}`} className="flex gap-4 group">
-                    <img src={post.image} alt={post.title} className="w-20 h-20 object-cover flex-shrink-0 rounded-lg" />
+                  <Link key={post.id} href={buildMultilingualUrl(`/${locale}/news`, post.legacyId || String(post.id), post.slug)} className="flex gap-4 group">
+                    {post.image ? (
+                    <ImageWithFallback
+                      src={post.image}
+                      alt={post.title}
+                      className="w-20 h-20 object-cover flex-shrink-0 rounded-lg"
+                      fallbackIcon="calendar"
+                      placeholderSize="sm"
+                    />
+                    ) : null}
                     <div className="flex-1">
                       <h4 className="font-bold text-sari-dark dark:text-white group-hover:text-sari-blue transition-colors line-clamp-2 text-sm">{post.title}</h4>
                       <div className="flex items-center gap-2 text-xs text-gray-500 mt-2">
                         <Calendar className="w-3 h-3" />
-                        <span>{post.date}</span>
+                        <span>
+                          {formatDate(post.publicationDate || post.date, locale as any, { format: 'short' })}
+                        </span>
                       </div>
                     </div>
                   </Link>
@@ -283,26 +352,15 @@ export default function NewsDetailPage() {
               <p className="text-blue-100 mb-6 text-sm text-center">
                 {t('newsletterDesc')}
               </p>
-              {newsletterSubmitted ? (
-                <div className="bg-white/10 p-4 text-center rounded-lg">
-                  <CheckCircle className="w-8 h-8 mx-auto mb-2" />
-                  <p className="text-sm">{t('subscriptionSuccess')}</p>
-                </div>
-              ) : (
-                <form onSubmit={handleNewsletterSubmit}>
-                  <input 
-                    type="email" 
-                    required 
-                    placeholder={t('yourEmail')} 
-                    value={newsletterEmail} 
-                    onChange={(e) => setNewsletterEmail(e.target.value)} 
-                    className="w-full px-4 py-3 mb-4 text-sari-dark focus:outline-none rounded-lg" 
-                  />
-                  <button type="submit" className="w-full bg-sari-lime text-sari-dark font-semibold py-3 hover:bg-white transition-colors rounded-lg">
-                    {t('subscribe')}
-                  </button>
-                </form>
-              )}
+              <NewsletterSignup
+                variant="card"
+                source="news.detail"
+                labels={{
+                  placeholder: t('yourEmail'),
+                  submit: t('subscribe'),
+                  successDesc: t('subscriptionSuccess'),
+                }}
+              />
             </div>
 
             <div className="bg-white dark:bg-[#1a1a1a] p-8 border border-gray-200 dark:border-gray-800 shadow-xl rounded-xl">
@@ -312,12 +370,13 @@ export default function NewsDetailPage() {
                   <span key={i} className="px-3 py-2 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-sm hover:bg-sari-blue hover:text-white transition-colors cursor-pointer rounded-lg">
                     #{tag}
                   </span>
-                ))}
+                ))} 
               </div>
             </div>
           </div>
         </div>
       </div>
     </div>
+    </PageVisibilityGuard>
   );
 }

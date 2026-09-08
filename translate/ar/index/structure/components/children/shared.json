@@ -1,0 +1,17 @@
+{
+  "label": "مشترك",
+  "icon": "share-2",
+  "files": [
+    "Alert",
+    "Avatar",
+    "Badge",
+    "Divider",
+    "IconButton",
+    "ImageWithFallback",
+    "LanguageSwitcher",
+    "Rating",
+    "SocialLinks",
+    "Spinner",
+    "Tag"
+  ]
+}

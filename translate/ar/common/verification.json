@@ -1,0 +1,19 @@
+{
+  "title": "التحقق من الأصالة",
+  "subtitle": "تحقق من أصالة مستنداتك",
+  "howToVerify": "كيف تتحقق؟",
+  "verificationForm": "نموذج التحقق",
+  "documentCode": "رمز المستند",
+  "verificationKey": "مفتاح التحقق",
+  "antiRobot": "التحقق من عدم كونك روبوت",
+  "authentic": "مستند أصيل",
+  "expired": "مستند منتهي الصلاحية",
+  "revoked": "مستند ملغى",
+  "forged": "مستند مزور",
+  "notFound": "مستند غير معترف به",
+  "legalNotice": "إشعارات قانونية",
+  "scanQR": "مسح رمز QR",
+  "faq": "أسئلة شائعة",
+  "needHelp": "تحتاج مساعدة؟",
+  "contactSupport": "اتصل بالدعم"
+}

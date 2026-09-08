@@ -1,0 +1,16 @@
+{
+  "breadcrumb": "Configuration avancée / Visibilité vitrine",
+  "title": "Visibilité de la vitrine",
+  "description": "Affichez ou masquez menus, pages, modules, sections, boutons et actions — {visible}/{total} actifs.",
+  "reset": "Réinitialiser",
+  "resetSuccess": "Visibilité réinitialisée",
+  "searchPlaceholder": "Rechercher un élément…",
+  "itemsCount": "{count} élément(s)",
+  "hideAll": "Tout masquer",
+  "showAll": "Tout afficher",
+  "visible": "Visible",
+  "hidden": "Masqué",
+  "noResults": "Aucun élément ne correspond à « {query} ».",
+  "groupShown": "{group} affiché(s)",
+  "groupHidden": "{group} masqué(s)"
+}

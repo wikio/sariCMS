@@ -21,6 +21,23 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Uploads GED (on garde le dossier)
+/public/uploads/*
+!/public/uploads/.gitkeep
+
+# JSON i18n fusionnés — copies de messages/<locale>.json fabriquées par
+# `npm run intl:sync` et à chaque enregistrement depuis l'écran « Traductions »
+# (lib/translate-store.ts). La source de vérité suivie par git est messages/*.json ;
+# le site ne lit ces copies qu'en repli. Les vues de l'atelier, /translate/<locale>/**,
+# sont suivies, elles.
+/translate/fr.json
+/translate/en.json
+/translate/ar.json
+
 # Fichiers système / OS
 .DS_Store
 Thumbs.db
+tsconfig.tsbuildinfo
+
+# Écrit par npm run db:schema-check : il décrit l'état d'UNE base, pas du dépôt
+backend/sql/schema-sync.mysql.sql

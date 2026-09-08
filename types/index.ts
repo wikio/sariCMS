@@ -24,26 +24,54 @@ export interface Config {
   };
 }
 
+/**
+ * Règle de sous-menu généré depuis le contenu.
+ * Voir `lib/menu-auto.ts` : la liste est résolue à l'affichage, pas figée.
+ */
+export interface MenuAutoRule {
+  source: 'solutions' | 'services' | 'products' | 'news' | 'events';
+  /** `groups` : les catégories du module au lieu de ses fiches. */
+  mode: 'all' | 'pick' | 'groups';
+  /** Ids de fiches en mode `pick`, noms de catégories en mode `groups`. */
+  ids?: Array<string | number>;
+  limit?: number;
+  /** Description courte sous le titre. Absent = affichée. */
+  showDesc?: boolean;
+  /** Icône de la fiche devant le titre. Absent = masquée. */
+  showIcon?: boolean;
+  /** Vignette de l'image de la fiche. Absent = masquée. */
+  showImage?: boolean;
+}
+
+export interface MenuLink {
+  id?: string;
+  label: string;
+  href: string;
+  desc?: string;
+  icon?: string;
+  /** Vignette affichée devant le libellé du sous-lien. */
+  image?: string;
+  submenu?: MenuLink[];
+  /** Présente si le sous-menu est généré ; `submenu` est alors calculé. */
+  auto?: MenuAutoRule | null;
+}
+
 export interface Menu {
-  mainMenu: Array<{
-    id: string;
-    label: string;
-    href: string;
-    submenu?: Array<{
-      label: string;
-      href: string;
-      desc?: string;
-    }>;
-  }>;
+  mainMenu: Array<MenuLink & { id: string }>;
   footerMenu: {
-    navigation: Array<{ label: string; href: string }>;
+    navigation: MenuLink[];
     legal: Array<{ label: string; href: string }>;
   };
   socialLinks: Record<string, string>;
 }
 
 export interface Product {
-  id: number;
+  id: number | string;
+  slug?: string;
+  /** Langue de la fiche (utile quand chaque langue a sa propre ligne en base). */
+  locale?: string;
+  /** Identifiant partagé par les versions FR/EN/AR d'un même produit. */
+  legacyId?: string;
   name: string;
   category: string;
   price: string;
@@ -63,10 +91,17 @@ export interface Product {
 }
 
 export interface Event {
-  id: number;
+  id: number | string;
+  locale?: string; // Langue du contenu (fr, en, ar)
+  legacyId?: string; // ID unique pour toutes les versions linguistiques
+  slug?: string;
   title: string;
   type: string;
+  category?: string;
   date: string;
+  startDate?: string;
+  endDate?: string;
+  targetAudience?: string;
   location: string;
   shortDesc: string;
   fullContent?: string;
@@ -74,12 +109,29 @@ export interface Event {
   agenda?: string[];
 }
 
+export interface Author {
+  id: number | string;
+  name: string;
+  email?: string;
+  bio?: string;
+  photo?: string;
+  role?: string;
+  articlesCount?: number;
+}
+
 export interface News {
-  id: number;
+  id: number | string;
+  locale?: string; // Langue du contenu (fr, en, ar)
+  legacyId?: string; // ID unique pour toutes les versions linguistiques
+  slug?: string;
   title: string;
   category: string;
   date: string;
+  publicationDate?: string;
+  /** Nom affiché de l'auteur (fiche liée, ou nom libre pour les articles repris). */
   author?: string;
+  /** Fiche auteur liée : sert à afficher la qualification et la présentation. */
+  authorId?: number | string;
   shortDesc: string;
   fullContent?: string;
   image: string;
@@ -89,8 +141,28 @@ export interface News {
   classification?: string;
 }
 
+/**
+ * Fiche auteur d'une actualité. `role` est la qualification affichée sous le
+ * nom sur la page article, `bio` la présentation courte qui la suit.
+ */
+export interface Author {
+  id: number | string;
+  locale?: string;
+  legacyId?: string;
+  slug?: string;
+  name: string;
+  role?: string;
+  bio?: string;
+  photo?: string;
+  email?: string;
+  /** Auteur retenu lorsqu'un article n'en désigne aucun. */
+  isFallback?: boolean;
+  sortOrder?: number;
+}
+
 export interface Career {
-  id: number;
+  id: number | string;
+  slug?: string;
   title: string;
   type: string;
   location: string;
@@ -106,12 +178,20 @@ export interface Career {
   workflow?: string[];
   benefits?: string[];
   contact?: string;
+  applyAuth?: 'required' | 'optional' | 'inherit';
 }
 
 export interface Service {
-  id: number;
+  id: number | string;
+  /** Langue de la fiche (fr, en, ar) */
+  locale?: string;
+  /** Identifiant partagé par toutes les versions linguistiques d'un même service */
+  legacyId?: string;
+  slug?: string;
   title: string;
   icon: string;
+  color?: string;
+  image?: string;
   shortDesc: string;
   fullDesc?: string;
   features?: string[];
@@ -119,7 +199,7 @@ export interface Service {
 }
 
 export interface Testimonial {
-  id: number;
+  id: number | string;
   name: string;
   role: string;
   clinic: string;
@@ -129,25 +209,42 @@ export interface Testimonial {
 }
 
 export interface Partner {
-  id: number;
+  id: number | string;
   name: string;
   logo: string;
   category?: string;
 }
 
+export interface LegalDoc {
+  title: string;
+  content: string;
+  lastUpdate?: string;
+}
+
 export interface Legal {
-  mentions: { title: string; content: string };
-  privacy: { title: string; content: string };
-  cgv: { title: string; content: string };
-  about: { title: string; content: string };
+  mentions: LegalDoc;
+  privacy: LegalDoc;
+  conditions: LegalDoc;
+  about: LegalDoc;
+  [key: string]: LegalDoc;
 }
 
 export interface GenericContent {
-  id: number;
+  id: number | string;
+  /** Identifiant de reprise des données du site (`pag-1`), quand il existe. */
+  legacyId?: string;
+  /** Slug de la page — c'est par lui qu'une page construite est demandée. */
+  slug?: string;
+  /** Brouillon ou publié : la page construite n'est servie que publiée. */
+  status?: string;
   title: string;
   subtitle?: string;
   category?: string;
-  type?: 'full' | 'simple' | 'about' | 'gallery' | 'flyer' | 'slide' | 'scroll';
+  /**
+   * `constructor` : la page est construite dans le constructeur de l'admin et
+   * rendue sans bandeau de navigation ni pied de page, à partir de `content`.
+   */
+  type?: 'full' | 'simple' | 'about' | 'gallery' | 'flyer' | 'slide' | 'scroll' | 'constructor';
   content?: string;
   media?: string | string[];
   slides?: Array<{
@@ -170,6 +267,25 @@ export interface GenericContent {
   }>;
 }
 
+/**
+ * Une page « Constructeur » telle que la vitrine la consomme : le HTML et le CSS
+ * sortie du constructeur de page, séparés, et de quoi titrer la page.
+ */
+export interface ConstructorPage {
+  id: number | string;
+  slug: string;
+  locale: string;
+  title: string;
+  subtitle?: string;
+  category?: string;
+  status?: string;
+  html: string;
+  css: string;
+  /** Visuel de partage (celui de la fiche, s'il y en a un). */
+  media?: string;
+  updatedAt?: string;
+}
+
 export interface VerificationCode {
   code: string;
   key: string;
@@ -180,17 +296,33 @@ export interface VerificationCode {
   revocationReason?: string;
 }
 
+export interface HeroSlide {
+  id: number | string;
+  title: string;
+  subtitle: string;
+  description: string;
+  image: string;
+  cta: string;
+  ctaLink: string;
+}
+
 export interface SolutionCategory {
-  id: string;
+  id: number | string;
+  /** Langue de la fiche (fr, en, ar) */
+  locale?: string;
+  /** Identifiant partagé par toutes les versions linguistiques d'une même solution */
+  legacyId?: string;
+  slug?: string;
   title: string;
   shortDesc: string;
   fullDesc?: string;
   icon: string;
   image: string;
   color: string;
-  productIds: number[];
+  productIds: Array<number | string>;
   features?: string[];
   faq?: Array<{ q: string; a: string }>;
+  sortOrder?: number;
 }
 
 export interface Navigation {

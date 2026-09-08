@@ -1,6 +1,8 @@
 [
   {
     "id": 1,
+    "slug": "technicien-biomedical-h-f",
+    "legacyId": "job-1",
     "title": "Technicien Biomédical H/F",
     "type": "CDI",
     "location": "Lyon (69)",
@@ -28,6 +30,8 @@
   },
   {
     "id": 2,
+    "slug": "commercial-sectoriel-btob",
+    "legacyId": "job-2",
     "title": "Commercial Sectoriel BtoB",
     "type": "CDI",
     "location": "Paris",
@@ -55,6 +59,8 @@
   },
   {
     "id": 3,
+    "slug": "responsable-logistique",
+    "legacyId": "job-3",
     "title": "Responsable Logistique",
     "type": "CDI",
     "location": "Lyon (69)",
@@ -82,6 +88,8 @@
   },
   {
     "id": 4,
+    "slug": "assistant-e-administratif-ve",
+    "legacyId": "job-4",
     "title": "Assistant(e) Administratif(ve)",
     "type": "CDD",
     "location": "Lyon (69)",
@@ -108,6 +116,8 @@
   },
   {
     "id": 5,
+    "slug": "ingenieur-application-imagerie",
+    "legacyId": "job-5",
     "title": "Ingénieur d'Application Imagerie",
     "type": "CDI",
     "location": "Marseille (13)",
@@ -135,6 +145,8 @@
   },
   {
     "id": 6,
+    "slug": "technicien-de-surface-medical",
+    "legacyId": "job-6",
     "title": "Technicien de Surface Médical",
     "type": "CDI",
     "location": "Lyon (69)",
@@ -161,6 +173,8 @@
   },
   {
     "id": 7,
+    "slug": "stagiaire-marketing-digital",
+    "legacyId": "job-7",
     "title": "Stagiaire Marketing Digital",
     "type": "Stage",
     "location": "Lyon (69)",
@@ -187,6 +201,8 @@
   },
   {
     "id": 8,
+    "slug": "magasinier-cariste",
+    "legacyId": "job-8",
     "title": "Magasinier Cariste",
     "type": "CDI",
     "location": "Lyon (69)",
@@ -214,6 +230,8 @@
   },
   {
     "id": 9,
+    "slug": "comptable-fournisseurs",
+    "legacyId": "job-9",
     "title": "Comptable Fournisseurs",
     "type": "CDI",
     "location": "Lyon (69)",
@@ -241,6 +259,8 @@
   },
   {
     "id": 10,
+    "slug": "responsable-qualite-reglementaire",
+    "legacyId": "job-10",
     "title": "Responsable Qualité Réglementaire",
     "type": "CDI",
     "location": "Lyon (69)",
@@ -268,6 +288,8 @@
   },
   {
     "id": 11,
+    "slug": "developpeur-web-full-stack",
+    "legacyId": "job-11",
     "title": "Développeur Web Full Stack",
     "type": "CDI",
     "location": "Lyon (69) / Télétravail",
@@ -295,6 +317,8 @@
   },
   {
     "id": 12,
+    "slug": "charge-de-clientele-senior",
+    "legacyId": "job-12",
     "title": "Chargé de Clientèle Sénior",
     "type": "CDI",
     "location": "Bordeaux (33)",
@@ -322,6 +346,8 @@
   },
   {
     "id": 13,
+    "slug": "apprenti-e-technicien-ne-biomedical-e",
+    "legacyId": "job-13",
     "title": "Apprenti(e) Technicien(ne) Biomédical(e)",
     "type": "Alternance",
     "location": "Lyon (69)",
@@ -349,6 +375,8 @@
   },
   {
     "id": 14,
+    "slug": "directeur-trice-agence-regionale",
+    "legacyId": "job-14",
     "title": "Directeur(trice) d'Agence Régionale",
     "type": "CDI",
     "location": "Nantes (44)",
@@ -376,6 +404,8 @@
   },
   {
     "id": 15,
+    "slug": "community-manager",
+    "legacyId": "job-15",
     "title": "Community Manager",
     "type": "CDD",
     "location": "Lyon (69)",
