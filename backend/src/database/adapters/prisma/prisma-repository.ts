@@ -5,8 +5,12 @@ import {
   PaginatedResult,
   QueryOptions,
 } from '../../../common/crud/interfaces/repository.interface';
+import { Logger } from '@nestjs/common';
 import { PrismaService } from './prisma.service';
 import { RELATION_SCALARS } from './relation-scalars';
+import { PRISMA_MODEL_FIELDS } from './model-fields';
+
+const logger = new Logger('PrismaRepository');
 
 /**
  * Colonnes de date : elles se reconnaissent à leur nom — `date` nu, ou un suffixe
@@ -65,6 +69,29 @@ export class PrismaRepository<T extends BaseEntity> implements ICrudRepository<T
 
   private get db() {
     return this.prisma.delegate(this.model);
+  }
+
+  /**
+   * Les champs que le modèle déclare, ou `null` si le schéma généré ne le décrit
+   * pas — auquel cas on ne filtre rien : un faux négatif coûterait des colonnes.
+   */
+  private declared: ReadonlySet<string> | null | undefined;
+
+  private fieldNames(): ReadonlySet<string> | null {
+    if (this.declared === undefined) {
+      const list = PRISMA_MODEL_FIELDS[String(this.model || '').toLowerCase()];
+      this.declared = list ? new Set(list) : null;
+    }
+    return this.declared;
+  }
+
+  /**
+   * Le modèle a-t-il cette colonne ? `true` quand le modèle est inconnu, pour ne
+   * jamais retirer un champ par erreur.
+   */
+  knowsField(name: string): boolean {
+    const fields = this.fieldNames();
+    return !fields || fields.has(name);
   }
 
   async findMany(options: QueryOptions): Promise<PaginatedResult<T>> {
@@ -277,12 +304,39 @@ export class PrismaRepository<T extends BaseEntity> implements ICrudRepository<T
     throw error as Error;
   }
 
+  /** Un seul avertissement par champ et par dépôt : le reste du lot n'a rien à voir avec lui. */
+  private readonly warnedFields = new Set<string>();
+
+  private warnUnknownField(field: string): void {
+    if (this.warnedFields.has(field)) return;
+    this.warnedFields.add(field);
+    logger.warn(
+      `${this.collection}: le modèle \`${this.model}\` ne déclare pas le champ \`${field}\` — ` +
+        `il a été écarté de l'écriture pour ne pas faire échouer la ligne. ` +
+        `Soit la colonne doit exister : l'ajouter à prisma/schema.prisma, puis « npm run sql:schema » ` +
+        `et « npm run db:schema-fix » dans backend/ pour la créer en base. ` +
+        `Soit le champ n'a rien à y faire : le retirer de l'expédition (formulaires, DTO, imports).`,
+    );
+  }
+
   private toPrisma(data: Partial<T>): Record<string, unknown> {
     const out: Record<string, unknown> = {};
     const scalars = RELATION_SCALARS[String(this.model || '').toLowerCase()] ?? {};
+    const fields = this.fieldNames();
     const provided = new Set(Object.keys(data as Record<string, unknown>));
     for (const [k, v] of Object.entries(data as Record<string, unknown>)) {
       if (v === undefined) continue;
+      // Une clé que le modèle ne déclare pas est refusée tout court : Prisma ne
+      // répond pas « ce champ est inconnu » et continue, il jette la ligne entière
+      // — « Unknown argument `legacyId` » — et avec elle les huit candidatures du
+      // lot, la reprise du catalogue en cours, l'écran qui affichait la liste. Le
+      // champ vient d'ailleurs que le schéma : un DTO qui a grandi, un JSON repris,
+      // une table restée en arrière. Ici il ne peut rien signifier, alors il reste
+      // en route, et le message dit où le reprendre.
+      if (fields && !fields.has(k) && !scalars[k]) {
+        this.warnUnknownField(k);
+        continue;
+      }
       // Une clé étrangère de relation ne s'écrit pas à la main : depuis que le
       // schéma déclare `career Career? @relation(fields: [careerId]…)`, Prisma
       // refuse `careerId` au `create` (« Unknown argument `careerId`. Did you mean

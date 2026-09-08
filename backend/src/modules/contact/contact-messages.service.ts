@@ -11,6 +11,9 @@ export class ContactMessagesService extends BaseCrudService<ContactMessageEntity
   protected readonly repository: ICrudRepository<ContactMessageEntity>;
   protected readonly options: CrudServiceOptions = {
     resource: 'contact',
+    // Un message reçu, dans la langue où il a été écrit : pas de `legacyId`.
+    hasLegacyId: false,
+
     searchFields: ['name', 'email', 'subject', 'message'],
     sortableFields: ['createdAt', 'status', 'name'],
     listFields: ['id', 'name', 'email', 'subject', 'status', 'createdAt'],

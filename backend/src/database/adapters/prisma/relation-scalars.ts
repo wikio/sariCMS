@@ -1,8 +1,8 @@
 // backend/src/database/adapters/prisma/relation-scalars.ts
 /**
  * FICHIER GÉNÉRÉ — ne pas éditer à la main.
- * Source : prisma/schema.prisma. Générateur : `npm run prisma:relations`
- * (backend/scripts/generate-relation-scalars.mjs). Contrôle :
+ * Source : prisma/schema.prisma. Générateur : `npm run prisma:maps`
+ * (backend/scripts/generate-schema-maps.mjs). Contrôle :
  * relation-scalars.spec.ts, qui échoue si le schéma bouge sans régénération.
  *
  * Colonnes qui portent une clé étrangère de relation : elles se lisent, elle ne

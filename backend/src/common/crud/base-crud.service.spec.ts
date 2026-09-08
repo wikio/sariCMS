@@ -230,3 +230,90 @@ describe('BaseCrudService', () => {
     );
   });
 });
+
+/**
+ * Le `legacyId` que le modèle ne veut pas.
+ *
+ * Le service en dote chaque fiche créée, parce que c'est le lien entre les
+ * versions FR / EN / AR d'une même ressource. Mais toutes les tables ne sont pas
+ * traduites — une candidature, un message reçu, une ligne de journal — et celles-là
+ * n'ont pas la colonne : Prisma refuse l'argument et la création répond 500. Le
+ * drapeau `hasLegacyId` le déclare, et le magasin peut le confirmer lui-même ; dans
+ * les deux cas, un `legacyId` fourni par le client est retiré plutôt que perdu.
+ */
+describe('BaseCrudService — legacyId selon le modèle', () => {
+  /** Un dépôt à colonnes étroites, comme l'adaptateur Prisma : il sait ce qu'il a. */
+  class SchemaRepo extends MemoryRepo {
+    constructor(private readonly columns: string[]) {
+      super();
+    }
+    knowsField(name: string): boolean {
+      return this.columns.includes(name);
+    }
+  }
+
+  const NARROW = ['id', 'title', 'status', 'locale', 'createdAt', 'updatedAt', 'deletedAt', 'createdBy', 'updatedBy'];
+  const WIDE = ['id', 'title', 'status', 'locale', 'legacyId', 'createdAt', 'updatedAt', 'deletedAt'];
+
+  class ApplicationsService extends BaseCrudService<Item> {
+    protected readonly repository: ICrudRepository<Item>;
+    protected readonly options: CrudServiceOptions = {
+      resource: 'applications',
+      searchFields: ['title'],
+      listFields: ['id', 'title'],
+      cardFields: ['id', 'title'],
+    };
+    constructor(repo: ICrudRepository<Item>, cache: AppCacheService, audit: AuditService) {
+      super(cache, audit);
+      this.repository = repo;
+    }
+  }
+
+  class FlaggedService extends ApplicationsService {
+    protected override readonly options: CrudServiceOptions = {
+      resource: 'applications',
+      searchFields: ['title'],
+      listFields: ['id', 'title'],
+      hasLegacyId: false,
+    };
+  }
+
+  it('n’en invente pas quand le modèle n’a pas la colonne', async () => {
+    const repo = new SchemaRepo(NARROW);
+    await new ApplicationsService(repo, mockCache(), mockAudit()).create({
+      title: 'A',
+      status: 'ok',
+    } as Partial<Item>);
+    expect(repo.items[0]).not.toHaveProperty('legacyId');
+  });
+
+  it('écarte celui que le client envoie, au lieu de perdre la ligne', async () => {
+    const repo = new SchemaRepo(NARROW);
+    await new ApplicationsService(repo, mockCache(), mockAudit()).create({
+      title: 'A',
+      status: 'ok',
+      legacyId: 'appl-x',
+    } as unknown as Partial<Item>);
+    // Le champ n'a nulle part où être stocké : il reste en route, la candidature passe.
+    expect(repo.items[0]).not.toHaveProperty('legacyId');
+    expect(repo.items[0].title).toBe('A');
+  });
+
+  it('respecte le drapeau du service, même sur un magasin muet', async () => {
+    const repo = new MemoryRepo();
+    await new FlaggedService(repo, mockCache(), mockAudit()).create({
+      title: 'A',
+      status: 'ok',
+    } as Partial<Item>);
+    expect(repo.items[0]).not.toHaveProperty('legacyId');
+  });
+
+  it('le continue de poser quand le modèle a la colonne', async () => {
+    const repo = new SchemaRepo(WIDE);
+    const service = new ApplicationsService(repo, mockCache(), mockAudit());
+    await service.create({ title: 'A', status: 'ok', legacyId: 'grp-1' } as unknown as Partial<Item>);
+    expect(repo.items[0].legacyId).toBe('grp-1');
+    await service.create({ title: 'B', status: 'ok' } as Partial<Item>);
+    expect(String(repo.items[1].legacyId)).toMatch(/^appl-/);
+  });
+});

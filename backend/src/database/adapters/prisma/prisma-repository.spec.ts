@@ -23,7 +23,10 @@ type Repo = {
 function repo(): Repo {
   const delegate = { count: async () => 0, findMany: async () => [] };
   const service = { delegate: () => delegate } as never;
-  const instance = new PrismaRepository('pages', service, 'Page') as unknown as Repo;
+  // Le nom du modèle est volontairement hors de la table générée : ces tests portent
+  // sur les dates, pas sur la liste des colonnes de `Page`. Un modèle inconnu n'est
+  // pas filtré (voir model-fields.spec.ts pour ce filtrage).
+  const instance = new PrismaRepository('pages', service, 'datesSansContrainte') as unknown as Repo;
   return instance;
 }
 

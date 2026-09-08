@@ -57,6 +57,17 @@ Le fichier `sql/schema-sync.mysql.sql` dépend de **votre** base, pas du dépôt
 il est ignoré par git, et il se rejoue sans effet une fois la base au niveau
 (chaque ordre est gardé par son comptage `information_schema`).
 
+**Et si la colonne n'existe nulle part ?** `db:schema-fix` ne peut rien ajouter pour
+un champ que `prisma/schema.prisma` ne déclare pas — et une écriture qui l'envoie
+quand même répond « Unknown argument `legacyId` », en emportant la ligne entière, donc
+le lot d'import, donc l'écran. C'est le cas des tables qui ne sont pas traduites :
+candidatures, messages reçus, coordonnées, journal d'audit, pages. Là, le SQL n'a
+rien à rattraper : soit le champ a sa place dans le modèle (l'ajouter au schéma, puis
+`npm run sql:schema` et `npm run db:schema-fix`), soit il n'y a pas à être envoyé.
+L'adaptateur Prisma écarte aujourd'hui la clé inconnue avec un avertissement, et le
+service CRUD ne dote plus de `legacyId` que les modèles qui ont la colonne — un lot
+ne se juge plus sur un champ sans destinataire.
+
 ## Une liste administrative tombe en 500 « invalid datetime value »
 
 `PrismaClientKnownRequestError: … The column `updatedAt` contained an invalid
@@ -503,6 +514,7 @@ node sql/generate-seed.mjs          # seed.mysql.sql (contenu de démonstration)
 node sql/migrate-data.mjs           # migrate-data.mysql.sql (reprise des JSON)
 node sql/generate-fix-zero-dates.mjs # fix-zero-dates.mysql.sql (dates au zéro)
 node scripts/schema-sync.mjs          # sql/schema-sync.mysql.sql (base en retard sur le schéma)
+node scripts/generate-schema-maps.mjs # relation-scalars.ts + model-fields.ts (les tables de l'adaptateur Prisma)
 node sql/generate-fix-permissions.mjs # fix-permissions.mysql.sql (rôles verrouillés)
 node sql/generate-seed-legal.mjs      # seed-legal-pages.mysql.sql (documents légaux)
 ```

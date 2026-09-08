@@ -73,6 +73,13 @@ export interface ICrudRepository<T extends BaseEntity> {
   purgeExpired(olderThan: Date): Promise<number>;
   count(where?: Record<string, unknown>, includeDeleted?: boolean): Promise<number>;
   autocomplete(field: string, q: string, limit: number): Promise<AutocompleteHit[]>;
+  /**
+   * Le magasin a-t-il cette colonne ? Seuls les adaptateurs à schéma étroit (Prisma)
+   * répondent : un document JSON accepte n'importe quelle clé. Les services s'en
+   * servent pour ne pas inventer un champ que la base refuserait — un refus de Prisma
+   * n'est pas une plainte, c'est la ligne entière qui tombe.
+   */
+  knowsField?(name: string): boolean;
 }
 
 export type RepositoryFactory = <T extends BaseEntity>(collection: string) => ICrudRepository<T>;

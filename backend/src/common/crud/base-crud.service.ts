@@ -342,14 +342,41 @@ export abstract class BaseCrudService<T extends BaseEntity> {
    */
   protected withLegacyId(dto: Partial<T>): Partial<T> {
     // Table sans colonne `legacyId` : ne rien injecter, sinon Prisma rejette
-    // l'argument inconnu et la création répond 500.
+    // l'argument inconnu et la création répond 500. Le drapeau du service est la
+    // déclaration d'intention ; quand le magasin répond, lui, on ne lui demande
+    // pas la permission deux fois — et une valeur déjà présente est retirée, parce
+    // qu'elle n'a nulle part où être stockée.
     if (this.options.hasLegacyId === false) return dto;
+    if (this.rejectsLegacyId()) return this.withoutLegacyId(dto);
     if (dto.legacyId) return dto;
     const prefix = this.options.resource.slice(0, 4).replace(/[^a-z0-9]/gi, '') || 'ent';
     return {
       ...dto,
       legacyId: `${prefix}-${Date.now().toString(36)}-${randomUUID().slice(0, 6)}`,
     };
+  }
+
+  /**
+   * Le magasin connaît-il la colonne ? Un magasin muet — un document JSON, qui
+   * accepte n'importe quelle clé — laisse passer : seule une réponse explicite
+   * « non » arrête l'injection.
+   */
+  private rejectsLegacyId(): boolean {
+    const repository = this.repository;
+    return repository.knowsField ? repository.knowsField('legacyId') === false : false;
+  }
+
+  /**
+   * Retire un `legacyId` que le modèle ne peut pas stocker. La valeur peut venir du
+   * client — une fiche reprise avec son lien de traduction, un lot rejoué — et
+   * l'écarter vaut mieux que de perdre la ligne : le lien, lui, n'a nulle part où
+   * vivre tant que la colonne n'existe pas.
+   */
+  private withoutLegacyId(dto: Partial<T>): Partial<T> {
+    if (dto.legacyId === undefined) return dto;
+    const rest: Record<string, unknown> = { ...dto };
+    delete rest.legacyId;
+    return rest as Partial<T>;
   }
 
   protected safeAuditPayload(data: unknown): Record<string, unknown> | undefined {
