@@ -1,0 +1,11 @@
+# Security.txt for SariCMS
+# https://tools.ietf.org/html/draft-foudil-securitytxt-11
+
+Contact: mailto:security@sarisysteme.com
+Contact: https://sarisysteme.com/contact
+Encryption: https://sarisysteme.com/.well-known/pgp-key.txt
+Acknowledgments: https://sarisysteme.com/security/hall-of-fame
+Policy: https://sarisysteme.com/security/policy
+Preferred-Languages: fr, en
+Canonical: https://sarisysteme.com/.well-known/security.txt
+Expires: 2027-01-01T00:00:00.000Z

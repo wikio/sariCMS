@@ -2952,6 +2952,10 @@
       "enterCode": "Enter the displayed code",
       "refresh": "Refresh"
     },
+    "ServerCaptcha": {
+      "refresh": "Refresh",
+      "verified": "Verified"
+    },
     "headerExtra": {
       "user": "User"
     },

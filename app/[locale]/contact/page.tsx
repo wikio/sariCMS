@@ -5,14 +5,14 @@ import { useState, useEffect } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { 
-  Phone, Mail, MapPin, Clock, CheckCircle, Lock, 
-  RefreshCw, Send, Loader, Shield, Users
+  Phone, Mail, MapPin, Clock, CheckCircle, 
+  Send, Loader, Shield, Users
 } from 'lucide-react';
 import { getConfig, getMenu } from '@/lib/data';
 import { subscribeToNewsletter } from '@/lib/newsletter-admin';
 import type { Config, Menu } from '@/types';
 import SocialLinks from '@/components/shared/SocialLinks';
-import ImageCaptcha from '@/components/ImageCaptcha';
+import ServerCaptcha from '@/components/ServerCaptcha';
 import { loadAdminSettings } from '@/lib/admin-settings';
 import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
 import { maskPhone } from '@/lib/masks';
@@ -32,15 +32,7 @@ export default function ContactPage() {
   });
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  // États CAPTCHA
-  const [captchaAnswer, setCaptchaAnswer] = useState('');
-  const [captchaQuestion, setCaptchaQuestion] = useState('');
-  const [captchaExpected, setCaptchaExpected] = useState(0);
-  const [captchaAttempts, setCaptchaAttempts] = useState(0);
-  const [captchaBlocked, setCaptchaBlocked] = useState(false);
   const [captchaOk, setCaptchaOk] = useState(false);
-  const [siteCaptcha, setSiteCaptcha] = useState(true);
 
   const locale = useLocale();
   const t = useTranslations('pages.contact');
@@ -57,55 +49,10 @@ export default function ContactPage() {
     loadData();
   }, [locale]);
 
-  // Génération du CAPTCHA mathématique
-  const generateCaptcha = () => {
-    const num1 = Math.floor(Math.random() * 10) + 1;
-    const num2 = Math.floor(Math.random() * 10) + 1;
-    const operators = ['+', '-'];
-    const operator = operators[Math.floor(Math.random() * operators.length)];
-    let question, expected;
-    
-    if (operator === '+') {
-      question = `${num1} + ${num2} = ?`;
-      expected = num1 + num2;
-    } else {
-      const max = Math.max(num1, num2);
-      const min = Math.min(num1, num2);
-      question = `${max} - ${min} = ?`;
-      expected = max - min;
-    }
-    
-    setCaptchaQuestion(question);
-    setCaptchaExpected(expected);
-    setCaptchaAnswer('');
-  };
-
-  useEffect(() => {
-    generateCaptcha();
-    try { setSiteCaptcha(loadAdminSettings().security.siteCaptcha); } catch { /* */ }
-  }, []);
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (captchaBlocked) return;
-
-    if (siteCaptcha) {
-      if (!captchaOk) return;
-    } else if (parseInt(captchaAnswer) !== captchaExpected) {
-      setCaptchaAttempts(prev => prev + 1);
-      if (captchaAttempts >= 4) {
-        setCaptchaBlocked(true);
-        setTimeout(() => {
-          setCaptchaBlocked(false);
-          setCaptchaAttempts(0);
-          generateCaptcha();
-        }, 300000); // 5 minutes
-      } else {
-        generateCaptcha();
-      }
-      return;
-    }
+    if (!captchaOk) return;
 
     // La case « newsletter » est lue avant l'envoi : le formulaire sera
     // réinitialisé juste après, et l'adresse doit partir dans la liste
@@ -146,9 +93,7 @@ export default function ContactPage() {
         newsletter: false,
         acceptTerms: false
       });
-      setCaptchaAnswer('');
-      setCaptchaAttempts(0);
-      generateCaptcha();
+      setCaptchaOk(false);
       setTimeout(() => setSubmitted(false), 5000);
     });
   };
@@ -350,11 +295,11 @@ export default function ContactPage() {
                 </div>
               )}
 
-              {/* Message de blocage CAPTCHA */}
-              {captchaBlocked && (
+              {/* Message de blocage CAPTCHA - géré côté serveur via ServerCaptcha */}
+              {false && (
                 <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-500 p-6 mb-8 flex items-start gap-4 animate-fade-in-up">
                   <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0">
-                    <Lock className="w-6 h-6 text-red-500" />
+                    <div className="w-6 h-6 text-red-500" />
                   </div>
                   <div>
                     <h3 className="font-bold text-red-700 dark:text-red-400 text-lg">
@@ -524,35 +469,7 @@ export default function ContactPage() {
                     <Shield className="w-4 h-4 text-sari-blue" />
                     {t('captchaLabel')} <span className="text-red-500">*</span>
                   </label>
-                  {siteCaptcha ? (
-                    <ImageCaptcha onChange={setCaptchaOk} />
-                  ) : (
-                    <div className="flex items-center gap-4">
-                      <div className="flex-1 bg-white dark:bg-[#1a1a1a] border border-gray-300 dark:border-gray-700 px-4 py-3 text-center">
-                        <span className="text-xl font-bold text-sari-dark dark:text-white font-mono">
-                          {captchaQuestion}
-                        </span>
-                      </div>
-                      <input
-                        type="number"
-                        value={captchaAnswer}
-                        onChange={(e) => setCaptchaAnswer(e.target.value)}
-                        placeholder="?"
-                        disabled={captchaBlocked}
-                        className="w-24 px-4 py-3 border-2 border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none transition-colors text-center font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                        required
-                      />
-                      <button
-                        type="button"
-                        onClick={generateCaptcha}
-                        disabled={captchaBlocked}
-                        className="p-3 bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        title={t('newCaptcha')}
-                      >
-                        <RefreshCw className="w-5 h-5 text-sari-dark dark:text-white" />
-                      </button>
-                    </div>
-                  )}
+                  <ServerCaptcha onChange={setCaptchaOk} locale={locale} />
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                     {t('captchaHelp')}
                   </p>
@@ -561,7 +478,7 @@ export default function ContactPage() {
                 {/* Bouton submit */}
                 <button
                   type="submit"
-                  disabled={isSubmitting || captchaBlocked}
+                  disabled={isSubmitting || !captchaOk}
                   className="w-full btn-primary text-white py-4 font-semibold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {isSubmitting ? (

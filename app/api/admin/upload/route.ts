@@ -6,8 +6,10 @@ import { isManifestFile, parseAssetName } from '@/lib/ged/prefix.mjs';
 import { isStateFile } from '@/lib/ged/manifest.mjs';
 import { bufferFromDataUrl, extensionFromDataUrl } from '@/lib/ged/http';
 import { gedStore } from '@/lib/ged/store.mjs';
+import { validateUpload, sanitizeFileName, ALLOWED_MIME_TYPES } from '@/lib/upload-validation';
 
 const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads');
+const MAX_UPLOAD_SIZE = 50 * 1024 * 1024; // 50MB
 
 /** Une ligne de la liste : le fichier, plus ce que la fiche GED sait de lui. */
 type MediaEntry = {
@@ -46,8 +48,10 @@ function isSidecar(name: string): boolean {
 /**
  * Génère un ID unique sans dépendance externe
  */
+import { randomBytes } from 'crypto';
+
 function generateUniqueId(): string {
-  return Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
+  return Date.now().toString(36) + randomBytes(4).toString('hex');
 }
 
 /**
@@ -232,15 +236,40 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
+    // VALIDATION SÉCURISÉE DU FICHIER
+    const validation = await validateUpload(file, {
+      maxSizeBytes: MAX_UPLOAD_SIZE,
+      allowedMimeTypes: Object.keys(ALLOWED_MIME_TYPES),
+      scanForPolyglots: true,
+    });
+
+    if (!validation.valid) {
+      return NextResponse.json(
+        { error: validation.error, code: 'UPLOAD_VALIDATION_FAILED' },
+        { status: 400 }
+      );
+    }
+
+    // Log warnings si présents
+    if (validation.warnings && validation.warnings.length > 0) {
+      console.warn('[Upload API] Warnings:', validation.warnings);
+    }
+
     // Créer le dossier du module s'il n'existe pas
     const moduleDir = getModuleDir(folder);
     if (!existsSync(moduleDir)) {
       await mkdir(moduleDir, { recursive: true });
     }
 
-    // Générer le nom de fichier
-    const fileName = generateFileName(folder, id, slug, file.name);
+    // Générer le nom de fichier sécurisé
+    const safeOriginalName = sanitizeFileName(file.name);
+    const fileName = generateFileName(folder, id, slug, safeOriginalName);
     const filePath = path.join(moduleDir, fileName);
+
+    // Vérification path traversal
+    if (!path.resolve(filePath).startsWith(path.resolve(moduleDir) + path.sep)) {
+      return NextResponse.json({ error: 'Chemin de fichier invalide', code: 'PATH_TRAVERSAL' }, { status: 400 });
+    }
 
     // Lire et sauvegarder le fichier
     const bytes = await file.arrayBuffer();
@@ -263,6 +292,7 @@ export async function POST(request: NextRequest) {
       label: label || fileName,
       module: folder,
       id,
+      warnings: validation.warnings,
     });
   } catch (error) {
     console.error('[Upload API] POST error:', error);
@@ -290,6 +320,24 @@ async function postFromJson(request: NextRequest) {
   const buffer = await bufferFromDataUrl(dataUrl, 30 * 1024 * 1024);
   if (!buffer) {
     return NextResponse.json({ error: 'Image illisible : dataUrl (base64) attendu.' }, { status: 400 });
+  }
+
+  // VALIDATION SÉCURISÉE POUR LES DONNÉES JSON (dataUrl)
+  const validation = await validateUpload(buffer, {
+    maxSizeBytes: MAX_UPLOAD_SIZE,
+    allowedMimeTypes: Object.keys(ALLOWED_MIME_TYPES),
+    scanForPolyglots: true,
+  });
+
+  if (!validation.valid) {
+    return NextResponse.json(
+      { error: validation.error, code: 'UPLOAD_VALIDATION_FAILED' },
+      { status: 400 }
+    );
+  }
+
+  if (validation.warnings && validation.warnings.length > 0) {
+    console.warn('[Upload API] JSON Warnings:', validation.warnings);
   }
 
   const overwrite = body.overwrite ? String(body.overwrite) : body.file ? String(body.file) : '';

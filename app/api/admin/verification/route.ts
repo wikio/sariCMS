@@ -24,7 +24,15 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const store = await readVerificationStore();
-  return NextResponse.json(store, { headers: { 'Cache-Control': 'no-store' } });
+  // Masquer la clé API dans la réponse GET (sécurité)
+  const safeStore = {
+    ...store,
+    api: {
+      ...store.api,
+      apiKey: store.api.apiKey ? '***MASKED***' : '',
+    },
+  };
+  return NextResponse.json(safeStore, { headers: { 'Cache-Control': 'no-store' } });
 }
 
 export async function PUT(req: NextRequest) {

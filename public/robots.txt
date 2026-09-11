@@ -1,0 +1,35 @@
+# robots.txt for SariCMS
+# Généré automatiquement - ne pas modifier manuellement
+
+User-agent: *
+Allow: /
+
+# Admin et API - interdits aux robots
+Disallow: /admin/
+Disallow: /api/
+Disallow: /fr/admin/
+Disallow: /en/admin/
+Disallow: /ar/admin/
+Disallow: /fr/api/
+Disallow: /en/api/
+Disallow: /ar/api/
+
+# Pages privées / utilisateur
+Disallow: /dashboard/
+Disallow: /connexion/
+Disallow: /inscription/
+Disallow: /profil/
+Disallow: /panier/
+Disallow: /paiement/
+
+# Fichiers statiques sensibles
+Disallow: /uploads/
+Disallow: /canvas/
+Disallow: /_next/
+Disallow: /static/
+
+# Sitemap
+Sitemap: https://sarisysteme.com/sitemap.xml
+
+# Host
+Host: https://sarisysteme.com

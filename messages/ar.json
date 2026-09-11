@@ -2952,6 +2952,10 @@
       "enterCode": "أدخل الرمز المعروض",
       "refresh": "تحديث"
     },
+    "ServerCaptcha": {
+      "refresh": "تحديث",
+      "verified": "تم التحقق"
+    },
     "headerExtra": {
       "user": "المستخدم"
     },

@@ -18,7 +18,7 @@ import '@/app/admin.css';
 import { ToastProvider } from '@/components/admin/Toast';
 import AdminLanguageSwitcher from '@/components/admin/AdminLanguageSwitcher';
 import { AdminThemeProvider, ADMIN_THEMES, useAdminTheme } from '@/components/admin/AdminTheme';
-import { clearAdminSession, hasAdminSession, isAdminUser, readAdminUser } from '@/lib/admin-session';
+import { useAdminAuth, clearAuthCache } from '@/components/admin/useAdminAuth';
 import { unreadForAdmin } from '@/lib/messages';
 
 interface Child { id: string; label: string; href: string }
@@ -38,17 +38,14 @@ function Shell({ children }: { children: ReactNode }) {
   const t = useTranslations('admin');
   const isRTL = locale === 'ar';
   const { theme, setTheme } = useAdminTheme();
+  const { user, loading, logout, isLoginPage } = useAdminAuth();
   const [open, setOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [themesOpen, setThemesOpen] = useState(false);
   const [userOpen, setUserOpen] = useState(false);
   const [expanded, setExpanded] = useState<string>('products');
-  // Initialisé à null puis chargé côté client (évite le mismatch d'hydratation
-  // entre le rendu serveur et le localStorage du navigateur).
-  const [user, setUser] = useState<ReturnType<typeof readAdminUser>>(null);
   const [q, setQ] = useState('');
   const [unread, setUnread] = useState(0);
-  const isLogin = pathname === `/${locale}/admin` || pathname === `/${locale}/admin/`;
 
   useEffect(() => {
     const refresh = () => setUnread(unreadForAdmin());
@@ -62,7 +59,7 @@ function Shell({ children }: { children: ReactNode }) {
   // écrans (qui lisent le cache local) affichent les données partagées et
   // non celles du seul navigateur courant.
   useEffect(() => {
-    if (isLogin || !hasAdminSession()) return;
+    if (isLoginPage || !user) return;
     let cancelled = false;
     import('@/lib/crm-sync')
       .then((m) => m.pullAll())
@@ -74,24 +71,22 @@ function Shell({ children }: { children: ReactNode }) {
       })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [isLogin]);
+  }, [isLoginPage, user]);
 
   useEffect(() => {
-    const current = readAdminUser();
-    setUser(current);
-    if (isLogin) return;
-    if (!hasAdminSession()) {
+    if (isLoginPage) return;
+    if (!user) {
       router.push(`/${locale}/admin`);
       return;
     }
     // Un compte client / partenaire / candidat possède un token valide
     // (même endpoint /auth/login) mais n'a rien à faire dans le back-office :
     // on ferme la session et on le renvoie vers son espace personnel.
-    if (current && !isAdminUser(current)) {
-      clearAdminSession();
+    if (user && user.type !== 'admin') {
+      clearAuthCache();
       router.replace(`/${locale}/dashboard`);
     }
-  }, [pathname, locale, isLogin, router]);
+  }, [pathname, locale, isLoginPage, router, user]);
 
   const closeMobile = () => setMobileOpen(false);
   const menu: Item[] = useMemo(() => [
@@ -160,7 +155,7 @@ function Shell({ children }: { children: ReactNode }) {
       || menu.find((m) => m.children?.some((c) => pathname.includes(c.href.replace(`/${locale}`, ''))))?.id
       || null;
 
-  if (isLogin) {
+  if (isLoginPage) {
     return (
       <div data-admin-theme={theme} dir={isRTL ? 'rtl' : 'ltr'} className="ad-app min-h-screen relative overflow-hidden">
         <div className="ad-grid-bg absolute inset-0 opacity-70" />
@@ -264,7 +259,7 @@ function Shell({ children }: { children: ReactNode }) {
                 <div className="absolute right-0 mt-2 w-56 ad-card p-2 z-50">
                   <Link href={`/${locale}/admin/profile`} className="block px-3 py-2 text-sm hover:bg-[var(--ad-surface-2)]" onClick={() => setUserOpen(false)}>{t("profile.showProfile")}</Link>
                   <Link href={`/${locale}/admin/profile?edit=1`} className="block px-3 py-2 text-sm hover:bg-[var(--ad-surface-2)]" onClick={() => setUserOpen(false)}>{t("profile.updateProfile")}</Link>
-                  <button className="w-full text-left px-3 py-2 text-sm text-rose-500" onClick={() => { clearAdminSession(); router.push(`/${locale}`); }}>
+                  <button className="w-full text-left px-3 py-2 text-sm text-rose-500" onClick={async () => { await logout(); router.push(`/${locale}`); }}>
                     <LogOut className="w-4 h-4 inline mr-2" />{t('header.logout')}
                   </button>
                 </div>

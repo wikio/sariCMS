@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "rows": [
+    {
+      "id": "c4630516-7a84-4978-a166-d39bf1ac78c7",
+      "token": "280c247e-8903-41ad-ad67-85c1fe4a2cb9",
+      "createdAt": "2026-09-07T01:34:05.219Z",
+      "notes": null,
+      "email": "mail.tst@yopmail.com",
+      "name": null,
+      "locale": "fr",
+      "status": "subscribed",
+      "source": "home.newsletter",
+      "consent": true,
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36 Edg/151.0.0.0",
+      "subscribedAt": "2026-09-07T01:34:05.219Z",
+      "unsubscribedAt": null,
+      "updatedAt": "2026-09-07T01:34:05.219Z"
+    }
+  ]
+}

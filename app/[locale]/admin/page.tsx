@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { ArrowLeft, Lock, LogIn, Shield } from 'lucide-react';
 import PixelGridLoader from '@/components/admin/PixelGridLoader';
-import ImageCaptcha from '@/components/ImageCaptcha';
+import ServerCaptcha from '@/components/ServerCaptcha';
 import { cmsFetch, CmsError } from '@/lib/cms';
-import { clearAdminSession, hasAdminAccess, persistAdminSession } from '@/lib/admin-session';
+import { clearAuthCache } from '@/components/admin/useAdminAuth';
 import { loadAdminSettings } from '@/lib/admin-settings';
 
 export default function AdminLoginPage() {
@@ -25,9 +25,18 @@ export default function AdminLoginPage() {
   const [captchaOk, setCaptchaOk] = useState(false);
 
   useEffect(() => {
-    // hasAdminAccess() (et non hasAdminSession()) : une session de client ou
-    // de partenaire ne doit pas ouvrir le back-office.
-    if (hasAdminAccess()) router.replace(`/${locale}/admin/dashboard`);
+    // Vérifier via l'API si on est déjà connecté en admin
+    fetch('/api/admin/auth/me', { credentials: 'same-origin', cache: 'no-store' })
+      .then(res => {
+        if (res.ok) return res.json();
+        return null;
+      })
+      .then(data => {
+        if (data?.user?.type === 'admin') {
+          router.replace(`/${locale}/admin/dashboard`);
+        }
+      })
+      .catch(() => {});
   }, [router, locale]);
 
   useEffect(() => {
@@ -35,24 +44,20 @@ export default function AdminLoginPage() {
     setSecurity(s.security);
   }, []);
 
-  const accept = (result: { accessToken?: string; refreshToken?: string; user?: never; requires2fa?: boolean; challengeToken?: string }) => {
-    if (result.requires2fa && result.challengeToken) {
-      setChallengeToken(result.challengeToken);
-      return;
-    }
-    if (!result.accessToken || !result.user) {
+  const accept = (result: unknown) => {
+    const data = result as { user?: { type?: string } } | null;
+    if (!data?.user) {
       setError(t('wrongPassword'));
       return;
     }
     // Les identifiants sont valides, mais /auth/login authentifie aussi les
     // clients, partenaires et candidats : refuser ici l'accès au back-office.
-    const type = (result.user as { type?: string }).type;
+    const type = data.user.type;
     if (type !== 'admin') {
-      clearAdminSession();
+      clearAuthCache();
       setError(t('notAdmin'));
       return;
     }
-    persistAdminSession(result as never);
     router.push(`/${locale}/admin/dashboard`);
   };
 
@@ -69,7 +74,8 @@ export default function AdminLoginPage() {
       const json = challengeToken
         ? { challengeToken, code: totpCode }
         : { email, password, ...(totpCode ? { totpCode } : {}) };
-      accept(await cmsFetch(path, { method: 'POST', json, timeoutMs: 8000 }));
+      const result = await cmsFetch(path, { method: 'POST', json, timeoutMs: 8000 });
+      accept(result);
     } catch (err) {
       setError(err instanceof CmsError ? (err.status === 401 ? t('wrongPassword') : err.message) : t('apiUnreachable'));
     } finally {
@@ -105,7 +111,7 @@ export default function AdminLoginPage() {
               <input className="ad-input text-center tracking-[0.4em]" value={totpCode} onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="000000" />
             )}
             {security.adminCaptcha && (
-              <ImageCaptcha onChange={setCaptchaOk} />
+              <ServerCaptcha onChange={setCaptchaOk} locale={locale} />
             )}
             <button className="ad-btn ad-btn-primary w-full py-3" disabled={!email || (!challengeToken && !password)}>
               <LogIn className="w-4 h-4" /> {challengeToken ? t('verifyTotp') : t('submit')}
