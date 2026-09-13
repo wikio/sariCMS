@@ -71,7 +71,8 @@ export default function VerificationExperience({
   const captchaInputRef = useRef<HTMLInputElement>(null);
 
   // Le mode du service — API externe activée, ou registre local de démonstration.
-  const [mode, setMode] = useState<{ enabled: boolean; fallbackToLocal: boolean } | null>(null);
+  // showDemoCodes est piloté par l'admin (Paramètres → Vérification des documents).
+  const [mode, setMode] = useState<{ enabled: boolean; fallbackToLocal: boolean; showDemoCodes?: boolean } | null>(null);
 
   const [verificationCodes, setVerificationCodes] = useState<VerificationCode[]>([]);
   const resultRef = useRef<HTMLDivElement>(null);
@@ -594,8 +595,8 @@ export default function VerificationExperience({
                   )}
                 </div>
               </form>
-              {/* Codes de démonstration — que tant que le registre local répond */}
-              {(!mode || !mode.enabled || mode.fallbackToLocal) && (
+              {/* Codes de démonstration — paramétrable depuis l'admin (showDemoCodes), et seulement quand le registre local peut répondre */}
+              {(mode ? (mode.showDemoCodes !== false && (!mode.enabled || mode.fallbackToLocal)) : true) && (
               <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-800">
                 <p className="text-sm font-bold text-sari-dark dark:text-white mb-3">
                   {t('form.demoCodes')}

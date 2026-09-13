@@ -6,9 +6,9 @@
  * deux sections séparément — `{api}` ou `{codes}` — pour que enregistrer un
  * libellé n'écrase jamais une clé d'API, et l'inverse.
  *
- * La clé d'API repart en clair dans `GET` : c'est le convention du reste des
- * paramètres de ce back-office (SMTP et ERP se relisent de la même façon pour
- * pouvoir être corrigés) ; l'écran est derrière l'accès administrateur.
+ * La clé d'API est masquée dans `GET` (***MASKED***) pour éviter l'exposition ;
+ * `PUT` conserve la clé existante si le champ revient masqué ou vide — l'admin
+ * laisse le champ vide pour « conserver » (placeholder du formulaire).
  */
 import { NextRequest, NextResponse } from 'next/server';
 import {
@@ -42,7 +42,17 @@ export async function PUT(req: NextRequest) {
   }
   try {
     const store = await readVerificationStore();
-    if (body.api !== undefined) store.api = sanitizeApiSettings(body.api as Record<string, unknown>);
+    if (body.api !== undefined) {
+      const incoming = body.api as Record<string, unknown>;
+      const prevKey = store.api.apiKey;
+      const sanitized = sanitizeApiSettings(incoming);
+      // Laisser vide ou ***MASKED*** = conserver la clé existante (évite d'écraser par le masque du GET)
+      const rawKey = typeof incoming.apiKey === 'string' ? incoming.apiKey.trim() : '';
+      if (rawKey === '' || rawKey === '***MASKED***') {
+        sanitized.apiKey = prevKey;
+      }
+      store.api = sanitized;
+    }
     if (body.codes !== undefined) store.codes = sanitizeCodes(body.codes);
     await writeVerificationStore(store);
     return NextResponse.json({ ok: true, ...store });
