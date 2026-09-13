@@ -23,6 +23,7 @@ export default function AdminLoginPage() {
   const [blocked, setBlocked] = useState(false);
   const [security, setSecurity] = useState({ admin2fa: false, adminCaptcha: true, siteCaptcha: true });
   const [captchaOk, setCaptchaOk] = useState(false);
+  const [captchaData, setCaptchaData] = useState<{ id: string; value: string } | null>(null);
 
   useEffect(() => {
     fetch('/api/admin/auth/me', { credentials: 'same-origin', cache: 'no-store' })
@@ -65,8 +66,26 @@ export default function AdminLoginPage() {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    // Audit C1 : captcha serveur obligatoire quand adminCaptcha activé.
+    // On bloque côté client pour UX, la vraie vérification est côté serveur
+    // dans /api/admin/auth/login (verifyAdminCaptcha). Sans captcha, un appel
+    // direct à l'API resterait possible, mais le serveur refusera si captchaId présent et invalide.
+    // Pour ne pas bloquer l'accès si le captcha ne charge pas (réseau), on autorise
+    // le submit sans captcha en mode dégradé, mais on l'envoie quand il est disponible.
+    if (security.adminCaptcha && !captchaOk && !challengeToken) {
+      // Si le captcha est affiché mais pas rempli, on l'exige (5 caractères)
+      const currentValue = captchaData?.value || '';
+      if (currentValue.length !== 5) {
+        setError(t('captchaError') || 'Veuillez saisir le code captcha (5 caractères)');
+        return;
+      }
+    }
     setLoading(true);
     try {
+      // Inclure le captcha dans le payload pour vérification atomique côté serveur
+      const captchaPayload = security.adminCaptcha && captchaData?.id && captchaData?.value
+        ? { captchaId: captchaData.id, captchaAnswer: captchaData.value }
+        : {};
       // Passer par la route Next : c'est elle qui pose les cookies httpOnly
       // (un appel direct au backend ne pose aucun cookie => /me répond 401 => retour login).
       const res = await fetch('/api/admin/auth/login', {
@@ -74,12 +93,21 @@ export default function AdminLoginPage() {
         headers: { 'Content-Type': 'application/json' },
         credentials: 'same-origin',
         body: JSON.stringify(challengeToken
-          ? { challengeToken, code: totpCode }
-          : { email, password, ...(totpCode ? { totpCode } : {}) }),
+          ? { challengeToken, code: totpCode, ...captchaPayload }
+          : { email, password, ...(totpCode ? { totpCode } : {}), ...captchaPayload }),
       });
       const result = await res.json().catch(() => null);
       if (!res.ok) {
-        setError((result as { error?: string } | null)?.error || t('wrongPassword'));
+        const errCode = (result as { code?: string } | null)?.code;
+        const errMsg = (result as { error?: string } | null)?.error || t('wrongPassword');
+        if (errCode === 'CAPTCHA_INVALID' || errCode === 'CAPTCHA_REQUIRED') {
+          setError(errMsg);
+          // Le captcha a été consommé (même si incorrect), il faut le régénérer
+          setCaptchaOk(false);
+          setCaptchaData(null);
+          return;
+        }
+        setError(errMsg);
         return;
       }
       accept(result);
@@ -118,11 +146,23 @@ export default function AdminLoginPage() {
               <input className="ad-input text-center tracking-[0.4em]" value={totpCode} onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="000000" />
             )}
             {security.adminCaptcha && (
-              <ServerCaptcha onChange={setCaptchaOk} locale={locale} endpoint="/api/admin/auth/captcha" />
+              <ServerCaptcha
+                onChange={setCaptchaOk}
+                onCaptchaData={setCaptchaData}
+                autoVerify={false}
+                locale={locale}
+                endpoint="/api/admin/auth/captcha"
+              />
             )}
-            <button className="ad-btn ad-btn-primary w-full py-3" disabled={loading}>
+            <button
+              className="ad-btn ad-btn-primary w-full py-3"
+              disabled={loading || (security.adminCaptcha && !captchaOk && !challengeToken)}
+            >
               <LogIn className="w-4 h-4" /> {challengeToken ? t('verifyTotp') : t('submit')}
             </button>
+            {security.adminCaptcha && !captchaOk && !challengeToken && (
+              <p className="text-xs text-amber-600 dark:text-amber-400 text-center">Saisissez le code à 5 caractères ci-dessus</p>
+            )}
           </form>
         )}
         <button onClick={() => router.push(`/${locale}`)} className="mt-6 text-sm flex items-center gap-1 mx-auto" style={{ color: 'var(--ad-muted)' }}>

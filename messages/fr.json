@@ -98,7 +98,8 @@
       "emailPlaceholder": "vous@exemple.com",
       "apiUnreachable": "L'API est injoignable. Vérifiez qu'elle est démarrée.",
       "verifyTotp": "Vérifier le code",
-      "notAdmin": "Ce compte n'est pas un compte administrateur. Utilisez votre espace personnel."
+      "notAdmin": "Ce compte n'est pas un compte administrateur. Utilisez votre espace personnel.",
+      "captchaError": "Veuillez saisir le code captcha (5 caractères)"
     },
     "dataManager": {
       "title": "Titre",

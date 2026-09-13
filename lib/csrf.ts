@@ -48,8 +48,14 @@ export function getCsrfTokenFromRequest(req: NextRequest): string | null {
 }
 
 export function setCsrfCookie(response: NextResponse, token: string): void {
+  // Double Submit Cookie Pattern : le cookie DOIT être lisible en JS
+  // pour être renvoyé dans le header X-CSRF-Token. httpOnly=true empêcherait
+  // le client de le lire (document.cookie) et provoquerait systématiquement
+  // un 403 CSRF_INVALID sur tous les POST/PUT/PATCH/DELETE après login.
+  // La protection reste assurée par SameSite=Strict + Secure + validation
+  // côté serveur (comparaison header vs cookie en temps constant).
   response.cookies.set(CSRF_COOKIE_NAME, token, {
-    httpOnly: true,
+    httpOnly: false,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
     path: '/',

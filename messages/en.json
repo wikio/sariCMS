@@ -98,7 +98,8 @@
       "emailPlaceholder": "you@example.com",
       "apiUnreachable": "The API is unreachable. Check that it is running.",
       "verifyTotp": "Verify code",
-      "notAdmin": "This account is not an administrator account. Please use your personal dashboard."
+      "notAdmin": "This account is not an administrator account. Please use your personal dashboard.",
+      "captchaError": "Please enter the 5-character captcha code"
     },
     "dataManager": {
       "title": "Title",

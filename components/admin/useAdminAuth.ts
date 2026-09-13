@@ -64,8 +64,23 @@ export function useAdminAuth() {
       authCheckPromise = (async () => {
         try {
           log('Fetching /api/admin/auth/me');
-          const res = await fetch('/api/admin/auth/me', { credentials: 'same-origin', cache: 'no-store' });
+          let res = await fetch('/api/admin/auth/me', { credentials: 'same-origin', cache: 'no-store' });
           log('Auth check response:', res.status);
+          if (res.status === 401) {
+            // Access token expiré ? Tenter un refresh silencieux via cookie httpOnly
+            log('401 -> attempting refresh');
+            try {
+              const refreshRes = await fetch('/api/admin/auth/refresh', { method: 'POST', credentials: 'same-origin', cache: 'no-store' });
+              log('Refresh response:', refreshRes.status);
+              if (refreshRes.ok) {
+                // Réessayer /me après refresh
+                res = await fetch('/api/admin/auth/me', { credentials: 'same-origin', cache: 'no-store' });
+                log('Retry me after refresh:', res.status);
+              }
+            } catch (e) {
+              logError('Refresh attempt failed', e);
+            }
+          }
           if (res.ok) {
             const data = await res.json();
             log('Auth check data:', data);

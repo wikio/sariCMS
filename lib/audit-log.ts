@@ -284,6 +284,19 @@ export const auditLog = {
       details: { limit: data.limit },
     }),
 
+  authFailure: (data: { ip?: string; path: string; ua?: string; reason: string }) =>
+    writeAuditLog({
+      type: 'auth.login.failure',
+      severity: 'warning',
+      ip: data.ip,
+      userAgent: data.ua,
+      resource: 'auth',
+      resourceId: data.path,
+      action: 'auth_check',
+      outcome: 'failure',
+      error: data.reason,
+    }),
+
   suspiciousRequest: (data: { ip: string; path: string; reason: string; ua?: string; payload?: unknown }) =>
     writeAuditLog({
       type: 'api.suspicious_request',
