@@ -5,6 +5,10 @@
  */
 import { createHash, randomBytes, randomUUID } from 'crypto';
 
+const DEBUG = false;
+const log = (...args: unknown[]) => DEBUG && console.log('[lib/admin-captcha]', ...args);
+const logError = (...args: unknown[]) => DEBUG && console.error('[lib/admin-captcha ERROR]', ...args);
+
 export interface CaptchaIssue {
   id: string;
   imageUrl: string;
@@ -113,6 +117,7 @@ export function issueCaptcha(): CaptchaIssue {
   prune(entries);
   const code = makeCode();
   const id = randomUUID();
+  log('Issuing captcha:', { id, code });
   entries.set(id, {
     hash: fingerprint(code),
     svg: renderCaptchaSvg(code),
@@ -123,7 +128,10 @@ export function issueCaptcha(): CaptchaIssue {
 
 export function captchaImage(id: string): string | null {
   const entry = book().get(String(id || '').trim());
-  if (!entry || entry.expiresAt <= Date.now()) return null;
+  if (!entry || entry.expiresAt <= Date.now()) {
+    log('captchaImage: not found or expired', id);
+    return null;
+  }
   return entry.svg;
 }
 
@@ -132,8 +140,12 @@ export function verifyCaptcha(id: string, answer: string): boolean {
   const key = String(id || '').trim();
   if (!key) return false;
   const entry = entries.get(key);
-  if (!entry) return false;
+  if (!entry) {
+    log('verifyCaptcha: entry not found', key);
+    return false;
+  }
   const ok = entry.expiresAt > Date.now() && entry.hash === fingerprint(answer);
+  log('verifyCaptcha:', { key, ok, expired: entry.expiresAt <= Date.now() });
   if (ok) entries.delete(key);
   return ok;
 }

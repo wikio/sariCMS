@@ -74,7 +74,7 @@ function Shell({ children }: { children: ReactNode }) {
   }, [isLoginPage, user]);
 
   useEffect(() => {
-    if (isLoginPage) return;
+    if (isLoginPage || loading) return;
     if (!user) {
       router.push(`/${locale}/admin`);
       return;
@@ -86,7 +86,7 @@ function Shell({ children }: { children: ReactNode }) {
       clearAuthCache();
       router.replace(`/${locale}/dashboard`);
     }
-  }, [pathname, locale, isLoginPage, router, user]);
+  }, [pathname, locale, isLoginPage, loading, router, user]);
 
   const closeMobile = () => setMobileOpen(false);
   const menu: Item[] = useMemo(() => [

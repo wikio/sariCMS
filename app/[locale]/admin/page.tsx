@@ -25,7 +25,6 @@ export default function AdminLoginPage() {
   const [captchaOk, setCaptchaOk] = useState(false);
 
   useEffect(() => {
-    // Vérifier via l'API si on est déjà connecté en admin
     fetch('/api/admin/auth/me', { credentials: 'same-origin', cache: 'no-store' })
       .then(res => {
         if (res.ok) return res.json();
@@ -45,36 +44,44 @@ export default function AdminLoginPage() {
   }, []);
 
   const accept = (result: unknown) => {
-    const data = result as { user?: { type?: string } } | null;
+    const data = result as { user?: { type?: string }; requires2fa?: boolean; challengeToken?: string } | null;
+    if (data?.requires2fa && data?.challengeToken) {
+      setChallengeToken(data.challengeToken);
+      return;
+    }
     if (!data?.user) {
       setError(t('wrongPassword'));
       return;
     }
-    // Les identifiants sont valides, mais /auth/login authentifie aussi les
-    // clients, partenaires et candidats : refuser ici l'accès au back-office.
-    const type = data.user.type;
-    if (type !== 'admin') {
+    if (data.user.type !== 'admin') {
       clearAuthCache();
       setError(t('notAdmin'));
       return;
     }
+    clearAuthCache();
     router.push(`/${locale}/admin/dashboard`);
   };
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    if (security.adminCaptcha && !captchaOk) {
-      setError('Veuillez saisir le code CAPTCHA correctement.');
-      return;
-    }
     setLoading(true);
     try {
-      const path = challengeToken ? '/auth/2fa/challenge' : '/auth/login';
-      const json = challengeToken
-        ? { challengeToken, code: totpCode }
-        : { email, password, ...(totpCode ? { totpCode } : {}) };
-      const result = await cmsFetch(path, { method: 'POST', json, timeoutMs: 8000 });
+      // Passer par la route Next : c'est elle qui pose les cookies httpOnly
+      // (un appel direct au backend ne pose aucun cookie => /me répond 401 => retour login).
+      const res = await fetch('/api/admin/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify(challengeToken
+          ? { challengeToken, code: totpCode }
+          : { email, password, ...(totpCode ? { totpCode } : {}) }),
+      });
+      const result = await res.json().catch(() => null);
+      if (!res.ok) {
+        setError((result as { error?: string } | null)?.error || t('wrongPassword'));
+        return;
+      }
       accept(result);
     } catch (err) {
       setError(err instanceof CmsError ? (err.status === 401 ? t('wrongPassword') : err.message) : t('apiUnreachable'));
@@ -105,15 +112,15 @@ export default function AdminLoginPage() {
           <PixelGridLoader compact label="Auth" />
         ) : (
           <form onSubmit={onSubmit} className="space-y-3">
-            <input className="ad-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t('emailPlaceholder')} />
+            <input className="ad-input" type="email" value={email || 'admin@sarisysteme.com'} onChange={(e) => setEmail(e.target.value)} placeholder={t('emailPlaceholder')} />
             <input className="ad-input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t('passwordPlaceholder')} disabled={!!challengeToken} />
             {(challengeToken || totpCode) && (
               <input className="ad-input text-center tracking-[0.4em]" value={totpCode} onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="000000" />
             )}
             {security.adminCaptcha && (
-              <ServerCaptcha onChange={setCaptchaOk} locale={locale} />
+              <ServerCaptcha onChange={setCaptchaOk} locale={locale} endpoint="/api/admin/auth/captcha" />
             )}
-            <button className="ad-btn ad-btn-primary w-full py-3" disabled={!email || (!challengeToken && !password)}>
+            <button className="ad-btn ad-btn-primary w-full py-3" disabled={loading}>
               <LogIn className="w-4 h-4" /> {challengeToken ? t('verifyTotp') : t('submit')}
             </button>
           </form>

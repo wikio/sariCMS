@@ -74,7 +74,19 @@ export function validateCsrfToken(req: NextRequest): boolean {
 
 export function csrfProtectionMiddleware(
   req: NextRequest,
-  exemptPaths: string[] = ['/api/contact/captcha', '/api/newsletter/captcha', '/api/verification/captcha']
+  exemptPaths: string[] = [
+    '/api/contact/captcha',
+    '/api/contact/verify-captcha',
+    '/api/newsletter/captcha',
+    '/api/verification/captcha',
+    '/api/verification/verify-captcha',
+    '/api/admin/auth/captcha',
+    '/api/admin/auth/verify-captcha',
+    '/api/admin/auth/login',
+    '/api/admin/auth/logout',
+    '/api/admin/auth/refresh',
+    '/api/csrf-token',
+  ]
 ): NextResponse | null {
   // Exempter les routes de lecture (GET, HEAD, OPTIONS) et les chemins listés
   if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return null;

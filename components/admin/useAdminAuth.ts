@@ -4,6 +4,10 @@ import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useLocale } from 'next-intl';
 
+const DEBUG = false;
+const log = (...args: unknown[]) => DEBUG && console.log('[useAdminAuth]', ...args);
+const logError = (...args: unknown[]) => DEBUG && console.error('[useAdminAuth ERROR]', ...args);
+
 export interface AdminUser {
   id: string;
   email: string;
@@ -28,23 +32,28 @@ export function useAdminAuth() {
 
   useEffect(() => {
     const isLogin = pathname === `/${locale}/admin` || pathname === `/${locale}/admin/`;
+    log('Pathname changed:', { pathname, isLogin });
     setIsLoginPage(isLogin);
   }, [pathname, locale]);
 
   useEffect(() => {
     if (isLoginPage) {
+      log('Login page, skipping auth check');
       setLoading(false);
       return;
     }
 
     const checkAuth = async () => {
+      log('Checking auth, cachedUser:', cachedUser);
       if (cachedUser) {
+        log('Using cached user');
         setUser(cachedUser);
         setLoading(false);
         return;
       }
 
       if (authCheckPromise) {
+        log('Waiting for existing auth check');
         const user = await authCheckPromise;
         setUser(user);
         cachedUser = user;
@@ -54,20 +63,27 @@ export function useAdminAuth() {
 
       authCheckPromise = (async () => {
         try {
+          log('Fetching /api/admin/auth/me');
           const res = await fetch('/api/admin/auth/me', { credentials: 'same-origin', cache: 'no-store' });
+          log('Auth check response:', res.status);
           if (res.ok) {
             const data = await res.json();
+            log('Auth check data:', data);
             return data.user || null;
           }
-        } catch {
-          // ignore
+        } catch (err) {
+          logError('Auth check fetch error:', err);
         }
         return null;
       })();
 
       const user = await authCheckPromise;
+      log('Auth check result:', user);
       setUser(user);
       cachedUser = user;
+      // Ne pas garder en cache un échec : après un login réussi, le prochain
+      // contrôle doit refaire un appel /me au lieu de rejouer le 401 précédent.
+      if (!user) authCheckPromise = null;
       setLoading(false);
     };
 
@@ -75,10 +91,11 @@ export function useAdminAuth() {
   }, [isLoginPage, locale, pathname]);
 
   const logout = async () => {
+    log('Logging out');
     try {
       await fetch('/api/admin/auth/logout', { method: 'POST', credentials: 'same-origin' });
-    } catch {
-      // ignore
+    } catch (err) {
+      logError('Logout error:', err);
     }
     cachedUser = null;
     authCheckPromise = null;
@@ -87,6 +104,7 @@ export function useAdminAuth() {
   };
 
   const refreshUser = async () => {
+    log('Refreshing user');
     cachedUser = null;
     authCheckPromise = null;
     setLoading(true);
@@ -97,6 +115,7 @@ export function useAdminAuth() {
       cachedUser = user;
       setUser(user);
     } else {
+      logError('Refresh failed:', res.status);
       setUser(null);
       cachedUser = null;
     }
@@ -107,6 +126,7 @@ export function useAdminAuth() {
 }
 
 export function clearAuthCache() {
+  log('Clearing auth cache');
   cachedUser = null;
   authCheckPromise = null;
 }
