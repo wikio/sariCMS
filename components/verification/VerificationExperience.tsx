@@ -596,7 +596,7 @@ export default function VerificationExperience({
                 </div>
               </form>
               {/* Codes de démonstration — paramétrable depuis l'admin (showDemoCodes), et seulement quand le registre local peut répondre */}
-              {(mode ? (mode.showDemoCodes !== false && (!mode.enabled || mode.fallbackToLocal)) : true) && (
+              {mode && mode.showDemoCodes !== false && (!mode.enabled || mode.fallbackToLocal) && (
               <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-800">
                 <p className="text-sm font-bold text-sari-dark dark:text-white mb-3">
                   {t('form.demoCodes')}

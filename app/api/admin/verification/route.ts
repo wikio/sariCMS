@@ -45,9 +45,20 @@ export async function PUT(req: NextRequest) {
     if (body.api !== undefined) {
       const incoming = body.api as Record<string, unknown>;
       const prevKey = store.api.apiKey;
-      const sanitized = sanitizeApiSettings(incoming);
+      // Partiel supporté : le toggle depuis /admin/verification-codes n'envoie que {showDemoCodes}
+      // On merge avec le store existant pour ne pas réinitialiser url/auth/etc.
+      const merged: Record<string, unknown> = {
+        ...store.api,
+        ...incoming,
+        response: {
+          ...store.api.response,
+          ...((incoming.response as Record<string, unknown> | undefined) || {}),
+        },
+      };
+      const sanitized = sanitizeApiSettings(merged);
       // Laisser vide ou ***MASKED*** = conserver la clé existante (évite d'écraser par le masque du GET)
-      const rawKey = typeof incoming.apiKey === 'string' ? incoming.apiKey.trim() : '';
+      // Si l'appel est partiel sans apiKey, on garde aussi prevKey (déjà dans merged).
+      const rawKey = typeof incoming.apiKey === 'string' ? incoming.apiKey.trim() : undefined;
       if (rawKey === '' || rawKey === '***MASKED***') {
         sanitized.apiKey = prevKey;
       }
