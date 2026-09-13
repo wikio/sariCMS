@@ -10,8 +10,8 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 
-const CSRF_COOKIE_NAME = 'sari_csrf';
-const CSRF_HEADER_NAME = 'x-csrf-token';
+export const CSRF_COOKIE_NAME = 'sari_csrf';
+export const CSRF_HEADER_NAME = 'x-csrf-token';
 const CSRF_TOKEN_BYTES = 32;
 
 function generateRandomBytes(length: number): Uint8Array {

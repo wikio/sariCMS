@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cmsFetch } from '@/lib/cms';
 import { createAccessToken, createRefreshToken, setAuthCookies, AdminUser } from '@/lib/admin-auth';
 import { verifyCaptcha as verifyAdminCaptcha } from '@/lib/admin-captcha';
+import { generateCsrfToken, setCsrfCookie } from '@/lib/csrf';
 
 const DEBUG = false;
 const log = (...args: unknown[]) => DEBUG && console.log('[API admin/auth/login]', ...args);
@@ -56,6 +57,9 @@ export async function POST(req: NextRequest) {
       const refreshToken = (challenge as { refreshToken?: string }).refreshToken || await createRefreshToken(user.id);
       const response = NextResponse.json({ ok: true, user });
       setAuthCookies(response, accessToken, refreshToken, user);
+      // Double Submit CSRF : poser sari_csrf immédiatement pour que les PUT admin suivants
+      // n'échouent pas avant que le middleware n'ait eu le temps de le poser via une page.
+      try { setCsrfCookie(response, generateCsrfToken()); } catch {}
       log('Login success (2fa), cookies set');
       return response;
     } catch (error: unknown) {
@@ -91,6 +95,7 @@ export async function POST(req: NextRequest) {
 
     const response = NextResponse.json({ ok: true, user });
     setAuthCookies(response, accessToken, refreshToken, user);
+    try { setCsrfCookie(response, generateCsrfToken()); } catch {}
     log('Login success, cookies set');
     return response;
   } catch (error: unknown) {
@@ -137,6 +142,7 @@ export async function POST(req: NextRequest) {
         const refreshToken = await createRefreshToken(user.id);
         const response = NextResponse.json({ ok: true, user, dev: true });
         setAuthCookies(response, accessToken, refreshToken, user);
+        try { setCsrfCookie(response, generateCsrfToken()); } catch {}
         log('Dev fallback login success');
         return response;
       }

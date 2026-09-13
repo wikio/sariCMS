@@ -2,7 +2,7 @@
 import createMiddleware from 'next-intl/middleware';
 import { NextRequest, NextResponse } from 'next/server';
 import { locales, defaultLocale, type Locale } from './lib/i18n';
-import { csrfProtectionMiddleware } from './lib/csrf';
+import { csrfProtectionMiddleware, generateCsrfToken, setCsrfCookie } from './lib/csrf';
 import { auditLog } from './lib/audit-log-edge';
 import { jwtVerify } from 'jose';
 
@@ -28,6 +28,19 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
     response.headers.set(header.key, header.value);
   }
   return response;
+}
+
+function finalize(request: NextRequest, response: NextResponse): NextResponse {
+  const final = addSecurityHeaders(response);
+  // Double Submit CSRF: si l'utilisateur est sur l'admin mais n'a pas encore de cookie sari_csrf,
+  // on le pose maintenant pour que le premier POST/PUT n'échoue pas. Le token est aussi
+  // posé par /api/csrf-token et par /api/admin/auth/login, mais le middleware couvre
+  // le cas où l'on arrive direct sur /admin/dashboard après login.
+  if ((isAdminRoute(request.nextUrl.pathname) || isAdminApiRoute(request.nextUrl.pathname)) && !request.cookies.get('sari_csrf')?.value) {
+    const token = generateCsrfToken();
+    setCsrfCookie(final, token);
+  }
+  return final;
 }
 
 function isAdminRoute(pathname: string): boolean {
@@ -113,7 +126,7 @@ export default async function middleware(request: NextRequest) {
     if (csrfResponse) {
       // Log CSRF failure
       auditLog.csrfFailure({ ip, path: pathname, ua }).catch(() => {});
-      return addSecurityHeaders(csrfResponse);
+      return finalize(request, csrfResponse);
     }
   }
 
@@ -130,7 +143,8 @@ export default async function middleware(request: NextRequest) {
     if (!token) {
       auditLog.authFailure({ ip, path: pathname, ua, reason: 'missing_token' }).catch(() => {});
       if (isAdminApiRoute(pathname)) {
-        return addSecurityHeaders(
+        return finalize(
+          request,
           new NextResponse(JSON.stringify({ error: 'Non authentifié', code: 'NOT_AUTHENTICATED' }), {
             status: 401,
             headers: { 'Content-Type': 'application/json' },
@@ -140,7 +154,7 @@ export default async function middleware(request: NextRequest) {
       // Page admin : rediriger vers login localisé
       const localeMatch = pathname.match(/^\/(fr|en|ar)(\/|$)/);
       const locale = (localeMatch ? localeMatch[1] : defaultLocale) as string;
-      return addSecurityHeaders(NextResponse.redirect(new URL(`/${locale}/admin`, request.url)));
+      return finalize(request, NextResponse.redirect(new URL(`/${locale}/admin`, request.url)));
     }
     // Si token présent, tenter une vérification JWT rapide (multi-secrets).
     // Si échec, on ne bloque pas immédiatement : le token peut être un JWT backend signé avec un secret
@@ -160,10 +174,13 @@ export default async function middleware(request: NextRequest) {
     if (checkRateLimit(ip)) {
       // Log rate limit
       auditLog.rateLimited({ ip, path: pathname, ua, limit: RATE_LIMIT_MAX_REQUESTS }).catch(() => {});
-      return new NextResponse(JSON.stringify({ error: 'Trop de requêtes', code: 'RATE_LIMITED' }), {
-        status: 429,
-        headers: { 'Content-Type': 'application/json', 'Retry-After': '60' },
-      });
+      return finalize(
+        request,
+        new NextResponse(JSON.stringify({ error: 'Trop de requêtes', code: 'RATE_LIMITED' }), {
+          status: 429,
+          headers: { 'Content-Type': 'application/json', 'Retry-After': '60' },
+        })
+      );
     }
   }
 
@@ -175,13 +192,13 @@ export default async function middleware(request: NextRequest) {
     pathname.includes('.')
   ) {
     const response = NextResponse.next();
-    return addSecurityHeaders(response);
+    return finalize(request, response);
   }
 
   // ✅ Rediriger "/" vers "/fr" (locale par défaut)
   if (pathname === '/') {
     const response = NextResponse.redirect(new URL(`/${defaultLocale}`, request.url));
-    return addSecurityHeaders(response);
+    return finalize(request, response);
   }
 
   // ✅ Vérifier si le pathname commence par une locale valide
@@ -193,12 +210,12 @@ export default async function middleware(request: NextRequest) {
   if (!pathnameHasLocale) {
     const newUrl = new URL(`/${defaultLocale}${pathname}`, request.url);
     const response = NextResponse.redirect(newUrl);
-    return addSecurityHeaders(response);
+    return finalize(request, response);
   }
 
   // ✅ Sinon, laisser next-intl gérer le reste
   const response = intlMiddleware(request);
-  return addSecurityHeaders(response);
+  return finalize(request, response);
 }
 
 // Configuration des routes à matcher

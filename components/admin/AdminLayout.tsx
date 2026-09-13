@@ -1,5 +1,6 @@
 'use client';
 
+import CsrfPatch from '@/components/admin/CsrfPatch';
 import { ReactNode, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -158,6 +159,7 @@ function Shell({ children }: { children: ReactNode }) {
   if (isLoginPage) {
     return (
       <div data-admin-theme={theme} dir={isRTL ? 'rtl' : 'ltr'} className="ad-app min-h-screen relative overflow-hidden">
+        <CsrfPatch />
         <div className="ad-grid-bg absolute inset-0 opacity-70" />
         <div className="absolute top-5 right-5 z-10 flex gap-2"><AdminLanguageSwitcher /></div>
         {children}
@@ -167,6 +169,7 @@ function Shell({ children }: { children: ReactNode }) {
 
   return (
     <div data-admin-theme={theme} dir={isRTL ? 'rtl' : 'ltr'} className="ad-app">
+      <CsrfPatch />
       <aside className={`ad-sidebar ${open ? 'w-[272px]' : 'w-[76px]'} fixed inset-y-0 z-40 flex flex-col transition-all duration-300 ${isRTL ? 'right-0' : 'left-0'} ${mobileOpen ? 'is-open' : 'is-closed'}`} style={{ background: 'var(--ad-sidebar)', color: 'var(--ad-sidebar-ink)' }}>
         <div className="h-[72px] px-4 flex items-center gap-3 border-b border-white/10">
           <div className="w-10 h-10 flex items-center justify-center" style={{ background: 'var(--ad-accent-2)', color: 'var(--ad-accent-2-ink)', borderRadius: 10 }}>
