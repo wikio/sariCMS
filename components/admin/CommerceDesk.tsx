@@ -533,31 +533,31 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
               {(open.items || []).map((it: any, i: number) => (
                 <div key={i} className="ad-card p-3 space-y-2 text-sm border" style={{borderColor:'var(--ad-line)'}}>
                   <div className="grid grid-cols-12 gap-2 items-end">
-                    <div className="col-span-3">
+                    <div className="col-span-4">
                       <label className="block">
                         <span className="field-label">Article</span>
                         {consult ? <div className="font-bold pt-1.5">{it.name}</div> : <input className="ad-input" placeholder={t('itemNamePlaceholder')} value={it.name} onChange={(e) => patchItem(i, { name: e.target.value })} />}
                       </label>
                     </div>
-                    <div className="col-span-2">
+                    <div className="col-span-1">
                       <label className="block">
                         <span className="field-label">Qté</span>
-                        {consult ? <div className="pt-1.5">× {it.quantity}</div> : <input className="ad-input" type="number" min={1} value={it.quantity} onChange={(e) => patchItem(i, { quantity: Number(e.target.value) })} />}
+                        {consult ? <div className="pt-1.5 text-center">× {it.quantity}</div> : <input className="ad-input text-center tabular-nums" type="number" min={1} value={it.quantity} onChange={(e) => patchItem(i, { quantity: Number(e.target.value) })} />}
                       </label>
                     </div>
                     <div className="col-span-2">
                       <label className="block">
                         <span className="field-label">PU HT (DA)</span>
-                        {consult ? <div className="pt-1.5">{Number(it.price).toLocaleString()}</div> : <input className="ad-input" type="number" min={0} value={it.price} onChange={(e) => patchItem(i, { price: Number(e.target.value) })} />}
+                        {consult ? <div className="pt-1.5">{Number(it.price).toLocaleString()}</div> : <input className="ad-input text-right tabular-nums" type="number" min={0} value={it.price} onChange={(e) => patchItem(i, { price: Number(e.target.value) })} />}
                       </label>
                     </div>
                     <div className="col-span-4">
                       <label className="block">
                         <span className="field-label">Remise</span>
                         {consult ? <div className="pt-1.5">-{it.discountValue ?? it.discount ?? 0}{it.discountType==='fixed'?' DA':'%'}</div> : (
-                          <div className="flex gap-1.5 items-center">
-                            <input className="ad-input flex-1 min-w-0 text-right tabular-nums" type="number" min={0} placeholder="0" value={it.discountValue ?? it.discount ?? 0} onChange={(e) => patchItem(i, { discountValue: Number(e.target.value), discount: Number(e.target.value) })} />
-                            <select className="ad-select w-16 flex-shrink-0 text-center" value={it.discountType||'percent'} onChange={e=>patchItem(i,{discountType:e.target.value as any})}>
+                          <div className="flex gap-1 items-stretch">
+                            <input className="ad-input flex-1 min-w-[62px] text-right tabular-nums" type="number" min={0} placeholder="0" value={it.discountValue ?? it.discount ?? 0} onChange={(e) => patchItem(i, { discountValue: Number(e.target.value), discount: Number(e.target.value) })} />
+                            <select className="ad-select w-14 flex-shrink-0 text-center !px-1" value={it.discountType||'percent'} onChange={e=>patchItem(i,{discountType:e.target.value as any})}>
                               <option value="percent">%</option>
                               <option value="fixed">DA</option>
                             </select>
@@ -565,7 +565,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                         )}
                       </label>
                     </div>
-                    <div className="col-span-1 font-black text-right pb-1.5" title="Total HT remisé">{((Number(it.quantity) * Number(it.price)) - (it.discountType==='fixed' ? (Number(it.discountValue||it.discount||0)*Number(it.quantity)) : (Number(it.quantity) * Number(it.price) * (Number(it.discountValue||it.discount||0)/100)))).toLocaleString()}</div>
+                    <div className="col-span-1 font-black text-right flex items-center justify-end self-end h-[2.75rem] pb-1 whitespace-nowrap tabular-nums" title="Total HT remisé">{((Number(it.quantity) * Number(it.price)) - (it.discountType==='fixed' ? (Number(it.discountValue||it.discount||0)*Number(it.quantity)) : (Number(it.quantity) * Number(it.price) * (Number(it.discountValue||it.discount||0)/100)))).toLocaleString()}</div>
                   </div>
                   <div className="grid grid-cols-12 gap-2 items-end">
                     <div className="col-span-3">

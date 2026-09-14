@@ -180,7 +180,7 @@ export default function ServerCaptcha({
           autoComplete="off"
           autoCapitalize="characters"
           spellCheck={false}
-          className="ad-input flex-1 uppercase tracking-[0.3em] font-bold text-center"
+          className="ad-input flex-1 uppercase tracking-[0.3em] font-bold text-center bg-white dark:bg-[#1a1a1a] !border-2 !border-sari-blue/30 focus:!border-sari-blue focus:!ring-2 focus:!ring-sari-blue/20 shadow-sm"
           value={input}
           onChange={handleInputChange}
           onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
@@ -188,6 +188,7 @@ export default function ServerCaptcha({
           aria-label="Saisir le code affiché"
           disabled={loading || verified}
           maxLength={5}
+          style={{ borderColor: 'rgb(var(--color-sari-blue) / 0.3)' }}
         />
         <button
           type="button"

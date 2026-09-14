@@ -127,7 +127,7 @@ export default function ImageCaptcha({
           autoComplete="off"
           autoCapitalize="characters"
           spellCheck={false}
-          className="ad-input flex-1 uppercase tracking-[0.3em] font-bold text-center"
+          className="ad-input flex-1 uppercase tracking-[0.3em] font-bold text-center bg-white dark:bg-[#1a1a1a] !border-2 !border-sari-blue/30 focus:!border-sari-blue focus:!ring-2 focus:!ring-sari-blue/20 shadow-sm"
           value={input}
           onChange={(e) => {
             const v = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
@@ -137,6 +137,7 @@ export default function ImageCaptcha({
           placeholder="CODE"
           aria-label="Saisir le code affiché"
           maxLength={6}
+          style={{ borderColor: 'rgb(var(--color-sari-blue) / 0.3)' }}
         />
         <button
           type="button"
