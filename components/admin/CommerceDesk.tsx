@@ -556,8 +556,8 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                         <span className="field-label">Remise</span>
                         {consult ? <div className="pt-1.5">-{it.discountValue ?? it.discount ?? 0}{it.discountType==='fixed'?' DA':'%'}</div> : (
                           <div className="flex gap-1 items-stretch">
-                            <input className="ad-input flex-1 min-w-[62px] text-right tabular-nums" type="number" min={0} placeholder="0" value={it.discountValue ?? it.discount ?? 0} onChange={(e) => patchItem(i, { discountValue: Number(e.target.value), discount: Number(e.target.value) })} />
-                            <select className="ad-select w-14 flex-shrink-0 text-center !px-1" value={it.discountType||'percent'} onChange={e=>patchItem(i,{discountType:e.target.value as any})}>
+                            <input className="ad-input flex-1 min-w-[88px] text-right tabular-nums" type="number" min={0} placeholder="0" value={it.discountValue ?? it.discount ?? 0} onChange={(e) => patchItem(i, { discountValue: Number(e.target.value), discount: Number(e.target.value) })} />
+                            <select className="ad-select w-12 flex-shrink-0 text-center !px-1 !py-0 text-sm" style={{ paddingRight: '1.4rem' }} value={it.discountType||'percent'} onChange={e=>patchItem(i,{discountType:e.target.value as any})}>
                               <option value="percent">%</option>
                               <option value="fixed">DA</option>
                             </select>
