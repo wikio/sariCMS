@@ -107,6 +107,7 @@ function Shell({ children }: { children: ReactNode }) {
         { id: 'payment-records', label: t('menu.paymentRecords'), href: `/${locale}/admin/payment-records` },
         { id: 'coupons', label: t('menu.coupons'), href: `/${locale}/admin/coupons` },
         { id: 'taxes', label: t('menu.taxes'), href: `/${locale}/admin/taxes` },
+        { id: 'shop-config', label: (t as any)('menu.shopConfig') !== 'menu.shopConfig' ? (t as any)('menu.shopConfig') : 'Config. boutique', href: `/${locale}/admin/shop-config` },
       ],
     },
     { type: 'divider', label: t('menu.contentSection') },

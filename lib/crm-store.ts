@@ -9,7 +9,10 @@ export interface CommerceItem {
   name: string;
   quantity: number;
   price: number;
-  discount?: number;
+  discount?: number; // legacy % (0-100)
+  // Remise enrichie : fixe ou % (prioritaire sur discount legacy si présent)
+  discountValue?: number;
+  discountType?: 'fixed' | 'percent';
   category?: string;
   /** Unité de mesure (pièce, kg, carton, m²…) */
   unit?: string;
@@ -17,8 +20,18 @@ export interface CommerceItem {
   description?: string;
   /** Nom du fichier de référence joint */
   attachment?: string;
-  /** Taux de taxe (%) appliqué par ligne (côté Admin) */
+  /** Taux de taxe (%) appliqué par ligne (côté Admin) — prioritaire */
   taxRate?: number;
+  vatRate?: number; // alias de taxRate pour produits
+  vatIncluded?: boolean;
+  // Frais livraison spécifiques produit
+  shippingFee?: number;
+  shippingType?: 'fixed' | 'per_qty' | 'free';
+  zones?: string[];
+  weight?: number;
+  sku?: string;
+  // Pour affichage panier
+  image?: string;
 }
 
 export interface OrderInvoice {
@@ -44,15 +57,30 @@ export interface Order {
   date: string;
   status: OrderStatus;
   total: number;
+  // Totaux détaillés (pour affichage et édition admin)
+  subtotal?: number;
+  discountTotal?: number; // somme remises produit + globale + coupon
+  shippingFee?: number; // frais livraison (produit + global zone)
+  taxTotal?: number;
+  globalDiscount?: number;
+  taxLines?: Array<{ id: string; name: string; amount: number; rate: number; mode: string }>;
   items: CommerceItem[];
   address?: string;
+  // Zones & livraison
+  deliveryZone?: string;
+  saleZone?: string;
+  deliveryAddress?: string;
+  shippingMethod?: string;
+  saleConditionsAccepted?: boolean;
+  notes?: string; // notes client
+  adminNotes?: string; // notes admin avant confirmation
   payment?: string;
   /** Paiement confirmé (requis pour lier une facture si activé). */
   paid?: boolean;
   cost?: number;
   coupon?: string;
   quoteId?: number;
-  zone?: string;
+  zone?: string; // legacy alias deliveryZone
   ip?: string;
   history?: Array<{ status: string; at: string; note?: string }>;
   /** Facture de vente liée (ERP ou upload manuel). */

@@ -3,13 +3,24 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-interface CartItem {
+export interface CartItem {
   id: number | string;
   name: string;
   price: number | string;
   quantity: number;
   image: string;
   category?: string;
+  // Commerce enrichi (optionnel, rétro-compatible)
+  sku?: string;
+  discountValue?: number;
+  discountType?: 'fixed' | 'percent';
+  discount?: number; // legacy %
+  vatRate?: number;
+  vatIncluded?: boolean;
+  shippingFee?: number;
+  shippingType?: 'fixed' | 'per_qty' | 'free';
+  zones?: string[];
+  weight?: number;
 }
 
 interface CartContextType {

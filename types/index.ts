@@ -88,6 +88,82 @@ export interface Product {
     choices: string[];
   }>;
   catalogPdf?: string;
+  // --- Commerce enrichi (frais, remises, TVA, zones) ---
+  /** Code produit / SKU */
+  sku?: string;
+  /** Frais de livraison spécifiques au produit (DA) */
+  shippingFee?: number;
+  /** Mode de frais : fixe par ligne, par quantité, ou gratuit */
+  shippingType?: 'fixed' | 'per_qty' | 'free';
+  /** Remise produit */
+  discountValue?: number;
+  discountType?: 'fixed' | 'percent';
+  /** TVA prédéfinie (%) pour ce produit ; undefined = utilise la taxe globale/catégorie */
+  vatRate?: number;
+  vatIncluded?: boolean;
+  /** Zones où ce produit est vendable/livrable ; vide = toutes zones globales */
+  zones?: string[];
+  /** Poids (kg) utile pour frais au poids */
+  weight?: number;
+  /** Gestion stock */
+  stockQty?: number;
+  stockFinal?: boolean;
+  sortOrder?: number;
+  status?: string;
+}
+
+// Configuration globale boutique
+export interface ShippingZoneFee {
+  zone: string; // ex: DZ-16, DZ-31, ALL
+  label: string;
+  fee: number;
+  perQty?: number; // supplément par quantité au-delà de 1
+  freeFrom?: number; // franco à partir de X DA
+}
+
+export interface GlobalShippingConfig {
+  mode: 'fixed' | 'per_qty' | 'by_zone' | 'weight';
+  defaultFee: number;
+  perQtyFee: number;
+  perKgFee?: number;
+  freeThreshold?: number; // franco global
+  zoneFees: ShippingZoneFee[];
+}
+
+export interface GlobalDiscountConfig {
+  active: boolean;
+  type: 'fixed' | 'percent';
+  value: number;
+  minOrder?: number;
+  maxDiscount?: number;
+}
+
+export interface SaleZone {
+  code: string; // ex: DZ-16
+  label: string;
+  wilaya?: string;
+  active: boolean;
+  deliveryDays?: string;
+  codAllowed?: boolean;
+}
+
+export interface ShopConfig {
+  currency: string;
+  shipping: GlobalShippingConfig;
+  globalDiscount: GlobalDiscountConfig;
+  saleConditions: string; // CGV rappel
+  deliveryNotes: string;
+  saleZones: SaleZone[]; // zones globales disponibles
+  deliveryZones: SaleZone[];
+  importApi?: {
+    enabled: boolean;
+    url: string;
+    authHeader: 'none' | 'X-API-Key' | 'Authorization';
+    apiKey: string;
+    csvUrl?: string;
+    mapping?: Record<string, string>;
+    batchValidation: boolean;
+  };
 }
 
 export interface Event {

@@ -114,7 +114,16 @@ export default function ProductDetailPage() {
         quantity: qty,
         image: currentImage,
         category: product.category,
-      });
+        sku: (product as any).sku,
+        discountValue: (product as any).discountValue,
+        discountType: (product as any).discountType,
+        vatRate: (product as any).vatRate,
+        vatIncluded: (product as any).vatIncluded,
+        shippingFee: (product as any).shippingFee,
+        shippingType: (product as any).shippingType,
+        zones: (product as any).zones,
+        weight: (product as any).weight,
+      } as any);
       setAddedToCart(true);
       setIsAdding(false);
       setTimeout(() => setAddedToCart(false), 3000);
@@ -213,6 +222,16 @@ export default function ProductDetailPage() {
               </span>
             )}
           </div>
+          {/* Commerce enrichi : livraison / remise / TVA / zones */}
+          {(((product as any).shippingFee || (product as any).discountValue || (product as any).vatRate || (product as any).zones?.length)) && (
+            <div className="flex flex-wrap gap-2 mb-4 text-xs">
+              {(product as any).discountValue ? <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full font-bold">Remise {(product as any).discountValue}{(product as any).discountType==='fixed'?' DA':'%'} / unité</span> : null}
+              {(product as any).vatRate ? <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full">TVA {(product as any).vatRate}% {(product as any).vatIncluded?'incluse':''}</span> : null}
+              {(product as any).shippingFee ? <span className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full">Livraison {(product as any).shippingFee} DA {(product as any).shippingType==='per_qty'?'×Qté':(product as any).shippingType==='free'?'offerte':''}</span> : null}
+              {(product as any).zones?.length ? <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full">Zones: {(product as any).zones.join(', ')}</span> : <span className="bg-gray-50 text-gray-500 px-3 py-1 rounded-full border">Livrable toutes zones</span>}
+              {(product as any).weight ? <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full">{(product as any).weight} kg</span> : null}
+            </div>
+          )}
           <p className="text-gray-600 dark:text-gray-400 mb-8 text-lg leading-relaxed">
             {product.shortDesc}
           </p>

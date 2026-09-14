@@ -7,6 +7,7 @@ import { Eye, FileCheck2, History, LayoutGrid, Link2, List as ListIcon, MessageS
 import { isOrderPaid, loadOrders, loadQuotes, saveOrders, saveQuotes, type Order, type OrderInvoice, type Quote, type CommerceItem } from '@/lib/crm-store';
 import { loadCoupons, loadTaxes } from '@/lib/shop-store';
 import { loadAdminSettings } from '@/lib/admin-settings';
+import { loadShopConfig, formatZoneLabel, type ShopConfig } from '@/lib/shop-config';
 import { computeTotals, money } from '@/lib/commerce-math';
 import { useToast } from '@/components/admin/Toast';
 import SearchField from '@/components/admin/SearchField';
@@ -91,6 +92,8 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
   const title = kind === 'orders' ? t('orders') : t('quotes');
   const taxes = loadTaxes();
   const coupons = loadCoupons();
+  const [shopConfig, setShopConfig] = useState<ShopConfig | null>(null);
+  useEffect(() => { setShopConfig(loadShopConfig()); const h=()=>setShopConfig(loadShopConfig()); window.addEventListener('sari-shop-config-changed',h); return ()=>window.removeEventListener('sari-shop-config-changed',h); }, []);
 
   useEffect(() => {
     const loaded = (kind === 'orders' ? loadOrders() : loadQuotes()) as Row[];
@@ -126,8 +129,8 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
   };
 
   const saveOpen = (next: Row) => {
-    const totals = computeTotals(next.items || [], taxes, coupons.find((c) => c.code === next.coupon), { zone: next.zone });
-    const withTotal = { ...next, total: Math.round(totals.total) };
+    const totals = computeTotals(next.items || [], taxes, coupons.find((c) => c.code === next.coupon), { zone: (next as any).zone || (next as any).deliveryZone, shopConfig });
+    const withTotal = { ...next, total: Math.round(totals.total), subtotal: totals.subtotal, taxTotal: totals.taxTotal, shippingFee: totals.shipping, discountTotal: totals.discount } as any;
     persist(rows.map((r) => r.id === next.id ? withTotal : r));
     setOpen(withTotal);
     showToast(t('saved', { title }), 'success');
@@ -251,7 +254,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
   const quotes = kind === 'orders' ? loadQuotes() : [];
   const linkedQuote = open && 'quoteId' in open && open.quoteId ? quotes.find((qte) => qte.id === open.quoteId) : undefined;
   const linkedOrder = open && 'orderId' in open && open.orderId ? orders.find((ord) => ord.id === open.orderId) : undefined;
-  const totals = open ? computeTotals(open.items || [], taxes, coupons.find((c) => c.code === open.coupon), { zone: open.zone }) : null;
+  const totals = open ? computeTotals(open.items || [] as any, taxes, coupons.find((c) => c.code === (open as any).coupon), { zone: (open as any).zone || (open as any).deliveryZone, shopConfig }) : null;
   const stats = {
     total: rows.length,
     amount: rows.reduce((s, r) => s + Number(r.total || 0), 0),
@@ -520,68 +523,158 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
               </ul>
             )}
 
-            <h3 className="ad-section-title">Lignes</h3>
+            <h3 className="ad-section-title">Lignes — frais & remises par article (avant confirmation)</h3>
             {!consult && (
               <p className="text-xs" style={{ color: 'var(--ad-muted)' }}>
-                Indication : renseignez le nom de l'article, la quantité vendue, le prix unitaire HT et, le cas échéant, une remise en %.
+                Par ligne : remises (fixe ou %), TVA prédéfinie, frais de livraison (fixe/par Qté/gratuit) et zones. L'admin peut ajouter un frais par article ou global avant confirmation — le total se recalcule avec la config globale (par zone/quantité).
               </p>
             )}
-            <div className="space-y-2">
-              {(open.items || []).map((it, i) => (
-                <div key={i} className="ad-card p-3 grid grid-cols-12 gap-2 items-end text-sm">
-                  <div className="col-span-4">
-                    <label className="block">
-                      <span className="field-label">Article</span>
-                      {consult
-                        ? <div className="font-bold pt-1.5">{it.name}</div>
-                        : <input className="ad-input" placeholder={t('itemNamePlaceholder')} value={it.name} onChange={(e) => patchItem(i, { name: e.target.value })} />}
-                    </label>
+            <div className="space-y-3">
+              {(open.items || []).map((it: any, i: number) => (
+                <div key={i} className="ad-card p-3 space-y-2 text-sm border" style={{borderColor:'var(--ad-line)'}}>
+                  <div className="grid grid-cols-12 gap-2 items-end">
+                    <div className="col-span-4">
+                      <label className="block">
+                        <span className="field-label">Article</span>
+                        {consult ? <div className="font-bold pt-1.5">{it.name}</div> : <input className="ad-input" placeholder={t('itemNamePlaceholder')} value={it.name} onChange={(e) => patchItem(i, { name: e.target.value })} />}
+                      </label>
+                    </div>
+                    <div className="col-span-2">
+                      <label className="block">
+                        <span className="field-label">Qté</span>
+                        {consult ? <div className="pt-1.5">× {it.quantity}</div> : <input className="ad-input" type="number" min={1} value={it.quantity} onChange={(e) => patchItem(i, { quantity: Number(e.target.value) })} />}
+                      </label>
+                    </div>
+                    <div className="col-span-2">
+                      <label className="block">
+                        <span className="field-label">PU HT (DA)</span>
+                        {consult ? <div className="pt-1.5">{Number(it.price).toLocaleString()}</div> : <input className="ad-input" type="number" min={0} value={it.price} onChange={(e) => patchItem(i, { price: Number(e.target.value) })} />}
+                      </label>
+                    </div>
+                    <div className="col-span-3">
+                      <label className="block">
+                        <span className="field-label">Remise</span>
+                        {consult ? <div className="pt-1.5">-{it.discountValue ?? it.discount ?? 0}{it.discountType==='fixed'?' DA':'%'}</div> : (
+                          <div className="flex gap-1">
+                            <input className="ad-input flex-1" type="number" min={0} value={it.discountValue ?? it.discount ?? 0} onChange={(e) => patchItem(i, { discountValue: Number(e.target.value), discount: Number(e.target.value) })} />
+                            <select className="ad-select w-20" value={it.discountType||'percent'} onChange={e=>patchItem(i,{discountType:e.target.value as any})}>
+                              <option value="percent">%</option>
+                              <option value="fixed">DA</option>
+                            </select>
+                          </div>
+                        )}
+                      </label>
+                    </div>
+                    <div className="col-span-1 font-black text-right pb-1.5" title="Total HT remisé">{((Number(it.quantity) * Number(it.price)) - (it.discountType==='fixed' ? (Number(it.discountValue||it.discount||0)*Number(it.quantity)) : (Number(it.quantity) * Number(it.price) * (Number(it.discountValue||it.discount||0)/100)))).toLocaleString()}</div>
                   </div>
-                  <div className="col-span-2">
-                    <label className="block">
-                      <span className="field-label">Quantité</span>
-                      {consult
-                        ? <div className="pt-1.5">× {it.quantity}</div>
-                        : <input className="ad-input" type="number" min={1} placeholder={t('quantityPlaceholder')} value={it.quantity} onChange={(e) => patchItem(i, { quantity: Number(e.target.value) })} />}
-                    </label>
+                  <div className="grid grid-cols-12 gap-2 items-end">
+                    <div className="col-span-3">
+                      <label className="block">
+                        <span className="field-label">TVA %</span>
+                        {consult ? <div className="pt-1 text-xs">{it.vatRate ?? it.taxRate ?? '—'}{it.vatIncluded?' (incl.)':''}</div> : (
+                          <div className="flex gap-1">
+                            <input className="ad-input" type="number" placeholder="19" value={it.vatRate ?? it.taxRate ?? ''} onChange={e=>patchItem(i,{vatRate:e.target.value==='' ? undefined : Number(e.target.value), taxRate:e.target.value==='' ? undefined : Number(e.target.value)})} />
+                            <label className="flex items-center gap-1 text-xs"><input type="checkbox" checked={!!it.vatIncluded} onChange={e=>patchItem(i,{vatIncluded:e.target.checked})}/>Incl.</label>
+                          </div>
+                        )}
+                      </label>
+                    </div>
+                    <div className="col-span-4">
+                      <label className="block">
+                        <span className="field-label">Livraison article</span>
+                        {consult ? <div className="pt-1 text-xs">{it.shippingFee?`${it.shippingFee} DA ${it.shippingType==='per_qty'?'×Qté':it.shippingType==='free'?'offert':'fixe'}`:'—'}</div> : (
+                          <div className="flex gap-1">
+                            <input className="ad-input" type="number" value={it.shippingFee ?? 0} onChange={e=>patchItem(i,{shippingFee:Number(e.target.value)})} />
+                            <select className="ad-select w-24" value={it.shippingType||'fixed'} onChange={e=>patchItem(i,{shippingType:e.target.value as any})}>
+                              <option value="fixed">Fixe</option>
+                              <option value="per_qty">/Qté</option>
+                              <option value="free">Offert</option>
+                            </select>
+                          </div>
+                        )}
+                      </label>
+                    </div>
+                    <div className="col-span-4">
+                      <label className="block">
+                        <span className="field-label">Zones (vide=toutes)</span>
+                        {consult ? <div className="pt-1 text-xs font-mono">{(it.zones||[]).join(', ') || '—'}</div> : <input className="ad-input font-mono text-xs" placeholder="DZ-16,DZ-31" value={(it.zones||[]).join(',')} onChange={e=>patchItem(i,{zones:e.target.value.split(',').map((s:string)=>s.trim()).filter(Boolean)})} />}
+                      </label>
+                    </div>
+                    {!consult && <button className="ad-btn ad-btn-icon ad-btn-danger col-span-1" onClick={() => setOpen({ ...open, items: (open.items || []).filter((_, j) => j !== i) })}><Trash2 className="w-4 h-4" /></button>}
                   </div>
-                  <div className="col-span-2">
-                    <label className="block">
-                      <span className="field-label">Prix unit. HT (DA)</span>
-                      {consult
-                        ? <div className="pt-1.5">{it.price.toLocaleString()}</div>
-                        : <input className="ad-input" type="number" min={0} placeholder={t('pricePlaceholder')} value={it.price} onChange={(e) => patchItem(i, { price: Number(e.target.value) })} />}
-                    </label>
-                  </div>
-                  <div className="col-span-2">
-                    <label className="block">
-                      <span className="field-label">Remise %</span>
-                      {consult
-                        ? <div className="pt-1.5">-{it.discount || 0}%</div>
-                        : <input className="ad-input" type="number" min={0} max={100} placeholder={t('discountPlaceholder')} value={it.discount || 0} onChange={(e) => patchItem(i, { discount: Number(e.target.value) })} />}
-                    </label>
-                  </div>
-                  <div className="col-span-1 font-black text-right pb-1.5" title="Total de la ligne (remise déduite)">{((it.quantity * it.price) * (1 - (it.discount || 0) / 100)).toLocaleString()}</div>
-                  {!consult && <button className="ad-btn ad-btn-icon ad-btn-danger col-span-1" title="Supprimer la ligne" onClick={() => setOpen({ ...open, items: (open.items || []).filter((_, j) => j !== i) })}><Trash2 className="w-4 h-4" /></button>}
                 </div>
               ))}
               {!consult && (
-                <button className="ad-btn ad-btn-ghost" onClick={() => setOpen({ ...open, items: [...(open.items || []), { id: Date.now(), name: '', quantity: 1, price: 0 }] })}>
+                <button className="ad-btn ad-btn-ghost" onClick={() => setOpen({ ...open, items: [...(open.items || []), { id: Date.now(), name: '', quantity: 1, price: 0 } as any] })}>
                   <Plus className="w-4 h-4" /> Ajouter une ligne
                 </button>
               )}
             </div>
 
             {!consult && (
-              <label className="block space-y-1.5">
-                <span className="field-label">Code promo / Coupon</span>
-                <input className="ad-input font-mono" placeholder="Ex. SARI10 (facultatif)" value={open.coupon || ''} onChange={(e) => setOpen({ ...open, coupon: e.target.value.toUpperCase() })} />
-              </label>
+              <div className="grid md:grid-cols-2 gap-3">
+                <label className="block space-y-1.5">
+                  <span className="field-label">Code promo / Coupon</span>
+                  <input className="ad-input font-mono" placeholder="SARI10" value={(open as any).coupon || open.coupon || ''} onChange={(e) => setOpen({ ...open, coupon: e.target.value.toUpperCase() } as any)} />
+                </label>
+                <label className="block space-y-1.5">
+                  <span className="field-label">Zone livraison / vente</span>
+                  <select className="ad-select" value={(open as any).deliveryZone || (open as any).zone || ''} onChange={e=>setOpen({ ...open, deliveryZone: e.target.value, zone: e.target.value } as any)}>
+                    <option value="">— Sélection —</option>
+                    {(shopConfig?.saleZones || []).map(z=> <option key={z.code} value={z.code}>{z.label} {z.code}{!z.active?' (indisponible)':''}</option>)}
+                  </select>
+                </label>
+              </div>
+            )}
+            {consult && (
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div><span style={{color:'var(--ad-muted)'}}>Zone</span><div className="font-bold">{(open as any).deliveryZone || (open as any).zone || '—'} {(shopConfig && ((open as any).deliveryZone||(open as any).zone)) ? `· ${formatZoneLabel((open as any).deliveryZone||(open as any).zone)}` : ''}</div></div>
+                <div><span style={{color:'var(--ad-muted)'}}>Coupon</span><div className="font-mono">{(open as any).coupon || '—'}</div></div>
+              </div>
+            )}
+
+            {!consult && (
+              <div className="space-y-3 border p-3 rounded-lg" style={{borderColor:'var(--ad-line)'}}>
+                <div className="font-bold text-sm flex items-center gap-2">Frais & remises globaux (avant confirmation)</div>
+                <div className="grid md:grid-cols-2 gap-3">
+                  <label className="block space-y-1.5">
+                    <span className="field-label">Frais livraison global (DA) — 0 = auto par zone</span>
+                    <input className="ad-input" type="number" value={(open as any).shippingFee ?? ''} placeholder="auto" onChange={e=>setOpen({ ...open, shippingFee: e.target.value==='' ? undefined : Number(e.target.value)} as any)} />
+                  </label>
+                  <label className="block space-y-1.5">
+                    <span className="field-label">Remise globale (DA)</span>
+                    <input className="ad-input" type="number" value={(open as any).globalDiscount ?? ''} placeholder="0" onChange={e=>setOpen({ ...open, globalDiscount: e.target.value==='' ? undefined : Number(e.target.value)} as any)} />
+                  </label>
+                </div>
+                <p className="text-xs" style={{color:'var(--ad-muted)'}}>Astuce : laissez vide pour calcul auto par zone (fiches Boutique → Configuration globale). Vous pouvez aussi ajouter un frais par article ci-dessus — les deux s'additionnent.</p>
+                <label className="block space-y-1.5">
+                  <span className="field-label">Adresse livraison</span>
+                  <input className="ad-input" placeholder="Adresse complète" value={(open as any).deliveryAddress || (open as any).address || ''} onChange={e=>setOpen({...open, deliveryAddress:e.target.value, address:e.target.value} as any)} />
+                </label>
+                <div className="grid md:grid-cols-2 gap-3">
+                  <label className="block space-y-1.5">
+                    <span className="field-label">Notes client / CGV</span>
+                    <textarea className="ad-textarea" rows={2} placeholder="Rappel CGV, instructions..." value={(open as any).notes || ''} onChange={e=>setOpen({...open, notes:e.target.value} as any)} />
+                  </label>
+                  <label className="block space-y-1.5">
+                    <span className="field-label">Notes internes admin</span>
+                    <textarea className="ad-textarea" rows={2} placeholder="Visible admin uniquement" value={(open as any).adminNotes || ''} onChange={e=>setOpen({...open, adminNotes:e.target.value} as any)} />
+                  </label>
+                </div>
+                {shopConfig?.saleConditions && <div className="text-xs bg-amber-50 dark:bg-amber-900/20 border border-amber-200 p-2 rounded">CGV : {shopConfig.saleConditions.slice(0,300)}{shopConfig.saleConditions.length>300?'…':''}</div>}
+              </div>
             )}
 
             <div className="ad-card p-4 space-y-1 text-sm">
               <div className="flex justify-between"><span>Sous-total HT</span><strong>{money(totals.subtotal)}</strong></div>
-              <div className="flex justify-between"><span>Remise {open.coupon ? `(${open.coupon})` : ''}</span><strong>- {money(totals.discount)}</strong></div>
+              {totals.productDiscount>0 && <div className="flex justify-between" style={{color:'var(--ad-muted)'}}><span>Remises produits</span><strong>- {money(totals.productDiscount)}</strong></div>}
+              {totals.globalDiscount>0 && <div className="flex justify-between" style={{color:'var(--ad-muted)'}}><span>Remise globale</span><strong>- {money(totals.globalDiscount)}</strong></div>}
+              {totals.couponDiscount>0 && <div className="flex justify-between" style={{color:'var(--ad-muted)'}}><span>Coupon {(open as any).coupon}</span><strong>- {money(totals.couponDiscount)}</strong></div>}
+              {totals.discount>0 && totals.productDiscount===0 && totals.globalDiscount===0 && totals.couponDiscount===0 && <div className="flex justify-between"><span>Remise</span><strong>- {money(totals.discount)}</strong></div>}
+              {totals.productShipping>0 && <div className="flex justify-between"><span>Livraison articles</span><strong>{money(totals.productShipping)}</strong></div>}
+              {totals.globalShipping>0 && <div className="flex justify-between"><span>Livraison zone {formatZoneLabel((open as any).deliveryZone || (open as any).zone || '')}</span><strong>{money(totals.globalShipping)}</strong></div>}
+              {totals.shipping>0 && <div className="flex justify-between"><span>Total livraison</span><strong>{money(totals.shipping)}</strong></div>}
+              {totals.shipping===0 && <div className="flex justify-between text-green-600"><span>Livraison</span><strong>Offerte</strong></div>}
               {totals.taxLines.map((t) => (
                 <div key={t.id} className="flex justify-between" style={{ color: 'var(--ad-muted)' }}>
                   <span>{t.name} {t.included ? '(incluse)' : ''} {t.mode === 'percent' ? `${t.rate}%` : ''}</span>
@@ -593,6 +686,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                 <span className="font-black">{t('totalTTC')}</span>
                 <span className="font-black" style={{ color: 'var(--ad-accent)' }}>{money(totals.total)}</span>
               </div>
+              <p className="text-[11px]" style={{color:'var(--ad-muted)'}}>Calcul : sous-total → remises produit → globale → coupon → taxes (TVA produit prioritaire + globales) → livraison (articles + zone).</p>
             </div>
           </>
         )}
