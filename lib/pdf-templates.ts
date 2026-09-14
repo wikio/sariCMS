@@ -57,6 +57,29 @@ function barcodeSvg(code: string): string {
   return svg;
 }
 
+function statusLabel(raw?: string): string {
+  if (!raw) return '';
+  const k = String(raw).trim().toLowerCase();
+  const map: Record<string, string> = {
+    pending: 'En attente',
+    pending_payment: 'Paiement en attente',
+    processing: 'En préparation',
+    shipped: 'Expédiée',
+    delivered: 'Livrée',
+    cancelled: 'Annulée',
+    paid: 'Payée',
+    draft: 'Brouillon',
+    submitted: 'Soumis',
+    replied: 'Répondu',
+    revision: 'Révision demandée',
+    accepted: 'Accepté',
+    rejected: 'Refusé',
+    transformed: 'Transformé en commande',
+    expired: 'Expiré',
+  };
+  return map[k] || String(raw);
+}
+
 /** Structure commune : en-tête société + bloc client + tableau + totaux + montant en lettres + note. */
 function documentShell(opts: {
   title: string;
@@ -82,6 +105,7 @@ function documentShell(opts: {
     )
     .join('');
   const barcode = barcodeSvg(opts.reference);
+  const statutFr = opts.status ? statusLabel(opts.status) : '';
   return `<!doctype html>
 <html lang="fr">
 <head>
@@ -99,12 +123,12 @@ function documentShell(opts: {
   .head .ref { text-align: right; font-size: 12px; color: #4a5568; max-width: 280px; }
   .head .ref h1 { font-size: 22px; margin: 0 0 4px; color: #1a202c; }
   .head .ref .code { font-family: monospace; font-size: 11px; color: #0d7a9e; background: #edf2f7; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 4px; word-break: break-all; }
-  .head .ref .barcode { margin-top: 8px; display: flex; justify-content: flex-end; }
-  .head .ref .barcode svg { max-width: 100%; height: auto; }
   .meta { display: flex; justify-content: space-between; gap: 24px; margin: 20px 0; font-size: 13px; }
   .meta .box { flex: 1; }
   .meta .box h3 { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: #0d7a9e; margin: 0 0 6px; }
   .meta .box div { color: #4a5568; line-height: 1.6; }
+  .meta .box .barcode { margin-top: 10px; }
+  .meta .box .barcode svg { max-width: 100%; height: auto; display: block; }
   table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 13px; }
   th { background: #edf2f7; text-align: left; padding: 8px 10px; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: #4a5568; }
   td { padding: 8px 10px; border-bottom: 1px solid #e2e8f0; }
@@ -134,9 +158,6 @@ function documentShell(opts: {
     <div class="ref">
       <h1>${escapeHtml(opts.title)}</h1>
       <div class="code">${escapeHtml(opts.reference)}</div>
-      <div class="barcode">${barcode}</div>
-      ${opts.status ? `<div style="margin-top:6px;">Statut : ${escapeHtml(opts.status)}</div>` : ''}
-      ${opts.paymentLabel ? `<div style="margin-top:2px; font-weight:700; color:#0d7a9e;">Paiement : ${escapeHtml(opts.paymentLabel)}</div>` : ''}
     </div>
   </div>
 
@@ -165,7 +186,9 @@ function documentShell(opts: {
         Date : ${escapeHtml(opts.date)}<br/>
         Réf. : ${escapeHtml(opts.reference)}<br/>
         ${opts.validity ? `Validité : ${escapeHtml(opts.validity)}<br/>` : ''}
+        ${statutFr ? `Statut : ${escapeHtml(statutFr)}<br/>` : ''}
         ${opts.paymentLabel ? `Mode paiement : ${escapeHtml(opts.paymentLabel)}<br/>` : ''}
+        <div class="barcode">${barcode}</div>
       </div>
     </div>
   </div>
