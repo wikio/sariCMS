@@ -434,9 +434,9 @@ export default function PaymentPage() {
                   <span className="text-gray-600 dark:text-gray-400">{t('tax', { defaultMessage: 'TVA (19%)' })} :</span>
                   <span className="font-semibold text-sari-dark dark:text-white">{formatMoney(order.taxAmount || 0, { decimals: 2 })}</span>
                 </div>
-                <div className="flex justify-between text-lg pt-2 border-t border-gray-200 dark:border-gray-800">
-                  <span className="font-bold text-sari-dark dark:text-white">{t('total', { defaultMessage: 'Total' })} :</span>
-                  <span className="font-bold text-sari-lime">{formatMoney(order.grandTotal || 0, { decimals: 2 })}</span>
+                <div className="flex justify-between items-center gap-6 text-lg pt-2 border-t border-gray-200 dark:border-gray-800">
+                  <span className="font-bold text-sari-dark dark:text-white flex-shrink-0">{t('total', { defaultMessage: 'Total' })} :</span>
+                  <span className="font-bold text-sari-lime text-right flex-shrink-0 tabular-nums">{formatMoney(order.grandTotal || 0, { decimals: 2 })}</span>
                 </div>
               </div>
               <button
