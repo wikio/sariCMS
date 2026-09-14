@@ -104,17 +104,63 @@ export default function ProductDetailPage() {
   const nextImage = () => setActiveImage((prev) => (prev + 1) % gallery.length);
   const prevImage = () => setActiveImage((prev) => (prev - 1 + gallery.length) % gallery.length);
 
+  // Calcule le prix selon la variante sélectionnée (plusieurs prix par type)
+  const getVariantPrice = (): number => {
+    const base = parseFloat(String(product.price).replace(/[^0-9.]/g,''))||0;
+    if (!product.options?.length || !Object.keys(selectedOptions).length) return base;
+    let price: number | null = null;
+    for (const opt of product.options as any[]) {
+      const choice = selectedOptions[opt.name];
+      if (!choice) continue;
+      // prix direct dans l'option
+      if (opt.prices && opt.prices[choice] != null) {
+        const p = Number(opt.prices[choice]);
+        if (Number.isFinite(p)) price = p;
+      }
+      // prix via variantPrices global
+      const vp = (product as any).variantPrices;
+      if (vp) {
+        const key1 = `${opt.name}:${choice}`;
+        const key2 = choice;
+        if (vp[key1] != null) price = Number(vp[key1]);
+        else if (vp[key2] != null) price = Number(vp[key2]);
+      }
+    }
+    return price != null ? price : base;
+  };
+  const variantPrice = getVariantPrice();
+  const optionSummary = Object.keys(selectedOptions).length ? Object.entries(selectedOptions).map(([k,v])=> `${k}: ${v}`).join(' • ') : undefined;
+  const variantKey = Object.keys(selectedOptions).length ? Object.entries(selectedOptions).map(([k,v])=> `${k}:${v}`).join('|') : undefined;
+  // SKU variante
+  const getVariantSku = (): string | undefined => {
+    let suffix = '';
+    for (const opt of (product.options as any[])||[]) {
+      const choice = selectedOptions[opt.name];
+      if (choice && opt.skus?.[choice]) suffix += `-${opt.skus[choice]}`;
+    }
+    if (suffix) return `${(product as any).sku || product.id}${suffix}`;
+    return (product as any).sku;
+  };
+
   const handleAddToCart = () => {
+    // Validation : tous les types/variantes doivent être choisis
+    if (product.options?.length) {
+      const missing = product.options.filter((opt:any) => !selectedOptions[opt.name]);
+      if (missing.length) {
+        alert(`Veuillez choisir : ${missing.map((o:any)=>o.name).join(', ')}`);
+        return;
+      }
+    }
     setIsAdding(true);
     setTimeout(() => {
       addToCart({
         id: product.id,
-        name: product.name,
-        price: product.price,
+        name: product.name + (optionSummary ? ` (${optionSummary})` : ''),
+        price: variantPrice || product.price,
         quantity: qty,
         image: currentImage,
         category: product.category,
-        sku: (product as any).sku,
+        sku: getVariantSku(),
         discountValue: (product as any).discountValue,
         discountType: (product as any).discountType,
         vatRate: (product as any).vatRate,
@@ -123,6 +169,10 @@ export default function ProductDetailPage() {
         shippingType: (product as any).shippingType,
         zones: (product as any).zones,
         weight: (product as any).weight,
+        selectedOptions: Object.keys(selectedOptions).length ? {...selectedOptions} : undefined,
+        variantKey,
+        variantPrice,
+        optionSummary,
       } as any);
       setAddedToCart(true);
       setIsAdding(false);
@@ -210,7 +260,8 @@ export default function ProductDetailPage() {
             {product.name}
           </h1>
           <div className="flex items-center gap-4 mb-6">
-            <span className="text-3xl font-bold text-sari-lime">{withSymbol(product.price)}</span>
+            <span className="text-3xl font-bold text-sari-lime">{withSymbol(variantPrice || product.price)}</span>
+            {variantPrice !== parseFloat(String(product.price).replace(/[^0-9.]/g,'')) && <span className="text-sm line-through opacity-60">{withSymbol(product.price)}</span>}
             {product.inStock ? (
               <span className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-sm font-semibold flex items-center gap-1 rounded-full">
                 <Check className="w-4 h-4" />
@@ -245,19 +296,25 @@ export default function ProductDetailPage() {
                     {opt.name}
                   </label>
                   <div className="flex flex-wrap gap-3">
-                    {opt.choices.map((choice, j) => (
+                    {opt.choices.map((choice, j) => {
+                      const price = (opt as any).prices?.[choice];
+                      const isSelected = selectedOptions[opt.name] === choice;
+                      return (
                       <button
                         key={j}
                         onClick={() => setSelectedOptions({ ...selectedOptions, [opt.name]: choice })}
-                        className={`px-4 py-2 border-2 font-medium transition-all rounded-lg ${
-                          selectedOptions[opt.name] === choice
-                            ? 'border-sari-blue bg-sari-blue/10 text-sari-blue'
-                            : 'border-gray-300 dark:border-gray-700 hover:border-sari-blue/50'
+                        className={`px-4 py-2 border-2 font-medium transition-all rounded-xl flex flex-col items-center gap-1 min-w-[90px] ${
+                          isSelected
+                            ? 'border-sari-blue bg-sari-blue text-white shadow-lg scale-105'
+                            : 'border-gray-300 dark:border-gray-700 hover:border-sari-blue/50 bg-white dark:bg-[#1a1a1a]'
                         }`}
                       >
-                        {choice}
+                        <span className="font-bold">{choice}</span>
+                        {price != null && <span className={`text-xs px-2 py-0.5 rounded-full font-black ${isSelected?'bg-white text-sari-blue':'bg-sari-lime text-sari-dark'}`}>{price} DA</span>}
+                        {isSelected && <span className="text-[10px] opacity-80">✓ Sélectionné</span>}
                       </button>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               ))}

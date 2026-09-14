@@ -21,13 +21,18 @@ export interface CartItem {
   shippingType?: 'fixed' | 'per_qty' | 'free';
   zones?: string[];
   weight?: number;
+  // Variantes / sous-catégories
+  selectedOptions?: Record<string, string>;
+  variantKey?: string; // ex: "Taille:M|Couleur:Rouge" pour séparer les lignes
+  variantPrice?: number; // prix unitaire déjà ajusté selon variante
+  optionSummary?: string; // ex: "Taille: M • Couleur: Rouge"
 }
 
 interface CartContextType {
   items: CartItem[];
   addToCart: (item: CartItem) => void;
-  removeFromCart: (id: number | string) => void;
-  updateQuantity: (id: number | string, quantity: number) => void;
+  removeFromCart: (id: number | string, variantKey?: string) => void;
+  updateQuantity: (id: number | string, quantity: number, variantKey?: string) => void;
   clearCart: () => void;
   total: number;
 }
@@ -39,9 +44,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const stored = localStorage.getItem('sari_cart');
-    if (stored) {
+    const pending = localStorage.getItem('sari_pending_cart');
+    const toLoad = stored || pending;
+    if (toLoad) {
       try {
-        setItems(JSON.parse(stored));
+        const parsed = JSON.parse(toLoad);
+        if (Array.isArray(parsed) && parsed.length) setItems(parsed);
+        // Si on a restauré depuis pending, on resync sari_cart
+        if (!stored && pending) localStorage.setItem('sari_cart', pending);
       } catch (e) {
         localStorage.removeItem('sari_cart');
       }
@@ -52,28 +62,38 @@ export function CartProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('sari_cart', JSON.stringify(items));
   }, [items]);
 
+  const cartKey = (it: CartItem) => `${String(it.id)}::${it.variantKey||''}::${it.optionSummary||''}`;
   const addToCart = (item: CartItem) => {
+    // Génère une clé variante pour séparer les mêmes articles par catégorie/type/taille
+    const key = cartKey(item);
     setItems((prev) => {
-      const existing = prev.find((i) => String(i.id) === String(item.id));
+      const existing = prev.find((i) => cartKey(i) === key);
       if (existing) {
         return prev.map((i) =>
-          String(i.id) === String(item.id) ? { ...i, quantity: i.quantity + item.quantity } : i
+          cartKey(i) === key ? { ...i, quantity: i.quantity + item.quantity } : i
         );
       }
       return [...prev, item];
     });
   };
 
-  const removeFromCart = (id: number | string) => {
-    setItems((prev) => prev.filter((i) => String(i.id) !== String(id)));
+  const removeFromCart = (id: number | string, variantKey?: string) => {
+    setItems((prev) => prev.filter((i) => {
+      if (variantKey != null) return !(String(i.id)===String(id) && (i.variantKey||'')===variantKey);
+      // sans variantKey : si plusieurs variantes, on retire seulement si une seule, sinon on retire toutes pour compat
+      return String(i.id) !== String(id);
+    }));
   };
 
-  const updateQuantity = (id: number | string, quantity: number) => {
+  const updateQuantity = (id: number | string, quantity: number, variantKey?: string) => {
     if (quantity <= 0) {
-      removeFromCart(id);
+      removeFromCart(id, variantKey);
       return;
     }
-    setItems((prev) => prev.map((i) => (String(i.id) === String(id) ? { ...i, quantity } : i)));
+    setItems((prev) => prev.map((i) => {
+      const match = variantKey != null ? (String(i.id)===String(id) && (i.variantKey||'')===variantKey) : String(i.id)===String(id);
+      return match ? { ...i, quantity } : i;
+    }));
   };
 
   const clearCart = () => setItems([]);

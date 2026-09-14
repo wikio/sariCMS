@@ -232,8 +232,10 @@ export default function CartPage() {
 
   const goToPayment = (orderId: number | string) => {
     setRedirecting(true);
+    // Garder le panier jusqu'à confirmation finale — on sauvegarde en localStorage pour restauration si l'utilisateur revient
+    try { localStorage.setItem('sari_pending_cart', JSON.stringify(cart)); } catch {}
     router.push(`/${locale}/payment/${orderId}`);
-    setTimeout(() => clearCart(), 600);
+    // Ne pas vider immédiatement : le panier sera vidé après paiement confirmé ou après 30min
   };
 
   const antispamPasse = () => {
@@ -386,7 +388,13 @@ export default function CartPage() {
         {step === 1 && (
           <div className="grid lg:grid-cols-3 gap-6 md:gap-8">
             <div className="lg:col-span-2 space-y-4">
-              {cart.map((item, index) => {
+              {(() => {
+                // Grouper par catégorie pour lisibilité
+                const grouped = cart.reduce((acc:any, cur:any)=>{ const k=cur.category||'Autres'; (acc[k]=acc[k]||[]).push(cur); return acc; }, {} as any);
+                const flat: any[] = [];
+                Object.entries(grouped).forEach(([cat, items]: any)=>{ flat.push({__header:cat}); flat.push(...items); });
+                return flat.map((item:any, index:number)=>{
+                if (item.__header) return <div key={`h-${item.__header}`} className="flex items-center gap-2 mt-4 mb-1"><span className="px-3 py-1 rounded-full bg-sari-dark text-white text-xs font-black">{item.__header}</span><span className="flex-1 h-px bg-gray-200 dark:bg-gray-800"/><span className="text-xs font-bold opacity-60">{grouped[item.__header].length} réf.</span></div>;
                 const it: any = item;
                 const qty = it.quantity;
                 const unit = parseFloat(String(it.price).replace(/[^0-9.]/g,''))||0;
@@ -404,27 +412,27 @@ export default function CartPage() {
                       <span className="absolute -top-2 -right-2 bg-gradient-to-br from-sari-blue to-blue-700 text-white text-xs font-black w-8 h-8 rounded-full flex items-center justify-center shadow-lg border-2 border-white dark:border-[#1a1a1a]">×{qty}</span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-black text-sari-dark dark:text-white leading-tight line-clamp-2 flex items-center gap-2">{item.name} <Sparkles className="w-4 h-4 text-amber-500 opacity-0 group-hover:opacity-100 transition"/></h3>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 flex flex-wrap gap-1 mt-1">{item.category && <span className="px-2 py-0.5 rounded-full bg-gray-100 dark:bg-[#222]">{item.category}</span>} {it.sku && <span className="font-mono px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-700">SKU {it.sku}</span>} {it.zones?.length?<span className="px-2 py-0.5 rounded-full bg-gray-50 border flex items-center gap-1"><Flag className="w-3 h-3"/>{it.zones.join(', ')}</span>:<span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 flex items-center gap-1"><Globe className="w-3 h-3"/>Toutes zones</span>}</div>
+                      <h3 className="font-black text-base md:text-lg text-sari-dark dark:text-white leading-tight line-clamp-2 flex items-center gap-2">{(item as any).name.split(' (')[0]} {(item as any).optionSummary && <span className="text-sm font-bold px-2.5 py-1 rounded-full bg-sari-lime text-sari-dark">{(item as any).optionSummary}</span>} <Sparkles className="w-4 h-4 text-amber-500 opacity-0 group-hover:opacity-100 transition"/></h3>
+                      <div className="text-sm text-gray-600 dark:text-gray-400 flex flex-wrap gap-1.5 mt-2">{item.category && <span className="px-3 py-1 rounded-full bg-sari-blue/10 text-sari-blue font-bold text-xs">{item.category}</span>} {it.sku && <span className="font-mono px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-700 text-xs font-bold">SKU {it.sku}</span>} {(it as any).variantKey && <span className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold flex items-center gap-1"><Package className="w-3 h-3"/> Variante</span>} {it.zones?.length?<span className="px-2.5 py-1 rounded-full bg-gray-50 border flex items-center gap-1 text-xs"><Flag className="w-3 h-3"/>{it.zones.join(', ')}</span>:<span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 flex items-center gap-1 text-xs font-bold"><Globe className="w-3 h-3"/>Toutes zones</span>}</div>
                       {/* Grille prix / TVA / remise */}
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-3 text-xs">
                         <div className="bg-gray-50 dark:bg-[#111] p-2 rounded-xl border">
-                          <div className="text-[10px] uppercase font-black tracking-widest opacity-60 flex items-center gap-1"><Tag className="w-3 h-3"/> Prix unit.</div>
+                          <div className="text-xs uppercase font-black tracking-widest opacity-60 flex items-center gap-1"><Tag className="w-3 h-3"/> Prix unit.</div>
                           <div className="font-black text-sm">{withSymbol(unit)}</div>
-                          <div className="text-[11px] opacity-60">Qté <strong>{qty}</strong> → {formatMoney(sub)}</div>
+                          <div className="text-sm opacity-70">Qté <strong>{qty}</strong> → {formatMoney(sub)}</div>
                         </div>
                         <div className={`p-2 rounded-xl border ${it.discountValue?'bg-green-50 dark:bg-green-900/20 border-green-200':'bg-gray-50 dark:bg-[#111] opacity-60'}`}>
-                          <div className="text-[10px] uppercase font-black tracking-widest flex items-center gap-1"><Gift className="w-3 h-3"/> Remise</div>
+                          <div className="text-xs uppercase font-black tracking-widest flex items-center gap-1"><Gift className="w-3 h-3"/> Remise</div>
                           <div className="font-black text-sm flex items-center gap-1">{disc ? <><BadgePercent className="w-3.5 h-3.5 text-green-600"/>{disc}</> : '—'}</div>
                           <div className="text-[11px] text-green-700 font-bold">{discAmt ? `-${formatMoney(discAmt)}` : 'Aucune'}</div>
                         </div>
                         <div className={`p-2 rounded-xl border ${tva?'bg-blue-50 dark:bg-blue-900/20 border-blue-200':'bg-gray-50 dark:bg-[#111] opacity-60'}`}>
-                          <div className="text-[10px] uppercase font-black tracking-widest flex items-center gap-1"><Receipt className="w-3 h-3"/> TVA</div>
+                          <div className="text-xs uppercase font-black tracking-widest flex items-center gap-1"><Receipt className="w-3 h-3"/> TVA</div>
                           <div className="font-black text-sm">{tva || '—'}</div>
                           <div className="text-[11px]">{tvaAmt? formatMoney(tvaAmt) : '0 DA'}</div>
                         </div>
                         <div className="bg-amber-50 dark:bg-amber-900/20 p-2 rounded-xl border border-amber-200">
-                          <div className="text-[10px] uppercase font-black tracking-widest flex items-center gap-1"><Truck className="w-3 h-3"/> Livraison</div>
+                          <div className="text-xs uppercase font-black tracking-widest flex items-center gap-1"><Truck className="w-3 h-3"/> Livraison</div>
                           <div className="font-black text-sm">{it.shippingFee ? `${it.shippingFee} DA ${it.shippingType==='per_qty'?'×Qté':it.shippingType==='free'?'offerte':''}` : 'Incluse'}</div>
                           <div className="text-[11px] opacity-70">{item.category}</div>
                         </div>
@@ -436,19 +444,20 @@ export default function CartPage() {
                     </div>
                     <div className="flex flex-col items-center gap-2 shrink-0">
                       <div className="flex items-center gap-1 bg-gray-100 dark:bg-[#111] p-1 rounded-full border shadow-inner">
-                        <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="w-8 h-8 rounded-full bg-white dark:bg-[#1a1a1a] border hover:bg-gray-50 flex items-center justify-center shadow hover:scale-105 transition"><Minus className="w-4 h-4"/></button>
-                        <span className="w-10 text-center font-black">{qty}</span>
-                        <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="w-8 h-8 rounded-full bg-sari-blue text-white hover:bg-blue-700 flex items-center justify-center shadow hover:scale-105 transition"><Plus className="w-4 h-4"/></button>
+                        <button onClick={() => updateQuantity(item.id, item.quantity - 1, (item as any).variantKey)} className="w-9 h-9 rounded-full bg-white dark:bg-[#1a1a1a] border-2 border-gray-200 hover:border-sari-blue hover:bg-sari-blue/10 flex items-center justify-center shadow hover:scale-105 transition"><Minus className="w-4 h-4"/></button>
+                        <span className="w-12 text-center font-black text-lg">{qty}</span>
+                        <button onClick={() => updateQuantity(item.id, item.quantity + 1, (item as any).variantKey)} className="w-9 h-9 rounded-full bg-sari-blue text-white hover:bg-blue-700 flex items-center justify-center shadow hover:scale-105 transition"><Plus className="w-4 h-4"/></button>
                       </div>
-                      <button onClick={() => removeFromCart(item.id)} className="w-8 h-8 rounded-full bg-red-50 text-red-600 hover:bg-red-500 hover:text-white flex items-center justify-center shadow transition"><Trash2 className="w-4 h-4" /></button>
-                      <span className="text-[10px] font-black tracking-widest opacity-50">QTE</span>
+                      <button onClick={() => removeFromCart(item.id, (item as any).variantKey)} className="w-9 h-9 rounded-full bg-red-50 text-red-600 hover:bg-red-500 hover:text-white flex items-center justify-center shadow transition border-2 border-red-100" title="Retirer cette variante"><Trash2 className="w-4 h-4" /></button>
+                      <span className="text-xs font-black tracking-widest opacity-50">QTE</span>
                     </div>
                   </div>
                 );
-              })}
+                });
+              })()}
               <div className="flex flex-wrap gap-3">
-                <Link href={`/${locale}/products`} className="ad-btn ad-btn-ghost rounded-full inline-flex items-center gap-2 hover:scale-105 transition"><ArrowLeft className="w-4 h-4"/> Continuer les achats</Link>
-                <button onClick={() => clearCart()} className="ad-btn ad-btn-ghost text-red-600 rounded-full"><X className="w-4 h-4"/> Vider le panier</button>
+                <Link href={`/${locale}/products`} className="px-5 py-3 bg-white border-2 border-gray-200 rounded-full font-bold hover:border-sari-blue hover:text-sari-blue transition flex items-center gap-2 shadow-sm"><ArrowLeft className="w-4 h-4"/> Continuer les achats</Link>
+                <button onClick={() => { if(confirm('Vider tout le panier ?')) clearCart(); }} className="px-5 py-3 border-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 bg-white dark:bg-[#1a1a1a] rounded-full font-bold flex items-center gap-2 shadow-sm hover:shadow transition text-sm"><Trash2 className="w-4 h-4"/> Vider le panier</button>
                 <span className="ml-auto text-sm bg-white dark:bg-[#1a1a1a] border px-3 py-2 rounded-full shadow-sm flex items-center gap-2"><ClipboardList className="w-4 h-4"/> {totalQty} unités au total</span>
               </div>
             </div>
@@ -456,11 +465,14 @@ export default function CartPage() {
               <div className="bg-white dark:bg-[#1a1a1a] p-6 border border-gray-200 dark:border-gray-800 shadow-2xl rounded-2xl sticky top-28 space-y-4">
                 <h3 className="text-xl font-black text-sari-dark dark:text-white flex items-center gap-2"><span className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-400 to-blue-600 text-white flex items-center justify-center"><ClipboardList className="w-5 h-5"/></span> {t('summary')}</h3>
                 <div className="space-y-2">
-                  <label className="text-xs font-black uppercase tracking-widest flex items-center gap-1" style={{color:'var(--ad-muted)'}}><Tag className="w-3.5 h-3.5"/> Coupon</label>
+                  <label className="text-sm font-black uppercase tracking-widest flex items-center gap-1" className="text-gray-500"><Tag className="w-3.5 h-3.5"/> Coupon</label>
                   {!appliedCoupon ? (
                     <div className="flex gap-2">
-                      <input className="ad-input flex-1 font-mono uppercase rounded-full" placeholder="SARI10" value={couponCode} onChange={e=>setCouponCode(e.target.value)} />
-                      <button onClick={handleApplyCoupon} className="ad-btn ad-btn-ghost rounded-full">Appliquer</button>
+                      <div className="relative flex-1">
+                        <Tag className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-sari-blue pointer-events-none"/>
+                        <input className="w-full pl-11 pr-4 py-3.5 border-2 rounded-2xl bg-white dark:bg-[#1a1a1a] text-base font-mono uppercase focus:border-sari-blue focus:ring-4 focus:ring-sari-blue/10 outline-none transition placeholder:text-gray-400 border-gray-200 dark:border-gray-700" placeholder="SARI10" value={couponCode} onChange={e=>setCouponCode(e.target.value)} />
+                      </div>
+                      <button onClick={handleApplyCoupon} className="px-6 py-3.5 bg-sari-blue text-white rounded-2xl font-black hover:bg-[#138ab0] transition shadow">Appliquer</button>
                     </div>
                   ) : (
                     <div className="flex items-center justify-between bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 p-3 rounded-xl">
@@ -470,7 +482,7 @@ export default function CartPage() {
                   )}
                   {couponError && <p className="text-xs text-red-600 bg-red-50 border border-red-200 p-2 rounded-lg">{couponError}</p>}
                 </div>
-                <div className="space-y-2 text-sm border-t pt-4" style={{borderColor:'var(--ad-line)'}}>
+                <div className="space-y-2 text-sm border-t pt-4" className="border-gray-200 dark:border-gray-700">
                   <div className="flex justify-between"><span className="text-gray-600">Sous-total HT</span><strong>{formatMoney(totals.subtotal)}</strong></div>
                   {totals.productDiscount>0 && <div className="flex justify-between text-emerald-600"><span className="flex items-center gap-1"><Gift className="w-3 h-3"/> Remises produits</span><strong>-{formatMoney(totals.productDiscount)}</strong></div>}
                   {totals.globalDiscount>0 && <div className="flex justify-between text-emerald-600"><span>Remise globale</span><strong>-{formatMoney(totals.globalDiscount)}</strong></div>}
@@ -484,11 +496,11 @@ export default function CartPage() {
                       <span className="font-bold">{formatMoney(line.amount)}</span>
                     </div>
                   ))}
-                  <div className="flex justify-between text-lg font-black pt-3 border-t" style={{borderColor:'var(--ad-line)'}}><span>Total TTC</span><span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-emerald-600">{formatMoney(totals.total)}</span></div>
-                  <p className="text-[11px] text-gray-500 flex gap-1"><Info className="w-3 h-3 mt-0.5"/> TVA détaillée par article incluse. Livraison recalculée selon pays/zone à l'étape suivante. Hors Algérie disponible.</p>
+                  <div className="flex justify-between text-lg font-black pt-3 border-t" className="border-gray-200 dark:border-gray-700"><span>Total TTC</span><span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-emerald-600">{formatMoney(totals.total)}</span></div>
+                  <p className="text-sm text-gray-600 flex gap-1"><Info className="w-3 h-3 mt-0.5"/> TVA détaillée par article incluse. Livraison recalculée selon pays/zone à l'étape suivante. Hors Algérie disponible.</p>
                 </div>
                 <button onClick={()=>setStep(2)} className="w-full bg-gradient-to-r from-sari-blue to-blue-700 text-white py-3.5 font-black shadow-xl flex items-center justify-center gap-2 rounded-full hover:scale-[1.02] transition"><Truck className="w-5 h-5"/> Suivant : Livraison <ArrowRight className="w-5 h-5"/></button>
-                <Link href={`/${locale}/products`} className="w-full ad-btn ad-btn-ghost justify-center flex rounded-full">← Retour boutique</Link>
+                <Link href={`/${locale}/products`} className="w-full px-5 py-3 bg-white border-2 border-gray-200 rounded-full font-bold hover:border-sari-blue hover:text-sari-blue transition flex items-center justify-center gap-2">← Retour boutique</Link>
               </div>
             </div>
           </div>
@@ -498,22 +510,43 @@ export default function CartPage() {
           <div className="grid lg:grid-cols-3 gap-6 md:gap-8">
             <div className="lg:col-span-2 space-y-6">
               <div className="bg-white dark:bg-[#1a1a1a] p-6 border border-gray-200 dark:border-gray-800 shadow-2xl rounded-2xl space-y-5">
-                <h3 className="font-black text-lg flex items-center gap-2"><span className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 text-white flex items-center justify-center"><MapPin className="w-5 h-5"/></span> Livraison — <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-600">Algérie & hors Algérie</span></h3>
+                <h3 className="font-black text-xl flex items-center gap-3 text-sari-dark dark:text-white"><span className="w-10 h-10 rounded-xl bg-sari-blue text-white flex items-center justify-center shadow"><MapPin className="w-5 h-5"/></span> Livraison — <span className="text-sari-blue">Algérie & hors Algérie</span></h3>
+                {!isAuthenticated && (
+                  <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 bg-gradient-to-r from-sari-blue/10 to-sari-lime/10 border-2 border-sari-blue/20 p-4 rounded-2xl">
+                    <div className="flex gap-3">
+                      <span className="w-10 h-10 rounded-full bg-sari-blue text-white flex items-center justify-center shrink-0"><LogIn className="w-5 h-5"/></span>
+                      <div>
+                        <div className="font-black text-sari-dark dark:text-white">Gagnez du temps — connectez-vous</div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">Récupérez automatiquement nom, email, téléphone et adresse enregistrés.</div>
+                      </div>
+                    </div>
+                    <button onClick={()=>{ localStorage.setItem('sari_pending_cart', JSON.stringify(cart)); router.push(`/${locale}/connexion?source=panier`); }} className="px-6 py-3 bg-sari-blue hover:bg-[#138ab0] text-white rounded-full font-black shadow-lg flex items-center gap-2 whitespace-nowrap transition"><LogIn className="w-4 h-4"/> Se connecter</button>
+                  </div>
+                )}
+                {isAuthenticated && (
+                  <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 p-3 rounded-2xl flex items-center gap-2 text-sm text-emerald-800 dark:text-emerald-200"><CheckCircle className="w-5 h-5"/> Connecté en tant que <strong>{(user as any)?.name}</strong> — vos infos sont pré-remplies, modifiables.</div>
+                )}
                 <div className="grid md:grid-cols-3 gap-3">
                   <label className="space-y-1.5">
-                    <span className="text-[11px] font-black uppercase tracking-widest flex items-center gap-1" style={{color:'var(--ad-muted)'}}><Globe className="w-3 h-3"/> Pays</span>
-                    <select className={`ad-select rounded-full ${errors.country?'border-red-400':''}`} value={country} onChange={e=>{setCountry(e.target.value); setErrors({...errors, country: ''})}}>
+                    <span className="text-sm font-black uppercase tracking-widest flex items-center gap-1" className="text-gray-500"><Globe className="w-3 h-3"/> Pays</span>
+                    <div className="relative">
+                      <Globe className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-sari-blue pointer-events-none"/>
+                      <select className={`w-full pl-10 pr-10 py-3.5 border-2 rounded-2xl bg-white dark:bg-[#1a1a1a] text-base font-medium focus:border-sari-blue focus:ring-4 focus:ring-sari-blue/10 outline-none transition appearance-none ${errors.country?'border-red-300':'border-gray-200 dark:border-gray-700'}`} value={country} onChange={e=>{setCountry(e.target.value); setErrors({...errors, country: ''})}}>
                       {COUNTRIES.map(c=> <option key={c.code} value={c.code}>{c.flag} {c.label}</option>)}
-                    </select>
+                      </select>
+                    </div>
                     {errors.country && <p className="text-xs text-red-600">{errors.country}</p>}
                   </label>
                   <label className="space-y-1.5 md:col-span-2">
-                    <span className="text-[11px] font-black uppercase tracking-widest flex items-center gap-1" style={{color:'var(--ad-muted)'}}><MapPin className="w-3 h-3"/> Zone / Wilaya</span>
-                    <select className={`ad-select rounded-full ${errors.zone?'border-red-400':''}`} value={selectedZone} onChange={e=>{setSelectedZone(e.target.value); setErrors({...errors, zone:''})}}>
+                    <span className="text-sm font-black uppercase tracking-widest flex items-center gap-1" className="text-gray-500"><MapPin className="w-3 h-3"/> Zone / Wilaya</span>
+                    <div className="relative">
+                      <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-sari-blue pointer-events-none"/>
+                      <select className={`w-full pl-10 pr-10 py-3.5 border-2 rounded-2xl bg-white dark:bg-[#1a1a1a] text-base font-medium focus:border-sari-blue focus:ring-4 focus:ring-sari-blue/10 outline-none transition appearance-none ${errors.zone?'border-red-300':'border-gray-200 dark:border-gray-700'}`} value={selectedZone} onChange={e=>{setSelectedZone(e.target.value); setErrors({...errors, zone:''})}}>
                       {availableZones.length ? availableZones.map(z=> (
                         <option key={z.code} value={z.code}>{z.label} {z.code} — {z.deliveryDays} {z.codAllowed?'· COD':''}</option>
                       )) : <option value="">Aucune zone active pour ce pays</option>}
-                    </select>
+                      </select>
+                    </div>
                     {errors.zone && <p className="text-xs text-red-600">{errors.zone}</p>}
                   </label>
                 </div>
@@ -524,7 +557,7 @@ export default function CartPage() {
                 {showZonesHelp && shopConfig && (
                   <div className="grid md:grid-cols-2 gap-2 text-xs max-h-64 overflow-auto p-1">
                     {shopConfig.saleZones.map(z=> (
-                      <div key={z.code} className={`p-2.5 rounded-xl border flex justify-between items-center ${z.active?'bg-white dark:bg-[#111]':'bg-gray-100 opacity-50'}`} style={{borderColor:'var(--ad-line)'}}>
+                      <div key={z.code} className={`p-2.5 rounded-xl border flex justify-between items-center ${z.active?'bg-white dark:bg-[#111]':'bg-gray-100 opacity-50'}`} className="border-gray-200 dark:border-gray-700">
                         <span><strong>{z.label}</strong> <span className="font-mono text-[11px]">{z.code}</span> · {z.deliveryDays}</span>
                         <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${z.active?'bg-green-100 text-green-700':'bg-red-100 text-red-700'}`}>{z.active?'Disponible':'Indisponible'}</span>
                       </div>
@@ -534,35 +567,50 @@ export default function CartPage() {
 
                 <div className="grid md:grid-cols-2 gap-4">
                   <label className="space-y-1.5">
-                    <span className="text-[11px] font-black uppercase tracking-widest flex items-center gap-1" style={{color:'var(--ad-muted)'}}><Building2 className="w-3 h-3"/> Nom complet *</span>
-                    <input className={`ad-input rounded-full ${errors.name?'border-red-400':''}`} placeholder="Nom et prénom" value={customerName} onChange={e=>{setCustomerName(e.target.value); setErrors({...errors, name:''})}} />
+                    <span className="text-sm font-black uppercase tracking-widest flex items-center gap-1" className="text-gray-500"><Building2 className="w-3 h-3"/> Nom complet *</span>
+                    <div className="relative">
+                      <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-sari-blue pointer-events-none"/>
+                      <input className={`w-full pl-11 pr-4 py-3.5 border-2 rounded-2xl bg-white dark:bg-[#1a1a1a] text-base focus:border-sari-blue focus:ring-4 focus:ring-sari-blue/10 outline-none transition placeholder:text-gray-400 ${errors.name?'border-red-300':'border-gray-200 dark:border-gray-700'}`} placeholder="Nom et prénom" value={customerName} onChange={e=>{setCustomerName(e.target.value); setErrors({...errors, name:''})}} />
+                    </div>
                     {errors.name && <p className="text-xs text-red-600">{errors.name}</p>}
                   </label>
                   <label className="space-y-1.5">
-                    <span className="text-[11px] font-black uppercase tracking-widest flex items-center gap-1" style={{color:'var(--ad-muted)'}}><Home className="w-3 h-3"/> Société (optionnel)</span>
-                    <input className="ad-input rounded-full" placeholder="SARI Système" value={customerCompany} onChange={e=>setCustomerCompany(e.target.value)} />
+                    <span className="text-sm font-black uppercase tracking-widest flex items-center gap-1" className="text-gray-500"><Home className="w-3 h-3"/> Société (optionnel)</span>
+                    <div className="relative">
+                      <Home className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-sari-blue/60 pointer-events-none"/>
+                      <input className="w-full pl-11 pr-4 py-3.5 border-2 rounded-2xl bg-white dark:bg-[#1a1a1a] text-base focus:border-sari-blue focus:ring-4 focus:ring-sari-blue/10 outline-none transition placeholder:text-gray-400 border-gray-200 dark:border-gray-700" placeholder="Société (optionnel)" value={customerCompany} onChange={e=>setCustomerCompany(e.target.value)} />
+                    </div>
                   </label>
                   <label className="space-y-1.5">
-                    <span className="text-[11px] font-black uppercase tracking-widest flex items-center gap-1" style={{color:'var(--ad-muted)'}}><Phone className="w-3 h-3"/> Téléphone *</span>
-                    <input className={`ad-input rounded-full ${errors.phone?'border-red-400':''}`} placeholder="+213 5xx xxx xxx" value={customerPhone} onChange={e=>{setCustomerPhone(e.target.value); setErrors({...errors, phone:''})}} />
+                    <span className="text-sm font-black uppercase tracking-widest flex items-center gap-1" className="text-gray-500"><Phone className="w-3 h-3"/> Téléphone *</span>
+                    <div className="relative">
+                      <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-sari-blue pointer-events-none"/>
+                      <input className={`w-full pl-11 pr-4 py-3.5 border-2 rounded-2xl bg-white dark:bg-[#1a1a1a] text-base font-medium focus:border-sari-blue focus:ring-4 focus:ring-sari-blue/10 outline-none transition placeholder:text-gray-400 ${errors.phone?'border-red-300':'border-gray-200 dark:border-gray-700'}`} placeholder="+213 5xx xxx xxx" value={customerPhone} onChange={e=>{ const v=e.target.value.replace(/[^0-9+\s\-()]/g,''); setCustomerPhone(v); setErrors({...errors, phone:''})}} inputMode="tel" />
+                    </div>
                     {errors.phone && <p className="text-xs text-red-600">{errors.phone}</p>}
                   </label>
                   <label className="space-y-1.5">
-                    <span className="text-[11px] font-black uppercase tracking-widest flex items-center gap-1" style={{color:'var(--ad-muted)'}}><Mail className="w-3 h-3"/> Email *</span>
-                    <input className={`ad-input rounded-full ${errors.email?'border-red-400':''}`} placeholder="vous@exemple.com" value={customerEmail} onChange={e=>{setCustomerEmail(e.target.value); setErrors({...errors, email:''})}} />
+                    <span className="text-sm font-black uppercase tracking-widest flex items-center gap-1" className="text-gray-500"><Mail className="w-3 h-3"/> Email *</span>
+                    <div className="relative">
+                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-sari-blue pointer-events-none"/>
+                      <input className={`w-full pl-11 pr-4 py-3.5 border-2 rounded-2xl bg-white dark:bg-[#1a1a1a] text-base focus:border-sari-blue focus:ring-4 focus:ring-sari-blue/10 outline-none transition placeholder:text-gray-400 ${errors.email?'border-red-300':'border-gray-200 dark:border-gray-700'}`} placeholder="vous@exemple.com" value={customerEmail} onChange={e=>{setCustomerEmail(e.target.value); setErrors({...errors, email:''})}} inputMode="email" />
+                    </div>
                     {errors.email && <p className="text-xs text-red-600">{errors.email}</p>}
                   </label>
                 </div>
 
                 <label className="space-y-1.5 block">
-                  <span className="text-[11px] font-black uppercase tracking-widest flex items-center gap-1" style={{color:'var(--ad-muted)'}}><Home className="w-3 h-3"/> Adresse complète *</span>
-                  <textarea className={`ad-textarea rounded-2xl ${errors.address?'border-red-400':''}`} rows={3} placeholder={country==='DZ'?"Adresse, wilaya, commune, code postal":"Adresse, ville, code postal, pays"} value={deliveryAddress} onChange={e=>{setDeliveryAddress(e.target.value); setErrors({...errors, address:''})}} />
+                  <span className="text-sm font-black uppercase tracking-widest flex items-center gap-1" className="text-gray-500"><Home className="w-3 h-3"/> Adresse complète *</span>
+                  <div className="relative">
+                    <Home className="absolute left-3.5 top-4 w-5 h-5 text-sari-blue pointer-events-none"/>
+                    <textarea className={`w-full pl-11 pr-4 py-3.5 border-2 rounded-2xl bg-white dark:bg-[#1a1a1a] text-base focus:border-sari-blue focus:ring-4 focus:ring-sari-blue/10 outline-none transition placeholder:text-gray-400 min-h-[110px] ${errors.address?'border-red-300':'border-gray-200 dark:border-gray-700'}`} rows={4} placeholder={country==='DZ'?"Adresse, wilaya, commune, code postal":"Adresse, ville, code postal, pays"} value={deliveryAddress} onChange={e=>{setDeliveryAddress(e.target.value); setErrors({...errors, address:''})}} />
+                  </div>
                   {errors.address && <p className="text-xs text-red-600">{errors.address}</p>}
                 </label>
 
                 <label className="space-y-1.5 block">
-                  <span className="text-[11px] font-black uppercase tracking-widest flex items-center gap-1" style={{color:'var(--ad-muted)'}}><Info className="w-3 h-3"/> Notes / Rappels</span>
-                  <textarea className="ad-textarea rounded-2xl" rows={2} placeholder="Instructions de livraison, créneau, étage, hors Algérie : douane, etc." value={customerNotes} onChange={e=>setCustomerNotes(e.target.value)} />
+                  <span className="text-sm font-black uppercase tracking-widest flex items-center gap-1" className="text-gray-500"><Info className="w-3 h-3"/> Notes / Rappels</span>
+                  <textarea className={`w-full px-4 py-3 border-2 rounded-2xl bg-white dark:bg-[#1a1a1a] text-base focus:border-sari-blue focus:ring-4 focus:ring-sari-blue/10 outline-none transition min-h-[140px] ${errors.notes?'border-red-300': 'border-gray-200 dark:border-gray-700'}`} rows={5} placeholder="Instructions de livraison, créneau, étage, précisions douane si hors Algérie..." value={customerNotes} onChange={e=>setCustomerNotes(e.target.value)} />
                 </label>
 
                 {shopConfig?.deliveryNotes && (
@@ -574,17 +622,17 @@ export default function CartPage() {
                 {/* Captcha configurable */}
                 {antispamRequired && (
                   <div className={`p-4 rounded-xl border ${errors.captcha?'border-red-400 bg-red-50':'bg-amber-50 dark:bg-amber-900/20 border-amber-200'}`}>
-                    <div className="text-xs font-black uppercase tracking-widest flex items-center gap-2 mb-2"><ShieldCheck className="w-4 h-4"/> Vérification anti-robot *</div>
+                    <div className="text-sm font-black uppercase tracking-widest flex items-center gap-2 mb-2"><ShieldCheck className="w-4 h-4"/> Vérification anti-robot *</div>
                     <ImageCaptcha onChange={(ok)=>{setCaptchaOk(ok); if(ok) setErrors({...errors, captcha:''})}} />
                     {errors.captcha && <p className="text-xs text-red-600 mt-2">{errors.captcha}</p>}
-                    <p className="text-[11px] opacity-60 mt-1">Captcha configurable dans Admin → Paramètres → Sécurité (siteCaptcha).</p>
+                    <p className="text-sm opacity-70 mt-1">Captcha configurable dans Admin → Paramètres → Sécurité (siteCaptcha).</p>
                   </div>
                 )}
               </div>
 
               <div className={`p-4 rounded-2xl border-2 space-y-2 ${errors.cgv?'border-red-400 bg-red-50':'bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-amber-300'}`}>
                 <button type="button" onClick={()=>setShowCgv(!showCgv)} className="w-full flex items-center justify-between font-black text-sm"><span className="flex items-center gap-2"><ScrollText className="w-4 h-4"/> Conditions de vente *</span><span className="text-xs underline">{showCgv?'Masquer':'Afficher'}</span></button>
-                {showCgv && <div className="whitespace-pre-wrap leading-relaxed text-xs bg-white dark:bg-[#111] p-3 rounded-xl border max-h-40 overflow-auto" style={{color:'var(--ad-muted)'}}>{shopConfig?.saleConditions || 'Aucune condition configurée.'}</div>}
+                {showCgv && <div className="whitespace-pre-wrap leading-relaxed text-sm bg-white dark:bg-[#111] p-4 rounded-xl border-2 border-amber-200 max-h-56 overflow-auto text-sari-dark dark:text-gray-200">{shopConfig?.saleConditions || 'Aucune condition configurée.'}</div>}
                 <label className={`flex items-start gap-2 pt-2 cursor-pointer p-2 rounded-xl ${saleConditionsAccepted?'bg-green-100 border border-green-300':'bg-white border'}`}>
                   <input type="checkbox" checked={saleConditionsAccepted} onChange={e=>{setSaleConditionsAccepted(e.target.checked); setErrors({...errors, cgv:''})}} className="mt-0.5 w-4 h-4 accent-sari-blue"/>
                   <span className="text-sm font-bold">J'ai lu et j'accepte les conditions de vente et les zones de livraison (Algérie & hors Algérie)</span>
@@ -605,9 +653,9 @@ export default function CartPage() {
                   <div className="flex justify-between text-emerald-600"><span>Remises</span><strong>-{formatMoney(totals.discount)}</strong></div>
                   <div className="flex justify-between"><span>Livraison</span><strong>{totals.shipping?formatMoney(totals.shipping):'Offerte'}</strong></div>
                   <div className="flex justify-between"><span>Taxes (TVA par article incluse)</span><strong>{formatMoney(totals.taxTotal)}</strong></div>
-                  <div className="flex justify-between font-black text-base pt-2 border-t" style={{borderColor:'var(--ad-line)'}}><span>Total</span><span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-emerald-600">{formatMoney(totals.total)}</span></div>
+                  <div className="flex justify-between font-black text-base pt-2 border-t" className="border-gray-200 dark:border-gray-700"><span>Total</span><span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-emerald-600">{formatMoney(totals.total)}</span></div>
                 </div>
-                <div className="text-[11px] bg-gray-50 dark:bg-[#111] p-3 rounded-xl border">
+                <div className="text-sm bg-gray-50 dark:bg-[#111] p-3 rounded-xl border">
                   <div className="font-bold flex items-center gap-1"><Flag className="w-3 h-3"/> {COUNTRIES.find(c=>c.code===country)?.flag} {COUNTRIES.find(c=>c.code===country)?.label} · {formatZoneLabel(selectedZone)}</div>
                   <div className="mt-1 flex flex-wrap gap-1">{cart.map((it,i)=><span key={i} className="px-2 py-0.5 rounded-full bg-white dark:bg-[#1a1a1a] border text-[11px] font-bold">×{(it as any).quantity} {(it as any).name.slice(0,12)}</span>)}</div>
                 </div>
@@ -623,14 +671,14 @@ export default function CartPage() {
               <div className="bg-white dark:bg-[#1a1a1a] p-6 border border-gray-200 dark:border-gray-800 shadow-2xl rounded-2xl">
                 <h3 className="font-black text-lg mb-4 flex items-center gap-2"><span className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-blue-600 text-white flex items-center justify-center"><CreditCard className="w-5 h-5"/></span> Paiement & Confirmation</h3>
                 <div className="grid md:grid-cols-2 gap-3 text-sm">
-                  <div className="bg-gray-50 dark:bg-[#111] p-3 rounded-xl border"><div className="text-[11px] uppercase font-black opacity-60">Pays / Zone</div><div className="font-black">{COUNTRIES.find(c=>c.code===country)?.flag} {COUNTRIES.find(c=>c.code===country)?.label} · {formatZoneLabel(selectedZone)}</div></div>
-                  <div className="bg-gray-50 dark:bg-[#111] p-3 rounded-xl border"><div className="text-[11px] uppercase font-black opacity-60">Client</div><div className="font-bold truncate">{customerName || '—'} · {customerEmail}</div><div className="text-xs opacity-60">{customerPhone} {customerCompany && `· ${customerCompany}`}</div></div>
-                  <div className="bg-gray-50 dark:bg-[#111] p-3 rounded-xl border md:col-span-2"><div className="text-[11px] uppercase font-black opacity-60">Adresse</div><div className="font-medium">{deliveryAddress || '—'}</div></div>
+                  <div className="bg-gray-50 dark:bg-[#111] p-3 rounded-xl border"><div className="text-sm uppercase font-black opacity-60">Pays / Zone</div><div className="font-black">{COUNTRIES.find(c=>c.code===country)?.flag} {COUNTRIES.find(c=>c.code===country)?.label} · {formatZoneLabel(selectedZone)}</div></div>
+                  <div className="bg-gray-50 dark:bg-[#111] p-3 rounded-xl border"><div className="text-sm uppercase font-black opacity-60">Client</div><div className="font-bold truncate">{customerName || '—'} · {customerEmail}</div><div className="text-xs opacity-60">{customerPhone} {customerCompany && `· ${customerCompany}`}</div></div>
+                  <div className="bg-gray-50 dark:bg-[#111] p-3 rounded-xl border md:col-span-2"><div className="text-sm uppercase font-black opacity-60">Adresse</div><div className="font-medium">{deliveryAddress || '—'}</div></div>
                   <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-xl border border-blue-200 flex justify-between items-center"><span className="text-xs font-bold">Livraison</span><strong>{formatMoney(totals.shipping)}</strong></div>
                   <div className="bg-emerald-50 dark:bg-emerald-900/20 p-3 rounded-xl border border-emerald-200 flex justify-between items-center"><span className="text-xs font-bold">Articles</span><span className="font-black">{totalQty} unités · {cart.length} réf.</span></div>
                 </div>
                 <div className="mt-6">
-                  <div className="text-xs font-black uppercase tracking-widest mb-2 flex items-center gap-2"><Package className="w-3 h-3"/> Détail articles — quantités visibles</div>
+                  <div className="text-sm font-black uppercase tracking-widest mb-2 flex items-center gap-2"><Package className="w-3 h-3"/> Détail articles — quantités visibles</div>
                   <div className="space-y-2 max-h-72 overflow-auto pr-1">
                     {cart.map((it,i)=>{
                       const anyIt:any=it;
@@ -656,7 +704,7 @@ export default function CartPage() {
                   <button onClick={()=>setStep(2)} className="ad-btn ad-btn-ghost rounded-full"><ArrowLeft className="w-4 h-4"/> Retour livraison</button>
                   <button onClick={handleCheckout} className="ad-btn bg-gradient-to-r from-emerald-500 to-blue-600 text-white rounded-full ml-auto inline-flex items-center gap-2 px-8 py-3 font-black shadow-xl hover:scale-105 transition"><ShieldCheck className="w-5 h-5"/> Confirmer la commande</button>
                 </div>
-                <p className="text-[11px] text-gray-500 mt-3 bg-gray-50 dark:bg-[#111] p-3 rounded-xl border">En confirmant, vous acceptez les conditions de vente. Conditions affichées et validées à l'étape précédente. Vous pourrez encore annuler un article depuis le suivi commande tant que le statut est « En attente ». Livraison hors Algérie selon zone et frais indiqués.</p>
+                <p className="text-sm text-gray-600 mt-3 bg-gray-50 dark:bg-[#111] p-3 rounded-xl border">En confirmant, vous acceptez les conditions de vente. Conditions affichées et validées à l'étape précédente. Vous pourrez encore annuler un article depuis le suivi commande tant que le statut est « En attente ». Livraison hors Algérie selon zone et frais indiqués.</p>
               </div>
               <div className="flex gap-2">
                 <Link href={`/${locale}/products`} className="ad-btn ad-btn-ghost rounded-full">Continuer les achats</Link>
@@ -675,8 +723,8 @@ export default function CartPage() {
                   {totals.taxLines.map(l=>(
                     <div key={l.id} className="flex justify-between text-xs text-gray-600 bg-white dark:bg-[#111] p-2 rounded-lg border"><span>{l.name}</span><span className="font-bold">{formatMoney(l.amount)}</span></div>
                   ))}
-                  <div className="flex justify-between font-black text-lg pt-2 border-t" style={{borderColor:'var(--ad-line)'}}><span>Total TTC</span><span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-emerald-600">{formatMoney(totals.total)}</span></div>
-                  <div className="text-[11px] text-gray-500 text-center">{totalQty} unités · TVA par article détaillée · hors DZ inclus</div>
+                  <div className="flex justify-between font-black text-lg pt-2 border-t" className="border-gray-200 dark:border-gray-700"><span>Total TTC</span><span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-emerald-600">{formatMoney(totals.total)}</span></div>
+                  <div className="text-sm text-gray-600 text-center">{totalQty} unités · TVA par article détaillée · hors DZ inclus</div>
                 </div>
                 <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl text-xs flex gap-2 border border-green-200">
                   <Shield className="w-4 h-4 text-green-600 shrink-0"/><span>Paiement sécurisé — zones Algérie & hors Algérie, CGV vérifiées, captcha {antispamRequired?'activé':'désactivé'} (configurable).</span>

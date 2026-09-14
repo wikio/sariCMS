@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import {
-  CreditCard, User, Building, FileText, Globe, Lock, Copy, Upload,
+  CreditCard, User, Building, FileText, Globe, Lock, Copy, Upload, ArrowLeft,
   CheckCircle, AlertCircle, Clock, Info, ExternalLink, Send, Loader, Banknote,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -118,6 +118,8 @@ export default function PaymentPage() {
       }
       setIsProcessing(false);
       setCompleted(true);
+      // Garde le panier jusqu'à confirmation : on ne vide qu'après paiement enregistré, mais on garde une copie pending pour restauration si besoin
+      try { localStorage.removeItem('sari_pending_cart'); } catch {}
       clearCart();
       setTimeout(() => router.push(`/${locale}/dashboard`), 1600);
     }, 1500);
@@ -184,10 +186,12 @@ export default function PaymentPage() {
           { label: t('cart', { defaultMessage: 'Panier' }), href: '/panier' },
           { label: t('payment', { defaultMessage: 'Paiement' }) },
         ]} />
+        <button onClick={()=>router.push(`/${locale}/cart`)} className="mb-6 inline-flex items-center gap-2 px-5 py-3 bg-white dark:bg-[#1a1a1a] border-2 border-gray-200 dark:border-gray-700 rounded-full font-bold hover:border-sari-blue hover:text-sari-blue transition shadow-sm"><ArrowLeft className="w-4 h-4"/> Retour au panier — garder les articles jusqu'à confirmation</button>
 
-        <h1 className="text-4xl font-bold text-sari-dark dark:text-white mb-8">
+        <h1 className="text-4xl font-bold text-sari-dark dark:text-white mb-2">
           {t('title', { defaultMessage: 'Finaliser votre commande' })}
         </h1>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-8 flex items-center gap-2"><Info className="w-4 h-4 text-sari-blue"/> Vos articles restent dans le panier jusqu'à validation du paiement. Vous pouvez revenir en arrière à tout moment sans perdre votre sélection.</p>
 
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Colonne principale */}

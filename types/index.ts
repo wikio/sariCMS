@@ -86,7 +86,13 @@ export interface Product {
   options?: Array<{
     name: string;
     choices: string[];
+    /** Prix spécifique par choix (ex: taille M = 1500 DA, L = 1700 DA). Si absent, utilise prix de base. */
+    prices?: Record<string, number>;
+    /** SKU suffixe par choix */
+    skus?: Record<string, string>;
   }>;
+  /** Prix variantes rapides (alternative plate : clé "Taille:M" -> prix) */
+  variantPrices?: Record<string, number>;
   catalogPdf?: string;
   // --- Commerce enrichi (frais, remises, TVA, zones) ---
   /** Code produit / SKU */
