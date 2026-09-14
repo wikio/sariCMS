@@ -3,7 +3,8 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
-// codes et sync CRM pour persistance BD et format SARI-WCMD{XX}-{ID}
+import { nextCodeFor } from '@/lib/codes';
+import { loadOrders as loadCrmOrders, saveOrders as saveCrmOrders, loadQuotes as loadCrmQuotes, saveQuotes as saveCrmQuotes } from '@/lib/crm-store';
 
 export interface OrderItem {
   id: number;
@@ -83,7 +84,6 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
     let code = (orderData as any).code as string | undefined;
     if (!code) {
       try {
-        const { nextCodeFor } = require('@/lib/codes');
         const existing: string[] = JSON.parse(localStorage.getItem('sari_orders') || '[]').map((o: any)=> o.code).filter(Boolean);
         // aussi inclure les commandes CRM stockées (même clé) pour éviter collisions
         code = nextCodeFor('order', existing);
@@ -93,7 +93,6 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
     let quoteRef: string | undefined;
     if ((orderData as any).isQuote || (orderData as any).status === 'quote_requested') {
       try {
-        const { nextCodeFor } = require('@/lib/codes');
         const existingQ: string[] = JSON.parse(localStorage.getItem('sari_quotes') || '[]').map((q: any)=> q.reference).filter(Boolean);
         quoteRef = nextCodeFor('quote', existingQ);
       } catch { quoteRef = undefined; }
@@ -108,10 +107,10 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
     setOrders((prev) => [newOrder, ...prev]);
     // Persistance CRM (admin) : convertit vers le format Order CRM (lib/crm-store) pour visibilité admin + numéro formaté
     try {
-      const { loadOrders, saveOrders, loadQuotes, saveQuotes } = require('@/lib/crm-store');
+
       // Si devis demandé, créer un devis CRM plutôt qu'une commande
       if ((newOrder as any).isQuote || (newOrder as any).status === 'quote_requested') {
-        const quotes = loadQuotes();
+        const quotes = loadCrmQuotes();
         // évite doublon si déjà présent
         const qItems = (newOrder.items || []).map((it: any)=> ({ id: Number(it.id)||Date.now(), name: it.name, quantity: it.quantity||1, price: Number(String(it.price).replace(/[^0-9.]/g,''))||0, category: it.category }));
         const qTotal = Number((newOrder as any).grandTotal || (newOrder as any).totalAmount || 0);
@@ -131,9 +130,9 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
           address: (newOrder as any).deliveryAddress || '',
           country: (newOrder as any).country || '',
         };
-        saveQuotes([newQuote, ...quotes]);
+        saveCrmQuotes([newQuote, ...quotes]);
       } else {
-        const orders = loadOrders();
+        const orders = loadCrmOrders();
         const cItems = (newOrder.items || []).map((it: any)=> ({ id: Number(it.id)||Date.now(), name: it.name, quantity: it.quantity||1, price: Number(String(it.price).replace(/[^0-9.]/g,''))||0, category: it.category }));
         const cTotal = Number((newOrder as any).grandTotal || (newOrder as any).totalAmount || 0);
         const crmOrder: any = {
@@ -161,7 +160,7 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
           coupon: (newOrder as any).coupon || '',
           notes: (newOrder as any).notes || '',
         };
-        saveOrders([crmOrder, ...orders]);
+        saveCrmOrders([crmOrder, ...orders]);
       }
     } catch (e) {
       console.warn('[OrdersContext] sync CRM échouée', e);

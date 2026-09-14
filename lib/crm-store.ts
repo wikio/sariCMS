@@ -293,10 +293,65 @@ export function loadOrders(): Order[] {
   if (!stored) {
     const seeded = backfillOrderCodes(DEFAULT_ORDERS);
     if (typeof window !== 'undefined') localStorage.setItem(ORDERS_KEY, JSON.stringify(seeded));
-    return seeded;
+    return mergeWithCtxOrders(seeded);
   }
   const parsed = readJson<Order[]>(ORDERS_KEY, DEFAULT_ORDERS);
-  return backfillOrderCodes(parsed.map((o) => ({ ...o, total: Number(o.total) || 0, items: normalizeItems(o.items) })));
+  const normalized = backfillOrderCodes(parsed.map((o) => ({ ...o, total: Number(o.total) || 0, items: normalizeItems(o.items) })));
+  return mergeWithCtxOrders(normalized);
+}
+
+function mergeWithCtxOrders(orders: Order[]): Order[] {
+  if (typeof window === 'undefined') return orders;
+  try {
+    const ctxRaw = localStorage.getItem('sari_orders_ctx');
+    if (!ctxRaw) return orders;
+    const ctxParsed = JSON.parse(ctxRaw);
+    if (!Array.isArray(ctxParsed) || !ctxParsed.length) return orders;
+    const existingIds = new Set(orders.map(o=> String(o.id)));
+    const toAdd: Order[] = [];
+    for (const c of ctxParsed) {
+      // Ignore quotes (isQuote true) — they belong to quotes list
+      if ((c as any).isQuote || (c as any).status === 'quote_requested') continue;
+      const idStr = String((c as any).id);
+      if (existingIds.has(idStr)) continue;
+      // Convert ctx shape to CRM Order
+      const code = (c as any).code || nextCodeFor('order', orders.map(o=>o.code||'').concat(toAdd.map(o=>o.code||'')));
+      const cTotal = Number((c as any).grandTotal || (c as any).totalAmount || 0);
+      const cItems = Array.isArray((c as any).items) ? (c as any).items.map((it:any)=> ({ id: Number(it.id)||Date.now(), name: it.name, quantity: Number(it.quantity)||1, price: Number(String(it.price).replace(/[^0-9.]/g,''))||0, category: it.category })) : [];
+      const crm: Order = {
+        id: Number((c as any).id) || Date.now(),
+        code,
+        client: (c as any).customerName || 'Client',
+        email: (c as any).customerEmail || '',
+        phone: (c as any).customerPhone || '',
+        company: (c as any).customerCompany || '',
+        date: (c as any).createdAt ? String((c as any).createdAt).slice(0,10) : new Date().toISOString().slice(0,10),
+        status: 'pending',
+        total: cTotal,
+        subtotal: Number((c as any).subtotal || cTotal),
+        shippingFee: Number((c as any).shippingFee || 0),
+        taxTotal: Number((c as any).taxTotal || (c as any).taxAmount || 0),
+        discountTotal: Number((c as any).discountTotal || 0),
+        items: cItems.length ? cItems : [{ id: 1, name: 'Commande', quantity: 1, price: cTotal }],
+        zone: (c as any).deliveryZone || (c as any).saleZone || '',
+        deliveryZone: (c as any).deliveryZone || '',
+        saleZone: (c as any).saleZone || '',
+        address: (c as any).deliveryAddress || '',
+        deliveryAddress: (c as any).deliveryAddress || '',
+        country: (c as any).country || '',
+        coupon: (c as any).coupon || '',
+        notes: (c as any).notes || '',
+        payment: 'pending',
+      } as Order;
+      toAdd.push(crm);
+      existingIds.add(idStr);
+    }
+    if (toAdd.length) {
+      // Prepend ctx orders so recent client orders appear first
+      return [...toAdd, ...orders];
+    }
+    return orders;
+  } catch { return orders; }
 }
 
 /** Attribue un code auto-généré aux commandes qui n'en ont pas encore. */
@@ -321,13 +376,54 @@ export function loadQuotes(): Quote[] {
   if (!stored) {
     const seeded = backfillQuoteReferences(DEFAULT_QUOTES);
     if (typeof window !== 'undefined') localStorage.setItem(QUOTES_KEY, JSON.stringify(seeded));
-    return seeded;
+    return mergeWithCtxQuotes(seeded);
   }
-  return backfillQuoteReferences(readJson<Quote[]>(QUOTES_KEY, DEFAULT_QUOTES).map((q) => ({
+  const parsed = backfillQuoteReferences(readJson<Quote[]>(QUOTES_KEY, DEFAULT_QUOTES).map((q) => ({
     ...q,
     total: Number(q.total) || 0,
     items: normalizeItems(q.items),
   })));
+  return mergeWithCtxQuotes(parsed);
+}
+
+function mergeWithCtxQuotes(quotes: Quote[]): Quote[] {
+  if (typeof window === 'undefined') return quotes;
+  try {
+    const ctxRaw = localStorage.getItem('sari_orders_ctx');
+    if (!ctxRaw) return quotes;
+    const ctxParsed = JSON.parse(ctxRaw);
+    if (!Array.isArray(ctxParsed) || !ctxParsed.length) return quotes;
+    const existingIds = new Set(quotes.map(q=> String(q.id)));
+    const toAdd: Quote[] = [];
+    for (const c of ctxParsed) {
+      if (!((c as any).isQuote || (c as any).status === 'quote_requested')) continue;
+      const idStr = String((c as any).id);
+      if (existingIds.has(idStr)) continue;
+      const ref = (c as any).code || nextCodeFor('quote', quotes.map(q=>q.reference||'').concat(toAdd.map(q=>q.reference||'')));
+      const qTotal = Number((c as any).grandTotal || (c as any).totalAmount || 0);
+      const qItems = Array.isArray((c as any).items) ? (c as any).items.map((it:any)=> ({ id: Number(it.id)||Date.now(), name: it.name, quantity: Number(it.quantity)||1, price: Number(String(it.price).replace(/[^0-9.]/g,''))||0, category: it.category })) : [];
+      const q: Quote = {
+        id: Number((c as any).id) || Date.now(),
+        client: (c as any).customerName || 'Client',
+        email: (c as any).customerEmail || '',
+        phone: (c as any).customerPhone || '',
+        company: (c as any).customerCompany || '',
+        date: (c as any).createdAt ? String((c as any).createdAt).slice(0,10) : new Date().toISOString().slice(0,10),
+        status: 'pending',
+        total: qTotal,
+        validity: '30 jours',
+        reference: ref,
+        items: qItems.length ? qItems : [{ id: 1, name: 'Devis', quantity: 1, price: qTotal }],
+        zone: (c as any).deliveryZone || (c as any).saleZone || '',
+        address: (c as any).deliveryAddress || '',
+        country: (c as any).country || '',
+      } as Quote;
+      toAdd.push(q);
+      existingIds.add(idStr);
+    }
+    if (toAdd.length) return [...toAdd, ...quotes];
+    return quotes;
+  } catch { return quotes; }
 }
 
 /** Attribue une référence auto-générée aux devis qui n'en ont pas encore. */

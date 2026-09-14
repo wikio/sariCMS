@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Save, Truck, Tag, MapPin, FileText, Globe, RefreshCw, AlertTriangle, CheckCircle, Settings, Download, Plus, Trash2, Eye, EyeOff, Pencil } from 'lucide-react';
+import { Save, Truck, Tag, MapPin, FileText, Globe, RefreshCw, AlertTriangle, CheckCircle, Settings, Download, Plus, Trash2, Eye, EyeOff, Pencil, Search, Banknote } from 'lucide-react';
 import { loadShopConfig, saveShopConfig, DEFAULT_ZONES, formatZoneLabel, type ShopConfig, type ShippingZoneFee, type SaleZone } from '@/lib/shop-config';
+import { loadCurrencies, type Currency } from '@/lib/currencies';
 import { loadTaxes, saveTaxes, type TaxRule } from '@/lib/shop-store';
 
 export default function ShopConfigPage() {
@@ -14,17 +15,26 @@ export default function ShopConfigPage() {
   const [importResult, setImportResult] = useState<string>('');
   const [showApiKey, setShowApiKey] = useState(false);
   const [zoneFilter, setZoneFilter] = useState('');
+  const [currencies, setCurrencies] = useState<Currency[]>([]);
+  const [currencyQuery, setCurrencyQuery] = useState('');
+  const [showCurrencyList, setShowCurrencyList] = useState(false);
 
   useEffect(() => {
     setCfg(loadShopConfig());
     setTaxes(loadTaxes());
+    setCurrencies(loadCurrencies());
     const onTaxChanged = () => setTaxes(loadTaxes());
     const onCfgChanged = () => setCfg(loadShopConfig());
+    const onCurrencyChanged = () => setCurrencies(loadCurrencies());
     window.addEventListener('sari-shop-config-changed', onCfgChanged);
     window.addEventListener('storage', onCfgChanged);
+    window.addEventListener('sari-currencies', onCurrencyChanged as EventListener);
+    window.addEventListener('storage', onCurrencyChanged as EventListener);
     return () => {
       window.removeEventListener('sari-shop-config-changed', onCfgChanged);
       window.removeEventListener('storage', onCfgChanged);
+      window.removeEventListener('sari-currencies', onCurrencyChanged as EventListener);
+      window.removeEventListener('storage', onCurrencyChanged as EventListener);
     };
   }, []);
 
@@ -173,7 +183,55 @@ export default function ShopConfigPage() {
             <h3 className="font-bold flex items-center gap-2"><Truck className="w-5 h-5"/> Livraison globale</h3>
             <label className="block space-y-1">
               <span className="text-xs font-black uppercase tracking-widest" style={{color:'var(--ad-muted)'}}>Devise</span>
-              <input className="ad-input" value={cfg.currency} onChange={e=>update({currency:e.target.value})}/>
+              <div className="relative">
+                <div className="relative">
+                  <Banknote className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style={{color:'var(--ad-muted)'}} />
+                  <input
+                    className="ad-input pl-9 pr-8"
+                    placeholder="DZD — Dinar algérien"
+                    value={showCurrencyList && currencyQuery !== '' ? currencyQuery : cfg.currency}
+                    onChange={e=>{ setCurrencyQuery(e.target.value.toUpperCase()); setShowCurrencyList(true); }}
+                    onFocus={()=>{ setCurrencyQuery(cfg.currency); setShowCurrencyList(true); }}
+                    onBlur={()=> setTimeout(()=>setShowCurrencyList(false), 200)}
+                  />
+                  <Search className="w-3.5 h-3.5 absolute right-3 top-1/2 -translate-y-1/2 opacity-40" />
+                </div>
+                {showCurrencyList && (
+                  <div className="absolute z-20 mt-1 w-full bg-white dark:bg-[#1a1a1a] border rounded-xl shadow-xl max-h-56 overflow-auto" style={{borderColor:'var(--ad-line)'}}>
+                    {currencies
+                      .filter(c=> {
+                        const q = currencyQuery.toLowerCase();
+                        if (!q) return c.active;
+                        return `${c.code} ${c.name} ${c.symbol}`.toLowerCase().includes(q);
+                      })
+                      .map(c=>(
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={()=>{ update({currency: c.code}); setCurrencyQuery(c.code); setShowCurrencyList(false); }}
+                          className={`w-full text-left px-3 py-2 text-sm flex items-center justify-between hover:bg-[var(--ad-surface-2)] ${cfg.currency===c.code ? 'bg-[var(--ad-surface-2)] font-bold' : ''} ${!c.active ? 'opacity-50' : ''}`}
+                        >
+                          <span><span className="font-mono font-black">{c.code}</span> <span className="opacity-60">{c.symbol}</span> — {c.name}</span>
+                          {cfg.currency===c.code && <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full" style={{background:'var(--ad-accent)', color:'#fff'}}>Actuelle</span>}
+                        </button>
+                      ))}
+                    {currencies.filter(c=> {
+                      const q = currencyQuery.toLowerCase();
+                      if (!q) return c.active;
+                      return `${c.code} ${c.name} ${c.symbol}`.toLowerCase().includes(q);
+                    }).length===0 && (
+                      <div className="px-3 py-3 text-xs" style={{color:'var(--ad-muted)'}}>
+                        Aucune devise ne correspond. Vérifiez dans <a href="../currencies" className="underline" style={{color:'var(--ad-accent)'}}>Devises</a> ou saisissez un code ISO (ex: DZD, EUR).
+                      </div>
+                    )}
+                    <div className="border-t p-2 flex gap-2" style={{borderColor:'var(--ad-line)'}}>
+                      <button type="button" onClick={()=>{ if(currencyQuery.trim()) { update({currency: currencyQuery.trim().toUpperCase()}); setShowCurrencyList(false); } }} className="ad-btn ad-btn-ghost text-xs flex-1">Utiliser « {currencyQuery || cfg.currency} »</button>
+                      <a href="../currencies" className="ad-btn ad-btn-ghost text-xs">Gérer les devises</a>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <p className="text-[11px]" style={{color:'var(--ad-muted)'}}>Tapez pour filtrer (code, nom ou symbole). La devise active par défaut est <strong>{currencies.find(c=>c.isDefault)?.code || 'DZD'}</strong>. Gérée dans <a href="../currencies" className="underline" style={{color:'var(--ad-accent)'}}>Devises</a>.</p>
             </label>
             <label className="block space-y-1">
               <span className="text-xs font-black uppercase tracking-widest" style={{color:'var(--ad-muted)'}}>Mode livraison</span>
@@ -205,15 +263,24 @@ export default function ShopConfigPage() {
             {cfg.shipping.mode==='by_zone' && (
               <div className="space-y-2">
                 <div className="text-xs font-black uppercase tracking-widest" style={{color:'var(--ad-muted)'}}>Tarifs par zone</div>
-                <div className="max-h-64 overflow-auto border rounded-lg divide-y" style={{borderColor:'var(--ad-line)'}}>
+                <div className="max-h-64 overflow-auto border rounded-lg" style={{borderColor:'var(--ad-line)'}}>
+                  <div className="sticky top-0 z-10 bg-[var(--ad-surface)] border-b flex items-center gap-2 p-2 text-[11px] font-black uppercase tracking-widest" style={{color:'var(--ad-muted)', borderColor:'var(--ad-line)', background:'var(--ad-surface-2)'}}>
+                    <span className="w-20">Zone</span>
+                    <span className="w-24 text-center">Forfait</span>
+                    <span className="w-20 text-center">+ / article</span>
+                    <span className="w-28 text-center">Franco dès</span>
+                    <span className="flex-1 text-right opacity-0">actions</span>
+                  </div>
+                  <div className="divide-y" style={{borderColor:'var(--ad-line)'}}>
                   {cfg.shipping.zoneFees.map(f=>(
                     <div key={f.zone} className="flex items-center gap-2 p-2 text-sm">
-                      <span className="font-mono w-20">{f.zone}</span>
-                      <input type="number" className="ad-input w-24" value={f.fee} onChange={e=>updateZoneFee(f.zone,'fee',Number(e.target.value))} title="Forfait"/>
-                      <input type="number" className="ad-input w-20" value={f.perQty||0} onChange={e=>updateZoneFee(f.zone,'perQty',Number(e.target.value))} title="+/article"/>
-                      <input type="number" className="ad-input w-28" value={f.freeFrom||''} onChange={e=>updateZoneFee(f.zone,'freeFrom', Number(e.target.value)||undefined)} placeholder="franco" title="Franco"/>
+                      <span className="font-mono w-20 text-xs font-bold">{f.zone}</span>
+                      <input type="number" className="ad-input w-24 text-center" value={f.fee} onChange={e=>updateZoneFee(f.zone,'fee',Number(e.target.value))} title="Forfait fixe (DA)" placeholder="0"/>
+                      <input type="number" className="ad-input w-20 text-center" value={f.perQty||0} onChange={e=>updateZoneFee(f.zone,'perQty',Number(e.target.value))} title="Supplément par article supplémentaire (DA)" placeholder="0"/>
+                      <input type="number" className="ad-input w-28 text-center" value={f.freeFrom||''} onChange={e=>updateZoneFee(f.zone,'freeFrom', Number(e.target.value)||undefined)} placeholder="—" title="Franco à partir de (DA) — vide = jamais franco"/>
                     </div>
                   ))}
+                  </div>
                 </div>
                 <p className="text-xs text-gray-500">Ces tarifs s'appliquent selon la zone choisie par le client dans le tunnel. Utilisez l'onglet Zones pour activer/désactiver des wilayas.</p>
               </div>
