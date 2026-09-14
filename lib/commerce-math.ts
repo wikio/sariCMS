@@ -223,5 +223,6 @@ export function computeTotals(
  */
 export function money(n: number, suffix?: string) {
   const symbol = suffix ?? defaultCurrency().symbol;
-  return `${Math.round(n).toLocaleString('fr-DZ')} ${symbol}`;
+  const v = Number(n) || 0;
+  return `${v.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${symbol}`;
 }

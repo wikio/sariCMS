@@ -129,8 +129,30 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
   };
 
   const saveOpen = (next: Row) => {
+    // — Validations bloquantes avant sauvegarde (évite débordements NaN et incohérences) —
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(next.email || ''));
+    if (!next.client || String(next.client).trim().length < 2) { showToast('Client requis (≥2 caractères)', 'error'); return; }
+    if (!emailOk) { showToast('Email client invalide', 'error'); return; }
+    const items = (next.items || []) as any[];
+    if (!items.length) { showToast('Au moins une ligne d’article requise', 'error'); return; }
+    for (let idx = 0; idx < items.length; idx++) {
+      const it = items[idx] as any;
+      if (!it.name || String(it.name).trim().length < 2) { showToast(`Ligne ${idx + 1}: nom article requis (≥2 car.)`, 'error'); return; }
+      if (!Number.isFinite(Number(it.quantity)) || Math.floor(it.quantity) !== Number(it.quantity) || it.quantity < 1 || it.quantity > 9999) { showToast(`Ligne ${idx + 1}: quantité entière 1–9999`, 'error'); return; }
+      if (!Number.isFinite(Number(it.price)) || it.price < 0 || it.price > 10000000) { showToast(`Ligne ${idx + 1}: PU HT 0–10 000 000`, 'error'); return; }
+      const d = Number(it.discountValue ?? it.discount ?? 0);
+      if (!Number.isFinite(d) || d < 0) { showToast(`Ligne ${idx + 1}: remise ≥0`, 'error'); return; }
+      if (it.discountType === 'percent' && d > 100) { showToast(`Ligne ${idx + 1}: remise % max 100`, 'error'); return; }
+      if (it.discountType === 'fixed' && d * Number(it.quantity) > Number(it.price) * Number(it.quantity) + 1e-9) { showToast(`Ligne ${idx + 1}: remise fixe > total ligne`, 'error'); return; }
+      if (it.vatRate !== undefined && it.vatRate !== null && it.vatRate !== '' && (Number(it.vatRate) < 0 || Number(it.vatRate) > 100)) { showToast(`Ligne ${idx + 1}: TVA 0–100%`, 'error'); return; }
+      if (it.shippingFee !== undefined && it.shippingFee !== null && Number(it.shippingFee) < 0) { showToast(`Ligne ${idx + 1}: frais livraison ≥0`, 'error'); return; }
+    }
+    if ((next as any).globalDiscount !== undefined && (next as any).globalDiscount !== null && (next as any).globalDiscount !== '' && Number((next as any).globalDiscount) < 0) { showToast('Remise globale ≥0', 'error'); return; }
+    if ((next as any).shippingFee !== undefined && (next as any).shippingFee !== null && (next as any).shippingFee !== '' && Number((next as any).shippingFee) < 0) { showToast('Frais livraison global ≥0', 'error'); return; }
+
     const totals = computeTotals(next.items || [], taxes, coupons.find((c) => c.code === next.coupon), { zone: (next as any).zone || (next as any).deliveryZone, shopConfig });
-    const withTotal = { ...next, total: Math.round(totals.total), subtotal: totals.subtotal, taxTotal: totals.taxTotal, shippingFee: totals.shipping, discountTotal: totals.discount } as any;
+    const round2 = (n: number) => Math.round(n * 100) / 100;
+    const withTotal = { ...next, total: round2(totals.total), subtotal: round2(totals.subtotal), taxTotal: round2(totals.taxTotal), shippingFee: round2(totals.shipping), discountTotal: round2(totals.discount), productDiscount: round2(totals.productDiscount), globalDiscount: round2(totals.globalDiscount), couponDiscount: round2(totals.couponDiscount), productShipping: round2(totals.productShipping), globalShipping: round2(totals.globalShipping), taxLines: totals.taxLines.map((t) => ({ ...t, amount: round2(t.amount) })) } as any;
     persist(rows.map((r) => r.id === next.id ? withTotal : r));
     setOpen(withTotal);
     showToast(t('saved', { title }), 'success');
@@ -362,7 +384,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
         title={`${title} ${open ? (('reference' in open && open.reference) || ('code' in open && open.code) || `#${open.id}`) : ''}`}
         subtitle={open?.client}
         onClose={() => { setOpen(null); setHistoryOpen(false); }}
-        width={720}
+        width={860}
         footer={consult ? (
           <>
             <button className="ad-btn ad-btn-ghost" onClick={() => open && setMessageTo(open)}><MessageSquareText className="w-4 h-4" /> Message</button>
@@ -532,32 +554,32 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
             <div className="space-y-3">
               {(open.items || []).map((it: any, i: number) => (
                 <div key={i} className="ad-card p-3 space-y-2 text-sm border" style={{borderColor:'var(--ad-line)'}}>
-                  <div className="grid grid-cols-12 gap-2 items-end">
-                    <div className="col-span-4">
+                  <div className="grid grid-cols-12 gap-2 md:gap-3 items-end">
+                    <div className="col-span-12 sm:col-span-6 md:col-span-3">
                       <label className="block">
-                        <span className="field-label">Article</span>
-                        {consult ? <div className="font-bold pt-1.5">{it.name}</div> : <input className="ad-input" placeholder={t('itemNamePlaceholder')} value={it.name} onChange={(e) => patchItem(i, { name: e.target.value })} />}
+                        <span className="field-label">Article <span className="text-red-500">*</span></span>
+                        {consult ? <div className="font-bold pt-1.5 truncate">{it.name || '—'}</div> : <input className="ad-input w-full min-w-0 truncate" placeholder={t('itemNamePlaceholder')} value={it.name} onChange={(e) => patchItem(i, { name: e.target.value.slice(0, 80) })} required maxLength={80} aria-invalid={!it.name || String(it.name).trim().length < 2} title={!it.name ? 'Nom article requis (2–80 caractères)' : ''} />}
                       </label>
                     </div>
-                    <div className="col-span-1">
+                    <div className="col-span-4 sm:col-span-3 md:col-span-2">
                       <label className="block">
-                        <span className="field-label">Qté</span>
-                        {consult ? <div className="pt-1.5 text-center">× {it.quantity}</div> : <input className="ad-input text-center tabular-nums" type="number" min={1} value={it.quantity} onChange={(e) => patchItem(i, { quantity: Number(e.target.value) })} />}
+                        <span className="field-label">Qté <span className="text-red-500">*</span></span>
+                        {consult ? <div className="pt-1.5 text-center font-bold">× {it.quantity}</div> : <input className="ad-input w-full text-center tabular-nums font-semibold" type="number" inputMode="numeric" step="1" min={1} max={9999} value={it.quantity} onChange={(e) => { let v = Math.floor(Number(e.target.value) || 0); v = Math.max(1, Math.min(9999, v)); patchItem(i, { quantity: v }); }} onBlur={(e)=>{ let v=Math.floor(Number((e.target as HTMLInputElement).value)||1); if(v<1) patchItem(i,{quantity:1}); }} title="Quantité entière 1–9999" aria-invalid={Number(it.quantity) < 1} />}
                       </label>
                     </div>
-                    <div className="col-span-2">
+                    <div className="col-span-8 sm:col-span-3 md:col-span-2">
                       <label className="block">
-                        <span className="field-label">PU HT (DA)</span>
-                        {consult ? <div className="pt-1.5">{Number(it.price).toLocaleString()}</div> : <input className="ad-input text-right tabular-nums" type="number" min={0} value={it.price} onChange={(e) => patchItem(i, { price: Number(e.target.value) })} />}
+                        <span className="field-label">PU HT (DA) <span className="text-red-500">*</span></span>
+                        {consult ? <div className="pt-1.5 font-mono text-right">{Number(it.price).toLocaleString('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2})}</div> : <input className="ad-input w-full text-right tabular-nums font-mono" type="number" inputMode="decimal" step="0.01" min={0} max={10000000} value={it.price} onChange={(e) => { let v = Number(e.target.value); if (isNaN(v)) v = 0; v = Math.max(0, Math.min(10000000, Math.round(v*100)/100)); patchItem(i, { price: v }); }} title="Prix unitaire HT ≥0, 2 décimales, max 10M" aria-invalid={Number(it.price) < 0} />}
                       </label>
                     </div>
-                    <div className="col-span-4">
+                    <div className="col-span-8 sm:col-span-8 md:col-span-3">
                       <label className="block">
                         <span className="field-label">Remise</span>
-                        {consult ? <div className="pt-1.5">-{it.discountValue ?? it.discount ?? 0}{it.discountType==='fixed'?' DA':'%'}</div> : (
-                          <div className="flex gap-1 items-stretch">
-                            <input className="ad-input flex-1 min-w-[88px] text-right tabular-nums" type="number" min={0} placeholder="0" value={it.discountValue ?? it.discount ?? 0} onChange={(e) => patchItem(i, { discountValue: Number(e.target.value), discount: Number(e.target.value) })} />
-                            <select className="ad-select w-12 flex-shrink-0 text-center !px-1 !py-0 text-sm" style={{ paddingRight: '1.4rem' }} value={it.discountType||'percent'} onChange={e=>patchItem(i,{discountType:e.target.value as any})}>
+                        {consult ? <div className="pt-1.5 font-mono">-{Number(it.discountValue ?? it.discount ?? 0).toLocaleString('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2})}{it.discountType==='fixed'?' DA':'%'}</div> : (
+                          <div className="flex gap-1.5 items-stretch">
+                            <input className="ad-input flex-1 min-w-[84px] max-w-[140px] text-right tabular-nums font-mono" type="number" inputMode="decimal" step="0.01" min={0} max={it.discountType==='percent'?100: Number(it.price)*Number(it.quantity)} placeholder="0.00" value={it.discountValue ?? it.discount ?? 0} onChange={(e) => { let v = Number(e.target.value); if (isNaN(v)) v = 0; const cap = it.discountType==='percent'?100: Math.max(0, Number(it.price)*Number(it.quantity)); v = Math.max(0, Math.min(cap, Math.round(v*100)/100)); patchItem(i, { discountValue: v, discount: v }); }} title={it.discountType==='percent' ? 'Remise 0–100% (2 décimales)' : 'Remise fixe ≤ total ligne, 2 décimales'} />
+                            <select className="ad-select w-10 flex-shrink-0 text-center !px-0 !py-0 text-xs font-bold" style={{ paddingRight: '1.1rem', minWidth: '40px' }} value={it.discountType||'percent'} onChange={e=>patchItem(i,{discountType:e.target.value as any})} title="Type remise">
                               <option value="percent">%</option>
                               <option value="fixed">DA</option>
                             </select>
@@ -565,27 +587,27 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                         )}
                       </label>
                     </div>
-                    <div className="col-span-1 font-black text-right flex items-center justify-end self-end h-[2.75rem] pb-1 whitespace-nowrap tabular-nums" title="Total HT remisé">{((Number(it.quantity) * Number(it.price)) - (it.discountType==='fixed' ? (Number(it.discountValue||it.discount||0)*Number(it.quantity)) : (Number(it.quantity) * Number(it.price) * (Number(it.discountValue||it.discount||0)/100)))).toLocaleString()}</div>
+                    <div className="col-span-4 sm:col-span-4 md:col-span-2 font-black text-right flex items-center justify-end self-end h-[2.75rem] pb-1 whitespace-nowrap tabular-nums bg-gray-50 dark:bg-[#1e1e1e] border border-gray-200 dark:border-gray-700 rounded px-2 ml-1" style={{ minWidth: '92px' }} title="Total HT remisé (2 décimales)">{((Number(it.quantity) * Number(it.price)) - (it.discountType==='fixed' ? (Number(it.discountValue||it.discount||0)*Number(it.quantity)) : (Number(it.quantity) * Number(it.price) * (Number(it.discountValue||it.discount||0)/100)))).toLocaleString('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2})}</div>
                   </div>
-                  <div className="grid grid-cols-12 gap-2 items-end">
-                    <div className="col-span-3">
+                  <div className="grid grid-cols-12 gap-2 md:gap-3 items-end">
+                    <div className="col-span-6 sm:col-span-3 md:col-span-3">
                       <label className="block">
                         <span className="field-label">TVA %</span>
-                        {consult ? <div className="pt-1 text-xs">{it.vatRate ?? it.taxRate ?? '—'}{it.vatIncluded?' (incl.)':''}</div> : (
-                          <div className="flex gap-1">
-                            <input className="ad-input" type="number" placeholder="19" value={it.vatRate ?? it.taxRate ?? ''} onChange={e=>patchItem(i,{vatRate:e.target.value==='' ? undefined : Number(e.target.value), taxRate:e.target.value==='' ? undefined : Number(e.target.value)})} />
-                            <label className="flex items-center gap-1 text-xs"><input type="checkbox" checked={!!it.vatIncluded} onChange={e=>patchItem(i,{vatIncluded:e.target.checked})}/>Incl.</label>
+                        {consult ? <div className="pt-1 text-xs font-mono">{it.vatRate ?? it.taxRate ?? '—'}{it.vatIncluded?' (incl.)':''}</div> : (
+                          <div className="flex gap-1 items-center">
+                            <input className="ad-input flex-1 min-w-0 text-right tabular-nums" type="number" inputMode="decimal" step="0.01" min={0} max={100} placeholder="19.00" value={it.vatRate ?? it.taxRate ?? ''} onChange={e=>{ const raw=e.target.value; if(raw===''){ patchItem(i,{vatRate:undefined, taxRate:undefined}); return;} let v=Number(raw); if(isNaN(v)) return; v=Math.max(0, Math.min(100, Math.round(v*100)/100)); patchItem(i,{vatRate:v, taxRate:v});}} title="TVA 0–100%, 2 décimales" aria-invalid={it.vatRate!==undefined && (Number(it.vatRate)<0 || Number(it.vatRate)>100)} />
+                            <label className="flex items-center gap-1 text-xs whitespace-nowrap shrink-0"><input type="checkbox" checked={!!it.vatIncluded} onChange={e=>patchItem(i,{vatIncluded:e.target.checked})}/>Incl.</label>
                           </div>
                         )}
                       </label>
                     </div>
-                    <div className="col-span-4">
+                    <div className="col-span-6 sm:col-span-5 md:col-span-4">
                       <label className="block">
                         <span className="field-label">Livraison article</span>
-                        {consult ? <div className="pt-1 text-xs">{it.shippingFee?`${it.shippingFee} DA ${it.shippingType==='per_qty'?'×Qté':it.shippingType==='free'?'offert':'fixe'}`:'—'}</div> : (
-                          <div className="flex gap-1">
-                            <input className="ad-input" type="number" value={it.shippingFee ?? 0} onChange={e=>patchItem(i,{shippingFee:Number(e.target.value)})} />
-                            <select className="ad-select w-24" value={it.shippingType||'fixed'} onChange={e=>patchItem(i,{shippingType:e.target.value as any})}>
+                        {consult ? <div className="pt-1 text-xs font-mono">{it.shippingFee?`${Number(it.shippingFee).toLocaleString('fr-FR',{minimumFractionDigits:2, maximumFractionDigits:2})} DA ${it.shippingType==='per_qty'?'×Qté':it.shippingType==='free'?'offert':'fixe'}`:'—'}</div> : (
+                          <div className="flex gap-1 items-stretch">
+                            <input className="ad-input flex-1 min-w-[56px] text-right tabular-nums" type="number" inputMode="decimal" step="0.01" min={0} max={100000} placeholder="0.00" value={it.shippingFee ?? 0} onChange={e=>{ let v=Number(e.target.value); if(isNaN(v)) v=0; v=Math.max(0, Math.min(100000, Math.round(v*100)/100)); patchItem(i,{shippingFee:v});}} title="Frais livraison ≥0, max 100k, 2 décimales" />
+                            <select className="ad-select w-20 flex-shrink-0 text-center text-xs !px-1" value={it.shippingType||'fixed'} onChange={e=>patchItem(i,{shippingType:e.target.value as any})} title="Mode livraison">
                               <option value="fixed">Fixe</option>
                               <option value="per_qty">/Qté</option>
                               <option value="free">Offert</option>
@@ -594,13 +616,13 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                         )}
                       </label>
                     </div>
-                    <div className="col-span-4">
+                    <div className="col-span-10 sm:col-span-3 md:col-span-4">
                       <label className="block">
                         <span className="field-label">Zones (vide=toutes)</span>
-                        {consult ? <div className="pt-1 text-xs font-mono">{(it.zones||[]).join(', ') || '—'}</div> : <input className="ad-input font-mono text-xs" placeholder="DZ-16,DZ-31" value={(it.zones||[]).join(',')} onChange={e=>patchItem(i,{zones:e.target.value.split(',').map((s:string)=>s.trim()).filter(Boolean)})} />}
+                        {consult ? <div className="pt-1 text-xs font-mono truncate">{(it.zones||[]).join(', ') || '—'}</div> : <input className="ad-input w-full min-w-0 font-mono text-xs truncate" placeholder="DZ-16,DZ-31" value={(it.zones||[]).join(',')} onChange={e=>patchItem(i,{zones:e.target.value.split(',').map((s:string)=>s.trim()).filter(Boolean).slice(0,10).map(s=>s.slice(0,12))})} pattern="^[A-Z0-9-, ]*$" title="Codes zones séparés par virgule, ex: DZ-16,DZ-31 (max 10)" maxLength={80} />}
                       </label>
                     </div>
-                    {!consult && <button className="ad-btn ad-btn-icon ad-btn-danger col-span-1" onClick={() => setOpen({ ...open, items: (open.items || []).filter((_, j) => j !== i) })}><Trash2 className="w-4 h-4" /></button>}
+                    {!consult && <button className="ad-btn ad-btn-icon ad-btn-danger col-span-2 sm:col-span-1 md:col-span-1 self-end" onClick={() => setOpen({ ...open, items: (open.items || []).filter((_, j) => j !== i) })} title="Supprimer ligne" aria-label="Supprimer ligne"><Trash2 className="w-4 h-4" /></button>}
                   </div>
                 </div>
               ))}
@@ -615,11 +637,11 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
               <div className="grid md:grid-cols-2 gap-3">
                 <label className="block space-y-1.5">
                   <span className="field-label">Code promo / Coupon</span>
-                  <input className="ad-input font-mono" placeholder="SARI10" value={(open as any).coupon || open.coupon || ''} onChange={(e) => setOpen({ ...open, coupon: e.target.value.toUpperCase() } as any)} />
+                  <input className="ad-input w-full min-w-0 font-mono uppercase tracking-wider" placeholder="SARI10" value={(open as any).coupon || open.coupon || ''} onChange={(e) => setOpen({ ...open, coupon: e.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g,'').slice(0,20) } as any)} maxLength={20} pattern="^[A-Z0-9_-]*$" title="Coupon alphanumérique 3–20 car., majuscules" />
                 </label>
                 <label className="block space-y-1.5">
                   <span className="field-label">Zone livraison / vente</span>
-                  <select className="ad-select" value={(open as any).deliveryZone || (open as any).zone || ''} onChange={e=>setOpen({ ...open, deliveryZone: e.target.value, zone: e.target.value } as any)}>
+                  <select className="ad-select w-full min-w-0" value={(open as any).deliveryZone || (open as any).zone || ''} onChange={e=>setOpen({ ...open, deliveryZone: e.target.value, zone: e.target.value } as any)}>
                     <option value="">— Sélection —</option>
                     {(shopConfig?.saleZones || []).map(z=> <option key={z.code} value={z.code}>{z.label} {z.code}{!z.active?' (indisponible)':''}</option>)}
                   </select>
@@ -639,17 +661,17 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                 <div className="grid md:grid-cols-2 gap-3">
                   <label className="block space-y-1.5">
                     <span className="field-label">Frais livraison global (DA) — 0 = auto par zone</span>
-                    <input className="ad-input" type="number" value={(open as any).shippingFee ?? ''} placeholder="auto" onChange={e=>setOpen({ ...open, shippingFee: e.target.value==='' ? undefined : Number(e.target.value)} as any)} />
+                    <input className="ad-input w-full min-w-0 text-right tabular-nums" type="number" inputMode="decimal" step="0.01" min={0} max={100000} value={(open as any).shippingFee ?? ''} placeholder="auto (ex: 450.50)" onChange={e=>{ const raw=e.target.value; if(raw===''){ setOpen({ ...open, shippingFee: undefined } as any); return;} let v=Number(raw); if(isNaN(v)) return; v=Math.max(0, Math.min(100000, Math.round(v*100)/100)); setOpen({ ...open, shippingFee: v } as any);}} title="Frais global ≥0, max 100k, 2 décimales, vide=auto" />
                   </label>
                   <label className="block space-y-1.5">
                     <span className="field-label">Remise globale (DA)</span>
-                    <input className="ad-input" type="number" value={(open as any).globalDiscount ?? ''} placeholder="0" onChange={e=>setOpen({ ...open, globalDiscount: e.target.value==='' ? undefined : Number(e.target.value)} as any)} />
+                    <input className="ad-input w-full min-w-0 text-right tabular-nums" type="number" inputMode="decimal" step="0.01" min={0} max={1000000} value={(open as any).globalDiscount ?? ''} placeholder="0.00" onChange={e=>{ const raw=e.target.value; if(raw===''){ setOpen({ ...open, globalDiscount: undefined } as any); return;} let v=Number(raw); if(isNaN(v)) return; v=Math.max(0, Math.min(1000000, Math.round(v*100)/100)); setOpen({ ...open, globalDiscount: v } as any);}} title="Remise globale ≥0, max 1M, 2 décimales" />
                   </label>
                 </div>
                 <p className="text-xs" style={{color:'var(--ad-muted)'}}>Astuce : laissez vide pour calcul auto par zone (fiches Boutique → Configuration globale). Vous pouvez aussi ajouter un frais par article ci-dessus — les deux s'additionnent.</p>
                 <label className="block space-y-1.5">
                   <span className="field-label">Adresse livraison</span>
-                  <input className="ad-input" placeholder="Adresse complète" value={(open as any).deliveryAddress || (open as any).address || ''} onChange={e=>setOpen({...open, deliveryAddress:e.target.value, address:e.target.value} as any)} />
+                  <input className="ad-input w-full min-w-0" placeholder="Adresse complète (rue, ville, wilaya)" value={(open as any).deliveryAddress || (open as any).address || ''} onChange={e=>setOpen({...open, deliveryAddress:e.target.value.slice(0,120), address:e.target.value.slice(0,120)} as any)} maxLength={120} title="Adresse 5–120 caractères" />
                 </label>
                 <div className="grid md:grid-cols-2 gap-3">
                   <label className="block space-y-1.5">
