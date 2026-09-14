@@ -1,11 +1,11 @@
-// app/[locale]/cart/page.tsx — Tunnel de vente modernisé (3 étapes)
+// app/[locale]/cart/page.tsx — Tunnel convivial 3 étapes (animé, quantités visibles, TVA/remise par article, hors DZ, pays/adresse/tel/email + CGV + captcha configurable)
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ShoppingCart, Trash2, Plus, Minus, CreditCard, Shield, CheckCircle, LogIn, FileText, ArrowLeft, ArrowRight, MapPin, Truck, Tag, AlertTriangle, Info, Package, ClipboardList, X } from 'lucide-react';
+import { ShoppingCart, Trash2, Plus, Minus, CreditCard, Shield, CheckCircle, LogIn, FileText, ArrowLeft, ArrowRight, MapPin, Truck, Tag, AlertTriangle, Info, Package, ClipboardList, X, Globe, Mail, Phone, Home, Flag, BadgePercent, Receipt, Sparkles, ArrowUpCircle, ShieldCheck, Building2, ScrollText, Gift } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrders, type Order } from '@/contexts/OrdersContext';
@@ -18,6 +18,15 @@ import { loadShopConfig, type ShopConfig, formatZoneLabel, getShippingFeeForZone
 import { loadAdminSettings } from '@/lib/admin-settings';
 
 type Step = 1 | 2 | 3;
+
+const COUNTRIES = [
+  { code: 'DZ', label: 'Algérie', flag: '🇩🇿', zones: ['DZ-16','DZ-31','DZ-25','DZ-09','DZ-15','DZ-06','DZ-ALL'] },
+  { code: 'TN', label: 'Tunisie', flag: '🇹🇳', zones: ['INT-TN','INT-WORLD'] },
+  { code: 'MA', label: 'Maroc', flag: '🇲🇦', zones: ['INT-MA','INT-WORLD'] },
+  { code: 'FR', label: 'France', flag: '🇫🇷', zones: ['INT-FR','INT-EU','INT-WORLD'] },
+  { code: 'EU', label: 'Europe', flag: '🇪🇺', zones: ['INT-EU','INT-WORLD'] },
+  { code: 'WORLD', label: 'International (monde)', flag: '🌍', zones: ['INT-WORLD'] },
+];
 
 export default function CartPage() {
   const locale = useLocale();
@@ -41,16 +50,24 @@ export default function CartPage() {
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
   const [couponError, setCouponError] = useState('');
+
+  // Champs livraison enrichis
+  const [country, setCountry] = useState('DZ');
   const [deliveryAddress, setDeliveryAddress] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
+  const [customerEmail, setCustomerEmail] = useState('');
+  const [customerName, setCustomerName] = useState('');
+  const [customerCompany, setCustomerCompany] = useState('');
   const [customerNotes, setCustomerNotes] = useState('');
   const [saleConditionsAccepted, setSaleConditionsAccepted] = useState(false);
   const [showZonesHelp, setShowZonesHelp] = useState(false);
+  const [showCgv, setShowCgv] = useState(true);
+  const [errors, setErrors] = useState<Record<string,string>>({});
 
   useEffect(() => {
     setTaxes(loadTaxes());
     const cfg = loadShopConfig();
     setShopConfig(cfg);
-    // zone par défaut : première zone active
     const active = cfg.saleZones.find(z => z.active);
     if (active) setSelectedZone(active.code);
     const handler = () => setShopConfig(loadShopConfig());
@@ -58,15 +75,41 @@ export default function CartPage() {
     return () => window.removeEventListener('sari-shop-config-changed', handler);
   }, []);
 
-  const antispam = loadAdminSettings().security?.siteCaptcha !== false;
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      setCustomerName((user as any).name || '');
+      setCustomerEmail((user as any).email || '');
+      setCustomerPhone((user as any).phone || '');
+      setCustomerCompany((user as any).company || '');
+    }
+  }, [isAuthenticated, user]);
 
-  // Vérifie disponibilité par produit vs zone choisie
+  // Zones filtrées selon pays (hors DZ)
+  const availableZones = useMemo(() => {
+    if (!shopConfig) return [];
+    const c = COUNTRIES.find(x=>x.code===country);
+    if (!c) return shopConfig.saleZones.filter(z=>z.active);
+    if (country==='DZ') return shopConfig.saleZones.filter(z=>z.code.startsWith('DZ-') && z.active);
+    // hors DZ : propose INT-* correspondants + WORLD
+    return shopConfig.saleZones.filter(z => c.zones.includes(z.code) && z.active);
+  }, [shopConfig, country]);
+
+  useEffect(() => {
+    // si pays change et zone actuelle non compatible, bascule vers première dispo
+    if (availableZones.length && !availableZones.find(z=>z.code===selectedZone)) {
+      setSelectedZone(availableZones[0].code);
+    }
+  }, [availableZones, selectedZone]);
+
+  const antispam = loadAdminSettings().security?.siteCaptcha !== false;
+  const antispamRequired = antispam && !isAuthenticated;
+
   const unavailableProducts = useMemo(() => {
     if (!shopConfig || !selectedZone) return [];
     return cart.filter(item => {
       const zones = (item as any).zones as string[] | undefined;
       if (Array.isArray(zones) && zones.length > 0) {
-        return !zones.includes(selectedZone) && !zones.includes('ALL') && !zones.includes('DZ-ALL');
+        return !zones.includes(selectedZone) && !zones.includes('ALL') && !zones.includes('DZ-ALL') && !zones.includes('INT-WORLD');
       }
       const gz = shopConfig.saleZones.find(z => z.code === selectedZone);
       if (gz && !gz.active) return true;
@@ -94,6 +137,25 @@ export default function CartPage() {
     return computeTotals(items as any, taxes, appliedCoupon, { zone: selectedZone, shopConfig });
   }, [cart, taxes, appliedCoupon, selectedZone, shopConfig]);
 
+  const totalQty = cart.reduce((s,c)=>s+c.quantity,0);
+
+  const validateStep2 = (): boolean => {
+    const e: Record<string,string> = {};
+    if (!country) e.country = 'Pays requis';
+    if (!deliveryAddress.trim() || deliveryAddress.trim().length < 8) e.address = 'Adresse complète requise (≥8 caractères)';
+    if (!customerPhone.trim()) e.phone = 'Téléphone requis';
+    else if (!/^\+?[0-9\s\-()]{8,20}$/.test(customerPhone.trim())) e.phone = 'Téléphone invalide';
+    if (!customerEmail.trim()) e.email = 'Email requis';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim())) e.email = 'Email invalide';
+    if (!customerName.trim() && !isAuthenticated) e.name = 'Nom requis';
+    if (!selectedZone) e.zone = 'Zone requise';
+    if (!saleConditionsAccepted) e.cgv = 'Veuillez accepter les conditions de vente';
+    if (antispamRequired && !captchaOk) e.captcha = 'Validation captcha requise';
+    if (unavailableProducts.length>0) e.zone = `Certains articles non livrables en ${formatZoneLabel(selectedZone)}`;
+    setErrors(e);
+    return Object.keys(e).length===0;
+  };
+
   const handleApplyCoupon = () => {
     setCouponError('');
     const code = couponCode.trim().toUpperCase();
@@ -107,7 +169,6 @@ export default function CartPage() {
     if (found.end && now > found.end) { setCouponError('Coupon expiré'); return; }
     if (found.limitGlobal && found.used >= found.limitGlobal) { setCouponError('Coupon épuisé'); return; }
     if (found.minOrder && totals.subtotal < found.minOrder) { setCouponError(`Minimum ${formatMoney(found.minOrder)} requis`); return; }
-    // scope check
     if (found.scope === 'category' && found.scopeValues?.length) {
       const has = cart.some(c => found.scopeValues!.includes(c.category || ''));
       if (!has) { setCouponError('Aucun article de la catégorie cible'); return; }
@@ -119,10 +180,9 @@ export default function CartPage() {
     setAppliedCoupon(found);
     setCouponError('');
   };
-
   const handleRemoveCoupon = () => { setAppliedCoupon(null); setCouponCode(''); };
 
-  const createOrderAndRedirect = (options: { isQuote?: boolean; customerName?: string; customerEmail?: string; customerPhone?: string; customerCompany?: string } = {}) => {
+  const createOrderAndRedirect = (options: { isQuote?: boolean } = {}) => {
     const orderItems = cart.map(item => ({
       id: Number(item.id) || Date.now(),
       name: item.name,
@@ -151,16 +211,17 @@ export default function CartPage() {
       globalDiscount: totals.globalDiscount,
       taxLines: totals.taxLines,
       userId: isAuthenticated ? (user as any)?.id || null : null,
-      customerName: isAuthenticated ? (user as any)?.name || '' : options.customerName || '',
-      customerEmail: isAuthenticated ? (user as any)?.email || '' : options.customerEmail || '',
-      customerPhone: isAuthenticated ? (user as any)?.phone || '' : (options.customerPhone || ''),
-      customerCompany: isAuthenticated ? (user as any)?.company || '' : (options.customerCompany || ''),
+      customerName: isAuthenticated ? (user as any)?.name || customerName : customerName,
+      customerEmail: isAuthenticated ? (user as any)?.email || customerEmail : customerEmail,
+      customerPhone,
+      customerCompany,
       customerType: isAuthenticated ? (user as any)?.type || 'guest' : 'guest',
       isGuest: !isAuthenticated,
       isQuote: options.isQuote || false,
       status: (options.isQuote ? 'quote_requested' : 'pending') as Order['status'],
       saleZone: selectedZone,
       deliveryZone: selectedZone,
+      country,
       deliveryAddress,
       notes: customerNotes,
       saleConditionsAccepted,
@@ -176,7 +237,7 @@ export default function CartPage() {
   };
 
   const antispamPasse = () => {
-    if (!antispam || isAuthenticated) return true;
+    if (!antispamRequired) return true;
     if (captchaOk) return true;
     setCaptchaError(t('captchaRequired'));
     return false;
@@ -184,12 +245,8 @@ export default function CartPage() {
 
   const handleCheckout = () => {
     if (cart.length === 0 || redirecting) return;
-    if (unavailableProducts.length > 0) {
-      alert(`Certains articles ne sont pas livrables en ${formatZoneLabel(selectedZone)} : ${unavailableProducts.map(p=>p.name).join(', ')}`);
-      return;
-    }
-    if (!saleConditionsAccepted) {
-      alert('Veuillez accepter les conditions de vente');
+    if (!validateStep2()) {
+      setStep(2);
       return;
     }
     if (isAuthenticated) {
@@ -208,10 +265,12 @@ export default function CartPage() {
     }
     if (!antispamPasse()) return;
     if (option === 'pay') {
+      if (!validateStep2()) { setShowCheckoutModal(false); setStep(2); return; }
       const order = createOrderAndRedirect();
       setShowCheckoutModal(false);
       goToPayment(order.id);
     } else if (option === 'quote') {
+      if (!validateStep2()) { setShowCheckoutModal(false); setStep(2); return; }
       createOrderAndRedirect({ isQuote: true });
       setShowCheckoutModal(false);
       setOrderSubmitted(true);
@@ -220,28 +279,38 @@ export default function CartPage() {
     }
   };
 
+  // Petits helpers d'affichage TVA/remise par article
+  const lineTvaInfo = (it: any) => {
+    const rate = it.vatRate ?? it.taxRate;
+    if (rate==null || rate==='' ) return null;
+    return `${rate}%${it.vatIncluded?' incl.':''}`;
+  };
+  const lineDiscountInfo = (it: any) => {
+    if (it.discountValue==null && it.discount==null) return null;
+    const v = it.discountValue ?? it.discount;
+    const tp = it.discountType || (it.discount ? 'percent' : 'percent');
+    return `${v}${tp==='fixed'?' DA':'%'}`;
+  };
+
   if (orderSubmitted) {
     return (
-      <div className="pt-40 pb-24 min-h-screen bg-gray-50 dark:bg-[#111111]">
+      <div className="pt-40 pb-24 min-h-screen bg-gradient-to-b from-green-50 to-white dark:from-[#111] dark:to-[#0a0a0a]">
         <div className="container mx-auto px-6">
-          <div className="max-w-2xl mx-auto bg-white dark:bg-[#1a1a1a] p-12 border border-gray-200 dark:border-gray-800 shadow-xl text-center rounded-xl">
-            <div className="w-20 h-20 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
-              <CheckCircle className="w-10 h-10 text-green-500" />
-            </div>
-            <h1 className="text-3xl font-bold text-sari-dark dark:text-white mb-4">{t('quoteSent')}</h1>
+          <div className="max-w-2xl mx-auto bg-white dark:bg-[#1a1a1a] p-12 border border-gray-200 dark:border-gray-800 shadow-2xl text-center rounded-2xl animate-in fade-in zoom-in">
+            <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-6 animate-bounce"><CheckCircle className="w-10 h-10 text-green-500" /></div>
+            <h1 className="text-3xl font-black text-sari-dark dark:text-white mb-4">{t('quoteSent')}</h1>
             <p className="text-gray-600 dark:text-gray-400 mb-8">{t('quoteSentDesc')}</p>
-            <Link href={`/${locale}`} className="btn-primary text-white px-8 py-3 font-semibold inline-block rounded-lg">{t('backHome')}</Link>
+            <Link href={`/${locale}`} className="btn-primary text-white px-8 py-3 font-bold inline-flex items-center gap-2 rounded-full shadow-lg hover:scale-105 transition"><Sparkles className="w-5 h-5"/> {t('backHome')}</Link>
           </div>
         </div>
       </div>
     );
   }
-
   if (redirecting) {
     return (
       <div className="pt-40 pb-24 min-h-screen bg-gray-50 dark:bg-[#111111]">
         <div className="container mx-auto px-6">
-          <div className="max-w-md mx-auto bg-white dark:bg-[#1a1a1a] p-12 border border-gray-200 dark:border-gray-800 shadow-xl text-center rounded-xl">
+          <div className="max-w-md mx-auto bg-white dark:bg-[#1a1a1a] p-12 border border-gray-200 dark:border-gray-800 shadow-xl text-center rounded-2xl">
             <div className="w-16 h-16 mx-auto mb-6 rounded-full border-4 border-gray-200 dark:border-gray-700 border-t-sari-blue animate-spin" />
             <h1 className="text-2xl font-bold text-sari-dark dark:text-white mb-2">{t('preparingPayment')}</h1>
             <p className="text-gray-600 dark:text-gray-400">{t('preparingPaymentDesc')}</p>
@@ -250,18 +319,15 @@ export default function CartPage() {
       </div>
     );
   }
-
   if (cart.length === 0) {
     return (
-      <div className="pt-40 pb-24 min-h-screen bg-gray-50 dark:bg-[#111111]">
+      <div className="pt-40 pb-24 min-h-screen bg-gradient-to-b from-blue-50/60 to-white dark:from-[#111] dark:to-[#0a0a0a]">
         <div className="container mx-auto px-6">
-          <div className="max-w-2xl mx-auto bg-white dark:bg-[#1a1a1a] p-12 border border-gray-200 dark:border-gray-800 shadow-xl text-center rounded-xl">
-            <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
-              <ShoppingCart className="w-10 h-10 text-gray-400" />
-            </div>
-            <h1 className="text-3xl font-bold text-sari-dark dark:text-white mb-4">{t('empty')}</h1>
+          <div className="max-w-2xl mx-auto bg-white dark:bg-[#1a1a1a] p-12 border border-gray-200 dark:border-gray-800 shadow-2xl text-center rounded-2xl">
+            <div className="w-24 h-24 bg-gradient-to-br from-blue-100 to-emerald-100 dark:from-blue-900/30 dark:to-emerald-900/20 rounded-full flex items-center justify-center mx-auto mb-6"><ShoppingCart className="w-12 h-12 text-gray-400" /></div>
+            <h1 className="text-3xl font-black text-sari-dark dark:text-white mb-4">{t('empty')}</h1>
             <p className="text-gray-600 dark:text-gray-400 mb-8">{t('emptyDesc')}</p>
-            <Link href={`/${locale}/products`} className="btn-primary text-white px-8 py-3 font-semibold inline-block rounded-lg">{t('browseProducts')}</Link>
+            <Link href={`/${locale}/products`} className="btn-primary text-white px-8 py-3 font-bold inline-flex gap-2 rounded-full shadow-lg hover:scale-105 transition"><Package className="w-5 h-5"/> {t('browseProducts')}</Link>
           </div>
         </div>
       </div>
@@ -269,20 +335,23 @@ export default function CartPage() {
   }
 
   const Stepper = () => (
-    <div className="flex items-center justify-center gap-2 mb-8">
+    <div className="flex items-center justify-center gap-1 md:gap-2 mb-8 flex-wrap">
       {[
-        { n: 1, label: 'Panier', icon: ShoppingCart },
-        { n: 2, label: 'Livraison & Zone', icon: Truck },
-        { n: 3, label: 'Paiement', icon: CreditCard },
+        { n: 1, label: 'Panier', icon: ShoppingCart, desc: `${totalQty} articles` },
+        { n: 2, label: 'Livraison', icon: Truck, desc: country==='DZ'?'Algérie + hors DZ':'International' },
+        { n: 3, label: 'Paiement', icon: CreditCard, desc: 'Confirmation' },
       ].map((s, i) => {
         const Icon = s.icon;
         const active = step === s.n;
         const done = step > s.n;
         return (
-          <div key={s.n} className="flex items-center gap-2">
-            {i > 0 && <div className={`w-12 h-0.5 ${done ? 'bg-sari-blue' : 'bg-gray-200 dark:bg-gray-700'}`} />}
-            <button onClick={() => setStep(s.n as Step)} className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all ${active ? 'bg-sari-blue text-white shadow-lg' : done ? 'bg-green-100 text-green-700' : 'bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 text-gray-500'}`}>
-              <Icon className="w-4 h-4" /> {s.n}. {s.label} {done && <CheckCircle className="w-4 h-4" />}
+          <div key={s.n} className="flex items-center gap-1 md:gap-2">
+            {i > 0 && <div className={`hidden md:block w-10 h-1 rounded-full transition-all ${done ? 'bg-gradient-to-r from-emerald-400 to-blue-500' : 'bg-gray-200 dark:bg-gray-700'}`} />}
+            <button onClick={() => setStep(s.n as Step)} className={`flex items-center gap-2 md:gap-3 px-3 md:px-5 py-2 md:py-3 rounded-full text-sm font-black transition-all shadow-sm hover:scale-[1.02] ${active ? 'bg-gradient-to-r from-sari-blue to-blue-600 text-white shadow-xl scale-105' : done ? 'bg-emerald-500 text-white' : 'bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 text-gray-500'}`}>
+              <span className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black ${active ? 'bg-white/20' : done ? 'bg-white/20' : 'bg-gray-100 dark:bg-[#222]'}`}><Icon className="w-4 h-4" /></span>
+              <span className="hidden sm:block text-left"><span className="block leading-none">{s.n}. {s.label}</span><span className="text-[10px] opacity-70 font-normal">{s.desc}</span></span>
+              <span className="sm:hidden">{s.label}</span>
+              {done && <CheckCircle className="w-4 h-4 hidden md:block" />}
             </button>
           </div>
         );
@@ -291,223 +360,326 @@ export default function CartPage() {
   );
 
   return (
-    <div className="pt-32 pb-24 min-h-screen bg-gray-50 dark:bg-[#111111]">
-      <div className="container mx-auto px-6">
+    <div className="pt-28 pb-24 min-h-screen bg-gradient-to-b from-blue-50/40 via-white to-white dark:from-[#0f1115] dark:via-[#0a0a0a] dark:to-[#0a0a0a]">
+      <div className="container mx-auto px-4 md:px-6">
         <Breadcrumb items={[{ label: t('home'), href: '/' }, { label: t('products'), href: '/products' }, { label: t('cart') }]} />
-        <h1 className="text-4xl font-bold text-sari-dark dark:text-white mb-2 flex items-center gap-3">
-          <ShoppingCart className="w-8 h-8 text-sari-blue" /> {t('title')} <span className="text-lg font-normal text-gray-500">({cart.length} {t('items')})</span>
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400 mb-6 flex items-center gap-2">
-          <Info className="w-4 h-4" /> Tunnel en 3 étapes — vous pouvez revenir en arrière à tout moment pour modifier les quantités ou annuler un article.
-        </p>
+        <div className="flex flex-wrap items-end justify-between gap-4 mb-2">
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight text-sari-dark dark:text-white flex items-center gap-3">
+            <span className="w-12 h-12 rounded-2xl bg-gradient-to-br from-sari-blue to-blue-700 text-white flex items-center justify-center shadow-lg"><ShoppingCart className="w-6 h-6" /></span>
+            {t('title')} <span className="text-base font-bold px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"> {totalQty} article{totalQty>1?'s':''} · {cart.length} réf.</span>
+          </h1>
+          <div className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-2 bg-white dark:bg-[#1a1a1a] px-4 py-2 rounded-full border shadow-sm"><Info className="w-4 h-4 text-sari-blue"/> Tunnel 3 étapes — retour arrière à tout moment</div>
+        </div>
 
         <Stepper />
 
-        {/* Zones indisponibles */}
         {unavailableProducts.length > 0 && (
-          <div className="max-w-5xl mx-auto mb-6 bg-orange-50 dark:bg-orange-900/20 border-2 border-orange-400 p-4 rounded-xl flex items-start gap-3">
-            <AlertTriangle className="w-5 h-5 text-orange-600 mt-0.5" />
+          <div className="max-w-5xl mx-auto mb-6 bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20 border-2 border-orange-400 p-4 rounded-2xl flex items-start gap-3 animate-in slide-in-from-top-2">
+            <span className="w-10 h-10 rounded-full bg-orange-500 text-white flex items-center justify-center shrink-0"><AlertTriangle className="w-5 h-5" /></span>
             <div className="text-sm">
-              <div className="font-bold text-orange-700 dark:text-orange-300">Zone non livrable pour certains articles</div>
-              <div className="text-gray-700 dark:text-gray-300">En {formatZoneLabel(selectedZone)} : {unavailableProducts.map(p=>p.name).join(', ')} — choisissez une autre zone ou retirez ces articles.</div>
+              <div className="font-black text-orange-800 dark:text-orange-200">Zone non livrable pour certains articles</div>
+              <div className="text-gray-700 dark:text-gray-300">En {formatZoneLabel(selectedZone)} : {unavailableProducts.map(p=>p.name).join(', ')} — choisissez une autre zone ou retirez ces articles. <span className="font-bold">Hors Algérie disponible si activé en Config. boutique.</span></div>
             </div>
           </div>
         )}
 
         {step === 1 && (
-          <div className="grid lg:grid-cols-3 gap-8">
+          <div className="grid lg:grid-cols-3 gap-6 md:gap-8">
             <div className="lg:col-span-2 space-y-4">
-              {cart.map((item, index) => (
-                <div key={index} className="bg-white dark:bg-[#1a1a1a] p-6 border border-gray-200 dark:border-gray-800 shadow-xl rounded-xl flex items-center gap-4">
-                  <img src={item.image} alt={item.name} className="w-24 h-24 object-cover rounded-lg" />
-                  <div className="flex-1">
-                    <h3 className="font-bold text-sari-dark dark:text-white mb-1">{item.name}</h3>
-                    <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">{item.category} { (item as any).sku && <span className="font-mono">· {(item as any).sku}</span>}</div>
-                    <div className="flex flex-wrap gap-2 text-xs">
-                      {(item as any).discountValue ? <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Remise {(item as any).discountValue}{(item as any).discountType==='percent'?'%':' DA'}</span> : null}
-                      {(item as any).vatRate ? <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">TVA {(item as any).vatRate}%{(item as any).vatIncluded?' incl.':''}</span> : null}
-                      {(item as any).shippingFee ? <span className="bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">Livraison {(item as any).shippingFee} DA {(item as any).shippingType==='per_qty'?'×Qté':''}</span> : null}
-                      {(item as any).zones?.length ? <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full flex items-center gap-1"><MapPin className="w-3 h-3"/>{(item as any).zones.join(', ')}</span> : null}
+              {cart.map((item, index) => {
+                const it: any = item;
+                const qty = it.quantity;
+                const unit = parseFloat(String(it.price).replace(/[^0-9.]/g,''))||0;
+                const disc = lineDiscountInfo(it);
+                const tva = lineTvaInfo(it);
+                const tvaRate = it.vatRate ?? it.taxRate;
+                const sub = unit*qty;
+                const discAmt = it.discountType==='fixed' ? (Number(it.discountValue||0)*qty) : (sub * (Number(it.discountValue||it.discount||0)/100));
+                const net = sub - discAmt;
+                const tvaAmt = tvaRate ? net*(tvaRate/100) : 0;
+                return (
+                  <div key={index} className="group bg-white dark:bg-[#1a1a1a] p-4 md:p-5 border border-gray-200 dark:border-gray-800 shadow-lg hover:shadow-2xl rounded-2xl flex gap-4 items-start transition-all hover:scale-[1.005] animate-in fade-in slide-in-from-bottom-2" style={{animationDelay: `${index*40}ms`}}>
+                    <div className="relative shrink-0">
+                      <img src={item.image} alt={item.name} className="w-24 h-24 md:w-28 md:h-28 object-cover rounded-xl border" />
+                      <span className="absolute -top-2 -right-2 bg-gradient-to-br from-sari-blue to-blue-700 text-white text-xs font-black w-8 h-8 rounded-full flex items-center justify-center shadow-lg border-2 border-white dark:border-[#1a1a1a]">×{qty}</span>
                     </div>
-                    <div className="text-lg font-bold text-sari-lime mt-1">{withSymbol(item.price)}</div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-black text-sari-dark dark:text-white leading-tight line-clamp-2 flex items-center gap-2">{item.name} <Sparkles className="w-4 h-4 text-amber-500 opacity-0 group-hover:opacity-100 transition"/></h3>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 flex flex-wrap gap-1 mt-1">{item.category && <span className="px-2 py-0.5 rounded-full bg-gray-100 dark:bg-[#222]">{item.category}</span>} {it.sku && <span className="font-mono px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-700">SKU {it.sku}</span>} {it.zones?.length?<span className="px-2 py-0.5 rounded-full bg-gray-50 border flex items-center gap-1"><Flag className="w-3 h-3"/>{it.zones.join(', ')}</span>:<span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 flex items-center gap-1"><Globe className="w-3 h-3"/>Toutes zones</span>}</div>
+                      {/* Grille prix / TVA / remise */}
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-3 text-xs">
+                        <div className="bg-gray-50 dark:bg-[#111] p-2 rounded-xl border">
+                          <div className="text-[10px] uppercase font-black tracking-widest opacity-60 flex items-center gap-1"><Tag className="w-3 h-3"/> Prix unit.</div>
+                          <div className="font-black text-sm">{withSymbol(unit)}</div>
+                          <div className="text-[11px] opacity-60">Qté <strong>{qty}</strong> → {formatMoney(sub)}</div>
+                        </div>
+                        <div className={`p-2 rounded-xl border ${it.discountValue?'bg-green-50 dark:bg-green-900/20 border-green-200':'bg-gray-50 dark:bg-[#111] opacity-60'}`}>
+                          <div className="text-[10px] uppercase font-black tracking-widest flex items-center gap-1"><Gift className="w-3 h-3"/> Remise</div>
+                          <div className="font-black text-sm flex items-center gap-1">{disc ? <><BadgePercent className="w-3.5 h-3.5 text-green-600"/>{disc}</> : '—'}</div>
+                          <div className="text-[11px] text-green-700 font-bold">{discAmt ? `-${formatMoney(discAmt)}` : 'Aucune'}</div>
+                        </div>
+                        <div className={`p-2 rounded-xl border ${tva?'bg-blue-50 dark:bg-blue-900/20 border-blue-200':'bg-gray-50 dark:bg-[#111] opacity-60'}`}>
+                          <div className="text-[10px] uppercase font-black tracking-widest flex items-center gap-1"><Receipt className="w-3 h-3"/> TVA</div>
+                          <div className="font-black text-sm">{tva || '—'}</div>
+                          <div className="text-[11px]">{tvaAmt? formatMoney(tvaAmt) : '0 DA'}</div>
+                        </div>
+                        <div className="bg-amber-50 dark:bg-amber-900/20 p-2 rounded-xl border border-amber-200">
+                          <div className="text-[10px] uppercase font-black tracking-widest flex items-center gap-1"><Truck className="w-3 h-3"/> Livraison</div>
+                          <div className="font-black text-sm">{it.shippingFee ? `${it.shippingFee} DA ${it.shippingType==='per_qty'?'×Qté':it.shippingType==='free'?'offerte':''}` : 'Incluse'}</div>
+                          <div className="text-[11px] opacity-70">{item.category}</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between mt-3">
+                        <div className="text-sm"><span className="opacity-60">Sous-total article</span> <strong className="ml-2 text-base">{formatMoney(net + (it.vatIncluded?0:tvaAmt))}</strong></div>
+                        <div className="hidden md:flex items-center gap-1 text-[11px] bg-gray-100 dark:bg-[#222] px-2 py-1 rounded-full"><Package className="w-3 h-3"/> Poids {it.weight? `${it.weight} kg`:'—'}</div>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-center gap-2 shrink-0">
+                      <div className="flex items-center gap-1 bg-gray-100 dark:bg-[#111] p-1 rounded-full border shadow-inner">
+                        <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="w-8 h-8 rounded-full bg-white dark:bg-[#1a1a1a] border hover:bg-gray-50 flex items-center justify-center shadow hover:scale-105 transition"><Minus className="w-4 h-4"/></button>
+                        <span className="w-10 text-center font-black">{qty}</span>
+                        <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="w-8 h-8 rounded-full bg-sari-blue text-white hover:bg-blue-700 flex items-center justify-center shadow hover:scale-105 transition"><Plus className="w-4 h-4"/></button>
+                      </div>
+                      <button onClick={() => removeFromCart(item.id)} className="w-8 h-8 rounded-full bg-red-50 text-red-600 hover:bg-red-500 hover:text-white flex items-center justify-center shadow transition"><Trash2 className="w-4 h-4" /></button>
+                      <span className="text-[10px] font-black tracking-widest opacity-50">QTE</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="w-8 h-8 border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 rounded flex items-center justify-center"><Minus className="w-4 h-4"/></button>
-                    <span className="w-12 text-center font-bold">{item.quantity}</span>
-                    <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="w-8 h-8 border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 rounded flex items-center justify-center"><Plus className="w-4 h-4"/></button>
-                  </div>
-                  <button onClick={() => removeFromCart(item.id)} className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"><Trash2 className="w-5 h-5" /></button>
-                </div>
-              ))}
+                );
+              })}
               <div className="flex flex-wrap gap-3">
-                <Link href={`/${locale}/products`} className="ad-btn ad-btn-ghost inline-flex items-center gap-2"><ArrowLeft className="w-4 h-4"/> Continuer les achats</Link>
-                <button onClick={() => clearCart()} className="ad-btn ad-btn-ghost text-red-600"><X className="w-4 h-4"/> Vider le panier</button>
+                <Link href={`/${locale}/products`} className="ad-btn ad-btn-ghost rounded-full inline-flex items-center gap-2 hover:scale-105 transition"><ArrowLeft className="w-4 h-4"/> Continuer les achats</Link>
+                <button onClick={() => clearCart()} className="ad-btn ad-btn-ghost text-red-600 rounded-full"><X className="w-4 h-4"/> Vider le panier</button>
+                <span className="ml-auto text-sm bg-white dark:bg-[#1a1a1a] border px-3 py-2 rounded-full shadow-sm flex items-center gap-2"><ClipboardList className="w-4 h-4"/> {totalQty} unités au total</span>
               </div>
             </div>
             <div className="lg:col-span-1">
-              <div className="bg-white dark:bg-[#1a1a1a] p-6 border border-gray-200 dark:border-gray-800 shadow-xl rounded-xl sticky top-32 space-y-4">
-                <h3 className="text-xl font-bold text-sari-dark dark:text-white flex items-center gap-2"><ClipboardList className="w-5 h-5"/> {t('summary')}</h3>
-                {/* Coupon */}
+              <div className="bg-white dark:bg-[#1a1a1a] p-6 border border-gray-200 dark:border-gray-800 shadow-2xl rounded-2xl sticky top-28 space-y-4">
+                <h3 className="text-xl font-black text-sari-dark dark:text-white flex items-center gap-2"><span className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-400 to-blue-600 text-white flex items-center justify-center"><ClipboardList className="w-5 h-5"/></span> {t('summary')}</h3>
                 <div className="space-y-2">
-                  <label className="text-xs font-black uppercase tracking-widest" style={{color:'var(--ad-muted)'}}><Tag className="w-3 h-3 inline mr-1"/>Coupon</label>
+                  <label className="text-xs font-black uppercase tracking-widest flex items-center gap-1" style={{color:'var(--ad-muted)'}}><Tag className="w-3.5 h-3.5"/> Coupon</label>
                   {!appliedCoupon ? (
                     <div className="flex gap-2">
-                      <input className="ad-input flex-1 font-mono uppercase" placeholder="SARI10" value={couponCode} onChange={e=>setCouponCode(e.target.value)} />
-                      <button onClick={handleApplyCoupon} className="ad-btn ad-btn-ghost">Appliquer</button>
+                      <input className="ad-input flex-1 font-mono uppercase rounded-full" placeholder="SARI10" value={couponCode} onChange={e=>setCouponCode(e.target.value)} />
+                      <button onClick={handleApplyCoupon} className="ad-btn ad-btn-ghost rounded-full">Appliquer</button>
                     </div>
                   ) : (
-                    <div className="flex items-center justify-between bg-green-50 dark:bg-green-900/20 border border-green-200 p-2 rounded-lg">
-                      <span className="font-mono font-bold text-green-700">{appliedCoupon.code} -{appliedCoupon.type==='percent'?`${appliedCoupon.amount}%`:formatMoney(appliedCoupon.amount)}</span>
-                      <button onClick={handleRemoveCoupon} className="text-xs text-red-600">Retirer</button>
+                    <div className="flex items-center justify-between bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 p-3 rounded-xl">
+                      <span className="font-mono font-black text-green-700 flex items-center gap-2"><Gift className="w-4 h-4"/>{appliedCoupon.code} -{appliedCoupon.type==='percent'?`${appliedCoupon.amount}%`:formatMoney(appliedCoupon.amount)}</span>
+                      <button onClick={handleRemoveCoupon} className="text-xs font-bold text-red-600 hover:underline">Retirer</button>
                     </div>
                   )}
-                  {couponError && <p className="text-xs text-red-600">{couponError}</p>}
+                  {couponError && <p className="text-xs text-red-600 bg-red-50 border border-red-200 p-2 rounded-lg">{couponError}</p>}
                 </div>
-                {/* Totaux */}
                 <div className="space-y-2 text-sm border-t pt-4" style={{borderColor:'var(--ad-line)'}}>
                   <div className="flex justify-between"><span className="text-gray-600">Sous-total HT</span><strong>{formatMoney(totals.subtotal)}</strong></div>
-                  {totals.productDiscount>0 && <div className="flex justify-between text-green-600"><span>Remises produits</span><strong>-{formatMoney(totals.productDiscount)}</strong></div>}
-                  {totals.globalDiscount>0 && <div className="flex justify-between text-green-600"><span>Remise globale</span><strong>-{formatMoney(totals.globalDiscount)}</strong></div>}
-                  {totals.couponDiscount>0 && <div className="flex justify-between text-green-600"><span>Coupon {appliedCoupon?.code}</span><strong>-{formatMoney(totals.couponDiscount)}</strong></div>}
-                  {totals.productShipping>0 && <div className="flex justify-between"><span>Livraison produits</span><strong>{formatMoney(totals.productShipping)}</strong></div>}
-                  {totals.globalShipping>0 && <div className="flex justify-between"><span>Livraison zone {formatZoneLabel(selectedZone)}</span><strong>{formatMoney(totals.globalShipping)}</strong></div>}
-                  {totals.shipping===0 && <div className="flex justify-between text-green-600"><span>Livraison</span><strong>Offerte</strong></div>}
+                  {totals.productDiscount>0 && <div className="flex justify-between text-emerald-600"><span className="flex items-center gap-1"><Gift className="w-3 h-3"/> Remises produits</span><strong>-{formatMoney(totals.productDiscount)}</strong></div>}
+                  {totals.globalDiscount>0 && <div className="flex justify-between text-emerald-600"><span>Remise globale</span><strong>-{formatMoney(totals.globalDiscount)}</strong></div>}
+                  {totals.couponDiscount>0 && <div className="flex justify-between text-emerald-600"><span>Coupon {appliedCoupon?.code}</span><strong>-{formatMoney(totals.couponDiscount)}</strong></div>}
+                  {totals.productShipping>0 && <div className="flex justify-between"><span className="flex items-center gap-1"><Truck className="w-3 h-3"/> Livraison produits</span><strong>{formatMoney(totals.productShipping)}</strong></div>}
+                  {totals.globalShipping>0 && <div className="flex justify-between"><span>Livraison {formatZoneLabel(selectedZone)}</span><strong>{formatMoney(totals.globalShipping)}</strong></div>}
+                  {totals.shipping===0 && <div className="flex justify-between text-emerald-600 font-bold"><span className="flex items-center gap-1"><ArrowUpCircle className="w-3 h-3"/> Livraison</span><strong>Offerte 🎉</strong></div>}
                   {totals.taxLines.map(line=>(
-                    <div key={line.id} className="flex justify-between text-xs text-gray-600">
+                    <div key={line.id} className="flex justify-between text-xs text-gray-600 bg-gray-50 dark:bg-[#111] p-1.5 rounded-lg">
                       <span>{line.name}{line.mode==='percent'?` ${line.rate}%`:''}{line.included?' (incluse)':''}</span>
-                      <span>{formatMoney(line.amount)}</span>
+                      <span className="font-bold">{formatMoney(line.amount)}</span>
                     </div>
                   ))}
-                  <div className="flex justify-between text-lg font-black pt-2 border-t" style={{borderColor:'var(--ad-line)'}}><span>Total TTC</span><span style={{color:'var(--ad-accent)'}}>{formatMoney(totals.total)}</span></div>
-                  <p className="text-[11px] text-gray-500">TVA détaillée, frais et remises inclus. Livraison calculée selon zone choisie à l'étape suivante.</p>
+                  <div className="flex justify-between text-lg font-black pt-3 border-t" style={{borderColor:'var(--ad-line)'}}><span>Total TTC</span><span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-emerald-600">{formatMoney(totals.total)}</span></div>
+                  <p className="text-[11px] text-gray-500 flex gap-1"><Info className="w-3 h-3 mt-0.5"/> TVA détaillée par article incluse. Livraison recalculée selon pays/zone à l'étape suivante. Hors Algérie disponible.</p>
                 </div>
-                <button onClick={()=>setStep(2)} className="w-full btn-primary text-white py-3 font-semibold shadow-lg flex items-center justify-center gap-2 rounded-lg">Suivant : Livraison <ArrowRight className="w-5 h-5"/></button>
-                <Link href={`/${locale}/products`} className="w-full ad-btn ad-btn-ghost justify-center flex">← Retour boutique</Link>
+                <button onClick={()=>setStep(2)} className="w-full bg-gradient-to-r from-sari-blue to-blue-700 text-white py-3.5 font-black shadow-xl flex items-center justify-center gap-2 rounded-full hover:scale-[1.02] transition"><Truck className="w-5 h-5"/> Suivant : Livraison <ArrowRight className="w-5 h-5"/></button>
+                <Link href={`/${locale}/products`} className="w-full ad-btn ad-btn-ghost justify-center flex rounded-full">← Retour boutique</Link>
               </div>
             </div>
           </div>
         )}
 
         {step === 2 && (
-          <div className="grid lg:grid-cols-3 gap-8">
+          <div className="grid lg:grid-cols-3 gap-6 md:gap-8">
             <div className="lg:col-span-2 space-y-6">
-              <div className="bg-white dark:bg-[#1a1a1a] p-6 border border-gray-200 dark:border-gray-800 shadow-xl rounded-xl space-y-4">
-                <h3 className="font-bold text-lg flex items-center gap-2"><MapPin className="w-5 h-5 text-sari-blue"/> Zone de livraison / vente</h3>
-                <div className="grid md:grid-cols-2 gap-3">
+              <div className="bg-white dark:bg-[#1a1a1a] p-6 border border-gray-200 dark:border-gray-800 shadow-2xl rounded-2xl space-y-5">
+                <h3 className="font-black text-lg flex items-center gap-2"><span className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 text-white flex items-center justify-center"><MapPin className="w-5 h-5"/></span> Livraison — <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-600">Algérie & hors Algérie</span></h3>
+                <div className="grid md:grid-cols-3 gap-3">
                   <label className="space-y-1.5">
-                    <span className="text-[11px] font-black uppercase tracking-widest" style={{color:'var(--ad-muted)'}}>Wilaya / Zone</span>
-                    <select className="ad-select" value={selectedZone} onChange={e=>setSelectedZone(e.target.value)}>
-                      {shopConfig?.saleZones.filter(z=>z.active).map(z=> (
-                        <option key={z.code} value={z.code}>{z.label} {z.code} — {z.deliveryDays} {z.codAllowed?'· COD':''}</option>
-                      ))}
+                    <span className="text-[11px] font-black uppercase tracking-widest flex items-center gap-1" style={{color:'var(--ad-muted)'}}><Globe className="w-3 h-3"/> Pays</span>
+                    <select className={`ad-select rounded-full ${errors.country?'border-red-400':''}`} value={country} onChange={e=>{setCountry(e.target.value); setErrors({...errors, country: ''})}}>
+                      {COUNTRIES.map(c=> <option key={c.code} value={c.code}>{c.flag} {c.label}</option>)}
                     </select>
+                    {errors.country && <p className="text-xs text-red-600">{errors.country}</p>}
                   </label>
-                  <div className="space-y-1.5">
-                    <span className="text-[11px] font-black uppercase tracking-widest" style={{color:'var(--ad-muted)'}}>Frais estimés</span>
-                    <div className="ad-input bg-gray-50 dark:bg-[#111] font-bold">{formatMoney(getShippingFeeForZone(selectedZone, cart.reduce((s,c)=>s+c.quantity,0), totals.subtotal - totals.discount))} {totals.shipping===0 && '(offert)'}</div>
-                  </div>
+                  <label className="space-y-1.5 md:col-span-2">
+                    <span className="text-[11px] font-black uppercase tracking-widest flex items-center gap-1" style={{color:'var(--ad-muted)'}}><MapPin className="w-3 h-3"/> Zone / Wilaya</span>
+                    <select className={`ad-select rounded-full ${errors.zone?'border-red-400':''}`} value={selectedZone} onChange={e=>{setSelectedZone(e.target.value); setErrors({...errors, zone:''})}}>
+                      {availableZones.length ? availableZones.map(z=> (
+                        <option key={z.code} value={z.code}>{z.label} {z.code} — {z.deliveryDays} {z.codAllowed?'· COD':''}</option>
+                      )) : <option value="">Aucune zone active pour ce pays</option>}
+                    </select>
+                    {errors.zone && <p className="text-xs text-red-600">{errors.zone}</p>}
+                  </label>
                 </div>
-                <button onClick={()=>setShowZonesHelp(!showZonesHelp)} className="text-xs underline decoration-dotted">Voir toutes les zones disponibles</button>
+                <div className="flex items-center gap-2 text-xs bg-blue-50 dark:bg-blue-900/20 border border-blue-200 p-3 rounded-xl">
+                  <Truck className="w-4 h-4 text-blue-600 shrink-0"/><span>Frais estimés : <strong>{formatMoney(getShippingFeeForZone(selectedZone, cart.reduce((s,c)=>s+c.quantity,0), totals.subtotal - totals.discount))} {totals.shipping===0 && '(offert)'}</strong> — {country==='DZ' ? 'Algérie' : 'Hors Algérie (international)'} · {formatZoneLabel(selectedZone)}</span>
+                  <button onClick={()=>setShowZonesHelp(!showZonesHelp)} className="ml-auto text-xs underline decoration-dotted whitespace-nowrap">{showZonesHelp?'Masquer':'Voir zones'}</button>
+                </div>
                 {showZonesHelp && shopConfig && (
-                  <div className="grid md:grid-cols-2 gap-2 text-xs">
+                  <div className="grid md:grid-cols-2 gap-2 text-xs max-h-64 overflow-auto p-1">
                     {shopConfig.saleZones.map(z=> (
-                      <div key={z.code} className={`p-2 rounded-lg border flex justify-between ${z.active?'bg-white dark:bg-[#111]':'bg-gray-100 opacity-50'}`} style={{borderColor:'var(--ad-line)'}}>
-                        <span><strong>{z.label}</strong> <span className="font-mono">{z.code}</span> · {z.deliveryDays}</span>
-                        <span className={z.active?'text-green-600':'text-red-600'}>{z.active?'Disponible':'Indisponible'}</span>
+                      <div key={z.code} className={`p-2.5 rounded-xl border flex justify-between items-center ${z.active?'bg-white dark:bg-[#111]':'bg-gray-100 opacity-50'}`} style={{borderColor:'var(--ad-line)'}}>
+                        <span><strong>{z.label}</strong> <span className="font-mono text-[11px]">{z.code}</span> · {z.deliveryDays}</span>
+                        <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${z.active?'bg-green-100 text-green-700':'bg-red-100 text-red-700'}`}>{z.active?'Disponible':'Indisponible'}</span>
                       </div>
                     ))}
                   </div>
                 )}
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <label className="space-y-1.5">
+                    <span className="text-[11px] font-black uppercase tracking-widest flex items-center gap-1" style={{color:'var(--ad-muted)'}}><Building2 className="w-3 h-3"/> Nom complet *</span>
+                    <input className={`ad-input rounded-full ${errors.name?'border-red-400':''}`} placeholder="Nom et prénom" value={customerName} onChange={e=>{setCustomerName(e.target.value); setErrors({...errors, name:''})}} />
+                    {errors.name && <p className="text-xs text-red-600">{errors.name}</p>}
+                  </label>
+                  <label className="space-y-1.5">
+                    <span className="text-[11px] font-black uppercase tracking-widest flex items-center gap-1" style={{color:'var(--ad-muted)'}}><Home className="w-3 h-3"/> Société (optionnel)</span>
+                    <input className="ad-input rounded-full" placeholder="SARI Système" value={customerCompany} onChange={e=>setCustomerCompany(e.target.value)} />
+                  </label>
+                  <label className="space-y-1.5">
+                    <span className="text-[11px] font-black uppercase tracking-widest flex items-center gap-1" style={{color:'var(--ad-muted)'}}><Phone className="w-3 h-3"/> Téléphone *</span>
+                    <input className={`ad-input rounded-full ${errors.phone?'border-red-400':''}`} placeholder="+213 5xx xxx xxx" value={customerPhone} onChange={e=>{setCustomerPhone(e.target.value); setErrors({...errors, phone:''})}} />
+                    {errors.phone && <p className="text-xs text-red-600">{errors.phone}</p>}
+                  </label>
+                  <label className="space-y-1.5">
+                    <span className="text-[11px] font-black uppercase tracking-widest flex items-center gap-1" style={{color:'var(--ad-muted)'}}><Mail className="w-3 h-3"/> Email *</span>
+                    <input className={`ad-input rounded-full ${errors.email?'border-red-400':''}`} placeholder="vous@exemple.com" value={customerEmail} onChange={e=>{setCustomerEmail(e.target.value); setErrors({...errors, email:''})}} />
+                    {errors.email && <p className="text-xs text-red-600">{errors.email}</p>}
+                  </label>
+                </div>
+
                 <label className="space-y-1.5 block">
-                  <span className="text-[11px] font-black uppercase tracking-widest" style={{color:'var(--ad-muted)'}}>Adresse de livraison</span>
-                  <textarea className="ad-textarea" rows={3} placeholder="Adresse complète, wilaya, code postal, téléphone" value={deliveryAddress} onChange={e=>setDeliveryAddress(e.target.value)} />
+                  <span className="text-[11px] font-black uppercase tracking-widest flex items-center gap-1" style={{color:'var(--ad-muted)'}}><Home className="w-3 h-3"/> Adresse complète *</span>
+                  <textarea className={`ad-textarea rounded-2xl ${errors.address?'border-red-400':''}`} rows={3} placeholder={country==='DZ'?"Adresse, wilaya, commune, code postal":"Adresse, ville, code postal, pays"} value={deliveryAddress} onChange={e=>{setDeliveryAddress(e.target.value); setErrors({...errors, address:''})}} />
+                  {errors.address && <p className="text-xs text-red-600">{errors.address}</p>}
                 </label>
+
                 <label className="space-y-1.5 block">
-                  <span className="text-[11px] font-black uppercase tracking-widest" style={{color:'var(--ad-muted)'}}>Notes / Rappels</span>
-                  <textarea className="ad-textarea" rows={2} placeholder="Instructions de livraison, créneau, étage..." value={customerNotes} onChange={e=>setCustomerNotes(e.target.value)} />
+                  <span className="text-[11px] font-black uppercase tracking-widest flex items-center gap-1" style={{color:'var(--ad-muted)'}}><Info className="w-3 h-3"/> Notes / Rappels</span>
+                  <textarea className="ad-textarea rounded-2xl" rows={2} placeholder="Instructions de livraison, créneau, étage, hors Algérie : douane, etc." value={customerNotes} onChange={e=>setCustomerNotes(e.target.value)} />
                 </label>
+
                 {shopConfig?.deliveryNotes && (
-                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 p-3 rounded-lg text-xs flex gap-2">
+                  <div className="bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 border border-blue-200 p-3 rounded-xl text-xs flex gap-2">
                     <Info className="w-4 h-4 text-blue-600 mt-0.5 shrink-0"/><span>{shopConfig.deliveryNotes}</span>
+                  </div>
+                )}
+
+                {/* Captcha configurable */}
+                {antispamRequired && (
+                  <div className={`p-4 rounded-xl border ${errors.captcha?'border-red-400 bg-red-50':'bg-amber-50 dark:bg-amber-900/20 border-amber-200'}`}>
+                    <div className="text-xs font-black uppercase tracking-widest flex items-center gap-2 mb-2"><ShieldCheck className="w-4 h-4"/> Vérification anti-robot *</div>
+                    <ImageCaptcha onChange={(ok)=>{setCaptchaOk(ok); if(ok) setErrors({...errors, captcha:''})}} />
+                    {errors.captcha && <p className="text-xs text-red-600 mt-2">{errors.captcha}</p>}
+                    <p className="text-[11px] opacity-60 mt-1">Captcha configurable dans Admin → Paramètres → Sécurité (siteCaptcha).</p>
                   </div>
                 )}
               </div>
 
-              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 p-4 rounded-xl text-xs space-y-2">
-                <div className="font-bold flex items-center gap-2"><AlertTriangle className="w-4 h-4"/> Conditions de vente</div>
-                <div className="whitespace-pre-wrap leading-relaxed" style={{color:'var(--ad-muted)'}}>{shopConfig?.saleConditions || 'Aucune condition configurée.'}</div>
-                <label className="flex items-start gap-2 pt-2 cursor-pointer">
-                  <input type="checkbox" checked={saleConditionsAccepted} onChange={e=>setSaleConditionsAccepted(e.target.checked)} className="mt-0.5"/>
-                  <span className="text-sm font-semibold">J'ai lu et j'accepte les conditions de vente et les zones de livraison</span>
+              <div className={`p-4 rounded-2xl border-2 space-y-2 ${errors.cgv?'border-red-400 bg-red-50':'bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-amber-300'}`}>
+                <button type="button" onClick={()=>setShowCgv(!showCgv)} className="w-full flex items-center justify-between font-black text-sm"><span className="flex items-center gap-2"><ScrollText className="w-4 h-4"/> Conditions de vente *</span><span className="text-xs underline">{showCgv?'Masquer':'Afficher'}</span></button>
+                {showCgv && <div className="whitespace-pre-wrap leading-relaxed text-xs bg-white dark:bg-[#111] p-3 rounded-xl border max-h-40 overflow-auto" style={{color:'var(--ad-muted)'}}>{shopConfig?.saleConditions || 'Aucune condition configurée.'}</div>}
+                <label className={`flex items-start gap-2 pt-2 cursor-pointer p-2 rounded-xl ${saleConditionsAccepted?'bg-green-100 border border-green-300':'bg-white border'}`}>
+                  <input type="checkbox" checked={saleConditionsAccepted} onChange={e=>{setSaleConditionsAccepted(e.target.checked); setErrors({...errors, cgv:''})}} className="mt-0.5 w-4 h-4 accent-sari-blue"/>
+                  <span className="text-sm font-bold">J'ai lu et j'accepte les conditions de vente et les zones de livraison (Algérie & hors Algérie)</span>
                 </label>
+                {errors.cgv && <p className="text-xs text-red-600 font-bold">{errors.cgv}</p>}
               </div>
 
               <div className="flex flex-wrap gap-3">
-                <button onClick={()=>setStep(1)} className="ad-btn ad-btn-ghost inline-flex items-center gap-2"><ArrowLeft className="w-4 h-4"/> Retour panier</button>
-                <button onClick={()=>setStep(3)} disabled={!saleConditionsAccepted || unavailableProducts.length>0} className="ad-btn ad-btn-primary ml-auto inline-flex items-center gap-2 disabled:opacity-50">Suivant : Paiement <ArrowRight className="w-4 h-4"/></button>
+                <button onClick={()=>setStep(1)} className="ad-btn ad-btn-ghost rounded-full inline-flex items-center gap-2"><ArrowLeft className="w-4 h-4"/> Retour panier</button>
+                <button onClick={()=>{ if(validateStep2()) setStep(3); }} className="ad-btn bg-gradient-to-r from-sari-blue to-blue-700 text-white rounded-full ml-auto inline-flex items-center gap-2 px-6 py-3 font-black shadow-lg hover:scale-105 transition">Suivant : Paiement <ArrowRight className="w-4 h-4"/></button>
               </div>
             </div>
-            <div className="lg:col-span-1">
-              <div className="bg-white dark:bg-[#1a1a1a] p-6 border border-gray-200 dark:border-gray-800 shadow-xl rounded-xl sticky top-32 space-y-3">
-                <h4 className="font-bold flex items-center gap-2"><Package className="w-4 h-4"/> Récapitulatif</h4>
+            <div className="lg:col-span-1 space-y-4">
+              <div className="bg-white dark:bg-[#1a1a1a] p-6 border border-gray-200 dark:border-gray-800 shadow-2xl rounded-2xl sticky top-28 space-y-3">
+                <h4 className="font-black flex items-center gap-2"><span className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 text-white flex items-center justify-center"><Package className="w-4 h-4"/></span> Récapitulatif</h4>
                 <div className="space-y-2 text-sm">
-                  <div className="flex justify-between"><span>Sous-total</span><strong>{formatMoney(totals.subtotal)}</strong></div>
-                  <div className="flex justify-between text-green-600"><span>Remises</span><strong>-{formatMoney(totals.discount)}</strong></div>
+                  <div className="flex justify-between"><span className="opacity-60">Sous-total</span><strong>{formatMoney(totals.subtotal)}</strong></div>
+                  <div className="flex justify-between text-emerald-600"><span>Remises</span><strong>-{formatMoney(totals.discount)}</strong></div>
                   <div className="flex justify-between"><span>Livraison</span><strong>{totals.shipping?formatMoney(totals.shipping):'Offerte'}</strong></div>
-                  <div className="flex justify-between"><span>Taxes</span><strong>{formatMoney(totals.taxTotal)}</strong></div>
-                  <div className="flex justify-between font-black text-base pt-2 border-t" style={{borderColor:'var(--ad-line)'}}><span>Total</span><span>{formatMoney(totals.total)}</span></div>
+                  <div className="flex justify-between"><span>Taxes (TVA par article incluse)</span><strong>{formatMoney(totals.taxTotal)}</strong></div>
+                  <div className="flex justify-between font-black text-base pt-2 border-t" style={{borderColor:'var(--ad-line)'}}><span>Total</span><span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-emerald-600">{formatMoney(totals.total)}</span></div>
                 </div>
-                <div className="text-[11px] text-gray-500">Zone : {formatZoneLabel(selectedZone)} · {cart.length} articles · Paiement à la livraison disponible selon zone</div>
-                <button onClick={()=>setStep(1)} className="w-full ad-btn ad-btn-ghost text-sm">Modifier le panier</button>
+                <div className="text-[11px] bg-gray-50 dark:bg-[#111] p-3 rounded-xl border">
+                  <div className="font-bold flex items-center gap-1"><Flag className="w-3 h-3"/> {COUNTRIES.find(c=>c.code===country)?.flag} {COUNTRIES.find(c=>c.code===country)?.label} · {formatZoneLabel(selectedZone)}</div>
+                  <div className="mt-1 flex flex-wrap gap-1">{cart.map((it,i)=><span key={i} className="px-2 py-0.5 rounded-full bg-white dark:bg-[#1a1a1a] border text-[11px] font-bold">×{(it as any).quantity} {(it as any).name.slice(0,12)}</span>)}</div>
+                </div>
+                <button onClick={()=>setStep(1)} className="w-full ad-btn ad-btn-ghost text-sm rounded-full">Modifier quantités</button>
               </div>
             </div>
           </div>
         )}
 
         {step === 3 && (
-          <div className="grid lg:grid-cols-3 gap-8">
+          <div className="grid lg:grid-cols-3 gap-6 md:gap-8">
             <div className="lg:col-span-2 space-y-6">
-              <div className="bg-white dark:bg-[#1a1a1a] p-6 border border-gray-200 dark:border-gray-800 shadow-xl rounded-xl">
-                <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><CreditCard className="w-5 h-5 text-sari-blue"/> Paiement & Confirmation</h3>
-                <div className="space-y-3 text-sm">
-                  <div className="flex justify-between"><span>Zone</span><strong>{formatZoneLabel(selectedZone)}</strong></div>
-                  <div className="flex justify-between"><span>Adresse</span><span className="text-right max-w-[60%] truncate">{deliveryAddress || '—'}</span></div>
-                  <div className="flex justify-between"><span>Livraison</span><strong>{formatMoney(totals.shipping)}</strong></div>
-                  <div className="flex justify-between"><span>Articles</span><span>{cart.reduce((s,c)=>s+c.quantity,0)} unités</span></div>
+              <div className="bg-white dark:bg-[#1a1a1a] p-6 border border-gray-200 dark:border-gray-800 shadow-2xl rounded-2xl">
+                <h3 className="font-black text-lg mb-4 flex items-center gap-2"><span className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-blue-600 text-white flex items-center justify-center"><CreditCard className="w-5 h-5"/></span> Paiement & Confirmation</h3>
+                <div className="grid md:grid-cols-2 gap-3 text-sm">
+                  <div className="bg-gray-50 dark:bg-[#111] p-3 rounded-xl border"><div className="text-[11px] uppercase font-black opacity-60">Pays / Zone</div><div className="font-black">{COUNTRIES.find(c=>c.code===country)?.flag} {COUNTRIES.find(c=>c.code===country)?.label} · {formatZoneLabel(selectedZone)}</div></div>
+                  <div className="bg-gray-50 dark:bg-[#111] p-3 rounded-xl border"><div className="text-[11px] uppercase font-black opacity-60">Client</div><div className="font-bold truncate">{customerName || '—'} · {customerEmail}</div><div className="text-xs opacity-60">{customerPhone} {customerCompany && `· ${customerCompany}`}</div></div>
+                  <div className="bg-gray-50 dark:bg-[#111] p-3 rounded-xl border md:col-span-2"><div className="text-[11px] uppercase font-black opacity-60">Adresse</div><div className="font-medium">{deliveryAddress || '—'}</div></div>
+                  <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-xl border border-blue-200 flex justify-between items-center"><span className="text-xs font-bold">Livraison</span><strong>{formatMoney(totals.shipping)}</strong></div>
+                  <div className="bg-emerald-50 dark:bg-emerald-900/20 p-3 rounded-xl border border-emerald-200 flex justify-between items-center"><span className="text-xs font-bold">Articles</span><span className="font-black">{totalQty} unités · {cart.length} réf.</span></div>
                 </div>
-                <div className="mt-4 space-y-2">
-                  {cart.map((it,i)=>(
-                    <div key={i} className="flex justify-between text-sm border-b py-2" style={{borderColor:'var(--ad-line)'}}>
-                      <span className="truncate pr-4">{it.name} ×{it.quantity}</span>
-                      <span className="font-bold">{formatMoney(parseFloat(String(it.price).replace(/[^0-9.]/g,''))*it.quantity)}</span>
-                    </div>
-                  ))}
+                <div className="mt-6">
+                  <div className="text-xs font-black uppercase tracking-widest mb-2 flex items-center gap-2"><Package className="w-3 h-3"/> Détail articles — quantités visibles</div>
+                  <div className="space-y-2 max-h-72 overflow-auto pr-1">
+                    {cart.map((it,i)=>{
+                      const anyIt:any=it;
+                      const qty=anyIt.quantity;
+                      const unit=parseFloat(String(anyIt.price).replace(/[^0-9.]/g,''))||0;
+                      return (
+                        <div key={i} className="flex items-center gap-3 text-sm border p-3 rounded-xl bg-gray-50 dark:bg-[#111] hover:bg-white dark:hover:bg-[#1a1a1a] transition">
+                          <img src={anyIt.image} alt={anyIt.name} className="w-12 h-12 rounded-lg object-cover border"/>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-bold truncate">{anyIt.name}</div>
+                            <div className="text-xs opacity-60 flex flex-wrap gap-1"><span className="bg-white dark:bg-[#1a1a1a] px-2 py-0.5 rounded-full border font-mono">Qté ×{qty}</span> {anyIt.vatRate && <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">TVA {anyIt.vatRate}%</span>} {anyIt.discountValue && <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded-full">-{anyIt.discountValue}{anyIt.discountType==='fixed'?'DZD':'%'}</span>}</div>
+                          </div>
+                          <span className="font-black">{formatMoney(unit*qty)}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
+                {antispamRequired && !captchaOk && (
+                  <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs flex gap-2"><AlertTriangle className="w-4 h-4 text-amber-600"/> Merci de valider le captcha à l'étape Livraison (configurable dans Admin → Paramètres).</div>
+                )}
                 <div className="mt-6 flex flex-wrap gap-2">
-                  <button onClick={()=>setStep(2)} className="ad-btn ad-btn-ghost"><ArrowLeft className="w-4 h-4"/> Retour livraison</button>
-                  <button onClick={handleCheckout} className="ad-btn ad-btn-primary ml-auto inline-flex items-center gap-2"><CreditCard className="w-5 h-5"/> Confirmer la commande</button>
+                  <button onClick={()=>setStep(2)} className="ad-btn ad-btn-ghost rounded-full"><ArrowLeft className="w-4 h-4"/> Retour livraison</button>
+                  <button onClick={handleCheckout} className="ad-btn bg-gradient-to-r from-emerald-500 to-blue-600 text-white rounded-full ml-auto inline-flex items-center gap-2 px-8 py-3 font-black shadow-xl hover:scale-105 transition"><ShieldCheck className="w-5 h-5"/> Confirmer la commande</button>
                 </div>
-                <p className="text-[11px] text-gray-500 mt-3">En confirmant, vous acceptez les conditions de vente. Vous pourrez encore annuler un article depuis le suivi commande tant que le statut est "En attente".</p>
+                <p className="text-[11px] text-gray-500 mt-3 bg-gray-50 dark:bg-[#111] p-3 rounded-xl border">En confirmant, vous acceptez les conditions de vente. Conditions affichées et validées à l'étape précédente. Vous pourrez encore annuler un article depuis le suivi commande tant que le statut est « En attente ». Livraison hors Algérie selon zone et frais indiqués.</p>
               </div>
               <div className="flex gap-2">
-                <Link href={`/${locale}/products`} className="ad-btn ad-btn-ghost">Continuer les achats</Link>
-                <button onClick={()=>setStep(1)} className="ad-btn ad-btn-ghost">Modifier quantités</button>
+                <Link href={`/${locale}/products`} className="ad-btn ad-btn-ghost rounded-full">Continuer les achats</Link>
+                <button onClick={()=>setStep(1)} className="ad-btn ad-btn-ghost rounded-full">Modifier quantités</button>
               </div>
             </div>
             <div className="lg:col-span-1">
-              <div className="bg-white dark:bg-[#1a1a1a] p-6 border border-gray-200 dark:border-gray-800 shadow-xl rounded-xl sticky top-32">
-                <h4 className="font-bold mb-3">Total à payer</h4>
+              <div className="bg-gradient-to-b from-white to-gray-50 dark:from-[#1a1a1a] dark:to-[#111] p-6 border border-gray-200 dark:border-gray-800 shadow-2xl rounded-2xl sticky top-28">
+                <h4 className="font-black mb-3 flex items-center gap-2"><Receipt className="w-5 h-5 text-sari-blue"/> Total à payer</h4>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between"><span>Sous-total</span><strong>{formatMoney(totals.subtotal)}</strong></div>
-                  <div className="flex justify-between text-green-600"><span>Remises</span><span>-{formatMoney(totals.discount)}</span></div>
-                  <div className="flex justify-between"><span>Livraison</span><span>{formatMoney(totals.shipping)}</span></div>
+                  {totals.productDiscount>0 && <div className="flex justify-between text-emerald-600"><span>Remises produits</span><span>-{formatMoney(totals.productDiscount)}</span></div>}
+                  {totals.globalDiscount>0 && <div className="flex justify-between text-emerald-600"><span>Remise globale</span><span>-{formatMoney(totals.globalDiscount)}</span></div>}
+                  {totals.couponDiscount>0 && <div className="flex justify-between text-emerald-600"><span>Coupon {appliedCoupon?.code}</span><span>-{formatMoney(totals.couponDiscount)}</span></div>}
+                  <div className="flex justify-between"><span>Livraison ({country})</span><span>{formatMoney(totals.shipping)}</span></div>
                   {totals.taxLines.map(l=>(
-                    <div key={l.id} className="flex justify-between text-xs text-gray-600"><span>{l.name}</span><span>{formatMoney(l.amount)}</span></div>
+                    <div key={l.id} className="flex justify-between text-xs text-gray-600 bg-white dark:bg-[#111] p-2 rounded-lg border"><span>{l.name}</span><span className="font-bold">{formatMoney(l.amount)}</span></div>
                   ))}
-                  <div className="flex justify-between font-black text-lg pt-2 border-t" style={{borderColor:'var(--ad-line)'}}><span>Total TTC</span><span>{formatMoney(totals.total)}</span></div>
+                  <div className="flex justify-between font-black text-lg pt-2 border-t" style={{borderColor:'var(--ad-line)'}}><span>Total TTC</span><span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-emerald-600">{formatMoney(totals.total)}</span></div>
+                  <div className="text-[11px] text-gray-500 text-center">{totalQty} unités · TVA par article détaillée · hors DZ inclus</div>
                 </div>
-                <div className="mt-4 p-3 bg-gray-50 dark:bg-[#111] rounded-lg text-xs flex gap-2">
-                  <Shield className="w-4 h-4 text-green-600"/><span>Paiement sécurisé — vos données sont chiffrées. Zones et CGV rappelés à chaque commande.</span>
+                <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl text-xs flex gap-2 border border-green-200">
+                  <Shield className="w-4 h-4 text-green-600 shrink-0"/><span>Paiement sécurisé — zones Algérie & hors Algérie, CGV vérifiées, captcha {antispamRequired?'activé':'désactivé'} (configurable).</span>
                 </div>
               </div>
             </div>
@@ -516,61 +688,42 @@ export default function CartPage() {
       </div>
 
       {showCheckoutModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-[#1a1a1a] p-8 border border-gray-200 dark:border-gray-800 shadow-2xl rounded-xl max-w-md w-full">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-white dark:bg-[#1a1a1a] p-8 border border-gray-200 dark:border-gray-800 shadow-2xl rounded-2xl max-w-md w-full animate-in zoom-in-95">
             <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-sari-blue/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <ShoppingCart className="w-8 h-8 text-sari-blue" />
-              </div>
-              <h2 className="text-2xl font-bold text-sari-dark dark:text-white mb-2">{t('checkoutOptions')}</h2>
+              <div className="w-16 h-16 bg-gradient-to-br from-sari-blue to-blue-700 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg"><ShoppingCart className="w-8 h-8 text-white" /></div>
+              <h2 className="text-2xl font-black text-sari-dark dark:text-white mb-2">{t('checkoutOptions')}</h2>
               <p className="text-gray-600 dark:text-gray-400 text-sm">{t('checkoutOptionsDesc')}</p>
-              <p className="text-xs text-gray-500 mt-2">Total : {formatMoney(totals.total)} · Zone : {formatZoneLabel(selectedZone)}</p>
+              <p className="text-xs bg-gray-100 dark:bg-[#111] p-2 rounded-full mt-3 inline-block">Total : {formatMoney(totals.total)} · {COUNTRIES.find(c=>c.code===country)?.flag} {formatZoneLabel(selectedZone)} · {totalQty} unités</p>
+              <div className="text-xs mt-2 bg-blue-50 dark:bg-blue-900/20 p-2 rounded-lg text-left"><div className="font-bold">{customerName} · {customerEmail}</div><div className="opacity-70">{customerPhone} · {deliveryAddress.slice(0,40)}</div></div>
             </div>
-            {antispam && !isAuthenticated && (
-              <div className="mb-4">
+            {antispamRequired && (
+              <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 rounded-xl">
                 <ImageCaptcha onChange={(ok) => { setCaptchaOk(ok); if (ok) setCaptchaError(''); }} />
-                {captchaError && <p className="text-xs text-red-500 mt-1">{captchaError}</p>}
+                {captchaError && <p className="text-xs text-red-600 mt-1 bg-white dark:bg-[#111] p-2 rounded-lg">{captchaError}</p>}
               </div>
             )}
             <div className="space-y-3">
-              <button onClick={() => handleCheckoutOption('login')} className="w-full p-4 border-2 border-gray-200 dark:border-gray-700 hover:border-sari-blue transition-all rounded-lg text-left group">
+              <button onClick={() => handleCheckoutOption('login')} className="w-full p-4 border-2 border-gray-200 dark:border-gray-700 hover:border-sari-blue hover:shadow-lg transition-all rounded-2xl text-left group">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-sari-blue/10 rounded-lg flex items-center justify-center group-hover:bg-sari-blue transition-colors">
-                    <LogIn className="w-5 h-5 text-sari-blue group-hover:text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="font-bold text-sari-dark dark:text-white">{t('optionLogin')}</div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">{t('optionLoginDesc')}</div>
-                  </div>
+                  <div className="w-10 h-10 bg-sari-blue/10 rounded-xl flex items-center justify-center group-hover:bg-sari-blue transition-colors"><LogIn className="w-5 h-5 text-sari-blue group-hover:text-white" /></div>
+                  <div className="flex-1"><div className="font-black text-sari-dark dark:text-white">{t('optionLogin')}</div><div className="text-xs text-gray-500 dark:text-gray-400">{t('optionLoginDesc')}</div></div>
                 </div>
               </button>
-              <button onClick={() => handleCheckoutOption('pay')} className="w-full p-4 border-2 border-gray-200 dark:border-gray-700 hover:border-sari-lime transition-all rounded-lg text-left group">
+              <button onClick={() => handleCheckoutOption('pay')} className="w-full p-4 border-2 border-gray-200 dark:border-gray-700 hover:border-emerald-500 hover:shadow-lg transition-all rounded-2xl text-left group bg-gradient-to-r from-white to-emerald-50/50">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-sari-lime/10 rounded-lg flex items-center justify-center group-hover:bg-sari-lime transition-colors">
-                    <CreditCard className="w-5 h-5 text-sari-lime group-hover:text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="font-bold text-sari-dark dark:text-white">{t('optionPay')}</div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">{t('optionPayDesc')}</div>
-                  </div>
+                  <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center group-hover:bg-emerald-500 transition-colors"><CreditCard className="w-5 h-5 text-emerald-600 group-hover:text-white" /></div>
+                  <div className="flex-1"><div className="font-black text-sari-dark dark:text-white">{t('optionPay')}</div><div className="text-xs text-gray-500 dark:text-gray-400">{t('optionPayDesc')}</div></div>
                 </div>
               </button>
-              <button onClick={() => handleCheckoutOption('quote')} className="w-full p-4 border-2 border-gray-200 dark:border-gray-700 hover:border-purple-500 transition-all rounded-lg text-left group">
+              <button onClick={() => handleCheckoutOption('quote')} className="w-full p-4 border-2 border-gray-200 dark:border-gray-700 hover:border-purple-500 transition-all rounded-2xl text-left group">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-purple-500/10 rounded-lg flex items-center justify-center group-hover:bg-purple-500 transition-colors">
-                    <FileText className="w-5 h-5 text-purple-500 group-hover:text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="font-bold text-sari-dark dark:text-white">{t('optionQuote')}</div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">{t('optionQuoteDesc')}</div>
-                  </div>
+                  <div className="w-10 h-10 bg-purple-500/10 rounded-xl flex items-center justify-center group-hover:bg-purple-500 transition-colors"><FileText className="w-5 h-5 text-purple-500 group-hover:text-white" /></div>
+                  <div className="flex-1"><div className="font-black text-sari-dark dark:text-white">{t('optionQuote')}</div><div className="text-xs text-gray-500 dark:text-gray-400">{t('optionQuoteDesc')}</div></div>
                 </div>
               </button>
             </div>
-            <button onClick={() => setShowCheckoutModal(false)} className="w-full mt-4 py-2 text-gray-500 hover:text-sari-dark dark:hover:text-white text-sm flex items-center justify-center gap-2">
-              <span className="text-lg">×</span>
-              {t('cancel')}
-            </button>
+            <button onClick={() => setShowCheckoutModal(false)} className="w-full mt-4 py-2 text-gray-500 hover:text-sari-dark dark:hover:text-white text-sm flex items-center justify-center gap-2 rounded-full hover:bg-gray-100"><span className="text-lg">×</span> {t('cancel')}</button>
           </div>
         </div>
       )}

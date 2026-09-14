@@ -1,9 +1,10 @@
 // lib/shop-config.ts — Configuration globale boutique (frais, remises, zones, CGV, import API)
 import type { ShopConfig, SaleZone, ShippingZoneFee } from '@/types';
+export type { ShopConfig, SaleZone, ShippingZoneFee } from '@/types';
 
 const KEY = 'sari_shop_config';
 
-const DEFAULT_ZONES: SaleZone[] = [
+export const DEFAULT_ZONES: SaleZone[] = [
   { code: 'DZ-16', label: 'Alger', wilaya: 'Alger', active: true, deliveryDays: '24-48h', codAllowed: true },
   { code: 'DZ-31', label: 'Oran', wilaya: 'Oran', active: true, deliveryDays: '48-72h', codAllowed: true },
   { code: 'DZ-25', label: 'Constantine', wilaya: 'Constantine', active: true, deliveryDays: '48-72h', codAllowed: true },
@@ -11,6 +12,12 @@ const DEFAULT_ZONES: SaleZone[] = [
   { code: 'DZ-15', label: 'Tizi Ouzou', wilaya: 'Tizi Ouzou', active: true, deliveryDays: '48-72h', codAllowed: false },
   { code: 'DZ-06', label: 'Béjaïa', wilaya: 'Béjaïa', active: true, deliveryDays: '72h', codAllowed: true },
   { code: 'DZ-ALL', label: 'Toutes wilayas (défaut)', active: true, deliveryDays: '3-5j', codAllowed: false },
+  // Hors Algérie — livraison internationale (désactivée par défaut, activez dans Config. boutique)
+  { code: 'INT-TN', label: 'Tunisie', wilaya: 'Tunisie', active: false, deliveryDays: '5-7j', codAllowed: false },
+  { code: 'INT-MA', label: 'Maroc', wilaya: 'Maroc', active: false, deliveryDays: '5-7j', codAllowed: false },
+  { code: 'INT-FR', label: 'France', wilaya: 'France', active: false, deliveryDays: '7-10j', codAllowed: false },
+  { code: 'INT-EU', label: 'Europe (UE)', wilaya: 'Europe', active: false, deliveryDays: '7-12j', codAllowed: false },
+  { code: 'INT-WORLD', label: 'International (monde)', wilaya: 'Monde', active: false, deliveryDays: '10-15j', codAllowed: false },
 ];
 
 const DEFAULT_SHIPPING_ZONE_FEES: ShippingZoneFee[] = [
@@ -18,6 +25,12 @@ const DEFAULT_SHIPPING_ZONE_FEES: ShippingZoneFee[] = [
   { zone: 'DZ-09', label: 'Blida', fee: 500, perQty: 50, freeFrom: 25000 },
   { zone: 'DZ-31', label: 'Oran', fee: 700, perQty: 100, freeFrom: 30000 },
   { zone: 'DZ-ALL', label: 'Autres wilayas', fee: 900, perQty: 100, freeFrom: 40000 },
+  // Hors Algérie
+  { zone: 'INT-TN', label: 'Tunisie', fee: 2500, perQty: 200, freeFrom: 60000 },
+  { zone: 'INT-MA', label: 'Maroc', fee: 2800, perQty: 200, freeFrom: 60000 },
+  { zone: 'INT-FR', label: 'France', fee: 3500, perQty: 300, freeFrom: 80000 },
+  { zone: 'INT-EU', label: 'Europe', fee: 4000, perQty: 300 },
+  { zone: 'INT-WORLD', label: 'International', fee: 5000, perQty: 400 },
 ];
 
 export const DEFAULT_SHOP_CONFIG: ShopConfig = {
