@@ -172,9 +172,24 @@ export function computeTotals(
   // Taxes globales : on les applique seulement si l'item n'a pas déjà une TVA produit définie ?
   // Pour garder la flexibilité, on applique les taxes globales sur le taxable, et on additionne.
   // Si un produit a une vatRate, ses VAT s'ajoutent aux taxes globales (évite 0 taxe quand TVA produit=0).
-  const globalTaxLines = applyTaxes(taxable, taxes, opts.category, opts.zone);
-  // Si au moins un produit a vatRate explicite, on pourrait filtrer les taxes globales "all" pour éviter double TVA,
-  // mais on garde les deux pour l'instant : l'admin choisit via le scope (category/product).
+  let globalTaxLines = applyTaxes(taxable, taxes, opts.category, opts.zone);
+  // TVA globale par défaut (ShopConfig.globalTaxId) : si définie et active, on l'ajoute même si le filtrage zone l'aurait exclue,
+  // mais sans doublon. Cela permet à la boutique d'avoir une TVA de référence toujours appliquée.
+  const cfgTaxId = (opts.shopConfig as any)?.globalTaxId as string | undefined | null;
+  if (cfgTaxId) {
+    const defTax = taxes.find(t=> t.id===cfgTaxId && t.active);
+    if (defTax && !globalTaxLines.some(l=> l.id===defTax.id)) {
+      const amount = defTax.mode === 'percent' ? taxable * (defTax.rate/100) : defTax.rate;
+      globalTaxLines = [...globalTaxLines, { id: defTax.id, name: defTax.name, included: defTax.included, rate: defTax.rate, mode: defTax.mode, amount }];
+    }
+  } else {
+    // Fallback : si aucun globalTaxId mais une taxe marquée isDefault existe, on s'assure qu'elle est présente
+    const fallbackDef = taxes.find(t=> (t as any).isDefault && t.active);
+    if (fallbackDef && !globalTaxLines.some(l=> l.id===fallbackDef.id)) {
+      const amount = fallbackDef.mode === 'percent' ? taxable * (fallbackDef.rate/100) : fallbackDef.rate;
+      globalTaxLines = [...globalTaxLines, { id: fallbackDef.id, name: fallbackDef.name, included: fallbackDef.included, rate: fallbackDef.rate, mode: fallbackDef.mode, amount }];
+    }
+  }
   const taxLines = [...vatLines, ...globalTaxLines];
   const added = taxLines.filter(t => !t.included).reduce((s, t) => s + t.amount, 0);
   const included = taxLines.filter(t => t.included).reduce((s, t) => s + t.amount, 0);

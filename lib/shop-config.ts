@@ -54,6 +54,7 @@ export const DEFAULT_SHOP_CONFIG: ShopConfig = {
   deliveryNotes: `Livraison : 24-72h selon wilaya (voir zones disponibles). Frais offerts au-delà du seuil franco par zone. Suivi par SMS. COD possible uniquement pour les zones marquées.`,
   saleZones: DEFAULT_ZONES.map(z => ({ ...z })),
   deliveryZones: DEFAULT_ZONES.map(z => ({ ...z })),
+  globalTaxId: 't1',
   importApi: {
     enabled: false,
     url: '',
@@ -91,6 +92,7 @@ export function loadShopConfig(): ShopConfig {
       globalDiscount: { ...DEFAULT_SHOP_CONFIG.globalDiscount, ...(parsed.globalDiscount || {}) },
       saleZones: Array.isArray(parsed.saleZones) ? parsed.saleZones : DEFAULT_SHOP_CONFIG.saleZones,
       deliveryZones: Array.isArray(parsed.deliveryZones) ? parsed.deliveryZones : DEFAULT_SHOP_CONFIG.deliveryZones,
+      globalTaxId: typeof parsed.globalTaxId !== 'undefined' ? parsed.globalTaxId : DEFAULT_SHOP_CONFIG.globalTaxId,
       importApi: { ...DEFAULT_SHOP_CONFIG.importApi, ...(parsed.importApi || {}) },
     };
   } catch {

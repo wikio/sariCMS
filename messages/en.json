@@ -56,7 +56,9 @@
       "home": "Home page",
       "newsletter": "Newsletter",
       "canvas": "Graphic studio",
-      "verificationCodes": "Verification codes"
+      "verificationCodes": "Verification codes",
+      "shopConfig": "Shop Config",
+      "commerceSettings": "Commerce"
     },
     "header": {
       "seeSite": "View Site",

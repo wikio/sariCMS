@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Eye, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Eye, Pencil, Plus, Trash2, Star } from 'lucide-react';
 import { loadTaxes, saveTaxes, taxCompletion, type TaxRule } from '@/lib/shop-store';
 import { listTaxonomy } from '@/lib/taxonomies';
 import { useToast } from '@/components/admin/Toast';
@@ -14,7 +14,7 @@ import { money } from '@/lib/commerce-math';
 
 const empty = (): TaxRule => ({
   id: `t-${Date.now()}`, name: '', names: { fr: '', en: '', ar: '' }, labels: { fr: '', en: '', ar: '' },
-  mode: 'percent', rate: 19, zone: 'DZ', scope: 'all', scopeValues: [], included: false, priority: 1, active: true,
+  mode: 'percent', rate: 19, zone: 'DZ', scope: 'all', scopeValues: [], included: false, priority: 1, active: true, isDefault: false,
 });
 
 export default function TaxesPage() {
@@ -84,7 +84,7 @@ export default function TaxesPage() {
       )}
       <div className="ad-card overflow-x-auto">
         <table className="ad-table">
-          <thead><tr><th></th><th>{t("name", { defaultMessage: "Nom" })}</th><th>{t("rate")}</th><th>{t("zone")}</th><th>{t("target")}</th><th>i18n</th><th>Statut</th><th></th></tr></thead>
+          <thead><tr><th></th><th>{t("name", { defaultMessage: "Nom" })}</th><th>{t("rate")}</th><th>{t("zone")}</th><th>{t("target")}</th><th>i18n</th><th>Statut</th><th>Défaut</th><th></th></tr></thead>
           <tbody>
             {shown.map((t) => (
               <tr key={t.id}>
@@ -95,6 +95,10 @@ export default function TaxesPage() {
                 <td>{t.scope === 'all' ? 'Tous' : (t.scopeValues || []).join(', ') || t.category || '—'}</td>
                 <td><span className="ad-chip ad-chip-acc">{taxCompletion(t)}%</span></td>
                 <td><span className={`ad-chip ${t.active ? 'ad-chip-ok' : 'ad-chip-mute'}`}>{t.active ? 'Active' : 'Inactive'}</span></td>
+                <td>{t.isDefault ? <span className="ad-chip ad-chip-ok inline-flex items-center gap-1"><Star className="w-3 h-3"/> Défaut</span> : <button className="ad-btn ad-btn-ghost text-xs" onClick={()=>{
+                    const next = rows.map(r=> ({...r, isDefault: r.id===t.id}));
+                    setRows(next); saveTaxes(next); showToast('Taxe par défaut mise à jour','success');
+                  }}>Définir défaut</button>}</td>
                 <td className="text-right whitespace-nowrap">
                   <button className="ad-btn ad-btn-ghost" onClick={() => { setMode('consult'); setDraft({ ...t }); }}><Eye className="w-4 h-4" /></button>
                   <button className="ad-btn ad-btn-ghost" onClick={() => { setMode('edit'); setDraft({ ...t }); }}><Pencil className="w-4 h-4" /></button>
@@ -116,7 +120,9 @@ export default function TaxesPage() {
             <button className="ad-btn ad-btn-ghost" onClick={() => setDraft(null)}>Annuler</button>
             <button className="ad-btn ad-btn-primary" onClick={() => {
               if (!draft?.name.trim()) return;
-              persist(rows.some((r) => r.id === draft.id) ? rows.map((r) => r.id === draft.id ? draft : r) : [draft, ...rows]);
+              let next = rows.some((r) => r.id === draft.id) ? rows.map((r) => r.id === draft.id ? draft : r) : [draft, ...rows];
+              if (draft.isDefault) next = next.map(r=> ({...r, isDefault: r.id===draft.id}));
+              persist(next);
             }}>Enregistrer</button>
           </>
         )}
@@ -165,6 +171,7 @@ export default function TaxesPage() {
             </div>
             <Toggle on={draft.included} onChange={(v) => setDraft({ ...draft, included: v })} label="Incluse dans le prix" hint="Si activé, le prix affiché au client comprend déjà cette taxe." disabled={mode === 'consult'} />
             <Toggle on={draft.active} onChange={(v) => setDraft({ ...draft, active: v })} label="Active" hint="Seules les taxes actives s’appliquent aux commandes et devis." disabled={mode === 'consult'} />
+            <Toggle on={!!draft.isDefault} onChange={(v) => setDraft({ ...draft, isDefault: v })} label="Taxe par défaut (ajoutée automatiquement à chaque commande)" hint="Une seule taxe peut être par défaut. Elle sera synchronisée avec Config. boutique → TVA globale." disabled={mode === 'consult'} />
           </>
         )}
       </Drawer>

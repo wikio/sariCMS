@@ -59,6 +59,8 @@ export interface TaxRule {
   included: boolean;
   priority: number;
   active: boolean;
+  /** Si true, cette taxe est la TVA globale par défaut ajoutée automatiquement à chaque commande */
+  isDefault?: boolean;
   start?: string;
   end?: string;
 }
@@ -84,7 +86,7 @@ const DEFAULT_COUPONS: Coupon[] = [
 ];
 
 const DEFAULT_TAXES: TaxRule[] = [
-  { id: 't1', name: 'TVA standard', names: { fr: 'TVA standard', en: 'Standard VAT', ar: 'ضريبة القيمة المضافة' }, labels: { fr: 'TVA 19 %', en: 'VAT 19%', ar: 'ض.ق.م 19٪' }, mode: 'percent', rate: 19, zone: 'DZ', scope: 'all', scopeValues: [], included: false, priority: 1, active: true },
+  { id: 't1', name: 'TVA standard', names: { fr: 'TVA standard', en: 'Standard VAT', ar: 'ضريبة القيمة المضافة' }, labels: { fr: 'TVA 19 %', en: 'VAT 19%', ar: 'ض.ق.م 19٪' }, mode: 'percent', rate: 19, zone: 'DZ', scope: 'all', scopeValues: [], included: false, priority: 1, active: true, isDefault: true },
   { id: 't2', name: 'TVA réduite consommables', names: { fr: 'TVA réduite consommables', en: 'Reduced VAT consumables', ar: 'ضريبة مخفضة' }, labels: { fr: 'TVA 9 %', en: 'VAT 9%', ar: 'ض.ق.م 9٪' }, mode: 'percent', rate: 9, zone: 'DZ', category: 'Consommables', scope: 'category', scopeValues: ['Consommables'], included: false, priority: 2, active: true },
   { id: 't3', name: 'Éco-taxe', names: { fr: 'Éco-taxe', en: 'Eco-tax', ar: 'ضريبة بيئية' }, labels: { fr: 'Éco-taxe', en: 'Eco-tax', ar: 'ضريبة بيئية' }, mode: 'fixed', rate: 250, zone: 'DZ', scope: 'all', scopeValues: [], included: true, priority: 3, active: true },
 ];
@@ -128,9 +130,39 @@ export function loadTaxes(): TaxRule[] {
     labels: t.labels || { fr: t.name },
     scope: t.scope || (t.category ? 'category' : 'all'),
     scopeValues: t.scopeValues || (t.category ? [t.category] : []),
+    isDefault: Boolean(t.isDefault),
   }));
 }
-export function saveTaxes(rows: TaxRule[]) { localStorage.setItem(TAX_KEY, JSON.stringify(rows)); }
+export function saveTaxes(rows: TaxRule[]) {
+  // Unicité du défaut : au plus une taxe par défaut
+  let seen = false;
+  const normalized = rows.map((r) => {
+    if (r.isDefault && !seen) { seen = true; return r; }
+    if (r.isDefault && seen) return { ...r, isDefault: false };
+    return r;
+  });
+  localStorage.setItem(TAX_KEY, JSON.stringify(normalized));
+  // synchronise le ShopConfig.globalTaxId si présent
+  try {
+    const def = normalized.find((t) => t.isDefault && t.active);
+    if (typeof window !== 'undefined') {
+      const raw = localStorage.getItem('sari_shop_config');
+      if (raw) {
+        const cfg = JSON.parse(raw);
+        const nextId = def ? def.id : null;
+        if (cfg.globalTaxId !== nextId) {
+          cfg.globalTaxId = nextId;
+          localStorage.setItem('sari_shop_config', JSON.stringify(cfg));
+          window.dispatchEvent(new Event('sari-shop-config-changed'));
+        }
+      }
+    }
+  } catch {}
+}
+export function getDefaultTax(): TaxRule | null {
+  const all = loadTaxes();
+  return all.find((t) => t.isDefault && t.active) || all.find((t) => t.active) || null;
+}
 export function loadCouponUses() { return read(USE_KEY, DEFAULT_USES); }
 export function saveCouponUses(rows: CouponUse[]) { localStorage.setItem(USE_KEY, JSON.stringify(rows)); }
 

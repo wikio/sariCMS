@@ -161,6 +161,8 @@ export interface ShopConfig {
   deliveryNotes: string;
   saleZones: SaleZone[]; // zones globales disponibles
   deliveryZones: SaleZone[];
+  /** TVA globale par défaut (id TaxRule) — ajoutée automatiquement à chaque commande */
+  globalTaxId?: string | null;
   importApi?: {
     enabled: boolean;
     url: string;

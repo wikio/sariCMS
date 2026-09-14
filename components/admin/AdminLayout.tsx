@@ -44,7 +44,7 @@ function Shell({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [themesOpen, setThemesOpen] = useState(false);
   const [userOpen, setUserOpen] = useState(false);
-  const [expanded, setExpanded] = useState<string>('products');
+  const [expanded, setExpanded] = useState<string>('eshop');
   const [q, setQ] = useState('');
   const [unread, setUnread] = useState(0);
 
@@ -105,9 +105,6 @@ function Shell({ children }: { children: ReactNode }) {
         { id: 'shop-stats', label: t('menu.shopStats'), href: `/${locale}/admin/shop-stats` },
         { id: 'payments', label: t('menu.payments'), href: `/${locale}/admin/payments` },
         { id: 'payment-records', label: t('menu.paymentRecords'), href: `/${locale}/admin/payment-records` },
-        { id: 'coupons', label: t('menu.coupons'), href: `/${locale}/admin/coupons` },
-        { id: 'taxes', label: t('menu.taxes'), href: `/${locale}/admin/taxes` },
-        { id: 'shop-config', label: (t as any)('menu.shopConfig') !== 'menu.shopConfig' ? (t as any)('menu.shopConfig') : 'Config. boutique', href: `/${locale}/admin/shop-config` },
       ],
     },
     { type: 'divider', label: t('menu.contentSection') },
@@ -135,7 +132,6 @@ function Shell({ children }: { children: ReactNode }) {
     { type: 'divider', label: t('menu.advancedSection') },
     { id: 'taxonomies', icon: Tags, label: t('menu.taxonomies'), href: `/${locale}/admin/taxonomies` },
     { id: 'visibility', icon: Eye, label: t('menu.visibility'), href: `/${locale}/admin/visibility` },
-    { id: 'currencies', icon: Banknote, label: t('menu.currencies'), href: `/${locale}/admin/currencies` },
     { id: 'messages', icon: MessageSquareText, label: t('menu.messages'), href: `/${locale}/admin/messages` },
     { id: 'users', icon: UserCog, label: t('menu.users'), href: `/${locale}/admin/users` },
     { id: 'permissions', icon: Shield, label: t('menu.permissions'), href: `/${locale}/admin/permissions` },
@@ -145,7 +141,16 @@ function Shell({ children }: { children: ReactNode }) {
     { id: 'builder', icon: Paintbrush, label: t('menu.builder'), href: `/${locale}/admin/builder` },
     { id: 'canvas', icon: Palette, label: t('menu.canvas'), href: `/${locale}/admin/canvas` },
     { id: 'verification-codes', icon: ShieldCheck, label: t('menu.verificationCodes'), href: `/${locale}/admin/verification-codes` },
-    { id: 'settings', icon: Sliders, label: t('menu.settings'), href: `/${locale}/admin/settings` },
+    {
+      id: 'commerce-settings', type: 'group', icon: Sliders, label: t('menu.commerceSettings'),
+      children: [
+        { id: 'shop-config', label: t('menu.shopConfig'), href: `/${locale}/admin/shop-config` },
+        { id: 'taxes', label: t('menu.taxes'), href: `/${locale}/admin/taxes` },
+        { id: 'coupons', label: t('menu.coupons'), href: `/${locale}/admin/coupons` },
+        { id: 'currencies', label: t('menu.currencies'), href: `/${locale}/admin/currencies` },
+      ],
+    },
+    { id: 'settings', icon: Settings, label: t('menu.settings'), href: `/${locale}/admin/settings` },
     { id: 'profile', icon: UserRound, label: t('menu.profile'), href: `/${locale}/admin/profile` },
   ], [locale, t]);
 
