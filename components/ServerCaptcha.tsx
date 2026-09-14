@@ -175,6 +175,11 @@ export default function ServerCaptcha({
           )}
         </button>
         <input
+          type="text"
+          inputMode="text"
+          autoComplete="off"
+          autoCapitalize="characters"
+          spellCheck={false}
           className="ad-input flex-1 uppercase tracking-[0.3em] font-bold text-center"
           value={input}
           onChange={handleInputChange}
@@ -182,13 +187,16 @@ export default function ServerCaptcha({
           placeholder="CODE"
           aria-label="Saisir le code affiché"
           disabled={loading || verified}
+          maxLength={5}
         />
         <button
           type="button"
-          className="ad-btn ad-btn-icon ad-btn-ghost shrink-0"
+          className="ad-btn ad-btn-icon ad-btn-ghost shrink-0 w-11 h-11 flex items-center justify-center self-stretch"
           onClick={fetchCaptcha}
           disabled={loading}
           title={t('refresh')}
+          aria-label={t('refresh')}
+          style={{ borderRadius: 'var(--ad-radius-sm, 8px)', border: '1px solid var(--ad-line, #e3eef2)' }}
         >
           <RefreshCw className="w-4 h-4" />
         </button>
