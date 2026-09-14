@@ -28,7 +28,7 @@ export default function PaymentPage() {
   const router = useRouter();
   const t = useTranslations('pages.payment');
   const { isAuthenticated, user } = useAuth();
-  const { orders, updateOrderStatus } = useOrders();
+  const { orders, updateOrderStatus, updateOrder } = useOrders();
   const { clearCart } = useCart();
   const { format: formatMoney, withSymbol } = useCurrency();
 
@@ -114,7 +114,33 @@ export default function PaymentPage() {
           cardLast4: isCard ? cardLast4(cardData.cardNumber) : undefined,
         });
         const auto = isAutoValidated(method.type);
-        updateOrderStatus(order.id, auto ? 'paid' : 'pending_payment');
+        // Met à jour le type de paiement et le statut de façon atomique (lie vitrine ↔ admin via crm-store + ctx)
+        try {
+          if (updateOrder) {
+            updateOrder(order.id, { payment: method.type, status: auto ? 'paid' : 'pending_payment' } as any);
+          } else {
+            updateOrderStatus(order.id, auto ? 'paid' : 'pending_payment');
+            // fallback si updateOrder indisponible
+            const paymentVal = method.type;
+            const ctxRaw = localStorage.getItem('sari_orders_ctx');
+            if (ctxRaw) {
+              const ctxOrders = JSON.parse(ctxRaw);
+              const updCtx = ctxOrders.map((o:any)=> String(o.id)===String(order.id) ? {...o, payment: paymentVal} : o);
+              localStorage.setItem('sari_orders_ctx', JSON.stringify(updCtx));
+            }
+            const crmRaw = localStorage.getItem('sari_orders');
+            if (crmRaw) {
+              const crmOrders = JSON.parse(crmRaw);
+              const updCrm = crmOrders.map((o:any)=> String(o.id)===String(order.id) ? {...o, payment: paymentVal} : o);
+              localStorage.setItem('sari_orders', JSON.stringify(updCrm));
+            }
+          }
+        } catch {
+          updateOrderStatus(order.id, auto ? 'paid' : 'pending_payment');
+        }
+        try {
+          window.dispatchEvent(new Event('sari_orders_ctx_changed'));
+        } catch {}
       }
       setIsProcessing(false);
       setCompleted(true);

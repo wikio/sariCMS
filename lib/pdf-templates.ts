@@ -31,19 +31,36 @@ function escapeHtml(s: string): string {
     .replace(/"/g, '&quot;');
 }
 
-function abbrevCode(code: string): string {
-  const c = String(code || '').trim();
-  if (!c) return '';
-  const withoutPrefix = c.replace(/^SARI-/i, '');
-  if (withoutPrefix.length <= 12) return withoutPrefix;
-  return c.slice(-10);
+/** Génère un barcode SVG simple (Code128-like visuel) à partir du code complet */
+function barcodeSvg(code: string): string {
+  const c = String(code || '').trim() || 'CODE';
+  // Pattern binaire basé sur les charCodes
+  let bits = '';
+  for (let i = 0; i < c.length; i++) {
+    const cc = c.charCodeAt(i);
+    for (let b = 7; b >= 0; b--) bits += ((cc >> b) & 1) ? '1' : '0';
+  }
+  // assure au moins 96 bits pour un rendu stable
+  bits = bits.padEnd(96, '1010').slice(0, 96);
+  const barW = 2;
+  const W = bits.length * barW;
+  const H = 42;
+  let svg = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Code-barres ${escapeHtml(c)}">`;
+  svg += `<rect width="${W}" height="${H}" fill="white"/>`;
+  let x = 0;
+  for (let i = 0; i < bits.length; i++) {
+    if (bits[i] === '1') svg += `<rect x="${x}" y="6" width="${barW}" height="${H - 14}" fill="#0f172a"/>`;
+    x += barW;
+  }
+  svg += `<text x="${W/2}" y="${H - 1}" text-anchor="middle" font-size="7" font-family="monospace" fill="#334155">${escapeHtml(c)}</text>`;
+  svg += `</svg>`;
+  return svg;
 }
 
 /** Structure commune : en-tête société + bloc client + tableau + totaux + montant en lettres + note. */
 function documentShell(opts: {
   title: string;
   reference: string;
-  abbrev?: string;
   date: string;
   validity?: string;
   company: CompanyInfo;
@@ -55,6 +72,7 @@ function documentShell(opts: {
   breakdown?: Array<{ label: string; value: number; muted?: boolean }>;
   note?: string;
   status?: string;
+  paymentLabel?: string;
 }): string {
   const c = opts.company;
   const breakdownHtml = (opts.breakdown || [])
@@ -63,6 +81,7 @@ function documentShell(opts: {
         `<div class="row${b.muted ? ' muted' : ''}"><span>${escapeHtml(b.label)}</span><span class="num">${b.value < 0 ? '-' : ''}${money(Math.abs(b.value))}</span></div>`
     )
     .join('');
+  const barcode = barcodeSvg(opts.reference);
   return `<!doctype html>
 <html lang="fr">
 <head>
@@ -72,15 +91,16 @@ function documentShell(opts: {
   * { box-sizing: border-box; }
   body { font-family: 'Segoe UI', Arial, sans-serif; color: #1a202c; margin: 0; padding: 32px; }
   .page { max-width: 780px; margin: 0 auto; }
-  .head { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #0d7a9e; padding-bottom: 16px; }
+  .head { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #0d7a9e; padding-bottom: 16px; gap: 12px; }
   .brand { display: flex; align-items: center; gap: 12px; }
   .brand img { height: 44px; }
   .brand .name { font-size: 20px; font-weight: 800; color: #0d7a9e; }
   .brand .tag { font-size: 12px; color: #718096; }
-  .head .ref { text-align: right; font-size: 12px; color: #4a5568; }
+  .head .ref { text-align: right; font-size: 12px; color: #4a5568; max-width: 280px; }
   .head .ref h1 { font-size: 22px; margin: 0 0 4px; color: #1a202c; }
-  .head .ref .code { font-family: monospace; font-size: 11px; color: #0d7a9e; background: #edf2f7; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 4px; }
-  .head .ref .abbrev { font-size: 10px; color: #718096; margin-top: 2px; }
+  .head .ref .code { font-family: monospace; font-size: 11px; color: #0d7a9e; background: #edf2f7; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 4px; word-break: break-all; }
+  .head .ref .barcode { margin-top: 8px; display: flex; justify-content: flex-end; }
+  .head .ref .barcode svg { max-width: 100%; height: auto; }
   .meta { display: flex; justify-content: space-between; gap: 24px; margin: 20px 0; font-size: 13px; }
   .meta .box { flex: 1; }
   .meta .box h3 { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: #0d7a9e; margin: 0 0 6px; }
@@ -114,8 +134,9 @@ function documentShell(opts: {
     <div class="ref">
       <h1>${escapeHtml(opts.title)}</h1>
       <div class="code">${escapeHtml(opts.reference)}</div>
-      ${opts.abbrev ? `<div class="abbrev">Abrév. : ${escapeHtml(opts.abbrev)}</div>` : ''}
-      ${opts.status ? `<div style="margin-top:4px;">Statut : ${escapeHtml(opts.status)}</div>` : ''}
+      <div class="barcode">${barcode}</div>
+      ${opts.status ? `<div style="margin-top:6px;">Statut : ${escapeHtml(opts.status)}</div>` : ''}
+      ${opts.paymentLabel ? `<div style="margin-top:2px; font-weight:700; color:#0d7a9e;">Paiement : ${escapeHtml(opts.paymentLabel)}</div>` : ''}
     </div>
   </div>
 
@@ -142,9 +163,9 @@ function documentShell(opts: {
       <h3>Document</h3>
       <div>
         Date : ${escapeHtml(opts.date)}<br/>
-        ${opts.abbrev ? `Code abrégé : <b>${escapeHtml(opts.abbrev)}</b><br/>` : ''}
-        ${opts.validity ? `Validité : ${escapeHtml(opts.validity)}<br/>` : ''}
         Réf. : ${escapeHtml(opts.reference)}<br/>
+        ${opts.validity ? `Validité : ${escapeHtml(opts.validity)}<br/>` : ''}
+        ${opts.paymentLabel ? `Mode paiement : ${escapeHtml(opts.paymentLabel)}<br/>` : ''}
       </div>
     </div>
   </div>
@@ -167,7 +188,7 @@ function documentShell(opts: {
 
   ${opts.note ? `<div class="note"><b>Note :</b> ${escapeHtml(opts.note)}</div>` : ''}
 
-  <div class="foot">${escapeHtml(c.name)} — ${escapeHtml(c.address || '')} — Document généré par SARI CMS — ${escapeHtml(opts.reference)} ${opts.abbrev ? `(${escapeHtml(opts.abbrev)})` : ''}</div>
+  <div class="foot">${escapeHtml(c.name)} — ${escapeHtml(c.address || '')} — Document généré par SARI CMS — ${escapeHtml(opts.reference)}</div>
 </div>
 </body>
 </html>`;
@@ -224,7 +245,6 @@ export function quotePdfHtml(quote: Quote, company: CompanyInfo): string {
   return documentShell({
     title: 'Devis',
     reference,
-    abbrev: abbrevCode(reference),
     date: quote.date,
     validity: quote.validity || undefined,
     company,
@@ -278,11 +298,19 @@ export function orderPdfHtml(order: Order, company: CompanyInfo): string {
   }
 
   const total = oAny.total ?? 0;
+  // Résout le label paiement pour affichage dans le PDF
+  let paymentLabel: string | undefined;
+  try {
+    const raw = oAny.payment;
+    if (raw) {
+      const map: Record<string,string> = { 'card-intl':'Carte internationale','cib':'Carte CIB','transfer':'Virement','virement':'Virement','paypal':'PayPal','check':'Chèque','cod':'Paiement à la livraison','pending':'En attente','other':'Autre' };
+      paymentLabel = map[String(raw).toLowerCase()] || String(raw);
+    }
+  } catch {}
 
   return documentShell({
     title: 'Commande',
     reference,
-    abbrev: abbrevCode(reference),
     date: order.date,
     company,
     client: { name: order.client, email: order.email, phone: order.phone, address: order.address },
@@ -293,6 +321,7 @@ export function orderPdfHtml(order: Order, company: CompanyInfo): string {
     breakdown,
     note: oAny.adminNotes || oAny.notes || order.items?.find((i: any) => i.description)?.description,
     status: order.status,
+    paymentLabel,
   });
 }
 

@@ -23,6 +23,7 @@ import { unreadForUser } from '@/lib/messages';
 import { isBackOfficeUser } from '@/lib/admin-session';
 import DateText from '@/components/shared/DateText';
 import { useCurrency } from '@/lib/use-currency';
+import { paymentTypeLabel, normalizeOrderPaymentType } from '@/lib/payments';
 
 export default function DashboardPage() {
   const locale = useLocale();
@@ -378,8 +379,8 @@ export default function DashboardPage() {
                       <div key={order.id} className="bg-white dark:bg-[#1a1a1a] p-6 border border-gray-200 dark:border-gray-800 shadow-xl rounded-xl">
                         <div className="flex items-start justify-between mb-4">
                           <div>
-                            <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">{t('orderNumber')} #{order.id}</div>
-                            <div className="text-xs text-gray-400 dark:text-gray-500"><DateText value={order.createdAt} dateOnly /></div>
+                            <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">{t('orderNumber')} #{order.code || order.id} <span className="ml-2 px-2 py-0.5 bg-sari-blue/10 text-sari-blue rounded-full font-mono text-[10px]">{paymentTypeLabel(normalizeOrderPaymentType((order as any).payment || 'pending'))}</span></div>
+                            <div className="text-xs text-gray-400 dark:text-gray-500"><DateText value={order.createdAt} dateOnly /> · <span className="font-mono">{(order as any).code || `#${order.id}`}</span></div>
                           </div>
                           {getStatusBadge(order.status)}
                         </div>

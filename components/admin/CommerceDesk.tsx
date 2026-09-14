@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { Eye, FileCheck2, History, LayoutGrid, Link2, List as ListIcon, MessageSquareText, Plus, Printer, Reply, Trash2, Upload } from 'lucide-react';
 import { isOrderPaid, loadOrders, loadQuotes, saveOrders, saveQuotes, type Order, type OrderInvoice, type Quote, type CommerceItem } from '@/lib/crm-store';
-import { loadCoupons, loadTaxes } from '@/lib/shop-store';
+import { loadCoupons, loadTaxes, loadPayments } from '@/lib/shop-store';
+import { paymentTypeLabel, normalizeOrderPaymentType } from '@/lib/payments';
 import { loadAdminSettings } from '@/lib/admin-settings';
 import { loadShopConfig, formatZoneLabel, type ShopConfig } from '@/lib/shop-config';
 import { computeTotals, money } from '@/lib/commerce-math';
@@ -342,7 +343,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
       {view === 'list' ? (
         <div className="ad-card overflow-x-auto">
           <table className="ad-table">
-            <thead><tr><th>{t('columnNumber')}</th><th>{t('columnClient')}</th><th>{t('columnDate')}</th><th>{t('columnTotalTTC')}</th><th>{t('columnInvoice')}</th><th>{t('columnStatus')}</th><th></th></tr></thead>
+            <thead><tr><th>{t('columnNumber')}</th><th>{t('columnClient')}</th><th>{t('columnDate')}</th><th>{t('columnTotalTTC')}</th><th>Paiement</th><th>{t('columnInvoice')}</th><th>{t('columnStatus')}</th><th></th></tr></thead>
             <tbody>
               {shown.map((row) => (
                 <tr key={row.id}>
@@ -350,6 +351,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                   <td><div className="font-bold">{row.client}</div><div className="text-xs" style={{ color: 'var(--ad-muted)' }}>{row.email}</div></td>
                   <td><DateText value={row.date} dateOnly /></td>
                   <td className="font-black whitespace-nowrap">{money(Number(row.total))}</td>
+                  <td><span className="ad-chip ad-chip-acc font-mono text-xs whitespace-nowrap">{paymentTypeLabel(normalizeOrderPaymentType((row as any).payment || 'pending'))}</span></td>
                   <td>{'invoice' in row && row.invoice ? <span className="ad-chip ad-chip-ok">{row.invoice.number}</span> : <span style={{ color: 'var(--ad-muted)' }}>—</span>}</td>
                   <td><span className={`ad-chip ${row.status === 'delivered' || row.status === 'accepted' ? 'ad-chip-ok' : row.status === 'cancelled' || row.status === 'rejected' ? 'ad-chip-mute' : 'ad-chip-warn'}`}>{row.status}</span></td>
                   <td className="text-right whitespace-nowrap">
@@ -367,8 +369,9 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
         <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-3">
           {shown.map((row) => (
             <article key={row.id} className="ad-card p-4 space-y-2">
-              <div className="flex justify-between"><span className="font-mono text-xs">#{row.id}</span><span className="ad-chip ad-chip-acc">{row.status}</span></div>
+              <div className="flex justify-between"><span className="font-mono text-xs">{('code' in row && (row as any).code) || `#${row.id}`}</span><span className="ad-chip ad-chip-acc">{row.status}</span></div>
               <h3 className="font-black">{row.client}</h3>
+              <div className="text-xs font-mono" style={{color:'var(--ad-muted)'}}>{paymentTypeLabel(normalizeOrderPaymentType((row as any).payment || 'pending'))}</div>
               <div className="font-black" style={{ color: 'var(--ad-accent)' }}>{money(Number(row.total))}</div>
               <div className="flex gap-2">
                 <button className="ad-btn ad-btn-ghost flex-1" onClick={() => { setConsult(true); setOpen(row); }}>Consulter</button>
@@ -429,7 +432,19 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
               <div><span style={{ color: 'var(--ad-muted)' }}>Téléphone</span><div>{open.phone || '—'}</div></div>
               <div><span style={{ color: 'var(--ad-muted)' }}>Société</span><div>{open.company || '—'}</div></div>
               <div><span style={{ color: 'var(--ad-muted)' }}>Date</span><div className="font-bold"><DateText value={open.date} dateOnly /></div></div>
-              <div><span style={{ color: 'var(--ad-muted)' }}>Paiement</span><div>{('payment' in open && open.payment) || '—'}</div></div>
+              <div><span style={{ color: 'var(--ad-muted)' }}>Paiement</span>
+                {consult ? <div className="font-bold">{paymentTypeLabel(normalizeOrderPaymentType((open as any).payment || 'pending'))}</div> : (
+                  <select className="ad-select mt-1 w-full" value={(open as any).payment || 'pending'} onChange={(e)=>{ const v=e.target.value; const next={...open, payment:v} as any; setOpen(next); try{ const all=loadOrders(); const upd=all.map((o:any)=> String(o.id)===String(open.id) ? {...o, payment:v} : o); saveOrders(upd); }catch{} try{ const ctxRaw=localStorage.getItem('sari_orders_ctx'); if(ctxRaw){ const ctx=JSON.parse(ctxRaw); const updCtx=ctx.map((o:any)=> String(o.id)===String(open.id) ? {...o, payment:v} : o); localStorage.setItem('sari_orders_ctx', JSON.stringify(updCtx)); window.dispatchEvent(new Event('sari_orders_ctx_changed')); } }catch{} persist(rows.map(r=> String(r.id)===String(open.id) ? {...r, payment:v} as any : r)); showToast('Mode paiement mis à jour','success'); }}>
+                    <option value="pending">En attente</option>
+                    <option value="cib">Carte CIB</option>
+                    <option value="card-intl">Carte internationale</option>
+                    <option value="transfer">Virement</option>
+                    <option value="paypal">PayPal</option>
+                    <option value="check">Chèque</option>
+                    <option value="cod">Paiement à la livraison</option>
+                    <option value="other">Autre</option>
+                  </select>
+                )}</div>
               <div className="col-span-2"><span style={{ color: 'var(--ad-muted)' }}>Adresse</span><div>{open.address || '—'}</div></div>
               <div className="col-span-2">
                 <span style={{ color: 'var(--ad-muted)' }}>Pays / IP</span>

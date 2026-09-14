@@ -32,6 +32,7 @@ export interface Order {
   grandTotal: number;
   status: 'pending' | 'pending_payment' | 'paid' | 'shipped' | 'delivered' | 'cancelled' | 'quote_requested';
   createdAt: string;
+  payment?: string;
 }
 
 interface OrdersContextType {
@@ -39,6 +40,8 @@ interface OrdersContextType {
   addOrder: (orderData: Omit<Order, 'id' | 'createdAt' | 'code'> & { code?: string }) => Order;
   removeOrder: (id: number) => void;
   updateOrderStatus: (id: number, status: Order['status']) => void;
+  updateOrderPayment: (id: number, payment: string) => void;
+  updateOrder: (id: number, patch: Partial<Pick<Order, 'status' | 'payment'>>) => void;
 }
 
 const OrdersContext = createContext<OrdersContextType | undefined>(undefined);
@@ -79,6 +82,23 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
     // Ne pas écraser sari_orders (CRM) ici — la synchro CRM est gérée dans addOrder via saveOrders/saveQuotes
   }, [orders]);
 
+  // Écoute les mises à jour de paiement venant de l'admin (CommerceDesk) pour lier vitrine/admin
+  useEffect(() => {
+    const reload = () => {
+      try {
+        const raw = localStorage.getItem(CTX_KEY);
+        if (raw) setOrders(JSON.parse(raw));
+      } catch {}
+    };
+    const onStorage = (e: StorageEvent) => { if (e.key === CTX_KEY) reload(); };
+    window.addEventListener('sari_orders_ctx_changed', reload);
+    window.addEventListener('storage', onStorage);
+    return () => {
+      window.removeEventListener('sari_orders_ctx_changed', reload);
+      window.removeEventListener('storage', onStorage);
+    };
+  }, []);
+
   const addOrder = (orderData: Omit<Order, 'id' | 'createdAt' | 'code'> & { code?: string }): Order => {
     // Génère un code formaté SARI-WCMD{XX}-{ID} via lib/codes si non fourni, basé sur les commandes existantes
     let code = (orderData as any).code as string | undefined;
@@ -102,7 +122,9 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
       id: Date.now(),
       code: code!,
       createdAt: new Date().toISOString(),
-    } as Order;
+      // paiement initial en attente, lié à l'admin via crm-store
+      payment: (orderData as any).payment || 'pending',
+    } as any;
     // Persistance locale OrdersContext (compatibilité historique)
     setOrders((prev) => [newOrder, ...prev]);
     // Persistance CRM (admin) : convertit vers le format Order CRM (lib/crm-store) pour visibilité admin + numéro formaté
@@ -145,12 +167,12 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
           date: new Date().toISOString().slice(0,10),
           status: 'pending',
           total: cTotal,
+          payment: (newOrder as any).payment || 'pending',
           subtotal: Number((newOrder as any).subtotal || cTotal),
           shippingFee: Number((newOrder as any).shippingFee || 0),
           taxTotal: Number((newOrder as any).taxTotal || (newOrder as any).taxAmount || 0),
           discountTotal: Number((newOrder as any).discountTotal || 0),
           items: cItems,
-          payment: 'pending',
           zone: (newOrder as any).deliveryZone || (newOrder as any).saleZone || '',
           deliveryZone: (newOrder as any).deliveryZone || '',
           saleZone: (newOrder as any).saleZone || '',
@@ -176,10 +198,55 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
     setOrders((prev) =>
       prev.map((o) => (o.id === id ? { ...o, status } : o))
     );
+    // synchronise aussi le CRM si présent (au cas où la vitrine change le statut)
+    try {
+      const all = loadCrmOrders();
+      if (all.some((o:any)=> String(o.id)===String(id))) {
+        const upd = all.map((o:any)=> String(o.id)===String(id) ? {...o, status} : o);
+        saveCrmOrders(upd);
+      }
+    } catch {}
+  };
+
+  const updateOrderPayment = (id: number, payment: string) => {
+    setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, payment } as any : o)));
+    try {
+      const all = loadCrmOrders();
+      const upd = all.map((o:any)=> String(o.id)===String(id) ? {...o, payment} : o);
+      saveCrmOrders(upd);
+    } catch {}
+    try {
+      // assure que le ctx reste cohérent (déjà via setOrders, mais on force le stockage immédiat)
+      const raw = localStorage.getItem(CTX_KEY);
+      if (raw) {
+        const ctx = JSON.parse(raw);
+        const updCtx = ctx.map((o:any)=> String(o.id)===String(id) ? {...o, payment} : o);
+        localStorage.setItem(CTX_KEY, JSON.stringify(updCtx));
+        window.dispatchEvent(new Event('sari_orders_ctx_changed'));
+      }
+    } catch {}
+  };
+
+  const updateOrder = (id: number, patch: Partial<Pick<Order, 'status' | 'payment'>>) => {
+    setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, ...patch } as any : o)));
+    try {
+      const all = loadCrmOrders();
+      const upd = all.map((o:any)=> String(o.id)===String(id) ? {...o, ...patch} : o);
+      saveCrmOrders(upd);
+    } catch {}
+    try {
+      const raw = localStorage.getItem(CTX_KEY);
+      if (raw && patch.payment) {
+        const ctx = JSON.parse(raw);
+        const updCtx = ctx.map((o:any)=> String(o.id)===String(id) ? {...o, payment: patch.payment} : o);
+        localStorage.setItem(CTX_KEY, JSON.stringify(updCtx));
+        window.dispatchEvent(new Event('sari_orders_ctx_changed'));
+      }
+    } catch {}
   };
 
   return (
-    <OrdersContext.Provider value={{ orders, addOrder, removeOrder, updateOrderStatus }}>
+    <OrdersContext.Provider value={{ orders, addOrder, removeOrder, updateOrderStatus, updateOrderPayment, updateOrder }}>
       {children}
     </OrdersContext.Provider>
   );
