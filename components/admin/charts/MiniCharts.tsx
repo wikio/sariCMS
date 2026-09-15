@@ -13,7 +13,7 @@ export function BarChart({ items }: { items: Array<{ label: string; value: numbe
               style={{ width: `${(item.value / max) * 100}%`, background: item.color || 'var(--ad-accent)' }}
             />
           </div>
-          <span className="tabular-nums font-bold text-right">{item.value}</span>
+          <span className="tabular-nums font-bold text-right">{Number.isInteger(item.value) ? item.value : Number(item.value).toFixed(2)}</span>
         </div>
       ))}
     </div>
@@ -48,14 +48,14 @@ export function DonutChart({ items, size = 160 }: { items: Array<{ label: string
           offset += len;
           return el;
         })}
-        <text x="70" y="74" textAnchor="middle" fontSize="18" fontWeight="800" fill="var(--ad-ink)">{items.reduce((s, i) => s + i.value, 0)}</text>
+        <text x="70" y="74" textAnchor="middle" fontSize="18" fontWeight="800" fill="var(--ad-ink)">{(() => { const t = items.reduce((s, i) => s + i.value, 0); return Number.isInteger(t) ? t : Number(t).toFixed(2); })()}</text>
       </svg>
       <ul className="space-y-1 text-sm">
         {items.map((item) => (
           <li key={item.label} className="flex items-center gap-2">
             <span className="w-2.5 h-2.5" style={{ background: item.color }} />
             <span>{item.label}</span>
-            <span className="ml-auto font-bold tabular-nums">{item.value}</span>
+            <span className="ml-auto font-bold tabular-nums">{Number.isInteger(item.value) ? item.value : Number(item.value).toFixed(2)}</span>
           </li>
         ))}
       </ul>

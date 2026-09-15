@@ -67,9 +67,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
   const [invoiceBusy, setInvoiceBusy] = useState(false);
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const toggleSelect = (id: number) => setSelected(prev => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
-  const toggleAll = (on: boolean) => setSelected(on ? new Set(shown.map(r => r.id)) : new Set());
   const clearSelection = () => setSelected(new Set());
-  const isAllSelected = shown.length > 0 && shown.every(r => selected.has(r.id));
   
   // Traduction des statuts
   const translateStatus = (statusValue: string) => {
@@ -307,6 +305,8 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
     if (!q.trim()) return true;
     return `${r.client} ${r.email} ${r.id} ${r.company || ''}`.toLowerCase().includes(q.toLowerCase());
   }), [rows, q, status]);
+  const isAllSelected = shown.length > 0 && shown.every(r => selected.has(r.id));
+  const toggleAll = (on: boolean) => setSelected(on ? new Set(shown.map(r => r.id)) : new Set());
 
   const related = open ? rows.filter((r) => r.email === open.email && r.id !== open.id) : [];
   const orders = kind === 'quotes' ? loadOrders() : [];

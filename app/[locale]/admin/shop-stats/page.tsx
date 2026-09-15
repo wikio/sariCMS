@@ -79,7 +79,7 @@ export default function ShopStatsPage() {
   const byPay = useMemo(() => {
     const map: Record<string, number> = {};
     for (const o of scoped) map[o.payment || 'autre'] = (map[o.payment || 'autre'] || 0) + o.total;
-    return Object.entries(map).map(([label, value], i) => ({ label, value, color: ['#199ACA', '#C6DA34', '#EBB518', '#12323c', '#66757e'][i % 5] }));
+    return Object.entries(map).map(([label, value], i) => ({ label, value: Math.round(value * 100) / 100, color: ['#199ACA', '#C6DA34', '#EBB518', '#12323c', '#66757e'][i % 5] }));
   }, [scoped]);
 
   const topProducts = useMemo(() => {
