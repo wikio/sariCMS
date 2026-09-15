@@ -8,7 +8,7 @@ import Link from 'next/link';
 import {
   LayoutDashboard, User, Briefcase, Mail, Package, FileText, LogOut, CheckCircle,
   Clock, ShoppingBag, CreditCard, Inbox, Activity, Handshake, Plus, Minus, Trash2,
-  Search, MapPin, Banknote, Target, Award, Gift,
+  Search, MapPin, Banknote, Target, Award, Gift, ChevronDown, ChevronUp,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useApplications } from '@/contexts/ApplicationsContext';
@@ -37,6 +37,7 @@ export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState('overview');
   const [products, setProducts] = useState<Product[]>([]);
   const [productQ, setProductQ] = useState('');
+  const [expandedOrders, setExpandedOrders] = useState<Record<string, boolean>>({});
   const [unreadMessages, setUnreadMessages] = useState(0);
 
   useEffect(() => {
@@ -374,38 +375,92 @@ export default function DashboardPage() {
                     <button onClick={() => setActiveTab('products')} className="btn-primary text-white px-6 py-3 inline-block font-semibold rounded-lg">{t('browseProducts')}</button>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {realOrders.map((order) => (
-                      <div key={order.id} className="bg-white dark:bg-[#1a1a1a] p-6 border border-gray-200 dark:border-gray-800 shadow-xl rounded-xl">
-                        <div className="flex items-start justify-between mb-4">
-                          <div>
-                            <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">{t('orderNumber')} #{order.code || order.id} <span className="ml-2 px-2 py-0.5 bg-sari-blue/10 text-sari-blue rounded-full font-mono text-[10px]">{paymentTypeLabel(normalizeOrderPaymentType((order as any).payment || 'pending'))}</span></div>
-                            <div className="text-xs text-gray-400 dark:text-gray-500"><DateText value={order.createdAt} dateOnly /> · <span className="font-mono">{(order as any).code || `#${order.id}`}</span></div>
-                          </div>
-                          {getStatusBadge(order.status)}
-                        </div>
-                        <div className="space-y-2 mb-4">
-                          {order.items.map((it) => (
-                            <div key={it.id} className="flex items-center justify-between text-sm">
-                              <span className="text-gray-600 dark:text-gray-400">{it.name} × {it.quantity}</span>
-                              <span className="font-semibold text-sari-dark dark:text-white">{formatMoney(Number(it.price) * it.quantity)}</span>
+                  <div className="space-y-3">
+                    {realOrders.map((order) => {
+                      const isExpanded = !!expandedOrders[String(order.id)];
+                      const toggle = () => setExpandedOrders((prev) => ({ ...prev, [String(order.id)]: !prev[String(order.id)] }));
+                      const paymentLabel = paymentTypeLabel(normalizeOrderPaymentType((order as any).payment || 'pending'));
+                      const isPending = order.status === 'pending' || order.status === 'pending_payment';
+                      return (
+                      <div key={order.id} className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 shadow-xl rounded-xl overflow-hidden">
+                        {/* En-tête repliable : infos de base code / date / paiement / montant / bouton + flèche */}
+                        <div className="p-4 flex items-center justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="font-mono font-bold text-sm text-sari-dark dark:text-white">{t('orderNumber')} #{order.code || order.id}</span>
+                              <span className="px-2 py-0.5 bg-sari-blue/10 text-sari-blue rounded-full font-mono text-[10px] border border-sari-blue/20">{paymentLabel}</span>
+                              <span className="hidden sm:inline-flex">{getStatusBadge(order.status)}</span>
                             </div>
-                          ))}
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500 dark:text-gray-400 mt-1">
+                              <span className="inline-flex items-center gap-1"><Clock className="w-3 h-3" /> <DateText value={order.createdAt} dateOnly /></span>
+                              <span className="font-mono">{(order as any).code || `#${order.id}`}</span>
+                              <span className="sm:hidden">{getStatusBadge(order.status)}</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <div className="text-right hidden sm:block">
+                              <div className="font-black text-sari-lime text-base leading-none">{formatMoney(order.grandTotal, { decimals: 2 })}</div>
+                              <div className="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-wide">{t('total')}</div>
+                            </div>
+                            <div className="sm:hidden font-black text-sari-lime text-sm">{formatMoney(order.grandTotal, { decimals: 2 })}</div>
+                            {isPending ? (
+                              <Link href={`/${locale}/payment/${order.id}`} onClick={(e)=> e.stopPropagation()} className="hidden sm:inline-flex btn-primary text-white px-3 py-1.5 text-xs font-semibold rounded-lg items-center gap-1.5">
+                                <CreditCard className="w-3.5 h-3.5" /> {t('completePayment')}
+                              </Link>
+                            ) : (
+                              <span className="hidden sm:inline-flex text-xs text-gray-400">—</span>
+                            )}
+                            <button
+                              aria-label={isExpanded ? 'Replier' : 'Déplier'}
+                              aria-expanded={isExpanded}
+                              onClick={toggle}
+                              className="p-2 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shrink-0"
+                            >
+                              {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                            </button>
+                          </div>
                         </div>
-                        <div className="flex items-center justify-between border-t border-gray-100 dark:border-gray-800 pt-3 mb-3">
-                          <span className="font-bold text-sari-dark dark:text-white">{t('total')}</span>
-                          <span className="font-black text-sari-lime text-lg">{formatMoney(order.grandTotal, { decimals: 2 })}</span>
-                        </div>
-                        {(order.status === 'pending' || order.status === 'pending_payment') && (
-                          <div className="flex gap-2">
-                            <Link href={`/${locale}/payment/${order.id}`} className="flex-1 btn-primary text-white px-4 py-2 font-semibold text-center rounded-lg inline-flex items-center justify-center gap-2">
+                        {/* Actions rapides en mode replié (mobile) */}
+                        {isPending && (
+                          <div className="sm:hidden px-4 pb-3 flex gap-2">
+                            <Link href={`/${locale}/payment/${order.id}`} className="flex-1 btn-primary text-white px-3 py-2 text-sm font-semibold rounded-lg inline-flex items-center justify-center gap-2">
                               <CreditCard className="w-4 h-4" /> {t('completePayment')}
                             </Link>
-                            <button onClick={() => removeOrder(order.id)} className="px-4 py-2 border-2 border-red-300 dark:border-red-700 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg">{t('cancel')}</button>
+                            <button onClick={() => removeOrder(order.id)} className="px-3 py-2 border border-red-200 dark:border-red-800 text-red-500 rounded-lg text-sm">{t('cancel')}</button>
+                          </div>
+                        )}
+                        {/* Contenu déplié : liste articles */}
+                        {isExpanded && (
+                          <div className="border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-[#111111]/50 p-4 space-y-3 animate-in">
+                            <div className="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">Articles · {order.items.length}</div>
+                            <div className="space-y-2">
+                              {order.items.map((it) => (
+                                <div key={it.id} className="flex items-center justify-between text-sm bg-white dark:bg-[#1a1a1a] p-2.5 rounded-lg border border-gray-100 dark:border-gray-800">
+                                  <span className="text-gray-700 dark:text-gray-300 truncate pr-3">{it.name} <span className="text-gray-400">× {it.quantity}</span></span>
+                                  <span className="font-semibold text-sari-dark dark:text-white whitespace-nowrap">{formatMoney(Number(it.price) * it.quantity)}</span>
+                                </div>
+                              ))}
+                            </div>
+                            <div className="flex items-center justify-between border-t border-gray-200 dark:border-gray-700 pt-3">
+                              <span className="font-bold text-sari-dark dark:text-white text-sm">{t('total')}</span>
+                              <span className="font-black text-sari-lime">{formatMoney(order.grandTotal, { decimals: 2 })}</span>
+                            </div>
+                            <div className="flex gap-2 pt-1">
+                              {isPending ? (
+                                <>
+                                  <Link href={`/${locale}/payment/${order.id}`} className="flex-1 btn-primary text-white px-4 py-2 font-semibold text-center rounded-lg inline-flex items-center justify-center gap-2 text-sm">
+                                    <CreditCard className="w-4 h-4" /> {t('completePayment')}
+                                  </Link>
+                                  <button onClick={() => removeOrder(order.id)} className="px-4 py-2 border-2 border-red-300 dark:border-red-700 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-sm">{t('cancel')}</button>
+                                </>
+                              ) : (
+                                <div className="text-xs text-gray-500 dark:text-gray-400">Paiement : {paymentLabel} · Synchronisé avec l’admin</div>
+                              )}
+                            </div>
                           </div>
                         )}
                       </div>
-                    ))}
+                    )})}
                   </div>
                 )}
               </div>
