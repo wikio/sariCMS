@@ -194,16 +194,16 @@ export async function push(resource: SyncResource, row: Row): Promise<void> {
     }
   } catch (err) {
     // Log 400/409/422 toujours (validation), sinon seulement si debug
-    const isValidation = err instanceof CmsError && [400, 409, 422].includes(err.status);
+    const isValidation = err instanceof CmsError && [400, 409, 422, 500].includes(err.status);
     if (typeof window !== 'undefined') {
       try {
         const debug = localStorage.getItem('__SARI_DEBUG') || (window as unknown as { __SARI_DEBUG?: boolean }).__SARI_DEBUG;
         if (isValidation || debug) {
+          const body = err instanceof CmsError ? err.body : null;
+          const msg = err instanceof CmsError ? err.message : String(err);
+          // Stringify pour que Fast Refresh ne collapse pas l'objet
           // eslint-disable-next-line no-console
-          console.error(`[crm-sync] push ${resource} #${String(row.id)} ${isValidation ? 'VALIDATION 400' : 'échoué'}`, {
-            payload,
-            error: err instanceof CmsError ? { status: err.status, message: err.message, body: err.body } : err,
-          });
+          console.error(`[crm-sync] push ${resource} #${String(row.id)} ${err instanceof CmsError ? err.status : ''} ${msg}`, '\nPAYLOAD:', JSON.stringify(payload, null, 2), '\nBODY:', JSON.stringify(body, null, 2));
         }
       } catch {}
     }
