@@ -94,6 +94,8 @@ export class HistoryEntryDto {
 
 export const ORDER_STATUSES = [
   'pending',
+  'pending_payment',
+  'paid',
   'processing',
   'shipped',
   'delivered',

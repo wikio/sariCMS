@@ -6,7 +6,12 @@ export type PaymentStatus = 'validated' | 'pending' | 'rejected';
 
 /** Normalise la valeur « payment » d'une commande admin vers un PaymentType. */
 export function normalizeOrderPaymentType(payment?: string): PaymentType {
-  switch ((payment || '').toLowerCase()) {
+  const v = (payment || '').toLowerCase().trim();
+  switch (v) {
+    case 'pending':
+    case 'en_attente':
+    case 'en attente':
+      return 'pending' as PaymentType;
     case 'card-intl':
     case 'credit':
     case 'visa':
@@ -23,6 +28,8 @@ export function normalizeOrderPaymentType(payment?: string): PaymentType {
     case 'cheque':
       return 'check';
     case 'cod':
+    case 'cash':
+    case 'delivery':
       return 'cod';
     default:
       return 'other';
@@ -79,6 +86,7 @@ export function paymentTypeLabel(type: PaymentType): string {
     check: 'Chèque',
     cod: 'Paiement à la livraison',
     other: 'Autre',
+    pending: 'En attente',
   };
   return map[type] || type;
 }

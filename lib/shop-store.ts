@@ -1,4 +1,4 @@
-export type PaymentType = 'card-intl' | 'cib' | 'transfer' | 'paypal' | 'check' | 'cod' | 'other';
+export type PaymentType = 'card-intl' | 'cib' | 'transfer' | 'paypal' | 'check' | 'cod' | 'other' | 'pending';
 
 export interface PaymentMethod {
   id: string;

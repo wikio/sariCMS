@@ -29,6 +29,36 @@ export class QuotesService extends BaseCrudService<QuoteEntity> {
     this.repository = repository;
   }
 
+  private formatQuoteReference(id: number): string {
+    return `SARI-WDEV-${String(id).padStart(5, '0')}`;
+  }
+
+  override async create(dto: Partial<QuoteEntity>, actor?: import('../../common/crud/base-crud.service').ActorContext): Promise<unknown> {
+    if ((dto as Record<string, unknown>).reference) {
+      const dup = await this.repository.findOne({ reference: (dto as Record<string, unknown>).reference as string }, true).catch(() => null);
+      if (dup) delete (dto as Record<string, unknown>).reference;
+    }
+    const created = (await super.create(dto, actor)) as QuoteEntity & { reference?: string; id: number };
+    if (!created.reference) {
+      let suffix = created.id;
+      for (let attempt = 0; attempt < 25; attempt += 1) {
+        const reference = this.formatQuoteReference(suffix);
+        const exists = await this.repository.findOne({ reference }, true).catch(() => null);
+        if (!exists) {
+          try {
+            const updated = await this.repository.update(created.id, { reference } as Partial<QuoteEntity>);
+            return this.toView(updated as QuoteEntity, 'block');
+          } catch {
+            suffix += 1;
+            continue;
+          }
+        }
+        suffix += 1;
+      }
+    }
+    return created;
+  }
+
   protected override beforeSave(
     dto: Partial<QuoteEntity>,
     op: 'create' | 'update',

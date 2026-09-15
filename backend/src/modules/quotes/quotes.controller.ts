@@ -1,5 +1,6 @@
 import { Body, Controller, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Public } from '../../common/decorators/public.decorator';
 import { Actor } from '../../common/decorators/actor.decorator';
 import { CrudResource } from '../../common/decorators/crud-resource.decorator';
 import { ActorContext } from '../../common/crud/base-crud.service';
@@ -17,17 +18,20 @@ export class QuotesController extends BaseCrudController<QuoteEntity> {
     super();
   }
 
+  @Public()
   @Post()
   override create(@Body() dto: CreateQuoteDto, @Actor() actor: ActorContext) {
-    return this.service.create(dto as unknown as Partial<QuoteEntity>, actor);
+    if (!dto.date) (dto as unknown as Record<string, unknown>).date = new Date().toISOString();
+    return this.service.create(dto as unknown as Partial<QuoteEntity>, actor || { ip: undefined } as ActorContext);
   }
 
+  @Public()
   @Patch(':id')
   override update(
     @Param('id', new ParseIntPipe()) id: number,
     @Body() dto: UpdateQuoteDto,
     @Actor() actor: ActorContext,
   ) {
-    return this.service.update(id, dto as unknown as Partial<QuoteEntity>, actor);
+    return this.service.update(id, dto as unknown as Partial<QuoteEntity>, actor || { ip: undefined } as ActorContext);
   }
 }

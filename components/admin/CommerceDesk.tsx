@@ -29,6 +29,8 @@ type Row = (Order | Quote) & { history?: Array<{ status: string; at: string; not
 
 const ORDER_STATUS = [
   { value: 'pending', label: 'En attente' },
+  { value: 'pending_payment', label: 'En attente de paiement' },
+  { value: 'paid', label: 'Payée' },
   { value: 'processing', label: 'Préparation' },
   { value: 'shipped', label: 'Expédiée' },
   { value: 'delivered', label: 'Livrée' },
@@ -207,8 +209,10 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
 
   const convertToOrder = (quote: Row): Order => {
     const all = loadOrders();
+    const seqIds = all.map((o) => Number(o.id) || 0).filter((n) => n > 0 && n < 1000000);
+    const maxSeq = seqIds.length ? Math.max(...seqIds) : 1010;
     const newOrder: Order = {
-      id: (all.length ? Math.max(...all.map((o) => Number(o.id) || 0)) : 1000) + 1,
+      id: maxSeq + 1,
       code: nextCodeFor('order', all.map((o) => o.code || '')),
       client: quote.client,
       email: quote.email,

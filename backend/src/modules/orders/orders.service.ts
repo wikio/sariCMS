@@ -29,6 +29,41 @@ export class OrdersService extends BaseCrudService<OrderEntity> {
     this.repository = repository;
   }
 
+  private formatOrderCode(id: number, year?: number): string {
+    const y = year ?? new Date().getFullYear();
+    const yy = String(y % 100).padStart(2, '0');
+    return `SARI-WCMD${yy}-${String(id).padStart(5, '0')}`;
+  }
+
+  override async create(dto: Partial<OrderEntity>, actor?: import('../../common/crud/base-crud.service').ActorContext): Promise<unknown> {
+    // Si un code est fourni mais déjà pris, on le neutralise pour générer un code unique basé sur l'auto-incrément
+    if (dto.code) {
+      const dup = await this.repository.findOne({ code: dto.code }, true).catch(() => null);
+      if (dup) delete (dto as Record<string, unknown>).code;
+    }
+    const created = (await super.create(dto, actor)) as OrderEntity & { code?: string; id: number; date?: unknown };
+    // Génère le code formaté SARI-WCMD{YY}-{ID} si aucun code n'a été fourni (ou doublon neutralisé) — boucle anti-collision
+    if (!created.code) {
+      const baseYear = created.date ? new Date(String(created.date)).getFullYear() : undefined;
+      let suffix = created.id;
+      for (let attempt = 0; attempt < 25; attempt += 1) {
+        const code = this.formatOrderCode(suffix, baseYear);
+        const exists = await this.repository.findOne({ code }, true).catch(() => null);
+        if (!exists) {
+          try {
+            const updated = await this.repository.update(created.id, { code } as Partial<OrderEntity>);
+            return this.toView(updated as OrderEntity, 'block');
+          } catch {
+            suffix += 1;
+            continue;
+          }
+        }
+        suffix += 1;
+      }
+    }
+    return created;
+  }
+
   protected override beforeSave(
     dto: Partial<OrderEntity>,
     op: 'create' | 'update',

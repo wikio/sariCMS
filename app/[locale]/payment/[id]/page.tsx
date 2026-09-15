@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import {
   CreditCard, User, Building, FileText, Globe, Lock, Copy, Upload, ArrowLeft,
-  CheckCircle, AlertCircle, Clock, Info, ExternalLink, Send, Loader, Banknote,
+  CheckCircle, AlertCircle, Clock, Info, ExternalLink, Send, Loader, Banknote, X, AlertTriangle, ShieldAlert, Sparkles,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrders } from '@/contexts/OrdersContext';
@@ -41,6 +41,7 @@ export default function PaymentPage() {
   const [customerInfo, setCustomerInfo] = useState({ name: '', email: '', phone: '', company: '', address: '' });
   const [isProcessing, setIsProcessing] = useState(false);
   const [completed, setCompleted] = useState(false);
+  const [alertInfo, setAlertInfo] = useState<{ title: string; message: string; type?: 'error' | 'info' | 'success' } | null>(null);
 
   // Modes de paiement actifs (configurés dans l'admin).
   const methods = useMemo(() => loadPayments().filter((p) => p.active), []);
@@ -77,25 +78,25 @@ export default function PaymentPage() {
     e.preventDefault();
 
     if (!method) {
-      alert(t('selectMethod', { defaultMessage: 'Veuillez sélectionner une méthode de paiement' }));
+      setAlertInfo({ title: 'Méthode requise', message: t('selectMethod', { defaultMessage: 'Veuillez sélectionner une méthode de paiement' }), type: 'error' });
       return;
     }
     if (isCard && (!cardData.cardNumber || !cardData.cardName || !cardData.expiry || !cardData.cvv)) {
-      alert(t('fillCardInfo', { defaultMessage: 'Veuillez remplir toutes les informations de la carte' }));
+      setAlertInfo({ title: 'Informations carte incomplètes', message: t('fillCardInfo', { defaultMessage: 'Veuillez remplir toutes les informations de la carte' }), type: 'error' });
       return;
     }
     if (method.type === 'paypal' && !paypalEmail) {
-      alert(t('fillPaypalEmail', { defaultMessage: "Veuillez saisir l'email PayPal" }));
+      setAlertInfo({ title: 'Email PayPal requis', message: t('fillPaypalEmail', { defaultMessage: "Veuillez saisir l'email PayPal" }), type: 'error' });
       return;
     }
     if (method.type === 'transfer' || method.type === 'check') {
       if (!paymentProof) {
-        alert(t('uploadProof', { defaultMessage: 'Veuillez uploader la preuve de paiement' }));
+        setAlertInfo({ title: 'Preuve requise', message: t('uploadProof', { defaultMessage: 'Veuillez uploader la preuve de paiement' }), type: 'error' });
         return;
       }
     }
     if (!isAuthenticated && (!customerInfo.name || !customerInfo.email)) {
-      alert(t('fillInfo', { defaultMessage: 'Veuillez remplir vos informations' }));
+      setAlertInfo({ title: 'Informations manquantes', message: t('fillInfo', { defaultMessage: 'Veuillez remplir vos informations' }), type: 'error' });
       return;
     }
 
@@ -392,7 +393,7 @@ export default function PaymentPage() {
                       <button
                         onClick={() => {
                           navigator.clipboard.writeText(`Titulaire: ${method.account || 'SARI Système SARL'}\nRIB: ${method.rib || ''}\nIBAN: ${method.iban || ''}\nRéférence: ${order.id}`);
-                          alert(t('copied', { defaultMessage: 'Coordonnées copiées !' }));
+                          setAlertInfo({ title: 'Copié !', message: t('copied', { defaultMessage: 'Coordonnées copiées !' }), type: 'success' });
                         }}
                         className="mt-4 text-sm text-sari-blue hover:underline inline-flex items-center gap-1"
                       >
@@ -485,6 +486,27 @@ export default function PaymentPage() {
           </div>
         </div>
       </div>
+      {/* Modal alerte stylé pour les types de paiement */}
+      {alertInfo && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200" role="dialog" aria-modal="true">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setAlertInfo(null)} />
+          <div className="relative bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden animate-in zoom-in-95 duration-200 border border-gray-200 dark:border-gray-800">
+            <div className={`h-1.5 w-full bg-gradient-to-r ${alertInfo.type === 'success' ? 'from-emerald-500 to-green-600' : alertInfo.type === 'error' ? 'from-red-500 to-orange-600' : 'from-sari-blue to-blue-600'}`} />
+            <button onClick={() => setAlertInfo(null)} className="absolute top-3 right-3 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" aria-label="Fermer"><X className="w-5 h-5 text-gray-500" /></button>
+            <div className="p-6 sm:p-8 text-center">
+              <div className={`w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 rounded-2xl flex items-center justify-center shadow-lg animate-in zoom-in-50 duration-300 ${alertInfo.type === 'success' ? 'bg-gradient-to-br from-emerald-400 to-green-600' : alertInfo.type === 'error' ? 'bg-gradient-to-br from-red-500 to-orange-600' : 'bg-gradient-to-br from-sari-blue to-blue-600'}`}>
+                {alertInfo.type === 'success' ? <CheckCircle className="w-8 h-8 sm:w-10 sm:h-10 text-white" /> : alertInfo.type === 'error' ? <AlertTriangle className="w-8 h-8 sm:w-10 sm:h-10 text-white" /> : <ShieldAlert className="w-8 h-8 sm:w-10 sm:h-10 text-white" />}
+              </div>
+              <h3 className="text-xl sm:text-2xl font-black text-sari-dark dark:text-white mb-2">{alertInfo.title}</h3>
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-6">{alertInfo.message}</p>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button onClick={() => setAlertInfo(null)} className={`flex-1 px-6 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-2 text-white ${alertInfo.type === 'success' ? 'bg-gradient-to-r from-emerald-500 to-green-600 hover:from-green-600 hover:to-emerald-500' : alertInfo.type === 'error' ? 'bg-gradient-to-r from-red-500 to-orange-600 hover:from-orange-600 hover:to-red-500' : 'bg-gradient-to-r from-sari-blue to-blue-600 hover:from-blue-600 hover:to-sari-blue'}`}><CheckCircle className="w-5 h-5" /> Compris</button>
+                <button onClick={() => setAlertInfo(null)} className="px-6 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-xl font-semibold hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">Fermer</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -99,27 +99,61 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  // Synchronise les commandes/devis locaux vers MySQL au montage (remplit la table `orders` vide après passage en public)
+  useEffect(() => {
+    try {
+      const crmOrders = loadCrmOrders();
+      if (crmOrders.length) {
+        void import('@/lib/crm-sync').then((m) => m.pushCollection('orders', crmOrders as any)).catch(() => {});
+      }
+      const crmQuotes = loadCrmQuotes();
+      if (crmQuotes.length) {
+        void import('@/lib/crm-sync').then((m) => m.pushCollection('quotes', crmQuotes as any)).catch(() => {});
+      }
+    } catch {}
+  }, []);
+
   const addOrder = (orderData: Omit<Order, 'id' | 'createdAt' | 'code'> & { code?: string }): Order => {
     // Génère un code formaté SARI-WCMD{XX}-{ID} via lib/codes si non fourni, basé sur les commandes existantes
     let code = (orderData as any).code as string | undefined;
     if (!code) {
       try {
-        const existing: string[] = JSON.parse(localStorage.getItem('sari_orders') || '[]').map((o: any)=> o.code).filter(Boolean);
-        // aussi inclure les commandes CRM stockées (même clé) pour éviter collisions
-        code = nextCodeFor('order', existing);
+        const existingCodes: string[] = [];
+        try { const a = JSON.parse(localStorage.getItem('sari_orders') || '[]'); if (Array.isArray(a)) existingCodes.push(...a.map((o: any)=> o.code).filter(Boolean)); } catch {}
+        try { const b = JSON.parse(localStorage.getItem('sari_orders_ctx') || '[]'); if (Array.isArray(b)) existingCodes.push(...b.map((o: any)=> o.code).filter(Boolean)); } catch {}
+        code = nextCodeFor('order', existingCodes);
       } catch { code = `SARI-WCMD-${Date.now().toString().slice(-5)}`; }
     }
     // Devis (quote_requested) doit aussi avoir une référence devis
     let quoteRef: string | undefined;
     if ((orderData as any).isQuote || (orderData as any).status === 'quote_requested') {
       try {
-        const existingQ: string[] = JSON.parse(localStorage.getItem('sari_quotes') || '[]').map((q: any)=> q.reference).filter(Boolean);
+        const existingQ: string[] = [];
+        try { const a = JSON.parse(localStorage.getItem('sari_quotes') || '[]'); if (Array.isArray(a)) existingQ.push(...a.map((q: any)=> q.reference).filter(Boolean)); } catch {}
+        try { const b = JSON.parse(localStorage.getItem('sari_orders_ctx') || '[]'); if (Array.isArray(b)) existingQ.push(...b.filter((o:any)=> o.isQuote || o.status==='quote_requested').map((o:any)=> o.code).filter(Boolean)); } catch {}
         quoteRef = nextCodeFor('quote', existingQ);
       } catch { quoteRef = undefined; }
     }
+    // ID incrémenté monotone (auto-incrément local) — évite Date.now() et collisions timestamp
+    let nextId = Date.now();
+    try {
+      const allIds: number[] = [];
+      try { const a = JSON.parse(localStorage.getItem('sari_orders') || '[]'); if (Array.isArray(a)) allIds.push(...a.map((o:any)=> Number(o.id)).filter((n:number)=> Number.isFinite(n))); } catch {}
+      try { const b = JSON.parse(localStorage.getItem('sari_orders_ctx') || '[]'); if (Array.isArray(b)) allIds.push(...b.map((o:any)=> Number(o.id)).filter((n:number)=> Number.isFinite(n))); } catch {}
+      try { const c = JSON.parse(localStorage.getItem('sari_quotes') || '[]'); if (Array.isArray(c)) allIds.push(...c.map((o:any)=> Number(o.id)).filter((n:number)=> Number.isFinite(n))); } catch {}
+      // Sépare les IDs séquentiels (<1e6) des timestamps Date.now() (>1e12) pour ne pas boucler sur la même dérivation
+      const seqIds = allIds.filter((n)=> n > 0 && n < 1000000);
+      const maxSeq = seqIds.length ? Math.max(...seqIds) : 1010;
+      let candidate = maxSeq + 1;
+      if (candidate < 1011) candidate = 1011;
+      // Garantit unicité même si un timestamp dérivé aurait déjà pris la valeur
+      const existingSet = new Set(allIds);
+      while (existingSet.has(candidate)) candidate += 1;
+      nextId = candidate;
+    } catch { nextId = Date.now() % 100000 + 1011; }
     const newOrder: Order = {
       ...orderData,
-      id: Date.now(),
+      id: nextId,
       code: code!,
       createdAt: new Date().toISOString(),
       // paiement initial en attente, lié à l'admin via crm-store
