@@ -171,7 +171,6 @@ export async function push(resource: SyncResource, row: Row): Promise<void> {
   const payload = toPayload(row);
   const doFetch = async <T>(path: string, opts: Parameters<typeof cmsFetch>[1]): Promise<T> => {
     try {
-      // Tente en public d'abord — vitrine et admin sans session expirée
       return await cmsFetch<T>(path, { timeoutMs: 8000, ...opts });
     } catch (e) {
       if (e instanceof CmsError) {
