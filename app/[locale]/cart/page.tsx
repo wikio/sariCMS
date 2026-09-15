@@ -407,9 +407,9 @@ export default function CartPage() {
                 const tvaAmt = tvaRate ? net*(tvaRate/100) : 0;
                 return (
                   <div key={index} className="group bg-white dark:bg-[#1a1a1a] p-4 md:p-5 border border-gray-200 dark:border-gray-800 shadow-lg hover:shadow-2xl rounded-2xl flex gap-4 items-start transition-all hover:scale-[1.005] animate-in fade-in slide-in-from-bottom-2" style={{animationDelay: `${index*40}ms`}}>
-                    <div className="relative shrink-0">
-                      <img src={item.image} alt={item.name} className="w-24 h-24 md:w-28 md:h-28 object-cover rounded-xl border" />
-                      <span className="absolute -top-2 -right-2 bg-gradient-to-br from-sari-blue to-blue-700 text-white text-xs font-black w-8 h-8 rounded-full flex items-center justify-center shadow-lg border-2 border-white dark:border-[#1a1a1a]">×{qty}</span>
+                    <div className="relative shrink-0 self-start">
+                      <img src={item.image} alt={item.name} className="w-20 h-20 md:w-24 md:h-24 object-cover rounded-xl border-2 border-gray-100 dark:border-gray-800 shadow-sm" />
+                      <span className="absolute -top-2 -right-2 bg-gradient-to-br from-sari-blue to-blue-700 text-white text-xs font-black w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center shadow-lg border-2 border-white dark:border-[#1a1a1a]">×{qty}</span>
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="font-black text-base md:text-lg text-sari-dark dark:text-white leading-tight line-clamp-2 flex items-center gap-2">{(item as any).name.split(' (')[0]} {(item as any).optionSummary && <span className="text-sm font-bold px-2.5 py-1 rounded-full bg-sari-lime text-sari-dark">{(item as any).optionSummary}</span>} <Sparkles className="w-4 h-4 text-amber-500 opacity-0 group-hover:opacity-100 transition"/></h3>
@@ -442,14 +442,14 @@ export default function CartPage() {
                         <div className="hidden md:flex items-center gap-1 text-[11px] bg-gray-100 dark:bg-[#222] px-2 py-1 rounded-full"><Package className="w-3 h-3"/> Poids {it.weight? `${it.weight} kg`:'—'}</div>
                       </div>
                     </div>
-                    <div className="flex flex-col items-center gap-2 shrink-0">
+                    <div className="flex flex-col items-center gap-2.5 shrink-0 self-start pt-1">
                       <div className="flex items-center gap-1 bg-gray-100 dark:bg-[#111] p-1 rounded-full border shadow-inner">
-                        <button onClick={() => updateQuantity(item.id, item.quantity - 1, (item as any).variantKey)} className="w-9 h-9 rounded-full bg-white dark:bg-[#1a1a1a] border-2 border-gray-200 hover:border-sari-blue hover:bg-sari-blue/10 flex items-center justify-center shadow hover:scale-105 transition"><Minus className="w-4 h-4"/></button>
-                        <span className="w-12 text-center font-black text-lg">{qty}</span>
-                        <button onClick={() => updateQuantity(item.id, item.quantity + 1, (item as any).variantKey)} className="w-9 h-9 rounded-full bg-sari-blue text-white hover:bg-blue-700 flex items-center justify-center shadow hover:scale-105 transition"><Plus className="w-4 h-4"/></button>
+                        <button onClick={() => updateQuantity(item.id, item.quantity - 1, (item as any).variantKey)} className="w-8 h-8 md:w-9 md:h-9 rounded-full bg-white dark:bg-[#1a1a1a] border-2 border-gray-200 hover:border-sari-blue hover:bg-sari-blue/10 flex items-center justify-center shadow hover:scale-105 transition"><Minus className="w-4 h-4"/></button>
+                        <span className="w-10 md:w-12 text-center font-black text-base md:text-lg">{qty}</span>
+                        <button onClick={() => updateQuantity(item.id, item.quantity + 1, (item as any).variantKey)} className="w-8 h-8 md:w-9 md:h-9 rounded-full bg-sari-blue text-white hover:bg-blue-700 flex items-center justify-center shadow hover:scale-105 transition"><Plus className="w-4 h-4"/></button>
                       </div>
-                      <button onClick={() => removeFromCart(item.id, (item as any).variantKey)} className="w-9 h-9 rounded-full bg-red-50 text-red-600 hover:bg-red-500 hover:text-white flex items-center justify-center shadow transition border-2 border-red-100" title="Retirer cette variante"><Trash2 className="w-4 h-4" /></button>
-                      <span className="text-xs font-black tracking-widest opacity-50">QTE</span>
+                      <button onClick={() => removeFromCart(item.id, (item as any).variantKey)} className="w-10 h-10 rounded-xl bg-white dark:bg-[#1a1a1a] text-red-600 hover:bg-red-500 hover:text-white flex items-center justify-center shadow-md transition border-2 border-red-200 hover:border-red-500 hover:shadow-lg hover:scale-105" title="Retirer l'article"><Trash2 className="w-4 h-4" /></button>
+                      <span className="text-[10px] font-black tracking-widest opacity-40">SUPPR.</span>
                     </div>
                   </div>
                 );
@@ -470,7 +470,7 @@ export default function CartPage() {
                     <div className="flex gap-2">
                       <div className="relative flex-1">
                         <Tag className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-sari-blue pointer-events-none"/>
-                        <input className="w-full pl-11 pr-4 py-3.5 border-2 rounded-2xl bg-white dark:bg-[#1a1a1a] text-base font-mono uppercase focus:border-sari-blue focus:ring-4 focus:ring-sari-blue/10 outline-none transition placeholder:text-gray-400 border-gray-200 dark:border-gray-700" placeholder="SARI10" value={couponCode} onChange={e=>setCouponCode(e.target.value)} />
+                        <input className="w-full pl-11 pr-4 py-3.5 border-2 rounded-2xl bg-white dark:bg-[#1a1a1a] text-base font-mono uppercase focus:border-sari-blue focus:ring-4 focus:ring-sari-blue/10 outline-none transition placeholder:text-gray-400 border-gray-200 dark:border-gray-700" placeholder="COUPON" value={couponCode} onChange={e=>setCouponCode(e.target.value)} />
                       </div>
                       <button onClick={handleApplyCoupon} className="px-6 py-3.5 bg-sari-blue text-white rounded-2xl font-black hover:bg-[#138ab0] transition shadow">Appliquer</button>
                     </div>

@@ -8,7 +8,7 @@ import Link from 'next/link';
 import {
   LayoutDashboard, User, Briefcase, Mail, Package, FileText, LogOut, CheckCircle,
   Clock, ShoppingBag, CreditCard, Inbox, Activity, Handshake, Plus, Minus, Trash2,
-  Search, MapPin, Banknote, Target, Award, Gift, ChevronDown, ChevronUp,
+  Search, MapPin, Banknote, Target, Award, Gift, ChevronDown, ChevronUp, Eye,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useApplications } from '@/contexts/ApplicationsContext';
@@ -296,7 +296,10 @@ export default function DashboardPage() {
                                   <button onClick={() => updateQuantity(p.id, qty + 1)} className="p-1.5 border border-gray-300 dark:border-gray-700 rounded"><Plus className="w-3.5 h-3.5" /></button>
                                 </div>
                               ) : (
-                                <button onClick={() => addToCart({ id: p.id, name: p.name, price: typeof p.price === 'number' ? p.price : 0, quantity: 1, image: p.image || '', category: p.category })} className="btn-primary text-white px-3 py-1.5 text-sm font-semibold rounded-lg inline-flex items-center gap-1.5"><Plus className="w-3.5 h-3.5" /> {t('addToCart')}</button>
+                                <div className="flex items-center gap-2">
+                                  <Link href={`/${locale}/products/${p.id}`} className="px-3 py-1.5 text-sm font-semibold rounded-lg border border-gray-200 dark:border-gray-700 hover:border-sari-blue hover:text-sari-blue transition inline-flex items-center gap-1.5 bg-white dark:bg-[#1a1a1a]"><Eye className="w-3.5 h-3.5" /> Détail</Link>
+                                  <button onClick={() => addToCart({ id: p.id, name: p.name, price: p.price, quantity: 1, image: p.image || '', category: p.category })} className="btn-primary text-white px-3 py-1.5 text-sm font-semibold rounded-lg inline-flex items-center gap-1.5"><Plus className="w-3.5 h-3.5" /> {t('addToCart')}</button>
+                                </div>
                               )}
                             </div>
                           </div>

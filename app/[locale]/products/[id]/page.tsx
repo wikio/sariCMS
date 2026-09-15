@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import {
   ChevronLeft, ChevronRight, Check, ShoppingCart, Loader,
-  Download, Package, AlertTriangle
+  Download, Package, AlertTriangle, X, Info, Sparkles, ShieldAlert
 } from 'lucide-react';
 import { getProducts } from '@/lib/data';
 import { matchesEntity } from '@/lib/ids';
@@ -34,6 +34,8 @@ export default function ProductDetailPage() {
   const [qty, setQty] = useState(1);
   const [addedToCart, setAddedToCart] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
+  const [optionAlert, setOptionAlert] = useState<string | null>(null);
+  const [missingOptions, setMissingOptions] = useState<string[]>([]);
 
   useEffect(() => {
     const loadProduct = async () => {
@@ -147,9 +149,14 @@ export default function ProductDetailPage() {
     if (product.options?.length) {
       const missing = product.options.filter((opt:any) => !selectedOptions[opt.name]);
       if (missing.length) {
-        alert(`Veuillez choisir : ${missing.map((o:any)=>o.name).join(', ')}`);
+        setMissingOptions(missing.map((o:any)=>o.name));
+        setOptionAlert(`Veuillez choisir : ${missing.map((o:any)=>o.name).join(', ')}`);
         return;
       }
+    }
+    // Vérifie catégorie manquante (optionnel)
+    if (!product.category || product.category.trim() === '' || product.category === '—') {
+      // n'empêche pas l'ajout mais on pourrait alerter; on laisse passer sans modal pour ne pas bloquer
     }
     setIsAdding(true);
     setTimeout(() => {
@@ -187,6 +194,61 @@ export default function ProductDetailPage() {
         <div className="fixed top-24 right-4 bg-green-500 text-white px-6 py-3 shadow-lg z-50 animate-fade-in-up rounded-lg flex items-center gap-2">
           <Check className="w-5 h-5" />
           {t('addedToQuote')}
+        </div>
+      )}
+
+      {/* Modal alerte options manquantes - centré, animé, responsive */}
+      {optionAlert && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200" role="dialog" aria-modal="true">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setOptionAlert(null)} />
+          <div className="relative bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden animate-in zoom-in-95 duration-200 border border-gray-200 dark:border-gray-800">
+            <div className="bg-gradient-to-r from-amber-500 to-orange-600 p-[1.5px]" />
+            <button
+              onClick={() => setOptionAlert(null)}
+              className="absolute top-3 right-3 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              aria-label="Fermer"
+            >
+              <X className="w-5 h-5 text-gray-500" />
+            </button>
+            <div className="p-6 sm:p-8 text-center">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center shadow-lg animate-in zoom-in-50 duration-300">
+                <ShieldAlert className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
+              </div>
+              <h3 className="text-xl sm:text-2xl font-black text-sari-dark dark:text-white mb-2 flex items-center justify-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-amber-500" /> Sélection requise
+              </h3>
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-4">
+                Veuillez choisir une option pour continuer. Tous les types/variantes doivent être sélectionnés avant d’ajouter au panier.
+              </p>
+              {missingOptions.length > 0 && (
+                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-3 mb-4 text-left">
+                  <div className="text-xs font-black uppercase tracking-widest text-amber-800 dark:text-amber-300 mb-2 flex items-center gap-1.5"><Info className="w-3.5 h-3.5" /> Options manquantes</div>
+                  <div className="flex flex-wrap gap-2">
+                    {missingOptions.map((opt) => (
+                      <span key={opt} className="px-3 py-1.5 bg-white dark:bg-[#1a1a1a] border border-amber-200 dark:border-amber-700 rounded-full text-sm font-bold text-amber-800 dark:text-amber-200 flex items-center gap-1.5 shadow-sm">
+                        <Sparkles className="w-3.5 h-3.5 text-amber-500" /> {opt}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={() => setOptionAlert(null)}
+                  className="flex-1 bg-gradient-to-r from-sari-blue to-blue-600 hover:from-blue-600 hover:to-sari-blue text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-2"
+                >
+                  <Check className="w-5 h-5" /> Compris
+                </button>
+                <button
+                  onClick={() => setOptionAlert(null)}
+                  className="px-6 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-xl font-semibold hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                >
+                  Fermer
+                </button>
+              </div>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-3">Astuce : cliquez sur une taille/couleur ci-dessus pour la sélectionner.</p>
+            </div>
+          </div>
         </div>
       )}
 
