@@ -69,22 +69,37 @@ export class OrdersService extends BaseCrudService<OrderEntity> {
     op: 'create' | 'update',
     existing?: OrderEntity,
   ): Partial<OrderEntity> {
-    const out = { ...dto };
+    const out: Record<string, unknown> & Partial<OrderEntity> = { ...dto } as Record<string, unknown> & Partial<OrderEntity>;
     if (op === 'create') {
       out.status = out.status || 'pending';
       out.currency = out.currency || 'DZD';
       out.paid = out.paid ?? false;
       if (!out.date) out.date = new Date().toISOString();
+      const rawClient = String((out as Record<string, unknown>).client || '').trim();
+      if (!rawClient || rawClient.length < 2) (out as Record<string, unknown>).client = 'Client';
+      const rawEmail = String((out as Record<string, unknown>).email || '').trim().toLowerCase();
+      const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rawEmail);
+      if (!emailOk) (out as Record<string, unknown>).email = 'no-reply@sari.dz';
+      else (out as Record<string, unknown>).email = rawEmail;
+      const t = Number((out as Record<string, unknown>).total);
+      (out as Record<string, unknown>).total = Number.isFinite(t) && t >= 0 ? Math.round(t * 100) / 100 : 0;
+      if (!Array.isArray((out as Record<string, unknown>).items)) (out as Record<string, unknown>).items = [];
+      (out as Record<string, unknown>).items = ((out as Record<string, unknown>).items as unknown[]).map((it: unknown) => {
+        const r = (it || {}) as Record<string, unknown>;
+        const name = String(r.name || 'Article').slice(0, 300) || 'Article';
+        const qty = Math.max(1, Math.min(9999, Math.floor(Number(r.quantity) || 1)));
+        const priceRaw = r.price;
+        const priceNum = typeof priceRaw === 'string' ? Number(String(priceRaw).replace(/[^0-9.]/g, '')) : Number(priceRaw);
+        const price = Math.max(0, Math.min(10000000, Math.round((Number.isFinite(priceNum) ? priceNum : 0) * 100) / 100));
+        return { ...r, name, quantity: qty, price };
+      });
     }
-    if (typeof out.email === 'string') out.email = out.email.toLowerCase().trim();
-
-    // Journalise chaque changement d'état pour garder une traçabilité
-    // équivalente à celle que l'ancien store localStorage tenait à la main.
-    if (op === 'update' && out.status && existing && out.status !== existing.status) {
-      const history = Array.isArray(existing.history) ? [...(existing.history as unknown[])] : [];
-      history.push({ status: out.status, at: new Date().toISOString() });
-      out.history = history;
+    if (typeof (out as Record<string, unknown>).email === 'string') (out as Record<string, unknown>).email = String((out as Record<string, unknown>).email).toLowerCase().trim();
+    if (op === 'update' && (out as Record<string, unknown>).status && existing && (out as Record<string, unknown>).status !== (existing as unknown as Record<string, unknown>).status) {
+      const history = Array.isArray((existing as unknown as Record<string, unknown>).history) ? [...((existing as unknown as Record<string, unknown>).history as unknown[])] : [];
+      history.push({ status: (out as Record<string, unknown>).status as string, at: new Date().toISOString() });
+      (out as Record<string, unknown>).history = history;
     }
-    return out;
+    return out as Partial<OrderEntity>;
   }
 }

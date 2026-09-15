@@ -120,10 +120,11 @@ export class CreateOrderDto {
   @MaxLength(180)
   client!: string;
 
-  @ApiProperty({ example: 'contact@client.dz' })
+  @ApiPropertyOptional({ example: 'contact@client.dz' })
+  @IsOptional()
   @IsEmail()
   @MaxLength(180)
-  email!: string;
+  email?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
