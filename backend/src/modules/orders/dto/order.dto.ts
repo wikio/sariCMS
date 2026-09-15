@@ -201,6 +201,54 @@ export class CreateOrderDto {
   @MaxLength(80)
   zone?: string;
 
+  @ApiPropertyOptional({ description: 'Sous-total HT' })
+  @IsOptional()
+  @IsNumber()
+  subtotal?: number;
+
+  @ApiPropertyOptional({ description: 'Frais de livraison' })
+  @IsOptional()
+  @IsNumber()
+  shippingFee?: number;
+
+  @ApiPropertyOptional({ description: 'Total taxes' })
+  @IsOptional()
+  @IsNumber()
+  taxTotal?: number;
+
+  @ApiPropertyOptional({ description: 'Total remises' })
+  @IsOptional()
+  @IsNumber()
+  discountTotal?: number;
+
+  @ApiPropertyOptional({ description: 'Zone de livraison' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  deliveryZone?: string;
+
+  @ApiPropertyOptional({ description: 'Zone de vente' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  saleZone?: string;
+
+  @ApiPropertyOptional({ description: 'Adresse de livraison détaillée' })
+  @IsOptional()
+  @IsString()
+  deliveryAddress?: string;
+
+  @ApiPropertyOptional({ description: 'Pays ISO' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  country?: string;
+
+  @ApiPropertyOptional({ description: 'Notes client' })
+  @IsOptional()
+  @IsString()
+  notes?: string;
+
   @ApiPropertyOptional({ type: [HistoryEntryDto] })
   @IsOptional()
   @IsArray()
