@@ -193,12 +193,17 @@ export async function push(resource: SyncResource, row: Row): Promise<void> {
       if (newId !== undefined) rememberId(resource, row.id, newId);
     }
   } catch (err) {
-    // Debug visible en console navigateur si besoin : localStorage.__SARI_DEBUG='1'
+    // Log 400/409/422 toujours (validation), sinon seulement si debug
+    const isValidation = err instanceof CmsError && [400, 409, 422].includes(err.status);
     if (typeof window !== 'undefined') {
       try {
-        if (localStorage.getItem('__SARI_DEBUG') || (window as unknown as { __SARI_DEBUG?: boolean }).__SARI_DEBUG) {
+        const debug = localStorage.getItem('__SARI_DEBUG') || (window as unknown as { __SARI_DEBUG?: boolean }).__SARI_DEBUG;
+        if (isValidation || debug) {
           // eslint-disable-next-line no-console
-          console.warn(`[crm-sync] push ${resource} #${String(row.id)} échoué`, err);
+          console.error(`[crm-sync] push ${resource} #${String(row.id)} ${isValidation ? 'VALIDATION 400' : 'échoué'}`, {
+            payload,
+            error: err instanceof CmsError ? { status: err.status, message: err.message, body: err.body } : err,
+          });
         }
       } catch {}
     }
