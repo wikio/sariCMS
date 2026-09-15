@@ -73,6 +73,12 @@ export class CommerceItemDto {
   @IsOptional()
   @IsNumber()
   taxRate?: number;
+
+  @ApiPropertyOptional({ description: 'Image produit (compat vitrine)' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(800)
+  image?: string;
 }
 
 /** Entrée d'historique de statut. */
@@ -111,8 +117,8 @@ export class CreateOrderDto {
 
   @ApiPropertyOptional({ description: 'Compte client rattaché (users.id)' })
   @IsOptional()
-  @IsInt()
-  userId?: number;
+  // string accepté pour compat localStorage ("1789...")
+  userId?: number | string;
 
   @ApiProperty({ example: 'Sonatrach' })
   @IsString()
@@ -248,6 +254,97 @@ export class CreateOrderDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  // --- Compat vitrine / legacy crm-store (tous optionnels pour éviter 400 forbidNonWhitelisted) ---
+  @ApiPropertyOptional({ description: 'Compat: totalAmount (legacy)' })
+  @IsOptional()
+  @IsNumber()
+  totalAmount?: number;
+
+  @ApiPropertyOptional({ description: 'Compat: taxAmount (legacy)' })
+  @IsOptional()
+  @IsNumber()
+  taxAmount?: number;
+
+  @ApiPropertyOptional({ description: 'Compat: grandTotal (legacy)' })
+  @IsOptional()
+  @IsNumber()
+  grandTotal?: number;
+
+  @ApiPropertyOptional({ description: 'Compat: productDiscount' })
+  @IsOptional()
+  @IsNumber()
+  productDiscount?: number;
+
+  @ApiPropertyOptional({ description: 'Compat: globalDiscount' })
+  @IsOptional()
+  @IsNumber()
+  globalDiscount?: number;
+
+  @ApiPropertyOptional({ description: 'Compat: couponDiscount' })
+  @IsOptional()
+  @IsNumber()
+  couponDiscount?: number;
+
+  @ApiPropertyOptional({ description: 'Compat: productShipping' })
+  @IsOptional()
+  @IsNumber()
+  productShipping?: number;
+
+  @ApiPropertyOptional({ description: 'Compat: globalShipping' })
+  @IsOptional()
+  @IsNumber()
+  globalShipping?: number;
+
+  @ApiPropertyOptional({ description: 'Compat: taxLines' })
+  @IsOptional()
+  @IsArray()
+  taxLines?: unknown[];
+
+  @ApiPropertyOptional({ description: 'Compat: customerName -> client' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(180)
+  customerName?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(180)
+  customerEmail?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  customerPhone?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(180)
+  customerCompany?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  customerType?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  isGuest?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  isQuote?: boolean;
+
+  @ApiPropertyOptional({ description: 'Notes internes admin' })
+  @IsOptional()
+  @IsString()
+  adminNotes?: string;
 
   @ApiPropertyOptional({ type: [HistoryEntryDto] })
   @IsOptional()

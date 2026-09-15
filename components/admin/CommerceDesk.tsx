@@ -65,6 +65,11 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
   const [messageTo, setMessageTo] = useState<Row | null>(null);
   const [respondTo, setRespondTo] = useState<Row | null>(null);
   const [invoiceBusy, setInvoiceBusy] = useState(false);
+  const [selected, setSelected] = useState<Set<number>>(new Set());
+  const toggleSelect = (id: number) => setSelected(prev => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  const toggleAll = (on: boolean) => setSelected(on ? new Set(shown.map(r => r.id)) : new Set());
+  const clearSelection = () => setSelected(new Set());
+  const isAllSelected = shown.length > 0 && shown.every(r => selected.has(r.id));
   
   // Traduction des statuts
   const translateStatus = (statusValue: string) => {
@@ -129,6 +134,33 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
     setRows(next);
     if (kind === 'orders') saveOrders(next as Order[]);
     else saveQuotes(next as Quote[]);
+  };
+  const batchDelete = () => {
+    if (!selected.size) return;
+    if (!confirm(`Supprimer ${selected.size} élément(s) ?`)) return;
+    persist(rows.filter(r => !selected.has(r.id)));
+    clearSelection();
+    showToast(`${selected.size} supprimé(s)`, 'success');
+  };
+  const batchStatus = (nextStatus: string) => {
+    if (!selected.size || !nextStatus) return;
+    let orderCreated = 0;
+    const next = rows.map(r => {
+      if (!selected.has(r.id)) return r;
+      // devis accepté -> transformation auto
+      if (kind === 'quotes' && nextStatus === 'accepted') {
+        const settings = loadAdminSettings().quote;
+        if (settings.autoTransformToOrder) {
+          const created = convertToOrder(r);
+          orderCreated += 1;
+          return { ...r, status: 'transformed' as never, orderId: created.id, history: [...(r.history||[]), { status: 'transformed', at: new Date().toISOString(), note: `Lot: transformé en commande #${created.id}` }] } as Row;
+        }
+      }
+      return { ...r, status: nextStatus as never, history: [...(r.history||[]), { status: nextStatus, at: new Date().toISOString(), note: 'Lot' }] } as Row;
+    });
+    persist(next);
+    clearSelection();
+    showToast(orderCreated ? `${selected.size} mis à jour, ${orderCreated} commande(s) créée(s)` : `Statut → ${nextStatus} (${selected.size})`, 'success');
   };
 
   const saveOpen = (next: Row) => {
@@ -316,6 +348,14 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
 
   return (
     <div className="space-y-4">
+      <div className="ad-card p-3 text-xs leading-relaxed" style={{ borderColor: 'color-mix(in srgb, var(--ad-accent) 25%, var(--ad-line))', background: 'color-mix(in srgb, var(--ad-accent) 4%, transparent)' }}>
+        <strong>{kind==='orders' ? 'Commande' : 'Devis'} — comment ça marche ?</strong>{' '}
+        {kind==='orders' ? (
+          <>La <strong>commande</strong> est un engagement d'achat (après devis ou direct vitrine). Elle porte un paiement (CB/CIB, virement, PayPal, chèque, COD), une livraison (zone/frais), une facture (ERP ou upload) et un suivi statut : <em>pending → pending_payment → paid → processing → shipped → delivered</em> (ou <em>cancelled</em>). Le multi-sélection permet de changer le statut ou supprimer en lot tout en historisant.</>
+        ) : (
+          <>Le <strong>devis</strong> est une estimation chiffrée avant achat. Cycle : <em>draft → submitted → processing → replied → accepted/rejected</em> (ou <em>revision/expired</em>). <em>accepted</em> peut <strong>auto-transformer en commande</strong> (réglage Admin → Devis), l'original passe en <em>transformed</em> avec lien vers la commande. La validité (jours) expire auto en <em>expired</em>. Le lot permet d'accepter/transformer plusieurs devis d'un coup.</>
+        )}
+      </div>
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-3 ad-rise">
         <div>
           <div className="text-[11px] uppercase tracking-[0.22em] font-black" style={{ color: 'var(--ad-muted)' }}>E-shop</div>
@@ -344,13 +384,26 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
         </select>
       </div>
 
+      {selected.size > 0 && (
+        <div className="ad-card p-3 flex flex-wrap items-center gap-2" style={{ borderColor: 'var(--ad-accent)', background: 'color-mix(in srgb, var(--ad-accent) 8%, transparent)' }}>
+          <span className="font-black text-sm">{selected.size} sélectionné(s)</span>
+          <select className="ad-select w-48" defaultValue="" onChange={e=>{ const v=e.target.value; if(v) { batchStatus(v); e.target.value=''; } }}>
+            <option value="">— Changer statut —</option>
+            {statuses.map(s=> <option key={s.value} value={s.value}>{translateStatus(s.value)}</option>)}
+          </select>
+          <button className="ad-btn ad-btn-danger" onClick={batchDelete}><Trash2 className="w-4 h-4"/> Supprimer</button>
+          <button className="ad-btn ad-btn-ghost" onClick={clearSelection}>Annuler</button>
+          <span className="text-xs ml-auto" style={{color:'var(--ad-muted)'}}>Astuce : le lot garde l'historique (note “Lot”).</span>
+        </div>
+      )}
       {view === 'list' ? (
         <div className="ad-card overflow-x-auto">
           <table className="ad-table">
-            <thead><tr><th>{t('columnNumber')}</th><th>{t('columnClient')}</th><th>{t('columnDate')}</th><th>{t('columnTotalTTC')}</th><th>Paiement</th><th>{t('columnInvoice')}</th><th>{t('columnStatus')}</th><th></th></tr></thead>
+            <thead><tr><th><input type="checkbox" checked={isAllSelected} onChange={e=>toggleAll(e.target.checked)} aria-label="Tout sélectionner" /></th><th>{t('columnNumber')}</th><th>{t('columnClient')}</th><th>{t('columnDate')}</th><th>{t('columnTotalTTC')}</th><th>Paiement</th><th>{t('columnInvoice')}</th><th>{t('columnStatus')}</th><th></th></tr></thead>
             <tbody>
               {shown.map((row) => (
-                <tr key={row.id}>
+                <tr key={row.id} style={selected.has(row.id) ? { background: 'color-mix(in srgb, var(--ad-accent) 6%, transparent)' } : undefined}>
+                  <td><input type="checkbox" checked={selected.has(row.id)} onChange={()=>toggleSelect(row.id)} aria-label={`Sélectionner ${row.id}`} /></td>
                   <td className="font-mono text-sm">{('reference' in row && row.reference) || ('code' in row && row.code) || `#${row.id}`}</td>
                   <td><div className="font-bold">{row.client}</div><div className="text-xs" style={{ color: 'var(--ad-muted)' }}>{row.email}</div></td>
                   <td><DateText value={row.date} dateOnly /></td>
@@ -372,8 +425,8 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
       ) : (
         <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-3">
           {shown.map((row) => (
-            <article key={row.id} className="ad-card p-4 space-y-2">
-              <div className="flex justify-between"><span className="font-mono text-xs">{('code' in row && (row as any).code) || `#${row.id}`}</span><span className="ad-chip ad-chip-acc">{row.status}</span></div>
+            <article key={row.id} className="ad-card p-4 space-y-2" style={selected.has(row.id) ? { borderColor: 'var(--ad-accent)', boxShadow: '0 0 0 1px var(--ad-accent)' } : undefined}>
+              <div className="flex justify-between"><label className="flex items-center gap-1.5 font-mono text-xs"><input type="checkbox" checked={selected.has(row.id)} onChange={()=>toggleSelect(row.id)} />{('code' in row && (row as any).code) || `#${row.id}`}</label><span className="ad-chip ad-chip-acc">{row.status}</span></div>
               <h3 className="font-black">{row.client}</h3>
               <div className="text-xs font-mono" style={{color:'var(--ad-muted)'}}>{paymentTypeLabel(normalizeOrderPaymentType((row as any).payment || 'pending'))}</div>
               <div className="font-black" style={{ color: 'var(--ad-accent)' }}>{money(Number(row.total))}</div>

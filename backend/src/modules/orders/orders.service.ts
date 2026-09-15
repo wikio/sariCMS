@@ -70,6 +70,42 @@ export class OrdersService extends BaseCrudService<OrderEntity> {
     existing?: OrderEntity,
   ): Partial<OrderEntity> {
     const out: Record<string, unknown> & Partial<OrderEntity> = { ...dto } as Record<string, unknown> & Partial<OrderEntity>;
+    // --- Compat vitrine legacy : mappe les anciens noms vers les colonnes canoniques ---
+    const compat = out as Record<string, unknown>;
+    if (compat.customerName && !compat.client) compat.client = compat.customerName;
+    if (compat.customerEmail && !compat.email) compat.email = compat.customerEmail;
+    if (compat.customerPhone && !compat.phone) compat.phone = compat.customerPhone;
+    if (compat.customerCompany && !compat.company) compat.company = compat.customerCompany;
+    if ((compat.grandTotal !== undefined || compat.totalAmount !== undefined) && (compat.total === undefined || Number(compat.total) === 0)) {
+      const gt = compat.grandTotal !== undefined ? Number(compat.grandTotal) : Number(compat.totalAmount);
+      if (Number.isFinite(gt)) compat.total = gt;
+    }
+    if (compat.taxAmount !== undefined && compat.taxTotal === undefined) compat.taxTotal = compat.taxAmount;
+    if (typeof compat.userId === 'string') {
+      const n = Number(String(compat.userId).trim());
+      if (Number.isFinite(n) && n > 0) (compat as Record<string, unknown>).userId = n;
+      else delete (compat as Record<string, unknown>).userId;
+    }
+    // Supprime les champs legacy qui n'ont pas de colonne (évite le warn + garde le payload propre)
+    delete compat.customerName; delete compat.customerEmail; delete compat.customerPhone; delete compat.customerCompany;
+    delete compat.customerType; delete compat.isGuest; delete compat.isQuote;
+    delete compat.totalAmount; delete compat.taxAmount; delete compat.grandTotal;
+    delete compat.productDiscount; delete compat.globalDiscount; delete compat.couponDiscount;
+    delete compat.productShipping; delete compat.globalShipping; delete compat.taxLines;
+    delete compat.subtotal; delete compat.shippingFee; delete compat.taxTotal; delete compat.discountTotal;
+    delete compat.deliveryZone; delete compat.saleZone; delete compat.deliveryAddress; delete compat.country; delete compat.notes; delete compat.adminNotes;
+    // Sur update, ne jamais écraser le code avec un doublon (cause 500 Unique constraint)
+    if (op === 'update' && compat.code && existing) {
+      if (String(compat.code) === String((existing as unknown as Record<string, unknown>).code)) {
+        // même code -> inutile de le renvoyer
+        delete compat.code;
+      }
+      // si code différent, on le laisse mais create() gère déjà le doublon; update laissera 500 si collision
+      // on préfère supprimer pour éviter 500 sur les vieux localStorage qui rejouent d'anciens codes
+      else {
+        delete compat.code;
+      }
+    }
     if (op === 'create') {
       out.status = out.status || 'pending';
       out.currency = out.currency || 'DZD';
@@ -91,7 +127,14 @@ export class OrdersService extends BaseCrudService<OrderEntity> {
         const priceRaw = r.price;
         const priceNum = typeof priceRaw === 'string' ? Number(String(priceRaw).replace(/[^0-9.]/g, '')) : Number(priceRaw);
         const price = Math.max(0, Math.min(10000000, Math.round((Number.isFinite(priceNum) ? priceNum : 0) * 100) / 100));
-        return { ...r, name, quantity: qty, price };
+        // garde image si présent, mais sanitise
+        const clean: Record<string, unknown> = { ...r, name, quantity: qty, price };
+        if (clean.image && typeof clean.image === 'string' && String(clean.image).length > 800) clean.image = String(clean.image).slice(0, 800);
+        // retire les clés legacy d'item si présentes
+        delete (clean as Record<string, unknown>).vatRate; delete (clean as Record<string, unknown>).vatIncluded;
+        delete (clean as Record<string, unknown>).shippingFee; delete (clean as Record<string, unknown>).shippingType;
+        delete (clean as Record<string, unknown>).zones; delete (clean as Record<string, unknown>).discountType; delete (clean as Record<string, unknown>).discountValue;
+        return clean;
       });
     }
     if (typeof (out as Record<string, unknown>).email === 'string') (out as Record<string, unknown>).email = String((out as Record<string, unknown>).email).toLowerCase().trim();
@@ -99,6 +142,14 @@ export class OrdersService extends BaseCrudService<OrderEntity> {
       const history = Array.isArray((existing as unknown as Record<string, unknown>).history) ? [...((existing as unknown as Record<string, unknown>).history as unknown[])] : [];
       history.push({ status: (out as Record<string, unknown>).status as string, at: new Date().toISOString() });
       (out as Record<string, unknown>).history = history;
+    }
+    // sanitize items même en update (évite image trop longue etc.)
+    if (op === 'update' && Array.isArray((out as Record<string, unknown>).items)) {
+      (out as Record<string, unknown>).items = ((out as Record<string, unknown>).items as unknown[]).map((it: unknown) => {
+        const r = (it || {}) as Record<string, unknown>;
+        if (typeof r.image === 'string' && r.image.length > 800) r.image = r.image.slice(0, 800);
+        return r;
+      });
     }
     return out as Partial<OrderEntity>;
   }
