@@ -2,7 +2,8 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useAuth } from './AuthContext';
+import { useAuth, frontToken } from './AuthContext';
+import { cmsFetch } from '@/lib/cms';
 import { nextCodeFor } from '@/lib/codes';
 import { loadOrders as loadCrmOrders, saveOrders as saveCrmOrders, loadQuotes as loadCrmQuotes, saveQuotes as saveCrmQuotes } from '@/lib/crm-store';
 
@@ -112,6 +113,105 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
       }
     } catch {}
   }, []);
+
+  // Association vitrine ↔ BD : charge les commandes/devis du client depuis MySQL (si connecté)
+  // - Si un JWT vitrine existe (frontToken), on l'envoie -> le backend résout actor via JwtAuthGuard optionnel
+  // - Sinon fallback public par email (démo client@sari.dz sans token) -> query ?email=
+  useEffect(() => {
+    if (!user?.id && !user?.email) return;
+    let cancelled = false;
+    const fetchMy = async () => {
+      try {
+        const token = frontToken();
+        const emailParam = user.email ? `&email=${encodeURIComponent(user.email)}` : '';
+        const userIdParam = user.id ? `&userId=${encodeURIComponent(user.id)}` : '';
+        // Orders
+        let oRows: any[] = [];
+        try {
+          const path = token
+            ? `/orders/my/list?limit=100&view=block`
+            : `/orders/my/list?limit=100&view=block${emailParam}${userIdParam}`;
+          const opts: any = token ? { token, timeoutMs: 6000 } : { timeoutMs: 6000 };
+          const oRes: any = await cmsFetch(path, opts).catch(() => null);
+          oRows = Array.isArray(oRes?.data) ? oRes.data : Array.isArray(oRes) ? oRes : [];
+        } catch {}
+        if (!cancelled && oRows.length) {
+          const mapped = oRows.map((r: any) => ({
+            id: Number(r.id),
+            code: r.code,
+            userId: r.userId ? String(r.userId) : null,
+            customerName: r.client || 'Client',
+            customerEmail: r.email || '',
+            customerPhone: r.phone || '',
+            customerCompany: r.company || '',
+            customerType: 'client',
+            isGuest: !r.userId,
+            isQuote: false,
+            items: Array.isArray(r.items) ? r.items.map((it: any) => ({ id: Number(it.id)|| Date.now(), name: it.name, price: String(it.price), quantity: Number(it.quantity)||1, image: it.image || '', category: it.category || '' })) : [],
+            totalAmount: Number(r.total) || 0,
+            taxAmount: 0,
+            grandTotal: Number(r.total) || 0,
+            status: r.status || 'pending',
+            createdAt: r.date || r.createdAt || new Date().toISOString(),
+            payment: r.payment || 'pending',
+          }));
+          setOrders(prev => {
+            const byId = new Map<string, any>();
+            for (const m of mapped) byId.set(String(m.id), m);
+            for (const m of mapped) if (m.code) byId.set(String(m.code), m);
+            const localOnly = prev.filter(p => !byId.has(String(p.id)) && !byId.has(String((p as any).code)));
+            const merged = [...mapped as any, ...localOnly];
+            try { localStorage.setItem(CTX_KEY, JSON.stringify(merged)); } catch {}
+            return merged as any;
+          });
+        }
+        // Quotes
+        let qRows: any[] = [];
+        try {
+          const path = token
+            ? `/quotes/my/list?limit=100&view=block`
+            : `/quotes/my/list?limit=100&view=block${emailParam}${userIdParam}`;
+          const opts: any = token ? { token, timeoutMs: 6000 } : { timeoutMs: 6000 };
+          const qRes: any = await cmsFetch(path, opts).catch(() => null);
+          qRows = Array.isArray(qRes?.data) ? qRes.data : Array.isArray(qRes) ? qRes : [];
+        } catch {}
+        if (!cancelled && qRows.length) {
+          const qMapped = qRows.map((r: any) => ({
+            id: Number(r.id),
+            code: r.reference || r.code,
+            userId: r.userId ? String(r.userId) : null,
+            customerName: r.client || 'Client',
+            customerEmail: r.email || '',
+            customerPhone: r.phone || '',
+            customerCompany: r.company || '',
+            customerType: 'client',
+            isGuest: !r.userId,
+            isQuote: true,
+            items: Array.isArray(r.items) ? r.items.map((it: any) => ({ id: Number(it.id)|| Date.now(), name: it.name, price: String(it.price), quantity: Number(it.quantity)||1, image: it.image || '', category: it.category || '' })) : [],
+            totalAmount: Number(r.total) || 0,
+            taxAmount: 0,
+            grandTotal: Number(r.total) || 0,
+            status: 'quote_requested' as const,
+            createdAt: r.date || r.createdAt || new Date().toISOString(),
+            payment: 'pending',
+          }));
+          setOrders(prev => {
+            const byId = new Map<string, any>();
+            for (const m of qMapped) byId.set(String(m.id), m);
+            for (const m of qMapped) if ((m as any).code) byId.set(String((m as any).code), m);
+            const localOnly = prev.filter(p => !byId.has(String(p.id)) && !byId.has(String((p as any).code)));
+            const merged = [...qMapped as any, ...localOnly.filter((p:any)=> p.isQuote)];
+            const ordersOnly = prev.filter((p:any)=> !p.isQuote);
+            const final = [...ordersOnly, ...merged] as any;
+            try { localStorage.setItem(CTX_KEY, JSON.stringify(final)); } catch {}
+            return final;
+          });
+        }
+      } catch {}
+    };
+    void fetchMy();
+    return () => { cancelled = true; };
+  }, [user?.id, user?.email]);
 
   const addOrder = (orderData: Omit<Order, 'id' | 'createdAt' | 'code'> & { code?: string }): Order => {
     // Génère un code formaté SARI-WCMD{XX}-{ID} via lib/codes si non fourni, basé sur les commandes existantes
