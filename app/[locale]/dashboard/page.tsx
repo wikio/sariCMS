@@ -9,7 +9,7 @@ import {
   LayoutDashboard, User, Briefcase, Mail, Package, FileText, LogOut, CheckCircle,
   Clock, ShoppingBag, CreditCard, Inbox, Activity, Handshake, Plus, Minus, Trash2,
   Search, MapPin, Banknote, Target, Award, Gift, ChevronDown, ChevronUp, Eye,
-  MessageCircle, AlertTriangle, X, Send,
+  MessageCircle, AlertTriangle, X, Send, Printer, Download, FileDown,
 } from 'lucide-react';
 import { useAuth, frontToken } from '@/contexts/AuthContext';
 import { useApplications } from '@/contexts/ApplicationsContext';
@@ -26,6 +26,8 @@ import DateText from '@/components/shared/DateText';
 import { useCurrency } from '@/lib/use-currency';
 import { paymentTypeLabel, normalizeOrderPaymentType } from '@/lib/payments';
 import { cmsFetch } from '@/lib/cms';
+import { orderPdfHtml, printHtml } from '@/lib/pdf-templates';
+import { getConfig } from '@/lib/data';
 
 export default function DashboardPage() {
   const locale = useLocale();
@@ -147,6 +149,74 @@ export default function DashboardPage() {
     setActiveTab('messages');
     // petit délai pour laisser MessagesModule se charger puis ouvrir
     setTimeout(() => window.dispatchEvent(new Event('sari-threads-changed')), 100);
+  };
+
+  const handlePdf = async (order: any, download = false) => {
+    try {
+      const cfg: any = await getConfig(locale as any).catch(() => null);
+      const company = cfg?.meta ? {
+        name: cfg.meta.companyName || 'SARI Système',
+        tagline: cfg.meta.tagline || '',
+        phone: cfg.meta.phone || '',
+        email: cfg.meta.email || '',
+        address: cfg.meta.address || '',
+        logo: cfg.meta.logo || '',
+      } : { name: 'SARI Système', tagline: '', phone: '', email: '', address: '', logo: '' };
+      // Convert vitrine Order -> CRM Order shape for pdf-templates
+      const crmOrder: any = {
+        id: order.id,
+        code: order.code,
+        client: order.customerName || 'Client',
+        email: order.customerEmail || '',
+        phone: order.customerPhone || '',
+        company: order.customerCompany || '',
+        date: (order.createdAt || new Date().toISOString()).slice(0,10),
+        status: order.status,
+        total: Number(order.grandTotal) || 0,
+        items: Array.isArray(order.items) ? order.items.map((it:any)=> ({
+          id: it.id,
+          name: it.name,
+          quantity: Number(it.quantity)||1,
+          price: Number(String(it.price).replace(/[^0-9.]/g,''))||0,
+          category: it.category,
+          image: it.image,
+        })) : [],
+        address: (order as any).deliveryAddress || (order as any).address || '',
+        zone: (order as any).zone || (order as any).deliveryZone || '',
+        coupon: (order as any).coupon || '',
+        notes: (order as any).notes || '',
+        adminNotes: (order as any).adminNotes || '',
+        subtotal: (order as any).subtotal,
+        taxTotal: (order as any).taxTotal,
+        shippingFee: (order as any).shippingFee,
+        discountTotal: (order as any).discountTotal,
+        productDiscount: (order as any).productDiscount,
+        globalDiscount: (order as any).globalDiscount,
+        couponDiscount: (order as any).couponDiscount,
+        productShipping: (order as any).productShipping,
+        globalShipping: (order as any).globalShipping,
+        taxLines: (order as any).taxLines,
+        payment: (order as any).payment,
+      };
+      const html = orderPdfHtml(crmOrder, company);
+      const title = crmOrder.code || `Commande #${crmOrder.id}`;
+      if (download) {
+        const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${title.replace(/[^a-zA-Z0-9_-]/g,'_')}.html`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        // aussi ouvrir l'impression pour permettre Enregistrer en PDF si l'utilisateur préfère
+      } else {
+        printHtml(title, html);
+      }
+    } catch (e) {
+      console.error('PDF error', e);
+    }
   };
 
   const canShowPayButton = (order: any) => {
@@ -552,9 +622,37 @@ export default function DashboardPage() {
                                 <div className="text-sm text-gray-500 dark:text-gray-400 italic">{t('noItems', { defaultMessage: 'Aucun article détaillé' })} — {formatMoney(order.grandTotal, { decimals: 2 })}</div>
                               )}
                             </div>
+                            {/* Détail montants */}
+                            {(() => {
+                              const o:any = order as any;
+                              const sub = o.subtotal ?? (Array.isArray(o.items) ? o.items.reduce((s:number,it:any)=> s + (Number(String(it.price).replace(/[^0-9.]/g,''))||0)* (Number(it.quantity)||1),0) : 0);
+                              const hasDiscount = (o.discountTotal && o.discountTotal>0) || (o.productDiscount && o.productDiscount>0) || (o.globalDiscount && o.globalDiscount>0) || (o.couponDiscount && o.couponDiscount>0);
+                              const hasShipping = o.shippingFee !== undefined || o.productShipping !== undefined || o.globalShipping !== undefined;
+                              const hasTax = (o.taxTotal && o.taxTotal>0) || (Array.isArray(o.taxLines) && o.taxLines.length>0);
+                              if (!hasDiscount && !hasShipping && !hasTax && sub === Number(o.grandTotal||0)) return null;
+                              return (
+                                <div className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-200 dark:border-gray-800 p-3 space-y-1.5 text-sm">
+                                  <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400">Sous-total HT</span><span className="font-semibold">{formatMoney(sub, { decimals: 2 })}</span></div>
+                                  {o.productDiscount >0 && <div className="flex justify-between text-emerald-600 dark:text-emerald-400"><span>Remise produits</span><span>-{formatMoney(o.productDiscount, { decimals: 2 })}</span></div>}
+                                  {o.globalDiscount >0 && <div className="flex justify-between text-emerald-600 dark:text-emerald-400"><span>Remise globale</span><span>-{formatMoney(o.globalDiscount, { decimals: 2 })}</span></div>}
+                                  {o.couponDiscount >0 && <div className="flex justify-between text-emerald-600 dark:text-emerald-400"><span>Coupon {o.coupon||''}</span><span>-{formatMoney(o.couponDiscount, { decimals: 2 })}</span></div>}
+                                  {o.discountTotal >0 && !o.productDiscount && !o.globalDiscount && !o.couponDiscount && <div className="flex justify-between text-emerald-600 dark:text-emerald-400"><span>Remises</span><span>-{formatMoney(o.discountTotal, { decimals: 2 })}</span></div>}
+                                  {o.productShipping >0 && <div className="flex justify-between"><span>Livraison articles</span><span>{formatMoney(o.productShipping, { decimals: 2 })}</span></div>}
+                                  {o.globalShipping >0 && <div className="flex justify-between"><span>Livraison zone {o.zone||o.deliveryZone||''}</span><span>{formatMoney(o.globalShipping, { decimals: 2 })}</span></div>}
+                                  {hasShipping && o.shippingFee !== undefined && o.productShipping===undefined && o.globalShipping===undefined && <div className="flex justify-between"><span>Frais de livraison</span><span>{Number(o.shippingFee)===0 ? 'Offerte' : formatMoney(o.shippingFee, { decimals: 2 })}</span></div>}
+                                  {Array.isArray(o.taxLines) && o.taxLines.length>0 ? o.taxLines.map((tl:any,i:number)=> <div key={i} className="flex justify-between text-gray-500 dark:text-gray-400 text-xs"><span>{tl.name} {tl.rate? `${tl.rate}%`:''}</span><span>{formatMoney(tl.amount, { decimals: 2 })}</span></div>) : (o.taxTotal>0 && <div className="flex justify-between text-gray-500 dark:text-gray-400"><span>TVA / Taxes</span><span>{formatMoney(o.taxTotal, { decimals: 2 })}</span></div>)}
+                                  {o.zone && <div className="flex justify-between text-xs text-gray-500"><span>Zone</span><span className="font-mono">{o.zone}</span></div>}
+                                </div>
+                              );
+                            })()}
                             <div className="flex items-center justify-between border-t border-gray-200 dark:border-gray-700 pt-3">
                               <span className="font-bold text-sari-dark dark:text-white text-sm">{t('total')}</span>
                               <span className="font-black text-sari-lime">{formatMoney(order.grandTotal, { decimals: 2 })}</span>
+                            </div>
+                            {/* Boutons PDF */}
+                            <div className="flex flex-wrap gap-2">
+                              <button onClick={()=> handlePdf(order,false)} className="flex-1 sm:flex-none px-3 py-2 bg-white dark:bg-[#1a1a1a] border border-gray-300 dark:border-gray-700 hover:border-sari-blue hover:text-sari-blue rounded-lg text-sm font-semibold inline-flex items-center justify-center gap-2"><Eye className="w-4 h-4" /> {t('viewPdf', { defaultMessage: 'Voir PDF' })}</button>
+                              <button onClick={()=> handlePdf(order,true)} className="flex-1 sm:flex-none px-3 py-2 bg-sari-blue text-white hover:bg-sari-dark rounded-lg text-sm font-semibold inline-flex items-center justify-center gap-2"><Download className="w-4 h-4" /> {t('downloadPdf', { defaultMessage: 'Télécharger PDF' })}</button>
                             </div>
                             <div className="flex flex-wrap gap-2 pt-1">
                               {showPay ? (

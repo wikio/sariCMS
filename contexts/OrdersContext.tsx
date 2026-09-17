@@ -34,6 +34,23 @@ export interface Order {
   status: 'pending' | 'pending_payment' | 'paid' | 'shipped' | 'delivered' | 'cancelled' | 'cancel_requested' | 'quote_requested';
   createdAt: string;
   payment?: string;
+  subtotal?: number;
+  shippingFee?: number;
+  taxTotal?: number;
+  discountTotal?: number;
+  productDiscount?: number;
+  globalDiscount?: number;
+  couponDiscount?: number;
+  productShipping?: number;
+  globalShipping?: number;
+  taxLines?: any[];
+  zone?: string;
+  deliveryZone?: string;
+  saleZone?: string;
+  coupon?: string;
+  notes?: string;
+  adminNotes?: string;
+  history?: any[];
 }
 
 interface OrdersContextType {
@@ -174,6 +191,23 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
             status: (r.status as any) || 'pending',
             createdAt: (r.date as string) || (r.createdAt as string) || new Date().toISOString(),
             payment: (r.payment as string) || 'pending',
+            subtotal: (r as any).subtotal !== undefined ? Number((r as any).subtotal) : undefined,
+            shippingFee: (r as any).shippingFee !== undefined ? Number((r as any).shippingFee) : (r as any).globalShipping !== undefined ? Number((r as any).globalShipping) : undefined,
+            taxTotal: (r as any).taxTotal !== undefined ? Number((r as any).taxTotal) : undefined,
+            discountTotal: (r as any).discountTotal !== undefined ? Number((r as any).discountTotal) : undefined,
+            productDiscount: (r as any).productDiscount !== undefined ? Number((r as any).productDiscount) : undefined,
+            globalDiscount: (r as any).globalDiscount !== undefined ? Number((r as any).globalDiscount) : undefined,
+            couponDiscount: (r as any).couponDiscount !== undefined ? Number((r as any).couponDiscount) : undefined,
+            productShipping: (r as any).productShipping !== undefined ? Number((r as any).productShipping) : undefined,
+            globalShipping: (r as any).globalShipping !== undefined ? Number((r as any).globalShipping) : undefined,
+            taxLines: Array.isArray((r as any).taxLines) ? (r as any).taxLines : undefined,
+            zone: (r as any).zone || (r as any).deliveryZone || undefined,
+            deliveryZone: (r as any).deliveryZone || undefined,
+            saleZone: (r as any).saleZone || undefined,
+            coupon: (r as any).coupon || undefined,
+            notes: (r as any).notes || undefined,
+            adminNotes: (r as any).adminNotes || undefined,
+            history: Array.isArray((r as any).history) ? (r as any).history : undefined,
           }));
           // Si la DB n'a pas d'items (view list ou migration), garde les items locaux
           try { if (mapped.length && mapped.every((m:any)=> !m.items || m.items.length===0)) console.warn('[OrdersContext] my/list orders sans items - garde local si dispo', oRows.slice(0,1)); } catch {}

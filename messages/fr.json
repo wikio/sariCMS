@@ -3403,7 +3403,14 @@
       "confirmCancelRequest": "Confirmer la demande",
       "messageAboutOrder": "Envoyer un message à propos de cette commande",
       "confirmCancel": "Annuler cette commande ?",
-      "cancelRequestedShort": "Annulation demandée"
+      "cancelRequestedShort": "Annulation demandée",
+      "viewPdf": "Voir PDF",
+      "downloadPdf": "Télécharger PDF",
+      "subtotalHT": "Sous-total HT",
+      "discounts": "Remises",
+      "taxes": "TVA / Taxes",
+      "shipping": "Frais de livraison",
+      "totalTTC": "Total TTC"
     },
     "eventDetail": {
       "notFound": "Événement non trouvé",

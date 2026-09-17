@@ -3403,7 +3403,14 @@
       "confirmCancelRequest": "تأكيد الطلب",
       "messageAboutOrder": "إرسال رسالة حول هذا الطلب",
       "confirmCancel": "إلغاء هذا الطلب؟",
-      "cancelRequestedShort": "تم طلب الإلغاء"
+      "cancelRequestedShort": "تم طلب الإلغاء",
+      "viewPdf": "عرض PDF",
+      "downloadPdf": "تحميل PDF",
+      "subtotalHT": "المجموع الفرعي",
+      "discounts": "الخصومات",
+      "taxes": "الضرائب",
+      "shipping": "الشحن",
+      "totalTTC": "المجموع الكلي"
     },
     "eventDetail": {
       "notFound": "الفعالية غير موجودة",
