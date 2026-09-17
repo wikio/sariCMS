@@ -3410,7 +3410,15 @@
       "discounts": "Discounts",
       "taxes": "Taxes",
       "shipping": "Shipping",
-      "totalTTC": "Total incl. tax"
+      "totalTTC": "Total incl. tax",
+      "productDiscount": "Product discount",
+      "globalDiscount": "Global discount",
+      "couponLabel": "Coupon {coupon}",
+      "productShipping": "Product shipping",
+      "globalShipping": "Zone shipping {zone}",
+      "zone": "Zone",
+      "articlesCount": "Items · {count}",
+      "offered": "Free"
     },
     "eventDetail": {
       "notFound": "Event Not Found",

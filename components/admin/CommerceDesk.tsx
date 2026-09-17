@@ -825,7 +825,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
               {totals.globalShipping>0 && <div className="flex justify-between"><span>Livraison zone {formatZoneLabel((open as any).deliveryZone || (open as any).zone || '')}</span><strong>{money(totals.globalShipping)}</strong></div>}
               {totals.shipping>0 && <div className="flex justify-between"><span>Total livraison</span><strong>{money(totals.shipping)}</strong></div>}
               {totals.shipping===0 && <div className="flex justify-between text-green-600"><span>Livraison</span><strong>Offerte</strong></div>}
-              {totals.taxLines.map((t) => (
+              {totals.taxLines.map((t:any) => (
                 <div key={t.id} className="flex justify-between" style={{ color: 'var(--ad-muted)' }}>
                   <span>{t.name} {t.included ? '(incluse)' : ''} {t.mode === 'percent' ? `${t.rate}%` : ''}</span>
                   <span>{money(t.amount)}</span>

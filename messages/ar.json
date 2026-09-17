@@ -3410,7 +3410,15 @@
       "discounts": "الخصومات",
       "taxes": "الضرائب",
       "shipping": "الشحن",
-      "totalTTC": "المجموع الكلي"
+      "totalTTC": "المجموع الكلي",
+      "productDiscount": "خصم المنتجات",
+      "globalDiscount": "الخصم العام",
+      "couponLabel": "القسيمة {coupon}",
+      "productShipping": "شحن المنتجات",
+      "globalShipping": "شحن المنطقة {zone}",
+      "zone": "المنطقة",
+      "articlesCount": "المواد · {count}",
+      "offered": "مجاني"
     },
     "eventDetail": {
       "notFound": "الفعالية غير موجودة",

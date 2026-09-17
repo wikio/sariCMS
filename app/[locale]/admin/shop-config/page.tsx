@@ -132,7 +132,7 @@ export default function ShopConfigPage() {
         localStorage.setItem('sari_import_log', JSON.stringify({ date: new Date().toISOString(), imported, source: cfg.importApi.csvUrl }));
         setImportResult(`✓ ${imported} produits validés (lots OK). Import simulé — branchez ici votre persistence (data/products.json ou API).`);
       } else {
-        const res = await fetch(cfg.importApi.url, { headers });
+        const res = await fetch(cfg.importApi!.url, { headers });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
         const arr = Array.isArray(json) ? json : (json.data || json.products || []);
@@ -141,8 +141,8 @@ export default function ShopConfigPage() {
         if (invalid.length) throw new Error(`${invalid.length} produits invalides (name/price/quantity)`);
         const totalQty = arr.reduce((s:number,p:any)=>s+Number(p.quantity||0),0);
         if (totalQty>100000) throw new Error(`Quantité totale trop élevée: ${totalQty}`);
-        localStorage.setItem('sari_import_log', JSON.stringify({ date: new Date().toISOString(), imported: arr.length, source: cfg.importApi.url }));
-        setImportResult(`✓ ${arr.length} produits validés et prêts à l'import. (Mapping: ${JSON.stringify(cfg.importApi.mapping||{})})`);
+        localStorage.setItem('sari_import_log', JSON.stringify({ date: new Date().toISOString(), imported: arr.length, source: cfg.importApi!.url }));
+        setImportResult(`✓ ${arr.length} produits validés et prêts à l'import. (Mapping: ${JSON.stringify(cfg.importApi!.mapping||{})})`);
       }
     } catch (e:any) {
       setImportResult(`✗ Erreur: ${e.message}`);

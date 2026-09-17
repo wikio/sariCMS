@@ -198,7 +198,7 @@ export default function DashboardPage() {
         taxLines: (order as any).taxLines,
         payment: (order as any).payment,
       };
-      const html = orderPdfHtml(crmOrder, company);
+      const html = orderPdfHtml(crmOrder, company, locale);
       const title = crmOrder.code || `Commande #${crmOrder.id}`;
       if (download) {
         const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
@@ -609,7 +609,7 @@ export default function DashboardPage() {
                         {/* Contenu déplié : liste articles */}
                         {isExpanded && (
                           <div className="border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-[#111111]/50 p-4 space-y-3 animate-in">
-                            <div className="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">Articles · {order.items.length}</div>
+                            <div className="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t('articlesCount', { count: order.items.length, defaultMessage: `Articles · ${order.items.length}` })}</div>
                             <div className="space-y-2">
                               {Array.isArray(order.items) && order.items.length > 0 ? order.items.map((it: any) => {
                                 const unit = Number(String(it.price).replace(/[^0-9.]/g,'')) || 0;
@@ -632,21 +632,21 @@ export default function DashboardPage() {
                               if (!hasDiscount && !hasShipping && !hasTax && sub === Number(o.grandTotal||0)) return null;
                               return (
                                 <div className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-200 dark:border-gray-800 p-3 space-y-1.5 text-sm">
-                                  <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400">Sous-total HT</span><span className="font-semibold">{formatMoney(sub, { decimals: 2 })}</span></div>
-                                  {o.productDiscount >0 && <div className="flex justify-between text-emerald-600 dark:text-emerald-400"><span>Remise produits</span><span>-{formatMoney(o.productDiscount, { decimals: 2 })}</span></div>}
-                                  {o.globalDiscount >0 && <div className="flex justify-between text-emerald-600 dark:text-emerald-400"><span>Remise globale</span><span>-{formatMoney(o.globalDiscount, { decimals: 2 })}</span></div>}
-                                  {o.couponDiscount >0 && <div className="flex justify-between text-emerald-600 dark:text-emerald-400"><span>Coupon {o.coupon||''}</span><span>-{formatMoney(o.couponDiscount, { decimals: 2 })}</span></div>}
-                                  {o.discountTotal >0 && !o.productDiscount && !o.globalDiscount && !o.couponDiscount && <div className="flex justify-between text-emerald-600 dark:text-emerald-400"><span>Remises</span><span>-{formatMoney(o.discountTotal, { decimals: 2 })}</span></div>}
-                                  {o.productShipping >0 && <div className="flex justify-between"><span>Livraison articles</span><span>{formatMoney(o.productShipping, { decimals: 2 })}</span></div>}
-                                  {o.globalShipping >0 && <div className="flex justify-between"><span>Livraison zone {o.zone||o.deliveryZone||''}</span><span>{formatMoney(o.globalShipping, { decimals: 2 })}</span></div>}
-                                  {hasShipping && o.shippingFee !== undefined && o.productShipping===undefined && o.globalShipping===undefined && <div className="flex justify-between"><span>Frais de livraison</span><span>{Number(o.shippingFee)===0 ? 'Offerte' : formatMoney(o.shippingFee, { decimals: 2 })}</span></div>}
+                                  <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400">{t('subtotalHT', { defaultMessage: 'Sous-total HT' })}</span><span className="font-semibold">{formatMoney(sub, { decimals: 2 })}</span></div>
+                                  {o.productDiscount >0 && <div className="flex justify-between text-emerald-600 dark:text-emerald-400"><span>{t('productDiscount', { defaultMessage: 'Remise produits' })}</span><span>-{formatMoney(o.productDiscount, { decimals: 2 })}</span></div>}
+                                  {o.globalDiscount >0 && <div className="flex justify-between text-emerald-600 dark:text-emerald-400"><span>{t('globalDiscount', { defaultMessage: 'Remise globale' })}</span><span>-{formatMoney(o.globalDiscount, { decimals: 2 })}</span></div>}
+                                  {o.couponDiscount >0 && <div className="flex justify-between text-emerald-600 dark:text-emerald-400"><span>{t('couponLabel', { coupon: o.coupon||'', defaultMessage: `Coupon ${o.coupon||''}` })}</span><span>-{formatMoney(o.couponDiscount, { decimals: 2 })}</span></div>}
+                                  {o.discountTotal >0 && !o.productDiscount && !o.globalDiscount && !o.couponDiscount && <div className="flex justify-between text-emerald-600 dark:text-emerald-400"><span>{t('discounts', { defaultMessage: 'Remises' })}</span><span>-{formatMoney(o.discountTotal, { decimals: 2 })}</span></div>}
+                                  {o.productShipping >0 && <div className="flex justify-between"><span>{t('productShipping', { defaultMessage: 'Livraison articles' })}</span><span>{formatMoney(o.productShipping, { decimals: 2 })}</span></div>}
+                                  {o.globalShipping >0 && <div className="flex justify-between"><span>{t('globalShipping', { zone: o.zone||o.deliveryZone||'', defaultMessage: `Livraison zone ${o.zone||o.deliveryZone||''}` })}</span><span>{formatMoney(o.globalShipping, { decimals: 2 })}</span></div>}
+                                  {hasShipping && o.shippingFee !== undefined && o.productShipping===undefined && o.globalShipping===undefined && <div className="flex justify-between"><span>{t('shipping', { defaultMessage: 'Frais de livraison' })}</span><span>{Number(o.shippingFee)===0 ? t('offered', { defaultMessage: 'Offerte' }) : formatMoney(o.shippingFee, { decimals: 2 })}</span></div>}
                                   {(() => {
                                     const valid = Array.isArray(o.taxLines) ? (o.taxLines as any[]).filter((tl:any)=> tl && typeof tl === 'object' && !Array.isArray(tl) && tl.name && typeof tl.amount === 'number' && Number.isFinite(tl.amount) && tl.amount !== 0) : [];
                                     if (valid.length) return valid.map((tl:any,i:number)=> <div key={i} className="flex justify-between text-gray-500 dark:text-gray-400 text-xs"><span>{tl.name} {tl.rate? `${tl.rate}%`:''}</span><span>{formatMoney(tl.amount, { decimals: 2 })}</span></div>);
-                                    if (o.taxTotal>0) return <div className="flex justify-between text-gray-500 dark:text-gray-400"><span>TVA / Taxes</span><span>{formatMoney(o.taxTotal, { decimals: 2 })}</span></div>;
+                                    if (o.taxTotal>0) return <div className="flex justify-between text-gray-500 dark:text-gray-400"><span>{t('taxes', { defaultMessage: 'TVA / Taxes' })}</span><span>{formatMoney(o.taxTotal, { decimals: 2 })}</span></div>;
                                     return null;
                                   })()}
-                                  {o.zone && <div className="flex justify-between text-xs text-gray-500"><span>Zone</span><span className="font-mono">{o.zone}</span></div>}
+                                  {o.zone && <div className="flex justify-between text-xs text-gray-500"><span>{t('zone', { defaultMessage: 'Zone' })}</span><span className="font-mono">{o.zone}</span></div>}
                                 </div>
                               );
                             })()}

@@ -465,7 +465,7 @@ export default function CartPage() {
               <div className="bg-white dark:bg-[#1a1a1a] p-6 border border-gray-200 dark:border-gray-800 shadow-2xl rounded-2xl sticky top-28 space-y-4">
                 <h3 className="text-xl font-black text-sari-dark dark:text-white flex items-center gap-2"><span className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-400 to-blue-600 text-white flex items-center justify-center"><ClipboardList className="w-5 h-5"/></span> {t('summary')}</h3>
                 <div className="space-y-2">
-                  <label className="text-sm font-black uppercase tracking-widest flex items-center gap-1" className="text-gray-500"><Tag className="w-3.5 h-3.5"/> Coupon</label>
+                  <label className="text-sm font-black uppercase tracking-widest flex items-center gap-1 text-gray-500"><Tag className="w-3.5 h-3.5"/> Coupon</label>
                   {!appliedCoupon ? (
                     <div className="flex gap-2">
                       <div className="relative flex-1">
@@ -482,7 +482,7 @@ export default function CartPage() {
                   )}
                   {couponError && <p className="text-xs text-red-600 bg-red-50 border border-red-200 p-2 rounded-lg">{couponError}</p>}
                 </div>
-                <div className="space-y-2 text-sm border-t pt-4" className="border-gray-200 dark:border-gray-700">
+                <div className="space-y-2 text-sm border-t pt-4 border-gray-200 dark:border-gray-700">
                   <div className="flex justify-between"><span className="text-gray-600">Sous-total HT</span><strong>{formatMoney(totals.subtotal)}</strong></div>
                   {totals.productDiscount>0 && <div className="flex justify-between text-emerald-600"><span className="flex items-center gap-1"><Gift className="w-3 h-3"/> Remises produits</span><strong>-{formatMoney(totals.productDiscount)}</strong></div>}
                   {totals.globalDiscount>0 && <div className="flex justify-between text-emerald-600"><span>Remise globale</span><strong>-{formatMoney(totals.globalDiscount)}</strong></div>}
@@ -496,7 +496,7 @@ export default function CartPage() {
                       <span className="font-bold">{formatMoney(line.amount)}</span>
                     </div>
                   ))}
-                  <div className="flex justify-between text-lg font-black pt-3 border-t" className="border-gray-200 dark:border-gray-700"><span>Total TTC</span><span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-emerald-600">{formatMoney(totals.total)}</span></div>
+                  <div className="flex justify-between text-lg font-black pt-3 border-t border-gray-200 dark:border-gray-700"><span>Total TTC</span><span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-emerald-600">{formatMoney(totals.total)}</span></div>
                   <p className="text-sm text-gray-600 flex gap-1"><Info className="w-3 h-3 mt-0.5"/> TVA détaillée par article incluse. Livraison recalculée selon pays/zone à l'étape suivante. Hors Algérie disponible.</p>
                 </div>
                 <button onClick={()=>setStep(2)} className="w-full bg-gradient-to-r from-sari-blue to-blue-700 text-white py-3.5 font-black shadow-xl flex items-center justify-center gap-2 rounded-full hover:scale-[1.02] transition"><Truck className="w-5 h-5"/> Suivant : Livraison <ArrowRight className="w-5 h-5"/></button>
@@ -528,7 +528,7 @@ export default function CartPage() {
                 )}
                 <div className="grid md:grid-cols-3 gap-3">
                   <label className="space-y-1.5">
-                    <span className="text-sm font-black uppercase tracking-widest flex items-center gap-1" className="text-gray-500"><Globe className="w-3 h-3"/> Pays</span>
+                    <span className="text-sm font-black uppercase tracking-widest flex items-center gap-1 text-gray-500"><Globe className="w-3 h-3"/> Pays</span>
                     <div className="relative">
                       <Globe className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-sari-blue pointer-events-none"/>
                       <select className={`w-full pl-10 pr-10 py-3.5 border-2 rounded-2xl bg-white dark:bg-[#1a1a1a] text-base font-medium focus:border-sari-blue focus:ring-4 focus:ring-sari-blue/10 outline-none transition appearance-none ${errors.country?'border-red-300':'border-gray-200 dark:border-gray-700'}`} value={country} onChange={e=>{setCountry(e.target.value); setErrors({...errors, country: ''})}}>
@@ -538,7 +538,7 @@ export default function CartPage() {
                     {errors.country && <p className="text-xs text-red-600">{errors.country}</p>}
                   </label>
                   <label className="space-y-1.5 md:col-span-2">
-                    <span className="text-sm font-black uppercase tracking-widest flex items-center gap-1" className="text-gray-500"><MapPin className="w-3 h-3"/> Zone / Wilaya</span>
+                    <span className="text-sm font-black uppercase tracking-widest flex items-center gap-1 text-gray-500"><MapPin className="w-3 h-3"/> Zone / Wilaya</span>
                     <div className="relative">
                       <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-sari-blue pointer-events-none"/>
                       <select className={`w-full pl-10 pr-10 py-3.5 border-2 rounded-2xl bg-white dark:bg-[#1a1a1a] text-base font-medium focus:border-sari-blue focus:ring-4 focus:ring-sari-blue/10 outline-none transition appearance-none ${errors.zone?'border-red-300':'border-gray-200 dark:border-gray-700'}`} value={selectedZone} onChange={e=>{setSelectedZone(e.target.value); setErrors({...errors, zone:''})}}>
@@ -557,7 +557,7 @@ export default function CartPage() {
                 {showZonesHelp && shopConfig && (
                   <div className="grid md:grid-cols-2 gap-2 text-xs max-h-64 overflow-auto p-1">
                     {shopConfig.saleZones.map(z=> (
-                      <div key={z.code} className={`p-2.5 rounded-xl border flex justify-between items-center ${z.active?'bg-white dark:bg-[#111]':'bg-gray-100 opacity-50'}`} className="border-gray-200 dark:border-gray-700">
+                      <div key={z.code} className={`p-2.5 rounded-xl border flex justify-between items-center border-gray-200 dark:border-gray-700 ${z.active?'bg-white dark:bg-[#111]':'bg-gray-100 opacity-50'}`}>
                         <span><strong>{z.label}</strong> <span className="font-mono text-[11px]">{z.code}</span> · {z.deliveryDays}</span>
                         <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${z.active?'bg-green-100 text-green-700':'bg-red-100 text-red-700'}`}>{z.active?'Disponible':'Indisponible'}</span>
                       </div>
@@ -567,7 +567,7 @@ export default function CartPage() {
 
                 <div className="grid md:grid-cols-2 gap-4">
                   <label className="space-y-1.5">
-                    <span className="text-sm font-black uppercase tracking-widest flex items-center gap-1" className="text-gray-500"><Building2 className="w-3 h-3"/> Nom complet *</span>
+                    <span className="text-sm font-black uppercase tracking-widest flex items-center gap-1 text-gray-500"><Building2 className="w-3 h-3"/> Nom complet *</span>
                     <div className="relative">
                       <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-sari-blue pointer-events-none"/>
                       <input className={`w-full pl-11 pr-4 py-3.5 border-2 rounded-2xl bg-white dark:bg-[#1a1a1a] text-base focus:border-sari-blue focus:ring-4 focus:ring-sari-blue/10 outline-none transition placeholder:text-gray-400 ${errors.name?'border-red-300':'border-gray-200 dark:border-gray-700'}`} placeholder="Nom et prénom" value={customerName} onChange={e=>{setCustomerName(e.target.value); setErrors({...errors, name:''})}} />
@@ -575,14 +575,14 @@ export default function CartPage() {
                     {errors.name && <p className="text-xs text-red-600">{errors.name}</p>}
                   </label>
                   <label className="space-y-1.5">
-                    <span className="text-sm font-black uppercase tracking-widest flex items-center gap-1" className="text-gray-500"><Home className="w-3 h-3"/> Société (optionnel)</span>
+                    <span className="text-sm font-black uppercase tracking-widest flex items-center gap-1 text-gray-500"><Home className="w-3 h-3"/> Société (optionnel)</span>
                     <div className="relative">
                       <Home className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-sari-blue/60 pointer-events-none"/>
                       <input className="w-full pl-11 pr-4 py-3.5 border-2 rounded-2xl bg-white dark:bg-[#1a1a1a] text-base focus:border-sari-blue focus:ring-4 focus:ring-sari-blue/10 outline-none transition placeholder:text-gray-400 border-gray-200 dark:border-gray-700" placeholder="Société (optionnel)" value={customerCompany} onChange={e=>setCustomerCompany(e.target.value)} />
                     </div>
                   </label>
                   <label className="space-y-1.5">
-                    <span className="text-sm font-black uppercase tracking-widest flex items-center gap-1" className="text-gray-500"><Phone className="w-3 h-3"/> Téléphone *</span>
+                    <span className="text-sm font-black uppercase tracking-widest flex items-center gap-1 text-gray-500"><Phone className="w-3 h-3"/> Téléphone *</span>
                     <div className="relative">
                       <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-sari-blue pointer-events-none"/>
                       <input className={`w-full pl-11 pr-4 py-3.5 border-2 rounded-2xl bg-white dark:bg-[#1a1a1a] text-base font-medium focus:border-sari-blue focus:ring-4 focus:ring-sari-blue/10 outline-none transition placeholder:text-gray-400 ${errors.phone?'border-red-300':'border-gray-200 dark:border-gray-700'}`} placeholder="+213 5xx xxx xxx" value={customerPhone} onChange={e=>{ const v=e.target.value.replace(/[^0-9+\s\-()]/g,''); setCustomerPhone(v); setErrors({...errors, phone:''})}} inputMode="tel" />
@@ -590,7 +590,7 @@ export default function CartPage() {
                     {errors.phone && <p className="text-xs text-red-600">{errors.phone}</p>}
                   </label>
                   <label className="space-y-1.5">
-                    <span className="text-sm font-black uppercase tracking-widest flex items-center gap-1" className="text-gray-500"><Mail className="w-3 h-3"/> Email *</span>
+                    <span className="text-sm font-black uppercase tracking-widest flex items-center gap-1 text-gray-500"><Mail className="w-3 h-3"/> Email *</span>
                     <div className="relative">
                       <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-sari-blue pointer-events-none"/>
                       <input className={`w-full pl-11 pr-4 py-3.5 border-2 rounded-2xl bg-white dark:bg-[#1a1a1a] text-base focus:border-sari-blue focus:ring-4 focus:ring-sari-blue/10 outline-none transition placeholder:text-gray-400 ${errors.email?'border-red-300':'border-gray-200 dark:border-gray-700'}`} placeholder="vous@exemple.com" value={customerEmail} onChange={e=>{setCustomerEmail(e.target.value); setErrors({...errors, email:''})}} inputMode="email" />
@@ -600,7 +600,7 @@ export default function CartPage() {
                 </div>
 
                 <label className="space-y-1.5 block">
-                  <span className="text-sm font-black uppercase tracking-widest flex items-center gap-1" className="text-gray-500"><Home className="w-3 h-3"/> Adresse complète *</span>
+                  <span className="text-sm font-black uppercase tracking-widest flex items-center gap-1 text-gray-500"><Home className="w-3 h-3"/> Adresse complète *</span>
                   <div className="relative">
                     <Home className="absolute left-3.5 top-4 w-5 h-5 text-sari-blue pointer-events-none"/>
                     <textarea className={`w-full pl-11 pr-4 py-3.5 border-2 rounded-2xl bg-white dark:bg-[#1a1a1a] text-base focus:border-sari-blue focus:ring-4 focus:ring-sari-blue/10 outline-none transition placeholder:text-gray-400 min-h-[110px] ${errors.address?'border-red-300':'border-gray-200 dark:border-gray-700'}`} rows={4} placeholder={country==='DZ'?"Adresse, wilaya, commune, code postal":"Adresse, ville, code postal, pays"} value={deliveryAddress} onChange={e=>{setDeliveryAddress(e.target.value); setErrors({...errors, address:''})}} />
@@ -609,7 +609,7 @@ export default function CartPage() {
                 </label>
 
                 <label className="space-y-1.5 block">
-                  <span className="text-sm font-black uppercase tracking-widest flex items-center gap-1" className="text-gray-500"><Info className="w-3 h-3"/> Notes / Rappels</span>
+                  <span className="text-sm font-black uppercase tracking-widest flex items-center gap-1 text-gray-500"><Info className="w-3 h-3"/> Notes / Rappels</span>
                   <textarea className={`w-full px-4 py-3 border-2 rounded-2xl bg-white dark:bg-[#1a1a1a] text-base focus:border-sari-blue focus:ring-4 focus:ring-sari-blue/10 outline-none transition min-h-[140px] ${errors.notes?'border-red-300': 'border-gray-200 dark:border-gray-700'}`} rows={5} placeholder="Instructions de livraison, créneau, étage, précisions douane si hors Algérie..." value={customerNotes} onChange={e=>setCustomerNotes(e.target.value)} />
                 </label>
 
@@ -653,7 +653,7 @@ export default function CartPage() {
                   <div className="flex justify-between text-emerald-600"><span>Remises</span><strong>-{formatMoney(totals.discount)}</strong></div>
                   <div className="flex justify-between"><span>Livraison</span><strong>{totals.shipping?formatMoney(totals.shipping):'Offerte'}</strong></div>
                   <div className="flex justify-between"><span>Taxes (TVA par article incluse)</span><strong>{formatMoney(totals.taxTotal)}</strong></div>
-                  <div className="flex justify-between font-black text-base pt-2 border-t" className="border-gray-200 dark:border-gray-700"><span>Total</span><span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-emerald-600">{formatMoney(totals.total)}</span></div>
+                  <div className="flex justify-between font-black text-base pt-2 border-t border-gray-200 dark:border-gray-700"><span>Total</span><span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-emerald-600">{formatMoney(totals.total)}</span></div>
                 </div>
                 <div className="text-sm bg-gray-50 dark:bg-[#111] p-3 rounded-xl border">
                   <div className="font-bold flex items-center gap-1"><Flag className="w-3 h-3"/> {COUNTRIES.find(c=>c.code===country)?.flag} {COUNTRIES.find(c=>c.code===country)?.label} · {formatZoneLabel(selectedZone)}</div>
@@ -723,7 +723,7 @@ export default function CartPage() {
                   {totals.taxLines.map(l=>(
                     <div key={l.id} className="flex justify-between text-xs text-gray-600 bg-white dark:bg-[#111] p-2 rounded-lg border"><span>{l.name}</span><span className="font-bold">{formatMoney(l.amount)}</span></div>
                   ))}
-                  <div className="flex justify-between font-black text-lg pt-2 border-t" className="border-gray-200 dark:border-gray-700"><span>Total TTC</span><span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-emerald-600">{formatMoney(totals.total)}</span></div>
+                  <div className="flex justify-between font-black text-lg pt-2 border-t border-gray-200 dark:border-gray-700"><span>Total TTC</span><span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-emerald-600">{formatMoney(totals.total)}</span></div>
                   <div className="text-sm text-gray-600 text-center">{totalQty} unités · TVA par article détaillée · hors DZ inclus</div>
                 </div>
                 <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl text-xs flex gap-2 border border-green-200">

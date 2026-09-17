@@ -3410,7 +3410,15 @@
       "discounts": "Remises",
       "taxes": "TVA / Taxes",
       "shipping": "Frais de livraison",
-      "totalTTC": "Total TTC"
+      "totalTTC": "Total TTC",
+      "productDiscount": "Remise produits",
+      "globalDiscount": "Remise globale",
+      "couponLabel": "Coupon {coupon}",
+      "productShipping": "Livraison articles",
+      "globalShipping": "Livraison zone {zone}",
+      "zone": "Zone",
+      "articlesCount": "Articles · {count}",
+      "offered": "Offerte"
     },
     "eventDetail": {
       "notFound": "Événement non trouvé",
