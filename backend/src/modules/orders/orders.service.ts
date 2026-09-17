@@ -106,8 +106,18 @@ export class OrdersService extends BaseCrudService<OrderEntity> {
     if (compat.country !== undefined && typeof compat.country === 'string') compat.country = String(compat.country).slice(0,80);
     if (compat.notes !== undefined && typeof compat.notes === 'string') compat.notes = String(compat.notes).slice(0,2000);
     if (compat.adminNotes !== undefined && typeof compat.adminNotes === 'string') compat.adminNotes = String(compat.adminNotes).slice(0,2000);
-    // taxLines : garde Json tel quel si array
-    if (compat.taxLines !== undefined && !Array.isArray(compat.taxLines)) delete compat.taxLines;
+    // taxLines : garde Json tel quel si array, nettoie les entrées vides type [[]] ou {name:undefined}
+    if (compat.taxLines !== undefined) {
+      if (!Array.isArray(compat.taxLines)) delete compat.taxLines;
+      else {
+        const cleaned = (compat.taxLines as any[]).filter((tl:any)=> tl && typeof tl==='object' && !Array.isArray(tl) && tl.name && typeof tl.amount==='number' && Number.isFinite(tl.amount) && tl.amount!==0);
+        // Si après nettoyage il ne reste que des entrées invalides type [[]], on vide pour éviter "undefined 0,00 DA" en vitrine/PDF
+        if (cleaned.length !== (compat.taxLines as any[]).length) {
+          if (cleaned.length) (compat as Record<string, unknown>).taxLines = cleaned;
+          else delete (compat as Record<string, unknown>).taxLines;
+        }
+      }
+    }
 
     // Sur update, ne jamais écraser le code avec un doublon (cause 500 Unique constraint)
     if (op === 'update' && compat.code && existing) {

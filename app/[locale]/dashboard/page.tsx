@@ -640,7 +640,12 @@ export default function DashboardPage() {
                                   {o.productShipping >0 && <div className="flex justify-between"><span>Livraison articles</span><span>{formatMoney(o.productShipping, { decimals: 2 })}</span></div>}
                                   {o.globalShipping >0 && <div className="flex justify-between"><span>Livraison zone {o.zone||o.deliveryZone||''}</span><span>{formatMoney(o.globalShipping, { decimals: 2 })}</span></div>}
                                   {hasShipping && o.shippingFee !== undefined && o.productShipping===undefined && o.globalShipping===undefined && <div className="flex justify-between"><span>Frais de livraison</span><span>{Number(o.shippingFee)===0 ? 'Offerte' : formatMoney(o.shippingFee, { decimals: 2 })}</span></div>}
-                                  {Array.isArray(o.taxLines) && o.taxLines.length>0 ? o.taxLines.map((tl:any,i:number)=> <div key={i} className="flex justify-between text-gray-500 dark:text-gray-400 text-xs"><span>{tl.name} {tl.rate? `${tl.rate}%`:''}</span><span>{formatMoney(tl.amount, { decimals: 2 })}</span></div>) : (o.taxTotal>0 && <div className="flex justify-between text-gray-500 dark:text-gray-400"><span>TVA / Taxes</span><span>{formatMoney(o.taxTotal, { decimals: 2 })}</span></div>)}
+                                  {(() => {
+                                    const valid = Array.isArray(o.taxLines) ? (o.taxLines as any[]).filter((tl:any)=> tl && typeof tl === 'object' && !Array.isArray(tl) && tl.name && typeof tl.amount === 'number' && Number.isFinite(tl.amount) && tl.amount !== 0) : [];
+                                    if (valid.length) return valid.map((tl:any,i:number)=> <div key={i} className="flex justify-between text-gray-500 dark:text-gray-400 text-xs"><span>{tl.name} {tl.rate? `${tl.rate}%`:''}</span><span>{formatMoney(tl.amount, { decimals: 2 })}</span></div>);
+                                    if (o.taxTotal>0) return <div className="flex justify-between text-gray-500 dark:text-gray-400"><span>TVA / Taxes</span><span>{formatMoney(o.taxTotal, { decimals: 2 })}</span></div>;
+                                    return null;
+                                  })()}
                                   {o.zone && <div className="flex justify-between text-xs text-gray-500"><span>Zone</span><span className="font-mono">{o.zone}</span></div>}
                                 </div>
                               );

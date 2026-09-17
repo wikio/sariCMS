@@ -260,7 +260,8 @@ export function quotePdfHtml(quote: Quote, company: CompanyInfo): string {
   else if (typeof qAny.discount === 'number' && qAny.discount > 0) breakdown.push({ label: 'Remise', value: -qAny.discount, muted: true });
   if (typeof qAny.taxTotal === 'number' && qAny.taxTotal > 0) breakdown.push({ label: 'TVA / Taxes', value: qAny.taxTotal, muted: true });
   if (Array.isArray(qAny.taxLines) && qAny.taxLines.length) {
-    qAny.taxLines.forEach((tl: any) => breakdown.push({ label: `${tl.name} ${tl.rate ? `${tl.rate}%` : ''}`, value: tl.amount, muted: true }));
+    const valid = (qAny.taxLines as any[]).filter((tl:any)=> tl && typeof tl==='object' && !Array.isArray(tl) && tl.name && typeof tl.amount==='number' && Number.isFinite(tl.amount) && tl.amount!==0);
+    valid.forEach((tl: any) => breakdown.push({ label: `${tl.name} ${tl.rate ? `${tl.rate}%` : ''}`, value: tl.amount, muted: true }));
   }
   if (typeof qAny.shippingFee === 'number' && qAny.shippingFee > 0) breakdown.push({ label: 'Livraison', value: qAny.shippingFee });
   if (typeof qAny.globalDiscount === 'number' && qAny.globalDiscount > 0) breakdown.push({ label: 'Remise globale', value: -qAny.globalDiscount, muted: true });
@@ -313,9 +314,12 @@ export function orderPdfHtml(order: Order, company: CompanyInfo): string {
   if (oAny.globalShipping > 0) breakdown.push({ label: 'Livraison zone', value: oAny.globalShipping });
   if (oAny.shippingFee !== undefined && oAny.shipping > 0 && !oAny.productShipping && !oAny.globalShipping) breakdown.push({ label: 'Livraison', value: oAny.shippingFee ?? oAny.shipping });
   else if (oAny.shipping > 0 && !oAny.productShipping && !oAny.globalShipping) breakdown.push({ label: 'Livraison', value: oAny.shipping });
-  if (typeof oAny.shipping === 'number' && oAny.shipping === 0) breakdown.push({ label: 'Livraison offerte', value: 0 });
+  // Livraison offerte 0 supprimée (bruit visuel) — le total suffit, ou afficher seulement si explicitement offerte via globalShipping=0
+  // if (typeof oAny.shipping === 'number' && oAny.shipping === 0) breakdown.push({ label: 'Livraison offerte', value: 0 });
   if (Array.isArray(oAny.taxLines) && oAny.taxLines.length) {
-    oAny.taxLines.forEach((tl: any) => breakdown.push({ label: `${tl.name} ${tl.included ? '(incl.)' : ''} ${tl.rate ? `${tl.rate}%` : ''}`.trim(), value: tl.amount, muted: true }));
+    const validTaxLines = (oAny.taxLines as any[]).filter((tl:any)=> tl && typeof tl==='object' && !Array.isArray(tl) && tl.name && typeof tl.amount==='number' && Number.isFinite(tl.amount) && tl.amount!==0);
+    validTaxLines.forEach((tl: any) => breakdown.push({ label: `${tl.name} ${tl.included ? '(incl.)' : ''} ${tl.rate ? `${tl.rate}%` : ''}`.trim(), value: tl.amount, muted: true }));
+    if (!validTaxLines.length && typeof oAny.taxTotal === 'number' && oAny.taxTotal > 0) breakdown.push({ label: 'TVA / Taxes', value: oAny.taxTotal, muted: true });
   } else if (typeof oAny.taxTotal === 'number' && oAny.taxTotal > 0) {
     breakdown.push({ label: 'TVA / Taxes', value: oAny.taxTotal, muted: true });
   }

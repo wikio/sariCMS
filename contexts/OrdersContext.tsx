@@ -200,7 +200,7 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
             couponDiscount: (r as any).couponDiscount !== undefined ? Number((r as any).couponDiscount) : undefined,
             productShipping: (r as any).productShipping !== undefined ? Number((r as any).productShipping) : undefined,
             globalShipping: (r as any).globalShipping !== undefined ? Number((r as any).globalShipping) : undefined,
-            taxLines: Array.isArray((r as any).taxLines) ? (r as any).taxLines : undefined,
+            taxLines: Array.isArray((r as any).taxLines) ? (r as any).taxLines.filter((tl:any)=> tl && typeof tl==='object' && !Array.isArray(tl) && tl.name) : undefined,
             zone: (r as any).zone || (r as any).deliveryZone || undefined,
             deliveryZone: (r as any).deliveryZone || undefined,
             saleZone: (r as any).saleZone || undefined,
