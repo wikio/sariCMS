@@ -74,6 +74,16 @@ export class CommerceItemDto {
   @IsNumber()
   taxRate?: number;
 
+  @ApiPropertyOptional({ description: 'Compat: discountValue (legacy CommerceDesk)' })
+  @IsOptional()
+  @IsNumber()
+  discountValue?: number;
+
+  @ApiPropertyOptional({ description: 'Compat: vatRate (legacy CommerceDesk)' })
+  @IsOptional()
+  @IsNumber()
+  vatRate?: number;
+
   @ApiPropertyOptional({ description: 'Image produit (compat vitrine)' })
   @IsOptional()
   @IsString()

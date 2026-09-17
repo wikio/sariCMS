@@ -98,6 +98,17 @@ function toPayload(row: Row): Row {
       if (Number.isFinite(n) && n > 0) out.careerId = n;
       continue;
     }
+    if (k === 'items' && Array.isArray(v)) {
+      // Normalise les lignes commerce : discountValue -> discount, vatRate -> taxRate (compat CommerceDesk)
+      out[k] = (v as Row[]).map((it) => {
+        const copy: Row = { ...it };
+        if (copy.discountValue !== undefined && copy.discount === undefined) copy.discount = copy.discountValue as number;
+        if (copy.vatRate !== undefined && copy.taxRate === undefined) copy.taxRate = copy.vatRate as number;
+        // Le DTO accepte désormais discountValue/vatRate en compat, mais on garde la forme canonique
+        return copy;
+      });
+      continue;
+    }
     out[k] = v;
   }
   return out;

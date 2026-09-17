@@ -164,6 +164,69 @@ export class CreateQuoteDto {
   @IsObject()
   response?: Record<string, unknown> | null;
 
+
+  // --- Compat vitrine / CommerceDesk (évite 400 forbidNonWhitelisted lors du push local) ---
+  @ApiPropertyOptional({ description: 'Compat: Zone de livraison (alias zone)' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  deliveryZone?: string;
+
+  @ApiPropertyOptional({ description: 'Compat: Frais de livraison' })
+  @IsOptional()
+  @IsNumber()
+  shippingFee?: number;
+
+  @ApiPropertyOptional({ description: 'Compat: Remise globale' })
+  @IsOptional()
+  @IsNumber()
+  globalDiscount?: number;
+
+  @ApiPropertyOptional({ description: 'Compat: Notes admin' })
+  @IsOptional()
+  @IsString()
+  adminNotes?: string;
+
+  @ApiPropertyOptional({ description: 'Compat: Sous-total HT' })
+  @IsOptional()
+  @IsNumber()
+  subtotal?: number;
+
+  @ApiPropertyOptional({ description: 'Compat: Total taxes' })
+  @IsOptional()
+  @IsNumber()
+  taxTotal?: number;
+
+  @ApiPropertyOptional({ description: 'Compat: Total remises' })
+  @IsOptional()
+  @IsNumber()
+  discountTotal?: number;
+
+  @ApiPropertyOptional({ description: 'Compat: Remise produit' })
+  @IsOptional()
+  @IsNumber()
+  productDiscount?: number;
+
+  @ApiPropertyOptional({ description: 'Compat: Remise coupon' })
+  @IsOptional()
+  @IsNumber()
+  couponDiscount?: number;
+
+  @ApiPropertyOptional({ description: 'Compat: Livraison produit' })
+  @IsOptional()
+  @IsNumber()
+  productShipping?: number;
+
+  @ApiPropertyOptional({ description: 'Compat: Livraison globale' })
+  @IsOptional()
+  @IsNumber()
+  globalShipping?: number;
+
+  @ApiPropertyOptional({ description: 'Compat: Lignes de taxe détaillées' })
+  @IsOptional()
+  @IsArray()
+  taxLines?: unknown[];
+
   @ApiPropertyOptional({ description: 'Date de la demande (ISO)' })
   @IsOptional()
   @IsString()
