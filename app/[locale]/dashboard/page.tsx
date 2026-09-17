@@ -34,7 +34,7 @@ export default function DashboardPage() {
   const t = useTranslations('pages.dashboard');
   const { withSymbol, format: formatMoney } = useCurrency();
   const router = useRouter();
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, isLoading, logout } = useAuth();
   const { applications, removeApplication } = useApplications();
   const { orders, removeOrder, updateOrderStatus } = useOrders();
   const { items: cart, addToCart, removeFromCart, updateQuantity, total: cartTotal } = useCart();
@@ -54,6 +54,7 @@ export default function DashboardPage() {
   }, [user?.email]);
 
   useEffect(() => {
+    if (isLoading) return;
     if (!isAuthenticated) {
       router.push(`/${locale}/connexion`);
       return;
@@ -63,7 +64,7 @@ export default function DashboardPage() {
     if (isBackOfficeUser(user?.type)) {
       router.replace(`/${locale}/admin/dashboard`);
     }
-  }, [isAuthenticated, locale, router, user?.type]);
+  }, [isAuthenticated, isLoading, locale, router, user?.type]);
 
   useEffect(() => {
     if (user?.type === 'client' || user?.type === 'partner') {
@@ -82,6 +83,10 @@ export default function DashboardPage() {
     return products.filter((p) => (p.name || '').toLowerCase().includes(q) || (p.category || '').toLowerCase().includes(q));
   }, [products, productQ]);
 
+  // Évite le flash de déconnexion lors du changement de langue :
+  // AuthProvider se réhydrate depuis localStorage de façon asynchrone.
+  // Tant que isLoading est vrai, on ne sait pas encore si l'utilisateur est connecté.
+  if (isLoading) return <div className="pt-40 pb-24 min-h-screen bg-gray-50 dark:bg-[#111111] flex items-center justify-center"><div className="animate-pulse text-gray-500">Chargement…</div></div>;
   // Pas de rendu pendant la redirection : évite que l'espace client
   // n'apparaisse une fraction de seconde à un administrateur.
   if (!user || isBackOfficeUser(user.type)) return null;
