@@ -143,15 +143,74 @@ export class PrismaRepository<T extends BaseEntity> implements ICrudRepository<T
   }
 
   async create(data: Partial<T>): Promise<T> {
-    return (await this.db.create({ data: this.toPrisma(data) })) as T;
+    let payload: Record<string, unknown> = this.toPrisma(data) as Record<string, unknown>;
+    for (let attempt = 0; attempt < 12; attempt += 1) {
+      try {
+        return (await this.db.create({ data: payload })) as T;
+      } catch (e: unknown) {
+        const msg = String((e as { message?: string })?.message || e);
+        const m = /Unknown argument `([^`]+)`/.exec(msg);
+        if (m) {
+          const field = m[1];
+          if (field in payload) {
+            this.warnUnknownField(field);
+            const { [field]: _drop, ...rest } = payload;
+            payload = rest;
+            continue;
+          }
+          const dataRec = data as Record<string, unknown>;
+          if (field in dataRec) {
+            this.warnUnknownField(field);
+            delete (dataRec as Record<string, unknown>)[field];
+            payload = this.toPrisma(data) as Record<string, unknown>;
+            continue;
+          }
+        }
+        this.explainDate(e);
+        throw e;
+      }
+    }
+    return (await this.db.create({ data: payload })) as T;
   }
 
   async update(id: number, data: Partial<T>): Promise<T> {
-    return (await this.db.update({
-      where: { id },
-      data: this.toPrisma(data),
-    })) as T;
+    // Retry loop pour drift schéma : si le client Prisma n'a pas encore la colonne (ex: shippingFee),
+    // le DTO envoie le champ, model-fields le laisse passer, mais Prisma jette Unknown argument.
+    // On retire le champ incriminé et on rejoue — le statut et les autres champs passent quand même.
+    let payload: Record<string, unknown> = this.toPrisma(data) as Record<string, unknown>;
+    for (let attempt = 0; attempt < 12; attempt += 1) {
+      try {
+        return (await this.db.update({ where: { id }, data: payload })) as T;
+      } catch (e: unknown) {
+        const msg = String((e as { message?: string })?.message || e);
+        const m = /Unknown argument `([^`]+)`/.exec(msg);
+        if (m) {
+          const field = m[1];
+          if (field in payload) {
+            this.warnUnknownField(field);
+            const { [field]: _drop, ...rest } = payload;
+            payload = rest;
+            continue;
+          }
+          // Champ dans un sous-objet (ex: data.shippingFee) : tente quand même de le retirer du data d'origine
+          const dataRec = data as Record<string, unknown>;
+          if (field in dataRec) {
+            this.warnUnknownField(field);
+            delete (dataRec as Record<string, unknown>)[field];
+            payload = this.toPrisma(data) as Record<string, unknown>;
+            continue;
+          }
+        }
+        // Date cassée : déjà gérée par explainDate, mais on la laisse remonter via ce helper
+        this.explainDate(e);
+        throw e;
+      }
+    }
+    // Dernier essai sans les champs inconnus (tous retirés)
+    return (await this.db.update({ where: { id }, data: payload })) as T;
   }
+
+
 
   async softDelete(id: number): Promise<T> {
     return (await this.db.update({
