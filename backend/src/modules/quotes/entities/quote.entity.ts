@@ -49,4 +49,19 @@ export interface QuoteEntity extends BaseEntity {
   country?: string | null;
   attachments?: string[] | unknown;
   response?: QuoteResponsePayload | null | unknown;
+  // Détail montants (cohérence Order)
+  subtotal?: number | null;
+  discountTotal?: number | null;
+  productDiscount?: number | null;
+  globalDiscount?: number | null;
+  couponDiscount?: number | null;
+  shippingFee?: number | null;
+  productShipping?: number | null;
+  globalShipping?: number | null;
+  taxTotal?: number | null;
+  taxLines?: unknown;
+  deliveryZone?: string | null;
+  saleZone?: string | null;
+  deliveryAddress?: string | null;
+  adminNotes?: string | null;
 }

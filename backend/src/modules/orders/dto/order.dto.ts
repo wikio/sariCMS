@@ -89,6 +89,33 @@ export class CommerceItemDto {
   @IsString()
   @MaxLength(800)
   image?: string;
+
+  @ApiPropertyOptional({ description: 'Type de remise (fixed/percent)' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  discountType?: string;
+
+  @ApiPropertyOptional({ description: 'TVA incluse' })
+  @IsOptional()
+  @IsBoolean()
+  vatIncluded?: boolean;
+
+  @ApiPropertyOptional({ description: 'Frais livraison produit' })
+  @IsOptional()
+  @IsNumber()
+  shippingFee?: number;
+
+  @ApiPropertyOptional({ description: 'Type livraison produit' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  shippingType?: string;
+
+  @ApiPropertyOptional({ description: 'Zones autorisées (CSV ou array)' })
+  @IsOptional()
+  @IsArray()
+  zones?: string[];
 }
 
 /** Entrée d'historique de statut. */

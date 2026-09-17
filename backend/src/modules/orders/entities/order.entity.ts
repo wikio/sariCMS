@@ -12,6 +12,15 @@ export interface CommerceItemPayload {
   description?: string;
   attachment?: string;
   taxRate?: number;
+  // Champs enrichis (édition admin directe)
+  discountValue?: number;
+  discountType?: 'fixed' | 'percent';
+  vatRate?: number;
+  vatIncluded?: boolean;
+  shippingFee?: number;
+  shippingType?: 'fixed' | 'per_qty' | 'free';
+  zones?: string[];
+  image?: string;
 }
 
 /** Facture liée : upload manuel ou retour ERP. */
@@ -46,4 +55,21 @@ export interface OrderEntity extends BaseEntity {
   ip?: string | null;
   history?: Array<{ status: string; at: string; note?: string }> | unknown;
   invoice?: OrderInvoicePayload | null | unknown;
+  // Détail montants (persistés pour vitrine/PDF instantanés)
+  subtotal?: number | null;
+  discountTotal?: number | null;
+  productDiscount?: number | null;
+  globalDiscount?: number | null;
+  couponDiscount?: number | null;
+  shippingFee?: number | null;
+  productShipping?: number | null;
+  globalShipping?: number | null;
+  taxTotal?: number | null;
+  taxLines?: unknown;
+  deliveryZone?: string | null;
+  saleZone?: string | null;
+  deliveryAddress?: string | null;
+  country?: string | null;
+  notes?: string | null;
+  adminNotes?: string | null;
 }

@@ -183,9 +183,40 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
     if ((next as any).globalDiscount !== undefined && (next as any).globalDiscount !== null && (next as any).globalDiscount !== '' && Number((next as any).globalDiscount) < 0) { showToast('Remise globale ≥0', 'error'); return; }
     if ((next as any).shippingFee !== undefined && (next as any).shippingFee !== null && (next as any).shippingFee !== '' && Number((next as any).shippingFee) < 0) { showToast('Frais livraison global ≥0', 'error'); return; }
 
-    const totals = computeTotals(next.items || [], taxes, coupons.find((c) => c.code === next.coupon), { zone: (next as any).zone || (next as any).deliveryZone, shopConfig });
+    const baseTotals = computeTotals(next.items || [], taxes, coupons.find((c) => c.code === next.coupon), { zone: (next as any).zone || (next as any).deliveryZone, shopConfig });
     const round2 = (n: number) => Math.round(n * 100) / 100;
-    const withTotal = { ...next, total: round2(totals.total), subtotal: round2(totals.subtotal), taxTotal: round2(totals.taxTotal), shippingFee: round2(totals.shipping), discountTotal: round2(totals.discount), productDiscount: round2(totals.productDiscount), globalDiscount: round2(totals.globalDiscount), couponDiscount: round2(totals.couponDiscount), productShipping: round2(totals.productShipping), globalShipping: round2(totals.globalShipping), taxLines: totals.taxLines.map((t) => ({ ...t, amount: round2(t.amount) })) } as any;
+    // Si l'admin a saisi une valeur manuelle, elle prime sur le calcul auto (instantané vitrine/PDF)
+    const manualGD = (next as any).globalDiscount;
+    const manualSF = (next as any).shippingFee;
+    const hasManualGD = manualGD !== undefined && manualGD !== null && manualGD !== '' && Number.isFinite(Number(manualGD));
+    const hasManualSF = manualSF !== undefined && manualSF !== null && manualSF !== '' && Number.isFinite(Number(manualSF));
+    // Totaux effectifs avec overrides
+    let effGlobalDiscount = hasManualGD ? round2(Number(manualGD)) : round2(baseTotals.globalDiscount);
+    let effGlobalShipping = hasManualSF ? round2(Number(manualSF)) : round2(baseTotals.globalShipping);
+    // Recalcule discount/taxable/shipping/total avec les overrides (garde productDiscount/coupon/taxes de base)
+    let effDiscount = round2(baseTotals.productDiscount + effGlobalDiscount + baseTotals.couponDiscount);
+    let effShipping = round2(baseTotals.productShipping + effGlobalShipping);
+    // Recalcule taxes sur base taxable ajustée (taux proportionnel) — on ré-applique computeTotals avec discount manuel via shopConfig hack
+    // Simpler: garde taxLines de base mais ajuste le total TTC : taxable = subtotal - discount
+    let effTaxable = Math.max(0, round2(baseTotals.subtotal - effDiscount));
+    // Si discount a changé, on ré-estime les taxes proportionnellement (évite un saut brutal)
+    let effTaxTotal = round2(baseTotals.taxTotal);
+    if (baseTotals.subtotal > 0) {
+      const baseTaxable = Math.max(0, baseTotals.subtotal - baseTotals.discount);
+      if (baseTaxable > 0 && effTaxable !== baseTaxable) {
+        // proportion
+        effTaxTotal = round2(baseTotals.taxTotal * (effTaxable / baseTaxable));
+      } else if (baseTaxable === 0 && effTaxable > 0) {
+        // recalc via applyTaxes would be idéal, on garde base
+      }
+    }
+    // Total TTC = taxable + taxes non incluses + livraison ; on approxime avec effTaxTotal (inclut déjà included)
+    // On distingue added (non incluse) vs included : garde ratio
+    const addedRatio = baseTotals.taxTotal ? (baseTotals.taxLines.filter((t:any)=>!t.included).reduce((s:number,t:any)=>s+t.amount,0) / (baseTotals.taxTotal||1)) : 0;
+    const effAdded = round2(effTaxTotal * addedRatio);
+    const effTotal = round2(effTaxable + effAdded + effShipping);
+    const effTaxLines = baseTotals.taxLines.map((t:any)=> ({ ...t, amount: round2(t.amount * (effTaxTotal / (baseTotals.taxTotal||1) || 1)) }));
+    const withTotal = { ...next, total: effTotal, subtotal: round2(baseTotals.subtotal), taxTotal: effTaxTotal, shippingFee: effShipping, discountTotal: effDiscount, productDiscount: round2(baseTotals.productDiscount), globalDiscount: effGlobalDiscount, couponDiscount: round2(baseTotals.couponDiscount), productShipping: round2(baseTotals.productShipping), globalShipping: effGlobalShipping, taxLines: effTaxLines } as any;
     persist(rows.map((r) => r.id === next.id ? withTotal : r));
     setOpen(withTotal);
     showToast(t('saved', { title }), 'success');
@@ -313,7 +344,31 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
   const quotes = kind === 'orders' ? loadQuotes() : [];
   const linkedQuote = open && 'quoteId' in open && open.quoteId ? quotes.find((qte) => qte.id === open.quoteId) : undefined;
   const linkedOrder = open && 'orderId' in open && open.orderId ? orders.find((ord) => ord.id === open.orderId) : undefined;
-  const totals = open ? computeTotals(open.items || [] as any, taxes, coupons.find((c) => c.code === (open as any).coupon), { zone: (open as any).zone || (open as any).deliveryZone, shopConfig }) : null;
+  const rawTotals = open ? computeTotals(open.items || [] as any, taxes, coupons.find((c) => c.code === (open as any).coupon), { zone: (open as any).zone || (open as any).deliveryZone, shopConfig }) : null;
+  const totals = (() => {
+    if (!open || !rawTotals) return rawTotals;
+    const manualGD = (open as any).globalDiscount;
+    const manualSF = (open as any).shippingFee;
+    const hasManualGD = manualGD !== undefined && manualGD !== null && manualGD !== '' && Number.isFinite(Number(manualGD));
+    const hasManualSF = manualSF !== undefined && manualSF !== null && manualSF !== '' && Number.isFinite(Number(manualSF));
+    if (!hasManualGD && !hasManualSF) return rawTotals;
+    const round2 = (n:number)=> Math.round(n*100)/100;
+    const effGlobalDiscount = hasManualGD ? round2(Number(manualGD)) : rawTotals.globalDiscount;
+    const effGlobalShipping = hasManualSF ? round2(Number(manualSF)) : rawTotals.globalShipping;
+    const effDiscount = round2(rawTotals.productDiscount + effGlobalDiscount + rawTotals.couponDiscount);
+    const effShipping = round2(rawTotals.productShipping + effGlobalShipping);
+    const effTaxable = Math.max(0, round2(rawTotals.subtotal - effDiscount));
+    let effTaxTotal = rawTotals.taxTotal;
+    if (rawTotals.subtotal > 0) {
+      const baseTaxable = Math.max(0, rawTotals.subtotal - rawTotals.discount);
+      if (baseTaxable > 0 && effTaxable !== baseTaxable) effTaxTotal = round2(rawTotals.taxTotal * (effTaxable / baseTaxable));
+    }
+    const addedRatio = rawTotals.taxTotal ? (rawTotals.taxLines.filter((t:any)=>!t.included).reduce((s:number,t:any)=>s+t.amount,0) / (rawTotals.taxTotal||1)) : 0;
+    const effAdded = round2(effTaxTotal * addedRatio);
+    const effTotal = round2(effTaxable + effAdded + effShipping);
+    const effTaxLines = rawTotals.taxLines.map((t:any)=> ({ ...t, amount: round2(t.amount * (effTaxTotal / (rawTotals.taxTotal||1) || 1)) }));
+    return { ...rawTotals, globalDiscount: effGlobalDiscount, globalShipping: effGlobalShipping, discount: effDiscount, shipping: effShipping, taxTotal: effTaxTotal, taxLines: effTaxLines, total: effTotal } as any;
+  })();
   const stats = {
     total: rows.length,
     amount: rows.reduce((s, r) => s + Number(r.total || 0), 0),
@@ -760,9 +815,10 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
             )}
 
             <div className="ad-card p-4 space-y-1 text-sm">
+              {((open as any).globalDiscount !== undefined && (open as any).globalDiscount !== '' && (open as any).globalDiscount !== null) || ((open as any).shippingFee !== undefined && (open as any).shippingFee !== '' && (open as any).shippingFee !== null) ? <div className="text-xs px-2 py-1 rounded bg-amber-50 dark:bg-amber-900/20 border border-amber-200 text-amber-700">Valeur manuelle appliquée — enregistrez pour MAJ vitrine & PDF instantanée.</div> : null}
               <div className="flex justify-between"><span>Sous-total HT</span><strong>{money(totals.subtotal)}</strong></div>
               {totals.productDiscount>0 && <div className="flex justify-between" style={{color:'var(--ad-muted)'}}><span>Remises produits</span><strong>- {money(totals.productDiscount)}</strong></div>}
-              {totals.globalDiscount>0 && <div className="flex justify-between" style={{color:'var(--ad-muted)'}}><span>Remise globale</span><strong>- {money(totals.globalDiscount)}</strong></div>}
+              {totals.globalDiscount>0 && <div className="flex justify-between" style={{color:'var(--ad-muted)'}}><span>Remise globale{(open as any).globalDiscount!==undefined && (open as any).globalDiscount!=='' ? ' (manuelle)' : ''}</span><strong>- {money(totals.globalDiscount)}</strong></div>}
               {totals.couponDiscount>0 && <div className="flex justify-between" style={{color:'var(--ad-muted)'}}><span>Coupon {(open as any).coupon}</span><strong>- {money(totals.couponDiscount)}</strong></div>}
               {totals.discount>0 && totals.productDiscount===0 && totals.globalDiscount===0 && totals.couponDiscount===0 && <div className="flex justify-between"><span>Remise</span><strong>- {money(totals.discount)}</strong></div>}
               {totals.productShipping>0 && <div className="flex justify-between"><span>Livraison articles</span><strong>{money(totals.productShipping)}</strong></div>}

@@ -631,6 +631,23 @@ model Order {
   ip          String?
   history     Json?
   invoice     Json?
+  // Détail montants (édition admin directe, vitrine & PDF instantanés)
+  subtotal        Decimal? @db.Decimal(14, 2)
+  discountTotal   Decimal? @db.Decimal(14, 2)
+  productDiscount Decimal? @db.Decimal(14, 2)
+  globalDiscount  Decimal? @db.Decimal(14, 2)
+  couponDiscount  Decimal? @db.Decimal(14, 2)
+  shippingFee     Decimal? @db.Decimal(14, 2)
+  productShipping Decimal? @db.Decimal(14, 2)
+  globalShipping  Decimal? @db.Decimal(14, 2)
+  taxTotal        Decimal? @db.Decimal(14, 2)
+  taxLines        Json?
+  deliveryZone    String?  @db.VarChar(80)
+  saleZone        String?  @db.VarChar(80)
+  deliveryAddress String?  @db.Text
+  country         String?  @db.VarChar(80)
+  notes           String?  @db.Text
+  adminNotes      String?  @db.Text
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
@@ -672,6 +689,21 @@ model Quote {
   country      String?
   attachments  Json?
   response     Json?
+  // Détail montants (cohérence avec Order)
+  subtotal        Decimal? @db.Decimal(14, 2)
+  discountTotal   Decimal? @db.Decimal(14, 2)
+  productDiscount Decimal? @db.Decimal(14, 2)
+  globalDiscount  Decimal? @db.Decimal(14, 2)
+  couponDiscount  Decimal? @db.Decimal(14, 2)
+  shippingFee     Decimal? @db.Decimal(14, 2)
+  productShipping Decimal? @db.Decimal(14, 2)
+  globalShipping  Decimal? @db.Decimal(14, 2)
+  taxTotal        Decimal? @db.Decimal(14, 2)
+  taxLines        Json?
+  deliveryZone    String?  @db.VarChar(80)
+  saleZone        String?  @db.VarChar(80)
+  deliveryAddress String?  @db.Text
+  adminNotes      String?  @db.Text
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   deletedAt    DateTime?

@@ -87,13 +87,28 @@ export class OrdersService extends BaseCrudService<OrderEntity> {
       else delete (compat as Record<string, unknown>).userId;
     }
     // Supprime les champs legacy qui n'ont pas de colonne (évite le warn + garde le payload propre)
+    // NB: les champs breakdown (subtotal, shippingFee, etc.) et zones sont désormais persistés (schema 2026-09)
     delete compat.customerName; delete compat.customerEmail; delete compat.customerPhone; delete compat.customerCompany;
     delete compat.customerType; delete compat.isGuest; delete compat.isQuote;
     delete compat.totalAmount; delete compat.taxAmount; delete compat.grandTotal;
-    delete compat.productDiscount; delete compat.globalDiscount; delete compat.couponDiscount;
-    delete compat.productShipping; delete compat.globalShipping; delete compat.taxLines;
-    delete compat.subtotal; delete compat.shippingFee; delete compat.taxTotal; delete compat.discountTotal;
-    delete compat.deliveryZone; delete compat.saleZone; delete compat.deliveryAddress; delete compat.country; delete compat.notes; delete compat.adminNotes;
+    // Normalise les montants breakdown (2 décimales) — garde les valeurs admin si fournies
+    const round2 = (n: number) => Math.round(Number(n) * 100) / 100;
+    for (const k of ['subtotal','discountTotal','productDiscount','globalDiscount','couponDiscount','shippingFee','productShipping','globalShipping','taxTotal']) {
+      if (compat[k] !== undefined && compat[k] !== null && compat[k] !== '') {
+        const v = Number(compat[k]);
+        if (Number.isFinite(v)) (compat as Record<string, unknown>)[k] = round2(v);
+        else delete (compat as Record<string, unknown>)[k];
+      }
+    }
+    if (compat.deliveryZone !== undefined && typeof compat.deliveryZone === 'string') compat.deliveryZone = String(compat.deliveryZone).slice(0,80);
+    if (compat.saleZone !== undefined && typeof compat.saleZone === 'string') compat.saleZone = String(compat.saleZone).slice(0,80);
+    if (compat.deliveryAddress !== undefined && typeof compat.deliveryAddress === 'string') compat.deliveryAddress = String(compat.deliveryAddress).slice(0,500);
+    if (compat.country !== undefined && typeof compat.country === 'string') compat.country = String(compat.country).slice(0,80);
+    if (compat.notes !== undefined && typeof compat.notes === 'string') compat.notes = String(compat.notes).slice(0,2000);
+    if (compat.adminNotes !== undefined && typeof compat.adminNotes === 'string') compat.adminNotes = String(compat.adminNotes).slice(0,2000);
+    // taxLines : garde Json tel quel si array
+    if (compat.taxLines !== undefined && !Array.isArray(compat.taxLines)) delete compat.taxLines;
+
     // Sur update, ne jamais écraser le code avec un doublon (cause 500 Unique constraint)
     if (op === 'update' && compat.code && existing) {
       if (String(compat.code) === String((existing as unknown as Record<string, unknown>).code)) {
@@ -127,13 +142,15 @@ export class OrdersService extends BaseCrudService<OrderEntity> {
         const priceRaw = r.price;
         const priceNum = typeof priceRaw === 'string' ? Number(String(priceRaw).replace(/[^0-9.]/g, '')) : Number(priceRaw);
         const price = Math.max(0, Math.min(10000000, Math.round((Number.isFinite(priceNum) ? priceNum : 0) * 100) / 100));
-        // garde image si présent, mais sanitise
+        // garde image si présent, mais sanitise ; conserve les champs enrichis (discount, vat, livraison, zones)
         const clean: Record<string, unknown> = { ...r, name, quantity: qty, price };
         if (clean.image && typeof clean.image === 'string' && String(clean.image).length > 800) clean.image = String(clean.image).slice(0, 800);
-        // retire les clés legacy d'item si présentes
-        delete (clean as Record<string, unknown>).vatRate; delete (clean as Record<string, unknown>).vatIncluded;
-        delete (clean as Record<string, unknown>).shippingFee; delete (clean as Record<string, unknown>).shippingType;
-        delete (clean as Record<string, unknown>).zones; delete (clean as Record<string, unknown>).discountType; delete (clean as Record<string, unknown>).discountValue;
+        if (clean.discountValue !== undefined) { const v=Number(clean.discountValue); clean.discountValue = Number.isFinite(v) ? Math.round(Math.max(0,v)*100)/100 : 0; }
+        if (clean.discount !== undefined) { const v=Number(clean.discount); clean.discount = Number.isFinite(v) ? Math.round(Math.max(0,v)*100)/100 : 0; }
+        if (clean.vatRate !== undefined) { const v=Number(clean.vatRate); if (Number.isFinite(v)) clean.vatRate = Math.max(0, Math.min(100, Math.round(v*100)/100)); else delete clean.vatRate; }
+        if (clean.taxRate !== undefined) { const v=Number(clean.taxRate); if (Number.isFinite(v)) clean.taxRate = Math.max(0, Math.min(100, Math.round(v*100)/100)); else delete clean.taxRate; }
+        if (clean.shippingFee !== undefined) { const v=Number(clean.shippingFee); if (Number.isFinite(v)) clean.shippingFee = Math.max(0, Math.min(100000, Math.round(v*100)/100)); else delete clean.shippingFee; }
+        if (clean.zones !== undefined && !Array.isArray(clean.zones)) delete clean.zones;
         return clean;
       });
     }
@@ -143,11 +160,14 @@ export class OrdersService extends BaseCrudService<OrderEntity> {
       history.push({ status: (out as Record<string, unknown>).status as string, at: new Date().toISOString() });
       (out as Record<string, unknown>).history = history;
     }
-    // sanitize items même en update (évite image trop longue etc.)
+    // sanitize items même en update (garde les champs enrichis, tronque image)
     if (op === 'update' && Array.isArray((out as Record<string, unknown>).items)) {
       (out as Record<string, unknown>).items = ((out as Record<string, unknown>).items as unknown[]).map((it: unknown) => {
         const r = (it || {}) as Record<string, unknown>;
         if (typeof r.image === 'string' && r.image.length > 800) r.image = r.image.slice(0, 800);
+        if (r.discountValue !== undefined) { const v=Number(r.discountValue); r.discountValue = Number.isFinite(v) ? Math.round(Math.max(0,v)*100)/100 : 0; }
+        if (r.vatRate !== undefined) { const v=Number(r.vatRate); if (Number.isFinite(v)) r.vatRate = Math.max(0, Math.min(100, Math.round(v*100)/100)); else delete r.vatRate; }
+        if (r.shippingFee !== undefined) { const v=Number(r.shippingFee); if (Number.isFinite(v)) r.shippingFee = Math.max(0, Math.min(100000, Math.round(v*100)/100)); else delete r.shippingFee; }
         return r;
       });
     }
