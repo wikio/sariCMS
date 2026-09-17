@@ -31,7 +31,7 @@ export interface Order {
   totalAmount: number;
   taxAmount: number;
   grandTotal: number;
-  status: 'pending' | 'pending_payment' | 'paid' | 'shipped' | 'delivered' | 'cancelled' | 'quote_requested';
+  status: 'pending' | 'pending_payment' | 'paid' | 'shipped' | 'delivered' | 'cancelled' | 'cancel_requested' | 'quote_requested';
   createdAt: string;
   payment?: string;
 }
@@ -136,6 +136,21 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
           oRows = Array.isArray(oRes?.data) ? oRes.data : Array.isArray(oRes) ? oRes : [];
         } catch {}
         if (!cancelled && oRows.length) {
+          const parseItems = (raw: any): any[] => {
+            let arr: any[] = [];
+            if (Array.isArray(raw)) arr = raw;
+            else if (typeof raw === 'string') {
+              try { const p = JSON.parse(raw); if (Array.isArray(p)) arr = p; } catch {}
+            } else if (raw && typeof raw === 'object' && Array.isArray((raw as any).items)) arr = (raw as any).items;
+            return arr.map((it: any) => ({
+              id: Number(it.id) || Date.now() + Math.floor(Math.random()*1000),
+              name: String(it.name || it.title || 'Produit'),
+              price: String(it.price ?? it.unitPrice ?? it.prix ?? '0'),
+              quantity: Number(it.quantity ?? it.qty ?? 1) || 1,
+              image: String(it.image || it.photo || ''),
+              category: String(it.category || ''),
+            }));
+          };
           const mapped = oRows.map((r: any) => ({
             id: Number(r.id),
             code: r.code,
@@ -147,13 +162,13 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
             customerType: 'client',
             isGuest: !r.userId,
             isQuote: false,
-            items: Array.isArray(r.items) ? r.items.map((it: any) => ({ id: Number(it.id)|| Date.now(), name: it.name, price: String(it.price), quantity: Number(it.quantity)||1, image: it.image || '', category: it.category || '' })) : [],
+            items: parseItems(r.items),
             totalAmount: Number(r.total) || 0,
-            taxAmount: 0,
-            grandTotal: Number(r.total) || 0,
-            status: r.status || 'pending',
-            createdAt: r.date || r.createdAt || new Date().toISOString(),
-            payment: r.payment || 'pending',
+            taxAmount: Number((r as any).taxTotal ?? (r as any).taxAmount ?? 0),
+            grandTotal: Number(r.total) || Number((r as any).grandTotal) || 0,
+            status: (r.status as any) || 'pending',
+            createdAt: (r.date as string) || (r.createdAt as string) || new Date().toISOString(),
+            payment: (r.payment as string) || 'pending',
           }));
           setOrders(prev => {
             const byId = new Map<string, any>();
@@ -176,25 +191,30 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
           qRows = Array.isArray(qRes?.data) ? qRes.data : Array.isArray(qRes) ? qRes : [];
         } catch {}
         if (!cancelled && qRows.length) {
-          const qMapped = qRows.map((r: any) => ({
+          const qMapped = qRows.map((r: any) => {
+            let qArr: any[] = [];
+            const qRaw = (r as any).items;
+            if (Array.isArray(qRaw)) qArr = qRaw;
+            else if (typeof qRaw === 'string') { try { const p=JSON.parse(qRaw); if(Array.isArray(p)) qArr=p; } catch {} }
+            return {
             id: Number(r.id),
-            code: r.reference || r.code,
+            code: (r.reference as string) || (r.code as string),
             userId: r.userId ? String(r.userId) : null,
-            customerName: r.client || 'Client',
-            customerEmail: r.email || '',
-            customerPhone: r.phone || '',
-            customerCompany: r.company || '',
+            customerName: (r.client as string) || 'Client',
+            customerEmail: (r.email as string) || '',
+            customerPhone: (r.phone as string) || '',
+            customerCompany: (r.company as string) || '',
             customerType: 'client',
             isGuest: !r.userId,
             isQuote: true,
-            items: Array.isArray(r.items) ? r.items.map((it: any) => ({ id: Number(it.id)|| Date.now(), name: it.name, price: String(it.price), quantity: Number(it.quantity)||1, image: it.image || '', category: it.category || '' })) : [],
+            items: qArr.map((it: any) => ({ id: Number(it.id)|| Date.now(), name: String(it.name||'Produit'), price: String(it.price??'0'), quantity: Number(it.quantity||1)||1, image: String(it.image||''), category: String(it.category||'') })),
             totalAmount: Number(r.total) || 0,
             taxAmount: 0,
             grandTotal: Number(r.total) || 0,
             status: 'quote_requested' as const,
-            createdAt: r.date || r.createdAt || new Date().toISOString(),
+            createdAt: (r.date as string) || (r.createdAt as string) || new Date().toISOString(),
             payment: 'pending',
-          }));
+          }});
           setOrders(prev => {
             const byId = new Map<string, any>();
             for (const m of qMapped) byId.set(String(m.id), m);

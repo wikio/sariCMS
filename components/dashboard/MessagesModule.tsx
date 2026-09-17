@@ -30,6 +30,21 @@ export default function MessagesModule({ user }: { user: User }) {
     return () => window.removeEventListener('sari-threads-changed', handler);
   }, [user.email]);
 
+  // Ouverture automatique si dashboard a demandé un fil (message concernant commande)
+  useEffect(() => {
+    try {
+      const pending = localStorage.getItem('sari_pending_open_thread');
+      if (pending) {
+        const exists = threads.find((t) => t.id === pending);
+        if (exists) {
+          setOpenId(pending);
+          markThreadRead(pending, 'user');
+        }
+        localStorage.removeItem('sari_pending_open_thread');
+      }
+    } catch {}
+  }, [threads]);
+
   const open = threads.find((th) => th.id === openId) || null;
 
   const openThread = (th: Thread) => {

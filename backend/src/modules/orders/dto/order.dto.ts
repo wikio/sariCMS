@@ -116,6 +116,7 @@ export const ORDER_STATUSES = [
   'shipped',
   'delivered',
   'cancelled',
+  'cancel_requested',
 ] as const;
 
 export class CreateOrderDto {

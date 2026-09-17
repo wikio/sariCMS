@@ -9,8 +9,9 @@ import {
   LayoutDashboard, User, Briefcase, Mail, Package, FileText, LogOut, CheckCircle,
   Clock, ShoppingBag, CreditCard, Inbox, Activity, Handshake, Plus, Minus, Trash2,
   Search, MapPin, Banknote, Target, Award, Gift, ChevronDown, ChevronUp, Eye,
+  MessageCircle, AlertTriangle, X, Send,
 } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth, frontToken } from '@/contexts/AuthContext';
 import { useApplications } from '@/contexts/ApplicationsContext';
 import { useOrders } from '@/contexts/OrdersContext';
 import { useCart } from '@/contexts/CartContext';
@@ -19,11 +20,12 @@ import type { Product } from '@/types';
 import QuoteRequestModule from '@/components/dashboard/QuoteRequestModule';
 import MessagesModule from '@/components/dashboard/MessagesModule';
 import ProfileModule from '@/components/dashboard/ProfileModule';
-import { unreadForUser } from '@/lib/messages';
+import { unreadForUser, ensureThread, sendMessage } from '@/lib/messages';
 import { isBackOfficeUser } from '@/lib/admin-session';
 import DateText from '@/components/shared/DateText';
 import { useCurrency } from '@/lib/use-currency';
 import { paymentTypeLabel, normalizeOrderPaymentType } from '@/lib/payments';
+import { cmsFetch } from '@/lib/cms';
 
 export default function DashboardPage() {
   const locale = useLocale();
@@ -39,6 +41,8 @@ export default function DashboardPage() {
   const [productQ, setProductQ] = useState('');
   const [expandedOrders, setExpandedOrders] = useState<Record<string, boolean>>({});
   const [unreadMessages, setUnreadMessages] = useState(0);
+  const [cancelModal, setCancelModal] = useState<{ order: any; reason: string } | null>(null);
+  const [cancelLoading, setCancelLoading] = useState(false);
 
   useEffect(() => {
     const refreshUnread = () => setUnreadMessages(user?.email ? unreadForUser(user.email) : 0);
@@ -110,6 +114,7 @@ export default function DashboardPage() {
       delivered: { label: t('orderDelivered'), color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' },
       rejected: { label: t('statusRejected'), color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' },
       cancelled: { label: t('cancel'), color: 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300' },
+      cancel_requested: { label: t('cancelRequested', { defaultMessage: 'Annulation demandée' }), color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' },
       quote_requested: { label: t('quoteRequested'), color: 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400' },
     };
     const c = config[status] || config.pending;
@@ -119,6 +124,97 @@ export default function DashboardPage() {
   const handleLogout = () => {
     logout();
     router.push(`/${locale}`);
+  };
+
+  const handleMessageForOrder = (order: any) => {
+    if (!user?.email) return;
+    const code = order.code || `#${order.id}`;
+    const subject = `Commande ${code} — ${order.status}`;
+    const thread = ensureThread({
+      email: user.email,
+      name: user.name,
+      type: 'client' as const,
+      subject,
+      context: { kind: 'order' as const, id: order.id, ref: code },
+    });
+    // Pré-remplir un message d'intention si le fil est vide
+    try {
+      if (thread.messages.length === 0) {
+        // ne pas envoyer auto, juste créer le fil
+      }
+      localStorage.setItem('sari_pending_open_thread', thread.id);
+    } catch {}
+    setActiveTab('messages');
+    // petit délai pour laisser MessagesModule se charger puis ouvrir
+    setTimeout(() => window.dispatchEvent(new Event('sari-threads-changed')), 100);
+  };
+
+  const canShowPayButton = (order: any) => {
+    const norm = normalizeOrderPaymentType((order as any).payment || 'pending');
+    const isPendingStatus = order.status === 'pending' || order.status === 'pending_payment';
+    const isCod = norm === 'cod';
+    const isPaid = order.status === 'paid' || order.status === 'shipped' || order.status === 'delivered';
+    const isCancelled = order.status === 'cancelled' || order.status === 'cancel_requested';
+    if (isCancelled || isPaid) return false;
+    // Affiche si en attente OU si COD (pour changer d'avis et payer autrement)
+    return isPendingStatus || isCod || norm === 'pending';
+  };
+
+  const isPaymentDone = (order: any) => {
+    const norm = normalizeOrderPaymentType((order as any).payment || 'pending');
+    return order.status === 'paid' || order.status === 'shipped' || order.status === 'delivered' || (norm !== 'pending' && norm !== 'cod' && order.status !== 'pending' && order.status !== 'pending_payment');
+  };
+
+  const handleCancelClick = (order: any) => {
+    const paid = isPaymentDone(order) || order.status === 'shipped' || order.status === 'delivered';
+    const norm = normalizeOrderPaymentType((order as any).payment || 'pending');
+    const isCodPending = norm === 'cod' && (order.status === 'pending' || order.status === 'pending_payment');
+    // Si paiement effectué (hors COD en attente), demande confirmation via modal
+    if (paid && !isCodPending) {
+      setCancelModal({ order, reason: '' });
+    } else {
+      // Annulation directe pour commandes non payées
+      if (confirm(t('confirmCancel', { defaultMessage: 'Annuler cette commande ?' }))) {
+        removeOrder(order.id);
+        // sync backend si possible
+        try {
+          const token = frontToken();
+          cmsFetch(`/orders/${order.id}`, { method: 'PATCH', json: { status: 'cancelled' }, ...(token ? { token } : {}), timeoutMs: 6000 }).catch(()=>{});
+        } catch {}
+      }
+    }
+  };
+
+  const confirmCancelRequest = async () => {
+    if (!cancelModal) return;
+    setCancelLoading(true);
+    const order = cancelModal.order;
+    try {
+      // Local: passe en cancel_requested pour revue admin
+      updateOrderStatus(order.id, 'cancel_requested' as any);
+      // Backend: PATCH status + history note
+      const token = frontToken();
+      await cmsFetch(`/orders/${order.id}`, {
+        method: 'PATCH',
+        json: { status: 'cancel_requested', adminNotes: cancelModal.reason || 'Demande d\'annulation client', history: [...(order.history||[]), { status: 'cancel_requested', at: new Date().toISOString(), note: cancelModal.reason || 'Demande annulation' }] },
+        ...(token ? { token } : {}),
+        timeoutMs: 8000,
+      }).catch(()=>{});
+      // Optionnel: créer un fil de discussion pour suivi remboursement
+      try {
+        const thread = ensureThread({
+          email: user.email,
+          name: user.name,
+          type: 'client' as const,
+          subject: `Demande d'annulation — Commande ${order.code || order.id}`,
+          context: { kind: 'order' as const, id: order.id, ref: order.code },
+        });
+        const body = `Bonjour, je souhaite annuler la commande ${order.code || '#' + order.id} (montant ${formatMoney(order.grandTotal, { decimals: 2 })}).` + (cancelModal.reason ? ` Motif : ${cancelModal.reason}` : '') + ` Merci de me confirmer l'annulation et le remboursement.`;
+        sendMessage(thread.id, 'user', body);
+      } catch {}
+    } catch {}
+    setCancelLoading(false);
+    setCancelModal(null);
   };
 
   const RoleIcon = isCandidate ? User : isPartner ? Handshake : ShoppingBag;
@@ -147,7 +243,7 @@ export default function DashboardPage() {
               <nav className="p-4 space-y-1">
                 {menuItems.map((item) => {
                   const Icon = item.icon;
-                  const badge = item.id === 'applications' ? applications.length : item.id === 'orders' ? realOrders.length : item.id === 'messages' ? unreadMessages : null;
+                  const badge = item.id === 'applications' ? applications.length : item.id === 'orders' ? realOrders.length : item.id === 'quotes' ? myQuotes.length : item.id === 'messages' ? unreadMessages : null;
                   return (
                     <button
                       key={item.id}
@@ -383,7 +479,8 @@ export default function DashboardPage() {
                       const isExpanded = !!expandedOrders[String(order.id)];
                       const toggle = () => setExpandedOrders((prev) => ({ ...prev, [String(order.id)]: !prev[String(order.id)] }));
                       const paymentLabel = paymentTypeLabel(normalizeOrderPaymentType((order as any).payment || 'pending'));
-                      const isPending = order.status === 'pending' || order.status === 'pending_payment';
+                      const showPay = canShowPayButton(order);
+                      const isCancelled = order.status === 'cancelled' || order.status === 'cancel_requested';
                       return (
                       <div key={order.id} className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 shadow-xl rounded-xl overflow-hidden">
                         {/* En-tête repliable : infos de base code / date / paiement / montant / bouton + flèche */}
@@ -406,10 +503,12 @@ export default function DashboardPage() {
                               <div className="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-wide">{t('total')}</div>
                             </div>
                             <div className="sm:hidden font-black text-sari-lime text-sm">{formatMoney(order.grandTotal, { decimals: 2 })}</div>
-                            {isPending ? (
+                            {showPay ? (
                               <Link href={`/${locale}/payment/${order.id}`} onClick={(e)=> e.stopPropagation()} className="hidden sm:inline-flex btn-primary text-white px-3 py-1.5 text-xs font-semibold rounded-lg items-center gap-1.5">
                                 <CreditCard className="w-3.5 h-3.5" /> {t('completePayment')}
                               </Link>
+                            ) : isCancelled ? (
+                              <span className="hidden sm:inline-flex text-xs px-2 py-1 bg-red-100 text-red-700 rounded-full font-bold">{t('cancelRequested', { defaultMessage: 'Annulation demandée' })}</span>
                             ) : (
                               <span className="hidden sm:inline-flex text-xs text-gray-400">—</span>
                             )}
@@ -424,12 +523,17 @@ export default function DashboardPage() {
                           </div>
                         </div>
                         {/* Actions rapides en mode replié (mobile) */}
-                        {isPending && (
+                        {(showPay || !isCancelled) && (
                           <div className="sm:hidden px-4 pb-3 flex gap-2">
-                            <Link href={`/${locale}/payment/${order.id}`} className="flex-1 btn-primary text-white px-3 py-2 text-sm font-semibold rounded-lg inline-flex items-center justify-center gap-2">
-                              <CreditCard className="w-4 h-4" /> {t('completePayment')}
-                            </Link>
-                            <button onClick={() => removeOrder(order.id)} className="px-3 py-2 border border-red-200 dark:border-red-800 text-red-500 rounded-lg text-sm">{t('cancel')}</button>
+                            {showPay && (
+                              <Link href={`/${locale}/payment/${order.id}`} className="flex-1 btn-primary text-white px-3 py-2 text-sm font-semibold rounded-lg inline-flex items-center justify-center gap-2">
+                                <CreditCard className="w-4 h-4" /> {t('completePayment')}
+                              </Link>
+                            )}
+                            {!isCancelled && (
+                              <button onClick={() => handleCancelClick(order)} className="px-3 py-2 border border-red-200 dark:border-red-800 text-red-500 rounded-lg text-sm">{t('cancel')}</button>
+                            )}
+                            <button onClick={() => handleMessageForOrder(order)} className="px-3 py-2 border border-sari-blue/30 text-sari-blue rounded-lg text-sm inline-flex items-center gap-1"><MessageCircle className="w-4 h-4" /> Msg</button>
                           </div>
                         )}
                         {/* Contenu déplié : liste articles */}
@@ -437,27 +541,42 @@ export default function DashboardPage() {
                           <div className="border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-[#111111]/50 p-4 space-y-3 animate-in">
                             <div className="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">Articles · {order.items.length}</div>
                             <div className="space-y-2">
-                              {order.items.map((it) => (
-                                <div key={it.id} className="flex items-center justify-between text-sm bg-white dark:bg-[#1a1a1a] p-2.5 rounded-lg border border-gray-100 dark:border-gray-800">
+                              {Array.isArray(order.items) && order.items.length > 0 ? order.items.map((it: any) => {
+                                const unit = Number(String(it.price).replace(/[^0-9.]/g,'')) || 0;
+                                return (
+                                <div key={String(it.id)+it.name} className="flex items-center justify-between text-sm bg-white dark:bg-[#1a1a1a] p-2.5 rounded-lg border border-gray-100 dark:border-gray-800">
                                   <span className="text-gray-700 dark:text-gray-300 truncate pr-3">{it.name} <span className="text-gray-400">× {it.quantity}</span></span>
-                                  <span className="font-semibold text-sari-dark dark:text-white whitespace-nowrap">{formatMoney(Number(it.price) * it.quantity)}</span>
+                                  <span className="font-semibold text-sari-dark dark:text-white whitespace-nowrap">{formatMoney(unit * Number(it.quantity||1))}</span>
                                 </div>
-                              ))}
+                              )}) : (
+                                <div className="text-sm text-gray-500 dark:text-gray-400 italic">{t('noItems', { defaultMessage: 'Aucun article détaillé' })} — {formatMoney(order.grandTotal, { decimals: 2 })}</div>
+                              )}
                             </div>
                             <div className="flex items-center justify-between border-t border-gray-200 dark:border-gray-700 pt-3">
                               <span className="font-bold text-sari-dark dark:text-white text-sm">{t('total')}</span>
                               <span className="font-black text-sari-lime">{formatMoney(order.grandTotal, { decimals: 2 })}</span>
                             </div>
-                            <div className="flex gap-2 pt-1">
-                              {isPending ? (
+                            <div className="flex flex-wrap gap-2 pt-1">
+                              {showPay ? (
                                 <>
                                   <Link href={`/${locale}/payment/${order.id}`} className="flex-1 btn-primary text-white px-4 py-2 font-semibold text-center rounded-lg inline-flex items-center justify-center gap-2 text-sm">
                                     <CreditCard className="w-4 h-4" /> {t('completePayment')}
                                   </Link>
-                                  <button onClick={() => removeOrder(order.id)} className="px-4 py-2 border-2 border-red-300 dark:border-red-700 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-sm">{t('cancel')}</button>
+                                  {!isCancelled && (
+                                    <button onClick={() => handleCancelClick(order)} className="px-4 py-2 border-2 border-red-300 dark:border-red-700 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-sm">{t('cancel')}</button>
+                                  )}
+                                  <button onClick={() => handleMessageForOrder(order)} className="px-4 py-2 border border-sari-blue/30 text-sari-blue hover:bg-sari-blue/5 rounded-lg text-sm inline-flex items-center gap-2"><MessageCircle className="w-4 h-4" /> {t('contactAboutOrder', { defaultMessage: 'Message' })}</button>
                                 </>
+                              ) : isCancelled ? (
+                                <div className="w-full flex flex-col gap-2">
+                                  <div className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 p-2 rounded-lg flex items-start gap-2"><AlertTriangle className="w-4 h-4 mt-0.5"/> {t('cancelReview', { defaultMessage: 'Demande d\'annulation transmise — en attente de validation admin et remboursement.' })}</div>
+                                  <button onClick={() => handleMessageForOrder(order)} className="px-4 py-2 bg-sari-blue text-white rounded-lg text-sm inline-flex items-center gap-2 self-start"><MessageCircle className="w-4 h-4" /> {t('sendMessage', { defaultMessage: 'Envoyer un message' })}</button>
+                                </div>
                               ) : (
-                                <div className="text-xs text-gray-500 dark:text-gray-400">Paiement : {paymentLabel} · Synchronisé avec l’admin</div>
+                                <div className="w-full flex items-center justify-between gap-2">
+                                  <span className="text-xs text-gray-500 dark:text-gray-400">Paiement : {paymentLabel} · {t('syncedWithAdmin', { defaultMessage: 'Synchronisé avec l’admin' })}</span>
+                                  <button onClick={() => handleMessageForOrder(order)} className="px-3 py-1.5 text-xs border border-sari-blue/30 text-sari-blue rounded-lg inline-flex items-center gap-1"><MessageCircle className="w-3.5 h-3.5" /> {t('contact', { defaultMessage: 'Contacter' })}</button>
+                                </div>
                               )}
                             </div>
                           </div>
@@ -484,6 +603,37 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+      {/* Modal annulation avec remboursement */}
+      {cancelModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => !cancelLoading && setCancelModal(null)} />
+          <div className="relative bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-200 dark:border-gray-800">
+            <div className="h-1.5 w-full bg-gradient-to-r from-red-500 to-orange-600" />
+            <div className="p-6">
+              <div className="flex items-start justify-between gap-4 mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-900/30 text-red-600 flex items-center justify-center"><AlertTriangle className="w-5 h-5" /></div>
+                  <div>
+                    <h3 className="font-black text-sari-dark dark:text-white">{t('cancelOrderTitle', { defaultMessage: 'Demander l\'annulation ?' })}</h3>
+                    <p className="text-xs text-gray-500">{t('orderNumber')} #{cancelModal.order.code || cancelModal.order.id} · {formatMoney(cancelModal.order.grandTotal, { decimals: 2 })}</p>
+                  </div>
+                </div>
+                <button onClick={() => !cancelLoading && setCancelModal(null)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"><X className="w-5 h-5" /></button>
+              </div>
+              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-3 rounded-xl text-sm text-amber-800 dark:text-amber-200 mb-4">
+                {t('cancelPaidWarning', { defaultMessage: 'Cette commande a déjà été payée. Elle ne sera pas supprimée immédiatement. Votre demande sera transmise à l\'administration pour validation et remboursement. Vous serez notifié.' })}
+              </div>
+              <label className="block text-sm font-bold text-sari-dark dark:text-white mb-2">{t('cancelReason', { defaultMessage: 'Motif (optionnel)' })}</label>
+              <textarea value={cancelModal.reason} onChange={(e)=> setCancelModal({ ...cancelModal, reason: e.target.value })} rows={3} placeholder={t('cancelReasonPlaceholder', { defaultMessage: 'Ex: erreur de commande, délai trop long...' })} className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white rounded-xl outline-none focus:border-red-500" />
+              <div className="flex gap-3 mt-6">
+                <button onClick={()=> setCancelModal(null)} disabled={cancelLoading} className="flex-1 px-4 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-xl font-bold hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50">{t('keepOrder', { defaultMessage: 'Garder la commande' })}</button>
+                <button onClick={confirmCancelRequest} disabled={cancelLoading} className="flex-1 px-4 py-3 bg-gradient-to-r from-red-500 to-orange-600 text-white rounded-xl font-black shadow-lg hover:shadow-xl disabled:opacity-50 flex items-center justify-center gap-2">{cancelLoading ? '...' : <><Trash2 className="w-4 h-4" /> {t('confirmCancelRequest', { defaultMessage: 'Confirmer la demande' })}</>}</button>
+              </div>
+              <button onClick={()=> { handleMessageForOrder(cancelModal.order); setCancelModal(null); }} className="w-full mt-3 px-4 py-2.5 border border-sari-blue/30 text-sari-blue rounded-xl font-semibold inline-flex items-center justify-center gap-2 hover:bg-sari-blue/5"><MessageCircle className="w-4 h-4" /> {t('messageAboutOrder', { defaultMessage: 'Envoyer un message à propos de cette commande' })}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
