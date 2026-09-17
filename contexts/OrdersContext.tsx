@@ -140,15 +140,20 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
             let arr: any[] = [];
             if (Array.isArray(raw)) arr = raw;
             else if (typeof raw === 'string') {
-              try { const p = JSON.parse(raw); if (Array.isArray(p)) arr = p; } catch {}
+              try { const p = JSON.parse(raw); if (Array.isArray(p)) arr = p; else if (p && typeof p === 'object' && Array.isArray((p as any).items)) arr = (p as any).items; } catch {}
             } else if (raw && typeof raw === 'object' && Array.isArray((raw as any).items)) arr = (raw as any).items;
+            // Fallback: parfois l'API renvoie items dans un champ différent (products/lines)
+            if (!arr.length && raw && typeof raw === 'object') {
+              const alt = (raw as any).products || (raw as any).lines || (raw as any).cart;
+              if (Array.isArray(alt)) arr = alt;
+            }
             return arr.map((it: any) => ({
               id: Number(it.id) || Date.now() + Math.floor(Math.random()*1000),
-              name: String(it.name || it.title || 'Produit'),
-              price: String(it.price ?? it.unitPrice ?? it.prix ?? '0'),
-              quantity: Number(it.quantity ?? it.qty ?? 1) || 1,
-              image: String(it.image || it.photo || ''),
-              category: String(it.category || ''),
+              name: String(it.name || it.title || it.productName || 'Produit'),
+              price: String(it.price ?? it.unitPrice ?? it.prix ?? it.amount ?? '0'),
+              quantity: Number(it.quantity ?? it.qty ?? it.count ?? 1) || 1,
+              image: String(it.image || it.photo || it.img || ''),
+              category: String(it.category || it.cat || ''),
             }));
           };
           const mapped = oRows.map((r: any) => ({
@@ -162,7 +167,7 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
             customerType: 'client',
             isGuest: !r.userId,
             isQuote: false,
-            items: parseItems(r.items),
+            items: parseItems(r.items || (r as any).products || (r as any).lines || (r as any).cart),
             totalAmount: Number(r.total) || 0,
             taxAmount: Number((r as any).taxTotal ?? (r as any).taxAmount ?? 0),
             grandTotal: Number(r.total) || Number((r as any).grandTotal) || 0,
@@ -170,12 +175,23 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
             createdAt: (r.date as string) || (r.createdAt as string) || new Date().toISOString(),
             payment: (r.payment as string) || 'pending',
           }));
+          // Si la DB n'a pas d'items (view list ou migration), garde les items locaux
+          try { if (mapped.length && mapped.every((m:any)=> !m.items || m.items.length===0)) console.warn('[OrdersContext] my/list orders sans items - garde local si dispo', oRows.slice(0,1)); } catch {}
           setOrders(prev => {
             const byId = new Map<string, any>();
             for (const m of mapped) byId.set(String(m.id), m);
             for (const m of mapped) if (m.code) byId.set(String(m.code), m);
+            const mergedMapped = mapped.map((m:any)=> {
+              if ((!m.items || m.items.length===0)) {
+                const local = prev.find((p:any)=> String(p.id)===String(m.id) || (m.code && String((p as any).code)===String(m.code)));
+                if (local && Array.isArray((local as any).items) && (local as any).items.length) {
+                  return { ...m, items: (local as any).items, totalAmount: (local as any).totalAmount || m.totalAmount, grandTotal: (local as any).grandTotal || m.grandTotal };
+                }
+              }
+              return m;
+            });
             const localOnly = prev.filter(p => !byId.has(String(p.id)) && !byId.has(String((p as any).code)));
-            const merged = [...mapped as any, ...localOnly];
+            const merged = [...mergedMapped as any, ...localOnly];
             try { localStorage.setItem(CTX_KEY, JSON.stringify(merged)); } catch {}
             return merged as any;
           });

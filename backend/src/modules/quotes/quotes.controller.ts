@@ -33,7 +33,8 @@ export class QuotesController extends BaseCrudController<QuoteEntity> {
     if (!rawId && !rawEmail) throw new UnauthorizedException('Not authenticated');
     const page = Number((query as any).page) || 1;
     const limit = Math.min(100, Number((query as any).limit) || 100);
-    const res: any = await this.service.findAll({ page: 1, limit: 1000, sortBy: 'createdAt', sortOrder: 'desc' } as any);
+    const view = ((query as any).view as string) || 'block';
+    const res: any = await this.service.findAll({ page: 1, limit: 1000, sortBy: 'createdAt', sortOrder: 'desc', view } as any);
     const rows: any[] = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
     const uid = rawId;
     const email = rawEmail;
