@@ -393,8 +393,8 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
       logo: cfg.meta.logo,
     };
     const html = kind === 'quotes'
-      ? quotePdfHtml(row as Quote, company)
-      : orderPdfHtml(row as Order, company);
+      ? quotePdfHtml(row as Quote, company, locale)
+      : orderPdfHtml(row as Order, company, locale);
     const title = kind === 'quotes'
       ? (('reference' in row && row.reference) || `Devis #${row.id}`)
       : (('code' in row && row.code) || `Commande #${row.id}`);
