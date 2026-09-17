@@ -3388,7 +3388,22 @@
       "pwdTooMany": "Too many attempts. Try again in a minute.",
       "pwdRejected": "New password rejected: it must differ from the old one and meet the rules.",
       "pwdFailed": "The change failed. Please try again later.",
-      "pwdNeedsSession": "Sign in again to change your password."
+      "pwdNeedsSession": "Sign in again to change your password.",
+      "cancelRequested": "Cancellation requested",
+      "noItems": "No detailed items",
+      "contactAboutOrder": "Message",
+      "syncedWithAdmin": "Synced with admin",
+      "contact": "Contact",
+      "cancelReview": "Cancellation request sent — pending admin validation and refund.",
+      "cancelOrderTitle": "Request cancellation?",
+      "cancelPaidWarning": "This order has already been paid. It will not be deleted immediately. Your request will be sent to admin for validation and refund. You will be notified.",
+      "cancelReason": "Reason (optional)",
+      "cancelReasonPlaceholder": "Ex: wrong order, too long delay...",
+      "keepOrder": "Keep order",
+      "confirmCancelRequest": "Confirm request",
+      "messageAboutOrder": "Send a message about this order",
+      "confirmCancel": "Cancel this order?",
+      "cancelRequestedShort": "Cancellation requested"
     },
     "eventDetail": {
       "notFound": "Event Not Found",
