@@ -35,6 +35,19 @@ function pdfT(locale: PdfLocale | string | undefined) {
     globalShipping: isAr ? 'الشحن حسب المنطقة' : isEn ? 'Zone shipping' : 'Livraison zone',
     shipping: isAr ? 'الشحن' : isEn ? 'Shipping' : 'Livraison',
     tax: isAr ? 'الضرائب / القيمة المضافة' : isEn ? 'Taxes' : 'TVA / Taxes',
+    taxBase: isAr ? 'الوعاء الضريبي' : isEn ? 'Taxable base' : 'Assiette',
+    taxBaseRate: (rate:number, included?:boolean)=> {
+      const suf = included ? (isAr ? ' (متضمنة)' : isEn ? ' (incl.)' : ' (incl.)') : '';
+      if (isAr) return `الوعاء ${rate}%${suf}`;
+      if (isEn) return `Base ${rate}%${suf}`;
+      return `Assiette ${rate}%${suf}`;
+    },
+    taxAmountRate: (rate:number, included?:boolean)=> {
+      const suf = included ? (isAr ? ' (متضمنة)' : isEn ? ' (incl.)' : ' (incl.)') : '';
+      if (isAr) return `الضريبة ${rate}%${suf}`;
+      if (isEn) return `VAT ${rate}%${suf}`;
+      return `TVA ${rate}%${suf}`;
+    },
     totalTTC: isAr ? 'المجموع شامل الضريبة' : isEn ? 'Total incl. tax' : 'Total TTC',
     totalHT: isAr ? 'المجموع دون ضريبة' : isEn ? 'Total excl. tax' : 'Total HT',
     orderTitle: isAr ? 'طلب' : isEn ? 'Order' : 'Commande',
@@ -327,7 +340,30 @@ export function quotePdfHtml(quote: Quote, company: CompanyInfo, locale?: PdfLoc
   if (typeof qAny.taxTotal === 'number' && qAny.taxTotal > 0) breakdown.push({ label: tr.tax, value: qAny.taxTotal, muted: true });
   if (Array.isArray(qAny.taxLines) && qAny.taxLines.length) {
     const valid = (qAny.taxLines as any[]).filter((tl:any)=> tl && typeof tl==='object' && !Array.isArray(tl) && tl.name && typeof tl.amount==='number' && Number.isFinite(tl.amount) && tl.amount!==0);
-    valid.forEach((tl: any) => breakdown.push({ label: `${tl.name} ${tl.rate ? `${tl.rate}%` : ''}`, value: tl.amount, muted: true }));
+    if (valid.length) {
+      const grouped = new Map<number, { base:number; amount:number; included:boolean }>();
+      for (const tl of valid) {
+        const rate = Number(tl.rate)||0;
+        const inc = !!tl.included;
+        let base:number;
+        if (typeof tl.base==='number' && Number.isFinite(tl.base)) base=tl.base;
+        else if (tl.mode==='percent' && rate) base= tl.amount/(rate/100);
+        else if (rate) base= tl.amount/(rate/100);
+        else base=0;
+        const g=grouped.get(rate);
+        if(g){ g.base+=base; g.amount+=tl.amount; } else grouped.set(rate,{base, amount:tl.amount, included:inc});
+      }
+      if (grouped.size===1 && valid.length===1) {
+        const tl:any=valid[0]; const rate=Number(tl.rate)||0; const g=grouped.get(rate)!;
+        if(g.base>0.005 && tl.mode!=='fixed') breakdown.push({ label: tr.taxBaseRate(rate, g.included), value:g.base, muted:true });
+        breakdown.push({ label: tr.taxAmountRate(rate, g.included), value:g.amount, muted:true });
+      } else {
+        for(const [rate,g] of Array.from(grouped.entries()).sort((a,b)=>a[0]-b[0])){
+          if(rate===0 && g.base===0) breakdown.push({ label: tr.tax, value:g.amount, muted:true });
+          else { if(g.base>0.005) breakdown.push({ label: tr.taxBaseRate(rate, g.included), value:g.base, muted:true }); breakdown.push({ label: tr.taxAmountRate(rate, g.included), value:g.amount, muted:true }); }
+        }
+      }
+    }
   }
   if (typeof qAny.shippingFee === 'number' && qAny.shippingFee > 0) breakdown.push({ label: tr.shipping, value: qAny.shippingFee });
   if (typeof qAny.globalDiscount === 'number' && qAny.globalDiscount > 0) breakdown.push({ label: tr.globalDiscount, value: -qAny.globalDiscount, muted: true });
@@ -386,7 +422,39 @@ export function orderPdfHtml(order: Order, company: CompanyInfo, locale?: PdfLoc
   // if (typeof oAny.shipping === 'number' && oAny.shipping === 0) breakdown.push({ label: 'Livraison offerte', value: 0 });
   if (Array.isArray(oAny.taxLines) && oAny.taxLines.length) {
     const validTaxLines = (oAny.taxLines as any[]).filter((tl:any)=> tl && typeof tl==='object' && !Array.isArray(tl) && tl.name && typeof tl.amount==='number' && Number.isFinite(tl.amount) && tl.amount!==0);
-    validTaxLines.forEach((tl: any) => breakdown.push({ label: `${tl.name} ${tl.included ? '(incl.)' : ''} ${tl.rate ? `${tl.rate}%` : ''}`.trim(), value: tl.amount, muted: true }));
+    if (validTaxLines.length) {
+      // Groupe par taux pour afficher assiette + taxe par taux (demande : assiette de taxe par taux)
+      const grouped = new Map<number, { base:number; amount:number; included:boolean }>();
+      for (const tl of validTaxLines) {
+        const rate = Number(tl.rate) || 0;
+        const inc = !!tl.included;
+        let base: number;
+        if (typeof tl.base === 'number' && Number.isFinite(tl.base)) base = tl.base;
+        else if (tl.mode === 'percent' && rate) base = tl.amount / (rate/100);
+        else if (rate) base = tl.amount / (rate/100);
+        else base = 0;
+        const g = grouped.get(rate);
+        if (g) { g.base += base; g.amount += tl.amount; }
+        else grouped.set(rate, { base, amount: tl.amount, included: inc });
+      }
+      // Si un seul taux et un seul trait, garde le label d'origine (ex: TVA produit avec nom produit)
+      if (grouped.size === 1 && validTaxLines.length === 1) {
+        const tl: any = validTaxLines[0];
+        const rate = Number(tl.rate) || 0;
+        const g = grouped.get(rate)!;
+        if (g.base > 0.005 && tl.mode !== 'fixed') breakdown.push({ label: tr.taxBaseRate(rate, g.included), value: g.base, muted: true });
+        breakdown.push({ label: tr.taxAmountRate(rate, g.included), value: g.amount, muted: true });
+      } else {
+        for (const [rate, g] of Array.from(grouped.entries()).sort((a,b)=> a[0]-b[0])) {
+          if (rate === 0 && g.base === 0) { // taxe fixe sans taux
+            breakdown.push({ label: tr.tax, value: g.amount, muted: true });
+          } else {
+            if (g.base > 0.005) breakdown.push({ label: tr.taxBaseRate(rate, g.included), value: g.base, muted: true });
+            breakdown.push({ label: tr.taxAmountRate(rate, g.included), value: g.amount, muted: true });
+          }
+        }
+      }
+    }
     if (!validTaxLines.length && typeof oAny.taxTotal === 'number' && oAny.taxTotal > 0) breakdown.push({ label: tr.tax, value: oAny.taxTotal, muted: true });
   } else if (typeof oAny.taxTotal === 'number' && oAny.taxTotal > 0) {
     breakdown.push({ label: tr.tax, value: oAny.taxTotal, muted: true });

@@ -7,6 +7,7 @@ export interface TaxLine {
   id: string;
   name: string;
   amount: number;
+  base?: number;
   included: boolean;
   rate: number;
   mode: 'percent' | 'fixed';
@@ -86,6 +87,7 @@ export function applyTaxes(base: number, taxes: TaxRule[], category?: string, zo
       rate: t.rate,
       mode: t.mode,
       amount: t.mode === 'percent' ? base * (t.rate / 100) : t.rate,
+      base: t.mode === 'percent' ? base : undefined,
     }));
 }
 
@@ -137,6 +139,7 @@ function productVatLines(items: CommerceItem[], taxableBaseByItem: Map<string, n
       rate,
       mode: 'percent',
       amount,
+      base,
     });
   }
   return lines;
@@ -180,14 +183,16 @@ export function computeTotals(
     const defTax = taxes.find(t=> t.id===cfgTaxId && t.active);
     if (defTax && !globalTaxLines.some(l=> l.id===defTax.id)) {
       const amount = defTax.mode === 'percent' ? taxable * (defTax.rate/100) : defTax.rate;
-      globalTaxLines = [...globalTaxLines, { id: defTax.id, name: defTax.name, included: defTax.included, rate: defTax.rate, mode: defTax.mode, amount }];
+      const base = defTax.mode === 'percent' ? taxable : undefined;
+      globalTaxLines = [...globalTaxLines, { id: defTax.id, name: defTax.name, included: defTax.included, rate: defTax.rate, mode: defTax.mode, amount, base }];
     }
   } else {
     // Fallback : si aucun globalTaxId mais une taxe marquée isDefault existe, on s'assure qu'elle est présente
     const fallbackDef = taxes.find(t=> (t as any).isDefault && t.active);
     if (fallbackDef && !globalTaxLines.some(l=> l.id===fallbackDef.id)) {
       const amount = fallbackDef.mode === 'percent' ? taxable * (fallbackDef.rate/100) : fallbackDef.rate;
-      globalTaxLines = [...globalTaxLines, { id: fallbackDef.id, name: fallbackDef.name, included: fallbackDef.included, rate: fallbackDef.rate, mode: fallbackDef.mode, amount }];
+      const base = fallbackDef.mode === 'percent' ? taxable : undefined;
+      globalTaxLines = [...globalTaxLines, { id: fallbackDef.id, name: fallbackDef.name, included: fallbackDef.included, rate: fallbackDef.rate, mode: fallbackDef.mode, amount, base }];
     }
   }
   const taxLines = [...vatLines, ...globalTaxLines];

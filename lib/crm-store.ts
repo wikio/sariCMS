@@ -63,7 +63,7 @@ export interface Order {
   shippingFee?: number; // frais livraison (produit + global zone)
   taxTotal?: number;
   globalDiscount?: number;
-  taxLines?: Array<{ id: string; name: string; amount: number; rate: number; mode: string }>;
+  taxLines?: Array<{ id: string; name: string; amount: number; base?: number; rate: number; mode: string; included?: boolean }>;
   items: CommerceItem[];
   address?: string;
   // Zones & livraison
