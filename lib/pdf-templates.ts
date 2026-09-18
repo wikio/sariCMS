@@ -334,10 +334,22 @@ export function quotePdfHtml(quote: Quote, company: CompanyInfo, locale?: PdfLoc
   const qAny = quote as any;
   const tr = pdfT(locale);
   const breakdown: Array<{ label: string; value: number; muted?: boolean }> = [];
-  if (typeof qAny.subtotal === 'number') breakdown.push({ label: tr.subtotal, value: qAny.subtotal });
-  if (typeof qAny.discountTotal === 'number' && qAny.discountTotal > 0) breakdown.push({ label: tr.discounts, value: -qAny.discountTotal, muted: true });
-  else if (typeof qAny.discount === 'number' && qAny.discount > 0) breakdown.push({ label: tr.discount, value: -qAny.discount, muted: true });
-  if (typeof qAny.taxTotal === 'number' && qAny.taxTotal > 0) breakdown.push({ label: tr.tax, value: qAny.taxTotal, muted: true });
+  // Subtotal: stored or compute from lines
+  const subtotal = typeof qAny.subtotal === 'number' ? qAny.subtotal : source.reduce((s:number,l:any)=> s + Number(l.unitPrice||0)*Number(l.quantity||0),0);
+  breakdown.push({ label: tr.subtotal, value: subtotal });
+  // Remises: détaille produit / globale / coupon si présents, sinon fallback
+  if (typeof qAny.productDiscount === 'number' && qAny.productDiscount > 0) breakdown.push({ label: tr.productDiscount, value: -qAny.productDiscount, muted: true });
+  if (typeof qAny.globalDiscount === 'number' && qAny.globalDiscount > 0) breakdown.push({ label: tr.globalDiscount, value: -qAny.globalDiscount, muted: true });
+  if (typeof qAny.couponDiscount === 'number' && qAny.couponDiscount > 0) breakdown.push({ label: tr.couponDiscount(qAny.coupon || ''), value: -qAny.couponDiscount, muted: true });
+  if (typeof qAny.discountTotal === 'number' && qAny.discountTotal > 0 && !qAny.productDiscount && !qAny.globalDiscount && !qAny.couponDiscount) breakdown.push({ label: tr.discounts, value: -qAny.discountTotal, muted: true });
+  else if (typeof qAny.discount === 'number' && qAny.discount > 0 && !qAny.productDiscount) breakdown.push({ label: tr.discount, value: -qAny.discount, muted: true });
+  // Livraison: produit + zone + fallback
+  if (typeof qAny.productShipping === 'number' && qAny.productShipping > 0) breakdown.push({ label: tr.productShipping, value: qAny.productShipping });
+  if (typeof qAny.globalShipping === 'number' && qAny.globalShipping > 0) breakdown.push({ label: tr.globalShipping, value: qAny.globalShipping });
+  if (typeof qAny.shippingFee === 'number' && qAny.shippingFee > 0 && !qAny.productShipping && !qAny.globalShipping) breakdown.push({ label: tr.shipping, value: qAny.shippingFee });
+  else if (typeof qAny.deliveryFee === 'number' && qAny.deliveryFee > 0 && !qAny.productShipping && !qAny.globalShipping) breakdown.push({ label: tr.shipping, value: qAny.deliveryFee });
+  else if (typeof qAny.shipping === 'number' && qAny.shipping > 0 && !qAny.productShipping && !qAny.globalShipping) breakdown.push({ label: tr.shipping, value: qAny.shipping });
+  // TVA: détaille par taux avec assiette + montant
   if (Array.isArray(qAny.taxLines) && qAny.taxLines.length) {
     const valid = (qAny.taxLines as any[]).filter((tl:any)=> tl && typeof tl==='object' && !Array.isArray(tl) && tl.name && typeof tl.amount==='number' && Number.isFinite(tl.amount) && tl.amount!==0);
     if (valid.length) {
@@ -364,9 +376,12 @@ export function quotePdfHtml(quote: Quote, company: CompanyInfo, locale?: PdfLoc
         }
       }
     }
+    if (!valid.length && typeof qAny.taxTotal === 'number' && qAny.taxTotal > 0) breakdown.push({ label: tr.tax, value: qAny.taxTotal, muted: true });
+  } else if (typeof qAny.taxTotal === 'number' && qAny.taxTotal > 0) {
+    breakdown.push({ label: tr.tax, value: qAny.taxTotal, muted: true });
+  } else if (typeof qAny.tax === 'number' && qAny.tax > 0) {
+    breakdown.push({ label: tr.tax, value: qAny.tax, muted: true });
   }
-  if (typeof qAny.shippingFee === 'number' && qAny.shippingFee > 0) breakdown.push({ label: tr.shipping, value: qAny.shippingFee });
-  if (typeof qAny.globalDiscount === 'number' && qAny.globalDiscount > 0) breakdown.push({ label: tr.globalDiscount, value: -qAny.globalDiscount, muted: true });
 
   return documentShell({
     title: tr.quoteTitle,
@@ -416,8 +431,9 @@ export function orderPdfHtml(order: Order, company: CompanyInfo, locale?: PdfLoc
   else if (typeof oAny.discount === 'number' && oAny.discount > 0 && !oAny.productDiscount) breakdown.push({ label: tr.discount, value: -oAny.discount, muted: true });
   if (oAny.productShipping > 0) breakdown.push({ label: tr.productShipping, value: oAny.productShipping });
   if (oAny.globalShipping > 0) breakdown.push({ label: tr.globalShipping, value: oAny.globalShipping });
-  if (oAny.shippingFee !== undefined && oAny.shipping > 0 && !oAny.productShipping && !oAny.globalShipping) breakdown.push({ label: tr.shipping, value: oAny.shippingFee ?? oAny.shipping });
-  else if (oAny.shipping > 0 && !oAny.productShipping && !oAny.globalShipping) breakdown.push({ label: tr.shipping, value: oAny.shipping });
+  if (typeof oAny.shippingFee === 'number' && oAny.shippingFee > 0 && !oAny.productShipping && !oAny.globalShipping) breakdown.push({ label: tr.shipping, value: oAny.shippingFee });
+  else if (typeof oAny.deliveryFee === 'number' && oAny.deliveryFee > 0 && !oAny.productShipping && !oAny.globalShipping) breakdown.push({ label: tr.shipping, value: oAny.deliveryFee });
+  else if (typeof oAny.shipping === 'number' && oAny.shipping > 0 && !oAny.productShipping && !oAny.globalShipping) breakdown.push({ label: tr.shipping, value: oAny.shipping });
   // Livraison offerte 0 supprimée (bruit visuel) — le total suffit, ou afficher seulement si explicitement offerte via globalShipping=0
   // if (typeof oAny.shipping === 'number' && oAny.shipping === 0) breakdown.push({ label: 'Livraison offerte', value: 0 });
   if (Array.isArray(oAny.taxLines) && oAny.taxLines.length) {
@@ -456,8 +472,11 @@ export function orderPdfHtml(order: Order, company: CompanyInfo, locale?: PdfLoc
       }
     }
     if (!validTaxLines.length && typeof oAny.taxTotal === 'number' && oAny.taxTotal > 0) breakdown.push({ label: tr.tax, value: oAny.taxTotal, muted: true });
+    else if (!validTaxLines.length && typeof oAny.tax === 'number' && oAny.tax > 0) breakdown.push({ label: tr.tax, value: oAny.tax, muted: true });
   } else if (typeof oAny.taxTotal === 'number' && oAny.taxTotal > 0) {
     breakdown.push({ label: tr.tax, value: oAny.taxTotal, muted: true });
+  } else if (typeof oAny.tax === 'number' && oAny.tax > 0) {
+    breakdown.push({ label: tr.tax, value: oAny.tax, muted: true });
   }
 
   const total = oAny.total ?? 0;

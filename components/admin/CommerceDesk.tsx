@@ -170,18 +170,18 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
     if (!items.length) { showToast(t("atLeastOneLine", {defaultMessage: "Au moins une ligne d’article requise"}), 'error'); return; }
     for (let idx = 0; idx < items.length; idx++) {
       const it = items[idx] as any;
-      if (!it.name || String(it.name).trim().length < 2) { showToast(`Ligne ${idx + 1}: nom article requis (≥2 car.)`, 'error'); return; }
-      if (!Number.isFinite(Number(it.quantity)) || Math.floor(it.quantity) !== Number(it.quantity) || it.quantity < 1 || it.quantity > 9999) { showToast(`Ligne ${idx + 1}: quantité entière 1–9999`, 'error'); return; }
-      if (!Number.isFinite(Number(it.price)) || it.price < 0 || it.price > 10000000) { showToast(`Ligne ${idx + 1}: PU HT 0–10 000 000`, 'error'); return; }
+      if (!it.name || String(it.name).trim().length < 2) { showToast(t("lineNameRequired", {line: String(idx+1)}), 'error'); return; }
+      if (!Number.isFinite(Number(it.quantity)) || Math.floor(it.quantity) !== Number(it.quantity) || it.quantity < 1 || it.quantity > 9999) { showToast(t("lineQtyInvalid", {line: String(idx+1)}), 'error'); return; }
+      if (!Number.isFinite(Number(it.price)) || it.price < 0 || it.price > 10000000) { showToast(t("linePriceInvalid", {line: String(idx+1)}), 'error'); return; }
       const d = Number(it.discountValue ?? it.discount ?? 0);
-      if (!Number.isFinite(d) || d < 0) { showToast(`Ligne ${idx + 1}: remise ≥0`, 'error'); return; }
-      if (it.discountType === 'percent' && d > 100) { showToast(`Ligne ${idx + 1}: remise % max 100`, 'error'); return; }
-      if (it.discountType === 'fixed' && d * Number(it.quantity) > Number(it.price) * Number(it.quantity) + 1e-9) { showToast(`Ligne ${idx + 1}: remise fixe > total ligne`, 'error'); return; }
-      if (it.vatRate !== undefined && it.vatRate !== null && it.vatRate !== '' && (Number(it.vatRate) < 0 || Number(it.vatRate) > 100)) { showToast(`Ligne ${idx + 1}: TVA 0–100%`, 'error'); return; }
-      if (it.shippingFee !== undefined && it.shippingFee !== null && Number(it.shippingFee) < 0) { showToast(`Ligne ${idx + 1}: frais livraison ≥0`, 'error'); return; }
+      if (!Number.isFinite(d) || d < 0) { showToast(t("lineDiscountInvalid", {line: String(idx+1)}), 'error'); return; }
+      if (it.discountType === 'percent' && d > 100) { showToast(t("lineDiscountPercentMax", {line: String(idx+1)}), 'error'); return; }
+      if (it.discountType === 'fixed' && d * Number(it.quantity) > Number(it.price) * Number(it.quantity) + 1e-9) { showToast(t("lineDiscountFixedExceeded", {line: String(idx+1)}), 'error'); return; }
+      if (it.vatRate !== undefined && it.vatRate !== null && it.vatRate !== '' && (Number(it.vatRate) < 0 || Number(it.vatRate) > 100)) { showToast(t("lineVatInvalid", {line: String(idx+1)}), 'error'); return; }
+      if (it.shippingFee !== undefined && it.shippingFee !== null && Number(it.shippingFee) < 0) { showToast(t("lineShippingInvalid", {line: String(idx+1)}), 'error'); return; }
     }
-    if ((next as any).globalDiscount !== undefined && (next as any).globalDiscount !== null && (next as any).globalDiscount !== '' && Number((next as any).globalDiscount) < 0) { showToast('Remise globale ≥0', 'error'); return; }
-    if ((next as any).shippingFee !== undefined && (next as any).shippingFee !== null && (next as any).shippingFee !== '' && Number((next as any).shippingFee) < 0) { showToast('Frais livraison global ≥0', 'error'); return; }
+    if ((next as any).globalDiscount !== undefined && (next as any).globalDiscount !== null && (next as any).globalDiscount !== '' && Number((next as any).globalDiscount) < 0) { showToast(t("globalDiscountInvalid"), 'error'); return; }
+    if ((next as any).shippingFee !== undefined && (next as any).shippingFee !== null && (next as any).shippingFee !== '' && Number((next as any).shippingFee) < 0) { showToast(t("globalShippingInvalid"), 'error'); return; }
 
     const baseTotals = computeTotals(next.items || [], taxes, coupons.find((c) => c.code === next.coupon), { zone: (next as any).zone || (next as any).deliveryZone, shopConfig });
     const round2 = (n: number) => Math.round(n * 100) / 100;
@@ -691,7 +691,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                     <div className="col-span-4 sm:col-span-3 md:col-span-2">
                       <label className="block">
                         <span className="field-label">{t("qty")} <span className="text-red-500">*</span></span>
-                        {consult ? <div className="pt-1.5 text-center font-bold">× {it.quantity}</div> : <input className="ad-input w-full text-center tabular-nums font-semibold" type="number" inputMode="numeric" step="1" min={1} max={9999} value={it.quantity} onChange={(e) => { let v = Math.floor(Number(e.target.value) || 0); v = Math.max(1, Math.min(9999, v)); patchItem(i, { quantity: v }); }} onBlur={(e)=>{ let v=Math.floor(Number((e.target as HTMLInputElement).value)||1); if(v<1) patchItem(i,{quantity:1}); }} title="Quantité entière 1–9999" aria-invalid={Number(it.quantity) < 1} />}
+                        {consult ? <div className="pt-1.5 text-center font-bold">× {it.quantity}</div> : <input className="ad-input w-full text-center tabular-nums font-semibold" type="number" inputMode="numeric" step="1" min={1} max={9999} value={it.quantity} onChange={(e) => { let v = Math.floor(Number(e.target.value) || 0); v = Math.max(1, Math.min(9999, v)); patchItem(i, { quantity: v }); }} onBlur={(e)=>{ let v=Math.floor(Number((e.target as HTMLInputElement).value)||1); if(v<1) patchItem(i,{quantity:1}); }} title={t("qtyTitle")} aria-invalid={Number(it.quantity) < 1} />}
                       </label>
                     </div>
                     <div className="col-span-8 sm:col-span-3 md:col-span-2">
@@ -705,7 +705,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                         <span className="field-label">{t("discount")}</span>
                         {consult ? <div className="pt-1.5 font-mono">-{Number(it.discountValue ?? it.discount ?? 0).toLocaleString('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2})}{it.discountType==='fixed'?' DA':'%'}</div> : (
                           <div className="flex gap-1.5 items-stretch">
-                            <input className="ad-input flex-1 min-w-[84px] max-w-[140px] text-right tabular-nums font-mono" type="number" inputMode="decimal" step="0.01" min={0} max={it.discountType==='percent'?100: Number(it.price)*Number(it.quantity)} placeholder="0.00" value={it.discountValue ?? it.discount ?? 0} onChange={(e) => { let v = Number(e.target.value); if (isNaN(v)) v = 0; const cap = it.discountType==='percent'?100: Math.max(0, Number(it.price)*Number(it.quantity)); v = Math.max(0, Math.min(cap, Math.round(v*100)/100)); patchItem(i, { discountValue: v, discount: v }); }} title={it.discountType==='percent' ? 'Remise 0–100% (2 décimales)' : 'Remise fixe ≤ total ligne, 2 décimales'} />
+                            <input className="ad-input flex-1 min-w-[84px] max-w-[140px] text-right tabular-nums font-mono" type="number" inputMode="decimal" step="0.01" min={0} max={it.discountType==='percent'?100: Number(it.price)*Number(it.quantity)} placeholder="0.00" value={it.discountValue ?? it.discount ?? 0} onChange={(e) => { let v = Number(e.target.value); if (isNaN(v)) v = 0; const cap = it.discountType==='percent'?100: Math.max(0, Number(it.price)*Number(it.quantity)); v = Math.max(0, Math.min(cap, Math.round(v*100)/100)); patchItem(i, { discountValue: v, discount: v }); }} title={it.discountType==='percent' ? t("discountPercentTitle") : t("discountFixedTitle")} />
                             <select className="ad-select w-10 flex-shrink-0 text-center !px-0 !py-0 text-xs font-bold" style={{ paddingRight: '1.1rem', minWidth: '40px' }} value={it.discountType||'percent'} onChange={e=>patchItem(i,{discountType:e.target.value as any})} title="Type remise">
                               <option value="percent">%</option>
                               <option value="fixed">DA</option>
@@ -722,7 +722,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                         <span className="field-label">{t("vatRate")}</span>
                         {consult ? <div className="pt-1 text-xs font-mono">{it.vatRate ?? it.taxRate ?? '—'}{it.vatIncluded?' (incl.)':''}</div> : (
                           <div className="flex gap-1 items-center">
-                            <input className="ad-input flex-1 min-w-0 text-right tabular-nums" type="number" inputMode="decimal" step="0.01" min={0} max={100} placeholder="19.00" value={it.vatRate ?? it.taxRate ?? ''} onChange={e=>{ const raw=e.target.value; if(raw===''){ patchItem(i,{vatRate:undefined, taxRate:undefined}); return;} let v=Number(raw); if(isNaN(v)) return; v=Math.max(0, Math.min(100, Math.round(v*100)/100)); patchItem(i,{vatRate:v, taxRate:v});}} title="TVA 0–100%, 2 décimales" aria-invalid={it.vatRate!==undefined && (Number(it.vatRate)<0 || Number(it.vatRate)>100)} />
+                            <input className="ad-input flex-1 min-w-0 text-right tabular-nums" type="number" inputMode="decimal" step="0.01" min={0} max={100} placeholder="19.00" value={it.vatRate ?? it.taxRate ?? ''} onChange={e=>{ const raw=e.target.value; if(raw===''){ patchItem(i,{vatRate:undefined, taxRate:undefined}); return;} let v=Number(raw); if(isNaN(v)) return; v=Math.max(0, Math.min(100, Math.round(v*100)/100)); patchItem(i,{vatRate:v, taxRate:v});}} title={t("vatTitle")} aria-invalid={it.vatRate!==undefined && (Number(it.vatRate)<0 || Number(it.vatRate)>100)} />
                             <label className="flex items-center gap-1 text-xs whitespace-nowrap shrink-0"><input type="checkbox" checked={!!it.vatIncluded} onChange={e=>patchItem(i,{vatIncluded:e.target.checked})}/>Incl.</label>
                           </div>
                         )}
@@ -733,7 +733,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                         <span className="field-label">{t("itemShipping")}</span>
                         {consult ? <div className="pt-1 text-xs font-mono">{it.shippingFee?`${Number(it.shippingFee).toLocaleString('fr-FR',{minimumFractionDigits:2, maximumFractionDigits:2})} DA ${it.shippingType==='per_qty'?'×Qté':it.shippingType==='free'?'offert':'fixe'}`:'—'}</div> : (
                           <div className="flex gap-1 items-stretch">
-                            <input className="ad-input flex-1 min-w-[56px] text-right tabular-nums" type="number" inputMode="decimal" step="0.01" min={0} max={100000} placeholder="0.00" value={it.shippingFee ?? 0} onChange={e=>{ let v=Number(e.target.value); if(isNaN(v)) v=0; v=Math.max(0, Math.min(100000, Math.round(v*100)/100)); patchItem(i,{shippingFee:v});}} title="Frais livraison ≥0, max 100k, 2 décimales" />
+                            <input className="ad-input flex-1 min-w-[56px] text-right tabular-nums" type="number" inputMode="decimal" step="0.01" min={0} max={100000} placeholder="0.00" value={it.shippingFee ?? 0} onChange={e=>{ let v=Number(e.target.value); if(isNaN(v)) v=0; v=Math.max(0, Math.min(100000, Math.round(v*100)/100)); patchItem(i,{shippingFee:v});}} title={t("shippingTitle")} />
                             <select className="ad-select w-20 flex-shrink-0 text-center text-xs !px-1" value={it.shippingType||'fixed'} onChange={e=>patchItem(i,{shippingType:e.target.value as any})} title="Mode livraison">
                               <option value="fixed">Fixe</option>
                               <option value="per_qty">/Qté</option>
@@ -788,17 +788,17 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                 <div className="grid md:grid-cols-2 gap-3">
                   <label className="block space-y-1.5">
                     <span className="field-label">{t("globalShippingFee")}</span>
-                    <input className="ad-input w-full min-w-0 text-right tabular-nums" type="number" inputMode="decimal" step="0.01" min={0} max={100000} value={(open as any).shippingFee ?? ''} placeholder="auto (ex: 450.50)" onChange={e=>{ const raw=e.target.value; if(raw===''){ setOpen({ ...open, shippingFee: undefined } as any); return;} let v=Number(raw); if(isNaN(v)) return; v=Math.max(0, Math.min(100000, Math.round(v*100)/100)); setOpen({ ...open, shippingFee: v } as any);}} title="Frais global ≥0, max 100k, 2 décimales, vide=auto" />
+                    <input className="ad-input w-full min-w-0 text-right tabular-nums" type="number" inputMode="decimal" step="0.01" min={0} max={100000} value={(open as any).shippingFee ?? ''} placeholder="auto (ex: 450.50)" onChange={e=>{ const raw=e.target.value; if(raw===''){ setOpen({ ...open, shippingFee: undefined } as any); return;} let v=Number(raw); if(isNaN(v)) return; v=Math.max(0, Math.min(100000, Math.round(v*100)/100)); setOpen({ ...open, shippingFee: v } as any);}} title={t("globalShippingTitle")} />
                   </label>
                   <label className="block space-y-1.5">
                     <span className="field-label">{t("globalDiscount")}</span>
-                    <input className="ad-input w-full min-w-0 text-right tabular-nums" type="number" inputMode="decimal" step="0.01" min={0} max={1000000} value={(open as any).globalDiscount ?? ''} placeholder="0.00" onChange={e=>{ const raw=e.target.value; if(raw===''){ setOpen({ ...open, globalDiscount: undefined } as any); return;} let v=Number(raw); if(isNaN(v)) return; v=Math.max(0, Math.min(1000000, Math.round(v*100)/100)); setOpen({ ...open, globalDiscount: v } as any);}} title="Remise globale ≥0, max 1M, 2 décimales" />
+                    <input className="ad-input w-full min-w-0 text-right tabular-nums" type="number" inputMode="decimal" step="0.01" min={0} max={1000000} value={(open as any).globalDiscount ?? ''} placeholder="0.00" onChange={e=>{ const raw=e.target.value; if(raw===''){ setOpen({ ...open, globalDiscount: undefined } as any); return;} let v=Number(raw); if(isNaN(v)) return; v=Math.max(0, Math.min(1000000, Math.round(v*100)/100)); setOpen({ ...open, globalDiscount: v } as any);}} title={t("globalDiscountTitle")} />
                   </label>
                 </div>
                 <p className="text-xs" style={{color:'var(--ad-muted)'}}>{t("feesHint")}</p>
                 <label className="block space-y-1.5">
                   <span className="field-label">{t("deliveryAddress")}</span>
-                  <input className="ad-input w-full min-w-0" placeholder={t("deliveryAddressPlaceholder")} value={(open as any).deliveryAddress || (open as any).address || ''} onChange={e=>setOpen({...open, deliveryAddress:e.target.value.slice(0,120), address:e.target.value.slice(0,120)} as any)} maxLength={120} title="Adresse 5–120 caractères" />
+                  <input className="ad-input w-full min-w-0" placeholder={t("deliveryAddressPlaceholder")} value={(open as any).deliveryAddress || (open as any).address || ''} onChange={e=>setOpen({...open, deliveryAddress:e.target.value.slice(0,120), address:e.target.value.slice(0,120)} as any)} maxLength={120} title={t("addressTitle")} />
                 </label>
                 <div className="grid md:grid-cols-2 gap-3">
                   <label className="block space-y-1.5">
