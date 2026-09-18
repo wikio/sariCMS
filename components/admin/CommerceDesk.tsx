@@ -502,20 +502,20 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
         width={860}
         footer={consult ? (
           <>
-            <button className="ad-btn ad-btn-ghost" onClick={() => open && setMessageTo(open)}><MessageSquareText className="w-4 h-4" /> Message</button>
-            <button className="ad-btn ad-btn-ghost" onClick={() => open && printRow(open)}><Printer className="w-4 h-4" /> PDF</button>
-            <button className="ad-btn ad-btn-ghost" onClick={() => setOpen(null)}>Fermer</button>
+            <button className="ad-btn ad-btn-ghost" onClick={() => open && setMessageTo(open)}><MessageSquareText className="w-4 h-4" /> {t("message")}</button>
+            <button className="ad-btn ad-btn-ghost" onClick={() => open && printRow(open)}><Printer className="w-4 h-4" /> {t("pdf")}</button>
+            <button className="ad-btn ad-btn-ghost" onClick={() => setOpen(null)}>{t("close")}</button>
             <button className="ad-btn ad-btn-primary" onClick={() => setConsult(false)}>{t("edit")}</button>
           </>
         ) : (
           <>
-            <button className="ad-btn ad-btn-ghost" onClick={() => open && setMessageTo(open)}><MessageSquareText className="w-4 h-4" /> Message</button>
-            <button className="ad-btn ad-btn-ghost" onClick={() => open && printRow(open)}><Printer className="w-4 h-4" /> PDF</button>
+            <button className="ad-btn ad-btn-ghost" onClick={() => open && setMessageTo(open)}><MessageSquareText className="w-4 h-4" /> {t("message")}</button>
+            <button className="ad-btn ad-btn-ghost" onClick={() => open && printRow(open)}><Printer className="w-4 h-4" /> {t("pdf")}</button>
             {kind === 'quotes' && (
-              <button className="ad-btn ad-btn-ghost" onClick={() => open && setRespondTo(open)}><Reply className="w-4 h-4" /> Répondre au devis</button>
+              <button className="ad-btn ad-btn-ghost" onClick={() => open && setRespondTo(open)}><Reply className="w-4 h-4" /> {t("replyToQuote")}</button>
             )}
-            <button className="ad-btn ad-btn-ghost" onClick={() => setOpen(null)}>Annuler</button>
-            <button className="ad-btn ad-btn-primary" onClick={() => open && saveOpen(open)}>Enregistrer</button>
+            <button className="ad-btn ad-btn-ghost" onClick={() => setOpen(null)}>{t("cancel")}</button>
+            <button className="ad-btn ad-btn-primary" onClick={() => open && saveOpen(open)}>{t("save")}</button>
           </>
         )}
       >
@@ -530,7 +530,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
             </div>
             {!consult && (
               <label className="block space-y-1.5">
-                <span className="field-label">Commentaire d'étape</span>
+                <span className="field-label">{t("stepComment")}</span>
                 <input className="ad-input" placeholder={t('notePlaceholder')} value={note} onChange={(e) => setNote(e.target.value)} />
               </label>
             )}
@@ -538,45 +538,45 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div><span style={{ color: 'var(--ad-muted)' }}>{t('columnClient')}</span><div className="font-bold">{open.client}</div></div>
               <div>
-                <span style={{ color: 'var(--ad-muted)' }}>Fiche client</span>
+                <span style={{ color: 'var(--ad-muted)' }}>{t("clientSheet")}</span>
                 <div><Link className="underline" href={`/${locale}/admin/clients`}>{open.email}</Link></div>
               </div>
-              <div><span style={{ color: 'var(--ad-muted)' }}>Téléphone</span><div>{open.phone || '—'}</div></div>
-              <div><span style={{ color: 'var(--ad-muted)' }}>Société</span><div>{open.company || '—'}</div></div>
-              <div><span style={{ color: 'var(--ad-muted)' }}>Date</span><div className="font-bold"><DateText value={open.date} dateOnly /></div></div>
-              <div><span style={{ color: 'var(--ad-muted)' }}>Paiement</span>
+              <div><span style={{ color: 'var(--ad-muted)' }}>{t("phone")}</span><div>{open.phone || '—'}</div></div>
+              <div><span style={{ color: 'var(--ad-muted)' }}>{t("company")}</span><div>{open.company || '—'}</div></div>
+              <div><span style={{ color: 'var(--ad-muted)' }}>{t("date")}</span><div className="font-bold"><DateText value={open.date} dateOnly /></div></div>
+              <div><span style={{ color: 'var(--ad-muted)' }}>{t("payment")}</span>
                 {consult ? <div className="font-bold">{paymentTypeLabel(normalizeOrderPaymentType((open as any).payment || 'pending'))}</div> : (
-                  <select className="ad-select mt-1 w-full" value={(open as any).payment || 'pending'} onChange={(e)=>{ const v=e.target.value; const next={...open, payment:v} as any; setOpen(next); try{ const all=loadOrders(); const upd=all.map((o:any)=> String(o.id)===String(open.id) ? {...o, payment:v} : o); saveOrders(upd); }catch{} try{ const ctxRaw=localStorage.getItem('sari_orders_ctx'); if(ctxRaw){ const ctx=JSON.parse(ctxRaw); const updCtx=ctx.map((o:any)=> String(o.id)===String(open.id) ? {...o, payment:v} : o); localStorage.setItem('sari_orders_ctx', JSON.stringify(updCtx)); window.dispatchEvent(new Event('sari_orders_ctx_changed')); } }catch{} persist(rows.map(r=> String(r.id)===String(open.id) ? {...r, payment:v} as any : r)); showToast('Mode paiement mis à jour','success'); }}>
-                    <option value="pending">En attente</option>
-                    <option value="cib">Carte CIB</option>
-                    <option value="card-intl">Carte internationale</option>
-                    <option value="transfer">Virement</option>
-                    <option value="paypal">PayPal</option>
-                    <option value="check">Chèque</option>
-                    <option value="cod">Paiement à la livraison</option>
-                    <option value="other">Autre</option>
+                  <select className="ad-select mt-1 w-full" value={(open as any).payment || 'pending'} onChange={(e)=>{ const v=e.target.value; const next={...open, payment:v} as any; setOpen(next); try{ const all=loadOrders(); const upd=all.map((o:any)=> String(o.id)===String(open.id) ? {...o, payment:v} : o); saveOrders(upd); }catch{} try{ const ctxRaw=localStorage.getItem('sari_orders_ctx'); if(ctxRaw){ const ctx=JSON.parse(ctxRaw); const updCtx=ctx.map((o:any)=> String(o.id)===String(open.id) ? {...o, payment:v} : o); localStorage.setItem('sari_orders_ctx', JSON.stringify(updCtx)); window.dispatchEvent(new Event('sari_orders_ctx_changed')); } }catch{} persist(rows.map(r=> String(r.id)===String(open.id) ? {...r, payment:v} as any : r)); showToast(t("paymentUpdated"),'success'); }}>
+                    <option value="pending">{t("paymentPending")}</option>
+                    <option value="cib">{t("paymentCib")}</option>
+                    <option value="card-intl">{t("paymentIntl")}</option>
+                    <option value="transfer">{t("paymentTransfer")}</option>
+                    <option value="paypal">{t("paymentPaypal")}</option>
+                    <option value="check">{t("paymentCheck")}</option>
+                    <option value="cod">{t("paymentCod")}</option>
+                    <option value="other">{t("paymentOther")}</option>
                   </select>
                 )}</div>
-              <div className="col-span-2"><span style={{ color: 'var(--ad-muted)' }}>Adresse</span><div>{open.address || '—'}</div></div>
+              <div className="col-span-2"><span style={{ color: 'var(--ad-muted)' }}>{t("address")}</span><div>{open.address || '—'}</div></div>
               <div className="col-span-2">
-                <span style={{ color: 'var(--ad-muted)' }}>Pays / IP</span>
+                <span style={{ color: 'var(--ad-muted)' }}>{t("countryIp")}</span>
                 <div><GeoBadge ip={open.ip} /></div>
               </div>
             </div>
 
             {kind === 'quotes' && (
               <div className="ad-card p-3 space-y-1 text-sm" style={{ borderColor: 'color-mix(in srgb, var(--ad-accent) 35%, var(--ad-line))' }}>
-                <div className="font-black flex items-center gap-2" style={{ color: 'var(--ad-accent)' }}>Conversion du devis</div>
+                <div className="font-black flex items-center gap-2" style={{ color: 'var(--ad-accent)' }}>{t("quoteConversion")}</div>
                 {linkedOrder ? (
                   <div>
-                    Abouti à la commande{' '}
+                    {t("linkedOrder")}{' '}
                     <button className="underline font-bold" onClick={() => { setOpen(null); window.location.href = `/${locale}/admin/orders`; }}>
                       #{linkedOrder.id} · {linkedOrder.status} · {money(Number(linkedOrder.total))}
                     </button>
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    <div style={{ color: 'var(--ad-muted)' }}>Aucune commande liée à ce devis.</div>
+                    <div style={{ color: 'var(--ad-muted)' }}>{t("noLinkedOrder")}</div>
                     {!consult && open.status === 'accepted' && (
                       <button className="ad-btn ad-btn-ghost" onClick={() => {
                         const created = convertToOrder(open);
@@ -590,7 +590,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                         const updated = next.find((r) => r.id === open.id);
                         if (updated) setOpen(updated);
                         showToast(t('orderCreated', { id: created.id }), 'success');
-                      }}>Convertir en commande</button>
+                      }}>{t("convertToOrder")}</button>
                     )}
                   </div>
                 )}
@@ -647,7 +647,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                         {!consult && (
                           <label className="ml-2 inline-flex items-center gap-1 cursor-pointer">
                             <input type="checkbox" checked={Boolean((open as Order).paid)} onChange={(e) => { const v = e.target.checked; persist(rows.map((r) => r.id === open.id ? ({ ...r, paid: v } as Row) : r)); setOpen({ ...open, paid: v } as Row); }} />
-                            Marquer comme payée
+                            {t("markAsPaid")}
                           </label>
                         )}
                       </div>
@@ -658,11 +658,11 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
             )}
 
             <button type="button" className="ad-btn ad-btn-ghost" onClick={() => setHistoryOpen((v) => !v)}>
-              <History className="w-4 h-4" /> Autres {title.toLowerCase()} du client ({related.length})
+              <History className="w-4 h-4" /> {t("otherOrders", {title: title.toLowerCase(), count: String(related.length)})}
             </button>
             {historyOpen && (
               <ul className="text-sm space-y-1 ad-card p-3">
-                {related.length === 0 && <li style={{ color: 'var(--ad-muted)' }}>Aucun autre document.</li>}
+                {related.length === 0 && <li style={{ color: 'var(--ad-muted)' }}>{t("noOtherDocs")}</li>}
                 {related.map((r) => (
                   <li key={r.id} className="flex justify-between">
                     <button className="underline" onClick={() => setOpen(r)}>#{r.id} · <DateText value={r.date} dateOnly /> · {r.status}</button>
@@ -672,10 +672,10 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
               </ul>
             )}
 
-            <h3 className="ad-section-title">Lignes — frais & remises par article (avant confirmation)</h3>
+            <h3 className="ad-section-title">{t("linesTitle")}</h3>
             {!consult && (
               <p className="text-xs" style={{ color: 'var(--ad-muted)' }}>
-                Par ligne : remises (fixe ou %), TVA prédéfinie, frais de livraison (fixe/par Qté/gratuit) et zones. L'admin peut ajouter un frais par article ou global avant confirmation — le total se recalcule avec la config globale (par zone/quantité).
+                {t("linesHint")}
               </p>
             )}
             <div className="space-y-3">
@@ -684,13 +684,13 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                   <div className="grid grid-cols-12 gap-2 md:gap-3 items-end">
                     <div className="col-span-12 sm:col-span-6 md:col-span-3">
                       <label className="block">
-                        <span className="field-label">Article <span className="text-red-500">*</span></span>
+                        <span className="field-label">{t("article")} <span className="text-red-500">*</span></span>
                         {consult ? <div className="font-bold pt-1.5 truncate">{it.name || '—'}</div> : <input className="ad-input w-full min-w-0 truncate" placeholder={t('itemNamePlaceholder')} value={it.name} onChange={(e) => patchItem(i, { name: e.target.value.slice(0, 80) })} required maxLength={80} aria-invalid={!it.name || String(it.name).trim().length < 2} title={!it.name ? 'Nom article requis (2–80 caractères)' : ''} />}
                       </label>
                     </div>
                     <div className="col-span-4 sm:col-span-3 md:col-span-2">
                       <label className="block">
-                        <span className="field-label">Qté <span className="text-red-500">*</span></span>
+                        <span className="field-label">{t("qty")} <span className="text-red-500">*</span></span>
                         {consult ? <div className="pt-1.5 text-center font-bold">× {it.quantity}</div> : <input className="ad-input w-full text-center tabular-nums font-semibold" type="number" inputMode="numeric" step="1" min={1} max={9999} value={it.quantity} onChange={(e) => { let v = Math.floor(Number(e.target.value) || 0); v = Math.max(1, Math.min(9999, v)); patchItem(i, { quantity: v }); }} onBlur={(e)=>{ let v=Math.floor(Number((e.target as HTMLInputElement).value)||1); if(v<1) patchItem(i,{quantity:1}); }} title="Quantité entière 1–9999" aria-invalid={Number(it.quantity) < 1} />}
                       </label>
                     </div>
@@ -702,7 +702,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                     </div>
                     <div className="col-span-8 sm:col-span-8 md:col-span-3">
                       <label className="block">
-                        <span className="field-label">Remise</span>
+                        <span className="field-label">{t("discount")}</span>
                         {consult ? <div className="pt-1.5 font-mono">-{Number(it.discountValue ?? it.discount ?? 0).toLocaleString('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2})}{it.discountType==='fixed'?' DA':'%'}</div> : (
                           <div className="flex gap-1.5 items-stretch">
                             <input className="ad-input flex-1 min-w-[84px] max-w-[140px] text-right tabular-nums font-mono" type="number" inputMode="decimal" step="0.01" min={0} max={it.discountType==='percent'?100: Number(it.price)*Number(it.quantity)} placeholder="0.00" value={it.discountValue ?? it.discount ?? 0} onChange={(e) => { let v = Number(e.target.value); if (isNaN(v)) v = 0; const cap = it.discountType==='percent'?100: Math.max(0, Number(it.price)*Number(it.quantity)); v = Math.max(0, Math.min(cap, Math.round(v*100)/100)); patchItem(i, { discountValue: v, discount: v }); }} title={it.discountType==='percent' ? 'Remise 0–100% (2 décimales)' : 'Remise fixe ≤ total ligne, 2 décimales'} />
@@ -719,7 +719,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                   <div className="grid grid-cols-12 gap-2 md:gap-3 items-end">
                     <div className="col-span-6 sm:col-span-3 md:col-span-3">
                       <label className="block">
-                        <span className="field-label">TVA %</span>
+                        <span className="field-label">{t("vatRate")}</span>
                         {consult ? <div className="pt-1 text-xs font-mono">{it.vatRate ?? it.taxRate ?? '—'}{it.vatIncluded?' (incl.)':''}</div> : (
                           <div className="flex gap-1 items-center">
                             <input className="ad-input flex-1 min-w-0 text-right tabular-nums" type="number" inputMode="decimal" step="0.01" min={0} max={100} placeholder="19.00" value={it.vatRate ?? it.taxRate ?? ''} onChange={e=>{ const raw=e.target.value; if(raw===''){ patchItem(i,{vatRate:undefined, taxRate:undefined}); return;} let v=Number(raw); if(isNaN(v)) return; v=Math.max(0, Math.min(100, Math.round(v*100)/100)); patchItem(i,{vatRate:v, taxRate:v});}} title="TVA 0–100%, 2 décimales" aria-invalid={it.vatRate!==undefined && (Number(it.vatRate)<0 || Number(it.vatRate)>100)} />
@@ -730,7 +730,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                     </div>
                     <div className="col-span-6 sm:col-span-5 md:col-span-4">
                       <label className="block">
-                        <span className="field-label">Livraison article</span>
+                        <span className="field-label">{t("itemShipping")}</span>
                         {consult ? <div className="pt-1 text-xs font-mono">{it.shippingFee?`${Number(it.shippingFee).toLocaleString('fr-FR',{minimumFractionDigits:2, maximumFractionDigits:2})} DA ${it.shippingType==='per_qty'?'×Qté':it.shippingType==='free'?'offert':'fixe'}`:'—'}</div> : (
                           <div className="flex gap-1 items-stretch">
                             <input className="ad-input flex-1 min-w-[56px] text-right tabular-nums" type="number" inputMode="decimal" step="0.01" min={0} max={100000} placeholder="0.00" value={it.shippingFee ?? 0} onChange={e=>{ let v=Number(e.target.value); if(isNaN(v)) v=0; v=Math.max(0, Math.min(100000, Math.round(v*100)/100)); patchItem(i,{shippingFee:v});}} title="Frais livraison ≥0, max 100k, 2 décimales" />
@@ -745,7 +745,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                     </div>
                     <div className="col-span-10 sm:col-span-3 md:col-span-4">
                       <label className="block">
-                        <span className="field-label">Zones (vide=toutes)</span>
+                        <span className="field-label">{t("zonesEmptyAll")}</span>
                         {consult ? <div className="pt-1 text-xs font-mono truncate">{(it.zones||[]).join(', ') || '—'}</div> : <input className="ad-input w-full min-w-0 font-mono text-xs truncate" placeholder="DZ-16,DZ-31" value={(it.zones||[]).join(',')} onChange={e=>patchItem(i,{zones:e.target.value.split(',').map((s:string)=>s.trim()).filter(Boolean).slice(0,10).map(s=>s.slice(0,12))})} pattern="^[A-Z0-9-, ]*$" title="Codes zones séparés par virgule, ex: DZ-16,DZ-31 (max 10)" maxLength={80} />}
                       </label>
                     </div>
@@ -767,9 +767,9 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                   <input className="ad-input w-full min-w-0 font-mono uppercase tracking-wider" placeholder="SARI10" value={(open as any).coupon || open.coupon || ''} onChange={(e) => setOpen({ ...open, coupon: e.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g,'').slice(0,20) } as any)} maxLength={20} pattern="^[A-Z0-9_-]*$" title="Coupon alphanumérique 3–20 car., majuscules" />
                 </label>
                 <label className="block space-y-1.5">
-                  <span className="field-label">Zone livraison / vente</span>
+                  <span className="field-label">{t("deliveryZone")}</span>
                   <select className="ad-select w-full min-w-0" value={(open as any).deliveryZone || (open as any).zone || ''} onChange={e=>setOpen({ ...open, deliveryZone: e.target.value, zone: e.target.value } as any)}>
-                    <option value="">— Sélection —</option>
+                    <option value="">{t("selectPlaceholder")}</option>
                     {(shopConfig?.saleZones || []).map(z=> <option key={z.code} value={z.code}>{z.label} {z.code}{!z.active?' (indisponible)':''}</option>)}
                   </select>
                 </label>
@@ -777,36 +777,36 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
             )}
             {consult && (
               <div className="grid grid-cols-2 gap-3 text-sm">
-                <div><span style={{color:'var(--ad-muted)'}}>Zone</span><div className="font-bold">{(open as any).deliveryZone || (open as any).zone || '—'} {(shopConfig && ((open as any).deliveryZone||(open as any).zone)) ? `· ${formatZoneLabel((open as any).deliveryZone||(open as any).zone)}` : ''}</div></div>
-                <div><span style={{color:'var(--ad-muted)'}}>Coupon</span><div className="font-mono">{(open as any).coupon || '—'}</div></div>
+                <div><span style={{color:'var(--ad-muted)'}}>{t("zoneLabel")}</span><div className="font-bold">{(open as any).deliveryZone || (open as any).zone || '—'} {(shopConfig && ((open as any).deliveryZone||(open as any).zone)) ? `· ${formatZoneLabel((open as any).deliveryZone||(open as any).zone)}` : ''}</div></div>
+                <div><span style={{color:'var(--ad-muted)'}}>{t("coupon")}</span><div className="font-mono">{(open as any).coupon || '—'}</div></div>
               </div>
             )}
 
             {!consult && (
               <div className="space-y-3 border p-3 rounded-lg" style={{borderColor:'var(--ad-line)'}}>
-                <div className="font-bold text-sm flex items-center gap-2">Frais & remises globaux (avant confirmation)</div>
+                <div className="font-bold text-sm flex items-center gap-2">{t("feesAndDiscountsTitle")}</div>
                 <div className="grid md:grid-cols-2 gap-3">
                   <label className="block space-y-1.5">
-                    <span className="field-label">Frais livraison global (DA) — 0 = auto par zone</span>
+                    <span className="field-label">{t("globalShippingFee")}</span>
                     <input className="ad-input w-full min-w-0 text-right tabular-nums" type="number" inputMode="decimal" step="0.01" min={0} max={100000} value={(open as any).shippingFee ?? ''} placeholder="auto (ex: 450.50)" onChange={e=>{ const raw=e.target.value; if(raw===''){ setOpen({ ...open, shippingFee: undefined } as any); return;} let v=Number(raw); if(isNaN(v)) return; v=Math.max(0, Math.min(100000, Math.round(v*100)/100)); setOpen({ ...open, shippingFee: v } as any);}} title="Frais global ≥0, max 100k, 2 décimales, vide=auto" />
                   </label>
                   <label className="block space-y-1.5">
-                    <span className="field-label">Remise globale (DA)</span>
+                    <span className="field-label">{t("globalDiscount")}</span>
                     <input className="ad-input w-full min-w-0 text-right tabular-nums" type="number" inputMode="decimal" step="0.01" min={0} max={1000000} value={(open as any).globalDiscount ?? ''} placeholder="0.00" onChange={e=>{ const raw=e.target.value; if(raw===''){ setOpen({ ...open, globalDiscount: undefined } as any); return;} let v=Number(raw); if(isNaN(v)) return; v=Math.max(0, Math.min(1000000, Math.round(v*100)/100)); setOpen({ ...open, globalDiscount: v } as any);}} title="Remise globale ≥0, max 1M, 2 décimales" />
                   </label>
                 </div>
-                <p className="text-xs" style={{color:'var(--ad-muted)'}}>Astuce : laissez vide pour calcul auto par zone (fiches Boutique → Configuration globale). Vous pouvez aussi ajouter un frais par article ci-dessus — les deux s'additionnent.</p>
+                <p className="text-xs" style={{color:'var(--ad-muted)'}}>{t("feesHint")}</p>
                 <label className="block space-y-1.5">
-                  <span className="field-label">Adresse livraison</span>
-                  <input className="ad-input w-full min-w-0" placeholder="Adresse complète (rue, ville, wilaya)" value={(open as any).deliveryAddress || (open as any).address || ''} onChange={e=>setOpen({...open, deliveryAddress:e.target.value.slice(0,120), address:e.target.value.slice(0,120)} as any)} maxLength={120} title="Adresse 5–120 caractères" />
+                  <span className="field-label">{t("deliveryAddress")}</span>
+                  <input className="ad-input w-full min-w-0" placeholder={t("deliveryAddressPlaceholder")} value={(open as any).deliveryAddress || (open as any).address || ''} onChange={e=>setOpen({...open, deliveryAddress:e.target.value.slice(0,120), address:e.target.value.slice(0,120)} as any)} maxLength={120} title="Adresse 5–120 caractères" />
                 </label>
                 <div className="grid md:grid-cols-2 gap-3">
                   <label className="block space-y-1.5">
-                    <span className="field-label">Notes client / CGV</span>
+                    <span className="field-label">{t("clientNotes")}</span>
                     <textarea className="ad-textarea" rows={2} placeholder="Rappel CGV, instructions..." value={(open as any).notes || ''} onChange={e=>setOpen({...open, notes:e.target.value} as any)} />
                   </label>
                   <label className="block space-y-1.5">
-                    <span className="field-label">Notes internes admin</span>
+                    <span className="field-label">{t("adminNotes")}</span>
                     <textarea className="ad-textarea" rows={2} placeholder="Visible admin uniquement" value={(open as any).adminNotes || ''} onChange={e=>setOpen({...open, adminNotes:e.target.value} as any)} />
                   </label>
                 </div>
@@ -815,28 +815,28 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
             )}
 
             <div className="ad-card p-4 space-y-1 text-sm">
-              {((open as any).globalDiscount !== undefined && (open as any).globalDiscount !== '' && (open as any).globalDiscount !== null) || ((open as any).shippingFee !== undefined && (open as any).shippingFee !== '' && (open as any).shippingFee !== null) ? <div className="text-xs px-2 py-1 rounded bg-amber-50 dark:bg-amber-900/20 border border-amber-200 text-amber-700">Valeur manuelle appliquée — enregistrez pour MAJ vitrine & PDF instantanée.</div> : null}
-              <div className="flex justify-between"><span>Sous-total HT</span><strong>{money(totals.subtotal)}</strong></div>
-              {totals.productDiscount>0 && <div className="flex justify-between" style={{color:'var(--ad-muted)'}}><span>Remises produits</span><strong>- {money(totals.productDiscount)}</strong></div>}
-              {totals.globalDiscount>0 && <div className="flex justify-between" style={{color:'var(--ad-muted)'}}><span>Remise globale{(open as any).globalDiscount!==undefined && (open as any).globalDiscount!=='' ? ' (manuelle)' : ''}</span><strong>- {money(totals.globalDiscount)}</strong></div>}
-              {totals.couponDiscount>0 && <div className="flex justify-between" style={{color:'var(--ad-muted)'}}><span>Coupon {(open as any).coupon}</span><strong>- {money(totals.couponDiscount)}</strong></div>}
-              {totals.discount>0 && totals.productDiscount===0 && totals.globalDiscount===0 && totals.couponDiscount===0 && <div className="flex justify-between"><span>Remise</span><strong>- {money(totals.discount)}</strong></div>}
-              {totals.productShipping>0 && <div className="flex justify-between"><span>Livraison articles</span><strong>{money(totals.productShipping)}</strong></div>}
-              {totals.globalShipping>0 && <div className="flex justify-between"><span>Livraison zone {formatZoneLabel((open as any).deliveryZone || (open as any).zone || '')}</span><strong>{money(totals.globalShipping)}</strong></div>}
-              {totals.shipping>0 && <div className="flex justify-between"><span>Total livraison</span><strong>{money(totals.shipping)}</strong></div>}
-              {totals.shipping===0 && <div className="flex justify-between text-green-600"><span>Livraison</span><strong>Offerte</strong></div>}
+              {((open as any).globalDiscount !== undefined && (open as any).globalDiscount !== '' && (open as any).globalDiscount !== null) || ((open as any).shippingFee !== undefined && (open as any).shippingFee !== '' && (open as any).shippingFee !== null) ? <div className="text-xs px-2 py-1 rounded bg-amber-50 dark:bg-amber-900/20 border border-amber-200 text-amber-700">{t("manualValue")}</div> : null}
+              <div className="flex justify-between"><span>{t("subtotalHT")}</span><strong>{money(totals.subtotal)}</strong></div>
+              {totals.productDiscount>0 && <div className="flex justify-between" style={{color:'var(--ad-muted)'}}><span>{t("productDiscounts")}</span><strong>- {money(totals.productDiscount)}</strong></div>}
+              {totals.globalDiscount>0 && <div className="flex justify-between" style={{color:'var(--ad-muted)'}}><span>{t("globalDiscountLabel")}{(open as any).globalDiscount!==undefined && (open as any).globalDiscount!=='' ? ` {t("manual")}` : ''}</span><strong>- {money(totals.globalDiscount)}</strong></div>}
+              {totals.couponDiscount>0 && <div className="flex justify-between" style={{color:'var(--ad-muted)'}}><span>{t("couponLabel")} {(open as any).coupon}</span><strong>- {money(totals.couponDiscount)}</strong></div>}
+              {totals.discount>0 && totals.productDiscount===0 && totals.globalDiscount===0 && totals.couponDiscount===0 && <div className="flex justify-between"><span>{t("discountLabel")}</span><strong>- {money(totals.discount)}</strong></div>}
+              {totals.productShipping>0 && <div className="flex justify-between"><span>{t("productShipping")}</span><strong>{money(totals.productShipping)}</strong></div>}
+              {totals.globalShipping>0 && <div className="flex justify-between"><span>{t("zoneShipping", {zone: formatZoneLabel((open as any).deliveryZone || (open as any).zone || '')})}</span><strong>{money(totals.globalShipping)}</strong></div>}
+              {totals.shipping>0 && <div className="flex justify-between"><span>{t("totalShipping")}</span><strong>{money(totals.shipping)}</strong></div>}
+              {totals.shipping===0 && <div className="flex justify-between text-green-600"><span>{t("shipping")}</span><strong>{t("freeShipping")}</strong></div>}
               {totals.taxLines.map((t:any) => (
                 <div key={t.id} className="flex justify-between" style={{ color: 'var(--ad-muted)' }}>
-                  <span>{t.name} {t.included ? '(incluse)' : ''} {t.mode === 'percent' ? `${t.rate}%` : ''}</span>
+                  <span>{t.name} {t.included ? t("included") : ''} {t.mode === 'percent' ? `${t.rate}%` : ''}</span>
                   <span>{money(t.amount)}</span>
                 </div>
               ))}
-              <div className="flex justify-between"><span>Total taxes</span><strong>{money(totals.taxTotal)}</strong></div>
+              <div className="flex justify-between"><span>{t("totalTaxes")}</span><strong>{money(totals.taxTotal)}</strong></div>
               <div className="flex justify-between text-base pt-2" style={{ borderTop: '1px solid var(--ad-line)' }}>
                 <span className="font-black">{t('totalTTC')}</span>
                 <span className="font-black" style={{ color: 'var(--ad-accent)' }}>{money(totals.total)}</span>
               </div>
-              <p className="text-[11px]" style={{color:'var(--ad-muted)'}}>Calcul : sous-total → remises produit → globale → coupon → taxes (TVA produit prioritaire + globales) → livraison (articles + zone).</p>
+              <p className="text-[11px]" style={{color:'var(--ad-muted)'}}>{t("calculation")}</p>
             </div>
           </>
         )}

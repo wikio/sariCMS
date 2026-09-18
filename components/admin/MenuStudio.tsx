@@ -419,6 +419,7 @@ function MenuStudioInner() {
 }
 
 function SortableItem({ id, children }: { id: string; children: React.ReactNode }) {
+  const t = useTranslations('admin.menuStudio');
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id });
   return (
     <div

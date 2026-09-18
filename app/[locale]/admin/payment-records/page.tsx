@@ -13,11 +13,11 @@ import { useTranslations } from 'next-intl';
 import DateText from '@/components/shared/DateText';
 import { money } from '@/lib/commerce-math';
 
-const STATUSES: Array<{ value: '' | PaymentStatus; label: string }> = [
-  { value: '', label: t("allStatuses") },
-  { value: 'validated', label: t("validated") },
-  { value: 'pending', label: t("pending") },
-  { value: 'rejected', label: t("rejected") },
+const STATUS_KEYS: Array<{ value: '' | PaymentStatus; labelKey: string }> = [
+  { value: '', labelKey: "allStatuses" },
+  { value: 'validated', labelKey: "validated" },
+  { value: 'pending', labelKey: "pending" },
+  { value: 'rejected', labelKey: "rejected" },
 ];
 
 export default function PaymentRecordsPage() {
@@ -98,7 +98,7 @@ export default function PaymentRecordsPage() {
       <div className="ad-card p-3 flex flex-wrap gap-2">
         <div className="flex-1 min-w-[220px]"><SearchField value={q} onChange={setQ} placeholder={t("searchPlaceholder")} /></div>
         <select className="ad-select sm:w-56" value={status} onChange={(e) => setStatus(e.target.value as '' | PaymentStatus)}>
-          {STATUSES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+          {STATUS_KEYS.map((s) => <option key={s.value} value={s.value}>{t(s.labelKey)}</option>)}
         </select>
       </div>
 
