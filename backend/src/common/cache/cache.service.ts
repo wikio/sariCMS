@@ -22,6 +22,8 @@ export class AppCacheService implements OnModuleInit, OnModuleDestroy {
   private memoryIndex = new Map<string, { value: unknown; expiresAt: number | null }>();
   private filePath!: string;
   private dirty = false;
+  /** Counter for temp file names — see `flush`. */
+  private tmpSeq = 0;
 
   constructor(@Inject(CACHE_MANAGER) private readonly memory: Cache) {}
 
@@ -146,9 +148,20 @@ export class AppCacheService implements OnModuleInit, OnModuleDestroy {
       for (const [k, v] of this.memoryIndex.entries()) {
         if (!v.expiresAt || v.expiresAt > now) serializable[k] = v;
       }
-      const tmp = `${this.filePath}.tmp`;
-      fs.writeFileSync(tmp, JSON.stringify(serializable));
-      fs.renameSync(tmp, this.filePath);
+      // Unique per flush: with a fixed `.tmp` name two processes sharing the
+      // cache file could rename it out from under each other.
+      const tmp = `${this.filePath}.${process.pid}.${++this.tmpSeq}.tmp`;
+      try {
+        fs.writeFileSync(tmp, JSON.stringify(serializable));
+        fs.renameSync(tmp, this.filePath);
+      } catch (err) {
+        try {
+          fs.rmSync(tmp, { force: true });
+        } catch {
+          /* best effort */
+        }
+        throw err;
+      }
       this.dirty = false;
     } catch (err) {
       this.logger.warn(`Unable to persist L2 cache: ${(err as Error).message}`);

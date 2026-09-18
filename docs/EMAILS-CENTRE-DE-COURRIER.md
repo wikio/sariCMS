@@ -101,6 +101,15 @@ L'envoi parallèle a révélé un défaut du magasin de courrier, corrigé :
 désormais un compteur, et `appendSentLog` — un lire-modifier-écrire — met ses
 ajouts bout à bout.
 
+Le même schéma se retrouvait dans trois autres magasins, avec un nom temporaire
+entièrement fixe (`fichier.tmp`) — donc déjà en collision entre deux processus,
+pas seulement entre deux écritures. Corrigés de la même manière :
+`lib/newsletter-store.ts` (la liste d'abonnés de secours : douze inscriptions
+simultanées n'en laissaient qu'une), `lib/home/store.ts` (la page d'accueil de
+secours : le JSON en sortait illisible) et, côté API, `json-store.ts` et
+`cache.service.ts`. Un `grep process.pid` ne trouve plus que des noms de
+temporaires uniques.
+
 #### Réinitialisation de mot de passe
 
 Le flux complet : `/{locale}/mot-de-passe-oublie` → `POST /api/forgot-password`
