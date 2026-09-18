@@ -2598,7 +2598,41 @@
       "chipPending": "قيد الانتظار",
       "chipUnsubscribed": "ملغى الاشتراك",
       "chipDeleted": "في سلة المهملات",
-      "confirmDelete": "نقل هذا السجل إلى سلة المهملات؟"
+      "confirmDelete": "نقل هذا السجل إلى سلة المهملات؟",
+      "campaign": {
+        "open": "إرسال جماعي",
+        "title": "إرسال الرسالة الإخبارية",
+        "close": "إغلاق",
+        "hint": "يُعدَّل نص الرسالة في شاشة مركز البريد؛ هنا تختار المستلمين ووجهة رابط «اقرأ المزيد».",
+        "scope": "المستلمون",
+        "scopeAll": "كل المشتركين المؤهلين",
+        "scopeFilters": "حسب عوامل التصفية المعروضة",
+        "scopePicked": "التحديد ({count})",
+        "link": "رابط «اقرأ المزيد»",
+        "linkHint": "العنوان الكامل مع https://.",
+        "check": "تحقّق",
+        "send": "إرسال ({count})",
+        "previewCount": "{count} عنوان مؤهل",
+        "previewSource": "المصدر",
+        "sourceApi": "نظام الإدارة",
+        "sourceFile": "ملف محلي",
+        "previewEmpty": "لا يوجد عنوان مؤهل: لن يُرسل شيء.",
+        "resultSummary": "أُرسل {sent} من {attempted}",
+        "remaining": "بقي {count} عنوان: أعد الإرسال.",
+        "toastSent": "أُرسل {sent} رسالة من {attempted}",
+        "reason": {
+          "disabled": "الحدث معطّل",
+          "master_off": "مركز البريد متوقف",
+          "duplicate": "أُرسل مؤخرًا",
+          "daily_cap": "بلغ الحد اليومي",
+          "recipient_cap": "بلغ حدّ المستلم",
+          "quiet_hours": "ساعات الهدوء",
+          "no_recipient": "لا يوجد مستلم",
+          "unknown_event": "حدث غير معروف",
+          "transport_error": "فشل الإرسال",
+          "internal_key_missing": "المفتاح الداخلي مفقود"
+        }
+      }
     },
     "verificationCodes": {
       "title": "أكواد التحقق",

@@ -1,0 +1,12 @@
+{
+  "disabled": "event disabled",
+  "master_off": "mail center switched off",
+  "duplicate": "already sent recently",
+  "daily_cap": "daily cap reached",
+  "recipient_cap": "per-recipient cap reached",
+  "quiet_hours": "quiet hours",
+  "no_recipient": "missing recipient",
+  "unknown_event": "unknown event",
+  "transport_error": "send failure",
+  "internal_key_missing": "internal key missing"
+}

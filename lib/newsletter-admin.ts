@@ -265,3 +265,64 @@ export async function unsubscribeFromNewsletter(payload: {
   const body = (await res.json().catch(() => null)) as { ok?: boolean; status?: string } | null;
   return { ok: Boolean(body?.ok), status: body?.status };
 }
+
+/* ------------------------------------------------------------------ Campagne */
+
+export interface CampaignScope {
+  filters?: SubscriberFilters;
+  /** Sélection explicite : prime sur les filtres. */
+  ids?: string[];
+  /** Centres d'intérêt ; suffit d'en partager un. */
+  topics?: string[];
+}
+
+export interface CampaignPreview {
+  eligible: number;
+  wouldSend: number;
+  remaining: number;
+  sample: string[];
+  stored: 'api' | 'local';
+}
+
+export interface CampaignResult {
+  campaignId: string;
+  eligible: number;
+  attempted: number;
+  sent: number;
+  remaining: number;
+  /** Motifs de non-envoi, comptés (`duplicate`, `daily_cap`…). */
+  skipped: Record<string, number>;
+  failures: Array<{ email: string; reason: string; detail?: string }>;
+  stored: 'api' | 'local';
+}
+
+const CAMPAIGN_URL = '/api/admin/newsletter/campaign';
+
+/**
+ * Compte les destinataires éligibles sans rien envoyer.
+ *
+ * Diffuser est irréversible : l'écran affiche d'abord ce nombre, et l'envoi se
+ * fait en deux temps.
+ */
+export async function previewCampaign(
+  scope: CampaignScope,
+  locale: string,
+): Promise<CampaignPreview> {
+  return send<CampaignPreview>(CAMPAIGN_URL, {
+    method: 'POST',
+    headers: headers(),
+    body: JSON.stringify({ ...scope, locale, dryRun: true }),
+  });
+}
+
+/** Envoie la campagne. `campaignId` fixe la portée de la clé d'unicité. */
+export async function sendCampaign(
+  scope: CampaignScope,
+  payload: { lien_document: string; locale: string; campaignId: string },
+): Promise<CampaignResult> {
+  return send<CampaignResult>(CAMPAIGN_URL, {
+    method: 'POST',
+    headers: headers(),
+    body: JSON.stringify({ ...scope, ...payload }),
+  });
+}

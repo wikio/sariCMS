@@ -2598,7 +2598,41 @@
       "chipPending": "En attente",
       "chipUnsubscribed": "Désinscrit",
       "chipDeleted": "À la corbeille",
-      "confirmDelete": "Placer cette fiche à la corbeille ?"
+      "confirmDelete": "Placer cette fiche à la corbeille ?",
+      "campaign": {
+        "open": "Diffuser",
+        "title": "Diffuser la lettre d’information",
+        "close": "Fermer",
+        "hint": "Le message se règle dans l’écran Centre de courrier ; ici on choisit les destinataires et la cible du « Lire la suite ».",
+        "scope": "Destinataires",
+        "scopeAll": "Tous les abonnés éligibles",
+        "scopeFilters": "Selon les filtres affichés",
+        "scopePicked": "La sélection ({count})",
+        "link": "Lien « Lire la suite »",
+        "linkHint": "Adresse complète, https:// comprise.",
+        "check": "Vérifier",
+        "send": "Envoyer ({count})",
+        "previewCount": "{count} adresse(s) éligible(s)",
+        "previewSource": "Source",
+        "sourceApi": "CMS",
+        "sourceFile": "fichier local",
+        "previewEmpty": "Aucune adresse éligible : rien ne sera envoyé.",
+        "resultSummary": "{sent} envoyé(s) sur {attempted}",
+        "remaining": "{count} adresse(s) restent à traiter : relancez la diffusion.",
+        "toastSent": "{sent} message(s) envoyé(s) sur {attempted}",
+        "reason": {
+          "disabled": "événement désactivé",
+          "master_off": "centre de courrier à l’arrêt",
+          "duplicate": "déjà envoyé récemment",
+          "daily_cap": "plafond quotidien atteint",
+          "recipient_cap": "plafond par destinataire atteint",
+          "quiet_hours": "heures calmes",
+          "no_recipient": "destinataire manquant",
+          "unknown_event": "événement inconnu",
+          "transport_error": "échec d’envoi",
+          "internal_key_missing": "clé interne absente"
+        }
+      }
     },
     "verificationCodes": {
       "title": "Codes de vérification",

@@ -65,15 +65,41 @@ n'existent pas, le module tourne sur ses valeurs par défaut — **tous les
 | `application_received`, `application_alert` | `app/api/applications/notify/route.ts` | serveur |
 | `user_welcome` | `app/api/register/route.ts` → `POST /auth/register` | serveur |
 | `user_password_reset` | `app/api/forgot-password/route.ts` → `POST /auth/forgot-password` | serveur |
+| `newsletter_campaign` | `app/api/admin/newsletter/campaign/route.ts`, appelé par le bouton « Diffuser » de `admin/newsletter` | serveur, jeton d'administration |
 
-Deux événements restent **sans déclencheur dans le produit** : ils sont
-configurables et désactivés, mais rien ne les appelle parce que la fonction
-n'existe pas encore.
+Un événement reste **sans déclencheur dans le produit** : il est configurable et
+désactivé, mais rien ne l'appelle parce que la fonction n'existe pas encore.
 
 | Événement | Ce qui manque |
 | --- | --- |
 | `stock_backorder` | `stockQty` existe dans le type produit (`types/index.ts:115`) mais aucun écran ne décrémente le stock ni ne planifie un réapprovisionnement |
-| `newsletter_campaign` | pas d'écran de diffusion dans `admin/newsletter` |
+
+#### Diffusion de la lettre d'information
+
+Le bouton « Diffuser » de `admin/newsletter` ouvre un panneau qui envoie à
+`POST /api/admin/newsletter/campaign`. Quatre points à conserver :
+
+- **Le message n'est pas composé dans ce panneau.** Il vit dans
+  `data/mail/modules.json` et se règle dans l'écran Centre de courrier. Le
+  panneau choisit les destinataires et la cible du « Lire la suite »
+  (`lien_document`), rien d'autre.
+- **L'éligibilité est tranchée côté serveur** : statut `subscribed` **et**
+  `consent === true`. Un écran qui cocherait toutes les lignes ne contourne
+  rien. Les abonnés ajoutés à la main n'ont pas de jeton (`token` n'est généré
+  que par l'inscription publique) : leur `lien_desinscription` part vide plutôt
+  que de pointer vers une page qui rejetterait la demande.
+- **Deux temps.** `dryRun` compte sans envoyer, puis l'envoi devient possible.
+  Un envoi de masse ne se rattrape pas.
+- **Par lots de 250**, quatre envois simultanés, et `campaignId` fixe la portée
+  de la clé d'unicité : un double clic ne renvoie pas tout. `remaining` indique
+  ce qui reste à traiter.
+
+L'envoi parallèle a révélé un défaut du magasin de courrier, corrigé :
+`writeJson` nommait son fichier temporaire d'après le PID seul, donc deux
+écritures simultanées du même processus se marchaient dessus (`ENOENT` au
+`rename`) et `data/mail/sent-log.json` en sortait tronqué. Le nom porte
+désormais un compteur, et `appendSentLog` — un lire-modifier-écrire — met ses
+ajouts bout à bout.
 
 #### Réinitialisation de mot de passe
 

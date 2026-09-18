@@ -63,13 +63,35 @@ async function readJson<T>(file: string): Promise<T | null> {
   }
 }
 
-/** Écriture atomique : fichier temporaire dans le même dossier, puis rename. */
+/** Compteur de fichier temporaire — voir `writeJson`. */
+let tmpSeq = 0;
+
+/**
+ * Écriture atomique : fichier temporaire dans le même dossier, puis rename.
+ *
+ * Le nom temporaire porte un compteur, pas seulement le PID : une diffusion
+ * envoie plusieurs messages en parallèle depuis le même processus, et deux
+ * écritures visant `sent-log.json.<pid>.tmp` se marchaient dessus — la première
+ * renommait le fichier, la seconde échouait en `ENOENT` et laissait le journal
+ * tronqué.
+ */
 async function writeJson(file: string, value: unknown): Promise<void> {
   await fs.mkdir(path.dirname(file), { recursive: true });
-  const tmp = `${file}.${process.pid}.tmp`;
+  tmpSeq += 1;
+  const tmp = `${file}.${process.pid}.${tmpSeq}.tmp`;
   await fs.writeFile(tmp, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
   await fs.rename(tmp, file);
 }
+
+/**
+ * File d'écriture du journal.
+ *
+ * `appendSentLog` est un lire-modifier-écrire : deux envois simultanés lisaient
+ * le même contenu et le dernier écrasait l'entrée de l'autre. Les ajouts sont
+ * donc mis bout à bout. Chaîne de promesses et non verrou : rien à libérer, et
+ * un rejet n'empêche pas l'écriture suivante.
+ */
+let logQueue: Promise<void> = Promise.resolve();
 
 const str = (value: unknown, max: number, fallback = ''): string => {
   if (typeof value !== 'string') return fallback;
@@ -223,12 +245,18 @@ export async function readSentLog(): Promise<MailSentEntry[]> {
   return Array.isArray(rows) ? rows : [];
 }
 
-export async function appendSentLog(entry: MailSentEntry, retentionDays: number): Promise<void> {
-  const rows = await readSentLog();
-  const cutoff = Date.now() - retentionDays * 86_400_000;
-  const kept = rows.filter((row) => Date.parse(row.at || '') >= cutoff);
-  kept.unshift(entry);
-  await writeJson(FILE_LOG, kept.slice(0, MAX_LOG_ROWS));
+export function appendSentLog(entry: MailSentEntry, retentionDays: number): Promise<void> {
+  const run = logQueue.then(async () => {
+    const rows = await readSentLog();
+    const cutoff = Date.now() - retentionDays * 86_400_000;
+    const kept = rows.filter((row) => Date.parse(row.at || '') >= cutoff);
+    kept.unshift(entry);
+    await writeJson(FILE_LOG, kept.slice(0, MAX_LOG_ROWS));
+  });
+  // On enchaîne sur une version qui ne rejette pas : sinon un échec d'écriture
+  // empoisonnerait la file et plus aucune entrée ne serait journalisée.
+  logQueue = run.catch(() => undefined);
+  return run;
 }
 
 /* ----------------------------------------------------------------- Lecture */
