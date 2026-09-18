@@ -95,5 +95,8 @@
   "seededChip": "repris du site",
   "importBanner": "Ce bloc affiche pour l’instant le contenu des fichiers du site : rien n’a encore été enregistré ici. Enregistrer le bloc fige ce contenu ; « Reprendre » l’écrit tel quel dans la configuration, où vous pouvez le modifier puis le supprimer.",
   "browseSource": "Module parcouru",
-  "freeOnlySource": "Le bandeau est réglé sur « Seulement les blocs du studio » : il n'utilise aucune fiche de module, uniquement les blocs saisis ci-dessous."
+  "freeOnlySource": "Le bandeau est réglé sur « Seulement les blocs du studio » : il n'utilise aucune fiche de module, uniquement les blocs saisis ci-dessous.",
+  "visitPage": "Visiter la page",
+  "chooseSection": "Choisissez un bloc à gauche",
+  "blockSettings": "Réglages du bloc"
 }
