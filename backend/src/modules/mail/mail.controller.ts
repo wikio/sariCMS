@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Headers, HttpCode, Post, UnauthorizedException } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Headers, HttpCode, Post, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { perm } from '../../common/constants/permissions';
@@ -7,6 +7,7 @@ import { RequirePermissions } from '../../common/decorators/permissions.decorato
 import { Public } from '../../common/decorators/public.decorator';
 import { MailService } from './mail.service';
 import { SendMailDto } from './dto/send-mail.dto';
+import { SaveSmtpDto, TestSmtpDto } from './dto/smtp.dto';
 
 @ApiTags('mail')
 @ApiBearerAuth()
@@ -55,5 +56,49 @@ export class MailController {
       smtpConfigured: this.mail.isSmtpConfigured(),
       items: this.mail.outbox(),
     };
+  }
+
+  /* -------------------------------------------------------------------------
+   * Réglages SMTP
+   *
+   * L'écran Paramètres → SMTP écrivait dans le `localStorage` du navigateur :
+   * les réglages n'arrivaient jamais au serveur, qui ne lisait que ses variables
+   * d'environnement. D'où un « SMTP non configuré » persistant alors que le
+   * formulaire était rempli. Ces trois routes ferment la boucle : l'écran
+   * enregistre sur le serveur, le transport est reconstruit aussitôt, et le test
+   * dit ce qui se passe vraiment.
+   *
+   * Le mot de passe ne sort jamais du serveur : l'état renvoie `hasPassword`,
+   * jamais la valeur.
+   * ---------------------------------------------------------------------- */
+
+  @Get('smtp')
+  @RequirePermissions(perm('settings', 'read'))
+  @ApiOperation({ summary: 'État des réglages SMTP (sans le mot de passe)' })
+  smtp() {
+    return this.mail.smtpStatus();
+  }
+
+  @Post('smtp')
+  @RequirePermissions(perm('settings', 'admin'))
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Enregistrer les réglages SMTP et les appliquer' })
+  saveSmtp(@Body() dto: SaveSmtpDto) {
+    return this.mail.saveSmtp(dto);
+  }
+
+  @Delete('smtp')
+  @RequirePermissions(perm('settings', 'admin'))
+  @ApiOperation({ summary: 'Oublier les réglages enregistrés (retour aux variables d’environnement)' })
+  clearSmtp() {
+    return this.mail.clearSmtp();
+  }
+
+  @Post('smtp/test')
+  @RequirePermissions(perm('settings', 'admin'))
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Tester le SMTP : connexion, puis envoi réel si `to` est fourni' })
+  testSmtp(@Body() dto: TestSmtpDto) {
+    return dto.to ? this.mail.testSend(dto.to) : this.mail.verifySmtp();
   }
 }

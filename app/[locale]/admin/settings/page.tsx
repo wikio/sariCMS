@@ -5,6 +5,7 @@ import { FolderOpen, Image as ImageIcon, Save, Search, Upload } from 'lucide-rea
 import { DEFAULT_SETTINGS, loadAdminSettings, saveAdminSettings, type AdminSettings } from '@/lib/admin-settings';
 import { previewCode, DEFAULT_TEMPLATES, type CodeKind } from '@/lib/codes';
 import VerificationSettingsSection from '@/components/admin/VerificationSettingsSection';
+import SmtpSection from '@/components/admin/SmtpSection';
 import MailCenterSection from '@/components/admin/MailCenterSection';
 import { testErpConnection } from '@/lib/erp';
 import { useToast } from '@/components/admin/Toast';
@@ -70,7 +71,6 @@ export default function AdminSettingsPage() {
 
   useEffect(() => { setSettings(loadAdminSettings()); }, []);
 
-  const setSmtp = (patch: Partial<AdminSettings['smtp']>) => setSettings({ ...settings, smtp: { ...settings.smtp, ...patch } });
   const setDb = (patch: Partial<AdminSettings['db']>) => setSettings({ ...settings, db: { ...settings.db, ...patch } });
   const setQuote = (patch: Partial<AdminSettings['quote']>) => setSettings({ ...settings, quote: { ...settings.quote, ...patch } });
   const setCodes = (patch: Partial<AdminSettings['codes']>) => setSettings({ ...settings, codes: { ...settings.codes, ...patch } });
@@ -318,26 +318,13 @@ export default function AdminSettingsPage() {
             </section>
           )}
 
-          {tab === 'smtp' && (
-            <section className="ad-card p-5 space-y-4">
-              <h2 className="ad-section-title">SMTP avancé</h2>
-              <p className="text-xs" style={{ color: 'var(--ad-muted)' }}>Ces valeurs alimentent le connecteur mail du backend. Laissez « Hôte » vide pour le mode fichier (outbox).</p>
-              <div className="grid md:grid-cols-2 gap-3">
-                <Field label="Hôte" value={settings.smtp.host} onChange={(v) => setSmtp({ host: v })} />
-                <Field label="Port" value={String(settings.smtp.port)} onChange={(v) => setSmtp({ port: Number(v) || 587 })} />
-                <Field label="Utilisateur" value={settings.smtp.user} onChange={(v) => setSmtp({ user: v })} />
-                <label className="space-y-1.5">
-                  <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Mot de passe</span>
-                  <input className="ad-input" type="password" value={settings.smtp.pass} onChange={(e) => setSmtp({ pass: e.target.value })} />
-                </label>
-                <Field label="Expéditeur" value={settings.smtp.from} onChange={(v) => setSmtp({ from: v })} />
-                <Field label="Reply-To" value={settings.smtp.replyTo} onChange={(v) => setSmtp({ replyTo: v })} />
-              </div>
-              <button type="button" className={`ad-btn ${settings.smtp.secure ? 'ad-btn-lime' : 'ad-btn-ghost'}`} onClick={() => setSmtp({ secure: !settings.smtp.secure })}>
-                TLS/SSL : {settings.smtp.secure ? 'activé' : 'désactivé'}
-              </button>
-            </section>
-          )}
+          {/*
+            SMTP a sa propre section : c'est le seul onglet dont les réglages
+            doivent atteindre le serveur d'API. L'ancien formulaire écrivait dans
+            le `localStorage`, donc jamais jusqu'au transport — voir
+            `components/admin/SmtpSection.tsx`.
+          */}
+          {tab === 'smtp' && <SmtpSection />}
 
           {tab === 'verification' && <VerificationSettingsSection />}
 

@@ -120,3 +120,87 @@ export async function loadOutbox(): Promise<{ smtpConfigured: boolean; items: Ou
     return { smtpConfigured: false, items: [] };
   }
 }
+
+/* ---------------------------------------------------------------------------
+ * Réglages SMTP — écran Paramètres → SMTP.
+ *
+ * Ces fonctions parlent au serveur d'API, qui range les réglages dans
+ * `storage/mail/smtp.json` et reconstruit son transport aussitôt. C'est ce qui
+ * manquait : l'écran écrivait dans le `localStorage` du navigateur, les réglages
+ * n'arrivaient jamais au serveur, et « SMTP non configuré » restait affiché même
+ * formulaire rempli.
+ *
+ * Contrairement à `loadOutbox`, aucune de ces fonctions n'avale les erreurs :
+ * un administrateur qui enregistre ses identifiants a besoin de savoir que
+ * l'enregistrement n'a pas abouti, pas d'un silence poli.
+ * ------------------------------------------------------------------------- */
+
+export type SmtpSource = 'file' | 'env' | 'none';
+
+/** État renvoyé par le serveur. Le mot de passe n'en fait jamais partie. */
+export interface SmtpStatus {
+  configured: boolean;
+  source: SmtpSource;
+  host: string;
+  port: number;
+  secure: boolean;
+  user: string;
+  from: string;
+  replyTo: string;
+  hasPassword: boolean;
+  stored: boolean;
+}
+
+/** Réglages tels que l'écran les envoie. `pass` vide = on garde l'ancien. */
+export interface SmtpForm {
+  host: string;
+  port: number;
+  secure: boolean;
+  user?: string;
+  pass?: string;
+  from?: string;
+  replyTo?: string;
+}
+
+export interface SmtpTestResult {
+  ok: boolean;
+  stage: 'connect' | 'send';
+  message: string;
+  code?: string;
+  tookMs: number;
+  host: string;
+  port: number;
+  messageId?: string;
+}
+
+/** État courant des réglages SMTP côté serveur. */
+export async function loadSmtp(): Promise<SmtpStatus> {
+  return cmsAdminFetch<SmtpStatus>('/mail/smtp', { timeoutMs: 8000 });
+}
+
+/** Enregistre les réglages et applique le nouveau transport. */
+export async function saveSmtp(form: SmtpForm): Promise<SmtpStatus> {
+  return cmsAdminFetch<SmtpStatus>('/mail/smtp', { method: 'POST', json: form, timeoutMs: 15000 });
+}
+
+/** Oublie les réglages enregistrés : les variables d'environnement reprennent la main. */
+export async function clearSmtp(): Promise<SmtpStatus> {
+  return cmsAdminFetch<SmtpStatus>('/mail/smtp', { method: 'DELETE', timeoutMs: 10000 });
+}
+
+/**
+ * Teste le SMTP.
+ *
+ * Sans destinataire : connexion et authentification seulement — la vérification
+ * qui ne dérange personne. Avec un destinataire : un vrai message part, seule
+ * preuve que la boîte de réception le reçoit.
+ */
+export async function testSmtp(to?: string): Promise<SmtpTestResult> {
+  return cmsAdminFetch<SmtpTestResult>('/mail/smtp/test', {
+    method: 'POST',
+    json: to ? { to } : {},
+    // Une connexion qui traîne doit avoir le temps de répondre ou d'échouer
+    // proprement : un test coupé à 12 s ne dit rien d'utile.
+    timeoutMs: 45000,
+  });
+}
