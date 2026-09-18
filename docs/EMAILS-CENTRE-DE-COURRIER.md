@@ -71,7 +71,7 @@ n'existe pas encore.
 
 | Événement | Ce qui manque |
 | --- | --- |
-| `user_password_reset` | aucun flux de réinitialisation : ni point d'entrée backend, ni page — le lien « Mot de passe oublié ? » de la page de connexion pointe vers `/mot-de-passe-oublie`, qui n'existe pas |
+| `user_password_reset` | aucun flux de réinitialisation : ni point d'entrée backend, ni page. Le lien « Mot de passe oublié ? » menait vers `/mot-de-passe-oublie`, qui n'a jamais existé — un 404 sur la seule issue d'un visiteur bloqué hors de son compte. Il pointe désormais vers `/contact?subject=client`, le motif étant présélectionné. Le vrai flux exige une table de jetons : **réutiliser `refresh_tokens` est à proscrire**, `auth.service.ts:102` cherche par `tokenHash` seul et un jeton de réinitialisation y serait accepté comme jeton de session |
 | `stock_backorder` | `stockQty` existe dans le type produit (`types/index.ts:115`) mais aucun écran ne décrémente le stock ni ne planifie un réapprovisionnement |
 | `newsletter_campaign` | pas d'écran de diffusion dans `admin/newsletter` |
 

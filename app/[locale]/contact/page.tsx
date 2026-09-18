@@ -17,6 +17,9 @@ import { loadAdminSettings } from '@/lib/admin-settings';
 import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
 import { maskPhone } from '@/lib/masks';
 
+/** Motifs proposés par le formulaire — `?subject=` doit rester dans cette liste. */
+const SUBJECTS = ['devis', 'technique', 'commercial', 'rh', 'partenaire', 'client'] as const;
+
 export default function ContactPage() {
   const [config, setConfig] = useState<Config | null>(null);
   const [menu, setMenu] = useState<Menu | null>(null);
@@ -37,6 +40,20 @@ export default function ContactPage() {
   // est désactivé pour que le code ne soit pas consommé avant l'envoi du formulaire.
   const [captcha, setCaptcha] = useState<{ id: string; value: string }>({ id: '', value: '' });
   const [formError, setFormError] = useState('');
+
+  // Un autre écran peut amener ici avec le motif déjà choisi — la page de
+  // connexion le fait pour un problème de compte. Toute valeur hors liste est
+  // ignorée : l'URL ne doit pas pouvoir inventer un motif.
+  //
+  // Lu dans `window.location` plutôt que via `useSearchParams()` : ce dernier
+  // exige une balise Suspense au prerender, pour un simple pré-remplissage au
+  // montage qui n'a pas besoin d'être réactif.
+  useEffect(() => {
+    const wanted = new URLSearchParams(window.location.search).get('subject');
+    if (wanted && (SUBJECTS as readonly string[]).includes(wanted)) {
+      setFormData((prev) => ({ ...prev, subject: wanted }));
+    }
+  }, []);
 
   const locale = useLocale();
   const t = useTranslations('pages.contact');
