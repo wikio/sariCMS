@@ -277,7 +277,7 @@ export default function ShopConfigPage() {
                   {cfg.shipping.zoneFees.map(f=>(
                     <div key={f.zone} className="flex items-center gap-2 p-2 text-sm">
                       <span className="font-mono w-20 text-xs font-bold">{f.zone}</span>
-                      <input type="number" className="ad-input w-24 text-center" value={f.fee} onChange={e=>updateZoneFee(f.zone,'fee',Number(e.target.value))} title={`${t("fixed")} (DA)` placeholder="0"/>
+                      <input type="number" className="ad-input w-24 text-center" value={f.fee} onChange={e=>updateZoneFee(f.zone,'fee',Number(e.target.value))} title={`${t("fixed")} (DA)`} placeholder="0"/>
                       <input type="number" className="ad-input w-20 text-center" value={f.perQty||0} onChange={e=>updateZoneFee(f.zone,'perQty',Number(e.target.value))} title="Supplément par article supplémentaire (DA)" placeholder="0"/>
                       <input type="number" className="ad-input w-28 text-center" value={f.freeFrom||''} onChange={e=>updateZoneFee(f.zone,'freeFrom', Number(e.target.value)||undefined)} placeholder="—" title="Franco à partir de (DA) — vide = jamais franco"/>
                     </div>
@@ -377,8 +377,8 @@ export default function ShopConfigPage() {
                     <span className="text-xs font-black uppercase" style={{color: z.active ? 'var(--ad-accent)' : 'var(--ad-muted)'}}>{z.active ? 'Active' : 'Inactive'}</span>
                   </label>
                   <div className="flex gap-1">
-                    <button onClick={()=>duplicateZone(z.code)} className="ad-btn ad-btn-ghost p-1" title="{t("duplicate")}"><Pencil className="w-3.5 h-3.5"/></button>
-                    <button onClick={()=>removeZone(z.code)} className="ad-btn ad-btn-danger p-1" title="{t("delete", {defaultMessage: "Supprimer"})}"><Trash2 className="w-3.5 h-3.5"/></button>
+                    <button onClick={()=>duplicateZone(z.code)} className="ad-btn ad-btn-ghost p-1" title={t("duplicate")}><Pencil className="w-3.5 h-3.5"/></button>
+                    <button onClick={()=>removeZone(z.code)} className="ad-btn ad-btn-danger p-1" title={t("delete")}><Trash2 className="w-3.5 h-3.5"/></button>
                   </div>
                 </div>
                 <div className="space-y-2">

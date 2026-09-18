@@ -281,6 +281,7 @@ export function StarRating({ value, onChange }: { value: number; onChange: (v: n
 }
 
 function OfferDetails({ offer, app, onOpenDoc, onNote, onScore }: { offer?: Offer; app: Application; onOpenDoc: (kind: 'cv' | 'lm') => void; onNote: (v: string) => void; onScore: (v: number) => void }) {
+  const t = useTranslations('admin.applications');
   return (
     <div className="p-3 space-y-3">
       <div className="flex flex-wrap items-center gap-2">
@@ -323,6 +324,7 @@ function OfferDetails({ offer, app, onOpenDoc, onNote, onScore }: { offer?: Offe
 
 /** Progression du candidat dans le parcours de candidature + lien de reprise. */
 function FlowProgression({ offer, app }: { offer: Offer; app: Application }) {
+  const t = useTranslations('admin.applications');
   const { showToast } = useToast();
   const steps = loadFlow(offer.id);
   const progress = loadProgress(offer.id, app.id);

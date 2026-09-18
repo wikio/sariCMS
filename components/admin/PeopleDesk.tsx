@@ -246,6 +246,7 @@ export default function PeopleDesk({
 }
 
 function ClientStats({ email }: { email: string }) {
+  const t = useTranslations('admin.people');
   const orders = loadOrders().filter((o) => o.email === email);
   const quotes = loadQuotes().filter((q) => q.email === email);
   const delivered = orders.filter((o) => o.status === 'delivered').length;
@@ -288,6 +289,7 @@ function ClientStats({ email }: { email: string }) {
 }
 
 function Field({ label, value, onChange, required }: { label: string; value: string; onChange: (v: string) => void; required?: boolean }) {
+  const t = useTranslations('admin.people');
   return (
     <label className="space-y-1.5">
       <span className="text-[11px] font-black uppercase tracking-[0.14em] flex items-center gap-2" style={{ color: 'var(--ad-muted)' }}>
