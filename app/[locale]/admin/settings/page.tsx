@@ -5,14 +5,15 @@ import { FolderOpen, Image as ImageIcon, Save, Search, Upload } from 'lucide-rea
 import { DEFAULT_SETTINGS, loadAdminSettings, saveAdminSettings, type AdminSettings } from '@/lib/admin-settings';
 import { previewCode, DEFAULT_TEMPLATES, type CodeKind } from '@/lib/codes';
 import VerificationSettingsSection from '@/components/admin/VerificationSettingsSection';
+import MailCenterSection from '@/components/admin/MailCenterSection';
 import { testErpConnection } from '@/lib/erp';
 import { useToast } from '@/components/admin/Toast';
 import GedPicker from '@/components/admin/GedPicker';
 import DateFormatPicker from '@/components/admin/DateFormatPicker';
 import { notifyDateSettingsChanged } from '@/lib/use-date-format';
 
-type SectionId = 'general' | 'commerce' | 'security' | 'integrations' | 'seo';
-type TabId = 'general' | 'dates' | 'products' | 'codes' | 'quotes' | 'invoicing' | 'security' | 'smtp' | 'database' | 'verification' | 'seo';
+type SectionId = 'general' | 'commerce' | 'security' | 'integrations' | 'emails' | 'seo';
+type TabId = 'general' | 'dates' | 'products' | 'codes' | 'quotes' | 'invoicing' | 'security' | 'smtp' | 'database' | 'verification' | 'mail' | 'seo';
 
 interface TabDef { id: TabId; label: string }
 interface SectionDef { id: SectionId; label: string; tabs: TabDef[] }
@@ -36,6 +37,9 @@ const SECTIONS: SectionDef[] = [
     { id: 'verification', label: 'Vérification des documents' },
     { id: 'database', label: 'Base de données' },
   ] },
+  { id: 'emails', label: 'Emails', tabs: [
+    { id: 'mail', label: 'Emails & notifications' },
+  ] },
   { id: 'seo', label: 'SEO', tabs: [
     { id: 'seo', label: 'Référencement' },
   ] },
@@ -53,6 +57,7 @@ const SEARCH_INDEX: Record<TabId, string> = {
   smtp: 'smtp hôte port utilisateur mot de passe expéditeur tls ssl email',
   verification: 'vérification vérif document code clé hash api externe qr anti-robot catalogue expire révoqué falsifié captcha',
   database: 'base de données driver mysql postgresql mongodb json url schéma',
+  mail: 'email emails notification message objet modèle gabarit template constructeur variable fusion commande devis candidature newsletter politique envoi plafond désinscription journal',
   seo: 'seo titre description mots-clés open graph twitter favicon canonical robots',
 };
 
@@ -335,6 +340,8 @@ export default function AdminSettingsPage() {
           )}
 
           {tab === 'verification' && <VerificationSettingsSection />}
+
+          {tab === 'mail' && <MailCenterSection />}
 
           {tab === 'seo' && <SeoSection />}
 

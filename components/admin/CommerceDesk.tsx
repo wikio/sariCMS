@@ -16,8 +16,7 @@ import Drawer from '@/components/admin/Drawer';
 import GeoBadge from '@/components/admin/GeoBadge';
 import MessageComposer from '@/components/admin/MessageComposer';
 import QuoteResponseComposer from '@/components/admin/QuoteResponseComposer';
-import { messageByTrigger } from '@/lib/notify-store';
-import { renderTemplate, sendMail } from '@/lib/mail';
+import { sendModuleMail } from '@/lib/mail';
 import { getConfig } from '@/lib/data';
 import { orderPdfHtml, printHtml, quotePdfHtml } from '@/lib/pdf-templates';
 import { nextCodeFor } from '@/lib/codes';
@@ -248,24 +247,71 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
     if (updated) notifyByStatus(updated, effectiveStatus);
   };
 
-  /** Envoie l'email de notification correspondant au nouveau statut (si un modèle actif existe). */
-  const notifyByStatus = (row: Row, statusValue: string) => {
-    const triggerMap: Record<string, string> = kind === 'orders'
-      ? { pending: 'order_confirmed', processing: 'order_confirmed', shipped: 'order_shipped', delivered: 'order_delivered' }
-      : { replied: 'quote_sent', accepted: 'quote_accepted', transformed: 'quote_accepted' };
-    const trigger = triggerMap[statusValue];
-    if (!trigger) return;
-    const template = messageByTrigger(trigger);
-    if (!template) return;
-    const { subject, html } = renderTemplate(template, {
-      nom_societe: 'SARI Système',
-      nom_client: row.client,
-      email_client: row.email,
+  /**
+   * Envoie l'email correspondant au nouveau statut, via le centre de courrier
+   * (Paramètres → « Emails & notifications », réglages dans `data/mail/*.json`).
+   *
+   * Trois règles reprises de l'audit des envois SMTP
+   * (`docs/AUDIT-EMAILS-SMTP-2026-09-18.md` §4.1, §4.2) :
+   *
+   * 1. **`pending` ne déclenche plus rien.** « En attente » est un état interne :
+   *    la confirmation part au passage en préparation. Auparavant `pending` et
+   *    `processing` mappent tous deux sur `order_confirmed`, et le client
+   *    recevait deux fois le même message.
+   * 2. **L'envoi est idempotent.** La clé `${kind}-${id}-${événement}` est
+   *    confrontée au journal serveur : un aller-retour de statut ne renvoie rien.
+   * 3. **Un échec n'est plus avalé.** Le `.catch(() => {})` laissait croire que le
+   *    client était prévenu ; ici l'administrateur voit pourquoi le message n'est
+   *    pas parti. Un événement volontairement désactivé reste silencieux — c'est
+   *    un réglage, pas une panne.
+   */
+  const notifyByStatus = async (row: Row, statusValue: string) => {
+    const eventMap: Record<string, string> = kind === 'orders'
+      ? { processing: 'order_confirmed', paid: 'order_payment', shipped: 'order_shipped', delivered: 'order_delivered', cancelled: 'order_cancelled' }
+      : { replied: 'quote_sent', accepted: 'quote_accepted', transformed: 'quote_accepted', expired: 'quote_expired' };
+    const event = eventMap[statusValue];
+    if (!event) return;
+
+    const cfg = await getConfig(locale).catch(() => null);
+    const origin = typeof window === 'undefined' ? '' : window.location.origin;
+    const vars: Record<string, string | number> = {
+      nom_societe: cfg?.meta.companyName || 'SARI Système',
+      adresse_societe: cfg?.meta.address || '',
+      telephone_societe: cfg?.meta.phone || '',
+      email_societe: cfg?.meta.email || '',
+      site_societe: origin,
+      nom_client: row.client || '',
+      email_client: row.email || '',
+      telephone_client: row.phone || '',
+      societe_client: row.company || '',
       numero_commande: ('code' in row && row.code) || String(row.id),
       numero_devis: ('reference' in row && row.reference) || String(row.id),
+      numero_facture: ('invoice' in row && row.invoice?.number) || '',
       montant_ttc: money(Number(row.total)),
-    });
-    sendMail({ to: row.email, toName: row.client, subject, html }).catch(() => {});
+      date_document: row.date || '',
+      lien_espace_client: `${origin}/${locale}/dashboard`,
+      lien_document: `${origin}/${locale}/dashboard`,
+    };
+
+    const result = await sendModuleMail({
+      event,
+      to: String(row.email || ''),
+      toName: row.client || undefined,
+      dedupeKey: `${kind}-${row.id}-${event}`,
+      vars,
+    }).catch((err: unknown) => ({
+      sent: false,
+      reason: 'transport_error' as const,
+      detail: err instanceof Error ? err.message : String(err),
+    }));
+
+    if (result.sent) {
+      showToast(t('emailSent', { email: String(row.email || '') }), 'success');
+    } else if (result.reason === 'disabled' || result.reason === 'master_off') {
+      // Désactivé dans les paramètres : aucun toast, l'administrateur l'a voulu.
+    } else {
+      showToast(t('emailNotSent', { reason: result.detail || String(result.reason || '') }), 'error');
+    }
   };
 
   const convertToOrder = (quote: Row): Order => {

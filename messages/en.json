@@ -1400,7 +1400,9 @@
       "shippingTitle": "Shipping ≥0, max 100k, 2 decimals",
       "globalShippingTitle": "Global shipping ≥0, max 100k, 2 decimals, empty=auto",
       "globalDiscountTitle": "Global discount ≥0, max 1M, 2 decimals",
-      "addressTitle": "Address 5–120 chars"
+      "addressTitle": "Address 5–120 chars",
+      "emailSent": "Email sent to {email}",
+      "emailNotSent": "Email not sent: {reason}"
     },
     "people": {
       "crm": "CRM",

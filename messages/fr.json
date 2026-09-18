@@ -1400,7 +1400,9 @@
       "shippingTitle": "Frais livraison ≥0, max 100k, 2 décimales",
       "globalShippingTitle": "Frais global ≥0, max 100k, 2 décimales, vide=auto",
       "globalDiscountTitle": "Remise globale ≥0, max 1M, 2 décimales",
-      "addressTitle": "Adresse 5–120 caractères"
+      "addressTitle": "Adresse 5–120 caractères",
+      "emailSent": "Email envoyé à {email}",
+      "emailNotSent": "Email non envoyé : {reason}"
     },
     "people": {
       "crm": "CRM",
