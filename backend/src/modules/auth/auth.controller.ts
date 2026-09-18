@@ -5,13 +5,51 @@ import { Request } from 'express';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { AuthService } from './auth.service';
-import { EnableTotpDto, LoginDto, RefreshDto, TwoFaLoginDto, VerifyTotpDto } from './dto/auth.dto';
+import { EnableTotpDto, LoginDto, RefreshDto, RegisterDto, TwoFaLoginDto, VerifyTotpDto } from './dto/auth.dto';
 import { ChangePasswordDto } from '../users/dto/user.dto';
+import { UsersService } from '../users/users.service';
+import { UserEntity } from '../users/entities/user.entity';
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly auth: AuthService) {}
+  constructor(
+    private readonly auth: AuthService,
+    private readonly users: UsersService,
+  ) {}
+
+  /**
+   * Inscription en libre-service depuis la vitrine.
+   *
+   * La page d'inscription appelait `POST /users`, qui exige la permission
+   * `users:create` : l'appel échouait en 401 et le navigateur retombait en
+   * silence sur un registre local. Aucun compte n'était donc jamais créé —
+   * et aucun message de bienvenue ne pouvait partir.
+   *
+   * Le type est forcé à `client` : ouvrir un compte administrateur ou
+   * partenaire reste réservé à `POST /users`. Débit limité, et l'appelant
+   * (route Next `/api/register`) ajoute captcha et piège à pourriels.
+   */
+  @Public()
+  @Post('register')
+  @HttpCode(HttpStatus.CREATED)
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @ApiOperation({ summary: 'Créer un compte client depuis la vitrine' })
+  register(@Body() dto: RegisterDto, @Req() req: Request) {
+    return this.users.create(
+      {
+        email: dto.email,
+        password: dto.password,
+        firstName: dto.firstName,
+        lastName: dto.lastName || '',
+        phone: dto.phone,
+        company: dto.company,
+        locale: dto.locale || 'fr',
+        type: 'client',
+      } as unknown as Partial<UserEntity>,
+      { ip: req.ip, userAgent: req.headers['user-agent'] },
+    );
+  }
 
   @Public()
   @Post('login')

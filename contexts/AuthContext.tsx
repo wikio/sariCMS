@@ -36,7 +36,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (email: string, password: string, type?: string) => Promise<boolean>;
   logout: () => void;
-  register: (userData: Partial<User> & { password: string }) => Promise<boolean>;
+  register: (userData: Partial<User> & { password: string; captchaId?: string; captchaAnswer?: string; locale?: string }) => Promise<boolean>;
   refreshUser: () => void;
 }
 
@@ -179,7 +179,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   /** Inscription : backend /users d'abord, sinon registre local. */
-  const register = async (userData: Partial<User> & { password: string }): Promise<boolean> => {
+  const register = async (userData: Partial<User> & { password: string; captchaId?: string; captchaAnswer?: string; locale?: string }): Promise<boolean> => {
     const email = String(userData.email ?? '');
     const fullName = userData.name || [userData.firstName, userData.lastName].filter(Boolean).join(' ');
     const [firstName = '', lastName = ''] = (userData.name || '').split(' ');
@@ -194,21 +194,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       company: userData.company,
     };
 
-    // Backend : POST /users (nécessite un mot de passe fort côté Nest).
+    // Backend via /api/register : cette route serveur applique la limite de
+    // débit, vérifie le captcha, crée le compte puis envoie `user_welcome` —
+    // autant de choses qu'un appel direct du navigateur ne pouvait pas faire.
     try {
-      await cmsFetch('/users', {
+      await fetch('/api/register', {
         method: 'POST',
-        json: {
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          name: newUser.name,
           email: userData.email,
           password: userData.password,
-          firstName: newUser.firstName || name,
-          lastName: newUser.lastName || '',
           type: newUser.type,
           phone: newUser.phone,
           company: newUser.company,
-          locale: 'fr',
-        },
-        timeoutMs: 12000,
+          locale: userData.locale || 'fr',
+          captchaId: userData.captchaId,
+          captchaAnswer: userData.captchaAnswer,
+        }),
       });
     } catch {
       // API hors-ligne ou validations Nest → on continue en local.

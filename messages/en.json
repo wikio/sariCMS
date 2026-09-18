@@ -3983,7 +3983,10 @@
       "whyJoin4": "Career development",
       "applicationsClosed": "Applications are currently closed.",
       "startJourney": "Start the journey",
-      "applyDisabled": "Applications are closed for this position."
+      "applyDisabled": "Applications are closed for this position.",
+      "captchaLabel": "Anti-spam check",
+      "captchaError": "Please enter the captcha code (5 characters)",
+      "notifyFailed": "Your application has been saved, but the confirmation email could not be sent. We will contact you directly."
     },
     "legal": {
       "pageNotFound": "Page not found",

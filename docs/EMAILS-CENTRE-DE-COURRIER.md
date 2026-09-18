@@ -62,8 +62,18 @@ n'existent pas, le module tourne sur ses valeurs par défaut — **tous les
 | `order_confirmed`, `order_shipped`, `order_delivered`, `order_cancelled`, `order_payment`, `quote_sent`, `quote_accepted`, `quote_expired` | `components/admin/CommerceDesk.tsx` → `notifyByStatus` | navigateur, jeton de session |
 | `contact_received`, `contact_alert` | `app/api/contact/route.ts` | serveur |
 | `newsletter_welcome` | `app/api/newsletter/route.ts` | serveur |
-| `newsletter_campaign` | onglet « Diffusion » (à venir) | — |
-| `application_received`, `application_alert`, `user_welcome`, `user_password_reset`, `stock_backorder` | configurable et prêt, appel à poser dans le module | — |
+| `application_received`, `application_alert` | `app/api/applications/notify/route.ts` | serveur |
+| `user_welcome` | `app/api/register/route.ts` → `POST /auth/register` | serveur |
+
+Trois événements restent **sans déclencheur dans le produit** : ils sont
+configurables et désactivés, mais rien ne les appelle parce que la fonction
+n'existe pas encore.
+
+| Événement | Ce qui manque |
+| --- | --- |
+| `user_password_reset` | aucun flux de réinitialisation : ni point d'entrée backend, ni page — le lien « Mot de passe oublié ? » de la page de connexion pointe vers `/mot-de-passe-oublie`, qui n'existe pas |
+| `stock_backorder` | `stockQty` existe dans le type produit (`types/index.ts:115`) mais aucun écran ne décrémente le stock ni ne planifie un réapprovisionnement |
+| `newsletter_campaign` | pas d'écran de diffusion dans `admin/newsletter` |
 
 ### 3.2 Envoyer depuis le serveur
 
@@ -101,6 +111,11 @@ Le transport se décide seul :
 
 - avec un `bearer` (onglet admin) → `POST /mail/send`, jeton de session ;
 - sans → `POST /mail/internal/send`, en-tête `x-mail-internal-key`.
+
+Deux de ces routes sont aussi des **points d'entrée publics capables de
+déclencher un envoi** : chacune porte un piège à pourriels, une limite de débit
+par IP et un captcha en image vérifié côté serveur, à usage unique. Sans ça, un
+robot pourrait épuiser le plafond quotidien et bloquer les envois légitimes.
 
 `MAIL_INTERNAL_KEY` doit donc avoir **la même valeur** dans `backend/.env` et
 dans le `.env.local` de Next. Non définie, les flux publics n'envoient rien :
@@ -172,12 +187,16 @@ npx next build                            # ✓ Compiled successfully — /api/c
 npm run intl:check                        # fr/en/ar 4636 clés, 0 absente
 npm run builder:check                     # 32 blocs, identifiants uniques
 npm run links:test                        # 10 assertions
-cd backend && npx jest src/modules/mail/mail.controller.spec.ts   # 4 tests
+cd backend && npx jest   # 139 tests passés, 3 échecs antérieurs à ce travail
 ```
 
-Le backend complet donne 135 tests passés et **3 échecs antérieurs à ce
-travail** (`orders.service.spec.ts`, `quotes.service.spec.ts`), vérifiés comme
-tels en remettant temporairement `mail.controller.ts` de côté.
+Les 3 échecs (`orders.service.spec.ts` ×2, `quotes.service.spec.ts` ×1) portent
+sur des valeurs par défaut de création et sont **antérieurs à ce travail**,
+vérifié en remettant temporairement les fichiers modifiés de côté.
+
+`next build` sature la mémoire de cette sandbox (3,9 Go) : Turbopack monte à
+3,6 Go et le processus est parfois tué. Il faut le relancer — le même arbre
+compile en 57 s quand la mémoire suit.
 
 Contrôles fonctionnels sur serveur lancé (`next start`) : 401 sans session ;
 GET renvoie 17 événements, 7 modules, 31 variables, 1 gabarit ; PUT crée
@@ -202,6 +221,17 @@ Chaîne publique testée de bout en bout (Next 5000 → Nest 3001 en `DB_DRIVER=
 - `/mail/internal/send` : clé juste → envoyé ; clé fausse, clé vide ou clé non
   configurée côté backend → 401 sans appel à `MailService.send`.
 
+Puis, sur les modules ajoutés ensuite :
+
+- `POST /api/applications/notify` → 200, `application_received` au candidat et
+  `application_alert` à l'entreprise journalisés `sent` ; captcha faux → 400 et
+  **aucune ligne** dans le journal ;
+- `POST /api/register` avec `"type":"admin"` dans le corps → 200, compte créé
+  avec `type: "client"`, mot de passe haché, aucun mot de passe en clair, et
+  `user_welcome` `sent` ;
+- `POST /auth/register` sans jeton → 201 (`backend/storage/json/users.json`),
+  alors que `POST /users` exige toujours la permission `users:create`.
+
 ## 8. Fichiers du module
 
 | Fichier | Rôle |
@@ -217,3 +247,6 @@ Chaîne publique testée de bout en bout (Next 5000 → Nest 3001 en `DB_DRIVER=
 | `app/api/contact/route.ts` | formulaire de contact : captcha serveur, relais CRM, `contact_received` + `contact_alert` |
 | `app/api/newsletter/route.ts` | inscription : `newsletter_welcome` avec lien de désinscription réel |
 | `backend/src/modules/mail/mail.controller.ts` | `POST /mail/internal/send`, point d'entrée à clé partagée |
+| `app/api/applications/notify/route.ts` | candidature : `application_received` + `application_alert`, sans toucher à l'enregistrement hors-ligne |
+| `app/api/register/route.ts` | inscription : crée le compte puis envoie `user_welcome` |
+| `backend/src/modules/auth/auth.controller.ts` | `POST /auth/register`, seul point d'entrée public d'inscription — type forcé à `client` |
