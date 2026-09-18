@@ -135,7 +135,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
   };
   const batchDelete = () => {
     if (!selected.size) return;
-    if (!confirm(`Supprimer ${selected.size} élément(s) ?`)) return;
+    if (!confirm(t("deleteConfirm", {count: String(selected.size)}))) return;
     persist(rows.filter(r => !selected.has(r.id)));
     clearSelection();
     showToast(`${selected.size} supprimé(s)`, 'success');
@@ -164,10 +164,10 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
   const saveOpen = (next: Row) => {
     // — Validations bloquantes avant sauvegarde (évite débordements NaN et incohérences) —
     const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(next.email || ''));
-    if (!next.client || String(next.client).trim().length < 2) { showToast('Client requis (≥2 caractères)', 'error'); return; }
-    if (!emailOk) { showToast('Email client invalide', 'error'); return; }
+    if (!next.client || String(next.client).trim().length < 2) { showToast(t("clientRequired", {defaultMessage: "Client requis (≥2 caractères)"}), 'error'); return; }
+    if (!emailOk) { showToast(t("emailInvalid", {defaultMessage: "Email client invalide"}), 'error'); return; }
     const items = (next.items || []) as any[];
-    if (!items.length) { showToast('Au moins une ligne d’article requise', 'error'); return; }
+    if (!items.length) { showToast(t("atLeastOneLine", {defaultMessage: "Au moins une ligne d’article requise"}), 'error'); return; }
     for (let idx = 0; idx < items.length; idx++) {
       const it = items[idx] as any;
       if (!it.name || String(it.name).trim().length < 2) { showToast(`Ligne ${idx + 1}: nom article requis (≥2 car.)`, 'error'); return; }
@@ -406,9 +406,9 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
       <div className="ad-card p-3 text-xs leading-relaxed" style={{ borderColor: 'color-mix(in srgb, var(--ad-accent) 25%, var(--ad-line))', background: 'color-mix(in srgb, var(--ad-accent) 4%, transparent)' }}>
         <strong>{kind==='orders' ? 'Commande' : 'Devis'} — comment ça marche ?</strong>{' '}
         {kind==='orders' ? (
-          <>La <strong>commande</strong> est un engagement d'achat (après devis ou direct vitrine). Elle porte un paiement (CB/CIB, virement, PayPal, chèque, COD), une livraison (zone/frais), une facture (ERP ou upload) et un suivi statut : <em>pending → pending_payment → paid → processing → shipped → delivered</em> (ou <em>cancelled</em>). Le multi-sélection permet de changer le statut ou supprimer en lot tout en historisant.</>
+          <>{t("howItWorksOrder")}</>
         ) : (
-          <>Le <strong>devis</strong> est une estimation chiffrée avant achat. Cycle : <em>draft → submitted → processing → replied → accepted/rejected</em> (ou <em>revision/expired</em>). <em>accepted</em> peut <strong>auto-transformer en commande</strong> (réglage Admin → Devis), l'original passe en <em>transformed</em> avec lien vers la commande. La validité (jours) expire auto en <em>expired</em>. Le lot permet d'accepter/transformer plusieurs devis d'un coup.</>
+          <>{t("howItWorksQuote")}</>
         )}
       </div>
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-3 ad-rise">
@@ -441,36 +441,36 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
 
       {selected.size > 0 && (
         <div className="ad-card p-3 flex flex-wrap items-center gap-2" style={{ borderColor: 'var(--ad-accent)', background: 'color-mix(in srgb, var(--ad-accent) 8%, transparent)' }}>
-          <span className="font-black text-sm">{selected.size} sélectionné(s)</span>
+          <span className="font-black text-sm">{t("batchSelected", {count: String(selected.size)})}</span>
           <select className="ad-select w-48" defaultValue="" onChange={e=>{ const v=e.target.value; if(v) { batchStatus(v); e.target.value=''; } }}>
-            <option value="">— Changer statut —</option>
+            <option value="">{t("batchChangeStatus")}</option>
             {statuses.map(s=> <option key={s.value} value={s.value}>{translateStatus(s.value)}</option>)}
           </select>
-          <button className="ad-btn ad-btn-danger" onClick={batchDelete}><Trash2 className="w-4 h-4"/> Supprimer</button>
-          <button className="ad-btn ad-btn-ghost" onClick={clearSelection}>Annuler</button>
-          <span className="text-xs ml-auto" style={{color:'var(--ad-muted)'}}>Astuce : le lot garde l'historique (note “Lot”).</span>
+          <button className="ad-btn ad-btn-danger" onClick={batchDelete}><Trash2 className="w-4 h-4"/> {t("batchDelete")}</button>
+          <button className="ad-btn ad-btn-ghost" onClick={clearSelection}>{t("batchCancel")}</button>
+          <span className="text-xs ml-auto" style={{color:'var(--ad-muted)'}}>{t("batchHint")}</span>
         </div>
       )}
       {view === 'list' ? (
         <div className="ad-card overflow-x-auto">
           <table className="ad-table">
-            <thead><tr><th><input type="checkbox" checked={isAllSelected} onChange={e=>toggleAll(e.target.checked)} aria-label="Tout sélectionner" /></th><th>{t('columnNumber')}</th><th>{t('columnClient')}</th><th>{t('columnDate')}</th><th>{t('columnTotalTTC')}</th><th>Paiement</th><th>{t('columnInvoice')}</th><th>{t('columnStatus')}</th><th></th></tr></thead>
+            <thead><tr><th><input type="checkbox" checked={isAllSelected} onChange={e=>toggleAll(e.target.checked)} aria-label={t("selectAll")} /></th><th>{t('columnNumber')}</th><th>{t('columnClient')}</th><th>{t('columnDate')}</th><th>{t('columnTotalTTC')}</th><th>{t("payment")}</th><th>{t('columnInvoice')}</th><th>{t('columnStatus')}</th><th></th></tr></thead>
             <tbody>
               {shown.map((row) => (
                 <tr key={row.id} style={selected.has(row.id) ? { background: 'color-mix(in srgb, var(--ad-accent) 6%, transparent)' } : undefined}>
-                  <td><input type="checkbox" checked={selected.has(row.id)} onChange={()=>toggleSelect(row.id)} aria-label={`Sélectionner ${row.id}`} /></td>
+                  <td><input type="checkbox" checked={selected.has(row.id)} onChange={()=>toggleSelect(row.id)} aria-label={t("selectItem", {id: String(row.id)})} /></td>
                   <td className="font-mono text-sm">{('reference' in row && row.reference) || ('code' in row && row.code) || `#${row.id}`}</td>
                   <td><div className="font-bold">{row.client}</div><div className="text-xs" style={{ color: 'var(--ad-muted)' }}>{row.email}</div></td>
                   <td><DateText value={row.date} dateOnly /></td>
                   <td className="font-black whitespace-nowrap">{money(Number(row.total))}</td>
                   <td><span className="ad-chip ad-chip-acc font-mono text-xs whitespace-nowrap">{paymentTypeLabel(normalizeOrderPaymentType((row as any).payment || 'pending'))}</span></td>
                   <td>{'invoice' in row && row.invoice ? <span className="ad-chip ad-chip-ok">{row.invoice.number}</span> : <span style={{ color: 'var(--ad-muted)' }}>—</span>}</td>
-                  <td><span className={`ad-chip ${row.status === 'delivered' || row.status === 'accepted' ? 'ad-chip-ok' : row.status === 'cancelled' || row.status === 'rejected' ? 'ad-chip-mute' : 'ad-chip-warn'}`}>{row.status}</span></td>
+                  <td><span className={`ad-chip ${row.status === 'delivered' || row.status === 'accepted' ? 'ad-chip-ok' : row.status === 'cancelled' || row.status === 'rejected' ? 'ad-chip-mute' : 'ad-chip-warn'}`}>{translateStatus(row.status)}</span></td>
                   <td className="text-right whitespace-nowrap">
-                    <button className="ad-btn ad-btn-icon ad-btn-ghost" title="Message au client" onClick={() => setMessageTo(row)}><MessageSquareText className="w-4 h-4" /></button>
-                    <button className="ad-btn ad-btn-ghost" onClick={() => { setConsult(true); setOpen(row); }}><Eye className="w-4 h-4" /> Voir</button>
-                    <button className="ad-btn ad-btn-ghost" onClick={() => { setConsult(false); setOpen(row); }}>Éditer</button>
-                    <button className="ad-btn ad-btn-icon ad-btn-danger ml-1" title="Supprimer" onClick={() => persist(rows.filter((r) => r.id !== row.id))}><Trash2 className="w-4 h-4" /></button>
+                    <button className="ad-btn ad-btn-icon ad-btn-ghost" title={t("messageToClient")} onClick={() => setMessageTo(row)}><MessageSquareText className="w-4 h-4" /></button>
+                    <button className="ad-btn ad-btn-ghost" onClick={() => { setConsult(true); setOpen(row); }}><Eye className="w-4 h-4" />{t("view")}</button>
+                    <button className="ad-btn ad-btn-ghost" onClick={() => { setConsult(false); setOpen(row); }}>{t("edit")}</button>
+                    <button className="ad-btn ad-btn-icon ad-btn-danger ml-1" title={t("delete")} onClick={() => persist(rows.filter((r) => r.id !== row.id))}><Trash2 className="w-4 h-4" /></button>
                   </td>
                 </tr>
               ))}
@@ -481,13 +481,13 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
         <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-3">
           {shown.map((row) => (
             <article key={row.id} className="ad-card p-4 space-y-2" style={selected.has(row.id) ? { borderColor: 'var(--ad-accent)', boxShadow: '0 0 0 1px var(--ad-accent)' } : undefined}>
-              <div className="flex justify-between"><label className="flex items-center gap-1.5 font-mono text-xs"><input type="checkbox" checked={selected.has(row.id)} onChange={()=>toggleSelect(row.id)} />{('code' in row && (row as any).code) || `#${row.id}`}</label><span className="ad-chip ad-chip-acc">{row.status}</span></div>
+              <div className="flex justify-between"><label className="flex items-center gap-1.5 font-mono text-xs"><input type="checkbox" checked={selected.has(row.id)} onChange={()=>toggleSelect(row.id)} />{('code' in row && (row as any).code) || `#${row.id}`}</label><span className="ad-chip ad-chip-acc">{translateStatus(row.status)}</span></div>
               <h3 className="font-black">{row.client}</h3>
               <div className="text-xs font-mono" style={{color:'var(--ad-muted)'}}>{paymentTypeLabel(normalizeOrderPaymentType((row as any).payment || 'pending'))}</div>
               <div className="font-black" style={{ color: 'var(--ad-accent)' }}>{money(Number(row.total))}</div>
               <div className="flex gap-2">
-                <button className="ad-btn ad-btn-ghost flex-1" onClick={() => { setConsult(true); setOpen(row); }}>Consulter</button>
-                <button className="ad-btn ad-btn-icon ad-btn-ghost" title="Message au client" onClick={() => setMessageTo(row)}><MessageSquareText className="w-4 h-4" /></button>
+                <button className="ad-btn ad-btn-ghost flex-1" onClick={() => { setConsult(true); setOpen(row); }}>{t("consult")}</button>
+                <button className="ad-btn ad-btn-icon ad-btn-ghost" title={t("messageToClient")} onClick={() => setMessageTo(row)}><MessageSquareText className="w-4 h-4" /></button>
               </div>
             </article>
           ))}
@@ -505,7 +505,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
             <button className="ad-btn ad-btn-ghost" onClick={() => open && setMessageTo(open)}><MessageSquareText className="w-4 h-4" /> Message</button>
             <button className="ad-btn ad-btn-ghost" onClick={() => open && printRow(open)}><Printer className="w-4 h-4" /> PDF</button>
             <button className="ad-btn ad-btn-ghost" onClick={() => setOpen(null)}>Fermer</button>
-            <button className="ad-btn ad-btn-primary" onClick={() => setConsult(false)}>Éditer</button>
+            <button className="ad-btn ad-btn-primary" onClick={() => setConsult(false)}>{t("edit")}</button>
           </>
         ) : (
           <>

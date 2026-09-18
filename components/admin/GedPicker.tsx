@@ -121,19 +121,19 @@ export default function GedPicker({
       }
     } catch (e) {
       console.error('[GedPicker] upload error:', e);
-      alert('Erreur lors de l\'upload du fichier');
+      alert(t("uploadError"));
     } finally {
       setBusy(false);
     }
   };
 
   const deleteFile = async (file: GedFile) => {
-    if (!confirm(`Supprimer le fichier "${file.name}" ?`)) return;
+    if (!confirm(t("deleteConfirm", {name: file.name}))) return;
     try {
       const fileParam = file.file || file.url.replace('/uploads/', '');
       if (!fileParam) {
         console.error('[GedPicker] No file path for deletion');
-        alert('Impossible de déterminer le chemin du fichier');
+        alert(t("deleteError"));
         return;
       }
       const res = await fetch(`/api/admin/upload?file=${encodeURIComponent(fileParam)}`, { method: 'DELETE' });
@@ -144,7 +144,7 @@ export default function GedPicker({
       await load(); // Recharger la liste et attendre
     } catch (error) {
       console.error('[GedPicker] delete error:', error);
-      alert('Erreur lors de la suppression du fichier');
+      alert(t("deleteFileError"));
     }
   };
 
@@ -172,7 +172,7 @@ export default function GedPicker({
       await load();
     } catch (error) {
       console.error('[GedPicker] rename error:', error);
-      alert('Erreur lors du renommage du fichier');
+      alert(t("renameError"));
     }
   };
 
@@ -202,7 +202,7 @@ export default function GedPicker({
       }
     } catch (error) {
       console.error('[GedPicker] replace error:', error);
-      alert('Erreur lors du remplacement du fichier');
+      alert(t("replaceError"));
     } finally {
       setBusy(false);
     }

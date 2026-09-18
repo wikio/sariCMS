@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import {
   DndContext, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent,
 } from '@dnd-kit/core';
@@ -46,6 +46,11 @@ type MenuRecord = {
   items: MenuItem[];
 };
 
+const LOCATIONS_KEYS: Record<string, {labelKey:string, hintKey:string}> = {
+  main: { labelKey: 'mainMenu', hintKey: 'hintMain' },
+  'footer-nav': { labelKey: 'footerNav', hintKey: 'hintFooterNav' },
+  'footer-legal': { labelKey: 'footerLegal', hintKey: 'hintFooterLegal' },
+};
 const LOCATIONS = [
   { id: 'main', label: 'Menu principal', hint: 'Navigation du header de la vitrine.' },
   { id: 'footer-nav', label: 'Pied — navigation', hint: 'Colonnes de liens du footer.' },
@@ -97,6 +102,8 @@ function normalizeItems(items: unknown): MenuItem[] {
 
 function MenuStudioInner() {
   const adminLocale = useLocale();
+  const t = useTranslations('admin.menuStudio');
+  const tc = useTranslations('admin.common');
   const { showToast } = useToast();
   const searchParams = useSearchParams();
   const [tab, setTab] = useState(() => {
@@ -104,7 +111,7 @@ function MenuStudioInner() {
     return wanted && LOCATIONS.some((l) => l.id === wanted) ? wanted : 'main';
   });
 
-  // Langue du menu édité. Elle était implicitement celle de l'interface : on
+  // {t("language")} édité. Elle était implicitement celle de l'interface : on
   // ne pouvait donc modifier que le menu de la langue dans laquelle on
   // naviguait, sans aucun indice à l'écran. Les autres langues continuaient
   // d'afficher l'ancien menu statique, d'où des menus divergents.
@@ -125,7 +132,7 @@ function MenuStudioInner() {
       const rows = await cmsAdminList<MenuRecord>('menus', { filter: JSON.stringify({ locale }) });
       setMenus(rows);
     } catch (err) {
-      showToast(err instanceof CmsError ? err.message : 'Menus inaccessibles', 'error');
+      showToast(err instanceof CmsError ? err.message : t("inaccessible"), 'error');
     } finally {
       setLoading(false);
     }
@@ -163,7 +170,7 @@ function MenuStudioInner() {
 
   const addChild = (index: number) => {
     setDraft((prev) => prev.map((it, i) => (i === index
-      ? { ...it, submenu: [...(it.submenu || []), { id: uid(), label: 'Nouveau sous-lien', href: '/' }] }
+      ? { ...it, submenu: [...(it.submenu || []), { id: uid(), label: t("newSubLink"), href: '/' }] }
       : it)));
   };
 
@@ -243,7 +250,7 @@ function MenuStudioInner() {
       const failed = results.filter((r) => r.status === 'rejected').length;
       showToast(
         failed
-          ? `Copie partielle : ${targets.length - failed}/${targets.length} langue(s)`
+          ? t("copyPartial", {done: String(targets.length - failed), total: String(targets.length)})
           : `Structure copiée vers ${targets.join(', ')}`,
         failed ? 'error' : 'success',
       );
@@ -263,9 +270,9 @@ function MenuStudioInner() {
         const created = await cmsAdminCreate<MenuRecord>('menus', payload);
         setMenus((prev) => [...prev, created]);
       }
-      showToast('Menu enregistré', 'success');
+      showToast(t("menuSaved"), 'success');
     } catch (err) {
-      showToast(err instanceof CmsError ? err.message : 'Enregistrement impossible', 'error');
+      showToast(err instanceof CmsError ? err.message : t("inaccessible"), 'error');
     } finally {
       setSaving(false);
     }
@@ -279,23 +286,23 @@ function MenuStudioInner() {
         <div>
           <div className="text-[11px] uppercase tracking-[0.22em] font-black" style={{ color: 'var(--ad-muted)' }}>Site vitrine</div>
           <h1 className="text-3xl font-black tracking-tight">Menus</h1>
-          <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>Menu principal et pieds de page · glisser-déposer pour l’ordre · sous-menus disponibles</p>
+          <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>{t("subtitle")}</p>
         </div>
         <button className="ad-btn ad-btn-primary" disabled={saving} onClick={save}>
-          <Save className="w-4 h-4" /> {saving ? '…' : 'Enregistrer ce menu'}
+          <Save className="w-4 h-4" /> {saving ? t("saving") : t("saveMenu")}
         </button>
       </header>
 
       <div className="flex flex-wrap gap-2 ad-rise">
         {LOCATIONS.map((loc) => (
           <button key={loc.id} type="button" className={`ad-btn ${tab === loc.id ? 'ad-btn-primary' : 'ad-btn-ghost'}`} onClick={() => setTab(loc.id)}>
-            {loc.label}
+            {t(LOCATIONS_KEYS[loc.id]?.labelKey || "mainMenu")}
           </button>
         ))}
       </div>
 
       <p className="text-sm ad-rise" style={{ color: 'var(--ad-muted)' }}>
-        {LOCATIONS.find((l) => l.id === tab)?.hint}
+        {t(LOCATIONS_KEYS[tab]?.hintKey || "hintMain")}
       </p>
 
       {/* Langue éditée. Chaque langue a son propre menu en base : sans ce
@@ -303,7 +310,7 @@ function MenuStudioInner() {
           gardaient l'ancien menu. */}
       <div className="ad-card p-3 flex flex-col lg:flex-row lg:items-center gap-3 ad-rise">
         <span className="text-[11px] font-black uppercase tracking-widest shrink-0" style={{ color: 'var(--ad-muted)' }}>
-          Langue du menu
+          {t("language")}
         </span>
         <div className="flex flex-wrap gap-2">
           {(LOCALES as readonly string[]).map((code) => (
@@ -315,7 +322,7 @@ function MenuStudioInner() {
             >
               {LOCALE_LABELS[code] || code.toUpperCase()}
               {!menus.some((m) => m.location === tab) && locale === code && (
-                <span className="ml-1 text-[10px] opacity-70">(vide)</span>
+                <span className="ml-1 text-[10px] opacity-70">({t("empty")})</span>
               )}
             </button>
           ))}
@@ -326,18 +333,17 @@ function MenuStudioInner() {
             className="ad-btn ad-btn-ghost"
             disabled={copying || saving || !draft.length}
             onClick={copyToOtherLocales}
-            title="Recopie liens, ordre et sous-menus vers les autres langues ; les libellés restent à traduire."
+            title={t("copyHint")}
           >
             <Languages className="w-4 h-4" />
-            {copying ? '…' : 'Copier vers les autres langues'}
+            {copying ? '…' : '{t("copyToOther")}'}
           </button>
         </div>
       </div>
 
       {!current && !loading && (
         <p className="text-sm ad-rise" style={{ color: 'var(--ad-warn, #b45309)' }}>
-          Aucun menu enregistré pour cette langue : la vitrine affiche le menu
-          par défaut. Enregistrez pour le remplacer.
+          {t("noMenuHint")}
         </p>
       )}
 
@@ -349,7 +355,7 @@ function MenuStudioInner() {
                 <div className="ad-card p-3 space-y-3">
                   <div className="flex items-start justify-between gap-2">
                     <div className="font-black text-sm flex items-center gap-2">
-                      <CornerDownRight className="w-4 h-4" style={{ color: 'var(--ad-muted)' }} /> {item.label || 'Lien'}
+                      <CornerDownRight className="w-4 h-4" style={{ color: 'var(--ad-muted)' }} /> {item.label || t("link")}
                     </div>
                     <button type="button" className="ad-btn ad-btn-icon ad-btn-danger" onClick={() => removeItem(i)}>
                       <Trash2 className="w-4 h-4" />
@@ -357,11 +363,11 @@ function MenuStudioInner() {
                   </div>
 
                   <div className="space-y-3">
-                    <input className="ad-input" placeholder="Libellé" value={item.label} onChange={(e) => setItem(i, { label: e.target.value })} />
-                    <input className="ad-input" placeholder="Description (optionnel)" value={item.desc || ''} onChange={(e) => setItem(i, { desc: e.target.value })} />
+                    <input className="ad-input" placeholder={t("labelPlaceholder")} value={item.label} onChange={(e) => setItem(i, { label: e.target.value })} />
+                    <input className="ad-input" placeholder={t("descPlaceholder")} value={item.desc || ''} onChange={(e) => setItem(i, { desc: e.target.value })} />
                     <SlugPicker value={item.href} onChange={(href) => setItem(i, { href })} />
                     <div>
-                      <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Icône Lucide (optionnel)</span>
+                      <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>{t("iconOptional")}</span>
                       <IconPicker value={item.icon || ''} onChange={(icon) => setItem(i, { icon })} />
                     </div>
                   </div>
@@ -377,17 +383,17 @@ function MenuStudioInner() {
                       montrer deux serait trompeur. */}
                   {!item.auto && (item.submenu?.length || 0) > 0 && (
                     <div className="ml-4 pl-4 space-y-2" style={{ borderLeft: '2px solid var(--ad-line)' }}>
-                      <div className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-accent)' }}>Sous-menu</div>
+                      <div className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-accent)' }}>{t("subMenu")}</div>
                       {item.submenu!.map((child, ci) => (
                         <div key={child.id || child.href} className="ad-card p-3 space-y-2" style={{ background: 'var(--ad-surface-2)' }}>
                           <div className="flex items-center gap-1">
-                            <input className="ad-input" placeholder="Libellé du sous-lien" value={child.label} onChange={(e) => setChild(i, ci, { label: e.target.value })} />
+                            <input className="ad-input" placeholder={t("subLinkPlaceholder")} value={child.label} onChange={(e) => setChild(i, ci, { label: e.target.value })} />
                             <button type="button" className="ad-btn ad-btn-icon ad-btn-ghost" disabled={ci === 0} onClick={() => moveChild(i, ci, -1)}><ChevronUp className="w-4 h-4" /></button>
                             <button type="button" className="ad-btn ad-btn-icon ad-btn-ghost" disabled={ci === (item.submenu!.length - 1)} onClick={() => moveChild(i, ci, 1)}><ChevronDown className="w-4 h-4" /></button>
                             <button type="button" className="ad-btn ad-btn-icon ad-btn-danger" onClick={() => removeChild(i, ci)}><Trash2 className="w-4 h-4" /></button>
                           </div>
                           <SlugPicker value={child.href} onChange={(href) => setChild(i, ci, { href })} />
-                          <input className="ad-input" placeholder="Description (optionnel)" value={child.desc || ''} onChange={(e) => setChild(i, ci, { desc: e.target.value })} />
+                          <input className="ad-input" placeholder={t("descPlaceholder")} value={child.desc || ''} onChange={(e) => setChild(i, ci, { desc: e.target.value })} />
                         </div>
                       ))}
                     </div>
@@ -405,7 +411,7 @@ function MenuStudioInner() {
         </SortableContext>
       </DndContext>
 
-      <button type="button" className="ad-btn ad-btn-ghost" onClick={() => setDraft((prev) => [...prev, { id: uid(), label: 'Nouveau lien', href: '/' }])}>
+      <button type="button" className="ad-btn ad-btn-ghost" onClick={() => setDraft((prev) => [...prev, { id: uid(), label: t("newLink"), href: '/' }])}>
         <Plus className="w-4 h-4" /> Ajouter un lien
       </button>
     </div>
@@ -425,7 +431,7 @@ function SortableItem({ id, children }: { id: string; children: React.ReactNode 
           {...attributes}
           {...listeners}
           className="ad-btn ad-btn-icon ad-btn-ghost cursor-grab mt-2 shrink-0"
-          title="Glisser pour réordonner"
+          title={t("dragToReorder")}
         >
           <GripVertical className="w-4 h-4 opacity-60" />
         </button>
