@@ -52,6 +52,7 @@ model User {
   updatedBy   Int?
 
   refreshTokens RefreshToken[]
+  passwordResetTokens PasswordResetToken[]
   auditLogs     AuditLog[]     @relation("ActorLogs")
   orders        Order[]        @relation("UserOrders")
   quotes        Quote[]        @relation("UserQuotes")
@@ -82,6 +83,36 @@ model RefreshToken {
   @@index([expiresAt])
   @@index([deletedAt])
   @@map("refresh_tokens")
+}
+
+/// Jeton de réinitialisation de mot de passe.
+///
+/// Table distincte de `refresh_tokens`, et ce n'est pas un détail de propreté :
+/// `AuthService.refresh()` cherche un jeton par `tokenHash` seul, sans filtre
+/// d'usage. Un jeton de réinitialisation rangé dans `refresh_tokens` serait donc
+/// accepté par `POST /auth/refresh` et donnerait une session complète.
+///
+/// `tokenHash` ne contient jamais le jeton lui-même mais son SHA-256 : une fuite
+/// de la table ne permet pas de réinitialiser un mot de passe. `usedAt` rend le
+/// jeton à usage unique.
+model PasswordResetToken {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  createdBy Int?
+  updatedBy Int?
+  ip        String?
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([deletedAt])
+  @@map("password_reset_tokens")
 }
 
 model Role {

@@ -1,13 +1,24 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req } from '@nestjs/common';
+import { Body, Controller, Get, Headers, HttpCode, HttpStatus, Post, Req, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Request } from 'express';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { AuthService } from './auth.service';
-import { EnableTotpDto, LoginDto, RefreshDto, RegisterDto, TwoFaLoginDto, VerifyTotpDto } from './dto/auth.dto';
+import {
+  EnableTotpDto,
+  ForgotPasswordDto,
+  LoginDto,
+  RefreshDto,
+  RegisterDto,
+  ResetPasswordDto,
+  TwoFaLoginDto,
+  VerifyTotpDto,
+} from './dto/auth.dto';
 import { ChangePasswordDto } from '../users/dto/user.dto';
 import { UsersService } from '../users/users.service';
+import { isInternalKey } from '../../common/security/internal-key';
 import { UserEntity } from '../users/entities/user.entity';
 
 @ApiTags('auth')
@@ -16,6 +27,7 @@ export class AuthController {
   constructor(
     private readonly auth: AuthService,
     private readonly users: UsersService,
+    private readonly config: ConfigService,
   ) {}
 
   /**
@@ -30,6 +42,51 @@ export class AuthController {
    * partenaire reste réservé à `POST /users`. Débit limité, et l'appelant
    * (route Next `/api/register`) ajoute captcha et piège à pourriels.
    */
+  /**
+   * Demande de jeton de réinitialisation — **réservée au serveur Next.js**.
+   *
+   * La réponse contient le jeton, qui servira à construire le lien envoyé par
+   * email. Un point d'entrée public ici laisserait n'importe qui obtenir le
+   * jeton de n'importe quelle adresse et réinitialiser son mot de passe : il est
+   * donc fermé par `MAIL_INTERNAL_KEY`, la même clé partagée que
+   * `POST /mail/internal/send`, que seul le processus Next connaît.
+   *
+   * C'est la route Next `/api/forgot-password` qui renvoie au visiteur le même
+   * message que le compte existe ou non.
+   */
+  @Public()
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @ApiOperation({ summary: 'Émettre un jeton de réinitialisation (serveur Next.js)' })
+  async requestReset(
+    @Headers('x-mail-internal-key') key: string,
+    @Body() dto: ForgotPasswordDto,
+    @Req() req: Request,
+  ) {
+    const expected = String(this.config.get<string>('MAIL_INTERNAL_KEY') || '');
+    if (!isInternalKey(key, expected)) {
+      throw new UnauthorizedException('Clé interne absente ou invalide');
+    }
+    return this.auth.requestPasswordReset(dto.email, { ip: req.ip });
+  }
+
+  /**
+   * Pose le nouveau mot de passe.
+   *
+   * Celui-là est réellement public — le visiteur arrive ici par le lien reçu par
+   * email, sans session. Le jeton est à usage unique et expire ; la validation
+   * du mot de passe est celle de `CreateUserDto`.
+   */
+  @Public()
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @ApiOperation({ summary: 'Réinitialiser le mot de passe avec le jeton reçu par email' })
+  resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.auth.resetPassword(dto);
+  }
+
   @Public()
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
@@ -46,6 +103,12 @@ export class AuthController {
         company: dto.company,
         locale: dto.locale || 'fr',
         type: 'client',
+        // Le schéma Prisma donne `pending` par défaut, et le pilote JSON
+        // n'applique aucun défaut : sans cette ligne le compte fraîchement créé
+        // était refusé à la connexion (« Account is not active ») alors même que
+        // l'email de bienvenue venait de partir. La vitrine n'a pas d'étape de
+        // confirmation par email, le compte est donc actif tout de suite.
+        status: 'active',
       } as unknown as Partial<UserEntity>,
       { ip: req.ip, userAgent: req.headers['user-agent'] },
     );

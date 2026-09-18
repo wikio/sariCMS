@@ -30,6 +30,9 @@ export const RELATION_SCALARS: Record<string, Record<string, RelationScalar>> = 
   user: {
     roleId: { relation: 'role', references: 'id', nullable: true, optionalRelation: true },
   },
+  passwordresettoken: {
+    userId: { relation: 'user', references: 'id', nullable: false, optionalRelation: false },
+  },
   refreshtoken: {
     userId: { relation: 'user', references: 'id', nullable: false, optionalRelation: false },
   },

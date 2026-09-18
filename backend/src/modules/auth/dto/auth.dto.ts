@@ -83,6 +83,35 @@ export class RegisterDto {
   locale?: string;
 }
 
+/**
+ * Demande de réinitialisation. Appelée par le serveur Next.js uniquement — voir
+ * `AuthController.requestReset` pour pourquoi ce point d'entrée n'est pas public.
+ */
+export class ForgotPasswordDto {
+  @ApiProperty({ example: 'client@sarisysteme.com' })
+  @IsEmail()
+  @MaxLength(180)
+  email!: string;
+}
+
+/** Nouveau mot de passe, présenté avec le jeton reçu par email. */
+export class ResetPasswordDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(200)
+  token!: string;
+
+  @ApiProperty({ minLength: 10, example: 'ChangeMe_Sari2026!' })
+  @IsString()
+  @MinLength(10)
+  @MaxLength(128)
+  @Matches(/[A-Z]/, { message: 'password must contain an uppercase letter' })
+  @Matches(/[a-z]/, { message: 'password must contain a lowercase letter' })
+  @Matches(/[0-9]/, { message: 'password must contain a digit' })
+  password!: string;
+}
+
 export class RefreshDto {
   @ApiProperty()
   @IsString()

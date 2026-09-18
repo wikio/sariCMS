@@ -1,19 +1,12 @@
 import { Body, Controller, Get, Headers, HttpCode, Post, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { timingSafeEqual } from 'crypto';
 import { perm } from '../../common/constants/permissions';
+import { isInternalKey } from '../../common/security/internal-key';
 import { RequirePermissions } from '../../common/decorators/permissions.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { MailService } from './mail.service';
 import { SendMailDto } from './dto/send-mail.dto';
-
-/** Comparaison à temps constant — la clé ne doit pas se deviner octet par octet. */
-function sameKey(given: string, expected: string): boolean {
-  const a = Buffer.from(String(given || ''));
-  const b = Buffer.from(expected);
-  return a.length === b.length && timingSafeEqual(a, b);
-}
 
 @ApiTags('mail')
 @ApiBearerAuth()
@@ -48,7 +41,7 @@ export class MailController {
   @ApiOperation({ summary: 'Envoi interne (serveur Next.js) — protégé par MAIL_INTERNAL_KEY' })
   async internalSend(@Headers('x-mail-internal-key') key: string, @Body() dto: SendMailDto) {
     const expected = String(this.config.get<string>('MAIL_INTERNAL_KEY') || '');
-    if (!expected || !sameKey(String(key || ''), expected)) {
+    if (!isInternalKey(key, expected)) {
       throw new UnauthorizedException('Clé interne absente ou invalide');
     }
     return this.mail.send(dto);

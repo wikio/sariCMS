@@ -9,12 +9,13 @@ import { UnauthorizedException } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import type { AuthService } from './auth.service';
 import type { UsersService } from '../users/users.service';
+import type { ConfigService } from '@nestjs/config';
 import type { RegisterDto } from './dto/auth.dto';
 
-function makeController(users: Partial<UsersService>) {
+function makeController(users: Partial<UsersService>, env: Record<string, string> = {}) {
   const auth = {} as AuthService;
-  const controller = new AuthController(auth, users as UsersService);
-  return controller;
+  const config = { get: (key: string) => env[key] } as unknown as ConfigService;
+  return new AuthController(auth, users as UsersService, config);
 }
 
 const req = { ip: '203.0.113.7', headers: { 'user-agent': 'jest' } } as never;

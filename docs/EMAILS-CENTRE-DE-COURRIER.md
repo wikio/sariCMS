@@ -64,16 +64,40 @@ n'existent pas, le module tourne sur ses valeurs par défaut — **tous les
 | `newsletter_welcome` | `app/api/newsletter/route.ts` | serveur |
 | `application_received`, `application_alert` | `app/api/applications/notify/route.ts` | serveur |
 | `user_welcome` | `app/api/register/route.ts` → `POST /auth/register` | serveur |
+| `user_password_reset` | `app/api/forgot-password/route.ts` → `POST /auth/forgot-password` | serveur |
 
-Trois événements restent **sans déclencheur dans le produit** : ils sont
+Deux événements restent **sans déclencheur dans le produit** : ils sont
 configurables et désactivés, mais rien ne les appelle parce que la fonction
 n'existe pas encore.
 
 | Événement | Ce qui manque |
 | --- | --- |
-| `user_password_reset` | aucun flux de réinitialisation : ni point d'entrée backend, ni page. Le lien « Mot de passe oublié ? » menait vers `/mot-de-passe-oublie`, qui n'a jamais existé — un 404 sur la seule issue d'un visiteur bloqué hors de son compte. Il pointe désormais vers `/contact?subject=client`, le motif étant présélectionné. Le vrai flux exige une table de jetons : **réutiliser `refresh_tokens` est à proscrire**, `auth.service.ts:102` cherche par `tokenHash` seul et un jeton de réinitialisation y serait accepté comme jeton de session |
 | `stock_backorder` | `stockQty` existe dans le type produit (`types/index.ts:115`) mais aucun écran ne décrémente le stock ni ne planifie un réapprovisionnement |
 | `newsletter_campaign` | pas d'écran de diffusion dans `admin/newsletter` |
+
+#### Réinitialisation de mot de passe
+
+Le flux complet : `/{locale}/mot-de-passe-oublie` → `POST /api/forgot-password`
+→ `POST /auth/forgot-password` (jeton) → email `user_password_reset` portant
+`lien_document` → `/{locale}/mot-de-passe-oublie?token=…` →
+`POST /api/reset-password` → `POST /auth/reset-password`.
+
+Trois points méritent d'être conservés tels quels :
+
+- **`POST /auth/forgot-password` renvoie le jeton à l'appelant.** Il est donc
+  fermé par `MAIL_INTERNAL_KEY` (`isInternalKey`,
+  `backend/src/common/security/internal-key.ts`), la même clé partagée que
+  `POST /mail/internal/send`. Le rendre public laisserait n'importe qui obtenir
+  le jeton de n'importe quelle adresse. `POST /auth/reset-password`, lui, est
+  réellement public : le jeton y tient lieu de preuve.
+- **`refresh_tokens` ne doit pas servir à ça.** `auth.service.ts` cherche par
+  `tokenHash` seul, sans filtre d'usage : un jeton de réinitialisation rangé là
+  serait accepté par `POST /auth/refresh` et donnerait une session complète.
+  D'où la table `password_reset_tokens`
+  (`backend/prisma/migrations/20260919_add_password_reset_tokens/`).
+- **La réponse de `/api/forgot-password` est la même** que le compte existe ou
+  non ; seul le serveur sait s'il a envoyé quelque chose. Répondre « adresse
+  inconnue » reviendrait à offrir un annuaire des comptes.
 
 ### 3.2 Envoyer depuis le serveur
 

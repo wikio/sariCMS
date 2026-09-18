@@ -159,15 +159,7 @@ export default function LoginPage() {
                     {t('remember', { defaultMessage: 'Se souvenir de moi' })}
                   </label>
                 </div>
-                {/*
-                  Il n'existe pas encore de réinitialisation en libre-service :
-                  aucun point d'entrée backend, donc aucun jeton à envoyer par
-                  email. Le lien menait vers `/mot-de-passe-oublie`, qui n'a
-                  jamais existé — un 404 sur la seule issue d'un visiteur bloqué
-                  hors de son compte. En attendant le vrai flux, on l'envoie vers
-                  le formulaire de contact, motif « compte » présélectionné.
-                */}
-                <Link href={`/${locale}/contact?subject=client`} className="text-sm text-sari-blue hover:underline">
+                <Link href={`/${locale}/mot-de-passe-oublie`} className="text-sm text-sari-blue hover:underline">
                   {t('forgotPassword', { defaultMessage: 'Mot de passe oublié ?' })}
                 </Link>
               </div>

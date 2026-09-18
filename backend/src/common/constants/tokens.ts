@@ -4,6 +4,7 @@ export const USER_REPOSITORY = Symbol('USER_REPOSITORY');
 export const ROLE_REPOSITORY = Symbol('ROLE_REPOSITORY');
 export const PERMISSION_REPOSITORY = Symbol('PERMISSION_REPOSITORY');
 export const REFRESH_TOKEN_REPOSITORY = Symbol('REFRESH_TOKEN_REPOSITORY');
+export const PASSWORD_RESET_TOKEN_REPOSITORY = Symbol('PASSWORD_RESET_TOKEN_REPOSITORY');
 export const PAGE_REPOSITORY = Symbol('PAGE_REPOSITORY');
 export const FAQ_REPOSITORY = Symbol('FAQ_REPOSITORY');
 export const TESTIMONIAL_REPOSITORY = Symbol('TESTIMONIAL_REPOSITORY');
@@ -33,6 +34,7 @@ export const COLLECTIONS = {
   roles: 'roles',
   permissions: 'permissions',
   refreshTokens: 'refresh_tokens',
+  passwordResetTokens: 'password_reset_tokens',
   pages: 'pages',
   faqs: 'faqs',
   testimonials: 'testimonials',
@@ -65,6 +67,7 @@ export const PRISMA_MODEL_BY_COLLECTION: Record<string, string> = {
   roles: 'role',
   permissions: 'permission',
   refresh_tokens: 'refreshToken',
+  password_reset_tokens: 'passwordResetToken',
   pages: 'page',
   faqs: 'faq',
   testimonials: 'testimonial',
