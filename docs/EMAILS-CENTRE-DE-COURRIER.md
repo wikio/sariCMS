@@ -55,32 +55,63 @@ n'existent pas, le module tourne sur ses valeurs par défaut — **tous les
 | Comptes clients | `user_welcome`, `user_password_reset` | création de compte / demande |
 | Stock | `stock_backorder` | rupture avec réapprovisionnement prévu |
 
-Seuls **Commandes** et **Devis** appellent réellement l'envoi aujourd'hui
-(`components/admin/CommerceDesk.tsx` → `notifyByStatus`). Les autres événements
-sont configurables et prêts ; il reste à ajouter l'appel `sendModuleMail` dans
-le module concerné.
+### 3.1 Qui appelle quoi
+
+| Événements | Appelant | Côté |
+| --- | --- | --- |
+| `order_confirmed`, `order_shipped`, `order_delivered`, `order_cancelled`, `order_payment`, `quote_sent`, `quote_accepted`, `quote_expired` | `components/admin/CommerceDesk.tsx` → `notifyByStatus` | navigateur, jeton de session |
+| `contact_received`, `contact_alert` | `app/api/contact/route.ts` | serveur |
+| `newsletter_welcome` | `app/api/newsletter/route.ts` | serveur |
+| `newsletter_campaign` | onglet « Diffusion » (à venir) | — |
+| `application_received`, `application_alert`, `user_welcome`, `user_password_reset`, `stock_backorder` | configurable et prêt, appel à poser dans le module | — |
+
+### 3.2 Envoyer depuis le serveur
+
+Les routes serveur (`app/api/**`) n'ont **pas** de jeton de session : elles
+passent par `lib/mail-center-send.ts`, un seul point d'entrée qui lit le
+même `data/mail/*.json`, applique la même politique, appelle le backend puis
+journalise.
 
 ```ts
-import { sendModuleMail } from '@/lib/mail';
+import { companyVars, requestOrigin, sendMailCenterEvent } from '@/lib/mail-center-send';
 
-const result = await sendModuleMail({
-  event: 'application_received',
-  to: candidature.email,
-  toName: candidature.candidate,
-  dedupeKey: `application-${candidature.id}-application_received`,
-  vars: {
-    nom_client: candidature.candidate,
-    reference_candidature: candidature.reference,
-    offre_emploi: candidature.jobTitle,
-    date_document: candidature.date,
-  },
-});
-if (!result.sent && result.reason !== 'disabled') showToast(result.detail, 'error');
+void (async () => {
+  const vars: Record<string, string> = {
+    ...(await companyVars(locale, requestOrigin(req))),
+    nom_client: message.name,
+    objet_message: message.subject,
+    message_client: message.message,
+    email_client: message.email,
+  };
+  await sendMailCenterEvent({
+    event: 'contact_received',
+    to: message.email,
+    toName: message.name,
+    vars,
+    dedupeKey: `contact-${message.email}-contact_received`,
+  });
+})().catch(() => {});
 ```
 
+L'envoi est **décroché** de la réponse : le visiteur n'attend pas le serveur de
+courrier (jusqu'à 20 s), et le résultat — envoyé ou refusé, avec son motif —
+atterrit dans `data/mail/sent-log.json`.
+
+Le transport se décide seul :
+
+- avec un `bearer` (onglet admin) → `POST /mail/send`, jeton de session ;
+- sans → `POST /mail/internal/send`, en-tête `x-mail-internal-key`.
+
+`MAIL_INTERNAL_KEY` doit donc avoir **la même valeur** dans `backend/.env` et
+dans le `.env.local` de Next. Non définie, les flux publics n'envoient rien :
+chaque tentative est journalisée en `failed` avec le motif
+`internal_key_missing`. Ce point d'entrée ne lève jamais d'exception vers
+l'appelant.
+
 `result.reason` vaut `disabled`, `master_off`, `duplicate`, `daily_cap`,
-`recipient_cap`, `quiet_hours`, `no_recipient` ou `transport_error`. Un refus
-n'est pas une exception : c'est la politique qui fait son travail.
+`recipient_cap`, `quiet_hours`, `no_recipient`, `unknown_event`,
+`transport_error` ou `internal_key_missing`. Un refus n'est pas une exception :
+c'est la politique qui fait son travail.
 
 ## 4. Les variables de fusion
 
@@ -135,10 +166,18 @@ Règles d'usage, dans l'esprit de l'audit :
 ## 7. Vérifications faites
 
 ```bash
-npx tsc --noEmit          # 0 erreur
-npx next build            # ✓ Compiled successfully — /api/admin/mail-center{,/send}
-npm run intl:check        # fr/en/ar 4636 clés, 0 absente
+npx tsc --noEmit                          # 0 erreur
+npx tsc --noEmit -p backend/tsconfig.json # 0 erreur
+npx next build                            # ✓ Compiled successfully — /api/contact, /api/newsletter, /api/admin/mail-center{,/send}
+npm run intl:check                        # fr/en/ar 4636 clés, 0 absente
+npm run builder:check                     # 32 blocs, identifiants uniques
+npm run links:test                        # 10 assertions
+cd backend && npx jest src/modules/mail/mail.controller.spec.ts   # 4 tests
 ```
+
+Le backend complet donne 135 tests passés et **3 échecs antérieurs à ce
+travail** (`orders.service.spec.ts`, `quotes.service.spec.ts`), vérifiés comme
+tels en remettant temporairement `mail.controller.ts` de côté.
 
 Contrôles fonctionnels sur serveur lancé (`next start`) : 401 sans session ;
 GET renvoie 17 événements, 7 modules, 31 variables, 1 gabarit ; PUT crée
@@ -148,6 +187,20 @@ même clé d'envoi → `duplicate` ; intervalle par destinataire → `duplicate`
 interrupteur coupé → `master_off` ; heures silencieuses → `quiet_hours` ;
 plafond par destinataire → `recipient_cap` ; backend SMTP absent →
 `transport_error` avec objet fusionné et `missingVars` correctes.
+
+Chaîne publique testée de bout en bout (Next 5000 → Nest 3001 en `DB_DRIVER=json`,
+`SMTP_HOST` vide donc mode fichier) :
+
+- `POST /api/contact` → 200, message enregistré dans le CRM (`id: 1`), puis
+  `contact_received` et `contact_alert` journalisés `sent` et présents dans
+  `backend/storage/mail/outbox.json` ;
+- deuxième message de la même adresse → les deux événements `skipped`
+  (`duplicate`) ;
+- captcha faux → 400, **aucune ligne** dans le journal ;
+- `POST /api/newsletter` avec consentement → `newsletter_welcome` `sent`, le
+  lien de désinscription portant le jeton réellement émis pour cet abonné ;
+- `/mail/internal/send` : clé juste → envoyé ; clé fausse, clé vide ou clé non
+  configurée côté backend → 401 sans appel à `MailService.send`.
 
 ## 8. Fichiers du module
 
@@ -160,3 +213,7 @@ plafond par destinataire → `recipient_cap` ; backend SMTP absent →
 | `components/admin/MailCenterSection.tsx` | l'écran (modules, gabarits, politique, journal) |
 | `components/admin/MailLayoutStudio.tsx` | le constructeur de gabarit |
 | `lib/mail.ts` | `sendModuleMail()` côté navigateur |
+| `lib/mail-center-send.ts` | serveur : le même envoi, sans jeton de session (`sendMailCenterEvent`, `companyVars`, `requestOrigin`) |
+| `app/api/contact/route.ts` | formulaire de contact : captcha serveur, relais CRM, `contact_received` + `contact_alert` |
+| `app/api/newsletter/route.ts` | inscription : `newsletter_welcome` avec lien de désinscription réel |
+| `backend/src/modules/mail/mail.controller.ts` | `POST /mail/internal/send`, point d'entrée à clé partagée |
