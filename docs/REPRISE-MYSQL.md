@@ -99,12 +99,15 @@ done
 npx prisma migrate deploy
 ```
 
-`migrate deploy` ne lance alors que les deux dernières, toutes deux strictement
-additives : `20260906_add_home_sections_and_newsletter` (deux `CREATE TABLE`,
-`home_sections` et `newsletter_subscribers`) puis
+`migrate deploy` ne lance alors que les migrations manquantes, toutes
+strictement additives : `20260906_add_home_sections_and_newsletter` (deux
+`CREATE TABLE`, `home_sections` et `newsletter_subscribers`),
 `20260907_add_newsletter_unsubscribe_reason` (deux colonnes et un index sur
 `newsletter_subscribers` — le motif et le commentaire saisis dans le formulaire
-public de désabonnement). Aucune donnée existante n'est touchée.
+public de désabonnement), puis
+`20260919_add_password_reset_tokens` (une `CREATE TABLE`,
+`password_reset_tokens` — les jetons de « Mot de passe oublié ? », hachés en
+SHA-256, à usage unique). Aucune donnée existante n'est touchée.
 
 **Option 2 — sans Prisma (hébergement mutualisé).** Le fichier de migration est
 du SQL autonome, il s'importe dans la base déjà sélectionnée et ne contient pas
@@ -113,10 +116,12 @@ de `USE` :
 ```bash
 mysql -u root -p sari_cms < backend/prisma/migrations/20260906_add_home_sections_and_newsletter/migration.sql
 mysql -u root -p sari_cms < backend/prisma/migrations/20260907_add_newsletter_unsubscribe_reason/migration.sql
+mysql -u root -p sari_cms < backend/prisma/migrations/20260919_add_password_reset_tokens/migration.sql
 ```
 
-Dans cet ordre : la seconde ajoute des colonnes à la table créée par la
-première.
+Dans cet ordre : la deuxième ajoute des colonnes à la table créée par la
+première. La troisième est indépendante — une table neuve, `password_reset_tokens`,
+qui ne touche à rien d'existant.
 
 Attention : des `CREATE TABLE` et `ALTER TABLE` simples, pas d'`IF NOT EXISTS`. À
 ne lancer qu'une fois — ou relisez le fichier et remplacez-les par
