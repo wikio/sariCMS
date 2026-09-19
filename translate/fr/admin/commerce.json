@@ -192,5 +192,13 @@
   "globalDiscountTitle": "Remise globale ≥0, max 1M, 2 décimales",
   "addressTitle": "Adresse 5–120 caractères",
   "emailSent": "Email envoyé à {email}",
-  "emailNotSent": "Email non envoyé : {reason}"
+  "emailNotSent": "Email non envoyé : {reason}",
+  "trackingNumber": "Numéro de suivi",
+  "carrier": "Transporteur",
+  "paidAt": "Date de paiement",
+  "shippedAt": "Date d’expédition",
+  "deliveredAt": "Date de livraison",
+  "askTracking": "Numéro de suivi du colis (laisser vide pour envoyer sans suivi) :",
+  "askCarrier": "Transporteur (ex. : Yalidine, EMS, Maystro) :",
+  "paymentsSynced": "{count} paiement(s) rattaché(s) validé(s)."
 }

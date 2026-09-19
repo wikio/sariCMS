@@ -656,6 +656,14 @@ model Order {
   address     String?   @db.Text
   payment     String?
   paid        Boolean   @default(false)
+  // Suivi logistique & horodatages métier.
+  // Sans eux, les gabarits « order_shipped » / «order_delivered » / « order_payment »
+  // du Centre de courrier demandent des variables que la fiche ne sait pas fournir.
+  trackingNumber String?   @db.VarChar(80)
+  carrier        String?   @db.VarChar(80)
+  shippedAt      DateTime?
+  deliveredAt    DateTime?
+  paidAt         DateTime?
   coupon      String?
   quoteId     Int?
   zone        String?

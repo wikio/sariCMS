@@ -39,5 +39,8 @@
   "validatedChip": "Validés",
   "pendingChip": "En attente",
   "rejectedChip": "Rejetés",
-  "delete": "Supprimer"
+  "delete": "Supprimer",
+  "deactivate": "Désactiver",
+  "deactivateReason": "Motif de désactivation :",
+  "deactivatedToast": "Paiement désactivé."
 }

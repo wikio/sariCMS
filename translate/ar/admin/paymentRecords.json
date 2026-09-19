@@ -39,5 +39,8 @@
   "validatedChip": "مصادق عليها",
   "pendingChip": "قيد الانتظار",
   "rejectedChip": "مرفوضة",
-  "delete": "حذف"
+  "delete": "حذف",
+  "deactivate": "إلغاء التنشيط",
+  "deactivateReason": "سبب إلغاء التنشيط:",
+  "deactivatedToast": "تم إلغاء تنشيط الدفع."
 }

@@ -77,6 +77,16 @@ export interface Order {
   payment?: string;
   /** Paiement confirmé (requis pour lier une facture si activé). */
   paid?: boolean;
+  /** Numéro de suivi du colis — variable `suivi_colis` du mail d'expédition. */
+  trackingNumber?: string;
+  /** Transporteur — variable `transporteur` du mail d'expédition. */
+  carrier?: string;
+  /** Date d'expédition (ISO), posée au passage à « expédiée ». */
+  shippedAt?: string;
+  /** Date de livraison (ISO) — variable `date_livraison`. */
+  deliveredAt?: string;
+  /** Date de règlement (ISO), posée au passage à « payée » ou au-delà. */
+  paidAt?: string;
   cost?: number;
   coupon?: string;
   quoteId?: number;

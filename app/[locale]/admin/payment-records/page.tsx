@@ -69,6 +69,19 @@ export default function PaymentRecordsPage() {
     showToast(t("rejectedToast"), 'success');
   };
 
+  /**
+   * Désactivation directe depuis la liste.
+   *
+   * Contrairement à la suppression, la ligne reste au journal : elle passe en
+   * « rejeté », sort du total validé et conserve son motif. C'est l'action
+   * réversible à privilégier quand un encaissement a été saisi à tort.
+   */
+  const deactivate = (id: string, reason: string) => {
+    rejectPayment(id, reason.trim());
+    setRows(loadPaymentRecords());
+    showToast(t("deactivatedToast", { defaultMessage: "Paiement désactivé." }), 'success');
+  };
+
   return (
     <div className="space-y-4">
       <header className="flex flex-wrap items-end justify-between gap-3">
@@ -124,6 +137,23 @@ export default function PaymentRecordsPage() {
                   <button className="ad-btn ad-btn-ghost" onClick={() => { setConsult(true); setOpen(p); setNote(''); }}><Eye className="w-4 h-4" />{t("view")}</button>
                   {p.status === 'pending' && (
                     <button className="ad-btn ad-btn-ghost" onClick={() => { setConsult(false); setOpen(p); setNote(''); }}><CheckCircle2 className="w-4 h-4" />{t("validate")}</button>
+                  )}
+                  {p.status !== 'rejected' && (
+                    /*
+                     * Désactiver un paiement sans le supprimer : la ligne reste
+                     * au journal (traçabilité) mais repasse en « rejeté » et
+                     * sort du total validé. La raison est demandée parce que
+                     * `rejectPayment` l'enregistre sur la ligne.
+                     */
+                    <button
+                      className="ad-btn ad-btn-ghost"
+                      title={t("deactivate", { defaultMessage: "Désactiver ce paiement" })}
+                      onClick={() => {
+                        const reason = window.prompt(t("deactivateReason", { defaultMessage: "Motif de désactivation :" }) || '');
+                        if (reason === null) return;
+                        deactivate(p.id, reason);
+                      }}
+                    ><XCircle className="w-4 h-4" />{t("deactivate", { defaultMessage: "Désactiver" })}</button>
                   )}
                   <button className="ad-btn ad-btn-icon ad-btn-danger ml-1" title={t("delete", {defaultMessage: "Supprimer"})} onClick={() => { if (confirm(t("confirmDelete"))) { deletePayment(p.id); setRows(loadPaymentRecords()); showToast(t("deleted"), 'success'); } }}><Trash2 className="w-4 h-4" /></button>
                 </td>

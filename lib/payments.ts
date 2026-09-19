@@ -196,6 +196,63 @@ export function deletePayment(id: string): void {
   savePaymentRecords(loadPaymentRecords().filter((p) => p.id !== id));
 }
 
+/** Statuts de commande qui signifient « réglé, ou une étape plus loin ». */
+export const PAID_OR_ABOVE = ['paid', 'processing', 'shipped', 'delivered'] as const;
+
+/** La commande est-elle à un stade où son paiement doit apparaître comme validé ? */
+export function isPaidOrAbove(status?: string | null): boolean {
+  return !!status && (PAID_OR_ABOVE as readonly string[]).includes(status);
+}
+
+/**
+ * Aligne le journal des paiements sur le statut de la commande.
+ *
+ * Règle demandée : dès que la commande passe à « payé » ou à une étape
+ * supérieure (préparation, expédiée, livrée), la ligne de paiement qui lui est
+ * rattachée doit suivre et passer en **validé**.
+ *
+ * Deux garde-fous assumés :
+ * - le sens inverse n'est **pas** automatique : revenir à « en attente » ne
+ *   dévalide pas un paiement déjà validé. C'est volontaire — un encaissement
+ *   réel ne s'annule pas d'un clic sur un statut ; l'administrateur utilise
+ *   « Désactiver » dans la liste s'il faut vraiment le retirer.
+ * - seule une ligne `pending` est promue. Une ligne déjà `rejected` reste
+ *   rejetée : elle a fait l'objet d'une décision explicite.
+ *
+ * Le rattachement se fait par `orderId`, avec repli sur `orderCode` pour les
+ * enregistrements créés avant que l'identifiant numérique soit connu.
+ *
+ * @returns le nombre de lignes promues (0 si rien à faire).
+ */
+export function syncPaymentsFromOrder(order: {
+  id?: number | null;
+  code?: string | null;
+  status?: string | null;
+}): number {
+  if (!isPaidOrAbove(order.status)) return 0;
+
+  const rows = loadPaymentRecords();
+  const id = Number(order.id) || null;
+  const code = (order.code || '').trim();
+  const stamp = new Date().toISOString();
+  let promoted = 0;
+
+  const next = rows.map((p) => {
+    const matches = (id != null && Number(p.orderId) === id) || (!!code && (p.orderCode || '').trim() === code);
+    if (!matches || p.status !== 'pending') return p;
+    promoted += 1;
+    return {
+      ...p,
+      status: 'validated' as PaymentStatus,
+      validatedAt: p.validatedAt || stamp,
+      note: p.note?.trim() ? p.note : 'Validé automatiquement : commande passée à l’étape « payé » ou au-delà.',
+    };
+  });
+
+  if (promoted) savePaymentRecords(next);
+  return promoted;
+}
+
 /**
  * Export CSV du journal des paiements (séparateur « ; » + BOM UTF-8,
  * compatible Excel). Masque les numéros de carte (derniers 4 chiffres).

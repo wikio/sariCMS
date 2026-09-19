@@ -6,7 +6,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { Eye, FileCheck2, History, LayoutGrid, Link2, List as ListIcon, MessageSquareText, Plus, Printer, Reply, Trash2, Upload } from 'lucide-react';
 import { isOrderPaid, loadOrders, loadQuotes, saveOrders, saveQuotes, type Order, type OrderInvoice, type Quote, type CommerceItem } from '@/lib/crm-store';
 import { loadCoupons, loadTaxes, loadPayments } from '@/lib/shop-store';
-import { paymentTypeLabel, normalizeOrderPaymentType } from '@/lib/payments';
+import { paymentTypeLabel, normalizeOrderPaymentType, isPaidOrAbove, syncPaymentsFromOrder } from '@/lib/payments';
 import { loadAdminSettings } from '@/lib/admin-settings';
 import { loadShopConfig, formatZoneLabel, type ShopConfig } from '@/lib/shop-config';
 import { computeTotals, money } from '@/lib/commerce-math';
@@ -25,6 +25,58 @@ import DateText from '@/components/shared/DateText';
 
 type Kind = 'orders' | 'quotes';
 type Row = (Order | Quote) & { history?: Array<{ status: string; at: string; note?: string }>; phone?: string; company?: string; coupon?: string; quoteId?: number; orderId?: number; zone?: string; ip?: string; address?: string };
+
+/** ISO → `aaaa-mm-jj` pour un `<input type="date">` ; vide si absente ou illisible. */
+function inputDate(iso?: string): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toISOString().slice(0, 10);
+}
+
+/** `aaaa-mm-jj` → ISO ; chaîne vide si le champ est vidé. */
+function fromInputDate(value: string): string {
+  if (!value) return '';
+  const d = new Date(`${value}T12:00:00`);
+  return Number.isNaN(d.getTime()) ? '' : d.toISOString();
+}
+
+/**
+ * Renseignements d'expédition et de règlement d'une ligne, prêts pour les
+ * gabarits du Centre de courrier.
+ *
+ * Une valeur absente reste une chaîne vide : mieux vaut un « Suivi : » vide
+ * qu'un numéro inventé. Les dates sont rendues en jj/mm/aaaa ; une valeur
+ * illisible est reprise telle quelle plutôt que transformée en « Invalid Date ».
+ */
+function shipmentOf(row: Row): {
+  trackingNumber: string;
+  carrier: string;
+  shippedAt: string;
+  deliveredAt: string;
+  paidAt: string;
+} {
+  const r = row as unknown as {
+    trackingNumber?: string;
+    carrier?: string;
+    shippedAt?: string;
+    deliveredAt?: string;
+    paidAt?: string;
+  };
+  const date = (v?: string): string => {
+    if (!v) return '';
+    const d = new Date(v);
+    if (Number.isNaN(d.getTime())) return v;
+    return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  };
+  return {
+    trackingNumber: r.trackingNumber || '',
+    carrier: r.carrier || '',
+    shippedAt: date(r.shippedAt),
+    deliveredAt: date(r.deliveredAt),
+    paidAt: date(r.paidAt),
+  };
+}
 
 const ORDER_STATUS = [
   { value: 'pending', label: 'En attente' },
@@ -233,14 +285,71 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
         effectiveStatus = 'transformed';
       }
     }
+    const current = rows.find((r) => r.id === id);
+    /**
+     * Horodatage métier + renseignements d'expédition.
+     *
+     * Les gabarits du Centre de courrier demandent `suivi_colis`, `transporteur`
+     * et `date_livraison` ; la fiche ne proposait aucun champ pour les saisir,
+     * donc les messages partaient avec des variables vides. On les demande au
+     * moment du changement d'étape, qui est précisément l'instant où
+     * l'administrateur a l'information sous les yeux.
+     *
+     * Les valeurs déjà enregistrées ne sont jamais écrasées (`||=`) : un
+     * aller-retour de statut ne réinitialise pas l'historique réel.
+     */
+    const stamps: Record<string, string> = {};
+    let trackingNumber = ('trackingNumber' in (current || {}) ? String((current as never as { trackingNumber?: string }).trackingNumber || '') : '');
+    let carrier = ('carrier' in (current || {}) ? String((current as never as { carrier?: string }).carrier || '') : '');
+    if (kind === 'orders') {
+      const nowIso = new Date().toISOString();
+      if (isPaidOrAbove(effectiveStatus)) {
+        stamps.paidAt = (current as never as { paidAt?: string })?.paidAt || nowIso;
+      }
+      if (effectiveStatus === 'shipped' || effectiveStatus === 'delivered') {
+        stamps.shippedAt = (current as never as { shippedAt?: string })?.shippedAt || nowIso;
+      }
+      if (effectiveStatus === 'shipped') {
+        if (!trackingNumber) {
+          trackingNumber = (typeof window !== 'undefined'
+            ? window.prompt(t('askTracking', { defaultMessage: 'Numéro de suivi du colis (laisser vide pour envoyer sans suivi) :' }) || '')
+            : '') || '';
+        }
+        if (!carrier) {
+          carrier = (typeof window !== 'undefined'
+            ? window.prompt(t('askCarrier', { defaultMessage: 'Transporteur (ex. : Yalidine, EMS, Maystro) :' }) || '')
+            : '') || '';
+        }
+      }
+      if (effectiveStatus === 'delivered') {
+        stamps.deliveredAt = (current as never as { deliveredAt?: string })?.deliveredAt || nowIso;
+      }
+    }
+
     const next = rows.map((r) => r.id === id ? {
       ...r,
       status: effectiveStatus as never,
       ...(orderId ? { orderId } : {}),
+      ...stamps,
+      ...(trackingNumber ? { trackingNumber } : {}),
+      ...(carrier ? { carrier } : {}),
+      // Une commande réglée doit entraîner sa ligne de paiement.
+      ...(kind === 'orders' && isPaidOrAbove(effectiveStatus) ? { paid: true } : {}),
       history: [...(r.history || []), { status: effectiveStatus, at: new Date().toISOString(), note }],
     } : r);
     persist(next);
     const updated = next.find((r) => r.id === id);
+    // Le journal des paiements suit le statut de la commande.
+    if (kind === 'orders' && updated) {
+      const promoted = syncPaymentsFromOrder({
+        id: updated.id,
+        code: 'code' in updated ? String(updated.code || '') : '',
+        status: effectiveStatus,
+      });
+      if (promoted > 0) {
+        showToast(t('paymentsSynced', { count: promoted, defaultMessage: `${promoted} paiement(s) rattaché(s) validé(s).` }), 'success');
+      }
+    }
     if (updated) setOpen(updated);
     setNote('');
     showToast(orderId ? t('quoteAcceptedOrderCreated', { id: orderId }) : t('statusUpdated'), 'success');
@@ -289,6 +398,14 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
       numero_facture: ('invoice' in row && row.invoice?.number) || '',
       montant_ttc: money(Number(row.total)),
       date_document: row.date || '',
+      // Renseignements d'expédition et de règlement saisis dans la fiche commande.
+      // Sans eux, `order_shipped` / `order_delivered` partaient avec des
+      // variables vides alors que le gabarit les mentionne.
+      suivi_colis: shipmentOf(row).trackingNumber,
+      transporteur: shipmentOf(row).carrier,
+      date_expedition: shipmentOf(row).shippedAt,
+      date_livraison: shipmentOf(row).deliveredAt,
+      date_paiement: shipmentOf(row).paidAt,
       lien_espace_client: `${origin}/${locale}/dashboard`,
       lien_document: `${origin}/${locale}/dashboard`,
     };
@@ -856,6 +973,40 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                     <textarea className="ad-textarea" rows={2} placeholder="Visible admin uniquement" value={(open as any).adminNotes || ''} onChange={e=>setOpen({...open, adminNotes:e.target.value} as any)} />
                   </label>
                 </div>
+                {kind === 'orders' && (
+                  /*
+                   * Expédition & règlement.
+                   *
+                   * Ces champs existaient dans les gabarits de mail
+                   * (`suivi_colis`, `transporteur`, `date_livraison`) mais
+                   * nulle part dans la fiche : les messages partaient donc avec
+                   * des variables vides. Les dates se règlent aussi toutes
+                   * seules au changement d'étape — ce bloc sert à corriger ou
+                   * compléter après coup.
+                   */
+                  <div className="grid md:grid-cols-2 gap-3">
+                    <label className="block space-y-1.5">
+                      <span className="field-label">{t("trackingNumber", { defaultMessage: "Numéro de suivi" })}</span>
+                      <input className="ad-input w-full min-w-0" maxLength={80} placeholder="ex. YL123456789DZ" value={(open as any).trackingNumber || ''} onChange={e=>setOpen({...open, trackingNumber:e.target.value.slice(0,80)} as any)} />
+                    </label>
+                    <label className="block space-y-1.5">
+                      <span className="field-label">{t("carrier", { defaultMessage: "Transporteur" })}</span>
+                      <input className="ad-input w-full min-w-0" maxLength={80} placeholder="ex. Yalidine, EMS, Maystro" value={(open as any).carrier || ''} onChange={e=>setOpen({...open, carrier:e.target.value.slice(0,80)} as any)} />
+                    </label>
+                    <label className="block space-y-1.5">
+                      <span className="field-label">{t("paidAt", { defaultMessage: "Date de paiement" })}</span>
+                      <input type="date" className="ad-input w-full min-w-0" value={inputDate((open as any).paidAt)} onChange={e=>setOpen({...open, paidAt:fromInputDate(e.target.value)} as any)} />
+                    </label>
+                    <label className="block space-y-1.5">
+                      <span className="field-label">{t("shippedAt", { defaultMessage: "Date d’expédition" })}</span>
+                      <input type="date" className="ad-input w-full min-w-0" value={inputDate((open as any).shippedAt)} onChange={e=>setOpen({...open, shippedAt:fromInputDate(e.target.value)} as any)} />
+                    </label>
+                    <label className="block space-y-1.5">
+                      <span className="field-label">{t("deliveredAt", { defaultMessage: "Date de livraison" })}</span>
+                      <input type="date" className="ad-input w-full min-w-0" value={inputDate((open as any).deliveredAt)} onChange={e=>setOpen({...open, deliveredAt:fromInputDate(e.target.value)} as any)} />
+                    </label>
+                  </div>
+                )}
                 {shopConfig?.saleConditions && <div className="text-xs bg-amber-50 dark:bg-amber-900/20 border border-amber-200 p-2 rounded">CGV : {shopConfig.saleConditions.slice(0,300)}{shopConfig.saleConditions.length>300?'…':''}</div>}
               </div>
             )}

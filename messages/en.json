@@ -878,7 +878,10 @@
       "validatedChip": "Validated",
       "pendingChip": "Pending",
       "rejectedChip": "Rejected",
-      "delete": "Delete"
+      "delete": "Delete",
+      "deactivate": "Deactivate",
+      "deactivateReason": "Deactivation reason:",
+      "deactivatedToast": "Payment deactivated."
     },
     "payments": {
       "title": "Payment methods",
@@ -1402,7 +1405,15 @@
       "globalDiscountTitle": "Global discount ≥0, max 1M, 2 decimals",
       "addressTitle": "Address 5–120 chars",
       "emailSent": "Email sent to {email}",
-      "emailNotSent": "Email not sent: {reason}"
+      "emailNotSent": "Email not sent: {reason}",
+      "trackingNumber": "Tracking number",
+      "carrier": "Carrier",
+      "paidAt": "Payment date",
+      "shippedAt": "Shipment date",
+      "deliveredAt": "Delivery date",
+      "askTracking": "Parcel tracking number (leave empty to send without tracking):",
+      "askCarrier": "Carrier (e.g. Yalidine, EMS, Maystro):",
+      "paymentsSynced": "{count} linked payment(s) marked as validated."
     },
     "people": {
       "crm": "CRM",

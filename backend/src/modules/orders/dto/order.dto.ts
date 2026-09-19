@@ -228,6 +228,33 @@ export class CreateOrderDto {
   @IsBoolean()
   paid?: boolean;
 
+  @ApiPropertyOptional({ description: 'Numéro de suivi colis (variable suivi_colis)' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  trackingNumber?: string;
+
+  @ApiPropertyOptional({ description: 'Transporteur (variable transporteur)' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  carrier?: string;
+
+  @ApiPropertyOptional({ description: 'Date d’expédition (ISO)' })
+  @IsOptional()
+  @IsString()
+  shippedAt?: string;
+
+  @ApiPropertyOptional({ description: 'Date de livraison (ISO, variable date_livraison)' })
+  @IsOptional()
+  @IsString()
+  deliveredAt?: string;
+
+  @ApiPropertyOptional({ description: 'Date de règlement (ISO)' })
+  @IsOptional()
+  @IsString()
+  paidAt?: string;
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()

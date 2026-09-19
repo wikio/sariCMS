@@ -72,4 +72,10 @@ export interface OrderEntity extends BaseEntity {
   country?: string | null;
   notes?: string | null;
   adminNotes?: string | null;
+  // Expédition & règlement (variables suivi_colis / transporteur / date_livraison)
+  trackingNumber?: string | null;
+  carrier?: string | null;
+  shippedAt?: Date | string | null;
+  deliveredAt?: Date | string | null;
+  paidAt?: Date | string | null;
 }

@@ -106,6 +106,22 @@ export class OrdersService extends BaseCrudService<OrderEntity> {
     if (compat.country !== undefined && typeof compat.country === 'string') compat.country = String(compat.country).slice(0,80);
     if (compat.notes !== undefined && typeof compat.notes === 'string') compat.notes = String(compat.notes).slice(0,2000);
     if (compat.adminNotes !== undefined && typeof compat.adminNotes === 'string') compat.adminNotes = String(compat.adminNotes).slice(0,2000);
+    // Suivi & transporteur : bornés comme en base (VARCHAR(80)).
+    for (const k of ['trackingNumber', 'carrier'] as const) {
+      if (compat[k] !== undefined && typeof compat[k] === 'string') {
+        (compat as Record<string, unknown>)[k] = String(compat[k]).slice(0, 80);
+      }
+    }
+    // Dates métier : une valeur vide ou illisible doit disparaître du payload.
+    // Sinon Prisma refuse l'écriture entière au lieu d'ignorer le champ.
+    for (const k of ['shippedAt', 'deliveredAt', 'paidAt'] as const) {
+      const v = (compat as Record<string, unknown>)[k];
+      if (v === undefined) continue;
+      if (v === null || v === '') { delete (compat as Record<string, unknown>)[k]; continue; }
+      const parsed = new Date(String(v));
+      if (Number.isNaN(parsed.getTime())) delete (compat as Record<string, unknown>)[k];
+      else (compat as Record<string, unknown>)[k] = parsed.toISOString();
+    }
     // taxLines : garde Json tel quel si array, nettoie les entrées vides type [[]] ou {name:undefined}
     if (compat.taxLines !== undefined) {
       if (!Array.isArray(compat.taxLines)) delete compat.taxLines;

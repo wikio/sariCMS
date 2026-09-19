@@ -192,5 +192,13 @@
   "globalDiscountTitle": "الخصم العام ≥0، بحد أقصى مليون، رقمان عشريان",
   "addressTitle": "العنوان 5–120 حرفًا",
   "emailSent": "تم إرسال البريد الإلكتروني إلى {email}",
-  "emailNotSent": "لم يُرسل البريد الإلكتروني: {reason}"
+  "emailNotSent": "لم يُرسل البريد الإلكتروني: {reason}",
+  "trackingNumber": "رقم التتبع",
+  "carrier": "شركة الشحن",
+  "paidAt": "تاريخ الدفع",
+  "shippedAt": "تاريخ الشحن",
+  "deliveredAt": "تاريخ التسليم",
+  "askTracking": "رقم تتبع الطرد (اتركه فارغًا للإرسال بدون تتبع):",
+  "askCarrier": "شركة الشحن (مثال: ياليدين، EMS، مايسترو):",
+  "paymentsSynced": "تم تأكيد {count} عملية دفع مرتبطة."
 }
