@@ -107,7 +107,13 @@ strictement additives : `20260906_add_home_sections_and_newsletter` (deux
 public de désabonnement), puis
 `20260919_add_password_reset_tokens` (une `CREATE TABLE`,
 `password_reset_tokens` — les jetons de « Mot de passe oublié ? », hachés en
-SHA-256, à usage unique). Aucune donnée existante n'est touchée.
+SHA-256, à usage unique), puis
+`20260919_add_order_shipment_fields` (cinq colonnes NULLables sur `orders` :
+`trackingNumber`, `carrier`, `shippedAt`, `deliveredAt`, `paidAt` — le numéro de
+suivi, le transporteur et les dates d'expédition, de livraison et de règlement
+que les gabarits de mail `order_shipped`, `order_delivered` et `order_payment`
+attendaient sans qu'aucun champ ne permette de les saisir). Aucune donnée
+existante n'est touchée.
 
 **Option 2 — sans Prisma (hébergement mutualisé).** Le fichier de migration est
 du SQL autonome, il s'importe dans la base déjà sélectionnée et ne contient pas
@@ -117,6 +123,7 @@ de `USE` :
 mysql -u root -p sari_cms < backend/prisma/migrations/20260906_add_home_sections_and_newsletter/migration.sql
 mysql -u root -p sari_cms < backend/prisma/migrations/20260907_add_newsletter_unsubscribe_reason/migration.sql
 mysql -u root -p sari_cms < backend/prisma/migrations/20260919_add_password_reset_tokens/migration.sql
+mysql -u root -p sari_cms < backend/prisma/migrations/20260919_add_order_shipment_fields/migration.sql
 ```
 
 Dans cet ordre : la deuxième ajoute des colonnes à la table créée par la
