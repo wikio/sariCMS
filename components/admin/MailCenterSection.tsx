@@ -111,12 +111,28 @@ export default function MailCenterSection() {
     setDirty(null);
   }, []);
 
+  /**
+   * Fusionne la réponse d'un PUT dans l'instantané courant au lieu de le
+   * remplacer.
+   *
+   * Le serveur ne renvoie que la section enregistrée : `{ok, policy, modules}`
+   * pour les modules, `{ok, layouts}` pour les gabarits. Passer cette réponse
+   * telle quelle à `apply()` écrasait l'instantané complet et faisait
+   * disparaître `catalog`, `vars`, `directory`, `files` et `sent`. Le rendu
+   * suivant plantait alors sur `snap.catalog.flatMap(...)` : l'écran tombait en
+   * erreur juste après un enregistrement qui avait pourtant réussi côté serveur.
+   */
+  const applyPartial = (patch: Partial<Snapshot>) => {
+    apply({ ...(snap as Snapshot), ...patch } as Snapshot);
+  };
+
   const reload = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch('/api/admin/mail-center', { cache: 'no-store' });
       const json = await res.json();
       if (!res.ok) throw new Error((json as { error?: string }).error || 'Lecture impossible.');
+      // Rechargement complet : le GET renvoie tout l'instantané, on remplace.
       apply(json as Snapshot);
     } catch (error) {
       showToast(error instanceof Error ? error.message : 'Centre de courrier illisible.', 'error');
@@ -138,7 +154,7 @@ export default function MailCenterSection() {
       });
       const json = await res.json().catch(() => null);
       if (!res.ok) throw new Error((json as { error?: string } | null)?.error || 'Enregistrement refusé.');
-      apply(json as Snapshot);
+      applyPartial(json as Partial<Snapshot>);
       showToast(`Enregistré dans ${snap?.directory || 'data/mail'}/`, 'success');
     } catch (error) {
       showToast(error instanceof Error ? error.message : 'Enregistrement impossible.', 'error');
@@ -153,7 +169,7 @@ export default function MailCenterSection() {
   };
 
   const varsFor = (eventId: string): MailVarDef[] => {
-    const event = snap?.catalog.flatMap((m) => m.events).find((e) => e.id === eventId);
+    const event = (snap?.catalog || []).flatMap((m) => m.events).find((e) => e.id === eventId);
     const keys = event?.vars || [];
     const list = (snap?.vars || []).filter((v) => keys.includes(v.key));
     return list.length ? list : snap?.vars || [];
@@ -168,7 +184,7 @@ export default function MailCenterSection() {
       layout: layouts.find((l) => l.id === config.layoutId) || null,
       vars,
     });
-    const event = snap?.catalog.flatMap((m) => m.events).find((e) => e.id === eventId);
+    const event = (snap?.catalog || []).flatMap((m) => m.events).find((e) => e.id === eventId);
     setPreview({ title: `Aperçu — ${event?.label || eventId}`, html });
   };
 
@@ -211,7 +227,7 @@ export default function MailCenterSection() {
       });
       const json = await res.json().catch(() => null);
       if (!res.ok) throw new Error((json as { error?: string } | null)?.error || 'Enregistrement refusé.');
-      apply(json as Snapshot);
+      applyPartial(json as Partial<Snapshot>);
       showToast(`Gabarit « ${layout.name} » enregistré dans ${snap?.directory || 'data/mail'}/layouts.json`, 'success');
     } catch (error) {
       showToast(error instanceof Error ? error.message : 'Enregistrement impossible.', 'error');
@@ -235,7 +251,7 @@ export default function MailCenterSection() {
   };
 
   const enabledCount = useMemo(() => Object.values(modules).filter((c) => c.enabled).length, [modules]);
-  const totalEvents = useMemo(() => snap?.catalog.reduce((n, m) => n + m.events.length, 0) || 0, [snap]);
+  const totalEvents = useMemo(() => (snap?.catalog || []).reduce((n, m) => n + m.events.length, 0) || 0, [snap]);
 
   if (loading && !snap) {
     return <div className="ad-card p-8 text-center text-sm">Chargement du centre de courrier…</div>;
