@@ -41,15 +41,18 @@ const RACINE_BACKEND = join(ICI, '..');
  * écrites à la main et suivent trois formes, toujours avec des identifiants
  * entre backticks. C'est volontairement tolérant — un objet non reconnu est
  * simplement ignoré, jamais deviné.
+ *
+ * Chaque objet porte aussi l'énoncé SQL d'origine (`sql`) : nommer un index
+ * manquant ne suffit pas à le réparer, autant donner la requête à copier.
  */
 export function extraireObjets(sql) {
   const colonnes = [];
   const index = [];
   const tables = [];
 
-  // CREATE TABLE `x`
-  for (const m of sql.matchAll(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?`([^`]+)`/gi)) {
-    tables.push(m[1]);
+  // CREATE TABLE `x` ( ... ) — l'énoncé court jusqu'au point-virgule.
+  for (const m of sql.matchAll(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?`([^`]+)`[\s\S]*?;/gi)) {
+    tables.push({ table: m[1], sql: m[0].trim() });
   }
 
   // ALTER TABLE `x` ... ADD COLUMN `y`  (plusieurs ADD COLUMN par ALTER)
@@ -57,13 +60,13 @@ export function extraireObjets(sql) {
     const table = m[1];
     const corps = m[2];
     for (const c of corps.matchAll(/ADD\s+COLUMN\s+`([^`]+)`/gi)) {
-      colonnes.push({ table, colonne: c[1] });
+      colonnes.push({ table, colonne: c[1], sql: m[0].trim() });
     }
   }
 
   // CREATE INDEX `i` ON `t`  /  CREATE UNIQUE INDEX
-  for (const m of sql.matchAll(/CREATE\s+(?:UNIQUE\s+)?INDEX\s+`([^`]+)`\s+ON\s+`([^`]+)`/gi)) {
-    index.push({ table: m[2], index: m[1] });
+  for (const m of sql.matchAll(/CREATE\s+(?:UNIQUE\s+)?INDEX\s+`([^`]+)`\s+ON\s+`([^`]+)`[\s\S]*?;/gi)) {
+    index.push({ table: m[2], index: m[1], sql: m[0].trim() });
   }
 
   return { tables, colonnes, index };
@@ -79,21 +82,26 @@ export function extraireObjets(sql) {
  * Fonction pure : c'est la partie qui peut se tromper, elle est donc testée
  * séparément (scripts/test-diagnose-migration.mjs).
  *
- * @param {{tables:string[], colonnes:Array, index:Array}} attendus  objets déclarés par le SQL
+ * @param {{tables:Array, colonnes:Array, index:Array}} attendus  objets déclarés par le SQL
  * @param {{tables:Set<string>, colonnes:Set<string>, index:Set<string>}} presents  objets vus en base
- * @returns {{action:'applied'|'rolled-back'|'manuel', raison:string, manquants:string[]}}
+ * @returns {{action:'applied'|'rolled-back'|'manuel', raison:string,
+ *            manquants:Array<{libelle:string, sql:string}>}}
  */
 export function decider(attendus, presents) {
   const manquants = [];
 
   for (const t of attendus.tables) {
-    if (!presents.tables.has(t)) manquants.push(`TABLE ${t}`);
+    if (!presents.tables.has(t.table)) manquants.push({ libelle: `TABLE ${t.table}`, sql: t.sql });
   }
-  for (const { table, colonne } of attendus.colonnes) {
-    if (!presents.colonnes.has(`${table}.${colonne}`)) manquants.push(`COLONNE ${table}.${colonne}`);
+  for (const c of attendus.colonnes) {
+    if (!presents.colonnes.has(`${c.table}.${c.colonne}`)) {
+      manquants.push({ libelle: `COLONNE ${c.table}.${c.colonne}`, sql: c.sql });
+    }
   }
-  for (const { table, index } of attendus.index) {
-    if (!presents.index.has(`${table}.${index}`)) manquants.push(`INDEX ${table}.${index}`);
+  for (const i of attendus.index) {
+    if (!presents.index.has(`${i.table}.${i.index}`)) {
+      manquants.push({ libelle: `INDEX ${i.table}.${i.index}`, sql: i.sql });
+    }
   }
 
   const totalAttendu = attendus.tables.length + attendus.colonnes.length + attendus.index.length;
@@ -246,7 +254,7 @@ async function main() {
 
       console.log('\nConstat :');
       const fmt = (ok) => (ok ? 'présent' : 'MANQUANT');
-      for (const t of attendus.tables) console.log(`  table  ${t} : ${fmt(presents.tables.has(t))}`);
+      for (const t of attendus.tables) console.log(`  table  ${t.table} : ${fmt(presents.tables.has(t.table))}`);
       for (const { table, colonne } of attendus.colonnes) {
         console.log(`  colonne ${table}.${colonne} : ${fmt(presents.colonnes.has(`${table}.${colonne}`))}`);
       }
@@ -266,7 +274,15 @@ async function main() {
       } else {
         if (decision.manquants.length) {
           console.log('  1) créer ce qui manque :');
-          for (const m of decision.manquants) console.log(`       - ${m}`);
+          for (const m of decision.manquants) {
+            console.log(`\n     -- ${m.libelle}`);
+            for (const ligne of m.sql.split('\n')) console.log(`     ${ligne}`);
+          }
+          console.log(
+            '\n     Un ALTER peut regrouper plusieurs ADD COLUMN : si certaines colonnes\n' +
+            "     existent déjà, ne gardez que la clause ADD COLUMN manquante, sinon\n" +
+            "     MySQL repartira en erreur 1060 « Duplicate column name ».",
+          );
         } else {
           console.log('  1) lire l’erreur ci-dessus, le script n’a pas d’objet à comparer');
         }

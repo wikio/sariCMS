@@ -21,6 +21,13 @@ const MIGRATIONS = join(ICI, '..', 'prisma', 'migrations');
 let ok = 0;
 let ko = 0;
 const verif = (libelle, condition, detail = '') => {
+  // Une condition qui n'est pas un booléen est un bug du test, pas un succès :
+  // une fonction ou un objet passé par erreur serait toujours « vrai ».
+  if (typeof condition !== 'boolean') {
+    ko++;
+    console.log(`  ❌ ${libelle} — condition de type ${typeof condition}, refusée`);
+    return;
+  }
   if (condition) { ok++; console.log(`  ✅ ${libelle}`); }
   else { ko++; console.log(`  ❌ ${libelle} ${detail}`); }
 };
@@ -66,8 +73,8 @@ for (const attendu of ['trackingNumber', 'carrier', 'shippedAt', 'deliveredAt', 
 console.log('\n3) Extraction sur une migration avec CREATE TABLE');
 const a906 = extraireObjets(sql('20260906_add_home_sections_and_newsletter'));
 verif('2 tables reconnues', a906.tables.length === 2, `(obtenu ${a906.tables.length})`);
-verif('home_sections', a906.tables.includes('home_sections'));
-verif('newsletter_subscribers', a906.tables.includes('newsletter_subscribers'));
+verif('home_sections', a906.tables.some((t) => t.table === 'home_sections'));
+verif('newsletter_subscribers', a906.tables.some((t) => t.table === 'newsletter_subscribers'));
 
 console.log('\n4) Décision — les objets existent tous');
 let d = decider(a907, jeu(
@@ -90,7 +97,7 @@ d = decider(a907, jeu(
   [],
 ));
 verif('action = manuel', d.action === 'manuel', `(obtenu ${d.action})`);
-verif('seul l’index manque', d.manquants.length === 1 && d.manquants[0].startsWith('INDEX'),
+verif('seul l’index manque', d.manquants.length === 1 && d.manquants[0].libelle.startsWith('INDEX'),
   `(obtenu ${JSON.stringify(d.manquants)})`);
 
 console.log('\n7) Décision — état partiel (une seule colonne sur deux)');
@@ -102,6 +109,29 @@ console.log('\n8) Décision — SQL sans objet reconnu');
 d = decider({ tables: [], colonnes: [], index: [] }, jeu([], [], []));
 verif('action = manuel', d.action === 'manuel');
 verif('le motif renvoie vers la colonne logs', /logs/.test(d.raison));
+
+console.log('\n9) Le SQL restitué est bien celui de la migration');
+const idxManquant = decider(a907, jeu(
+  [],
+  ['newsletter_subscribers.unsubscribeReason', 'newsletter_subscribers.unsubscribeNote'],
+  [],
+)).manquants[0];
+verif('énoncé CREATE INDEX fourni', /CREATE\s+INDEX/i.test(idxManquant.sql), `(obtenu ${idxManquant.sql})`);
+verif(
+  'le bon nom d’index',
+  idxManquant.sql.includes('`newsletter_subscribers_unsubscribeReason_idx`'),
+);
+verif('la bonne table', /ON\s+`newsletter_subscribers`/i.test(idxManquant.sql));
+verif('la bonne colonne', idxManquant.sql.includes('`unsubscribeReason`'));
+verif('énoncé terminé par un point-virgule', idxManquant.sql.trimEnd().endsWith(';'));
+
+const colManquante = decider(a907, jeu([], [], [])).manquants.find((m) => m.libelle.startsWith('COLONNE'));
+verif('ALTER fourni pour une colonne', /ALTER\s+TABLE\s+`newsletter_subscribers`/i.test(colManquante.sql));
+verif('ADD COLUMN présent', /ADD\s+COLUMN\s+`unsubscribeReason`/i.test(colManquante.sql));
+
+const tbl = decider(a906, jeu([], [], [])).manquants.find((m) => m.libelle === 'TABLE home_sections');
+verif('CREATE TABLE fourni', /CREATE\s+TABLE\s+`home_sections`/i.test(tbl.sql));
+verif('corps de la table inclus', /PRIMARY\s+KEY/i.test(tbl.sql));
 
 console.log(`\n${ok} ✅ / ${ko} ❌`);
 process.exit(ko ? 1 : 0);
