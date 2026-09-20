@@ -268,7 +268,14 @@ function StatTile({ label, value, icon: Icon, accent }: { label: string; value: 
   );
 }
 
-export function StarRating({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+/*
+ * Composant local : un fichier de page App Router ne peut exporter que
+ * `default`, `config`, `metadata`, `viewport`, `generateStaticParams`, etc.
+ * Exporter `StarRating` d'ici faisait échouer `next build` à l'étape
+ * « Running TypeScript » (TS2344 sur le type de route généré). Rien d'autre
+ * ne l'importe, il reste donc privé à ce fichier.
+ */
+function StarRating({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   return (
     <span className="inline-flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
       {[1, 2, 3, 4, 5].map((n) => (
