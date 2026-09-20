@@ -153,6 +153,46 @@ SHOW TABLES LIKE 'newsletter_subscribers';
 SELECT COUNT(*) FROM home_sections;      -- 0 est normal : voir 2.2 bis
 ```
 
+### 2.1 ter `Error: P3009` — une migration est marquée échouée
+
+```
+Error: P3009
+migrate found failed migrations in the target database, new migrations will not be applied.
+The `20260907_add_newsletter_unsubscribe_reason` migration started at … failed
+```
+
+Prisma bloque tout tant qu'une ligne de `_prisma_migrations` est en échec, et sa
+sortie ne dit ni pourquoi, ni si les objets existent déjà. C'est pourtant ce qui
+détermine la réparation :
+
+| État réel de la base | Commande |
+|---|---|
+| tous les objets de la migration existent | `npx prisma migrate resolve --applied <migration>` |
+| aucun n'existe | `npx prisma migrate resolve --rolled-back <migration>` |
+| une partie seulement | compléter à la main, puis `--applied` |
+
+L'état partiel est un cas réel : MySQL n'a pas de DDL transactionnel, un `ALTER`
+peut passer pendant que le `CREATE INDEX` qui suit échoue.
+
+**Un outil fait ce constat pour vous**, en lecture seule — il ne modifie ni la
+base ni `_prisma_migrations`, il imprime la commande à lancer :
+
+```bash
+cd backend
+npm run db:migration-diagnose                 # toutes les migrations échouées
+npm run db:migration-diagnose 20260907_add_newsletter_unsubscribe_reason
+```
+
+Il lit l'erreur enregistrée dans `_prisma_migrations.logs`, extrait du
+`migration.sql` les tables, colonnes et index attendus, les compare à
+`information_schema`, puis donne le constat objet par objet et la commande
+exacte. Sa logique de décision est couverte par `npm run db:migration-diagnose-test`
+(26 assertions sur les vraies migrations du dépôt) ; l'accès base lui-même ne
+l'est pas, faute de MySQL dans l'environnement de contrôle.
+
+Relancez ensuite `npx prisma migrate deploy` : il enchaîne sur les migrations
+suivantes.
+
 ### 2.2 Charger les données
 
 Deux jeux sont disponibles, **choisissez-en un** :
