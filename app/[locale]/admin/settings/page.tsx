@@ -7,6 +7,7 @@ import { previewCode, DEFAULT_TEMPLATES, type CodeKind } from '@/lib/codes';
 import VerificationSettingsSection from '@/components/admin/VerificationSettingsSection';
 import SmtpSection from '@/components/admin/SmtpSection';
 import MailCenterSection from '@/components/admin/MailCenterSection';
+import MaintenanceSection from '@/components/admin/MaintenanceSection';
 import { testErpConnection } from '@/lib/erp';
 import { useToast } from '@/components/admin/Toast';
 import GedPicker from '@/components/admin/GedPicker';
@@ -14,7 +15,7 @@ import DateFormatPicker from '@/components/admin/DateFormatPicker';
 import { notifyDateSettingsChanged } from '@/lib/use-date-format';
 
 type SectionId = 'general' | 'commerce' | 'security' | 'integrations' | 'emails' | 'seo';
-type TabId = 'general' | 'dates' | 'products' | 'codes' | 'quotes' | 'invoicing' | 'security' | 'smtp' | 'database' | 'verification' | 'mail' | 'seo';
+type TabId = 'general' | 'dates' | 'products' | 'codes' | 'quotes' | 'invoicing' | 'security' | 'smtp' | 'database' | 'maintenance' | 'verification' | 'mail' | 'seo';
 
 interface TabDef { id: TabId; label: string }
 interface SectionDef { id: SectionId; label: string; tabs: TabDef[] }
@@ -37,6 +38,7 @@ const SECTIONS: SectionDef[] = [
     { id: 'smtp', label: 'SMTP / Email' },
     { id: 'verification', label: 'Vérification des documents' },
     { id: 'database', label: 'Base de données' },
+    { id: 'maintenance', label: 'Journaux & maintenance' },
   ] },
   { id: 'emails', label: 'Emails', tabs: [
     { id: 'mail', label: 'Emails & notifications' },
@@ -58,6 +60,7 @@ const SEARCH_INDEX: Record<TabId, string> = {
   smtp: 'smtp hôte port utilisateur mot de passe expéditeur tls ssl email',
   verification: 'vérification vérif document code clé hash api externe qr anti-robot catalogue expire révoqué falsifié captcha',
   database: 'base de données driver mysql postgresql mongodb json url schéma',
+  maintenance: 'journaux log audit logs rétention conservation purge corbeille cron planification tâche jetons expirés audit_logs refresh_tokens',
   mail: 'email emails notification message objet modèle gabarit template constructeur variable fusion commande devis candidature newsletter politique envoi plafond désinscription journal',
   seo: 'seo titre description mots-clés open graph twitter favicon canonical robots',
 };
@@ -331,6 +334,8 @@ export default function AdminSettingsPage() {
           {tab === 'mail' && <MailCenterSection />}
 
           {tab === 'seo' && <SeoSection />}
+
+          {tab === 'maintenance' && <MaintenanceSection />}
 
           {tab === 'database' && (
             <section className="ad-card p-5 space-y-4">
