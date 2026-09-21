@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Post, Put } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { perm } from '../../common/constants/permissions';
@@ -7,6 +7,7 @@ import { CatalogImportService } from './catalog-import.service';
 import { ImportCatalogDto } from './dto/import-catalog.dto';
 import { TrashPurgeTask } from './trash-purge.task';
 import { LogRetentionTask } from './log-retention.task';
+import { MaintenanceSettingsService, MaintenanceSettings } from './maintenance-settings.service';
 
 @ApiTags('settings')
 @ApiBearerAuth()
@@ -15,6 +16,7 @@ export class SettingsController {
   constructor(
     private readonly purge: TrashPurgeTask,
     private readonly retention: LogRetentionTask,
+    private readonly maintenance: MaintenanceSettingsService,
     private readonly catalog: CatalogImportService,
     private readonly config: ConfigService,
   ) {}
@@ -46,6 +48,36 @@ export class SettingsController {
   @ApiOperation({ summary: 'Purger manuellement la corbeille expirée (toutes collections)' })
   run() {
     return this.purge.purgeAll();
+  }
+
+  @Get('maintenance')
+  @RequirePermissions(perm('settings', 'read'))
+  @ApiOperation({ summary: 'Rétention des journaux et planification des purges' })
+  getMaintenance() {
+    return this.maintenance.status();
+  }
+
+  @Put('maintenance')
+  @RequirePermissions(perm('settings', 'admin'))
+  @ApiOperation({
+    summary:
+      "Enregistrer la rétention et la planification, puis replanifier les deux tâches",
+  })
+  async putMaintenance(@Body() body: Partial<MaintenanceSettings>) {
+    const status = await this.maintenance.save(body);
+    // Le décorateur @Cron a figé une expression au démarrage : sans ce
+    // réenregistrement, un réglage saisi ici n'aurait d'effet qu'au redéploiage.
+    await Promise.all([this.retention.applySchedule(), this.purge.applySchedule()]);
+    return status;
+  }
+
+  @Delete('maintenance')
+  @RequirePermissions(perm('settings', 'admin'))
+  @ApiOperation({ summary: "Revenir aux variables d'environnement" })
+  async resetMaintenance() {
+    const status = await this.maintenance.reset();
+    await Promise.all([this.retention.applySchedule(), this.purge.applySchedule()]);
+    return status;
   }
 
   @Post('logs/apply-retention')
