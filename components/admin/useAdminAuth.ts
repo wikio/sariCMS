@@ -145,3 +145,19 @@ export function clearAuthCache() {
   cachedUser = null;
   authCheckPromise = null;
 }
+
+/**
+ * Amorce le cache avec un utilisateur dont l'identité vient d'être vérifiée.
+ *
+ * La page de connexion connaît déjà l'administrateur (la route
+ * `/api/admin/auth/login` répond `{ ok: true, user }`). Elle vidait pourtant le
+ * cache avant de naviguer, ce qui forçait le tableau de bord à refaire un
+ * aller-retour `/api/admin/auth/me` — parfois suivi d'un refresh — avant
+ * d'afficher quoi que ce soit. En amorçant le cache, l'écran d'accueil se rend
+ * immédiatement.
+ */
+export function setAuthCache(user: AdminUser) {
+  log('Seeding auth cache');
+  cachedUser = user;
+  authCheckPromise = null;
+}

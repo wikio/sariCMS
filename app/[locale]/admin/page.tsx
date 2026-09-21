@@ -7,7 +7,7 @@ import { ArrowLeft, Lock, LogIn, Shield } from 'lucide-react';
 import PixelGridLoader from '@/components/admin/PixelGridLoader';
 import ServerCaptcha from '@/components/ServerCaptcha';
 import { cmsFetch, CmsError } from '@/lib/cms';
-import { clearAuthCache } from '@/components/admin/useAdminAuth';
+import { clearAuthCache, setAuthCache, type AdminUser } from '@/components/admin/useAdminAuth';
 import { loadAdminSettings } from '@/lib/admin-settings';
 
 export default function AdminLoginPage() {
@@ -44,23 +44,33 @@ export default function AdminLoginPage() {
     setSecurity(s.security);
   }, []);
 
-  const accept = (result: unknown) => {
-    const data = result as { user?: { type?: string }; requires2fa?: boolean; challengeToken?: string } | null;
+  /**
+   * Traite la réponse de connexion.
+   *
+   * @returns true seulement si la connexion aboutit et que la navigation vers le
+   * tableau de bord est lancée — l'appelant garde alors l'indicateur de
+   * chargement allumé jusqu'à ce que l'écran d'accueil prenne la place.
+   */
+  const accept = (result: unknown): boolean => {
+    const data = result as { user?: AdminUser & { type?: string }; requires2fa?: boolean; challengeToken?: string } | null;
     if (data?.requires2fa && data?.challengeToken) {
       setChallengeToken(data.challengeToken);
-      return;
+      return false;
     }
     if (!data?.user) {
       setError(t('wrongPassword'));
-      return;
+      return false;
     }
     if (data.user.type !== 'admin') {
       clearAuthCache();
       setError(t('notAdmin'));
-      return;
+      return false;
     }
-    clearAuthCache();
+    // On connaît déjà l'administrateur : inutile de laisser le tableau de bord
+    // refaire un aller-retour /me (puis un refresh) avant d'afficher l'écran.
+    setAuthCache(data.user);
     router.push(`/${locale}/admin/dashboard`);
+    return true;
   };
 
   const onSubmit = async (e: React.FormEvent) => {
@@ -101,19 +111,24 @@ export default function AdminLoginPage() {
         const errCode = (result as { code?: string } | null)?.code;
         const errMsg = (result as { error?: string } | null)?.error || t('wrongPassword');
         if (errCode === 'CAPTCHA_INVALID' || errCode === 'CAPTCHA_REQUIRED') {
-          setError(errMsg);
           // Le captcha a été consommé (même si incorrect), il faut le régénérer
           setCaptchaOk(false);
           setCaptchaData(null);
-          return;
         }
         setError(errMsg);
+        setLoading(false);
         return;
       }
-      accept(result);
+      /*
+       * Succès : on NE remet pas `loading` à false. Sans ça, le formulaire de
+       * connexion réapparaissait une fraction de seconde pendant que le tableau
+       * de bord se chargeait. Le chargeur reste affiché, et comme aucune page
+       * `loading.tsx` n'existe sous /admin, Next laisse cet écran en place
+       * jusqu'à ce que la route d'accueil soit prête à s'afficher.
+       */
+      if (!accept(result)) setLoading(false);
     } catch (err) {
       setError(err instanceof CmsError ? (err.status === 401 ? t('wrongPassword') : err.message) : t('apiUnreachable'));
-    } finally {
       setLoading(false);
     }
   };
