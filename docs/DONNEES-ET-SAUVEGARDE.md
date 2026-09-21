@@ -22,14 +22,15 @@ de la même façon.
 
 | Support | Contenu | Sauvegarde |
 | --- | --- | --- |
-| **MySQL** | Contenus, catalogue, commandes, devis, candidatures, comptes, rôles, permissions, pistes d'audit, réglages de visibilité, de maintenance et de marque, coupons, taxes, **réglages des écrans d'administration** (table `settings`, clés `doc_*`) | `mysqldump` |
+| **MySQL** | Contenus, catalogue, commandes, devis, candidatures, comptes, rôles, permissions, pistes d'audit, réglages de visibilité, de maintenance et de marque, coupons, taxes, **réglages des écrans d'administration** (table `settings`, clés `doc_*`) et **numérotation des références produits** (clé `sku_seq`) | `mysqldump` |
 | **Fichiers du serveur** | Médias (`public/uploads`), réglages SMTP, centre de courrier, SEO, newsletter, vérification | copie des dossiers |
 | **Navigateur de l'administrateur** | **Journaux non transférés** : encaissements, utilisations de coupons, imports, compteur de références produits, annuaire, notes par personne, contenus d'édition | **aucune** — voir §4 |
 
 > ⚠️ Le troisième étage s'est réduit mais n'a pas disparu. Ce qu'il reste n'est pas
 > un réglage recopié : ce sont des **entrées ajoutées les unes après les autres**,
 > qui n'ont pas de table et se perdent au vidage des données du site — changer de
-> navigateur, de poste, ou de profil, les efface.
+> navigateur, de poste, ou de profil, les efface. Le défaut le plus grave de cette
+> liste, la référence produit double, est traité à part (§4 B bis).
 
 > Les réglages d'écran (devises, taxonomies, modes de paiement, configuration
 > boutique, Paramètres, gabarits de notification) vivent en base depuis cette
@@ -255,6 +256,46 @@ table lue par un endpoint de réglages. Ils sont retirés **côté client avant 
 et **rejetés côté serveur**, le second filtre ne valant que si le premier a été
 contourné : la valeur ne part même pas sur le réseau.
 
+### B bis. Le compteur de références produits, devenu serveur
+
+| | Avant | Maintenant |
+| --- | --- | --- |
+| Numérotation | `sari_sku_seq` dans le navigateur de chaque poste | ligne `sku_seq` de la table `settings`, groupe `counter` |
+| Format | appliqué par le navigateur, depuis son cache | relu dans `doc_admin.codes.product` à l'écriture |
+| Référence non fournie | `PRO-` + 5 chiffres de l'horodatage | première référence libre, vérifiée en table |
+
+Le compteur local était le défaut le plus grave de l'inventaire : deux
+administrateurs publiaient des produits portant **la même référence**, et
+`products.sku` n'a aucune contrainte d'unicité pour la refuser. Le repli du
+serveur, `Date.now()` tronqué à cinq chiffres, bouclait toutes les 100 000 ms —
+deux créations à environ 1 min 40 s d'intervalle portaient donc déjà la même
+valeur.
+
+Trois garde-fous, dans l'ordre où ils interviennent :
+
+- le compteur est **re-calé sur l'existant** à chaque attribution (plus haut
+  numéro trouvé parmi les 200 premières références triées) : une base restaurée,
+  un poste neuf ou la ligne effacée ne remettent pas la numérotation à 1 ;
+- la référence candidate est **contrôlée en table avant insertion**, corbeille
+  incluse, et on passe à la suivante si elle est prise ;
+- une référence **saisie à la main est conservée** telle quelle — c'est souvent un
+  code fabricant ou un code repris de l'ERP, et le réécrire serait pire que le
+  défaut combattu ; le compteur est seulement relevé au-dessus.
+
+Mesuré : dix créations lancées en parallèle rendent dix références distinctes
+(sous le pilote JSON, un seul processus). La limite est honnête : sous MySQL avec
+plusieurs instances, une réservation est une lecture suivie d'une écriture, et
+l'abstraction de dépôt ne permet ni `UPDATE … WHERE` ni transaction. Fermer
+définitivement cette fenêtre demande une table de compteur contrainte, donc une
+migration Prisma — voir §7 et `docs/REPRISE-MYSQL.md` §2.1 ter.
+
+L'écran ne pré-remplit plus le champ « Code produit » : une proposition faite avec
+un compteur local serait exactement le défaut supprimé. Le champ reste vide, avec
+« Laissé vide → attribué à l'enregistrement ».
+
+La clé `sari_sku_seq` peut subsister dans un cache déjà en place : plus rien ne la
+lit.
+
 ### C. Relié à une table qui existait déjà — sans nouveau magasin
 
 Le **logo de la vitrine** est le cas qui a déclenché cette vague, et il ne
@@ -303,18 +344,14 @@ Prisma, donc un arbitrage de schéma ; un document les aurait détruits à la lo
 | `sari_payment_records` | encaissements : validé, en attente, rejeté, motif | table de journal |
 | `sari_coupon_uses` | usages par coupon | table de journal |
 | `sari_import_log` | imports de catalogue | table de journal |
-| `sari_sku_seq` | **compteur de références produits** | compteur serveur atomique |
 | `sari_users_registry` | annuaire local de comptes | à arbitrer avec la table `users` |
+
+**`sari_sku_seq` a été traité depuis, et autrement.** Ce n'était pas un journal à
+transférer mais un défaut à supprimer : voir §4 B bis.
 
 `globalTaxId` de `sari_shop_config` désigne désormais une taxe **en base** alors que
 l'aiguillage vivait dans un cache local : les deux sont maintenant synchronisés, ce
 qui ferme une incohérence ancienne entre l'écran de facturation et le moteur de taxe.
-
-**Le défaut le plus grave de cette liste est `sari_sku_seq`.** Deux administrateurs
-qui créent un produit en même temps tirent le même numéro depuis leur compteur
-local et produisent la **même référence**. Ce n'est pas une perte de confort : deux
-fiches partagent un identifiant métier, et tout ce qui s'appuie sur le SKU
-(import, stock, facture) les confond. À traiter avant les journaux.
 
 ### F. Clés qui doivent rester dans le navigateur
 
@@ -409,14 +446,14 @@ synchronisation — le poste partirait en avance sur la base sans jamais le dire
 
 Ce qui attend encore un export automatique, parce que ce sont des journaux en
 append et non des réglages (voir §4 E), reste donc à sauver à la main depuis le
-poste qui les détient :
+poste qui les détient. Le compteur de références n'en fait plus partie : il est en
+base depuis §4 B bis.
 
 ```js
 copy(JSON.stringify({
   uses:    JSON.parse(localStorage.getItem('sari_coupon_uses')     || '[]'),
   records: JSON.parse(localStorage.getItem('sari_payment_records') || '[]'),
   imports: JSON.parse(localStorage.getItem('sari_import_log')       || '[]'),
-  skuSeq:  localStorage.getItem('sari_sku_seq'),
   users:   JSON.parse(localStorage.getItem('sari_users_registry')  || '[]'),
 }, null, 2));
 ```
@@ -450,9 +487,10 @@ de pendant en base.
   clés `doc_admin`, `doc_shop`, `doc_taxonomies`, `doc_currencies`,
   `doc_payments`, `doc_notify`).
   **Restent sans sauvegarde automatique** : enregistrements de paiement,
-  utilisations de coupons, journal d'imports, compteur de références produits,
-  annuaire local. Ce sont des journaux, pas des réglages : ils demandent des
-  lignes et une migration, non un document — voir §4 E.
+  utilisations de coupons, journal d'imports, annuaire local. Ce sont des
+  journaux, pas des réglages : ils demandent des lignes et une migration, non un
+  document — voir §4 E. Le compteur de références produits, lui, est passé en
+  base et entre dans le `mysqldump` — voir §4 B bis.
 - **La reprise du catalogue existant est automatique** (§5), mais elle ne se
   déclenche qu'une fois : au tout premier chargement d'un poste qui n'a jamais
   synchronisé, et seulement si la base est vide. Si l'administrateur ouvre

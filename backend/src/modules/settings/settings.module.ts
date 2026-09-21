@@ -7,11 +7,16 @@ import { MaintenanceSettingsService } from './maintenance-settings.service';
 import { BrandSettingsService } from './brand-settings.service';
 import { PublicBrandController } from './public-brand.controller';
 import { SettingsDocsService } from './settings-docs.service';
+import { SkuSeqService } from './sku-seq.service';
 
 @Module({
   controllers: [SettingsController, PublicBrandController],
   providers: [TrashPurgeTask, LogRetentionTask, MaintenanceSettingsService, BrandSettingsService,
-    CatalogImportService, SettingsDocsService],
-  exports: [MaintenanceSettingsService, BrandSettingsService, CatalogImportService],
+    CatalogImportService, SettingsDocsService, SkuSeqService],
+  // `SettingsDocsService` et `SkuSeqService` sont exportés parce que le service
+  // produits lit le format de référence dans `doc_admin` et réserve ses numéros
+  // ici : la règle de la référence ne vit pas dans deux endroits.
+  exports: [MaintenanceSettingsService, BrandSettingsService, CatalogImportService,
+    SettingsDocsService, SkuSeqService],
 })
 export class SettingsModule {}

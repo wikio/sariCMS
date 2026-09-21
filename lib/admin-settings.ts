@@ -192,13 +192,14 @@ export function saveAdminSettings(next: AdminSettings) {
   saveHook?.(next);
 }
 
-export function nextSku(format = loadAdminSettings().codes.product): string {
-  const n = Number(typeof window !== 'undefined' ? localStorage.getItem('sari_sku_seq') : 0) + 1;
-  if (typeof window !== 'undefined') localStorage.setItem('sari_sku_seq', String(n));
-  const y = new Date().getFullYear();
-  const yy = String(y % 100).padStart(2, '0');
-  return format
-    .replace(/\{XX\}/g, yy)
-    .replace(/\{YY\}/g, yy)
-    .replace(/\{ID\}/g, String(n).padStart(5, '0'));
-}
+/*
+ * `nextSku()` vivait ici : compteur dans `sari_sku_seq`, format appliqué dans le
+ * navigateur. Supprimé, et volontairement non remplacé. Un compteur par poste est
+ * précisément le défaut — deux administrateurs publiaient la même référence, et
+ * `products.sku` n'a aucune contrainte d'unicité pour la refuser. La référence est
+ * attribuée à l'écriture par `ProductsService`, qui consulte `SkuSeqService`
+ * (`backend/src/modules/settings/sku-seq.service.ts`).
+ *
+ * La clé `sari_sku_seq` peut rester dans un cache déjà en place : plus rien ne la
+ * lit, et la nettoyer depuis une page d'administration n'apporterait rien.
+ */
