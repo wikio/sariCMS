@@ -295,6 +295,56 @@ function documentShell(opts: {
 </html>`;
 }
 
+/**
+ * Totaux tels que les calcule `computeTotals` (`lib/commerce-math.ts`).
+ * Seuls les champs affichés par le document sont requis.
+ */
+export interface DocTotals {
+  subtotal: number;
+  discount: number;
+  productDiscount: number;
+  globalDiscount: number;
+  couponDiscount: number;
+  shipping: number;
+  productShipping: number;
+  globalShipping: number;
+  taxLines: Array<{ id: string; name: string; rate: number; mode: string; amount: number; base?: number; included?: boolean }>;
+  taxTotal: number;
+  total: number;
+}
+
+/**
+ * Prépare un document (commande ou devis) pour l'impression en y appliquant les
+ * totaux calculés.
+ *
+ * La fiche de l'admin n'affiche pas les montants stockés sur la ligne : elle les
+ * recalcule à chaque rendu à partir des articles, des règles de taxe, des
+ * coupons et de la zone de livraison. Sans cette étape, le PDF partait de la
+ * ligne brute et restait muet sur la TVA, la remise globale et la livraison dès
+ * que ces champs n'avaient jamais été persistés — alors que la fiche, elle,
+ * affichait tout. Le document imprimé montre donc exactement ce que l'écran
+ * montre.
+ *
+ * Passer `null` laisse le document intact (document différent de celui calculé).
+ */
+export function withTotals<T extends object>(doc: T, totals: DocTotals | null | undefined): T {
+  if (!totals) return doc;
+  return {
+    ...doc,
+    subtotal: totals.subtotal,
+    productDiscount: totals.productDiscount,
+    globalDiscount: totals.globalDiscount,
+    couponDiscount: totals.couponDiscount,
+    discountTotal: totals.discount,
+    productShipping: totals.productShipping,
+    globalShipping: totals.globalShipping,
+    shippingFee: totals.shipping,
+    taxLines: totals.taxLines,
+    taxTotal: totals.taxTotal,
+    total: totals.total,
+  } as T;
+}
+
 /** Template PDF pour un devis (utilise la réponse détaillée si présente, sinon les lignes de la demande). */
 export function quotePdfHtml(quote: Quote, company: CompanyInfo, locale?: PdfLocale | string): string {
   const source = quote.response?.mode === 'detailed' && quote.response.lines
@@ -427,8 +477,12 @@ export function orderPdfHtml(order: Order, company: CompanyInfo, locale?: PdfLoc
   if (typeof oAny.productDiscount === 'number' && oAny.productDiscount > 0) breakdown.push({ label: tr.productDiscount, value: -oAny.productDiscount, muted: true });
   if (typeof oAny.globalDiscount === 'number' && oAny.globalDiscount > 0) breakdown.push({ label: tr.globalDiscount, value: -oAny.globalDiscount, muted: true });
   if (typeof oAny.couponDiscount === 'number' && oAny.couponDiscount > 0) breakdown.push({ label: tr.couponDiscount(oAny.coupon || ''), value: -oAny.couponDiscount, muted: true });
-  if (typeof oAny.discountTotal === 'number' && oAny.discountTotal > 0 && !oAny.productDiscount && !oAny.globalDiscount) breakdown.push({ label: tr.discounts, value: -oAny.discountTotal, muted: true });
-  else if (typeof oAny.discount === 'number' && oAny.discount > 0 && !oAny.productDiscount) breakdown.push({ label: tr.discount, value: -oAny.discount, muted: true });
+  // Repli « Remises » agrégé : seulement si aucun détail n'est affiché. La
+  // fiche commande exige aussi `couponDiscount === 0` — sans cette garde, un
+  // document avec un simple coupon afficherait la remise du coupon PUIS le
+  // total des remises, donc la même remise deux fois.
+  if (typeof oAny.discountTotal === 'number' && oAny.discountTotal > 0 && !oAny.productDiscount && !oAny.globalDiscount && !oAny.couponDiscount) breakdown.push({ label: tr.discounts, value: -oAny.discountTotal, muted: true });
+  else if (typeof oAny.discount === 'number' && oAny.discount > 0 && !oAny.productDiscount && !oAny.globalDiscount && !oAny.couponDiscount) breakdown.push({ label: tr.discount, value: -oAny.discount, muted: true });
   if (oAny.productShipping > 0) breakdown.push({ label: tr.productShipping, value: oAny.productShipping });
   if (oAny.globalShipping > 0) breakdown.push({ label: tr.globalShipping, value: oAny.globalShipping });
   if (typeof oAny.shippingFee === 'number' && oAny.shippingFee > 0 && !oAny.productShipping && !oAny.globalShipping) breakdown.push({ label: tr.shipping, value: oAny.shippingFee });

@@ -18,7 +18,7 @@ import MessageComposer from '@/components/admin/MessageComposer';
 import QuoteResponseComposer from '@/components/admin/QuoteResponseComposer';
 import { sendModuleMail } from '@/lib/mail';
 import { getConfig } from '@/lib/data';
-import { orderPdfHtml, printHtml, quotePdfHtml } from '@/lib/pdf-templates';
+import { orderPdfHtml, printHtml, quotePdfHtml, withTotals } from '@/lib/pdf-templates';
 import { nextCodeFor } from '@/lib/codes';
 import { fetchInvoiceFromErp } from '@/lib/erp';
 import DateText from '@/components/shared/DateText';
@@ -555,9 +555,23 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
       address: cfg.meta.address,
       logo: cfg.meta.logo,
     };
+    /*
+     * Le PDF doit afficher les mêmes montants que la fiche.
+     *
+     * La fiche n'affiche PAS les totaux stockés sur la ligne : elle les
+     * recalcule à chaque rendu (`totals`, issu de `computeTotals` sur
+     * `open.items`, taxes et coupons de la boutique inclus, avec les remises
+     * et frais de livraison saisis à la main). `printRow` recevait la ligne
+     * brute : dès qu'un document ne portait pas `taxLines` / `globalDiscount` /
+     * `shippingFee` en base, le PDF n'avait rien à montrer alors que la fiche,
+     * elle, affichait tout. On lui donne donc exactement ce que la fiche a
+     * sous les yeux. (`row` est toujours `open` aux deux appels — la garde
+     * évite de plaquer des totaux calculés pour un autre document.)
+     */
+    const printable = withTotals(row, row === open ? (totals as any) : null);
     const html = kind === 'quotes'
-      ? quotePdfHtml(row as Quote, company, locale)
-      : orderPdfHtml(row as Order, company, locale);
+      ? quotePdfHtml(printable as Quote, company, locale)
+      : orderPdfHtml(printable as Order, company, locale);
     const title = kind === 'quotes'
       ? (('reference' in row && row.reference) || `Devis #${row.id}`)
       : (('code' in row && row.code) || `Commande #${row.id}`);
