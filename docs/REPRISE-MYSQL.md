@@ -99,6 +99,12 @@ done
 npx prisma migrate deploy
 ```
 
+> Ne pas ajouter les migrations de septembre à cette liste : `migrate resolve
+> --applied` inscrit « fait » sans rien exécuter. Si la base ne contient pas
+> encore `home_sections`, la marquer appliquée la fait définitivement sauter.
+> On ne déclare appliquée que ce que la base contient réellement — d'où le
+> contrôle de §2.1 ter.
+
 `migrate deploy` ne lance alors que les migrations manquantes, toutes
 strictement additives : `20260906_add_home_sections_and_newsletter` (deux
 `CREATE TABLE`, `home_sections` et `newsletter_subscribers`),
@@ -112,8 +118,11 @@ SHA-256, à usage unique), puis
 `trackingNumber`, `carrier`, `shippedAt`, `deliveredAt`, `paidAt` — le numéro de
 suivi, le transporteur et les dates d'expédition, de livraison et de règlement
 que les gabarits de mail `order_shipped`, `order_delivered` et `order_payment`
-attendaient sans qu'aucun champ ne permette de les saisir). Aucune donnée
-existante n'est touchée.
+attendaient sans qu'aucun champ ne permette de les saisir), puis
+`20260921_add_coupons_and_tax_rules` (deux `CREATE TABLE`, `coupons` et
+`tax_rules` — le catalogue de promotions et les taux d'imposition, qui ne
+vivaient que dans le `localStorage` du navigateur d'administration). Aucune
+donnée existante n'est touchée : deux tables neuves, cinq colonnes NULLables.
 
 **Option 2 — sans Prisma (hébergement mutualisé).** Le fichier de migration est
 du SQL autonome, il s'importe dans la base déjà sélectionnée et ne contient pas
@@ -133,6 +142,20 @@ qui ne touche à rien d'existant.
 Attention : des `CREATE TABLE` et `ALTER TABLE` simples, pas d'`IF NOT EXISTS`. À
 ne lancer qu'une fois — ou relisez le fichier et remplacez-les par
 `CREATE TABLE IF NOT EXISTS` avant.
+
+Pour la mise à jour du 2026-09-21, ce travail est déjà fait :
+`sql/migrate-coupons-taxes.mysql.sql` reprend les deux `CREATE TABLE` en
+`IF NOT EXISTS` et garde chaque `ALTER TABLE orders` par une lecture d'
+`information_schema`. Lui est **rejouable**, contrairement au fichier de
+migration brut :
+
+```bash
+mysql -u root -p sari_cms < backend/sql/migrate-coupons-taxes.mysql.sql
+```
+
+Il couvre d'ailleurs les deux migrations d'un seul coup (`20260919_add_order_shipment_fields`
+et `20260921_add_coupons_and_tax_rules`), ce qui évite d'avoir à décider lequel
+des deux a déjà été joué à moitié.
 
 **Option 3 — `prisma db push`.** Crée les tables et colonnes manquantes d'après
 `schema.prisma`, sans jamais supprimer une colonne existante.
@@ -192,6 +215,48 @@ l'est pas, faute de MySQL dans l'environnement de contrôle.
 
 Relancez ensuite `npx prisma migrate deploy` : il enchaîne sur les migrations
 suivantes.
+
+### 2.1 quater `P3018` avec `ERROR 1060` — la base a déjà la colonne
+
+`P3009` dit « une migration est restée marquée échouée ». `P3018` dit autre
+chose, et c'est le cas rencontré sur la base de production de SARI :
+
+```
+Error: P3018
+Migration failed for ... 20260919_add_order_shipment_fields
+Database error: Duplicate column name 'trackingNumber'
+```
+
+Le sens exact : MySQL ne rend pas le DDL transactionnel. Une migration de cinq
+`ALTER TABLE` qui échoue au deuxième ordre a déjà passé le premier,
+définitivement. La base se trouve donc **à moitié migrée** pendant que Prisma la
+croit non migrée — et rejoue tout, y compris la colonne qui existe déjà.
+
+Le remède n'est pas de forcer le registre : c'est d'aligner la base sur ce que
+la migration attend, puis de le déclarer. `sql/migrate-coupons-taxes.mysql.sql`
+fait exactement cela, puisque chaque ajout est gardé par `information_schema` —
+les colonnes présentes sont laissées tranquilles, les absentes créées.
+
+```bash
+cd backend
+mysql -u root -p sari_cms < sql/migrate-coupons-taxes.mysql.sql
+npx prisma migrate resolve --applied 20260919_add_order_shipment_fields
+npx prisma migrate resolve --applied 20260921_add_coupons_and_tax_rules
+npx prisma migrate deploy        # doit répondre « no pending migrations »
+```
+
+Contrôle, dans la même base :
+
+```sql
+SHOW COLUMNS FROM `orders` LIKE 'trackingNumber';   -- 1 ligne
+SHOW COLUMNS FROM `orders` LIKE 'paidAt';            -- 1 ligne
+SHOW TABLES LIKE 'coupons';                          -- 1 ligne
+SHOW TABLES LIKE 'tax_rules';                        -- 1 ligne
+```
+
+Un `migrate resolve --applied` posé à tort est rattrapable : la ligne vit dans
+`_prisma_migrations` et se corrige en base. Un `ALTER TABLE` mal joué, lui, se
+voit à la première écriture — d'où l'intérêt de contrôler avant de déclarer.
 
 ### 2.2 Charger les données
 
@@ -368,12 +433,26 @@ Les `.sql` sont **générés** : modifiez le script, jamais le `.sql`.
 
 ```bash
 # après toute modification de prisma/schema.prisma
-node backend/sql/generate-schema.mjs
+node backend/sql/generate-schema.mjs      # ou : npm run sql:schema, depuis backend/
+npm run db:schema-test                    # le dump doit couvrir tous les modèles Prisma
 
 # après toute modification des fichiers data/
 node scripts/add-slugs.mjs        # slugs + legacyId (--dry-run pour simuler)
 node backend/sql/migrate-data.mjs # régénère l'import
 ```
+
+`npm run db:schema-test` vérifie que `sql/schema.mysql.sql` contient bien une
+table par `@@map` du schéma Prisma, dans les deux sens. Sans ce contrôle, un
+modèle ajouté sans régénération du dump reste invisible jusqu'à la première
+liste qui tombe en 500 chez le client — le client Prisma, lui, connaît la table.
+
+**Pour les migrations à venir, ne plus écrire de fichier `migrate-*.mysql.sql` à
+la main.** Le besoin est couvert de façon générale : `npm run db:schema-check`
+lit la base réelle dans `information_schema`, le compare au dump, et écrit
+`sql/schema-sync.mysql.sql` — additions seules, chaque ordre gardé par sa propre
+vérification, donc rejouable. Le fichier `migrate-coupons-taxes.mysql.sql` de
+cette mise à jour suit le même gabarit, mais il restera figé : c'est un
+rattrapage daté, pas un modèle.
 
 Import direct, sans fichier intermédiaire :
 
