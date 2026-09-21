@@ -8,6 +8,8 @@ import { ImportCatalogDto } from './dto/import-catalog.dto';
 import { TrashPurgeTask } from './trash-purge.task';
 import { LogRetentionTask } from './log-retention.task';
 import { MaintenanceSettingsService, MaintenanceSettings } from './maintenance-settings.service';
+import { BrandSettingsService, BrandSettings } from './brand-settings.service';
+import { UpdateBrandDto } from './dto/brand.dto';
 
 @ApiTags('settings')
 @ApiBearerAuth()
@@ -17,6 +19,7 @@ export class SettingsController {
     private readonly purge: TrashPurgeTask,
     private readonly retention: LogRetentionTask,
     private readonly maintenance: MaintenanceSettingsService,
+    private readonly brand: BrandSettingsService,
     private readonly catalog: CatalogImportService,
     private readonly config: ConfigService,
   ) {}
@@ -78,6 +81,28 @@ export class SettingsController {
     const status = await this.maintenance.reset();
     await Promise.all([this.retention.applySchedule(), this.purge.applySchedule()]);
     return status;
+  }
+
+  @Get('brand')
+  @RequirePermissions(perm('settings', 'read'))
+  @ApiOperation({ summary: 'Marque enregistrée, environnement et défauts compris' })
+  getBrand() {
+    // `status()` et non `current()` : l'écran doit dire d'où vient ce qu'il affiche.
+    return this.brand.status();
+  }
+
+  @Put('brand')
+  @RequirePermissions(perm('settings', 'admin'))
+  @ApiOperation({ summary: 'Enregistrer le nom, l’accroche et le logo du back-office' })
+  async putBrand(@Body() body: UpdateBrandDto) {
+    return this.brand.save(body as Partial<BrandSettings>);
+  }
+
+  @Delete('brand')
+  @RequirePermissions(perm('settings', 'admin'))
+  @ApiOperation({ summary: 'Revenir aux variables d’environnement ou aux défauts' })
+  async resetBrand() {
+    return this.brand.reset();
   }
 
   @Post('logs/apply-retention')

@@ -8,6 +8,7 @@ import VerificationSettingsSection from '@/components/admin/VerificationSettings
 import SmtpSection from '@/components/admin/SmtpSection';
 import MailCenterSection from '@/components/admin/MailCenterSection';
 import MaintenanceSection from '@/components/admin/MaintenanceSection';
+import BrandSection from '@/components/admin/BrandSection';
 import { testErpConnection } from '@/lib/erp';
 import { useToast } from '@/components/admin/Toast';
 import GedPicker from '@/components/admin/GedPicker';
@@ -15,13 +16,14 @@ import DateFormatPicker from '@/components/admin/DateFormatPicker';
 import { notifyDateSettingsChanged } from '@/lib/use-date-format';
 
 type SectionId = 'general' | 'commerce' | 'security' | 'integrations' | 'emails' | 'seo';
-type TabId = 'general' | 'dates' | 'products' | 'codes' | 'quotes' | 'invoicing' | 'security' | 'smtp' | 'database' | 'maintenance' | 'verification' | 'mail' | 'seo';
+type TabId = 'general' | 'dates' | 'products' | 'codes' | 'quotes' | 'invoicing' | 'security' | 'smtp' | 'database' | 'maintenance' | 'verification' | 'mail' | 'seo' | 'brand';
 
 interface TabDef { id: TabId; label: string }
 interface SectionDef { id: SectionId; label: string; tabs: TabDef[] }
 
 const SECTIONS: SectionDef[] = [
   { id: 'general', label: 'Général', tabs: [
+    { id: 'brand', label: 'Identité du back-office' },
     { id: 'general', label: 'Identité & langue' },
     { id: 'dates', label: 'Dates & heures' },
   ] },
@@ -50,6 +52,7 @@ const SECTIONS: SectionDef[] = [
 
 // Index de recherche : onglet → mots-clés.
 const SEARCH_INDEX: Record<TabId, string> = {
+  brand: 'marque nom titre accroche logo icone icône favicon identité back-office administration en-tête barre latérale épinglette brand',
   general: 'langue langue origine logo site vitrine identité société entreprise',
   dates: 'date heure format affichage jour mois année calendrier iso horodatage relatif',
   products: 'produit stock réapprovisionnement crop largeur hauteur catalogue rupture',
@@ -336,6 +339,8 @@ export default function AdminSettingsPage() {
           {tab === 'seo' && <SeoSection />}
 
           {tab === 'maintenance' && <MaintenanceSection />}
+
+          {tab === 'brand' && <BrandSection />}
 
           {tab === 'database' && (
             <section className="ad-card p-5 space-y-4">

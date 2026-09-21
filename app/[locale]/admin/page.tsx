@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useAdminBrand } from '@/components/admin/BrandContext';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { ArrowLeft, Lock, LogIn, Shield } from 'lucide-react';
@@ -11,6 +12,7 @@ import { clearAuthCache, setAuthCache, type AdminUser } from '@/components/admin
 import { loadAdminSettings } from '@/lib/admin-settings';
 
 export default function AdminLoginPage() {
+  const { brand } = useAdminBrand();
   const router = useRouter();
   const locale = useLocale();
   const t = useTranslations('admin.login');
@@ -139,8 +141,16 @@ export default function AdminLoginPage() {
       <div className="ad-card relative z-10 w-full max-w-md p-8 ad-rise overflow-hidden">
         <div className="absolute inset-x-0 top-0 h-1" style={{ background: 'linear-gradient(90deg, var(--ad-accent), var(--ad-accent-2), var(--ad-warn))' }} />
         <div className="text-center mb-8">
-          <div className="mx-auto mb-4 w-16 h-16 rounded-3xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, var(--ad-accent), #0d7a9e)' }}>
-            <Shield className="w-8 h-8 text-white" />
+          {brand.logo ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={brand.logo} alt={brand.title} className="mx-auto mb-4 w-16 h-16 object-contain" />
+          ) : (
+            <div className="mx-auto mb-4 w-16 h-16 rounded-3xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, var(--ad-accent), #0d7a9e)' }}>
+              <Shield className="w-8 h-8 text-white" />
+            </div>
+          )}
+          <div className="text-[11px] uppercase tracking-[0.22em] font-bold mb-1" style={{ color: 'var(--ad-muted)' }}>
+            {brand.title}
           </div>
           <h1 className="text-2xl font-black">{t('title')}</h1>
           <p className="text-sm mt-1" style={{ color: 'var(--ad-muted)' }}>{t('subtitle')}</p>

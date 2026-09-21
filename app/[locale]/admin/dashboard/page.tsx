@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useAdminBrand } from '@/components/admin/BrandContext';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import {
@@ -18,6 +19,7 @@ import DateText from '@/components/shared/DateText';
 import { money } from '@/lib/commerce-math';
 
 export default function AdminDashboardPage() {
+  const { brand } = useAdminBrand();
   const locale = useLocale();
   const { showToast } = useToast();
   const t = useTranslations('admin.dashboard');
@@ -78,7 +80,7 @@ export default function AdminDashboardPage() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 ad-rise">
         <div>
-          <div className="text-[11px] uppercase tracking-[0.22em] font-bold" style={{ color: 'var(--ad-muted)' }}>SARI OS</div>
+          <div className="text-[11px] uppercase tracking-[0.22em] font-bold" style={{ color: 'var(--ad-muted)' }}>{brand.title}</div>
           <h1 className="text-3xl font-black tracking-tight">{t("title")}</h1>
         </div>
         <div className="flex gap-2 items-center">

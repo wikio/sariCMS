@@ -220,6 +220,19 @@ donc rien sur ces lignes-là.
 Les lignes en gras sont la **seule copie** : elles n'ont aucun équivalent serveur
 et se perdent au vidage du cache.
 
+**Attention aux deux logos de l'écran Paramètres**, qui ne se ressemblent pas
+alors qu'ils se suivent à l'écran :
+
+| Onglet | Ce qu'il règle | Où c'est stocké |
+| --- | --- | --- |
+| Général → Identité du back-office | nom, accroche et logo du **CMS** | table `settings`, clé `brand` |
+| Général → Identité & langue | logo du **site vitrine** | `sari_admin_settings`, donc le navigateur |
+
+Le premier est partagé par toute l'équipe et s'applique dès l'écran de connexion,
+avant session (`GET /api/v1/public/brand`, écriture gardée par `settings:admin`).
+Le second ne change l'apparence que sur le poste où il a été saisi — même défaut
+que celui corrigé pour les coupons, et volontairement laissé là pour l'instant.
+
 Conséquences encore valables :
 
 - Les **enregistrements de paiement** (validé / en attente / rejeté, avec leur

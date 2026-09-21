@@ -15,6 +15,9 @@ import {
   Tags, UserPlus, UserRound, Paintbrush, Banknote, MessageSquareText, Eye,
   LayoutTemplate, MailPlus,
 } from 'lucide-react';
+
+import { useAdminBrand } from '@/components/admin/BrandContext';
+import { brandDocumentTitle } from '@/lib/brand';
 import '@/app/admin.css';
 import { ToastProvider } from '@/components/admin/Toast';
 import AdminLanguageSwitcher from '@/components/admin/AdminLanguageSwitcher';
@@ -32,7 +35,7 @@ interface Item {
   children?: Child[];
 }
 
-function Shell({ children }: { children: ReactNode }) {
+function Shell({ children, page }: { children: ReactNode; page?: string }) {
   const router = useRouter();
   const pathname = usePathname();
   const locale = useLocale();
@@ -40,6 +43,7 @@ function Shell({ children }: { children: ReactNode }) {
   const isRTL = locale === 'ar';
   const { theme, setTheme } = useAdminTheme();
   const { user, loading, logout, isLoginPage } = useAdminAuth();
+  const { brand } = useAdminBrand();
   const [open, setOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [themesOpen, setThemesOpen] = useState(false);
@@ -47,6 +51,14 @@ function Shell({ children }: { children: ReactNode }) {
   const [expanded, setExpanded] = useState<string>('eshop');
   const [q, setQ] = useState('');
   const [unread, setUnread] = useState(0);
+
+  // La prop `title` d'AdminLayout était déclarée et jamais lue : les écrans qui
+  // la passent (Configuration du site, et les suivants) n'avaient aucun effet
+  // sur l'onglet. On applique « Page · Marque » ; sans `page`, la marque seule.
+  useEffect(() => {
+    const next = brandDocumentTitle(brand, page);
+    if (typeof document !== 'undefined' && document.title !== next) document.title = next;
+  }, [brand, page]);
 
   useEffect(() => {
     const refresh = () => setUnread(unreadForAdmin());
@@ -178,10 +190,15 @@ function Shell({ children }: { children: ReactNode }) {
       <CsrfPatch />
       <aside className={`ad-sidebar ${open ? 'w-[272px]' : 'w-[76px]'} fixed inset-y-0 z-40 flex flex-col transition-all duration-300 ${isRTL ? 'right-0' : 'left-0'} ${mobileOpen ? 'is-open' : 'is-closed'}`} style={{ background: 'var(--ad-sidebar)', color: 'var(--ad-sidebar-ink)' }}>
         <div className="h-[72px] px-4 flex items-center gap-3 border-b border-white/10">
-          <div className="w-10 h-10 flex items-center justify-center" style={{ background: 'var(--ad-accent-2)', color: 'var(--ad-accent-2-ink)', borderRadius: 10 }}>
-            <Shield className="w-5 h-5" />
-          </div>
-          {open && <div className="leading-tight"><div className="font-black tracking-tight">SARI OS</div><div className="text-[10px] uppercase tracking-[0.18em] opacity-60">Admin · Studio</div></div>}
+          {brand.logo ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={brand.logo} alt={brand.title} className="w-10 h-10 object-contain" style={{ borderRadius: 10 }} />
+          ) : (
+            <div className="w-10 h-10 flex items-center justify-center" style={{ background: 'var(--ad-accent-2)', color: 'var(--ad-accent-2-ink)', borderRadius: 10 }}>
+              <Shield className="w-5 h-5" />
+            </div>
+          )}
+          {open && <div className="leading-tight"><div className="font-black tracking-tight truncate max-w-[168px]">{brand.title}</div>{brand.subtitle ? <div className="text-[10px] uppercase tracking-[0.18em] opacity-60 truncate max-w-[168px]">{brand.subtitle}</div> : null}</div>}
         </div>
         <nav className="flex-1 overflow-y-auto ad-scroll py-3" onClick={closeMobile}>
           {menu.map((item, i) => {
@@ -282,11 +299,11 @@ function Shell({ children }: { children: ReactNode }) {
   );
 }
 
-export default function AdminLayout({ children }: { children: ReactNode; title?: string }) {
+export default function AdminLayout({ children, title }: { children: ReactNode; title?: string }) {
   return (
     <AdminThemeProvider>
       <ToastProvider>
-        <Shell>{children}</Shell>
+        <Shell page={title}>{children}</Shell>
       </ToastProvider>
     </AdminThemeProvider>
   );
