@@ -6,11 +6,12 @@ import { LogRetentionTask } from './log-retention.task';
 import { MaintenanceSettingsService } from './maintenance-settings.service';
 import { BrandSettingsService } from './brand-settings.service';
 import { PublicBrandController } from './public-brand.controller';
+import { SettingsDocsService } from './settings-docs.service';
 
 @Module({
   controllers: [SettingsController, PublicBrandController],
   providers: [TrashPurgeTask, LogRetentionTask, MaintenanceSettingsService, BrandSettingsService,
-    CatalogImportService],
+    CatalogImportService, SettingsDocsService],
   exports: [MaintenanceSettingsService, BrandSettingsService, CatalogImportService],
 })
 export class SettingsModule {}

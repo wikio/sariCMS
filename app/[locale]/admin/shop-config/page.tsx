@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { syncDoc } from '@/lib/settings-doc';
 import { useTranslations } from 'next-intl';
 import { Save, Truck, Tag, MapPin, FileText, Globe, RefreshCw, AlertTriangle, CheckCircle, Settings, Download, Plus, Trash2, Eye, EyeOff, Pencil, Search, Banknote } from 'lucide-react';
 import { loadShopConfig, saveShopConfig, DEFAULT_ZONES, formatZoneLabel, type ShopConfig, type ShippingZoneFee, type SaleZone } from '@/lib/shop-config';
@@ -48,6 +49,7 @@ export default function ShopConfigPage() {
   const save = () => {
     if (!cfg) return;
     saveShopConfig(cfg);
+    syncDoc('shop');
     // Synchronise le défaut TVA : si globalTaxId a changé, mettre isDefault côté taxes
     if (cfg.globalTaxId) {
       const nextTaxes = taxes.map(t => ({ ...t, isDefault: t.id === cfg.globalTaxId }));

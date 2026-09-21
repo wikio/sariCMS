@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Eye, Inbox, Mail, Pencil, Plus, Send, Trash2 } from 'lucide-react';
 import { loadMessages, saveMessages, MERGE_VARS, TRIGGERS, type NotifyMessage } from '@/lib/notify-store';
+import { syncDoc } from '@/lib/settings-doc';
 import {
   deleteThread, ensureThread, loadThreads, markThreadRead, sendMessage, unreadForAdmin, unreadForThread,
   threadLabel, type Thread,
@@ -264,7 +265,10 @@ function TemplatesTab() {
 
   useEffect(() => { setRows(loadMessages()); }, []);
   const persist = (next: NotifyMessage[], toast = 'Message enregistré') => {
-    setRows(next); saveMessages(next); showToast(toast, 'success'); setDraft(null); setSelected([]);
+    // un seul point d'écriture pour tout l'écran : le rattrapage en base y est
+    // branché une fois, et pas une fois par bouton
+    setRows(next); saveMessages(next); syncDoc('notify'); showToast(toast, 'success');
+    setDraft(null); setSelected([]);
   };
   const shown = useMemo(() => rows.filter((m) => {
     if (trigger && m.trigger !== trigger) return false;

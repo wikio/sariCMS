@@ -172,8 +172,24 @@ export function loadAdminSettings(): AdminSettings {
   }
 }
 
+/**
+ * Accroche de réplication, même disposition que `registerShopSaveHook` dans
+ * `lib/shop-store.ts` : les dix-huit lecteurs de ces réglages les attendent
+ * **synchroniquement** (`loadAdminSettings()`), et les passer en `await` aurait
+ * touché la vitrine entière. On garde donc le cache local pour la lecture, et la
+ * sauvegarde part en arrière-plan vers la base.
+ *
+ * Non branché côté vitrine : seule l'administration écrit.
+ */
+export type AdminSettingsSaveHook = (next: AdminSettings) => void;
+let saveHook: AdminSettingsSaveHook | null = null;
+export function registerAdminSettingsSaveHook(hook: AdminSettingsSaveHook | null): void {
+  saveHook = hook;
+}
+
 export function saveAdminSettings(next: AdminSettings) {
   localStorage.setItem(KEY, JSON.stringify(next));
+  saveHook?.(next);
 }
 
 export function nextSku(format = loadAdminSettings().codes.product): string {

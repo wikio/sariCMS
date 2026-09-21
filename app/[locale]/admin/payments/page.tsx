@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { syncDoc } from '@/lib/settings-doc';
 import { Eye, ListOrdered, Pencil, Plus, Trash2 } from 'lucide-react';
 import { formatIban, formatRib, isValidIban, loadPayments, savePayments, type PaymentMethod, type PaymentType } from '@/lib/shop-store';
 import { normalizeOrderPaymentType } from '@/lib/payments';
@@ -46,7 +47,7 @@ export default function PaymentsPage() {
   }, [ordersByType]);
 
   const persist = (next: PaymentMethod[], toast = t("saved")) => {
-    setRows(next); savePayments(next); showToast(toast, 'success'); setDraft(null); setSelected([]);
+    setRows(next); savePayments(next); syncDoc('payments'); showToast(toast, 'success'); setDraft(null); setSelected([]);
   };
 
   const validate = (row: PaymentMethod) => {

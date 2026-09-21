@@ -83,7 +83,37 @@ function Shell({ children, page }: { children: ReactNode; page?: string }) {
         window.dispatchEvent(new Event('sari-payments-changed'));
       })
       .catch(() => {});
+    // Réglages d'écran (Paramètres, boutique, taxonomies, devises, modes de
+    // paiement) : même traitement, ouvert au même moment. Centralisé ici et
+    // non dans chaque écran, parce qu'un administrateur qui n'ouvre jamais
+    // l'écran Devises n'en subit pas moins leurs formats de prix ailleurs.
+    import('@/lib/settings-doc')
+      .then((m) => m.hydrateDocs())
+      .then(() => {
+        if (cancelled) return;
+        window.dispatchEvent(new Event('sari-threads-changed'));
+        window.dispatchEvent(new Event('sari-shop-config-changed'));
+      })
+      .catch(() => {});
     return () => { cancelled = true; };
+  }, [isLoginPage, user]);
+
+  // Toute écriture de `saveAdminSettings()` part en base. Passé par le crochet
+  // du magasin plutôt que par l'écran : l'unique écran qui écrit aujourd'hui
+  // n'est pas une garantie pour les suivants.
+  useEffect(() => {
+    if (isLoginPage || !user) return;
+    let disposed = false;
+    import('@/lib/settings-doc').then((m) => {
+      if (disposed) return;
+      import('@/lib/admin-settings').then((store) => {
+        store.registerAdminSettingsSaveHook(() => m.syncDoc('admin'));
+      });
+    });
+    return () => {
+      disposed = true;
+      import('@/lib/admin-settings').then((store) => store.registerAdminSettingsSaveHook(null)).catch(() => {});
+    };
   }, [isLoginPage, user]);
 
   useEffect(() => {

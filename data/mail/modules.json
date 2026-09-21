@@ -1,0 +1,138 @@
+{
+  "order_confirmed": {
+    "enabled": false,
+    "subject": "Confirmation de votre commande {{numero_commande}}",
+    "body": "<p>Bonjour {{nom_client}},</p><p>Nous avons bien reçu votre commande <strong>{{numero_commande}}</strong> du {{date_document}}, d’un montant de <strong>{{montant_ttc}}</strong>.</p><p>Elle est en cours de préparation. Vous recevrez un nouvel email dès son expédition.</p><p>Cordialement,<br><strong>{{nom_societe}}</strong><br>{{telephone_societe}} · {{email_societe}}</p>",
+    "layoutId": "layout-defaut",
+    "bcc": "",
+    "minIntervalHours": 1
+  },
+  "order_shipped": {
+    "enabled": true,
+    "subject": "Votre commande {{numero_commande}} est expédiée",
+    "body": "<p>Bonjour {{nom_client}},</p><p>Votre commande <strong>{{numero_commande}}</strong> a été confiée à {{transporteur}}.</p><p>Numéro de suivi : <strong>{{suivi_colis}}</strong> — livraison estimée le {{date_livraison}}.</p><p>Cordialement,<br><strong>{{nom_societe}}</strong><br>{{telephone_societe}} · {{email_societe}}</p>",
+    "layoutId": "layout-defaut",
+    "bcc": "",
+    "minIntervalHours": 1
+  },
+  "order_delivered": {
+    "enabled": false,
+    "subject": "Votre commande {{numero_commande}} a été livrée",
+    "body": "<p>Bonjour {{nom_client}},</p><p>Votre commande <strong>{{numero_commande}}</strong> a été livrée le {{date_livraison}}.</p><p>Une question sur un article ? Répondez simplement à cet email.</p><p>Cordialement,<br><strong>{{nom_societe}}</strong><br>{{telephone_societe}} · {{email_societe}}</p>",
+    "layoutId": "layout-defaut",
+    "bcc": "",
+    "minIntervalHours": 1
+  },
+  "order_cancelled": {
+    "enabled": false,
+    "subject": "Annulation de votre commande {{numero_commande}}",
+    "body": "<p>Bonjour {{nom_client}},</p><p>Votre commande <strong>{{numero_commande}}</strong> du {{date_document}} a été annulée.</p><p>Aucun montant ne vous sera facturé. Notre équipe reste à votre disposition.</p><p>Cordialement,<br><strong>{{nom_societe}}</strong><br>{{telephone_societe}} · {{email_societe}}</p>",
+    "layoutId": "layout-defaut",
+    "bcc": "",
+    "minIntervalHours": 1
+  },
+  "order_payment": {
+    "enabled": false,
+    "subject": "Paiement reçu — commande {{numero_commande}}",
+    "body": "<p>Bonjour {{nom_client}},</p><p>Nous avons bien reçu votre règlement de <strong>{{montant_ttc}}</strong> pour la commande {{numero_commande}}.</p><p>Référence facture : {{numero_facture}}.</p><p>Cordialement,<br><strong>{{nom_societe}}</strong><br>{{telephone_societe}} · {{email_societe}}</p>",
+    "layoutId": "layout-defaut",
+    "bcc": "",
+    "minIntervalHours": 1
+  },
+  "quote_sent": {
+    "enabled": false,
+    "subject": "Votre devis {{numero_devis}}",
+    "body": "<p>Bonjour {{nom_client}},</p><p>Veuillez trouver votre devis <strong>{{numero_devis}}</strong> d’un montant de <strong>{{montant_ttc}}</strong>.</p><p>Il reste valable jusqu’au {{date_expiration}}. Nous restons à votre disposition pour toute précision.</p><p>Cordialement,<br><strong>{{nom_societe}}</strong><br>{{telephone_societe}} · {{email_societe}}</p>",
+    "layoutId": "layout-defaut",
+    "bcc": "",
+    "minIntervalHours": 1
+  },
+  "quote_accepted": {
+    "enabled": false,
+    "subject": "Devis {{numero_devis}} accepté",
+    "body": "<p>Bonjour {{nom_client}},</p><p>Nous vous confirmons l’acceptation de votre devis <strong>{{numero_devis}}</strong>.</p><p>Votre commande <strong>{{numero_commande}}</strong> est enregistrée et sera traitée dans les meilleurs délais.</p><p>Cordialement,<br><strong>{{nom_societe}}</strong><br>{{telephone_societe}} · {{email_societe}}</p>",
+    "layoutId": "layout-defaut",
+    "bcc": "",
+    "minIntervalHours": 1
+  },
+  "quote_expired": {
+    "enabled": false,
+    "subject": "Votre devis {{numero_devis}} arrive à échéance",
+    "body": "<p>Bonjour {{nom_client}},</p><p>Votre devis <strong>{{numero_devis}}</strong> expire le {{date_expiration}}.</p><p>Souhaitez-vous que nous le prolongions ? Répondez à cet email et nous nous en occupons.</p><p>Cordialement,<br><strong>{{nom_societe}}</strong><br>{{telephone_societe}} · {{email_societe}}</p>",
+    "layoutId": "layout-defaut",
+    "bcc": "",
+    "minIntervalHours": 1
+  },
+  "contact_received": {
+    "enabled": false,
+    "subject": "Nous avons bien reçu votre message",
+    "body": "<p>Bonjour {{nom_client}},</p><p>Merci de nous avoir écrits. Votre message du {{date_document}} est bien arrivé et va être traité par notre équipe.</p><p>Nous revenons vers vous sous un jour ouvré.</p><p>Cordialement,<br><strong>{{nom_societe}}</strong><br>{{telephone_societe}} · {{email_societe}}</p>",
+    "layoutId": "layout-defaut",
+    "bcc": "",
+    "minIntervalHours": 1
+  },
+  "contact_alert": {
+    "enabled": false,
+    "subject": "[{{nom_societe}}] Nouveau message de {{nom_client}}",
+    "body": "<p>Message reçu le {{date_document}}.</p><p><strong>De :</strong> {{nom_client}} — {{email_client}} — {{telephone_client}}</p><p><strong>Société :</strong> {{societe_client}}</p><blockquote>{{message_client}}</blockquote>",
+    "layoutId": "layout-defaut",
+    "bcc": "",
+    "minIntervalHours": 1
+  },
+  "application_received": {
+    "enabled": false,
+    "subject": "Votre candidature {{reference_candidature}} a bien été reçue",
+    "body": "<p>Bonjour {{nom_client}},</p><p>Nous avons bien reçu votre candidature pour le poste <strong>{{offre_emploi}}</strong> (référence {{reference_candidature}}).</p><p>Notre équipe recrutement l’étudie et revient vers vous rapidement.</p><p>Cordialement,<br><strong>{{nom_societe}}</strong><br>{{telephone_societe}} · {{email_societe}}</p>",
+    "layoutId": "layout-defaut",
+    "bcc": "",
+    "minIntervalHours": 1
+  },
+  "application_alert": {
+    "enabled": false,
+    "subject": "[{{nom_societe}}] Nouvelle candidature — {{offre_emploi}}",
+    "body": "<p>Candidature <strong>{{reference_candidature}}</strong> reçue le {{date_document}}.</p><p><strong>Candidat :</strong> {{nom_client}} — {{email_client}} — {{telephone_client}}</p><p><strong>Poste :</strong> {{offre_emploi}}</p>",
+    "layoutId": "layout-defaut",
+    "bcc": "",
+    "minIntervalHours": 1
+  },
+  "newsletter_welcome": {
+    "enabled": false,
+    "subject": "Votre inscription est confirmée",
+    "body": "<p>Bonjour {{nom_client}},</p><p>Merci de votre inscription à la lettre d’information de {{nom_societe}}.</p><p>Vous pouvez vous désinscrire à tout moment depuis le lien en bas de chacun de nos emails.</p><p><a href=\"{{lien_desinscription}}\">Me désinscrire</a></p>",
+    "layoutId": "layout-defaut",
+    "bcc": "",
+    "minIntervalHours": 1
+  },
+  "newsletter_campaign": {
+    "enabled": false,
+    "subject": "Les nouveautés {{nom_societe}}",
+    "body": "<p>Bonjour {{nom_client}},</p><p>Voici nos dernières actualités.</p><p><a href=\"{{lien_document}}\">Lire la suite</a></p>",
+    "layoutId": "layout-defaut",
+    "bcc": "",
+    "minIntervalHours": 1
+  },
+  "user_welcome": {
+    "enabled": false,
+    "subject": "Bienvenue chez {{nom_societe}}",
+    "body": "<p>Bonjour {{nom_client}},</p><p>Votre compte est créé. Vous pouvez suivre vos commandes et retrouver vos devis depuis votre espace client.</p><p><a href=\"{{lien_espace_client}}\">Accéder à mon espace</a></p><p>Cordialement,<br><strong>{{nom_societe}}</strong><br>{{telephone_societe}} · {{email_societe}}</p>",
+    "layoutId": "layout-defaut",
+    "bcc": "",
+    "minIntervalHours": 1
+  },
+  "user_password_reset": {
+    "enabled": false,
+    "subject": "Réinitialiser votre mot de passe",
+    "body": "<p>Bonjour {{nom_client}},</p><p>Une demande de réinitialisation a été faite pour votre compte. Le lien ci-dessous est valable une fois.</p><p><a href=\"{{lien_document}}\">Choisir un nouveau mot de passe</a></p><p>Si vous n’êtes pas à l’origine de cette demande, ignorez cet email.</p><p>Cordialement,<br><strong>{{nom_societe}}</strong><br>{{telephone_societe}} · {{email_societe}}</p>",
+    "layoutId": "layout-defaut",
+    "bcc": "",
+    "minIntervalHours": 1
+  },
+  "stock_backorder": {
+    "enabled": false,
+    "subject": "Votre commande {{numero_commande}} : réapprovisionnement prévu",
+    "body": "<p>Bonjour {{nom_client}},</p><p>Le produit <strong>{{produit}}</strong> (quantité {{quantite}}) est temporairement en rupture.</p><p>Un nouvel arrivage est prévu le <strong>{{date_reapprovisionnement}}</strong>. Votre commande {{numero_commande}} sera traitée dès réception.</p><p>Cordialement,<br><strong>{{nom_societe}}</strong><br>{{telephone_societe}} · {{email_societe}}</p>",
+    "layoutId": "layout-defaut",
+    "bcc": "",
+    "minIntervalHours": 1
+  }
+}

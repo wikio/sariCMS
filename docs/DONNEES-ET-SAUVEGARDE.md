@@ -22,14 +22,19 @@ de la même façon.
 
 | Support | Contenu | Sauvegarde |
 | --- | --- | --- |
-| **MySQL** | Contenus, catalogue, commandes, devis, candidatures, comptes, rôles, permissions, pistes d'audit, réglages de visibilité et de maintenance | `mysqldump` |
+| **MySQL** | Contenus, catalogue, commandes, devis, candidatures, comptes, rôles, permissions, pistes d'audit, réglages de visibilité, de maintenance et de marque, coupons, taxes, **réglages des écrans d'administration** (table `settings`, clés `doc_*`) | `mysqldump` |
 | **Fichiers du serveur** | Médias (`public/uploads`), réglages SMTP, centre de courrier, SEO, newsletter, vérification | copie des dossiers |
-| **Navigateur de l'administrateur** | **Coupons, taxes, devises, taxonomies, modes de paiement, enregistrements de paiement, réglages de l'écran Paramètres** | **aucune** — voir §4 |
+| **Navigateur de l'administrateur** | **Journaux non transférés** : encaissements, utilisations de coupons, imports, compteur de références produits, annuaire, notes par personne, contenus d'édition | **aucune** — voir §4 |
 
-> ⚠️ Le troisième étage est le point sensible. Ces données ne sont ni en base,
-> ni sur le serveur : elles vivent dans le `localStorage` du poste qui les a
-> saisies. Changer de navigateur, de poste, ou vider les données du site les
-> fait disparaître.
+> ⚠️ Le troisième étage s'est réduit mais n'a pas disparu. Ce qu'il reste n'est pas
+> un réglage recopié : ce sont des **entrées ajoutées les unes après les autres**,
+> qui n'ont pas de table et se perdent au vidage des données du site — changer de
+> navigateur, de poste, ou de profil, les efface.
+
+> Les réglages d'écran (devises, taxonomies, modes de paiement, configuration
+> boutique, Paramètres, gabarits de notification) vivent en base depuis cette
+> vague, sous forme d'un document JSON par écran. Le `localStorage` n'en garde
+> qu'un cache d'affichage, résolu §4 B.
 
 ---
 
@@ -192,61 +197,169 @@ d'environnement : le restaurer restaure aussi la configuration d'envoi.
 
 ---
 
-## 4. Ce qui n'est que dans le navigateur
+## 4. Inventaire complet de `localStorage`
 
-`localStorage` du poste de l'administrateur. Deux situations, à ne pas confondre.
+Vue d'ensemble, clé par clé, de ce que le navigateur de l'administrateur ou du
+visiteur conserve. La question posée était : *tout ce qui est en `localStorage`
+doit-il passer en base ?* — la réponse est non, mais il fallait le vérifier pour
+chaque clé au lieu de le supposer.
 
-| Clé | Contenu | Serveur ? |
+**Comment retrouver la liste** (un `grep` distrait en rate une catégorie) :
+
+```bash
+grep -rhoE "['\`]sari_[A-Za-z_]*" --include=*.ts --include=*.tsx app components lib | tr -d "'\`" | sort -u
+```
+
+Le motif couvre les trois écritures : `'sari_x'`, `` `sari_x${id}` `` et les
+constantes de clé. S'en tenir à `localStorage.getItem('sari_…')` avait fait passer
+à côté de `sari_config_<locale>` — toute la « Configuration du site ».
+
+### A. Cache d'une table — la base fait déjà autorité
+
+| Clé | Cache de | Autorité |
 | --- | --- | --- |
-| `sari_coupons` | cache des coupons | **oui** — table `coupons` |
-| `sari_taxes` | cache des taxes | **oui** — table `tax_rules` |
-| `sari_orders`, `sari_quotes`, `sari_applications` | cache CRM | **oui** — synchronisés |
-| `sari_site_visibility` | copie locale | **oui** — table `settings` |
-| `sari_coupon_uses` | **utilisations de coupons** | **non** |
-| `sari_shop_config` | **zones de livraison, frais, remise globale** | **non** |
-| `sari_payments` | **modes de paiement proposés** | **non** |
-| `sari_payment_records` | **enregistrements de paiement** | **non** |
-| `sari_currencies` | **devises** | **non** |
-| `sari_taxonomies` | **taxonomies** | **non** |
-| `sari_admin_settings` | **réglages de l'écran Paramètres** | **non** |
-| `sari_users_registry` | annuaire local | **non** |
-| `sari_cart`, `sari_theme`, `sari_sku_seq` | panier, thème, séquence | non, sans enjeu |
+| `sari_coupons`, `sari_taxes` | coupons, barèmes de taxe | tables `coupons`, `tax_rules` |
+| `sari_orders`, `sari_quotes`, `sari_applications` | CRM | tables correspondantes |
+| `sari_site_visibility` | visibilité des pages | table `settings` |
+| `sari_orders_ctx` | contexte de la file de commandes | synchronisé |
+| `sari_sync_ids_<ressource>` | correspondance d'identifiants local ↔ base | utilitaire |
 
-Les lignes marquées « oui » sont un **cache** : l'écran les lit et les écrit de
-façon synchrone, mais la base fait autorité et le contenu est rechargé à
-l'ouverture (`lib/shop-sync.ts`, `lib/crm-sync.ts`). Vider le cache ne coûte
-donc rien sur ces lignes-là.
+Vider ces clés ne coûte rien : elles se rechargent (`lib/shop-sync.ts`,
+`lib/crm-sync.ts`).
 
-Les lignes en gras sont la **seule copie** : elles n'ont aucun équivalent serveur
-et se perdent au vidage du cache.
+### B. Réglages d'écran — migrés cette fois-ci en documents JSON
 
-**Attention aux deux logos de l'écran Paramètres**, qui ne se ressemblent pas
-alors qu'ils se suivent à l'écran :
+Cinq magasins d'configuration n'existaient que sur le poste. Ils vivent désormais
+dans la table `settings`, un document par écran, liste blanche de champs à
+l'entrée (`backend/src/modules/settings/settings-docs.service.ts`,
+`lib/settings-doc.ts`) :
 
-| Onglet | Ce qu'il règle | Où c'est stocké |
+| Clé locale | Document en base | Ce qui reste volontairement local |
 | --- | --- | --- |
-| Général → Identité du back-office | nom, accroche et logo du **CMS** | table `settings`, clé `brand` |
-| Général → Identité & langue | logo du **site vitrine** | `sari_admin_settings`, donc le navigateur |
+| `sari_admin_settings` | `doc_admin` | `smtp`, `db`, `erp` (secrets), `siteLogo` (voir C) |
+| `sari_shop_config` | `doc_shop` | `importApi` (clé d'API tierce) |
+| `sari_taxonomies` | `doc_taxonomies` | rien — l'objet est indexé par taxon, pas par locale |
+| `sari_currencies` | `doc_currencies` | rien |
+| `sari_payments` | `doc_payments` | rien |
+| `sari_notify_messages` | `doc_notify` | rien — les textes des gabarits de notification |
 
-Le premier est partagé par toute l'équipe et s'applique dès l'écran de connexion,
-avant session (`GET /api/v1/public/brand`, écriture gardée par `settings:admin`).
-Le second ne change l'apparence que sur le poste où il a été saisi — même défaut
-que celui corrigé pour les coupons, et volontairement laissé là pour l'instant.
+Deux marqueurs accompagnent chaque document : `sari_doc_synced_<kind>` (la date du
+dernier échange, seule base de la décision « premier contact ») et
+`sari_doc_backup_<kind>` (la copie locale immédiatement avant un rattrapage, donc
+réécrite à chaque fois et non datée d'une heure fixe). Ces marqueurs sont locaux par
+nature : ils décrivent le poste, pas l'entreprise, et ne se sauvegardent pas.
 
-Conséquences encore valables :
+**Pourquoi les secrets restent-ils hors de la base ?** Parce que migrer le blob tel
+quel aurait migré `smtp.pass`, `db.url`, `erp.apiKey` et `importApi.apiKey` dans une
+table lue par un endpoint de réglages. Ils sont retirés **côté client avant l'envoi**
+et **rejetés côté serveur**, le second filtre ne valant que si le premier a été
+contourné : la valeur ne part même pas sur le réseau.
 
-- Les **enregistrements de paiement** (validé / en attente / rejeté, avec leur
-  motif) ne quittent pas le poste. C'est le point de vigilance comptable
-  principal depuis que les coupons et les taxes sont en base.
-- Les **zones de livraison et les frais** (`sari_shop_config`) sont locaux :
-  deux administrateurs peuvent facturer des frais de port différents. Le
-  `globalTaxId` de ce réglage pointe vers une taxe désormais en base, mais
-  l'aiguillage lui reste local : il n'est pas synchronisé.
-- Les **taxonomies** alimentent les listes déroulantes de plusieurs écrans ;
-  locales, elles diffèrent d'un poste à l'autre.
-- Le **montant de taxe recalculé** à l'affichage d'une commande dépend des
-  taxes en cache sur ce poste-là. Le montant *stocké* sur la commande, lui, est
-  en base et ne bouge pas.
+### C. Relié à une table qui existait déjà — sans nouveau magasin
+
+Le **logo de la vitrine** est le cas qui a déclenché cette vague, et il ne
+méritait pas une table de plus :
+
+| Champ | Avant | Maintenant |
+| --- | --- | --- |
+| Paramètres → logo du site vitrine | `sari_admin_settings.siteLogo`, navigateur | `contact_info.logo` |
+| Configuration du site (entière) | `sari_config_<locale>`, navigateur | `contact_info`, lu et écrit en base |
+
+`ContactInfo` portait déjà la colonne `logo`, une ligne par locale, une écriture
+`PATCH`, et surtout **la seule lecture que le rendu serveur applique** :
+`lib/data.ts:getConfig` → `GET /public/contact?locale=` → l'en-tête et le pied de
+page. Un logo écrit dans `localStorage` ne pouvait donc jamais devenir visible pour
+le visiteur — il changeait l'apparence sur le seul poste qui l'avait saisi. La
+copie locale subsiste comme miroir d'affichage immédiat ; la base décide.
+
+### D. Fichier serveur — laissé là où il est
+
+La consigne était de ne pas déplacer ce qui est déjà persisté côté serveur :
+
+| Fichier | Contenu |
+| --- | --- |
+| `data/mail/modules.json` | centre de messagerie : modules, gabarits, envois |
+| `backend/storage/mail/smtp.json` | configuration SMTP réelle |
+| `data/seo.json`, `data/newsletter.json`, `data/verification.json` | réglages et journaux applicatifs |
+
+Ces fichiers sont déjà hors du navigateur : ils survivent au vidage d'un cache et se
+sauvegardent avec le serveur. Les basculer en table n'aurait changé ni leur accès ni
+leur solidité, et aurait coupé le code qui les lit aujourd'hui.
+
+À ne pas confondre avec `sari_notify_messages`, qui **ressemble** à ces gabarits mais
+n'en partage pas le support : l'écran « Messages » écrivait sa liste uniquement dans
+le navigateur. Elle est donc migrée en `doc_notify` (section B), et le centre de
+messagerie reste sur son fichier.
+
+### E. Non migré, et pour une raison de forme
+
+Cinq magasins n'ont pas été basculés, et ce n'est pas un oubli : **un document JSON
+s'écrase au dernier appel**. Or ce sont des journaux en append — chaque entrée doit
+rester lisible après la suivante. Ils demandent des **lignes**, donc une migration
+Prisma, donc un arbitrage de schéma ; un document les aurait détruits à la longue.
+
+| Clé | Contenu | Ce qu'il faudrait |
+| --- | --- | --- |
+| `sari_payment_records` | encaissements : validé, en attente, rejeté, motif | table de journal |
+| `sari_coupon_uses` | usages par coupon | table de journal |
+| `sari_import_log` | imports de catalogue | table de journal |
+| `sari_sku_seq` | **compteur de références produits** | compteur serveur atomique |
+| `sari_users_registry` | annuaire local de comptes | à arbitrer avec la table `users` |
+
+`globalTaxId` de `sari_shop_config` désigne désormais une taxe **en base** alors que
+l'aiguillage vivait dans un cache local : les deux sont maintenant synchronisés, ce
+qui ferme une incohérence ancienne entre l'écran de facturation et le moteur de taxe.
+
+**Le défaut le plus grave de cette liste est `sari_sku_seq`.** Deux administrateurs
+qui créent un produit en même temps tirent le même numéro depuis leur compteur
+local et produisent la **même référence**. Ce n'est pas une perte de confort : deux
+fiches partagent un identifiant métier, et tout ce qui s'appuie sur le SKU
+(import, stock, facture) les confond. À traiter avant les journaux.
+
+### F. Clés qui doivent rester dans le navigateur
+
+Rien à migrer ici — elles décrivent un poste ou une session, pas l'entreprise :
+`sari_theme`, `sari_admin_theme` (préférence d'affichage), `sari_admin_time`
+(fuseau de l'opérateur), `sari_cart`, `sari_pending_cart`, `sari_pending_action`,
+`sari_pending_open_thread` (reprises après connexion), `sari_ged_surface` (vue de
+bibliothèque), `sari_user`, `sari_admin_auth`, les cookies
+`sari_admin_access` / `sari_admin_refresh` / `sari_admin_user` / `sari_csrf`
+(double submission), `__SARI_DEBUG`, `sari_demo_v3` (marqueur d'amorçage).
+
+### G. Écrans d'édition de contenu — hors vague, à arbitrer
+
+Ces clés portent du **contenu**, pas du réglage, et leurs écrans ont une logique
+d'enregistrement propre. Un document ne leur convient pas davantage qu'aux journaux :
+
+| Clé | Écran |
+| --- | --- |
+| `sari_admin_genericContent` | Contenus génériques |
+| `sari_component_<locale>_<type>` | Blocs de page |
+| `sari_page_builder_<slug>_<lang>` | Constructeur de page |
+| `sari_notes_<id>` | Notes sur une personne (`PeopleDesk`) |
+| `sari_threads` | Fil de discussion messages |
+| `sari_flow_*` (templates, legacy, progress, answers) | Entonnoir de recrutement |
+| `sari_fiche_i18n` | Traductions de fiche |
+| `sari_geo_<code>` | réponse de géocodage — un cache, pas une donnée |
+
+### Limite assumée : ces documents ne sont pas lus par la vitrine
+
+Les routes `doc/:kind` sont gardées par `settings:read` / `settings:admin`. Les
+réglages **partagés avec la vitrine** — formats de date, message de
+réapprovisionnement, formats de codes — vivent donc dans le même cache local qu'avant
+pour le visiteur : lui continue de voir les valeurs par défaut. Rendre ces valeurs
+visibles exige une lecture **serveur** au rendu de la page, étape distincte de
+celle-ci et non faite. Le logo, lui, est déjà dans ce cas favorable : sa table est
+publiquement lue, ce qui est précisément la raison pour laquelle il y a été mis
+plutôt que dans un document.
+
+### Un défaut annexe relevé au passage
+
+`lib/payments.ts:132` installe de **faux encaissements de démonstration** dans le
+`localStorage` de toute personne qui ouvre l'écran, administrateur comme visiteur.
+Ce n'est pas une perte de données, mais une source de confusion comptable quand les
+vrais enregistrements seront en base : la liste affichée pourrait mélanger données
+réelles et amorçage. À trancher séparément.
 
 ---
 
@@ -287,23 +400,31 @@ cesse. Dans les deux derniers cas, une copie du cache est écrite au préalable
 dans `sari_shop_backup_coupons` et `sari_shop_backup_taxes` : c'est le filet si
 un écrasement tourne mal.
 
-Le reste de l'étage n'a toujours **aucun** export automatique. Depuis le poste
-qui détient les données, dans la console, sur une page de l'administration :
+**Depuis que les réglages d'écran sont en base, cette extraction ne concerne plus
+quatre de leurs magasins.** `sari_shop_config`, `sari_payments`, `sari_currencies`,
+`sari_taxonomies` et `sari_notify_messages` se sauvegardent avec la table `settings`
+(clés `doc_*`) : les sortir du navigateur serait recopier une valeur que le serveur
+connaît déjà, et la réinjecter par `localStorage.setItem` ne déclencherait aucune
+synchronisation — le poste partirait en avance sur la base sans jamais le dire.
+
+Ce qui attend encore un export automatique, parce que ce sont des journaux en
+append et non des réglages (voir §4 E), reste donc à sauver à la main depuis le
+poste qui les détient :
 
 ```js
 copy(JSON.stringify({
-  uses:      JSON.parse(localStorage.getItem('sari_coupon_uses')|| '[]'),
-  shop:      JSON.parse(localStorage.getItem('sari_shop_config')|| '{}'),
-  payments:  JSON.parse(localStorage.getItem('sari_payments')  || '[]'),
-  records:   JSON.parse(localStorage.getItem('sari_payment_records') || '[]'),
-  currencies:JSON.parse(localStorage.getItem('sari_currencies')|| '[]'),
-  taxonomies:JSON.parse(localStorage.getItem('sari_taxonomies')|| '[]'),
+  uses:    JSON.parse(localStorage.getItem('sari_coupon_uses')     || '[]'),
+  records: JSON.parse(localStorage.getItem('sari_payment_records') || '[]'),
+  imports: JSON.parse(localStorage.getItem('sari_import_log')       || '[]'),
+  skuSeq:  localStorage.getItem('sari_sku_seq'),
+  users:   JSON.parse(localStorage.getItem('sari_users_registry')  || '[]'),
 }, null, 2));
 ```
 
 Le JSON est dans le presse-papiers. Le conserver avec les sauvegardes ; pour le
 réinjecter sur un autre poste, faire l'opération inverse avec
-`localStorage.setItem`.
+`localStorage.setItem` — c'est le bon geste **ici**, car ces clés n'ont pas encore
+de pendant en base.
 
 ---
 
@@ -323,11 +444,15 @@ réinjecter sur un autre poste, faire l'opération inverse avec
 
 ## 7. Points d'attention
 
-- **Coupons et taxes sont désormais en base** et entrent dans le `mysqldump`.
-  **Restent sans sauvegarde automatique** : devises, taxonomies, modes de
-  paiement, enregistrements de paiement, réglages de l'écran Paramètres,
-  configuration boutique (`sari_shop_config`) et utilisations de coupons
-  (`sari_coupon_uses`). Ce sont eux, le risque de perte restant.
+- **Les réglages sont en base et entrent dans le `mysqldump`** : coupons, taxes,
+  et depuis cette vague devises, taxonomies, modes de paiement, configuration
+  boutique, écran Paramètres et gabarits de notification (table `settings`,
+  clés `doc_admin`, `doc_shop`, `doc_taxonomies`, `doc_currencies`,
+  `doc_payments`, `doc_notify`).
+  **Restent sans sauvegarde automatique** : enregistrements de paiement,
+  utilisations de coupons, journal d'imports, compteur de références produits,
+  annuaire local. Ce sont des journaux, pas des réglages : ils demandent des
+  lignes et une migration, non un document — voir §4 E.
 - **La reprise du catalogue existant est automatique** (§5), mais elle ne se
   déclenche qu'une fois : au tout premier chargement d'un poste qui n'a jamais
   synchronisé, et seulement si la base est vide. Si l'administrateur ouvre

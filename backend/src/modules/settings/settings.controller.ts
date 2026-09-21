@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { perm } from '../../common/constants/permissions';
@@ -10,6 +10,7 @@ import { LogRetentionTask } from './log-retention.task';
 import { MaintenanceSettingsService, MaintenanceSettings } from './maintenance-settings.service';
 import { BrandSettingsService, BrandSettings } from './brand-settings.service';
 import { UpdateBrandDto } from './dto/brand.dto';
+import { SettingsDocsService } from './settings-docs.service';
 
 @ApiTags('settings')
 @ApiBearerAuth()
@@ -20,6 +21,7 @@ export class SettingsController {
     private readonly retention: LogRetentionTask,
     private readonly maintenance: MaintenanceSettingsService,
     private readonly brand: BrandSettingsService,
+    private readonly docs: SettingsDocsService,
     private readonly catalog: CatalogImportService,
     private readonly config: ConfigService,
   ) {}
@@ -81,6 +83,27 @@ export class SettingsController {
     const status = await this.maintenance.reset();
     await Promise.all([this.retention.applySchedule(), this.purge.applySchedule()]);
     return status;
+  }
+
+  @Get('doc/:kind')
+  @RequirePermissions(perm('settings', 'read'))
+  @ApiOperation({ summary: 'Règlages d’écran enregistrés (admin, boutique, devises…)' })
+  getDoc(@Param('kind') kind: string) {
+    return this.docs.status(kind);
+  }
+
+  @Put('doc/:kind')
+  @RequirePermissions(perm('settings', 'admin'))
+  @ApiOperation({ summary: 'Enregistrer un bloc de réglages d’écran' })
+  async putDoc(@Param('kind') kind: string, @Body() body: unknown) {
+    return this.docs.save(kind, body);
+  }
+
+  @Delete('doc/:kind')
+  @RequirePermissions(perm('settings', 'admin'))
+  @ApiOperation({ summary: 'Supprimer un bloc de réglages : retour aux défauts' })
+  async resetDoc(@Param('kind') kind: string) {
+    return this.docs.reset(kind);
   }
 
   @Get('brand')

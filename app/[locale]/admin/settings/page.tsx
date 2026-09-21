@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useLocale } from 'next-intl';
 import { FolderOpen, Image as ImageIcon, Save, Search, Upload } from 'lucide-react';
 import { DEFAULT_SETTINGS, loadAdminSettings, saveAdminSettings, type AdminSettings } from '@/lib/admin-settings';
+import { hydrateSiteLogo, saveSiteLogo } from '@/lib/site-contact';
 import { previewCode, DEFAULT_TEMPLATES, type CodeKind } from '@/lib/codes';
 import VerificationSettingsSection from '@/components/admin/VerificationSettingsSection';
 import SmtpSection from '@/components/admin/SmtpSection';
@@ -70,12 +72,28 @@ const SEARCH_INDEX: Record<TabId, string> = {
 
 export default function AdminSettingsPage() {
   const { showToast } = useToast();
+  const locale = useLocale();
   const [settings, setSettings] = useState<AdminSettings>(DEFAULT_SETTINGS);
   const [section, setSection] = useState<SectionId>('general');
   const [tab, setTab] = useState<TabId>('general');
   const [q, setQ] = useState('');
 
   useEffect(() => { setSettings(loadAdminSettings()); }, []);
+
+  // Le logo de vitrine se lit dans `ContactInfo`, pas dans le cache du poste :
+  // c'est la seule valeur que le rendu serveur de l'en-tête applique, donc la
+  // seule que voit un visiteur. Un poste qui en avait saisi un avant cette
+  // bascule le voit monté en base plutôt qu'écrasé par la valeur vide.
+  useEffect(() => {
+    let alive = true;
+    hydrateSiteLogo(locale)
+      .then(({ logo }) => {
+        if (!alive) return;
+        setSettings((prev) => (prev.siteLogo === logo ? prev : { ...prev, siteLogo: logo }));
+      })
+      .catch(() => { /* hors ligne : le cache local reste affiché */ });
+    return () => { alive = false; };
+  }, [locale]);
 
   const setDb = (patch: Partial<AdminSettings['db']>) => setSettings({ ...settings, db: { ...settings.db, ...patch } });
   const setQuote = (patch: Partial<AdminSettings['quote']>) => setSettings({ ...settings, quote: { ...settings.quote, ...patch } });
@@ -176,7 +194,17 @@ export default function AdminSettingsPage() {
               <h2 className="ad-section-title">Identité &amp; langue</h2>
               <div className="space-y-1.5">
                 <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Logo du site vitrine</span>
-                <SiteLogoField value={settings.siteLogo || ''} onChange={(v) => setSettings({ ...settings, siteLogo: v })} />
+                <SiteLogoField
+                  value={settings.siteLogo || ''}
+                  onChange={(v) => {
+                    setSettings({ ...settings, siteLogo: v });
+                    // Le cache local donne le retour visuel immédiat à l'opérateur ;
+                    // la base, elle, est ce que le visiteur recevra au prochain rendu.
+                    saveSiteLogo(locale, v)
+                      .then(() => showToast('Logo de vitrine enregistré en base', 'success'))
+                      .catch(() => showToast('Logo non enregistré en base', 'error'));
+                  }}
+                />
                 <p className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>
                   Utilisé dans l’en-tête et le pied de page de la vitrine. Laissez vide pour conserver le logo configuré dans les données du site.
                 </p>

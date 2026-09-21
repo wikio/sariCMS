@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { syncDoc } from '@/lib/settings-doc';
 import { Eye, Plus, Pencil, Trash2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import {
@@ -66,6 +67,7 @@ export default function TaxonomiesPage() {
   const persist = async (terms: TaxonomyTerm[]) => {
     if (!current) return;
     saveTaxonomy(current.key, terms);
+    syncDoc('taxonomies');
     refresh();
     
     // Sauvegarder les traductions dans les fichiers JSON
