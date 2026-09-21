@@ -239,6 +239,13 @@ export class PrismaRepository<T extends BaseEntity> implements ICrudRepository<T
     return res.count ?? 0;
   }
 
+  async deleteOlderThan(field: string, cutoff: Date): Promise<number> {
+    const res = await this.db.deleteMany({
+      where: { [field]: { lt: cutoff } },
+    });
+    return res.count ?? 0;
+  }
+
   async count(where: Record<string, unknown> = {}, includeDeleted = false): Promise<number> {
     return this.db.count({
       where: {

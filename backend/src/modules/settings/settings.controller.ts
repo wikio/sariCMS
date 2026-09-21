@@ -6,6 +6,7 @@ import { RequirePermissions } from '../../common/decorators/permissions.decorato
 import { CatalogImportService } from './catalog-import.service';
 import { ImportCatalogDto } from './dto/import-catalog.dto';
 import { TrashPurgeTask } from './trash-purge.task';
+import { LogRetentionTask } from './log-retention.task';
 
 @ApiTags('settings')
 @ApiBearerAuth()
@@ -13,6 +14,7 @@ import { TrashPurgeTask } from './trash-purge.task';
 export class SettingsController {
   constructor(
     private readonly purge: TrashPurgeTask,
+    private readonly retention: LogRetentionTask,
     private readonly catalog: CatalogImportService,
     private readonly config: ConfigService,
   ) {}
@@ -44,5 +46,15 @@ export class SettingsController {
   @ApiOperation({ summary: 'Purger manuellement la corbeille expirée (toutes collections)' })
   run() {
     return this.purge.purgeAll();
+  }
+
+  @Post('logs/apply-retention')
+  @RequirePermissions(perm('settings', 'admin'))
+  @ApiOperation({
+    summary:
+      "Appliquer la rétention : piste d'audit au-delà de la fenêtre, jetons expirés",
+  })
+  runRetention() {
+    return this.retention.purgeAll();
   }
 }

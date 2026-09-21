@@ -7,6 +7,7 @@ import {
 import { randomUUID } from 'crypto';
 import { AppCacheService } from '../cache/cache.service';
 import { AuditService } from '../audit/audit.service';
+import { auditDiff, compactAuditPayload } from '../audit/audit-payload';
 import { AutocompleteQueryDto, QueryDto, ViewMode } from './dto/query.dto';
 import {
   AutocompleteHit,
@@ -112,7 +113,7 @@ export abstract class BaseCrudService<T extends BaseEntity> {
       action: 'update',
       resource: this.options.resource,
       resourceId: id,
-      payload: this.safeAuditPayload(dto),
+      payload: this.auditUpdatePayload(existing, dto),
       ip: actor?.ip,
       userAgent: actor?.userAgent,
     });
@@ -379,16 +380,22 @@ export abstract class BaseCrudService<T extends BaseEntity> {
     return rest as Partial<T>;
   }
 
+  /**
+   * Payload destinée à `audit_logs` : secrets retirés, valeurs bornées.
+   * La logique vit dans `common/audit/audit-payload.ts` pour rester testable
+   * sans base de données.
+   */
   protected safeAuditPayload(data: unknown): Record<string, unknown> | undefined {
-    if (!data || typeof data !== 'object') return undefined;
-    const clone = { ...(data as Record<string, unknown>) };
-    delete clone.password;
-    delete clone.passwordHash;
-    delete clone.totpSecret;
-    delete clone.totpCode;
-    delete clone.partnerKey;
-    delete clone.refreshToken;
-    return clone;
+    return compactAuditPayload(data);
+  }
+
+  /**
+   * Sur une mise à jour, seuls les champs réellement modifiés sont journalisés.
+   * Sans ça, un `PUT` renvoyait tout le DTO — corps HTML compris — pour une
+   * simple correction de titre, et la table d'audit enflait d'autant.
+   */
+  protected auditUpdatePayload(before: unknown, after: unknown): Record<string, unknown> | undefined {
+    return this.safeAuditPayload(auditDiff(before, after));
   }
 
   protected async requireById(id: number, includeDeleted = false): Promise<T> {
