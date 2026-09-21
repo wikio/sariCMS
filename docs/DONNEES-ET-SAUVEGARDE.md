@@ -390,13 +390,28 @@ celle-ci et non faite. Le logo, lui, est déjà dans ce cas favorable : sa table
 publiquement lue, ce qui est précisément la raison pour laquelle il y a été mis
 plutôt que dans un document.
 
-### Un défaut annexe relevé au passage
+### Un défaut annexe, trouvé puis corrigé
 
-`lib/payments.ts:132` installe de **faux encaissements de démonstration** dans le
-`localStorage` de toute personne qui ouvre l'écran, administrateur comme visiteur.
-Ce n'est pas une perte de données, mais une source de confusion comptable quand les
-vrais enregistrements seront en base : la liste affichée pourrait mélanger données
-réelles et amorçage. À trancher séparément.
+`lib/payments.ts` **écrivait** de faux encaissements de démonstration dans le
+`localStorage` de toute personne ouvrant l'écran — virements « rapprochés », carte
+`**** 4242` validée pour 18 500 €. Un poste sans aucune transaction affichait donc
+un relevé, avec un total, et l'export CSV l'emportait. Un `catch` sur cache
+illisible rendait le même jeu fictif.
+
+Corrigé depuis, dans l'ordre :
+
+- la lecture n'écrit plus rien ; un cache absent ou illisible rend une liste vide ;
+- les lignes de démonstration **intactes** d'un cache héritée sont écartées à la
+  lecture et la purge est réécrite, pour que le total cesse de les compter ;
+- une ligne de démonstration **retouchée** par l'opérateur est conservée : son `id`
+  reste `pr1` alors que la donnée est devenue réelle, et détruire une saisie sur le
+  seul critère de l'identifiant serait un dommage plus grand que le défaut. La
+  reconnaissance se fait donc sur l'ensemble (id, montant, statut, date, client).
+  Corollaire assumé : une ligne fictive retouchée reste dans les totaux.
+
+Le jeu de démonstration reste disponible (`DEMO_PAYMENT_RECORDS`) pour un amorçage
+volontaire à la `lib/demo-seed.ts`, jamais pour une lecture. `npm run payments:test`
+fige ces cinq comportements, parce qu'aucun d'eux ne fait d'erreur visible.
 
 ---
 

@@ -22,7 +22,8 @@
     "builder:check": "node scripts/check-builder-kit.mjs",
     "links:test": "node scripts/test-link-kind.mjs",
     "shop:test": "node --experimental-strip-types scripts/test-shop-sync.mjs",
-    "settings-doc:test": "node scripts/test-settings-doc.mjs"
+    "settings-doc:test": "node scripts/test-settings-doc.mjs",
+    "payments:test": "node --experimental-strip-types scripts/test-payment-records.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

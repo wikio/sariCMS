@@ -96,7 +96,38 @@ export function paymentStatusLabel(status: PaymentStatus): string {
   return status === 'validated' ? 'Validé' : status === 'rejected' ? 'Rejeté' : 'En attente';
 }
 
-const DEMO_RECORDS: PaymentRecord[] = [
+/**
+ * Lignes de démonstration à écarter d'un cache hérité.
+ *
+ * Au seul `id`, on empiéterait sur une donnée réelle : un opérateur qui a *corrigé*
+ * une ligne de démonstration (montant, client, statut) pour en faire un vrai
+ * enregistrement lui laisse son `id` — `pr1` — et le purger sur ce seul critère
+ * serait effacer sa saisie. Une ligne n'est donc retirée que si rien de ce qu'un
+ * opérateur aurait pu changer n'a changé : `id`, montant, statut, date et client
+ * doivent tous correspondre à l'originel.
+ *
+ * Le corollaire vaut d'être dit : une ligne de démonstration retouchée reste
+ * affichée, et continuera d'entrer dans les totaux. C'est le prix de ne jamais
+ * détruire une saisie sur une supposition, et l'écran le signale par ailleurs.
+ */
+function isUntouchedDemoRow(row: PaymentRecord, demo: readonly PaymentRecord[]): boolean {
+  const twin = demo.find((d) => d.id === row.id);
+  if (!twin) return false;
+  return (
+    Number(row.amount) === Number(twin.amount) &&
+    String(row.status) === String(twin.status) &&
+    String(row.date) === String(twin.date) &&
+    String(row.client) === String(twin.client)
+  );
+}
+
+/*
+ * Jeu de démonstration. Seule voie d'entrée autorisée : un amorçage **volontaire**
+ * (`lib/demo-seed.ts`). Aucune lecture de ce magasin ne le pose, sinon un poste sans
+ * transaction afficherait des virements rapprochés et des paiements par carte
+ * validés — et leur total entrerait dans les chiffres présentés à l'opérateur.
+ */
+export const DEMO_PAYMENT_RECORDS: PaymentRecord[] = [
   {
     id: 'pr1', orderId: 1001, orderCode: 'SARI-WCMD26-00001', client: 'Dr. Marie Laurent', email: 'marie@clinique.fr',
     method: 'transfer', methodName: 'Virement', amount: 4500, status: 'validated',
@@ -124,17 +155,48 @@ const DEMO_RECORDS: PaymentRecord[] = [
   },
 ];
 
+/**
+ * Les encaissements enregistrés sur ce poste.
+ *
+ * Trois corrections d'un même geste, parce que ce magasin est comptable :
+ *
+ * - il ne s'écrit **plus rien** au premier lecture. `loadPaymentRecords()`
+ *   installait `DEMO_RECORDS` dans le `localStorage` de toute personne ouvrant
+ *   l'écran — administrateur comme visiteur —, ce qui fabriquait de faux
+ *   encaissements (virements « rapprochés », carte `**** 4242` validée, 4 500 €
+ *   encaissés) là où aucune transaction n'avait eu lieu. Un relevé comptable ne
+ *   se complète pas tout seul.
+ * - un `catch` ne rend plus le jeu de démonstration : un cache illisible rend une
+ *   liste vide, pas des lignes inventées.
+ * - les lignes de démonstration déjà en place sont **retirées à la lecture**, sur
+ *   leur identifiant (`pr1`…`pr5`, contre `pay-<horodatage>-<aléa>` pour une
+ *   ligne réelle), puis la purge est réécrite si elle a de quoi l'être. Un poste
+ *   qui les avait reçues avant ce correctif ne continue donc pas de les compter
+ *   dans son chiffre d'affaires.
+ *
+ * Le jeu de démonstration a sa place ailleurs : `lib/demo-seed.ts`, déclenché
+ * volontairement, pas posé en tapant sur une page.
+ */
 export function loadPaymentRecords(): PaymentRecord[] {
   if (typeof window === 'undefined') return [];
   try {
     const raw = localStorage.getItem(KEY);
-    if (!raw) {
-      localStorage.setItem(KEY, JSON.stringify(DEMO_RECORDS));
-      return DEMO_RECORDS;
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    const real = (parsed as PaymentRecord[]).filter((r) => !isUntouchedDemoRow(r, DEMO_PAYMENT_RECORDS));
+    if (real.length !== parsed.length) {
+      try {
+        localStorage.setItem(KEY, JSON.stringify(real));
+      } catch {
+        /* quota atteint ou écriture refusée : la lecture reste correcte sans le cache */
+      }
     }
-    return JSON.parse(raw) as PaymentRecord[];
+    return real;
   } catch {
-    return DEMO_RECORDS;
+    // Cache illisible : une liste vide. Rendre le jeu de démonstration ici
+    // afficherait des encaissements fictifs comme s'ils étaient réels.
+    return [];
   }
 }
 
