@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Download } from 'lucide-react';
 import { BarChart, DonutChart } from '@/components/admin/charts/MiniCharts';
 import { loadOrders, loadQuotes, quoteConversion, type Order } from '@/lib/crm-store';
-import { loadCouponUses, loadCoupons, loadTaxes, type Coupon } from '@/lib/shop-store';
+import { loadCouponUses, loadCoupons, loadTaxes, type Coupon, type TaxRule } from '@/lib/shop-store';
+import { hydrateShop } from '@/lib/shop-sync';
 import { computeTotals, money } from '@/lib/commerce-math';
 import { useTranslations } from 'next-intl';
 
@@ -39,15 +40,25 @@ export default function ShopStatsPage() {
   const [to, setTo] = useState('2026-12-31');
   const [orders, setOrders] = useState<Order[]>([]);
   const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [taxes, setTaxes] = useState<TaxRule[]>([]);
   const quotes = typeof window === 'undefined' ? [] : loadQuotes();
 
   useEffect(() => {
     setOrders(loadOrders());
     setCoupons(loadCoupons());
+    setTaxes(loadTaxes());
+    // Les coupons et les taxes viennent de la base ; le cache sert au premier
+    // rendu. Voir lib/shop-sync.ts.
+    let alive = true;
+    void hydrateShop().then(() => {
+      if (!alive) return;
+      setCoupons(loadCoupons());
+      setTaxes(loadTaxes());
+    });
+    return () => { alive = false; };
   }, []);
 
   const scoped = orders.filter((o) => inRange(o.date, from, to));
-  const taxes = loadTaxes();
   const uses = loadCouponUses();
   const delivered = scoped.filter((o) => o.status === 'delivered');
   const progress = scoped.filter((o) => o.status === 'processing' || o.status === 'pending' || o.status === 'shipped');

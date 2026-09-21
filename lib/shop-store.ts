@@ -122,7 +122,52 @@ export function loadCoupons(): Coupon[] {
     revenue: Number(c.revenue) || 0,
   }));
 }
-export function saveCoupons(rows: Coupon[]) { localStorage.setItem(COUPON_KEY, JSON.stringify(rows)); }
+/* -------------------------------------------------------------------------- *
+ * Persistance serveur
+ *
+ * Coupons et taxes ne vivaient que dans ce `localStorage` : invisibles d'un
+ * poste à l'autre, perdus au vidage du cache, et surtout inutilisables par un
+ * client — le panier public lisait la même clé et, vide chez lui, retombait sur
+ * les coupons de démonstration ci-dessus.
+ *
+ * Ils sont désormais en base (`coupons`, `tax_rules`) et `lib/shop-sync.ts` les
+ * réplique. L'interface synchrone est conservée, exactement comme `lib/crm-sync.ts`
+ * le fait pour commandes/devis/candidatures : le localStorage devient un cache,
+ * les écrans continuent d'appeler `loadCoupons()`/`saveCoupons()` sans `await`,
+ * et chaque écriture est poussée vers l'API en arrière-plan.
+ *
+ * Le point d'accroche évite une importation circulaire : `shop-sync.ts` dépend
+ * de ce module, pas l'inverse.
+ * -------------------------------------------------------------------------- */
+
+export type ShopSaveHook = (payload: {
+  kind: 'coupons' | 'taxes';
+  previous: unknown[];
+  next: unknown[];
+}) => void;
+
+let saveHook: ShopSaveHook | null = null;
+
+/** Installe (ou retire avec `null`) la réplication vers l'API. */
+export function registerShopSaveHook(hook: ShopSaveHook | null): void {
+  saveHook = hook;
+}
+
+function readRawArray(key: string): unknown[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const parsed = JSON.parse(localStorage.getItem(key) || '[]');
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveCoupons(rows: Coupon[]) {
+  const previous = readRawArray(COUPON_KEY);
+  localStorage.setItem(COUPON_KEY, JSON.stringify(rows));
+  saveHook?.({ kind: 'coupons', previous, next: rows });
+}
 export function loadTaxes(): TaxRule[] {
   return read(TAX_KEY, DEFAULT_TAXES).map((t) => ({
     ...t,
@@ -141,7 +186,9 @@ export function saveTaxes(rows: TaxRule[]) {
     if (r.isDefault && seen) return { ...r, isDefault: false };
     return r;
   });
+  const previousTaxes = readRawArray(TAX_KEY);
   localStorage.setItem(TAX_KEY, JSON.stringify(normalized));
+  saveHook?.({ kind: 'taxes', previous: previousTaxes, next: normalized });
   // synchronise le ShopConfig.globalTaxId si présent
   try {
     const def = normalized.find((t) => t.isDefault && t.active);

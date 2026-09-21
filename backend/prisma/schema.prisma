@@ -756,6 +756,83 @@ model Quote {
   @@map("quotes")
 }
 
+// ---------------------------------------------------------------------------
+// Commerce — coupons et taxes
+//
+// Ces deux tables existaient jusque-là uniquement dans le `localStorage` du
+// navigateur de l'administrateur (lib/shop-store.ts). Elles passent en base
+// pour deux raisons :
+//   1. un poste remplacé, un autre navigateur ou un nettoyage des données du
+//      site perdaient tout le catalogue ;
+//   2. le panier public lisait le même `localStorage` et, vide chez un client,
+//      retombait sur les coupons et taxes de démonstration — les coupons réels
+//      n'étaient donc jamais applicables à la commande.
+//
+// Les montants sont en `Float`, pas en `Decimal` : Prisma renvoie un objet
+// `Decimal` qui se sérialise en chaîne JSON (« 10.00 »), et `lib/commerce-math.ts`
+// calcule `coupon.amount / 100` sans coercition. Ce sont des valeurs de
+// configuration et des agrégats, pas des écritures comptables ; les montants de
+// ledger restent `Decimal(14,2)` sur `orders` et `quotes`.
+// ---------------------------------------------------------------------------
+
+model Coupon {
+  id             Int       @id @default(autoincrement())
+  code           String    @unique @db.VarChar(40)
+  type           String    @default("percent")
+  amount         Float     @default(0)
+  maxDiscount    Float?
+  minOrder       Float?
+  startDate      DateTime?
+  endDate        DateTime?
+  limitGlobal    Int?
+  limitPerClient Int?
+  used           Int       @default(0)
+  scope          String    @default("all")
+  scopeValues    Json?
+  excludeValues  Json?
+  stackable      Boolean   @default(false)
+  active         Boolean   @default(true)
+  revenue        Float     @default(0)
+  notes          String?   @db.Text
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+  createdBy      Int?
+  updatedBy      Int?
+
+  @@index([active])
+  @@index([deletedAt])
+  @@map("coupons")
+}
+
+model TaxRule {
+  id          Int       @id @default(autoincrement())
+  name        String
+  names       Json?
+  labels      Json?
+  mode        String    @default("percent")
+  rate        Float     @default(0)
+  zone        String    @default("DZ")
+  category    String?
+  scope       String    @default("all")
+  scopeValues Json?
+  included    Boolean   @default(false)
+  priority    Int       @default(0)
+  active      Boolean   @default(true)
+  isDefault   Boolean   @default(false)
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  createdBy   Int?
+  updatedBy   Int?
+
+  @@index([active, priority])
+  @@index([deletedAt])
+  @@map("tax_rules")
+}
+
 model JobApplication {
   id         Int       @id @default(autoincrement())
   reference  String?   @unique

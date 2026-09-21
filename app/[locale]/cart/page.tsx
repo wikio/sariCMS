@@ -13,7 +13,8 @@ import Breadcrumb from '@/components/ui/Breadcrumb';
 import { useCurrency } from '@/lib/use-currency';
 import ImageCaptcha from '@/components/ImageCaptcha';
 import { computeTotals } from '@/lib/commerce-math';
-import { loadTaxes, loadCoupons, type TaxRule, type Coupon } from '@/lib/shop-store';
+import { loadTaxes, type TaxRule, type Coupon } from '@/lib/shop-store';
+import { fetchPublicTaxes, validateCouponCode } from '@/lib/shop-sync';
 import { loadShopConfig, type ShopConfig, formatZoneLabel, getShippingFeeForZone } from '@/lib/shop-config';
 import { loadAdminSettings } from '@/lib/admin-settings';
 
@@ -66,13 +67,21 @@ export default function CartPage() {
 
   useEffect(() => {
     setTaxes(loadTaxes());
+    // Les taxes viennent de la base. Sans cet appel, un visiteur dont le
+    // localStorage est vide — c'est-à-dire tout client qui n'est pas
+    // l'administrateur — se voyait appliquer les taxes de démonstration de
+    // lib/shop-store.ts au lieu des taux réellement configurés.
+    let alive = true;
+    void fetchPublicTaxes()
+      .then((rows) => { if (alive && rows.length) setTaxes(rows); })
+      .catch(() => undefined);
     const cfg = loadShopConfig();
     setShopConfig(cfg);
     const active = cfg.saleZones.find(z => z.active);
     if (active) setSelectedZone(active.code);
     const handler = () => setShopConfig(loadShopConfig());
     window.addEventListener('sari-shop-config-changed', handler);
-    return () => window.removeEventListener('sari-shop-config-changed', handler);
+    return () => { alive = false; window.removeEventListener('sari-shop-config-changed', handler); };
   }, []);
 
   useEffect(() => {
@@ -156,12 +165,21 @@ export default function CartPage() {
     return Object.keys(e).length===0;
   };
 
-  const handleApplyCoupon = () => {
+  const handleApplyCoupon = async () => {
     setCouponError('');
     const code = couponCode.trim().toUpperCase();
     if (!code) { setCouponError('Saisissez un code'); return; }
-    const all = loadCoupons();
-    const found = all.find(c => c.code.toUpperCase() === code);
+    // Résolution côté serveur : avant, le panier cherchait dans son propre
+    // localStorage, vide chez un client, et ne trouvait donc jamais les coupons
+    // créés par l'administrateur. Les contrôles qui dépendent du contenu du
+    // panier (minimum, périmètre) restent ci-dessous, côté client.
+    let found: Coupon | null = null;
+    try {
+      found = await validateCouponCode(code);
+    } catch {
+      setCouponError('Vérification impossible pour le moment');
+      return;
+    }
     if (!found) { setCouponError('Coupon introuvable'); return; }
     if (!found.active) { setCouponError('Coupon inactif'); return; }
     const now = new Date().toISOString().slice(0,10);

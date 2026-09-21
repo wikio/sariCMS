@@ -6,6 +6,7 @@ import { Save, Truck, Tag, MapPin, FileText, Globe, RefreshCw, AlertTriangle, Ch
 import { loadShopConfig, saveShopConfig, DEFAULT_ZONES, formatZoneLabel, type ShopConfig, type ShippingZoneFee, type SaleZone } from '@/lib/shop-config';
 import { loadCurrencies, type Currency } from '@/lib/currencies';
 import { loadTaxes, saveTaxes, type TaxRule } from '@/lib/shop-store';
+import { hydrateShop } from '@/lib/shop-sync';
 
 export default function ShopConfigPage() {
   const t = useTranslations('admin.shopConfig');
@@ -25,6 +26,8 @@ export default function ShopConfigPage() {
     setCfg(loadShopConfig());
     setTaxes(loadTaxes());
     setCurrencies(loadCurrencies());
+    let alive = true;
+    void hydrateShop().then(() => { if (alive) setTaxes(loadTaxes()); });
     const onTaxChanged = () => setTaxes(loadTaxes());
     const onCfgChanged = () => setCfg(loadShopConfig());
     const onCurrencyChanged = () => setCurrencies(loadCurrencies());
@@ -33,6 +36,7 @@ export default function ShopConfigPage() {
     window.addEventListener('sari-currencies', onCurrencyChanged as EventListener);
     window.addEventListener('storage', onCurrencyChanged as EventListener);
     return () => {
+      alive = false;
       window.removeEventListener('sari-shop-config-changed', onCfgChanged);
       window.removeEventListener('storage', onCfgChanged);
       window.removeEventListener('sari-currencies', onCurrencyChanged as EventListener);

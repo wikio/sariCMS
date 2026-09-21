@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Eye, Pencil, Plus, Trash2, Star } from 'lucide-react';
 import { loadTaxes, saveTaxes, taxCompletion, type TaxRule } from '@/lib/shop-store';
+import { hydrateShop } from '@/lib/shop-sync';
 import { listTaxonomy } from '@/lib/taxonomies';
 import { useToast } from '@/components/admin/Toast';
 import Drawer from '@/components/admin/Drawer';
@@ -31,7 +32,15 @@ export default function TaxesPage() {
   const [selected, setSelected] = useState<string[]>([]);
   const cats = listTaxonomy('products.category').map((t) => t.label);
 
-  useEffect(() => { setRows(loadTaxes()); }, []);
+  useEffect(() => {
+    // Cache d'abord, puis la base — voir lib/shop-sync.ts.
+    setRows(loadTaxes());
+    let alive = true;
+    void hydrateShop().then(() => {
+      if (alive) setRows(loadTaxes());
+    });
+    return () => { alive = false; };
+  }, []);
   const persist = (next: TaxRule[], toast = 'Taxe enregistrée') => {
     setRows(next); saveTaxes(next); showToast(toast, 'success'); setDraft(null); setSelected([]);
   };

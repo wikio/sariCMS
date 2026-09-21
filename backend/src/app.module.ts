@@ -32,7 +32,9 @@ import { ServicesModule } from './modules/services/services.module';
 import { PartnersModule } from './modules/partners/partners.module';
 import { CareersModule } from './modules/careers/careers.module';
 import { SolutionsModule } from './modules/solutions/solutions.module';
+import { CouponsModule } from './modules/coupons/coupons.module';
 import { OrdersModule } from './modules/orders/orders.module';
+import { TaxesModule } from './modules/taxes/taxes.module';
 import { QuotesModule } from './modules/quotes/quotes.module';
 import { ApplicationsModule } from './modules/applications/applications.module';
 import { HeroModule } from './modules/hero/hero.module';
@@ -95,6 +97,8 @@ import { MailModule } from './modules/mail/mail.module';
     PartnersModule,
     CareersModule,
     SolutionsModule,
+    CouponsModule,
+    TaxesModule,
     OrdersModule,
     QuotesModule,
     ApplicationsModule,

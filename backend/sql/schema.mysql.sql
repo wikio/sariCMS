@@ -676,6 +676,11 @@ CREATE TABLE `orders` (
   `address`         TEXT           NULL,
   `payment`         VARCHAR(255)   NULL,
   `paid`            TINYINT(1)     NOT NULL DEFAULT 0,
+  `trackingNumber`  VARCHAR(80)    NULL,
+  `carrier`         VARCHAR(80)    NULL,
+  `shippedAt`       DATETIME(3)    NULL,
+  `deliveredAt`     DATETIME(3)    NULL,
+  `paidAt`          DATETIME(3)    NULL,
   `coupon`          VARCHAR(255)   NULL,
   `quoteId`         INT            NULL,
   `zone`            VARCHAR(255)   NULL,
@@ -767,6 +772,67 @@ CREATE TABLE `quotes` (
   KEY `quotes_userId_idx` (`userId`),
   KEY `quotes_deletedAt_idx` (`deletedAt`),
   CONSTRAINT `quotes_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Coupon
+DROP TABLE IF EXISTS `coupons`;
+CREATE TABLE `coupons` (
+  `id`             INT          NOT NULL AUTO_INCREMENT,
+  `code`           VARCHAR(40)  NOT NULL,
+  `type`           VARCHAR(255) NOT NULL DEFAULT 'percent',
+  `amount`         DOUBLE       NOT NULL DEFAULT 0,
+  `maxDiscount`    DOUBLE       NULL,
+  `minOrder`       DOUBLE       NULL,
+  `startDate`      DATETIME(3)  NULL,
+  `endDate`        DATETIME(3)  NULL,
+  `limitGlobal`    INT          NULL,
+  `limitPerClient` INT          NULL,
+  `used`           INT          NOT NULL DEFAULT 0,
+  `scope`          VARCHAR(255) NOT NULL DEFAULT 'all',
+  `scopeValues`    JSON         NULL,
+  `excludeValues`  JSON         NULL,
+  `stackable`      TINYINT(1)   NOT NULL DEFAULT 0,
+  `active`         TINYINT(1)   NOT NULL DEFAULT 1,
+  `revenue`        DOUBLE       NOT NULL DEFAULT 0,
+  `notes`          TEXT         NULL,
+  `createdAt`      DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `updatedAt`      DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  `deletedAt`      DATETIME(3)  NULL,
+  `createdBy`      INT          NULL,
+  `updatedBy`      INT          NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `coupons_code_key` (`code`),
+  KEY `coupons_active_idx` (`active`),
+  KEY `coupons_deletedAt_idx` (`deletedAt`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- TaxRule
+DROP TABLE IF EXISTS `tax_rules`;
+CREATE TABLE `tax_rules` (
+  `id`          INT          NOT NULL AUTO_INCREMENT,
+  `name`        VARCHAR(255) NOT NULL,
+  `names`       JSON         NULL,
+  `labels`      JSON         NULL,
+  `mode`        VARCHAR(255) NOT NULL DEFAULT 'percent',
+  `rate`        DOUBLE       NOT NULL DEFAULT 0,
+  `zone`        VARCHAR(255) NOT NULL DEFAULT 'DZ',
+  `category`    VARCHAR(255) NULL,
+  `scope`       VARCHAR(255) NOT NULL DEFAULT 'all',
+  `scopeValues` JSON         NULL,
+  `included`    TINYINT(1)   NOT NULL DEFAULT 0,
+  `priority`    INT          NOT NULL DEFAULT 0,
+  `active`      TINYINT(1)   NOT NULL DEFAULT 1,
+  `isDefault`   TINYINT(1)   NOT NULL DEFAULT 0,
+  `startDate`   DATETIME(3)  NULL,
+  `endDate`     DATETIME(3)  NULL,
+  `createdAt`   DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `updatedAt`   DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  `deletedAt`   DATETIME(3)  NULL,
+  `createdBy`   INT          NULL,
+  `updatedBy`   INT          NULL,
+  PRIMARY KEY (`id`),
+  KEY `tax_rules_active_priority_idx` (`active`, `priority`),
+  KEY `tax_rules_deletedAt_idx` (`deletedAt`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- JobApplication

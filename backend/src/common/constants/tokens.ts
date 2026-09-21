@@ -28,6 +28,8 @@ export const APPLICATION_REPOSITORY = Symbol('APPLICATION_REPOSITORY');
 export const AUTHOR_REPOSITORY = Symbol('AUTHOR_REPOSITORY');
 export const HOME_REPOSITORY = Symbol('HOME_REPOSITORY');
 export const NEWSLETTER_REPOSITORY = Symbol('NEWSLETTER_REPOSITORY');
+export const COUPON_REPOSITORY = Symbol('COUPON_REPOSITORY');
+export const TAX_RULE_REPOSITORY = Symbol('TAX_RULE_REPOSITORY');
 
 export const COLLECTIONS = {
   users: 'users',
@@ -58,6 +60,8 @@ export const COLLECTIONS = {
   authors: 'authors',
   homeSections: 'home_sections',
   newsletter: 'newsletter_subscribers',
+  coupons: 'coupons',
+  taxRules: 'tax_rules',
 } as const;
 
 export type CollectionName = (typeof COLLECTIONS)[keyof typeof COLLECTIONS];
@@ -91,4 +95,6 @@ export const PRISMA_MODEL_BY_COLLECTION: Record<string, string> = {
   authors: 'author',
   home_sections: 'homeSection',
   newsletter_subscribers: 'newsletterSubscriber',
+  coupons: 'coupon',
+  tax_rules: 'taxRule',
 };

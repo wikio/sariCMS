@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { Eye, FileCheck2, History, LayoutGrid, Link2, List as ListIcon, MessageSquareText, Plus, Printer, Reply, Trash2, Upload } from 'lucide-react';
 import { isOrderPaid, loadOrders, loadQuotes, saveOrders, saveQuotes, type Order, type OrderInvoice, type Quote, type CommerceItem } from '@/lib/crm-store';
-import { loadCoupons, loadTaxes, loadPayments } from '@/lib/shop-store';
+import { loadCoupons, loadTaxes, loadPayments, type Coupon, type TaxRule } from '@/lib/shop-store';
+import { hydrateShop } from '@/lib/shop-sync';
 import { paymentTypeLabel, normalizeOrderPaymentType, isPaidOrAbove, syncPaymentsFromOrder } from '@/lib/payments';
 import { loadAdminSettings } from '@/lib/admin-settings';
 import { loadShopConfig, formatZoneLabel, type ShopConfig } from '@/lib/shop-config';
@@ -147,10 +148,25 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
   
   const statuses = kind === 'orders' ? ORDER_STATUS : QUOTE_STATUS;
   const title = kind === 'orders' ? t('orders') : t('quotes');
-  const taxes = loadTaxes();
-  const coupons = loadCoupons();
+  // Initialisés sur le cache (comportement d'avant), puis remplacés par ce que
+  // renvoie la base. Voir lib/shop-sync.ts.
+  const [taxes, setTaxes] = useState<TaxRule[]>(() => loadTaxes());
+  const [coupons, setCoupons] = useState<Coupon[]>(() => loadCoupons());
   const [shopConfig, setShopConfig] = useState<ShopConfig | null>(null);
-  useEffect(() => { setShopConfig(loadShopConfig()); const h=()=>setShopConfig(loadShopConfig()); window.addEventListener('sari-shop-config-changed',h); return ()=>window.removeEventListener('sari-shop-config-changed',h); }, []);
+  useEffect(() => {
+    setShopConfig(loadShopConfig());
+    setTaxes(loadTaxes());
+    setCoupons(loadCoupons());
+    let alive = true;
+    void hydrateShop().then(() => {
+      if (!alive) return;
+      setTaxes(loadTaxes());
+      setCoupons(loadCoupons());
+    });
+    const h=()=>setShopConfig(loadShopConfig());
+    window.addEventListener('sari-shop-config-changed',h);
+    return ()=>{ alive = false; window.removeEventListener('sari-shop-config-changed',h); };
+  }, []);
 
   useEffect(() => {
     const loaded = (kind === 'orders' ? loadOrders() : loadQuotes()) as Row[];

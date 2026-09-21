@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Copy, Eye, Pencil, Plus, Trash2 } from 'lucide-react';
 import { couponStatus, generateCouponCode, loadCouponUses, loadCoupons, saveCoupons, type Coupon } from '@/lib/shop-store';
+import { hydrateShop } from '@/lib/shop-sync';
 import { listTaxonomy } from '@/lib/taxonomies';
 import { useToast } from '@/components/admin/Toast';
 import Drawer from '@/components/admin/Drawer';
@@ -32,7 +33,16 @@ export default function CouponsPage() {
   const cats = listTaxonomy('products.category').map((t) => t.label);
   const uses = loadCouponUses();
 
-  useEffect(() => { setRows(loadCoupons()); }, []);
+  useEffect(() => {
+    // Le cache d'abord, pour que l'écran s'affiche immédiatement ; la base
+    // prend le relais dès qu'elle répond. Voir lib/shop-sync.ts.
+    setRows(loadCoupons());
+    let alive = true;
+    void hydrateShop().then(() => {
+      if (alive) setRows(loadCoupons());
+    });
+    return () => { alive = false; };
+  }, []);
 
   const persist = (next: Coupon[], toast = 'Coupon enregistré') => {
     setRows(next);
