@@ -15,9 +15,14 @@
  * suppression.
  */
 
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
 import {
   couponFromApi,
   couponToApi,
+  decidePull,
+  planPull,
   removedIds,
   serverId,
   taxFromApi,
@@ -27,6 +32,9 @@ import {
   toTimestamp,
   toStringArray,
 } from '../lib/shop-mapping.ts';
+
+const ROOT = new URL('..', import.meta.url).pathname;
+const lire = (p) => readFileSync(join(ROOT, p), 'utf8');
 
 const C = process.stdout.isTTY
   ? { r: '\x1b[31m', g: '\x1b[32m', b: '\x1b[1m', x: '\x1b[0m' }
@@ -204,6 +212,91 @@ check('ligne conservée non signalée', !removed.includes(1));
 check('ligne jamais synchronisée ignorée', !removed.some((v) => String(v).startsWith('c-')));
 check('renommage non pris pour une suppression', removed.length === 1, JSON.stringify(removed));
 check('envoi identique → aucune suppression', eq(removedIds(before, before), []));
+
+section('Premier contact avec la base');
+
+// C'est ici que se joue la perte de données du déploiement : une base neuve
+// répond une liste vide, et remplacer le cache par cette liste efface le
+// catalogue saisi sur ce poste sans jamais l'avoir envoyé.
+
+check('base vide + poste jamais synchronisé → on migre le local',
+  decidePull({ serverCount: 0, localCount: 5, hasSyncedBefore: false }) === 'seed');
+check('base vide + poste déjà synchronisé → la base gagne (suppression volontaire)',
+  decidePull({ serverCount: 0, localCount: 5, hasSyncedBefore: true }) === 'overwrite');
+check('base vide + cache vide → rien à faire',
+  decidePull({ serverCount: 0, localCount: 0, hasSyncedBefore: false }) === 'noop');
+check('base vide + cache vide, déjà synchronisé → toujours rien',
+  decidePull({ serverCount: 0, localCount: 0, hasSyncedBefore: true }) === 'noop');
+check('base fournie → la base fait autorité, même au premier contact',
+  decidePull({ serverCount: 3, localCount: 5, hasSyncedBefore: false }) === 'overwrite');
+check('base fournie + cache vide → on remplit',
+  decidePull({ serverCount: 3, localCount: 0, hasSyncedBefore: true }) === 'overwrite');
+check('un seul coupon en base suffit à ne pas migrer le local',
+  decidePull({ serverCount: 1, localCount: 40, hasSyncedBefore: false }) === 'overwrite');
+
+section('Plan de synchronisation — lignes réelles');
+
+const srv = (n, tag = 'S') => Array.from({ length: n }, (_, i) => ({ id: i + 1, code: `${tag}${i + 1}` }));
+const loc = (n) => Array.from({ length: n }, (_, i) => ({ id: `c-${i}`, code: `L${i + 1}` }));
+
+const fresh = planPull({ serverRows: srv(0), localRows: loc(3), hasSyncedBefore: false });
+check('base vide + 3 coupons locaux jamais envoyés → migration', fresh.seed === true);
+check('… sans toucher au cache avant la poussée', fresh.write === null);
+check('… en gardant la copie des 3 lignes', fresh.backup?.length === 3);
+
+const afterDelete = planPull({ serverRows: srv(0), localRows: loc(3), hasSyncedBefore: true });
+check('déjà synchronisé + base vide → la base gagne', afterDelete.write !== null && afterDelete.seed === false);
+check('… et le cache reçoit bien le vide', afterDelete.write?.length === 0);
+
+const authoritative = planPull({ serverRows: srv(2), localRows: loc(5), hasSyncedBefore: false });
+check('2 lignes en base → ce sont elles qui remplissent le cache',
+  eq(authoritative.write?.map((r) => r.code), ['S1', 'S2']));
+check('… sans migration du local, même au premier contact', authoritative.seed === false);
+check('… mais les 5 lignes locales sont copiées avant écrasement',
+  authoritative.backup?.length === 5);
+
+const bothEmpty = planPull({ serverRows: [], localRows: [], hasSyncedBefore: false });
+check('rien des deux côtés → aucune écriture', bothEmpty.write === null && bothEmpty.seed === false);
+check('… et aucune copie inutile', bothEmpty.backup === null);
+
+check('un seul coupon local suffit à déclencher la reprise',
+  planPull({ serverRows: [], localRows: loc(1), hasSyncedBefore: false }).seed === true);
+
+
+/* ---------------------------------------- garde-fous lus dans le pont HTTP */
+
+section("Le pont ne doit pas réécraser le cache avant d’avoir poussé");
+
+// Ces contrôles lisent lib/shop-sync.ts au lieu de l'exécuter : le module
+// dépend de @/lib/cms-admin et d'un `window`, il n'est pas importable depuis
+// Node. Ils ne prouvent donc pas le comportement, ils rendent visible la
+// régression qui le casserait — l'ordre des écritures est exactement ce qui
+// faisait perdre le catalogue. Même convention que scripts/test-quote-checkout.mjs.
+
+const syncSrc = lire('lib/shop-sync.ts');
+const at = (needle) => syncSrc.indexOf(needle);
+
+check("pull() passe par le plan, pas par sa propre intuition", at('planPull({') > -1);
+check('pull() lit le cache local avant de décider', at('readCached<T>(conf.cache)') > -1);
+check('une copie de secours est écrite avant toute réécriture du cache',
+  at('localStorage.setItem(backupKey(resource)') > -1
+  && at('localStorage.setItem(backupKey(resource)') < at('localStorage.setItem(conf.cache'));
+check('en mode migration, le local est poussé avant que le cache soit écrit',
+  (() => {
+    const start = syncSrc.indexOf('if (plan.seed)');
+    if (start < 0) return false;
+    const block = syncSrc.slice(start, start + 700);
+    const push = block.indexOf('pushRows(');
+    const write = block.indexOf('localStorage.setItem(conf.cache');
+    return push > -1 && write > -1 && push < write;
+  })());
+check('aucun littéral vide écrit dans le cache (le geste qui perdait tout)',
+  !syncSrc.includes('setItem(conf.cache, JSON.stringify([]))')
+  && !syncSrc.includes("setItem(conf.cache, '[]')"));
+check('le cache n’est écrit que depuis le plan, jamais depuis fromServer brut',
+  !syncSrc.includes('setItem(conf.cache, JSON.stringify(fromServer))'));
+check('la marque de synchronisation est posée après la décision, pas avant',
+  at('localStorage.setItem(syncedKey(resource)') > at('const plan = planPull({'));
 
 /* ------------------------------------------------------------------ bilan */
 

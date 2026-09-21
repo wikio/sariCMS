@@ -253,8 +253,29 @@ Dans l'ordre d'importance :
 
 ### Récupérer l'étage navigateur
 
-Il n'existe pas d'export automatique. Depuis le poste qui a saisi les données,
-dans la console du navigateur, sur une page de l'administration :
+Coupons et taxes n'ont plus besoin d'être exportés à la main : au premier
+chargement de l'écran après la mise en base, `lib/shop-sync.ts` regarde ce que
+rend la base. Si elle est vide **et** que ce poste n'a jamais synchronisé, il
+pousse le catalogue local avant d'écrire quoi que ce soit, et l'administrateur
+voit « N coupons repris de ce poste et enregistrés en base ». Ouvrir l'écran ne
+détruit donc plus les données — c'était le risque de la bascule.
+
+Règle complète, dans `decidePull()` :
+
+| Base | Cache du poste | Déjà synchronisé | Ce qui se passe |
+| --- | --- | --- | --- |
+| lignes | peu importe | peu importe | la base remplit le cache |
+| vide | vide | — | rien |
+| vide | des lignes | non | **migration** : le local est poussé |
+| vide | des lignes | oui | la base gagne (suppression consentie) |
+
+La dernière ligne est ce qui empêche un catalogue supprimé de revenir sans
+cesse. Dans les deux derniers cas, une copie du cache est écrite au préalable
+dans `sari_shop_backup_coupons` et `sari_shop_backup_taxes` : c'est le filet si
+un écrasement tourne mal.
+
+Le reste de l'étage n'a toujours **aucun** export automatique. Depuis le poste
+qui détient les données, dans la console, sur une page de l'administration :
 
 ```js
 copy(JSON.stringify({
@@ -270,9 +291,6 @@ copy(JSON.stringify({
 Le JSON est dans le presse-papiers. Le conserver avec les sauvegardes ; pour le
 réinjecter sur un autre poste, faire l'opération inverse avec
 `localStorage.setItem`.
-
-`coupons` et `taxes` ont disparu de cette liste : ils sont en base et se
-retrouvent par `GET /api/v1/coupons/all` et `/api/v1/taxes/all`.
 
 ---
 
@@ -297,11 +315,13 @@ retrouvent par `GET /api/v1/coupons/all` et `/api/v1/taxes/all`.
   paiement, enregistrements de paiement, réglages de l'écran Paramètres,
   configuration boutique (`sari_shop_config`) et utilisations de coupons
   (`sari_coupon_uses`). Ce sont eux, le risque de perte restant.
-- **Le passage en base ne migre pas les données existantes.** Un poste
-  d'administrateur qui a déjà saisi des coupons doit les exporter avant, sinon
-  la base démarre vide et l'écran affichera la base plutôt que son cache. Le §5
-  donne le bout de code ; côté impôt, `data/fr|en|ar` et `admin/shop-import`
-  permettent une reprise plus large.
+- **La reprise du catalogue existant est automatique** (§5), mais elle ne se
+  déclenche qu'une fois : au tout premier chargement d'un poste qui n'a jamais
+  synchronisé, et seulement si la base est vide. Si l'administrateur ouvre
+  d'abord un autre poste, déjà synchronisé lui, c'est ce dernier qui remplira la
+  base et le premier verra son cache remplacé — la copie
+  `sari_shop_backup_coupons` reste alors le seul recours. Mieux vaut faire
+  la bascule depuis le poste qui détient le catalogue.
 - **`data/mail/` n'est ni ignoré ni versionné** : il disparaît d'un
   déploiement qui repart d'un clone propre.
 - **`smtp.json` contient un secret** et n'est pas dans git — à traiter comme

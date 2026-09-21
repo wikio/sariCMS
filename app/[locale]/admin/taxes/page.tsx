@@ -36,8 +36,15 @@ export default function TaxesPage() {
     // Cache d'abord, puis la base — voir lib/shop-sync.ts.
     setRows(loadTaxes());
     let alive = true;
-    void hydrateShop().then(() => {
-      if (alive) setRows(loadTaxes());
+    void hydrateShop().then((info) => {
+      if (!alive) return;
+      setRows(loadTaxes());
+      if (info.seededTaxes > 0) {
+        showToast(
+          `${info.seededTaxes} taxe${info.seededTaxes > 1 ? 's' : ''} reprise${info.seededTaxes > 1 ? 's' : ''} de ce poste et enregistrée${info.seededTaxes > 1 ? 's' : ''} en base`,
+          'success',
+        );
+      }
     });
     return () => { alive = false; };
   }, []);

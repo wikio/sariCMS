@@ -221,3 +221,81 @@ export function removedIds(previous: unknown[], next: unknown[]): number[] {
   }
   return out;
 }
+
+/* -------------------------------------------------------------------------- *
+ * Premier contact avec la base
+ * -------------------------------------------------------------------------- */
+
+/**
+ * Ce qu'on fait du cache local quand on vient de télécharger la base.
+ *
+ * - `overwrite` — la base est fournie, ou ce poste a déjà synchronisé : elle
+ *   fait autorité, on remplit le cache avec ce qu'elle renvoie ;
+ * - `seed` — la base est vide et ce poste ne s'est jamais synchronisé, mais il
+ *   porte un catalogue : c'est la migration. On pousse le local avant qu'un
+ *   `setItem(… [])` ne le détruisse ;
+ * - `noop` — rien des deux côtés.
+ *
+ * Sans cette règle, ouvrir l'écran après le passage en base écrasait le
+ * `localStorage` avec la liste vide d'une base neuve : la première visite
+ * faisait disparaître ce qu'on venait de lui demander de sauvegarder.
+ *
+ * Le critère `hasSyncedBefore` est ce qui distingue une migration d'une
+ * suppression volontaire. Sans lui, un administrateur ayant vidé son catalogue
+ * verrait ses coupons revenir à chaque chargement.
+ */
+export type PullDecision = 'overwrite' | 'seed' | 'noop';
+
+export function decidePull(args: {
+  serverCount: number;
+  localCount: number;
+  hasSyncedBefore: boolean;
+}): PullDecision {
+  if (args.serverCount > 0) return 'overwrite';
+  if (args.localCount === 0) return 'noop';
+  return args.hasSyncedBefore ? 'overwrite' : 'seed';
+}
+
+/** Ce que `pull()` doit faire, exprimé en lignes et non en chiffres. */
+export type PullPlan = {
+  /** Lignes à écrire dans le cache, ou `null` pour n'y pas toucher. */
+  write: unknown[] | null;
+  /** Pousser le local avant toute écriture — la migration. */
+  seed: boolean;
+  /** Copie de secours à conserver, ou `null`. */
+  backup: unknown[] | null;
+};
+
+/**
+ * Construit le plan à partir des lignes descendues et de celles du cache.
+ *
+ * Fonction séparée de `decidePull` pour que la règle reste écrite **une** fois
+ * : ici seulement la mise en forme du résultat, la décision vient de
+ * `decidePull`. Deux tables de vérité sur « qui gagne » seraient la recette
+ * d'une régression silencieuse.
+ */
+export function planPull(args: {
+  serverRows: unknown[];
+  localRows: unknown[];
+  hasSyncedBefore: boolean;
+}): PullPlan {
+  const { serverRows, localRows, hasSyncedBefore } = args;
+  const backup = localRows.length ? localRows : null;
+  switch (decidePull({
+    serverCount: serverRows.length,
+    localCount: localRows.length,
+    hasSyncedBefore,
+  })) {
+    case 'overwrite':
+      // La base fait autorité, y compris quand elle dit « vide » : c'est une
+      // suppression consentie, pas une perte.
+      return { write: serverRows, seed: false, backup };
+    case 'seed':
+      // On ne touche pas au cache avant que la poussée ait abouti : si le
+      // serveur est injoignable, les lignes restent en place pour la prochaine
+      // tentative.
+      return { write: null, seed: true, backup };
+    default:
+      return { write: null, seed: false, backup };
+  }
+}
