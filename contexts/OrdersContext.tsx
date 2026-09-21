@@ -5,7 +5,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { useAuth, frontToken } from './AuthContext';
 import { cmsFetch } from '@/lib/cms';
 import { nextCodeFor } from '@/lib/codes';
-import { loadOrders as loadCrmOrders, saveOrders as saveCrmOrders, loadQuotes as loadCrmQuotes, saveQuotes as saveCrmQuotes } from '@/lib/crm-store';
+import { loadOrders as loadCrmOrders, saveOrders as saveCrmOrders, loadQuotes as loadCrmQuotes, saveQuotes as saveCrmQuotes, numOrUndef } from '@/lib/crm-store';
 
 export interface OrderItem {
   id: number;
@@ -376,6 +376,14 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
           shippingFee: Number((newOrder as any).shippingFee || 0),
           taxTotal: Number((newOrder as any).taxTotal || (newOrder as any).taxAmount || 0),
           discountTotal: Number((newOrder as any).discountTotal || 0),
+          // Même détail que dans `mergeWithCtxOrders` : sans lui, le PDF de la
+          // commande ne peut afficher ni la remise globale ni la TVA par taux.
+          productDiscount: numOrUndef((newOrder as any).productDiscount),
+          globalDiscount: numOrUndef((newOrder as any).globalDiscount),
+          couponDiscount: numOrUndef((newOrder as any).couponDiscount),
+          productShipping: numOrUndef((newOrder as any).productShipping),
+          globalShipping: numOrUndef((newOrder as any).globalShipping),
+          taxLines: Array.isArray((newOrder as any).taxLines) ? (newOrder as any).taxLines : undefined,
           items: cItems,
           zone: (newOrder as any).deliveryZone || (newOrder as any).saleZone || '',
           deliveryZone: (newOrder as any).deliveryZone || '',

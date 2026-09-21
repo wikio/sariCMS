@@ -63,6 +63,14 @@ export interface Order {
   shippingFee?: number; // frais livraison (produit + global zone)
   taxTotal?: number;
   globalDiscount?: number;
+  /** Remise produit / remise coupon / livraisons détaillées.
+   *  Colonnes réelles de `orders` et lues par le PDF (`lib/pdf-templates.ts`) :
+   *  absentes du type, elles étaient silencieusement perdues à la conversion
+   *  panier → commande admin, et le détail disparaissait du document. */
+  productDiscount?: number;
+  couponDiscount?: number;
+  productShipping?: number;
+  globalShipping?: number;
   taxLines?: Array<{ id: string; name: string; amount: number; base?: number; rate: number; mode: string; included?: boolean }>;
   items: CommerceItem[];
   address?: string;
@@ -310,6 +318,13 @@ export function loadOrders(): Order[] {
   return mergeWithCtxOrders(normalized);
 }
 
+/** Nombre exploitable, ou `undefined` — jamais 0 par défaut. */
+export function numOrUndef(v: unknown): number | undefined {
+  if (v === undefined || v === null || v === '') return undefined;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : undefined;
+}
+
 function mergeWithCtxOrders(orders: Order[]): Order[] {
   if (typeof window === 'undefined') return orders;
   try {
@@ -342,6 +357,22 @@ function mergeWithCtxOrders(orders: Order[]): Order[] {
         shippingFee: Number((c as any).shippingFee || 0),
         taxTotal: Number((c as any).taxTotal || (c as any).taxAmount || 0),
         discountTotal: Number((c as any).discountTotal || 0),
+        /*
+         * Détail des remises, de la livraison et de la TVA.
+         *
+         * Le panier les calcule et les stocke (`app/[locale]/cart/page.tsx`
+         * écrit `globalDiscount` et `taxLines`), mais cette conversion ne les
+         * reprenait pas : la commande admin arrivait sans détail, et le PDF ne
+         * pouvait plus afficher ni la remise globale, ni la TVA par taux avec
+         * son assiette. Les champs absents restent `undefined` plutôt que 0,
+         * pour ne pas faire croire à une remise nulle là où il n'y en a pas.
+         */
+        productDiscount: numOrUndef((c as any).productDiscount),
+        globalDiscount: numOrUndef((c as any).globalDiscount),
+        couponDiscount: numOrUndef((c as any).couponDiscount),
+        productShipping: numOrUndef((c as any).productShipping),
+        globalShipping: numOrUndef((c as any).globalShipping),
+        taxLines: Array.isArray((c as any).taxLines) ? (c as any).taxLines : undefined,
         items: cItems.length ? cItems : [{ id: 1, name: 'Commande', quantity: 1, price: cTotal }],
         zone: (c as any).deliveryZone || (c as any).saleZone || '',
         deliveryZone: (c as any).deliveryZone || '',
