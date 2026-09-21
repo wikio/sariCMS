@@ -41,6 +41,12 @@
   "rejectedChip": "Rejetés",
   "delete": "Supprimer",
   "deactivate": "Désactiver",
-  "deactivateReason": "Motif de désactivation :",
-  "deactivatedToast": "Paiement désactivé."
+  "deactivatedToast": "Paiement désactivé.",
+  "deactivateTitle": "Désactiver le paiement",
+  "deactivateHint": "La ligne reste au journal pour la traçabilité : elle passe en « rejeté » et sort du total validé.",
+  "deactivateReasonLabel": "Motif de désactivation",
+  "deactivateReasonPlaceholder": "Ex. : encaissement saisi en double, montant erroné…",
+  "deactivateConfirm": "Désactiver ce paiement",
+  "deactivateCancel": "Annuler",
+  "deactivateReasonRequired": "Indiquez un motif de désactivation."
 }

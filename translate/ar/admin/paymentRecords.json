@@ -41,6 +41,12 @@
   "rejectedChip": "مرفوضة",
   "delete": "حذف",
   "deactivate": "إلغاء التنشيط",
-  "deactivateReason": "سبب إلغاء التنشيط:",
-  "deactivatedToast": "تم إلغاء تنشيط الدفع."
+  "deactivatedToast": "تم إلغاء تنشيط الدفع.",
+  "deactivateTitle": "تعطيل الدفع",
+  "deactivateHint": "يبقى السطر في السجل للتتبع: ينتقل إلى «مرفوض» ويخرج من مجموع المبالغ المعتمدة.",
+  "deactivateReasonLabel": "سبب التعطيل",
+  "deactivateReasonPlaceholder": "مثال: دفع مسجّل مرتين، مبلغ خاطئ…",
+  "deactivateConfirm": "تعطيل هذا الدفع",
+  "deactivateCancel": "إلغاء",
+  "deactivateReasonRequired": "يرجى ذكر سبب التعطيل."
 }

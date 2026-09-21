@@ -29,6 +29,10 @@ export default function PaymentRecordsPage() {
   const [open, setOpen] = useState<PaymentRecord | null>(null);
   const [consult, setConsult] = useState(false);
   const [note, setNote] = useState('');
+  // Paiement en cours de désactivation : tant qu'il est non nul, la fenêtre de
+  // motif est ouverte. Remplace l'ancien `window.prompt`.
+  const [deactivating, setDeactivating] = useState<PaymentRecord | null>(null);
+  const [reason, setReason] = useState('');
 
   useEffect(() => {
     setRows(loadPaymentRecords());
@@ -76,10 +80,28 @@ export default function PaymentRecordsPage() {
    * « rejeté », sort du total validé et conserve son motif. C'est l'action
    * réversible à privilégier quand un encaissement a été saisi à tort.
    */
-  const deactivate = (id: string, reason: string) => {
-    rejectPayment(id, reason.trim());
+  const deactivate = (id: string, motive: string) => {
+    rejectPayment(id, motive.trim());
     setRows(loadPaymentRecords());
     showToast(t("deactivatedToast", { defaultMessage: "Paiement désactivé." }), 'success');
+  };
+
+  /** Ouvre la fenêtre de motif pour un paiement donné. */
+  const askDeactivate = (payment: PaymentRecord) => {
+    setReason('');
+    setDeactivating(payment);
+  };
+
+  /** Valide la désactivation — le motif est obligatoire. */
+  const confirmDeactivate = () => {
+    if (!deactivating) return;
+    if (!reason.trim()) {
+      showToast(t("deactivateReasonRequired", { defaultMessage: "Indiquez un motif de désactivation." }), 'error');
+      return;
+    }
+    deactivate(deactivating.id, reason);
+    setDeactivating(null);
+    setReason('');
   };
 
   return (
@@ -148,11 +170,7 @@ export default function PaymentRecordsPage() {
                     <button
                       className="ad-btn ad-btn-ghost"
                       title={t("deactivate", { defaultMessage: "Désactiver ce paiement" })}
-                      onClick={() => {
-                        const reason = window.prompt(t("deactivateReason", { defaultMessage: "Motif de désactivation :" }) || '');
-                        if (reason === null) return;
-                        deactivate(p.id, reason);
-                      }}
+                      onClick={() => askDeactivate(p)}
                     ><XCircle className="w-4 h-4" />{t("deactivate", { defaultMessage: "Désactiver" })}</button>
                   )}
                   <button className="ad-btn ad-btn-icon ad-btn-danger ml-1" title={t("delete", {defaultMessage: "Supprimer"})} onClick={() => { if (confirm(t("confirmDelete"))) { deletePayment(p.id); setRows(loadPaymentRecords()); showToast(t("deleted"), 'success'); } }}><Trash2 className="w-4 h-4" /></button>
@@ -205,6 +223,83 @@ export default function PaymentRecordsPage() {
           </>
         )}
       </Drawer>
+
+      {/*
+        Fenêtre de motif de désactivation.
+
+        Remplace l'ancien `window.prompt`, dont l'apparence échappait au thème et
+        qui acceptait un motif vide. Ici le motif est obligatoire, la fenêtre est
+        centrée par `.ad-modal` (flex + align/justify center), se ferme à
+        Échap comme au clic sur le fond, et se valide à Ctrl/Cmd + Entrée.
+      */}
+      {deactivating && (
+        <div
+          className="ad-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="deactivate-title"
+          onClick={() => { setDeactivating(null); setReason(''); }}
+        >
+          <div
+            className="ad-modal-card space-y-4"
+            style={{ width: 'min(480px, 100%)' }}
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') { setDeactivating(null); setReason(''); }
+              if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) confirmDeactivate();
+            }}
+          >
+            <div className="flex items-start gap-3">
+              <div
+                className="shrink-0 w-10 h-10 rounded-xl flex items-center justify-center"
+                style={{ background: 'color-mix(in srgb, var(--ad-danger, #e5484d) 14%, transparent)', color: 'var(--ad-danger, #e5484d)' }}
+              >
+                <XCircle className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 id="deactivate-title" className="text-lg font-black">{t("deactivateTitle")}</h2>
+                <p className="text-xs mt-1" style={{ color: 'var(--ad-muted)' }}>{t("deactivateHint")}</p>
+              </div>
+            </div>
+
+            <div className="ad-card p-3 grid grid-cols-2 gap-2 text-sm" style={{ background: 'var(--ad-surface-2)' }}>
+              <div>
+                <span style={{ color: 'var(--ad-muted)' }}>{t("order")}</span>
+                <div className="font-bold font-mono">{deactivating.orderCode || (deactivating.orderId ? `#${deactivating.orderId}` : '—')}</div>
+              </div>
+              <div>
+                <span style={{ color: 'var(--ad-muted)' }}>{t("amount")}</span>
+                <div className="font-black">{money(Number(deactivating.amount))}</div>
+              </div>
+              <div className="col-span-2">
+                <span style={{ color: 'var(--ad-muted)' }}>{t("client")}</span>
+                <div className="font-bold">{deactivating.client}</div>
+              </div>
+            </div>
+
+            <label className="block space-y-1.5">
+              <span className="field-label">{t("deactivateReasonLabel")}</span>
+              <textarea
+                className="ad-textarea"
+                rows={3}
+                autoFocus
+                value={reason}
+                placeholder={t("deactivateReasonPlaceholder")}
+                onChange={(e) => setReason(e.target.value)}
+              />
+            </label>
+
+            <div className="flex justify-end gap-2">
+              <button className="ad-btn ad-btn-ghost" onClick={() => { setDeactivating(null); setReason(''); }}>
+                {t("deactivateCancel")}
+              </button>
+              <button className="ad-btn ad-btn-danger" onClick={confirmDeactivate} disabled={!reason.trim()}>
+                <XCircle className="w-4 h-4" />{t("deactivateConfirm")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -880,8 +880,14 @@
       "rejectedChip": "Rejected",
       "delete": "Delete",
       "deactivate": "Deactivate",
-      "deactivateReason": "Deactivation reason:",
-      "deactivatedToast": "Payment deactivated."
+      "deactivatedToast": "Payment deactivated.",
+      "deactivateTitle": "Deactivate payment",
+      "deactivateHint": "The row stays in the log for traceability: it moves to “rejected” and drops out of the validated total.",
+      "deactivateReasonLabel": "Deactivation reason",
+      "deactivateReasonPlaceholder": "e.g. payment entered twice, wrong amount…",
+      "deactivateConfirm": "Deactivate this payment",
+      "deactivateCancel": "Cancel",
+      "deactivateReasonRequired": "Please give a deactivation reason."
     },
     "payments": {
       "title": "Payment methods",
