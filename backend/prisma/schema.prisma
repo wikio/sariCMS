@@ -833,6 +833,48 @@ model TaxRule {
   @@map("tax_rules")
 }
 
+/// Encaissements enregistrés par l'administration et par le parcours de commande.
+///
+/// Ce magasin vivait dans `sari_payment_records`, le `localStorage` du poste : le
+/// seul endroit où ces lignes existaient, sans sauvegarde, sans partage entre
+/// deux administrateurs, et invisible en cas de changement de navigateur. C'est
+/// une donnée comptable — un virement attendu, une carte refusée avec son motif.
+///
+/// `externalId` porte la contrainte d'unicité, et c'est ce qui rend l'envoi
+/// idempotent : le navigateur envoie ses lignes avec l'identifiant qu'il leur a
+/// donné, et un double envoi ne crée pas de doublon. (Le catalogue produits n'a
+/// pas cet arrangement sur son `sku` : `String?` sans `@unique`, ce qui a laissé
+/// passer les références doubles — voir `sku-seq.service.ts`.)
+///
+/// `cardMasked` n'est PAS une colonne : il se déduit de `cardLast4` à la lecture.
+/// Stocker les deux, c'est deux valeurs qui peuvent se contredire.
+model PaymentRecord {
+  id          Int      @id @default(autoincrement())
+  externalId  String   @unique @db.VarChar(64)
+  orderId     Int?
+  orderCode   String?     @db.VarChar(40)
+  client      String      @db.VarChar(160)
+  email       String?     @db.VarChar(160)
+  method      String      @db.VarChar(24)
+  methodName  String?     @db.VarChar(60)
+  amount      Decimal     @default(0) @db.Decimal(14, 2)
+  status      String      @default("pending") @db.VarChar(20)
+  cardLast4   String?     @db.VarChar(4)
+  note        String?     @db.Text
+  date        DateTime
+  validatedAt DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  deletedAt   DateTime?
+  createdBy   Int?
+  updatedBy   Int?
+
+  @@index([status, date])
+  @@index([orderId])
+  @@index([deletedAt])
+  @@map("payment_records")
+}
+
 model JobApplication {
   id         Int       @id @default(autoincrement())
   reference  String?   @unique

@@ -95,6 +95,19 @@ function Shell({ children, page }: { children: ReactNode; page?: string }) {
         window.dispatchEvent(new Event('sari-shop-config-changed'));
       })
       .catch(() => {});
+    // Relevé d'encaissements : ouvert au même moment et pour la même raison — une
+    // saisie a pu avoir lieu sur un autre poste, et un relevé figé sur un seul
+    // navigateur n'est pas un relevé. Import dynamique, comme au-dessus, pour ne
+    // pas alourdir le premier chargement de l'administration. L'écran écoute
+    // `sari-payments-changed` : c'est lui qui redemande la liste après le
+    // rapatriement, pas un composant qui devinerait qu'il faut se rafraîchir.
+    import('@/lib/payment-records-sync')
+      .then((m) => m.hydratePaymentRecords())
+      .then(() => {
+        if (cancelled) return;
+        window.dispatchEvent(new Event('sari-payments-changed'));
+      })
+      .catch(() => {});
     return () => { cancelled = true; };
   }, [isLoginPage, user]);
 

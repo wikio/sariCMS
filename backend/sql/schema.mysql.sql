@@ -835,6 +835,35 @@ CREATE TABLE `tax_rules` (
   KEY `tax_rules_deletedAt_idx` (`deletedAt`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- PaymentRecord
+DROP TABLE IF EXISTS `payment_records`;
+CREATE TABLE `payment_records` (
+  `id`          INT            NOT NULL AUTO_INCREMENT,
+  `externalId`  VARCHAR(64)    NOT NULL,
+  `orderId`     INT            NULL,
+  `orderCode`   VARCHAR(40)    NULL,
+  `client`      VARCHAR(160)   NOT NULL,
+  `email`       VARCHAR(160)   NULL,
+  `method`      VARCHAR(24)    NOT NULL,
+  `methodName`  VARCHAR(60)    NULL,
+  `amount`      DECIMAL(14, 2) NOT NULL DEFAULT 0,
+  `status`      VARCHAR(20)    NOT NULL DEFAULT 'pending',
+  `cardLast4`   VARCHAR(4)     NULL,
+  `note`        TEXT           NULL,
+  `date`        DATETIME(3)    NOT NULL,
+  `validatedAt` DATETIME(3)    NULL,
+  `createdAt`   DATETIME(3)    NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `updatedAt`   DATETIME(3)    NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  `deletedAt`   DATETIME(3)    NULL,
+  `createdBy`   INT            NULL,
+  `updatedBy`   INT            NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `payment_records_externalId_key` (`externalId`),
+  KEY `payment_records_status_date_idx` (`status`, `date`),
+  KEY `payment_records_orderId_idx` (`orderId`),
+  KEY `payment_records_deletedAt_idx` (`deletedAt`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- JobApplication
 DROP TABLE IF EXISTS `job_applications`;
 CREATE TABLE `job_applications` (

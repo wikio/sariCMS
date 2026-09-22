@@ -38,6 +38,12 @@ export function normalizeOrderPaymentType(payment?: string): PaymentType {
 
 export interface PaymentRecord {
   id: string;
+  /**
+   * Identifiant de la ligne en base (`payment_records.id`), quand le poste l'a
+   * déjà reçue. Séparé de l'`id` local parce que les deux servent à autre chose :
+   * l'un aux gestes de l'écran, l'autre à adresser la ligne côté serveur.
+   */
+  dbId?: number;
   /** Identifiant de la commande liée (vitrine / panier). */
   orderId: number | null;
   /** Code de commande auto-généré (si connu). */
@@ -200,9 +206,37 @@ export function loadPaymentRecords(): PaymentRecord[] {
   }
 }
 
+/**
+ * Crochet de mise en base, sur le modèle de `lib/admin-settings.ts` : un seul
+ * point d'écriture, une seule branche de réplication. `savePaymentRecords` est
+ * bien l'unique porte de sortie du magasin — saisie, validation manuelle, refus,
+ * suppression, alignement depuis une commande — donc y accrocher la poussée
+ * couvre les cinq gestes, au lieu d'en couvrir quatre et de laisser le cinquième
+ * désynchroniser la base en silence.
+ *
+ * `previous` est passé exprès : la liste des retraits se déduit de l'écart entre
+ * avant et après, et le serveur n'accepte un retrait que nommé (jamais par
+ * absence, sinon un poste partiellement à jour effacerait des encaissements
+ * enregistrés ailleurs).
+ */
+export type PaymentRecordsSaveHook = (args: {
+  previous: PaymentRecord[];
+  next: PaymentRecord[];
+}) => void;
+
+let recordsSaveHook: PaymentRecordsSaveHook | null = null;
+
+export function registerPaymentRecordsSaveHook(hook: PaymentRecordsSaveHook | null): void {
+  recordsSaveHook = hook;
+}
+
 export function savePaymentRecords(rows: PaymentRecord[]) {
+  // Lu avant la réécriture : c'est l'état que le poste croisait, donc la base de
+  // comparaison des retraits.
+  const previous = loadPaymentRecords();
   localStorage.setItem(KEY, JSON.stringify(rows));
   emit();
+  recordsSaveHook?.({ previous, next: rows });
 }
 
 /** Enregistre un paiement ; le statut est déduit de la méthode (carte/PayPal = validé). */

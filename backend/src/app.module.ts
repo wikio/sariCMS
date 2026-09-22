@@ -35,6 +35,7 @@ import { SolutionsModule } from './modules/solutions/solutions.module';
 import { CouponsModule } from './modules/coupons/coupons.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { TaxesModule } from './modules/taxes/taxes.module';
+import { PaymentRecordsModule } from './modules/payments/payment-records.module';
 import { QuotesModule } from './modules/quotes/quotes.module';
 import { ApplicationsModule } from './modules/applications/applications.module';
 import { HeroModule } from './modules/hero/hero.module';
@@ -99,6 +100,7 @@ import { MailModule } from './modules/mail/mail.module';
     SolutionsModule,
     CouponsModule,
     TaxesModule,
+    PaymentRecordsModule,
     OrdersModule,
     QuotesModule,
     ApplicationsModule,

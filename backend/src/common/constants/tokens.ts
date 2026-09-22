@@ -30,6 +30,7 @@ export const HOME_REPOSITORY = Symbol('HOME_REPOSITORY');
 export const NEWSLETTER_REPOSITORY = Symbol('NEWSLETTER_REPOSITORY');
 export const COUPON_REPOSITORY = Symbol('COUPON_REPOSITORY');
 export const TAX_RULE_REPOSITORY = Symbol('TAX_RULE_REPOSITORY');
+export const PAYMENT_RECORD_REPOSITORY = Symbol('PAYMENT_RECORD_REPOSITORY');
 
 export const COLLECTIONS = {
   users: 'users',
@@ -62,6 +63,7 @@ export const COLLECTIONS = {
   newsletter: 'newsletter_subscribers',
   coupons: 'coupons',
   taxRules: 'tax_rules',
+  paymentRecords: 'payment_records',
 } as const;
 
 export type CollectionName = (typeof COLLECTIONS)[keyof typeof COLLECTIONS];
@@ -97,4 +99,5 @@ export const PRISMA_MODEL_BY_COLLECTION: Record<string, string> = {
   newsletter_subscribers: 'newsletterSubscriber',
   coupons: 'coupon',
   tax_rules: 'taxRule',
+  payment_records: 'paymentRecord',
 };

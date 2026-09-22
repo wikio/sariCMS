@@ -121,8 +121,18 @@ que les gabarits de mail `order_shipped`, `order_delivered` et `order_payment`
 attendaient sans qu'aucun champ ne permette de les saisir), puis
 `20260921_add_coupons_and_tax_rules` (deux `CREATE TABLE`, `coupons` et
 `tax_rules` — le catalogue de promotions et les taux d'imposition, qui ne
-vivaient que dans le `localStorage` du navigateur d'administration). Aucune
-donnée existante n'est touchée : deux tables neuves, cinq colonnes NULLables.
+vivaient que dans le `localStorage` du navigateur d'administration), puis
+`20260922_add_payment_records` (une `CREATE TABLE`, `payment_records` — le relevé
+d'encaissements de l'écran *Journal des paiements*, lui aussi enfermé dans un seul
+navigateur). Aucune donnée existante n'est touchée : trois tables neuves, cinq
+colonnes NULLables.
+
+Le blocage en cours chez l'exploitant — `P3018` / erreur 1060 « Duplicate column
+name » sur `20260919_add_order_shipment_fields`, la colonne `trackingNumber` ayant
+déjà été ajoutée à la main — se résout comme décrit plus bas dans ce fichier ;
+`20260922_add_payment_records` ne demande rien de particulier une fois le blocage
+levé, et sa `CREATE TABLE` ne peut pas entrer en conflit avec une colonne existante
+puisqu'elle ne crée qu'une table neuve.
 
 **Option 2 — sans Prisma (hébergement mutualisé).** Le fichier de migration est
 du SQL autonome, il s'importe dans la base déjà sélectionnée et ne contient pas
@@ -151,7 +161,17 @@ migration brut :
 
 ```bash
 mysql -u root -p sari_cms < backend/sql/migrate-coupons-taxes.mysql.sql
+mysql -u root -p sari_cms < backend/sql/migrate-payment-records.mysql.sql
 ```
+
+`migrate-payment-records.mysql.sql` est du même bois : `CREATE TABLE IF NOT EXISTS`,
+chaque index protégé par une lecture d'`information_schema`, rejouable, et un
+contrôle de colonnes en dernière requête. Il ne touche aucune table existante, donc
+il peut être passé avant, après, ou à la place de `migrate deploy` pour sa part. Il
+ne crée **pas** les permissions `payments` (ni `coupons`, ni `taxes`) : c'est le
+rôle de `sql/fix-permissions.mysql.sql`, à passer après, et l'attribution aux rôles
+reste une décision de l'exploitant dans Administration → Rôles. Sans ces lignes,
+l'écran répond 403 — le symptôme le plus probable d'une migration réussie à moitié.
 
 Il couvre d'ailleurs les deux migrations d'un seul coup (`20260919_add_order_shipment_fields`
 et `20260921_add_coupons_and_tax_rules`), ce qui évite d'avoir à décider lequel

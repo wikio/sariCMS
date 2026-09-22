@@ -43,7 +43,7 @@
 -- ce n'est pas bloquant, la section 4 ci-dessous durcit les colonnes elles-mêmes, et
 -- le CMS n'écrit plus de date vide depuis que l'adaptateur Prisma la refuse.
 
--- ——— 1. Diagnostic : 101 colonnes de date balayées ———
+-- ——— 1. Diagnostic : 124 colonnes de date balayées ———
 SELECT * FROM (
   SELECT 'roles' AS `table`, 'createdAt' AS `colonne`, COUNT(*) AS `lignes`
     FROM `roles`
@@ -92,6 +92,26 @@ SELECT * FROM (
   SELECT 'refresh_tokens' AS `table`, 'revokedAt' AS `colonne`, COUNT(*) AS `lignes`
     FROM `refresh_tokens`
     WHERE `revokedAt` IS NOT NULL AND (CAST(`revokedAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`revokedAt`), 0) = 0 OR COALESCE(DAY(`revokedAt`), 0) = 0)
+  UNION ALL
+  SELECT 'password_reset_tokens' AS `table`, 'createdAt' AS `colonne`, COUNT(*) AS `lignes`
+    FROM `password_reset_tokens`
+    WHERE `createdAt` IS NOT NULL AND (CAST(`createdAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`createdAt`), 0) = 0 OR COALESCE(DAY(`createdAt`), 0) = 0)
+  UNION ALL
+  SELECT 'password_reset_tokens' AS `table`, 'updatedAt' AS `colonne`, COUNT(*) AS `lignes`
+    FROM `password_reset_tokens`
+    WHERE `updatedAt` IS NOT NULL AND (CAST(`updatedAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`updatedAt`), 0) = 0 OR COALESCE(DAY(`updatedAt`), 0) = 0)
+  UNION ALL
+  SELECT 'password_reset_tokens' AS `table`, 'deletedAt' AS `colonne`, COUNT(*) AS `lignes`
+    FROM `password_reset_tokens`
+    WHERE `deletedAt` IS NOT NULL AND (CAST(`deletedAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`deletedAt`), 0) = 0 OR COALESCE(DAY(`deletedAt`), 0) = 0)
+  UNION ALL
+  SELECT 'password_reset_tokens' AS `table`, 'expiresAt' AS `colonne`, COUNT(*) AS `lignes`
+    FROM `password_reset_tokens`
+    WHERE `expiresAt` IS NOT NULL AND (CAST(`expiresAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`expiresAt`), 0) = 0 OR COALESCE(DAY(`expiresAt`), 0) = 0)
+  UNION ALL
+  SELECT 'password_reset_tokens' AS `table`, 'usedAt' AS `colonne`, COUNT(*) AS `lignes`
+    FROM `password_reset_tokens`
+    WHERE `usedAt` IS NOT NULL AND (CAST(`usedAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`usedAt`), 0) = 0 OR COALESCE(DAY(`usedAt`), 0) = 0)
   UNION ALL
   SELECT 'permissions' AS `table`, 'createdAt' AS `colonne`, COUNT(*) AS `lignes`
     FROM `permissions`
@@ -381,6 +401,18 @@ SELECT * FROM (
     FROM `orders`
     WHERE `deletedAt` IS NOT NULL AND (CAST(`deletedAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`deletedAt`), 0) = 0 OR COALESCE(DAY(`deletedAt`), 0) = 0)
   UNION ALL
+  SELECT 'orders' AS `table`, 'deliveredAt' AS `colonne`, COUNT(*) AS `lignes`
+    FROM `orders`
+    WHERE `deliveredAt` IS NOT NULL AND (CAST(`deliveredAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`deliveredAt`), 0) = 0 OR COALESCE(DAY(`deliveredAt`), 0) = 0)
+  UNION ALL
+  SELECT 'orders' AS `table`, 'paidAt' AS `colonne`, COUNT(*) AS `lignes`
+    FROM `orders`
+    WHERE `paidAt` IS NOT NULL AND (CAST(`paidAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`paidAt`), 0) = 0 OR COALESCE(DAY(`paidAt`), 0) = 0)
+  UNION ALL
+  SELECT 'orders' AS `table`, 'shippedAt' AS `colonne`, COUNT(*) AS `lignes`
+    FROM `orders`
+    WHERE `shippedAt` IS NOT NULL AND (CAST(`shippedAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`shippedAt`), 0) = 0 OR COALESCE(DAY(`shippedAt`), 0) = 0)
+  UNION ALL
   SELECT 'quotes' AS `table`, 'createdAt' AS `colonne`, COUNT(*) AS `lignes`
     FROM `quotes`
     WHERE `createdAt` IS NOT NULL AND (CAST(`createdAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`createdAt`), 0) = 0 OR COALESCE(DAY(`createdAt`), 0) = 0)
@@ -400,6 +432,66 @@ SELECT * FROM (
   SELECT 'quotes' AS `table`, 'desiredDate' AS `colonne`, COUNT(*) AS `lignes`
     FROM `quotes`
     WHERE `desiredDate` IS NOT NULL AND (CAST(`desiredDate` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`desiredDate`), 0) = 0 OR COALESCE(DAY(`desiredDate`), 0) = 0)
+  UNION ALL
+  SELECT 'coupons' AS `table`, 'createdAt' AS `colonne`, COUNT(*) AS `lignes`
+    FROM `coupons`
+    WHERE `createdAt` IS NOT NULL AND (CAST(`createdAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`createdAt`), 0) = 0 OR COALESCE(DAY(`createdAt`), 0) = 0)
+  UNION ALL
+  SELECT 'coupons' AS `table`, 'updatedAt' AS `colonne`, COUNT(*) AS `lignes`
+    FROM `coupons`
+    WHERE `updatedAt` IS NOT NULL AND (CAST(`updatedAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`updatedAt`), 0) = 0 OR COALESCE(DAY(`updatedAt`), 0) = 0)
+  UNION ALL
+  SELECT 'coupons' AS `table`, 'deletedAt' AS `colonne`, COUNT(*) AS `lignes`
+    FROM `coupons`
+    WHERE `deletedAt` IS NOT NULL AND (CAST(`deletedAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`deletedAt`), 0) = 0 OR COALESCE(DAY(`deletedAt`), 0) = 0)
+  UNION ALL
+  SELECT 'coupons' AS `table`, 'endDate' AS `colonne`, COUNT(*) AS `lignes`
+    FROM `coupons`
+    WHERE `endDate` IS NOT NULL AND (CAST(`endDate` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`endDate`), 0) = 0 OR COALESCE(DAY(`endDate`), 0) = 0)
+  UNION ALL
+  SELECT 'coupons' AS `table`, 'startDate' AS `colonne`, COUNT(*) AS `lignes`
+    FROM `coupons`
+    WHERE `startDate` IS NOT NULL AND (CAST(`startDate` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`startDate`), 0) = 0 OR COALESCE(DAY(`startDate`), 0) = 0)
+  UNION ALL
+  SELECT 'tax_rules' AS `table`, 'createdAt' AS `colonne`, COUNT(*) AS `lignes`
+    FROM `tax_rules`
+    WHERE `createdAt` IS NOT NULL AND (CAST(`createdAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`createdAt`), 0) = 0 OR COALESCE(DAY(`createdAt`), 0) = 0)
+  UNION ALL
+  SELECT 'tax_rules' AS `table`, 'updatedAt' AS `colonne`, COUNT(*) AS `lignes`
+    FROM `tax_rules`
+    WHERE `updatedAt` IS NOT NULL AND (CAST(`updatedAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`updatedAt`), 0) = 0 OR COALESCE(DAY(`updatedAt`), 0) = 0)
+  UNION ALL
+  SELECT 'tax_rules' AS `table`, 'deletedAt' AS `colonne`, COUNT(*) AS `lignes`
+    FROM `tax_rules`
+    WHERE `deletedAt` IS NOT NULL AND (CAST(`deletedAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`deletedAt`), 0) = 0 OR COALESCE(DAY(`deletedAt`), 0) = 0)
+  UNION ALL
+  SELECT 'tax_rules' AS `table`, 'endDate' AS `colonne`, COUNT(*) AS `lignes`
+    FROM `tax_rules`
+    WHERE `endDate` IS NOT NULL AND (CAST(`endDate` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`endDate`), 0) = 0 OR COALESCE(DAY(`endDate`), 0) = 0)
+  UNION ALL
+  SELECT 'tax_rules' AS `table`, 'startDate' AS `colonne`, COUNT(*) AS `lignes`
+    FROM `tax_rules`
+    WHERE `startDate` IS NOT NULL AND (CAST(`startDate` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`startDate`), 0) = 0 OR COALESCE(DAY(`startDate`), 0) = 0)
+  UNION ALL
+  SELECT 'payment_records' AS `table`, 'createdAt' AS `colonne`, COUNT(*) AS `lignes`
+    FROM `payment_records`
+    WHERE `createdAt` IS NOT NULL AND (CAST(`createdAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`createdAt`), 0) = 0 OR COALESCE(DAY(`createdAt`), 0) = 0)
+  UNION ALL
+  SELECT 'payment_records' AS `table`, 'updatedAt' AS `colonne`, COUNT(*) AS `lignes`
+    FROM `payment_records`
+    WHERE `updatedAt` IS NOT NULL AND (CAST(`updatedAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`updatedAt`), 0) = 0 OR COALESCE(DAY(`updatedAt`), 0) = 0)
+  UNION ALL
+  SELECT 'payment_records' AS `table`, 'date' AS `colonne`, COUNT(*) AS `lignes`
+    FROM `payment_records`
+    WHERE `date` IS NOT NULL AND (CAST(`date` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`date`), 0) = 0 OR COALESCE(DAY(`date`), 0) = 0)
+  UNION ALL
+  SELECT 'payment_records' AS `table`, 'deletedAt' AS `colonne`, COUNT(*) AS `lignes`
+    FROM `payment_records`
+    WHERE `deletedAt` IS NOT NULL AND (CAST(`deletedAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`deletedAt`), 0) = 0 OR COALESCE(DAY(`deletedAt`), 0) = 0)
+  UNION ALL
+  SELECT 'payment_records' AS `table`, 'validatedAt' AS `colonne`, COUNT(*) AS `lignes`
+    FROM `payment_records`
+    WHERE `validatedAt` IS NOT NULL AND (CAST(`validatedAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`validatedAt`), 0) = 0 OR COALESCE(DAY(`validatedAt`), 0) = 0)
   UNION ALL
   SELECT 'job_applications' AS `table`, 'createdAt' AS `colonne`, COUNT(*) AS `lignes`
     FROM `job_applications`
@@ -452,7 +544,7 @@ SELECT * FROM (
 WHERE s.`lignes` > 0
 ORDER BY s.`lignes` DESC, s.`table`;
 
--- ——— 2. Réparation (101 écritures possibles, chacune gardée par son WHERE) ———
+-- ——— 2. Réparation (124 écritures possibles, chacune gardée par son WHERE) ———
 -- Sur une colonne `ON UPDATE CURRENT_TIMESTAMP`, MySQL reprend la main : la
 -- date réparée devient l'heure de la réparation. C'est le rôle d'un tampon de
 -- modification, et c'est ce que le site affiche de toute façon.
@@ -481,6 +573,16 @@ UPDATE `refresh_tokens` SET `expiresAt` = NOW(3)
  WHERE `expiresAt` IS NOT NULL AND (CAST(`expiresAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`expiresAt`), 0) = 0 OR COALESCE(DAY(`expiresAt`), 0) = 0);
 UPDATE `refresh_tokens` SET `revokedAt` = NULL
  WHERE `revokedAt` IS NOT NULL AND (CAST(`revokedAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`revokedAt`), 0) = 0 OR COALESCE(DAY(`revokedAt`), 0) = 0);
+UPDATE `password_reset_tokens` SET `createdAt` = NOW(3)
+ WHERE `createdAt` IS NOT NULL AND (CAST(`createdAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`createdAt`), 0) = 0 OR COALESCE(DAY(`createdAt`), 0) = 0);
+UPDATE `password_reset_tokens` SET `updatedAt` = COALESCE(`createdAt`, NOW(3))
+ WHERE `updatedAt` IS NOT NULL AND (CAST(`updatedAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`updatedAt`), 0) = 0 OR COALESCE(DAY(`updatedAt`), 0) = 0);
+UPDATE `password_reset_tokens` SET `deletedAt` = NULL
+ WHERE `deletedAt` IS NOT NULL AND (CAST(`deletedAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`deletedAt`), 0) = 0 OR COALESCE(DAY(`deletedAt`), 0) = 0);
+UPDATE `password_reset_tokens` SET `expiresAt` = NOW(3)
+ WHERE `expiresAt` IS NOT NULL AND (CAST(`expiresAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`expiresAt`), 0) = 0 OR COALESCE(DAY(`expiresAt`), 0) = 0);
+UPDATE `password_reset_tokens` SET `usedAt` = NULL
+ WHERE `usedAt` IS NOT NULL AND (CAST(`usedAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`usedAt`), 0) = 0 OR COALESCE(DAY(`usedAt`), 0) = 0);
 UPDATE `permissions` SET `createdAt` = NOW(3)
  WHERE `createdAt` IS NOT NULL AND (CAST(`createdAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`createdAt`), 0) = 0 OR COALESCE(DAY(`createdAt`), 0) = 0);
 UPDATE `permissions` SET `updatedAt` = COALESCE(`createdAt`, NOW(3))
@@ -625,6 +727,12 @@ UPDATE `orders` SET `date` = NOW(3)
  WHERE `date` IS NOT NULL AND (CAST(`date` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`date`), 0) = 0 OR COALESCE(DAY(`date`), 0) = 0);
 UPDATE `orders` SET `deletedAt` = NULL
  WHERE `deletedAt` IS NOT NULL AND (CAST(`deletedAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`deletedAt`), 0) = 0 OR COALESCE(DAY(`deletedAt`), 0) = 0);
+UPDATE `orders` SET `deliveredAt` = NULL
+ WHERE `deliveredAt` IS NOT NULL AND (CAST(`deliveredAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`deliveredAt`), 0) = 0 OR COALESCE(DAY(`deliveredAt`), 0) = 0);
+UPDATE `orders` SET `paidAt` = NULL
+ WHERE `paidAt` IS NOT NULL AND (CAST(`paidAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`paidAt`), 0) = 0 OR COALESCE(DAY(`paidAt`), 0) = 0);
+UPDATE `orders` SET `shippedAt` = NULL
+ WHERE `shippedAt` IS NOT NULL AND (CAST(`shippedAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`shippedAt`), 0) = 0 OR COALESCE(DAY(`shippedAt`), 0) = 0);
 UPDATE `quotes` SET `createdAt` = NOW(3)
  WHERE `createdAt` IS NOT NULL AND (CAST(`createdAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`createdAt`), 0) = 0 OR COALESCE(DAY(`createdAt`), 0) = 0);
 UPDATE `quotes` SET `updatedAt` = COALESCE(`createdAt`, NOW(3))
@@ -635,6 +743,36 @@ UPDATE `quotes` SET `deletedAt` = NULL
  WHERE `deletedAt` IS NOT NULL AND (CAST(`deletedAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`deletedAt`), 0) = 0 OR COALESCE(DAY(`deletedAt`), 0) = 0);
 UPDATE `quotes` SET `desiredDate` = NULL
  WHERE `desiredDate` IS NOT NULL AND (CAST(`desiredDate` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`desiredDate`), 0) = 0 OR COALESCE(DAY(`desiredDate`), 0) = 0);
+UPDATE `coupons` SET `createdAt` = NOW(3)
+ WHERE `createdAt` IS NOT NULL AND (CAST(`createdAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`createdAt`), 0) = 0 OR COALESCE(DAY(`createdAt`), 0) = 0);
+UPDATE `coupons` SET `updatedAt` = COALESCE(`createdAt`, NOW(3))
+ WHERE `updatedAt` IS NOT NULL AND (CAST(`updatedAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`updatedAt`), 0) = 0 OR COALESCE(DAY(`updatedAt`), 0) = 0);
+UPDATE `coupons` SET `deletedAt` = NULL
+ WHERE `deletedAt` IS NOT NULL AND (CAST(`deletedAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`deletedAt`), 0) = 0 OR COALESCE(DAY(`deletedAt`), 0) = 0);
+UPDATE `coupons` SET `endDate` = NULL
+ WHERE `endDate` IS NOT NULL AND (CAST(`endDate` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`endDate`), 0) = 0 OR COALESCE(DAY(`endDate`), 0) = 0);
+UPDATE `coupons` SET `startDate` = NULL
+ WHERE `startDate` IS NOT NULL AND (CAST(`startDate` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`startDate`), 0) = 0 OR COALESCE(DAY(`startDate`), 0) = 0);
+UPDATE `tax_rules` SET `createdAt` = NOW(3)
+ WHERE `createdAt` IS NOT NULL AND (CAST(`createdAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`createdAt`), 0) = 0 OR COALESCE(DAY(`createdAt`), 0) = 0);
+UPDATE `tax_rules` SET `updatedAt` = COALESCE(`createdAt`, NOW(3))
+ WHERE `updatedAt` IS NOT NULL AND (CAST(`updatedAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`updatedAt`), 0) = 0 OR COALESCE(DAY(`updatedAt`), 0) = 0);
+UPDATE `tax_rules` SET `deletedAt` = NULL
+ WHERE `deletedAt` IS NOT NULL AND (CAST(`deletedAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`deletedAt`), 0) = 0 OR COALESCE(DAY(`deletedAt`), 0) = 0);
+UPDATE `tax_rules` SET `endDate` = NULL
+ WHERE `endDate` IS NOT NULL AND (CAST(`endDate` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`endDate`), 0) = 0 OR COALESCE(DAY(`endDate`), 0) = 0);
+UPDATE `tax_rules` SET `startDate` = NULL
+ WHERE `startDate` IS NOT NULL AND (CAST(`startDate` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`startDate`), 0) = 0 OR COALESCE(DAY(`startDate`), 0) = 0);
+UPDATE `payment_records` SET `createdAt` = NOW(3)
+ WHERE `createdAt` IS NOT NULL AND (CAST(`createdAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`createdAt`), 0) = 0 OR COALESCE(DAY(`createdAt`), 0) = 0);
+UPDATE `payment_records` SET `updatedAt` = COALESCE(`createdAt`, NOW(3))
+ WHERE `updatedAt` IS NOT NULL AND (CAST(`updatedAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`updatedAt`), 0) = 0 OR COALESCE(DAY(`updatedAt`), 0) = 0);
+UPDATE `payment_records` SET `date` = NOW(3)
+ WHERE `date` IS NOT NULL AND (CAST(`date` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`date`), 0) = 0 OR COALESCE(DAY(`date`), 0) = 0);
+UPDATE `payment_records` SET `deletedAt` = NULL
+ WHERE `deletedAt` IS NOT NULL AND (CAST(`deletedAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`deletedAt`), 0) = 0 OR COALESCE(DAY(`deletedAt`), 0) = 0);
+UPDATE `payment_records` SET `validatedAt` = NULL
+ WHERE `validatedAt` IS NOT NULL AND (CAST(`validatedAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`validatedAt`), 0) = 0 OR COALESCE(DAY(`validatedAt`), 0) = 0);
 UPDATE `job_applications` SET `createdAt` = NOW(3)
  WHERE `createdAt` IS NOT NULL AND (CAST(`createdAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`createdAt`), 0) = 0 OR COALESCE(DAY(`createdAt`), 0) = 0);
 UPDATE `job_applications` SET `updatedAt` = COALESCE(`createdAt`, NOW(3))
@@ -710,6 +848,26 @@ SELECT * FROM (
   SELECT 'refresh_tokens' AS `table`, 'revokedAt' AS `colonne`, COUNT(*) AS `reste`
     FROM `refresh_tokens`
     WHERE `revokedAt` IS NOT NULL AND (CAST(`revokedAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`revokedAt`), 0) = 0 OR COALESCE(DAY(`revokedAt`), 0) = 0)
+  UNION ALL
+  SELECT 'password_reset_tokens' AS `table`, 'createdAt' AS `colonne`, COUNT(*) AS `reste`
+    FROM `password_reset_tokens`
+    WHERE `createdAt` IS NOT NULL AND (CAST(`createdAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`createdAt`), 0) = 0 OR COALESCE(DAY(`createdAt`), 0) = 0)
+  UNION ALL
+  SELECT 'password_reset_tokens' AS `table`, 'updatedAt' AS `colonne`, COUNT(*) AS `reste`
+    FROM `password_reset_tokens`
+    WHERE `updatedAt` IS NOT NULL AND (CAST(`updatedAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`updatedAt`), 0) = 0 OR COALESCE(DAY(`updatedAt`), 0) = 0)
+  UNION ALL
+  SELECT 'password_reset_tokens' AS `table`, 'deletedAt' AS `colonne`, COUNT(*) AS `reste`
+    FROM `password_reset_tokens`
+    WHERE `deletedAt` IS NOT NULL AND (CAST(`deletedAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`deletedAt`), 0) = 0 OR COALESCE(DAY(`deletedAt`), 0) = 0)
+  UNION ALL
+  SELECT 'password_reset_tokens' AS `table`, 'expiresAt' AS `colonne`, COUNT(*) AS `reste`
+    FROM `password_reset_tokens`
+    WHERE `expiresAt` IS NOT NULL AND (CAST(`expiresAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`expiresAt`), 0) = 0 OR COALESCE(DAY(`expiresAt`), 0) = 0)
+  UNION ALL
+  SELECT 'password_reset_tokens' AS `table`, 'usedAt' AS `colonne`, COUNT(*) AS `reste`
+    FROM `password_reset_tokens`
+    WHERE `usedAt` IS NOT NULL AND (CAST(`usedAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`usedAt`), 0) = 0 OR COALESCE(DAY(`usedAt`), 0) = 0)
   UNION ALL
   SELECT 'permissions' AS `table`, 'createdAt' AS `colonne`, COUNT(*) AS `reste`
     FROM `permissions`
@@ -999,6 +1157,18 @@ SELECT * FROM (
     FROM `orders`
     WHERE `deletedAt` IS NOT NULL AND (CAST(`deletedAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`deletedAt`), 0) = 0 OR COALESCE(DAY(`deletedAt`), 0) = 0)
   UNION ALL
+  SELECT 'orders' AS `table`, 'deliveredAt' AS `colonne`, COUNT(*) AS `reste`
+    FROM `orders`
+    WHERE `deliveredAt` IS NOT NULL AND (CAST(`deliveredAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`deliveredAt`), 0) = 0 OR COALESCE(DAY(`deliveredAt`), 0) = 0)
+  UNION ALL
+  SELECT 'orders' AS `table`, 'paidAt' AS `colonne`, COUNT(*) AS `reste`
+    FROM `orders`
+    WHERE `paidAt` IS NOT NULL AND (CAST(`paidAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`paidAt`), 0) = 0 OR COALESCE(DAY(`paidAt`), 0) = 0)
+  UNION ALL
+  SELECT 'orders' AS `table`, 'shippedAt' AS `colonne`, COUNT(*) AS `reste`
+    FROM `orders`
+    WHERE `shippedAt` IS NOT NULL AND (CAST(`shippedAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`shippedAt`), 0) = 0 OR COALESCE(DAY(`shippedAt`), 0) = 0)
+  UNION ALL
   SELECT 'quotes' AS `table`, 'createdAt' AS `colonne`, COUNT(*) AS `reste`
     FROM `quotes`
     WHERE `createdAt` IS NOT NULL AND (CAST(`createdAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`createdAt`), 0) = 0 OR COALESCE(DAY(`createdAt`), 0) = 0)
@@ -1018,6 +1188,66 @@ SELECT * FROM (
   SELECT 'quotes' AS `table`, 'desiredDate' AS `colonne`, COUNT(*) AS `reste`
     FROM `quotes`
     WHERE `desiredDate` IS NOT NULL AND (CAST(`desiredDate` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`desiredDate`), 0) = 0 OR COALESCE(DAY(`desiredDate`), 0) = 0)
+  UNION ALL
+  SELECT 'coupons' AS `table`, 'createdAt' AS `colonne`, COUNT(*) AS `reste`
+    FROM `coupons`
+    WHERE `createdAt` IS NOT NULL AND (CAST(`createdAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`createdAt`), 0) = 0 OR COALESCE(DAY(`createdAt`), 0) = 0)
+  UNION ALL
+  SELECT 'coupons' AS `table`, 'updatedAt' AS `colonne`, COUNT(*) AS `reste`
+    FROM `coupons`
+    WHERE `updatedAt` IS NOT NULL AND (CAST(`updatedAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`updatedAt`), 0) = 0 OR COALESCE(DAY(`updatedAt`), 0) = 0)
+  UNION ALL
+  SELECT 'coupons' AS `table`, 'deletedAt' AS `colonne`, COUNT(*) AS `reste`
+    FROM `coupons`
+    WHERE `deletedAt` IS NOT NULL AND (CAST(`deletedAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`deletedAt`), 0) = 0 OR COALESCE(DAY(`deletedAt`), 0) = 0)
+  UNION ALL
+  SELECT 'coupons' AS `table`, 'endDate' AS `colonne`, COUNT(*) AS `reste`
+    FROM `coupons`
+    WHERE `endDate` IS NOT NULL AND (CAST(`endDate` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`endDate`), 0) = 0 OR COALESCE(DAY(`endDate`), 0) = 0)
+  UNION ALL
+  SELECT 'coupons' AS `table`, 'startDate' AS `colonne`, COUNT(*) AS `reste`
+    FROM `coupons`
+    WHERE `startDate` IS NOT NULL AND (CAST(`startDate` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`startDate`), 0) = 0 OR COALESCE(DAY(`startDate`), 0) = 0)
+  UNION ALL
+  SELECT 'tax_rules' AS `table`, 'createdAt' AS `colonne`, COUNT(*) AS `reste`
+    FROM `tax_rules`
+    WHERE `createdAt` IS NOT NULL AND (CAST(`createdAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`createdAt`), 0) = 0 OR COALESCE(DAY(`createdAt`), 0) = 0)
+  UNION ALL
+  SELECT 'tax_rules' AS `table`, 'updatedAt' AS `colonne`, COUNT(*) AS `reste`
+    FROM `tax_rules`
+    WHERE `updatedAt` IS NOT NULL AND (CAST(`updatedAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`updatedAt`), 0) = 0 OR COALESCE(DAY(`updatedAt`), 0) = 0)
+  UNION ALL
+  SELECT 'tax_rules' AS `table`, 'deletedAt' AS `colonne`, COUNT(*) AS `reste`
+    FROM `tax_rules`
+    WHERE `deletedAt` IS NOT NULL AND (CAST(`deletedAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`deletedAt`), 0) = 0 OR COALESCE(DAY(`deletedAt`), 0) = 0)
+  UNION ALL
+  SELECT 'tax_rules' AS `table`, 'endDate' AS `colonne`, COUNT(*) AS `reste`
+    FROM `tax_rules`
+    WHERE `endDate` IS NOT NULL AND (CAST(`endDate` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`endDate`), 0) = 0 OR COALESCE(DAY(`endDate`), 0) = 0)
+  UNION ALL
+  SELECT 'tax_rules' AS `table`, 'startDate' AS `colonne`, COUNT(*) AS `reste`
+    FROM `tax_rules`
+    WHERE `startDate` IS NOT NULL AND (CAST(`startDate` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`startDate`), 0) = 0 OR COALESCE(DAY(`startDate`), 0) = 0)
+  UNION ALL
+  SELECT 'payment_records' AS `table`, 'createdAt' AS `colonne`, COUNT(*) AS `reste`
+    FROM `payment_records`
+    WHERE `createdAt` IS NOT NULL AND (CAST(`createdAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`createdAt`), 0) = 0 OR COALESCE(DAY(`createdAt`), 0) = 0)
+  UNION ALL
+  SELECT 'payment_records' AS `table`, 'updatedAt' AS `colonne`, COUNT(*) AS `reste`
+    FROM `payment_records`
+    WHERE `updatedAt` IS NOT NULL AND (CAST(`updatedAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`updatedAt`), 0) = 0 OR COALESCE(DAY(`updatedAt`), 0) = 0)
+  UNION ALL
+  SELECT 'payment_records' AS `table`, 'date' AS `colonne`, COUNT(*) AS `reste`
+    FROM `payment_records`
+    WHERE `date` IS NOT NULL AND (CAST(`date` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`date`), 0) = 0 OR COALESCE(DAY(`date`), 0) = 0)
+  UNION ALL
+  SELECT 'payment_records' AS `table`, 'deletedAt' AS `colonne`, COUNT(*) AS `reste`
+    FROM `payment_records`
+    WHERE `deletedAt` IS NOT NULL AND (CAST(`deletedAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`deletedAt`), 0) = 0 OR COALESCE(DAY(`deletedAt`), 0) = 0)
+  UNION ALL
+  SELECT 'payment_records' AS `table`, 'validatedAt' AS `colonne`, COUNT(*) AS `reste`
+    FROM `payment_records`
+    WHERE `validatedAt` IS NOT NULL AND (CAST(`validatedAt` AS CHAR) LIKE '0000%' OR COALESCE(MONTH(`validatedAt`), 0) = 0 OR COALESCE(DAY(`validatedAt`), 0) = 0)
   UNION ALL
   SELECT 'job_applications' AS `table`, 'createdAt' AS `colonne`, COUNT(*) AS `reste`
     FROM `job_applications`
@@ -1086,3 +1316,5 @@ SELECT TABLE_NAME AS `table`, COLUMN_NAME AS `colonne`, DATA_TYPE AS `type`
 -- c'est que la base a été créée avant ces défauts : ajouter les ALTER qui
 -- manquent, table par table, sur le même modèle).
 ALTER TABLE `refresh_tokens` MODIFY `expiresAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3);
+ALTER TABLE `password_reset_tokens` MODIFY `expiresAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3);
+ALTER TABLE `payment_records` MODIFY `date` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3);

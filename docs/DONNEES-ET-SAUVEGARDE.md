@@ -22,15 +22,16 @@ de la même façon.
 
 | Support | Contenu | Sauvegarde |
 | --- | --- | --- |
-| **MySQL** | Contenus, catalogue, commandes, devis, candidatures, comptes, rôles, permissions, pistes d'audit, réglages de visibilité, de maintenance et de marque, coupons, taxes, **réglages des écrans d'administration** (table `settings`, clés `doc_*`) et **numérotation des références produits** (clé `sku_seq`) | `mysqldump` |
+| **MySQL** | Contenus, catalogue, commandes, devis, candidatures, comptes, rôles, permissions, pistes d'audit, réglages de visibilité, de maintenance et de marque, coupons, taxes, **relevé d'encaissements** (table `payment_records`), **réglages des écrans d'administration** (table `settings`, clés `doc_*`) et **numérotation des références produits** (clé `sku_seq`) | `mysqldump` |
 | **Fichiers du serveur** | Médias (`public/uploads`), réglages SMTP, centre de courrier, SEO, newsletter, vérification | copie des dossiers |
-| **Navigateur de l'administrateur** | **Journaux non transférés** : encaissements, utilisations de coupons, imports, compteur de références produits, annuaire, notes par personne, contenus d'édition | **aucune** — voir §4 |
+| **Navigateur de l'administrateur** | **Journaux non transférés** : utilisations de coupons, imports, annuaire, notes par personne, contenus d'édition | **aucune** — voir §4 |
 
 > ⚠️ Le troisième étage s'est réduit mais n'a pas disparu. Ce qu'il reste n'est pas
 > un réglage recopié : ce sont des **entrées ajoutées les unes après les autres**,
 > qui n'ont pas de table et se perdent au vidage des données du site — changer de
-> navigateur, de poste, ou de profil, les efface. Le défaut le plus grave de cette
-> liste, la référence produit double, est traité à part (§4 B bis).
+> navigateur, de poste, ou de profil, les efface. Les deux défauts les plus graves de
+> cette liste sont traités à part : la référence produit double (§4 B bis) et le
+> relevé d'encaissements (§4 B ter).
 
 > Les réglages d'écran (devises, taxonomies, modes de paiement, configuration
 > boutique, Paramètres, gabarits de notification) vivent en base depuis cette
@@ -296,6 +297,76 @@ un compteur local serait exactement le défaut supprimé. Le champ reste vide, a
 La clé `sari_sku_seq` peut subsister dans un cache déjà en place : plus rien ne la
 lit.
 
+### B ter. Le relevé d'encaissements, devenu table de journal (`payment_records`)
+
+`lib/payments.ts` tenait le relevé dans `sari_payment_records`, sans aucun appel
+serveur : ni modèle Prisma, ni module. Un encaissement validé lundi restait
+invisible mardi depuis le poste du comptable ; une sauvegarde complète de la base
+ne le contenait pas ; un navigateur vidé le supprimait — sauf à le recomposer
+lui-même, ce que la vague précédente a justement corrigé (voir « Un défaut annexe »
+plus bas).
+
+**Pourquoi une table et non un document `doc_*` comme les réglages.** Le relevé est
+en append : chaque ligne doit rester lisible après la suivante, et un document JSON
+s'écrase au dernier appel. `payment_records` porte donc une ligne par
+encaissement, avec les colonnes que l'écran affichait déjà — `client`, `email`,
+`method`, `methodName`, `amount`, `status`, `cardLast4`, `note`, `date`,
+`validatedAt` — plus `externalId`, `orderId`, `orderCode`.
+
+**Deux règles, parce que c'est un relevé comptable et non un catalogue.**
+
+- *L'envoi est idempotent.* `externalId` (l'identifiant que le poste s'était donné
+  lui-même) est **unique en base** : le rapprochement se fait dessus, puis sur l'id
+  numérique. Un onglet qui repart, une reprise après réseau instable, un cache
+  relancé : rien ne double. C'est la contrainte qui manque à `products.sku` — d'où
+  les références produits en double que §4 B bis a dû rattraper.
+- *Une absence n'est jamais une suppression.* Le cache passe par
+  `planPaymentRemoved(previous, next)` pour **nommer** les retraits, que le serveur
+  applique ; les lignes absentes de l'envoi restent. Un poste partiellement à jour
+  — deux onglets, un poste neuf, un poste dont la synchronisation a échoué — ne peut
+  donc pas effacer un encaissement enregistré ailleurs, pas plus qu'un poste au cache
+  vidé ne peut purger le journal.
+
+Deux détails de colonnes, pour mémoire : `amount` est en `DECIMAL(14,2)` comme les
+montants de `orders` (une somme en binaire ne tombe jamais juste au centime), et le
+service le rend en nombre pour que le total de l'écran reste une addition ;
+`cardMasked` **n'est pas une colonne** — il se déduit des quatre derniers chiffres à
+la lecture. Le numéro complet n'est stocké nulle part, et un PAN collé en entier
+dans le champ n'y laisse que sa fin.
+
+**À faire chez l’exploitant, dans l’ordre :**
+
+```bash
+cd backend
+npx prisma migrate deploy --config=prisma/mysql.config.cjs   # ou, à la main :
+mysql -u… -p… base < sql/migrate-payment-records.mysql.sql   # additif et idempotent
+npm run sql:fix-permissions
+mysql -u… -p… base < sql/fix-permissions.mysql.sql           # lignes de permissions
+```
+
+Le fichier additif ne crée **que** la table : l'attribution des droits reste une
+décision de l'exploitant, à cocher dans Administration → Rôles (c’est la règle de tous les fichiers
+`migrate-*`, et ce n’est pas un oubli).
+
+`migrate deploy` joue `prisma/migrations/20260922_add_payment_records` ; le fichier
+`sql/` fait la même chose sans Prisma, avec un contrôle de colonnes à la fin. Les
+deux sont additifs : aucune table existante n'est touchée. **Sans les lignes de
+permission, l'écran répond 403** aux rôles autres que super-admin — et un 403 sur
+une route neuve ressemble à un module absent, pas à un droit manquant.
+
+**Ce que la mise en base ne change pas.** La vitrine, elle, n'appelle aucune API
+d'administration : un encaissement saisi depuis le parcours de commande reste dans
+le cache du navigateur, et partira en base au premier montage d'un écran
+d'administration (le `planPull` de `lib/payment-records-sync.ts` pousse alors le
+poste vers une base vide). C'est un différé, pas une perte — mais un encaissement
+saisi sur un poste qui n'ouvre jamais l'administration n'est pas en base, et
+n'entre donc pas dans la sauvegarde de la base. Le reflexe à prendre : ouvrir
+l'écran *Journal des paiements* avant de sauvegarder, ce qui déclenche la
+poussée.
+
+Vérification : `npm run payments:test` à la racine (27 cas, dont le mappage et les
+retraits), `npx jest src/modules/payments` côté backend (16 cas).
+
 ### C. Relié à une table qui existait déjà — sans nouveau magasin
 
 Le **logo de la vitrine** est le cas qui a déclenché cette vague, et il ne
@@ -334,20 +405,21 @@ messagerie reste sur son fichier.
 
 ### E. Non migré, et pour une raison de forme
 
-Cinq magasins n'ont pas été basculés, et ce n'est pas un oubli : **un document JSON
+Trois magasins n'ont pas été basculés, et ce n'est pas un oubli : **un document JSON
 s'écrase au dernier appel**. Or ce sont des journaux en append — chaque entrée doit
 rester lisible après la suivante. Ils demandent des **lignes**, donc une migration
 Prisma, donc un arbitrage de schéma ; un document les aurait détruits à la longue.
 
 | Clé | Contenu | Ce qu'il faudrait |
 | --- | --- | --- |
-| `sari_payment_records` | encaissements : validé, en attente, rejeté, motif | table de journal |
 | `sari_coupon_uses` | usages par coupon | table de journal |
 | `sari_import_log` | imports de catalogue | table de journal |
 | `sari_users_registry` | annuaire local de comptes | à arbitrer avec la table `users` |
 
-**`sari_sku_seq` a été traité depuis, et autrement.** Ce n'était pas un journal à
-transférer mais un défaut à supprimer : voir §4 B bis.
+**Deux cas de cette liste ont été traités depuis, et chacun autrement.**
+`sari_sku_seq` n'était pas un journal à transférer mais un défaut à supprimer :
+voir §4 B bis. `sari_payment_records` est bien devenu une table de journal,
+`payment_records` : voir §4 B ter.
 
 `globalTaxId` de `sari_shop_config` désigne désormais une taxe **en base** alors que
 l'aiguillage vivait dans un cache local : les deux sont maintenant synchronisés, ce
@@ -461,17 +533,22 @@ synchronisation — le poste partirait en avance sur la base sans jamais le dire
 
 Ce qui attend encore un export automatique, parce que ce sont des journaux en
 append et non des réglages (voir §4 E), reste donc à sauver à la main depuis le
-poste qui les détient. Le compteur de références n'en fait plus partie : il est en
-base depuis §4 B bis.
+poste qui les détient. Le compteur de références n'en fait plus partie (§4 B bis),
+ni le relevé d'encaissements (§4 B ter) : `sari_payment_records` se sauvegarde avec
+la table `payment_records`.
 
 ```js
 copy(JSON.stringify({
   uses:    JSON.parse(localStorage.getItem('sari_coupon_uses')     || '[]'),
-  records: JSON.parse(localStorage.getItem('sari_payment_records') || '[]'),
   imports: JSON.parse(localStorage.getItem('sari_import_log')       || '[]'),
   users:   JSON.parse(localStorage.getItem('sari_users_registry')  || '[]'),
 }, null, 2));
 ```
+
+Un relevé récupéré sur un poste de secours se réinjecte tout de même dans
+`sari_payment_records` si la base l'aurait perdu : le cache reste la file
+d'attente, et `externalId` unique garantit que les lignes déjà parties ne sont pas
+doublonnées à la réinjection.
 
 Le JSON est dans le presse-papiers. Le conserver avec les sauvegardes ; pour le
 réinjecter sur un autre poste, faire l'opération inverse avec
