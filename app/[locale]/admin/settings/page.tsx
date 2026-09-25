@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useLocale } from 'next-intl';
+import { useSearchParams } from 'next/navigation';
 import { FolderOpen, Image as ImageIcon, Save, Search, Upload } from 'lucide-react';
 import { DEFAULT_SETTINGS, loadAdminSettings, saveAdminSettings, type AdminSettings } from '@/lib/admin-settings';
 import { useDocRefresh } from '@/lib/use-settings-doc';
@@ -11,6 +12,7 @@ import VerificationSettingsSection from '@/components/admin/VerificationSettings
 import SmtpSection from '@/components/admin/SmtpSection';
 import MailCenterSection from '@/components/admin/MailCenterSection';
 import MaintenanceSection from '@/components/admin/MaintenanceSection';
+import DemoDataSection from '@/components/admin/DemoDataSection';
 import BrandSection from '@/components/admin/BrandSection';
 import { testErpConnection } from '@/lib/erp';
 import { useToast } from '@/components/admin/Toast';
@@ -19,7 +21,7 @@ import DateFormatPicker from '@/components/admin/DateFormatPicker';
 import { notifyDateSettingsChanged } from '@/lib/use-date-format';
 
 type SectionId = 'general' | 'commerce' | 'security' | 'integrations' | 'emails' | 'seo';
-type TabId = 'general' | 'dates' | 'products' | 'codes' | 'quotes' | 'invoicing' | 'security' | 'smtp' | 'database' | 'maintenance' | 'verification' | 'mail' | 'seo' | 'brand';
+type TabId = 'general' | 'dates' | 'products' | 'codes' | 'quotes' | 'invoicing' | 'security' | 'smtp' | 'database' | 'maintenance' | 'verification' | 'mail' | 'seo' | 'brand' | 'demo';
 
 interface TabDef { id: TabId; label: string }
 interface SectionDef { id: SectionId; label: string; tabs: TabDef[] }
@@ -44,6 +46,7 @@ const SECTIONS: SectionDef[] = [
     { id: 'verification', label: 'Vérification des documents' },
     { id: 'database', label: 'Base de données' },
     { id: 'maintenance', label: 'Journaux & maintenance' },
+    { id: 'demo', label: 'Import & jeu de démonstration' },
   ] },
   { id: 'emails', label: 'Emails', tabs: [
     { id: 'mail', label: 'Emails & notifications' },
@@ -69,15 +72,30 @@ const SEARCH_INDEX: Record<TabId, string> = {
   maintenance: 'journaux log audit logs rétention conservation purge corbeille cron planification tâche jetons expirés audit_logs refresh_tokens',
   mail: 'email emails notification message objet modèle gabarit template constructeur variable fusion commande devis candidature newsletter politique envoi plafond désinscription journal',
   seo: 'seo titre description mots-clés open graph twitter favicon canonical robots',
+  demo: 'démo demo démonstration jeu données fictives catalogue import réimporter seed amorçage commande fictive devis fictif recette maquette bac à sable sandbox data fr en ar',
 };
 
 export default function AdminSettingsPage() {
   const { showToast } = useToast();
   const locale = useLocale();
+  const params = useSearchParams();
   const [settings, setSettings] = useState<AdminSettings>(DEFAULT_SETTINGS);
   const [section, setSection] = useState<SectionId>('general');
   const [tab, setTab] = useState<TabId>('general');
   const [q, setQ] = useState('');
+
+  // Lien profond `?tab=<onglet>` : l'accueil envoie vers « Import & jeu de
+  // démonstration », qu'il ne fallait plus chercher dans les six sections. Un
+  // onglet inconnu est ignoré plutôt qu'ouvert — atterrir sur une section vide
+  // serait plus déroutant que rester sur « Général ».
+  useEffect(() => {
+    const wanted = params?.get('tab') as TabId | null;
+    if (!wanted) return;
+    const owner = SECTIONS.find((sec) => sec.tabs.some((tb) => tb.id === wanted));
+    if (!owner) return;
+    setSection(owner.id);
+    setTab(wanted);
+  }, [params]);
 
   useEffect(() => { setSettings(loadAdminSettings()); }, []);
   // Idem : les réglages partagés descendent de la base juste après ce montage.
@@ -370,6 +388,8 @@ export default function AdminSettingsPage() {
           {tab === 'seo' && <SeoSection />}
 
           {tab === 'maintenance' && <MaintenanceSection />}
+
+          {tab === 'demo' && <DemoDataSection />}
 
           {tab === 'brand' && <BrandSection />}
 

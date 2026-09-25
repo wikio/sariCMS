@@ -235,6 +235,18 @@ export class CatalogImportService {
       ['pages', COLLECTIONS.pages],
       ['menus', COLLECTIONS.menus],
       ['users', COLLECTIONS.users],
+      // Les compteurs de ce qui N'EST pas du contenu traduisible mais qui occupe
+      // l'accueil du back-office. Ajoutés parce que le tableau de bord affichait
+      // ses commandes et ses devis depuis le `localStorage` du poste — donc depuis
+      // un cache qui, vide, se repeuple avec un jeu de démonstration : un
+      // administrateur pouvait voir 4 500 000 DA « livrés » sur une base neuve.
+      // La réponse est simple : demander les chiffres à la base.
+      ['orders', COLLECTIONS.orders],
+      ['quotes', COLLECTIONS.quotes],
+      ['applications', COLLECTIONS.applications],
+      ['coupons', COLLECTIONS.coupons],
+      ['taxRules', COLLECTIONS.taxRules],
+      ['paymentRecords', COLLECTIONS.paymentRecords],
     ];
     const out: Record<string, number> = {};
     for (const [key, col] of keys) {

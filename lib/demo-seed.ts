@@ -1,6 +1,6 @@
 'use client';
 
-import { cmsAdminCreate, cmsAdminList, cmsImportCatalog } from '@/lib/cms-admin';
+import { cmsAdminCreate, cmsAdminList, cmsImportCatalog, cmsStatus } from '@/lib/cms-admin';
 import { saveOrders, saveQuotes, type Order, type Quote } from '@/lib/crm-store';
 
 export const DEMO_FLAG = 'sari_demo_v3';
@@ -89,7 +89,43 @@ async function ensurePeople() {
   }
 }
 
-export async function seedDemoWorkspace() {
+/**
+ * Amorçage du jeu de démonstration — et garde-fou qui l'accompagne.
+ *
+ * Ce bouton vivait sur la page d'accueil de l'administration. Ce n'était pas un
+ * raccourci sympathique : `saveOrders()` et `saveQuotes()` répliquent chacun de
+ * leurs appels vers l'API (`lib/crm-sync.ts`), donc une curiosité sur un poste
+ * branché en production écrivait **onze commandes et six devis fictifs dans la
+ * base**, à côté des vraies, avec des montants qui entrent dans les totaux
+ * commerciaux. Rien ne les distinguait ensuite d'une saisie réelle : même table,
+ * même écran, et un `externalId` de fortune.
+ *
+ * Le geste reste disponible — il sert aux maquettes et aux recettes — mais il est
+ * descendu dans Paramètres, derrière une confirmation explicite, et il refuse de
+ * toucher une base qui contient déjà des commandes ou des devis. Un refus net vaut
+ * mieux qu'un `confirm()` que l'on clique sans lire : ici, ce que l'on casse ne se
+ * voit pas le jour même.
+ */
+export async function seedDemoWorkspace(
+  options: { force?: boolean } = {},
+): Promise<
+  | { ok: false; reason: 'base-occupée'; orders: number; quotes: number }
+  | {
+      ok: true;
+      imported: number;
+      orders: number;
+      quotes: number;
+      applications: number;
+      people: number;
+    }
+> {
+  const counts = (await cmsStatus().catch(() => null))?.counts ?? {};
+  const existingOrders = Number(counts.orders) || 0;
+  const existingQuotes = Number(counts.quotes) || 0;
+  if (!options.force && (existingOrders > 0 || existingQuotes > 0)) {
+    return { ok: false, reason: 'base-occupée', orders: existingOrders, quotes: existingQuotes };
+  }
+
   saveOrders(DEMO_ORDERS);
   saveQuotes(DEMO_QUOTES);
   localStorage.setItem('sari_applications', JSON.stringify(DEMO_APPLICATIONS));
@@ -107,5 +143,12 @@ export async function seedDemoWorkspace() {
   } catch {
     /* API offline */
   }
-  return { imported, orders: DEMO_ORDERS.length, quotes: DEMO_QUOTES.length, applications: DEMO_APPLICATIONS.length, people: CLIENTS.length + CANDIDATES.length + PARTNERS.length };
+  return {
+    ok: true,
+    imported,
+    orders: DEMO_ORDERS.length,
+    quotes: DEMO_QUOTES.length,
+    applications: DEMO_APPLICATIONS.length,
+    people: CLIENTS.length + CANDIDATES.length + PARTNERS.length,
+  };
 }

@@ -438,6 +438,30 @@ détail de la résolution :
 Un message `❌ étape 4 — aucune traduction trouvée` signale que les fiches ne
 partagent pas de `legacyId` : reprenez l'étape 2.2.
 
+### 4.4 Après la reprise : vérifier que les compteurs de l'administration viennent bien de MySQL
+
+La reprise de catalogue ne dit rien des réglages ni du CRM, et c'est là que les
+doutes se sont portés (« la liste des modes de paiement est vide », « les
+encaissements sont-ils sauvés en base »). Deux contrôles, du plus commode au plus
+complet :
+
+1. **Accueil de l'administration**, panneau « Données & source » : par écran, la
+   table ou le document lu, le nombre de lignes en base, et un macaron
+   « en base » / « cache du poste ». Un macaron « cache du poste » sur *Modes de
+   paiement* veut dire que le document `doc_payments` n'a jamais été enregistré —
+   l'écran montre ses valeurs par défaut, locales à ce navigateur. Rien n'est
+   perdu, il faut enregistrer une fois depuis l'écran.
+2. **`backend/sql/check-data-sources.mysql.sql`**, en lecture seule sur la base de
+   production. Il répond aux trois questions qui reviennent : les tables du relevé
+   et des réglages existent-elles, que contient `doc_payments` (absent, vide,
+   peuplé), et combien de lignes porte `payment_records`. Il départage aussi le
+   troisième cas, le plus trompeur : **une base pleine qu'un rôle n'a pas le droit
+   de lire** — un 403 muet se présente exactement comme une liste vide.
+
+Un point de vocabulaire, parce qu'il fait chercher midi à quatorze heures : les
+encaissements en base portent le statut `validated`, `pending` ou `rejected`. Un
+écran qui filtrerait sur une autre valeur ne se plaint pas — il affiche 0.
+
 ---
 
 ## 5. Ce qui reste à votre main
@@ -450,6 +474,7 @@ partagent pas de `legacyId` : reprenez l'étape 2.2.
 | **Contenu des FAQ** | 12 questions ajoutées aux services, 27 aux solutions, sur des sujets métier (homologation ANPP, douane, wilayas du Sud, chaîne du froid) | Relisez et ajustez : ce sont des formulations plausibles, pas vos engagements contractuels |
 | **Visuels des services** | Quatre images Unsplash génériques ont été posées, faute de visuels existants | Remplacez par vos propres photos |
 | **Comptes de démonstration** | `seed.mysql.sql` crée des comptes avec le mot de passe `ChangeMe_Sari2026!` | À changer immédiatement si vous importez le seed |
+| **Jeu de démonstration du workspace** | Il ne se déclenche plus depuis l'accueil : Paramètres → Intégrations → « Import & jeu de démonstration », avec une case à cocher à chaque séance | Si des commandes fictives ont déjà été posées avant ce changement, supprimez-les écran par écran (elles partent à la corbeille, pas par un `DELETE`) |
 
 ### Anomalies signalées, volontairement non corrigées
 

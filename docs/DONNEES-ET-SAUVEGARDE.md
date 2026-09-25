@@ -285,8 +285,18 @@ réponse d'un objet est la projection de la liste blanche du serveur, et reparti
 d'elle aurait effacé du cache `smtp`, `db`, `erp` et tout champ que le serveur
 n'admet pas encore. L'adoption est donc bornée à `shape === 'array'`.
 
-Pour regarder ce que la base contient réellement d'un document (le reflexe quand un
-écran de réglages semble vide) :
+Depuis, l'accueil de l'administration porte un panneau **« Données & source »** qui
+répond à la même question sans console : pour chaque écran concerné, le nom de la
+table ou du document, le nombre de lignes en base, et un macaron « en base » ou
+« cache du poste ». Les compteurs de volume viennent de `/settings/status`, qui
+compte désormais commandes, devis, candidatures, coupons, taxes et encaissements —
+avant, l'accueil affichait son chiffre d'affaires depuis `loadOrders()`, un cache
+qui se fabrique un jeu de démonstration quand on le lui demande.
+
+Pour regarder ce que la base contient réellement, en SQL cette fois (lecture seule,
+sans risque sur la production) : `backend/sql/check-data-sources.mysql.sql`. Il
+départage notamment les trois sens d'une liste de modes de paiement vide — document
+absent, document enregistré vide, ou poste qui n'a pas le droit de le lire.
 
 ```sql
 SELECT `key`, JSON_LENGTH(JSON_EXTRACT(`value`, '$.items')) AS lignes,
@@ -524,8 +534,20 @@ Corrigé depuis, dans l'ordre :
   Corollaire assumé : une ligne fictive retouchée reste dans les totaux.
 
 Le jeu de démonstration reste disponible (`DEMO_PAYMENT_RECORDS`) pour un amorçage
-volontaire à la `lib/demo-seed.ts`, jamais pour une lecture. `npm run payments:test`
-fige ces cinq comportements, parce qu'aucun d'eux ne fait d'erreur visible.
+volontaire, jamais pour une lecture. `npm run payments:test` fige ces cinq
+comportements, parce qu'aucun d'eux ne fait d'erreur visible.
+
+**L'amorçage volontaire, précisément.** `lib/demo-seed.ts` appelle
+`saveOrders()` et `saveQuotes()`, et ces deux fonctions répliquent vers l'API
+(`lib/crm-sync.ts`) : le bouton « Charger le jeu de démo » posait donc **onze
+commandes et six devis fictifs dans `orders` et `quotes`**, avec leurs montants,
+dans la même table que les vraies et sans aucun marqueur de statut. D'où trois
+changement depuis : le bouton a quitté l'accueil pour
+Paramètres → Intégrations → « Import & jeu de démonstration » ; il exige une case
+à cocher qui n'est mémorisée nulle part (elle se re-coche à chaque séance) ; et
+`seedDemoWorkspace()` **refuse** une base qui contient déjà des commandes ou des
+devis, sauf forçage explicite. Le refus est un résultat, pas une exception :
+l'écran affiche les compteurs qui l'ont provoqué.
 
 ---
 
@@ -620,10 +642,11 @@ de pendant en base.
   boutique, écran Paramètres et gabarits de notification (table `settings`,
   clés `doc_admin`, `doc_shop`, `doc_taxonomies`, `doc_currencies`,
   `doc_payments`, `doc_notify`).
-  **Restent sans sauvegarde automatique** : enregistrements de paiement,
-  utilisations de coupons, journal d'imports, annuaire local. Ce sont des
-  journaux, pas des réglages : ils demandent des lignes et une migration, non un
-  document — voir §4 E. Le compteur de références produits, lui, est passé en
+  **Passé en base depuis, donc dans le `mysqldump`** : le relevé
+  d'encaissements (table `payment_records`, §4 B ter).
+  **Restent sans sauvegarde automatique** : utilisations de coupons, journal
+  d'imports, annuaire local. Ce sont des journaux, pas des réglages : ils
+  demandent des lignes et une migration, non un document — voir §4 E. Le compteur de références produits, lui, est passé en
   base et entre dans le `mysqldump` — voir §4 B bis.
 - **La reprise du catalogue existant est automatique** (§5), mais elle ne se
   déclenche qu'une fois : au tout premier chargement d'un poste qui n'a jamais
