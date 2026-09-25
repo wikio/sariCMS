@@ -214,7 +214,7 @@ et je les liste pour qu'on ne « corrige » pas un jour ce qui est juste :
 
 ---
 
-## 5. Sécurité — sept constats, avec ce qui a été fait
+## 5. Sécurité — dix constats, avec ce qui a été fait et ce qui reste à décider
 
 ### F1 · Une clé d'API de passerelle partait en base — **corrigé**
 
@@ -329,7 +329,9 @@ Contrôlé, pas supposé :
   du serveur, le panier ne voyage qu'en `id`/`qty` — un prix inventé par le client ne
   peut pas payer une commande.
 
-### F7 · Dépendances et signalements publics — **à jour**
+### F7 · Les deux avis critiques Next.js — **sans objet ici**
+
+*(la revue complète des dépendances est en §F8, avec ce qui est atteignable ou non.)*
 
 `npm audit` signalait deux critiques Next.js (exécution distante non authentifiée sur
 les serveurs Windows ; et via l'API d'optimisation d'images quand des AVIF sont
@@ -341,13 +343,38 @@ utilisés — celle-là nous concernait, `/_next/image` étant exposé), corrig�
 synchronisation : aucun comportement de stockage, aucune donnée en plus. Sans objet en
 production, où la console est fermée de toute façon.
 
-### F8 · Ce que cet audit ne prétend pas couvrir
+### F8 · Dépendances — ce qui est réellement atteignable, et dans quel ordre les monter
 
-Pas de test d'intrusion, pas de revue du code non exécuté ici (les écrans de contenu
-`admin/c/*`, `legal`, `partners-accounts` n'ont été lus que sous l'angle du stockage),
-et rien qui ressemble à une analyse de charge. La liste des fichiers `public/uploads`
-existants n'a pas été reprise un par un : si des SVG ont été déposés **avant** ce
-nettoyage, ils sont toujours sur le disque — la commande en §7.
+`npm audit --json --omit=dev` (le périmètre qui compte : ce qui tourne sur le serveur)
+donne **35 signalements côté front, 18 côté backend**. Ce chiffre n'effraie pas tout
+seul : un signalement ne vaut que si le chemin d'appel existe dans CE produit.
+Vérification faite paquet par paquet, et elle change le classement.
+
+| Paquet signalé | Gravité | Atteignable ici ? | Conduite à tenir |
+| --- | --- | --- | --- |
+| `tar` (via `fabric`) | **critique** | non à l'exécution — traversal de lien matériel, chemin d'installation seulement | passer `fabric` en 7.4.0 (majeure, ligne suivante) : le correctif vient avec |
+| `fabric` (export SVG) | high | oui, mais le dépôt du fichier est neutralisé par `sanitizeSvgBuffer` depuis cette vague | `fabric@7.4.0`, puis **rouvrir l'atelier d'image** à la main : l'API 6 → 7 bouge |
+| `@tiptap/core` (`mergeAttributes`, clé `__proto__`) | high | oui — c'est l'éditeur de texte des écrans d'administration | `@tiptap/react` et les extensions en `^3.30.5` : un bump correctif, pas une migration |
+| `grapesjs`, `nanoid`, `underscore`, `canvas`, `@mapbox/node-pre-gyp` | high | transitive ou outillage | `npm audit fix` (sans `--force`) les fait passer, puis relancer le build |
+| `multer` (DoS par nettoyage incomplet) | high | **non** — aucun `FileInterceptor` dans `backend/src` : les fichiers entrent par la route Next `app/api/admin/upload`, qui parse elle-même | rien à démonter ; la migration Nest 12 éteindra le signalement |
+| `body-parser` (une limite mal formée désactive le contrôle de taille) | low | **à vérifier chez toi** : la borne de taille doit vivre dans la route de dépôt, pas dans le parsing de l'API | contrôler la borne de `app/api/admin/upload/route.ts` ; ne rien ajouter côté API |
+| `nodemailer` (`resolveContent`, ancienne signature) | high | **non** — `resolveContent` n'est appelé nulle part ; le centre de courrier fait `transporter.sendMail` | `nodemailer@^9.1.0` quand même : gratuit |
+| `file-type` (boucle sur un ASF malformé) | moderate | **non** — plus aucun code ne le lit ; la reconnaissance est `validateMagicBytes`, écrite à la main pour ça | retirer le paquet s'il traîne dans `dependencies` |
+| `lodash` (`_.template`), `js-yaml`, `deepmerge-ts`, `qs`, `uuid` | high/moderate | **non** — zéro occurrence de ces appels dans le dépôt | ils partiront avec la migration Nest ; ne pas les courir un par un |
+| `prisma` / `@prisma/config` | high | chemin d'installation du moteur et de génération du client, pas la requête d'un visiteur | dernière corrective de la mineure, `npx prisma generate`, puis `npm run sql:schema` en contrôle |
+| `@nestjs/*` (core, platform-express, swagger, config, schedule, cache-manager) | high/moderate | surface réelle (HTTP, limites, journal) — mais les correctifs sont en **Nest 12** | migration à planifier à part, pas la veille d'un déploiement ; à chiffrer avant |
+
+Ordre proposé, du moins risqué au plus engageant — chaque palier se vérifie par le build
+et par les contrôles de §7.1 avant le suivant :
+
+1. `npm audit fix` aux deux racines (ne touche que le verrou, aucune version majeure).
+2. `@tiptap/*@^3.30.5` et `nodemailer@^9.1.0` (correctifs dans la même mineure).
+3. `fabric@7.4.0` seul, atelier d'image ouvert à la main après.
+4. Migration Nest 10 → 12 et `prisma` à la dernière corrective, dans une branche dédiée.
+
+`npm audit fix --force` est **écarté** ici : il ferait passer des majeures sans que
+personne ne relise l'atelier de pages, et un builder cassé se voit moins vite qu'un logo
+qui s'affiche mal.
 
 ### F9 · La règle `/uploads` ne protège le site que si elle est **en dernier** dans `headers()`
 
@@ -378,6 +405,14 @@ Deux décisions assumées, à ne pas « corriger » machinalement :
   inerte sans le rendre inutilisable — c'est le bon échange.
 - **`style-src 'unsafe-inline'` est conservé** sur `/uploads/*` : un SVG légitime porte
   ses styles dans le fichier. Sans cette exception, les logos déposés se mettent à nu.
+
+### F10 · Ce que cet audit ne prétend pas couvrir
+
+Pas de test d'intrusion, pas de revue du code non exécuté ici (les écrans de contenu
+`admin/c/*`, `legal`, `partners-accounts` n'ont été lus que sous l'angle du stockage),
+et rien qui ressemble à une analyse de charge. La liste des fichiers `public/uploads`
+existants n'a pas été reprise un par un : si des SVG ont été déposés **avant** ce
+nettoyage, ils sont toujours sur le disque — la commande en §7.
 
 ---
 
@@ -429,7 +464,11 @@ la main).
 3. `npm run settings-doc:test`, `npm run upload:test`, `npm run shop:test`,
    `npm run payments:test`, `npm run intl:check`.
 4. `./node_modules/.bin/tsc --noEmit && npx next build --webpack` → 0 erreur, 218 pages.
-5. `npm audit --audit-level=high` aux deux racines (le jeton Next 16.3.3 est déjà passé).
+5. `npm audit --json --omit=dev` aux deux racines, et lire le tableau §F8 — pas le
+   total. Attendu : Next **16.3.5** (les deux critiques 16.x sont couvertes depuis
+   16.3.3) ; `@tiptap/core` et la chaîne `fabric`/`tar` restent signalés tant que la
+   montée n'est pas jouée. `npm audit fix` (sans `--force`) puis relancer : le nombre
+   doit baisser, ce qui reste est une décision, pas un oubli.
 
 ### 7.2 Sur le serveur, dans cet ordre précis
 
