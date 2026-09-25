@@ -23,7 +23,9 @@
     "links:test": "node scripts/test-link-kind.mjs",
     "shop:test": "node --experimental-strip-types scripts/test-shop-sync.mjs",
     "settings-doc:test": "node scripts/test-settings-doc.mjs",
-    "payments:test": "node --experimental-strip-types scripts/test-payment-records.mjs"
+    "payments:test": "node --experimental-strip-types scripts/test-payment-records.mjs",
+    "storage:audit": "node scripts/test-storage-map.mjs",
+    "upload:test": "node scripts/test-upload-hardening.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

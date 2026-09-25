@@ -79,6 +79,37 @@ describe('SettingsDocsService — garde-fous', () => {
     expect(stored).not.toHaveProperty('siteLogo');
   });
 
+  it('un mode de paiement perd sa clé d’API, à l’écriture comme à la relecture', async () => {
+    const { service, repo } = makeRepo();
+    await service.save('payments', [
+      { id: 'p1', name: 'Carte internationale', type: 'card-intl', apiKey: 'sk_live_424242424242' },
+      { id: 'p3', name: 'Virement', type: 'transfer', iban: 'DZ58 0079 …' },
+    ]);
+
+    // La ligne telle qu'elle est réellement stockée — c'est ce que lira une
+    // sauvegarde de la base, et ce que renverrait une API sans projection.
+    const stored = (repo.row as { value: { items: Record<string, unknown>[] } }).value;
+    expect(stored.items[0].apiKey).toBeUndefined();
+    expect(stored.items[0].name).toBe('Carte internationale');
+
+    const again = await service.status('payments');
+    expect((again.payload as Record<string, unknown>[])[0].apiKey).toBeUndefined();
+  });
+
+  it('une clé d’API déjà en base ne ressort pas à la lecture', async () => {
+    // Le cas réel d'une production : le document a été écrit avant la règle, le
+    // secret est donc dans `settings.value`. Seule la projection à la sortie le
+    // retient — filtrer l'écriture seule ne dirait rien de l'existant. La ligne est
+    // posée par-dessus le magasin, comme l'aurait fait un `UPDATE` à la main.
+    const { service, repo } = makeRepo();
+    await service.save('payments', [{ id: 'p1', name: 'Carte', type: 'card-intl' }]);
+    const row = repo.row as { key: string; value: { items: Record<string, unknown>[] } };
+    row.value.items[0].apiKey = 'sk_live_avant_la_regue';
+    const status = await service.status('payments');
+    expect(JSON.stringify(status.payload)).not.toContain('sk_live_');
+    expect(JSON.stringify(status.document)).not.toContain('sk_live_');
+  });
+
   it('la config boutique perd importApi, qui porte une clé d’API', async () => {
     const { service, repo } = makeRepo();
     await service.save('shop', {

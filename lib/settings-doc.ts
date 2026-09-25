@@ -30,6 +30,17 @@ interface DocSpec {
   /** `array` : le magasin stocke une liste nue, la base l'enveloppe. */
   shape: 'object' | 'array';
   /**
+   * Champs retirés de CHAQUE ligne, pour les magasins en liste nue.
+   *
+   * `strip` porte sur l'objet de réglages ; une liste n'a pas d'objet autour, et
+   * ses lignes peuvent quand même charrier un secret. C'est le cas de
+   * `payments` : chaque mode porte un `apiKey` saisi par l'opérateur, que le
+   * serveur refuserait d'ailleurs d'exploiter — mais une liste nue partait telle
+   * quelle en base, lisible par toute sauvegarde de MySQL et recrachée à chaque
+   * poste autorisé. La clé reste donc sur le poste, comme `smtp.pass`.
+   */
+  readonly itemStrip?: readonly string[];
+  /**
    * Champs qui ne quittent **pas** le navigateur.
    *
    * Le serveur les refuserait aussi (liste blanche dans
@@ -47,7 +58,7 @@ export const DOC_SPECS: Record<DocKind, DocSpec> = {
   shop: { cacheKey: 'sari_shop_config', shape: 'object', strip: ['importApi'] },
   taxonomies: { cacheKey: 'sari_taxonomies', shape: 'object', strip: [] },
   currencies: { cacheKey: 'sari_currencies', shape: 'array', strip: [] },
-  payments: { cacheKey: 'sari_payments', shape: 'array', strip: [] },
+  payments: { cacheKey: 'sari_payments', shape: 'array', strip: [], itemStrip: ['apiKey'] },
   notify: { cacheKey: 'sari_notify_messages', shape: 'array', strip: [] },
 };
 
@@ -167,7 +178,17 @@ export function restoreDocBackup(kind: DocKind): boolean {
 export function readLocalDoc(kind: DocKind): unknown {
   const spec = DOC_SPECS[kind];
   const raw = readJson<unknown>(spec.cacheKey, spec.shape === 'array' ? [] : {});
-  if (spec.shape === 'array') return Array.isArray(raw) ? raw : [];
+  if (spec.shape === 'array') {
+    const rows = Array.isArray(raw) ? raw : [];
+    const strip = spec.itemStrip ?? [];
+    if (!strip.length) return rows;
+    return rows.map((row) => {
+      if (!row || typeof row !== 'object') return row;
+      const out: Record<string, unknown> = { ...(row as Record<string, unknown>) };
+      for (const field of strip) delete out[field];
+      return out;
+    });
+  }
   if (!raw || typeof raw !== 'object') return {};
   const source = raw as Record<string, unknown>;
   const out: Record<string, unknown> = {};
@@ -219,8 +240,13 @@ export async function pullDoc(kind: DocKind): Promise<{ seeded: boolean }> {
     hasSyncedBefore: localStorage.getItem(syncedKey(kind)) !== null,
   });
 
-  // Copie avant toute réécriture : `setItem` est définitif.
-  if (hasLocal) localStorage.setItem(backupKey(kind), JSON.stringify(readLocalDoc(kind)));
+  // Copie avant toute réécriture : `setItem` est définitif. Le backup prend le
+  // cache BRUT, pas `readLocalDoc` : à quoi servirait une copie d'où le secret a
+  // déjà été retiré ? Elle doit pouvoir rendre la liste telle qu'elle était.
+  if (hasLocal) {
+    const raw = readJson<unknown>(DOC_SPECS[kind].cacheKey, null);
+    if (raw !== null && raw !== undefined) localStorage.setItem(backupKey(kind), JSON.stringify(raw));
+  }
   localStorage.setItem(syncedKey(kind), new Date().toISOString());
 
   if (decision === 'seed') {

@@ -31,8 +31,15 @@ const MAX_DOCUMENT_BYTES = 256 * 1024;
 type DocSpec =
   /** Objet : seuls les champs listés sont conservés. */
   | { shape: 'fields'; fields: readonly string[] }
-  /** Tableau : stocké sous `{ items: [...] }`, présenté au client comme une liste. */
-  | { shape: 'array' }
+  /**
+   * Tableau : stocké sous `{ items: [...] }`, présenté au client comme une liste.
+   *
+   * `itemStrip` retire un champ de CHAQUE ligne avant stockage, puis avant
+   * relecture — deux fois, parce que la base contient déjà le champ des lignes écrites avant cette règle : la
+   * projection à la sortie est ce qui garantit qu'un secret ne ressort jamais,
+   * même d'une ligne antérieure à cette règle.
+   */
+  | { shape: 'array'; itemStrip?: readonly string[] }
   /**
    * Objet à clés libres, toutes conservées. Réservé aux magasins indexés par une
    * clé que le serveur n'a pas à connaître — les taxonomies sont indexées par
@@ -95,7 +102,7 @@ export const DOC_SPECS: Record<string, DocSpec> = {
   },
   taxonomies: { shape: 'record' },
   currencies: { shape: 'array' },
-  payments: { shape: 'array' },
+  payments: { shape: 'array', itemStrip: ['apiKey'] },
   /*
    * Gabarits de messages de notification. Ce ne sont PAS les textes du centre de
    * messagerie (`data/mail/`, déjà sur le serveur et laissés tels quels) : cette
@@ -145,17 +152,36 @@ export interface DocStatus {
  */
 function fromClient(spec: DocSpec, input: unknown): Record<string, unknown> {
   if (spec.shape === 'array') {
-    return { items: Array.isArray(input) ? input : [] };
+    return { items: scrubItems(spec, input) };
   }
   return project(spec, input);
 }
 
 function fromStored(spec: DocSpec, value: unknown): Record<string, unknown> {
   if (spec.shape === 'array') {
-    const items = (value as { items?: unknown }).items;
-    return { items: Array.isArray(items) ? items : [] };
+    return { items: scrubItems(spec, (value as { items?: unknown }).items) };
   }
   return project(spec, value);
+}
+
+/**
+ * Retire de chaque ligne les champs qui ne quittent pas le navigateur.
+ *
+ * Le champ est retiré à l'entrée ET à la sortie, et la sortie n'est pas un détail
+ * : `payments` porte un `apiKey` par mode, déjà présent dans les documents écrits
+ * avant cette règle. Ne filtrer que l'écriture laisserait la clé resortir d'une
+ * sauvegarde de la base vers un poste — soit exactement ce qu'on refuse.
+ */
+function scrubItems(spec: DocSpec, input: unknown): unknown[] {
+  const rows = Array.isArray(input) ? input : [];
+  const strip = spec.shape === 'array' ? (spec.itemStrip ?? []) : [];
+  if (!strip.length) return rows;
+  return rows.map((row) => {
+    if (!row || typeof row !== 'object') return row;
+    const out: Record<string, unknown> = { ...(row as Record<string, unknown>) };
+    for (const field of strip) delete out[field];
+    return out;
+  });
 }
 
 function project(spec: DocSpec, input: unknown): Record<string, unknown> {
@@ -221,7 +247,7 @@ export class SettingsDocsService {
     return {
       kind,
       document,
-      payload: spec.shape === 'array' ? (document?.items ?? []) : document,
+      payload: spec.shape === 'array' ? scrubItems(spec, document?.items ?? []) : document,
       source: document ? 'db' : 'default',
     };
   }

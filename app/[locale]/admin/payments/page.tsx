@@ -247,7 +247,15 @@ export default function PaymentsPage() {
               <label className="block space-y-1.5">
                 <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Clé API</span>
                 <input className="ad-input font-mono" type="password" disabled={mode === 'consult'} value={draft.apiKey || ''} onChange={(e) => setDraft({ ...draft, apiKey: e.target.value })} />
-                <p className="ad-field-hint">{t("apiKeyHint", {defaultMessage: "Masquée à l’affichage. Ne jamais coller une clé de production dans un ticket."})}</p>
+                <p className="ad-field-hint">
+                  {t('apiKeyHint', { defaultMessage: 'Masquée à l’affichage. Ne jamais coller une clé de production dans un ticket.' })}
+                </p>
+                <p className="ad-field-hint" style={{ color: 'var(--ad-warn, #b45309)' }}>
+                  {t('apiKeyLocal', {
+                    defaultMessage:
+                      'Cette clé reste sur CE poste : elle n’est jamais envoyée en base ni partagée avec les autres administrateurs — une clé de passerelle dans MySQL se retrouve dans chaque sauvegarde de la base. Un second poste la re-saisit, ou mieux : la clé vit dans l’environnement du serveur.',
+                  })}
+                </p>
               </label>
             )}
             <Toggle on={draft.active} onChange={(active) => setDraft({ ...draft, active })} label={t("active")} hint={t("inactiveHint", {defaultMessage: "Un mode inactif n’apparaît plus au checkout."})} disabled={mode === 'consult'} />

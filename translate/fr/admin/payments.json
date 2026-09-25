@@ -56,5 +56,6 @@
   "useBackup": "Rendre la copie locale ({n})",
   "backupRestored": "Copie locale rendue ({n} ligne(s))",
   "backupEmpty": "Aucune copie locale exploitable sur ce poste.",
-  "typesAreCode": "La liste des types (virement, CIB, carte, PayPal, chèque, livraison) est fixée par le code, pas par la base : chaque type pilote un comportement — IBAN pour le virement, e-mail pour PayPal, frais en dinars pour la livraison. Un mode neuf se crée ici, sur n’importe lequel de ces types."
+  "typesAreCode": "La liste des types (virement, CIB, carte, PayPal, chèque, livraison) est fixée par le code, pas par la base : chaque type pilote un comportement — IBAN pour le virement, e-mail pour PayPal, frais en dinars pour la livraison. Un mode neuf se crée ici, sur n’importe lequel de ces types.",
+  "apiKeyLocal": "Cette clé reste sur CE poste : elle n’est jamais envoyée en base ni partagée avec les autres administrateurs — une clé de passerelle dans MySQL se retrouve dans chaque sauvegarde de la base. Un second poste la re-saisit, ou mieux : la clé vit dans l’environnement du serveur."
 }

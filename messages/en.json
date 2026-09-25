@@ -985,7 +985,8 @@
       "useBackup": "Restore local copy ({n})",
       "backupRestored": "Local copy restored ({n} row(s))",
       "backupEmpty": "No usable local copy on this workstation.",
-      "typesAreCode": "The list of types (transfer, CIB, card, PayPal, cheque, cash on delivery) is fixed by the code, not by the database: each type drives a behaviour — IBAN for a transfer, e-mail for PayPal, flat fees for delivery. A new method is created here, on any of these types."
+      "typesAreCode": "The list of types (transfer, CIB, card, PayPal, cheque, cash on delivery) is fixed by the code, not by the database: each type drives a behaviour — IBAN for a transfer, e-mail for PayPal, flat fees for delivery. A new method is created here, on any of these types.",
+      "apiKeyLocal": "This key stays on THIS workstation: it is never sent to the database nor shared with other administrators — a gateway key in MySQL ends up in every database backup. A second workstation re-enters it, or better: the key lives in the server environment."
     },
     "taxes": {
       "title": "Taxes",
