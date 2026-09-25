@@ -2,8 +2,21 @@
 -- Contrôle en lecture seule : d'où vient ce que l'administration affiche
 -- ---------------------------------------------------------------------------
 -- À passer sur la base de production sans crainte : aucune écriture, aucun
--- `ALTER`, aucun `UPDATE`. Cinq requêtes, chacune commentée sur ce qu'elle
--- répond.
+-- `ALTER`, aucun `UPDATE`. Chaque requête est commentée sur ce qu'elle répond.
+--
+-- SI VOUS LISEZ CETTE LIGNE PARCE QU'UNE REQUÊTE A ÉCHOUÉ EN 1146
+-- (« Table '….payment_records' doesn't exist ») : commencez par la requête 1,
+-- puis jouez le rattrapage additif, au choix :
+--   • avec Node et un accès réseau à la base : `cd backend && npm run db:schema-check`
+--     puis `npm run db:schema-fix` ;
+--   • sans les deux, dans phpMyAdmin / HeidiSQL : le fichier additif qui crée la
+--     table — `backend/sql/migrate-payment-records.mysql.sql` pour le relevé,
+--     `backend/sql/migrate-coupons-taxes.mysql.sql` pour coupons et taxes.
+-- Ne jouez PAS `backend/sql/schema.mysql.sql` : il commence par des `DROP TABLE`.
+--
+-- Les requêtes 3 à 6 tapent sur des tables qui n'existent pas encore : elles
+-- échoueront toutes seules. Les compteurs ci-dessous, eux, sont sûrs — ils lisent
+-- `information_schema` et répondent 0, pas une erreur.
 --
 -- Pourquoi ce fichier existe : deux questions sont revenues, et elles ne
 -- demandent pas de lire le code — juste de regarder la base.
@@ -52,6 +65,15 @@ SELECT p.`key` AS document,
   FROM `settings` p
  WHERE p.`key` IN ('doc_payments', 'doc_currencies', 'doc_notify', 'doc_admin', 'doc_shop', 'doc_taxonomies')
  ORDER BY p.`key`;
+
+-- 2bis. Les compteurs de lignes sans risquer le 1146 : `information_schema`
+--    répond 0 pour une table absente. Estimation InnoDB (TABLE_ROWS), donc à
+--    confirmer par un COUNT réel une fois les tables présentes.
+SELECT t.TABLE_NAME AS table_, COALESCE(t.TABLE_ROWS, 0) AS lignes_estimees
+  FROM information_schema.TABLES t
+ WHERE t.TABLE_SCHEMA = DATABASE()
+   AND t.TABLE_NAME IN ('payment_records', 'coupons', 'tax_rules', 'orders', 'quotes')
+ ORDER BY t.TABLE_NAME;
 
 -- 3. Le relevé d'encaissements : est-il en base, et que dit la base ?
 --    `rows` = lignes hors corbeille. Zéro alors que l'écran Journal des paiements

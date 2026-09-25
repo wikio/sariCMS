@@ -285,6 +285,18 @@ réponse d'un objet est la projection de la liste blanche du serveur, et reparti
 d'elle aurait effacé du cache `smtp`, `db`, `erp` et tout champ que le serveur
 n'admet pas encore. L'adoption est donc bornée à `shape === 'array'`.
 
+Un échec de lecture côté base est désormais **traduit** au lieu d'être recopié : une
+table absente répondait « The table `payment_records` does not exist in this
+database », qui ressemble à un bug de l'écran et ne mentionne pas le fichier qui la
+crée. `PrismaRepository.explainReadError` (P2021, P2022) nomme la collection, le
+rattrapage additif (`npm run db:schema-check` puis `db:schema-fix` dans `backend/`,
+ou le fichier additif du dépôt — `sql/migrate-payment-records.mysql.sql`, jamais
+`sql/schema.mysql.sql` qui commence par des `DROP`) et dit pourquoi
+`prisma migrate deploy` n'est pas la réponse sur une base reprise hors Prisma. Le
+même `count()` de `/settings/status` est maintenant tolérant : une collection qui ne
+répond pas sort de `counts` et entre dans `unavailable`, que l'accueil affiche. Avant
+cela, une table manquante suffisait à vider toute la page d'accueil de ses chiffres.
+
 Depuis, l'accueil de l'administration porte un panneau **« Données & source »** qui
 répond à la même question sans console : pour chaque écran concerné, le nom de la
 table ou du document, le nombre de lignes en base, et un macaron « en base » ou

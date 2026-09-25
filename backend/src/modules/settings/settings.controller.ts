@@ -30,11 +30,15 @@ export class SettingsController {
   @RequirePermissions(perm('settings', 'read'))
   @ApiOperation({ summary: 'État CMS + compteurs par collection' })
   async status() {
-    const counts = await this.catalog.counts();
+    const { counts, unavailable } = await this.catalog.inventory();
     return {
       driver: this.config.get('DB_DRIVER') || 'json',
       connected: true,
       counts,
+      // Les compteurs que la base n'a pas pu fournir (table absente, droit
+      // manquant). L'écran les affiche : un chiffre absent doit être expliqué,
+      // pas deviné.
+      unavailable,
     };
   }
 

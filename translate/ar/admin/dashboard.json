@@ -46,5 +46,7 @@
   "demoLink": "الاستيراد والبيانات التجريبية",
   "publishedCount": "منشور،",
   "eventsCount": "فعاليات",
-  "noActivity": "لا نشاط حتى الآن."
+  "noActivity": "لا نشاط حتى الآن.",
+  "unavailable": "عدّادات لم تقدّمها قاعدة البيانات",
+  "unavailableHelp": "في الغالب، الجدول لم يُنشَأ بعد في هذه القاعدة. التصحيح الإضافي: من backend/ نفّذوا «npm run db:schema-check» ثم «npm run db:schema-fix» (أو شغّلوا الملف backend/sql/schema-sync.mysql.sql في عميل SQL لديكم)."
 }

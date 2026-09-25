@@ -46,5 +46,7 @@
   "demoLink": "Import & demo data",
   "publishedCount": "publications,",
   "eventsCount": "events",
-  "noActivity": "No activity yet."
+  "noActivity": "No activity yet.",
+  "unavailable": "Counters this database did not provide",
+  "unavailableHelp": "Most often, the table has not been created on this database yet. The catch-up only adds: in backend/, run “npm run db:schema-check” then “npm run db:schema-fix” (or play backend/sql/schema-sync.mysql.sql in your SQL client)."
 }

@@ -109,7 +109,7 @@ async function ensurePeople() {
 export async function seedDemoWorkspace(
   options: { force?: boolean } = {},
 ): Promise<
-  | { ok: false; reason: 'base-occupée'; orders: number; quotes: number }
+  | { ok: false; reason: 'base-occupée' | 'base-inconnue'; orders: number; quotes: number }
   | {
       ok: true;
       imported: number;
@@ -119,11 +119,22 @@ export async function seedDemoWorkspace(
       people: number;
     }
 > {
-  const counts = (await cmsStatus().catch(() => null))?.counts ?? {};
+  const status = await cmsStatus().catch(() => null);
+  const counts = status?.counts ?? {};
   const existingOrders = Number(counts.orders) || 0;
   const existingQuotes = Number(counts.quotes) || 0;
-  if (!options.force && (existingOrders > 0 || existingQuotes > 0)) {
-    return { ok: false, reason: 'base-occupée', orders: existingOrders, quotes: existingQuotes };
+  // Une clé absente de `counts` ne veut pas dire « zéro en base » : le backend
+  // n'omet une collection que lorsqu'elle ne répond pas (table non migrée, droit
+  // manquant). Lire ce trou comme une base vide autoriserait l'amorçage
+  // précisément là où l'on ne voit rien — le refus porte donc un second motif.
+  const measured = 'orders' in counts && 'quotes' in counts;
+  if (!options.force && (!measured || existingOrders > 0 || existingQuotes > 0)) {
+    return {
+      ok: false,
+      reason: measured ? 'base-occupée' : 'base-inconnue',
+      orders: existingOrders,
+      quotes: existingQuotes,
+    };
   }
 
   saveOrders(DEMO_ORDERS);

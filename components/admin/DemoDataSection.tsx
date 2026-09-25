@@ -35,7 +35,9 @@ export default function DemoDataSection() {
   const [armed, setArmed] = useState(false);
   const [force, setForce] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [refused, setRefused] = useState<{ orders: number; quotes: number } | null>(null);
+  const [refused, setRefused] = useState<
+    { reason: 'base-occupée' | 'base-inconnue'; orders: number; quotes: number } | null
+  >(null);
 
   const refresh = useCallback(async () => {
     const [health, status] = await Promise.all([cmsHealth(), cmsStatus()]);
@@ -71,8 +73,13 @@ export default function DemoDataSection() {
         // Le refus est un résultat, pas une erreur : l'écran le dit avec les
         // chiffres qui l'ont provoqué, pour que la décision de forcer se prenne
         // en connaissance de cause.
-        setRefused({ orders: result.orders, quotes: result.quotes });
-        showToast('Base déjà peuplée : amorçage refusé', 'warning');
+        setRefused({ reason: result.reason, orders: result.orders, quotes: result.quotes });
+        showToast(
+          result.reason === 'base-occupée'
+            ? 'Base déjà peuplée : amorçage refusé'
+            : 'Compteurs indisponibles : amorçage refusé',
+          'warning',
+        );
       } else {
         showToast(
           `Jeu de démonstration posé : ${result.orders} commandes, ${result.quotes} devis, ` +
@@ -168,8 +175,20 @@ export default function DemoDataSection() {
         )}
         {refused && (
           <p className="text-sm mt-3" style={{ color: 'var(--ad-warn, #b45309)' }}>
-            Amorçage refusé : la base contient {refused.orders} commande(s) et {refused.quotes} devis.
-            Cochez « Forcer » ci-dessus si cet environnement est bien un bac à sable.
+            {refused.reason === 'base-occupée' ? (
+              <>
+                Amorçage refusé : la base contient {refused.orders} commande(s) et {refused.quotes} devis.
+                Cochez « Forcer » ci-dessus si cet environnement est bien un bac à sable.
+              </>
+            ) : (
+              <>
+                Amorçage refusé : les compteurs de commandes et de devis n'ont pas pu être lus
+                (table absente de la base, ou droits insuffisants sur « settings »). Une base dont
+                on ne sait rien est traitée comme une base à risque — vérifiez l'état, ou créez la
+                table (« npm run db:schema-check » puis « db:schema-fix » dans backend/), puis
+                cochez « Forcer » en connaissance de cause.
+              </>
+            )}
           </p>
         )}
       </section>

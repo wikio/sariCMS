@@ -46,5 +46,7 @@
   "demoLink": "Import & jeu de démonstration",
   "publishedCount": "publications,",
   "eventsCount": "événements",
-  "noActivity": "Aucune activité pour l’instant."
+  "noActivity": "Aucune activité pour l’instant.",
+  "unavailable": "Compteurs que la base n’a pas fournis",
+  "unavailableHelp": "Le plus souvent, la table n’a pas encore été créée sur cette base. Le rattrapage est additif : dans backend/, « npm run db:schema-check » puis « npm run db:schema-fix » (ou le fichier backend/sql/schema-sync.mysql.sql dans votre client SQL)."
 }

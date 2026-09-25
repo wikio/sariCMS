@@ -76,12 +76,15 @@ export default function AdminDashboardPage() {
     total: 0, waiting: 0, waitingAmount: 0, source: 'na',
   });
   const [methods, setMethods] = useState<{ count: number; fromBase: boolean } | null>(null);
+  const [unavailable, setUnavailable] = useState<string[]>([]);
 
   const refresh = useCallback(async () => {
     const [health, status] = await Promise.all([cmsHealth(), cmsStatus()]);
     setConnected(Boolean(health || status?.connected));
     setDriver(status?.driver || (health as { driver?: string } | null)?.driver || '');
     if (status?.counts) setCounts(status.counts);
+    // Le backend nomme ce qu'il n'a pas pu compter ; l'écran le rapporte tel quel.
+    setUnavailable(status?.unavailable ?? []);
     try {
       setLogs(unwrapList(await cmsAdminFetch<unknown>('/audit-logs/recent?limit=6')));
     } catch {
@@ -277,6 +280,22 @@ export default function AdminDashboardPage() {
               </tbody>
             </table>
           </div>
+          {unavailable.length > 0 && (
+            <p
+              className="text-sm mt-3 flex items-start gap-2"
+              style={{ color: 'var(--ad-warn, #b45309)' }}
+            >
+              <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+              <span>
+                {t('unavailable', { defaultMessage: 'Compteurs que la base n’a pas fournis' })} :{' '}
+                <code className="text-xs">{unavailable.join(' · ')}</code>.{' '}
+                {t('unavailableHelp', {
+                  defaultMessage:
+                    'Le plus souvent, la table n’a pas encore été créée sur cette base. Le rattrapage est additif : dans backend/, « npm run db:schema-check » puis « npm run db:schema-fix » (ou le fichier backend/sql/schema-sync.mysql.sql dans votre client SQL).',
+                })}
+              </span>
+            </p>
+          )}
           {ledger.source === 'base' && (
             <p className="text-xs mt-3" style={{ color: 'var(--ad-muted)' }}>
               <Wallet className="w-3 h-3 inline mr-1" />
