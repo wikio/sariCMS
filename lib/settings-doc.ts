@@ -53,6 +53,32 @@ export const DOC_SPECS: Record<DocKind, DocSpec> = {
 
 export const DOC_KINDS = Object.keys(DOC_SPECS) as DocKind[];
 
+/**
+ * Émis après toute écriture du cache depuis la base.
+ *
+ * Un écran qui copie le magasin dans son `useState` au montage ne relit **jamais**
+ * sans s'y abonner : la base arrive une fraction de seconde après, et l'écran reste
+ * sur ce que le navigateur contenait — vide sur un poste neuf, ou périmé. C'est le
+ * symptôme remonté sur « Modes de paiement » : rien n'affiché alors que la base
+ * était remplie. L'abonnement se fait par `useDocRefresh` (`lib/use-settings-doc.ts`),
+ * une fois pour tous les écrans de réglages.
+ */
+export const DOC_EVENT = 'sari-settings-doc-changed';
+
+/**
+ * Événements propres à un magasin, à émettre en plus du générique.
+ *
+ * Les composants publics ne connaissent que leurs événements à eux (`sari-currencies`
+ * pour les en-têtes de prix, `sari-payments-changed` pour le relevé) ; un
+ * `writeCache` qui n'émettait que l'événement des écrans de réglages laissait ces
+ * composants-là sur leur valeur du chargement.
+ */
+const EXTRA_EVENTS: Partial<Record<DocKind, string[]>> = {
+  currencies: ['sari-currencies'],
+  payments: ['sari-payments-changed'],
+  taxonomies: ['sari-taxonomies'],
+};
+
 const syncedKey = (kind: DocKind) => `sari_doc_synced_${kind}`;
 const backupKey = (kind: DocKind) => `sari_doc_backup_${kind}`;
 
@@ -96,9 +122,11 @@ function localHasContent(kind: DocKind): boolean {
 function writeCache(kind: DocKind, payload: unknown): void {
   if (payload === undefined || payload === null) return;
   localStorage.setItem(DOC_SPECS[kind].cacheKey, JSON.stringify(payload));
-  // Les écrans relisent le magasin à chaque appel, mais les en-têtes, eux,
-  // s'abonnent à cet événement — sans lui, un poste voisin ne rafraîchirait pas.
-  window.dispatchEvent(new CustomEvent('sari-settings-doc-changed', { detail: { kind } }));
+  // Les en-têtes et les autres postes s'abonnent à ces événements ; les écrans de
+  // réglages aussi, via `useDocRefresh`. Sans émission, le composant qui a déjà lu
+  // le magasin garde sa copie et le changement ne se voit qu'au rechargement.
+  window.dispatchEvent(new CustomEvent(DOC_EVENT, { detail: { kind } }));
+  for (const name of EXTRA_EVENTS[kind] ?? []) window.dispatchEvent(new Event(name));
 }
 
 /** Envoie le contenu du poste et renvoie ce que la base contient après. */
@@ -169,7 +197,19 @@ export async function hydrateDocs(): Promise<DocsHydration> {
  */
 export function syncDoc(kind: DocKind): void {
   if (typeof window === 'undefined') return;
-  void pushDoc(kind, readLocalDoc(kind)).catch(() => {
-    /* hors ligne : le cache local reste, le prochain chargement repoussera */
-  });
+  void pushDoc(kind, readLocalDoc(kind))
+    .then((after) => {
+      // Les listes nues seulement, et pour une raison précise : la réponse d'un
+      // objet est la projection de la liste blanche du serveur. Repartir d'elle
+      // effacerait du cache tout ce que le serveur ne connaît pas encore —
+      // `smtp`, `db`, `erp`, mais aussi un champ d'écran ajouté côté navigateur
+      // avant d'entrer dans `DOC_SPECS` côté backend. L'adoption d'une projection
+      // est une perte de données poliment présentée.
+      if (DOC_SPECS[kind].shape === 'array' && after !== undefined && after !== null) {
+        writeCache(kind, after);
+      }
+    })
+    .catch(() => {
+      /* hors ligne : le cache local reste, le prochain chargement repoussera */
+    });
 }

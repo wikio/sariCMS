@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Eye, Inbox, Mail, Pencil, Plus, Send, Trash2 } from 'lucide-react';
 import { loadMessages, saveMessages, MERGE_VARS, TRIGGERS, type NotifyMessage } from '@/lib/notify-store';
 import { syncDoc } from '@/lib/settings-doc';
+import { useDocRefresh } from '@/lib/use-settings-doc';
 import {
   deleteThread, ensureThread, loadThreads, markThreadRead, sendMessage, unreadForAdmin, unreadForThread,
   threadLabel, type Thread,
@@ -264,6 +265,9 @@ function TemplatesTab() {
   const [selected, setSelected] = useState<string[]>([]);
 
   useEffect(() => { setRows(loadMessages()); }, []);
+  // La base répond après ce montage : sans seconde lecture, l'écran reste sur le
+  // cache du poste (vide sur un poste neuf) alors que les gabarits sont enregistrés.
+  useDocRefresh('notify', () => setRows(loadMessages()));
   const persist = (next: NotifyMessage[], toast = 'Message enregistré') => {
     // un seul point d'écriture pour tout l'écran : le rattrapage en base y est
     // branché une fois, et pas une fois par bouton

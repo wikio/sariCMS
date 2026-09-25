@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { FolderOpen, Image as ImageIcon, Save, Search, Upload } from 'lucide-react';
 import { DEFAULT_SETTINGS, loadAdminSettings, saveAdminSettings, type AdminSettings } from '@/lib/admin-settings';
+import { useDocRefresh } from '@/lib/use-settings-doc';
 import { hydrateSiteLogo, saveSiteLogo } from '@/lib/site-contact';
 import { previewCode, DEFAULT_TEMPLATES, type CodeKind } from '@/lib/codes';
 import VerificationSettingsSection from '@/components/admin/VerificationSettingsSection';
@@ -79,6 +80,8 @@ export default function AdminSettingsPage() {
   const [q, setQ] = useState('');
 
   useEffect(() => { setSettings(loadAdminSettings()); }, []);
+  // Idem : les réglages partagés descendent de la base juste après ce montage.
+  useDocRefresh('admin', () => setSettings(loadAdminSettings()));
 
   // Le logo de vitrine se lit dans `ContactInfo`, pas dans le cache du poste :
   // c'est la seule valeur que le rendu serveur de l'en-tête applique, donc la

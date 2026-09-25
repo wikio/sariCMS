@@ -257,6 +257,48 @@ table lue par un endpoint de réglages. Ils sont retirés **côté client avant 
 et **rejetés côté serveur**, le second filtre ne valant que si le premier a été
 contourné : la valeur ne part même pas sur le réseau.
 
+**Ce que l'exploitation a révélé depuis, et qui a été corrigé.** Un administrateur
+a signalé l'écran *Modes de paiement* vide alors que la base était remplie. Deux
+défauts s'étaient donné rendez-vous, et aucun ne se voyait dans un test unitaire :
+
+- *l'écran relisait une seule fois.* `useEffect(() => setRows(loadX()), [])` copie
+  le cache dans un `useState` au montage, et l'amorçage d'`AdminLayout` descend la
+  base une fraction de seconde **après** : sur un poste neuf, l'écran restait sur le
+  cache vide. Dans l'autre sens c'était plus grave — l'écran affichait le vieux
+  cache de l'opérateur, qui l'enregistrait par-dessus la configuration d'un
+  collègue. Cinq écrans sont maintenant abonnés via `useDocRefresh`
+  (`lib/use-settings-doc.ts`) ; un seul hook pour tous, parce que cinq abonnements
+  écrits à la main, c'est un écran oublié. Le contrôle est dans `npm run
+  settings-doc:test`, qui lit les sources des cinq écrans.
+- *la lecture fabriquait le magasin.* `loadPayments()`, `loadCurrencies()` et
+  `loadMessages()` écrivaient leur jeu par défaut dans le cache quand la clé était
+  absente. Depuis la mise en base, ce n'est plus une paresse inoffensive :
+  `localHasContent()` prend ce jeu pour une saisie, la branche `seed` de `pullDoc()`
+  l'envoie au serveur, et des lignes que personne n'a écrites deviennent la
+  configuration partagée — au détriment de celle d'un autre poste. Une lecture ne
+  rend plus rien d'écrit ; le repli reste une valeur d'affichage. (Le même défaut,
+  trouvé sur le relevé d'encaissements, avait été corrigé de la même façon.)
+
+Un troisième point, préventif : `syncDoc()` repartait de la réponse du serveur pour
+remplir le cache. C'était juste pour les listes nues et faux pour les objets — la
+réponse d'un objet est la projection de la liste blanche du serveur, et repartir
+d'elle aurait effacé du cache `smtp`, `db`, `erp` et tout champ que le serveur
+n'admet pas encore. L'adoption est donc bornée à `shape === 'array'`.
+
+Pour regarder ce que la base contient réellement d'un document (le reflexe quand un
+écran de réglages semble vide) :
+
+```sql
+SELECT `key`, JSON_LENGTH(JSON_EXTRACT(`value`, '$.items')) AS lignes,
+       CHAR_LENGTH(`value`) AS octets
+  FROM `settings` WHERE `key` LIKE 'doc\_%';
+```
+
+Une ligne absente veut dire « jamais enregistré » — l'écran garde ses défauts
+d’affichage et la base ne sera écrite qu'au premier enregistrement. Une ligne à `0`
+veut dire « enregistré vide » : là, c'est un geste d'opérateur (ou une reprise
+depuis un cache vidé) qu'il faut retrouver, pas un bug d'affichage.
+
 ### B bis. Le compteur de références produits, devenu serveur
 
 | | Avant | Maintenant |

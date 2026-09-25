@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { syncDoc } from '@/lib/settings-doc';
+import { useDocRefresh } from '@/lib/use-settings-doc';
 import { Eye, ListOrdered, Pencil, Plus, Trash2 } from 'lucide-react';
 import { formatIban, formatRib, isValidIban, loadPayments, savePayments, type PaymentMethod, type PaymentType } from '@/lib/shop-store';
 import { normalizeOrderPaymentType } from '@/lib/payments';
@@ -40,6 +41,9 @@ export default function PaymentsPage() {
   const [ordersByType, setOrdersByType] = useState<PaymentMethod | null>(null);
 
   useEffect(() => { setRows(loadPayments()); }, []);
+  // Le cache est lu au montage, l'amorçage arrive après : sans cette seconde
+  // lecture, un poste neuf affiche une liste vide pendant que la base est pleine.
+  useDocRefresh('payments', () => setRows(loadPayments()));
 
   const ordersFor = useMemo(() => {
     if (!ordersByType) return [];

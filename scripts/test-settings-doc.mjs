@@ -190,9 +190,76 @@ check(
   'soit il revient dans `admin` (mauvais endroit), soit il est oublié partout (logo perdu)',
 );
 
+// ── est-ce que l'écran relit, une fois la base descendue ? ───────────────────
+//
+// Le défaut remonté sur « Modes de paiement » n'était pas une histoire de
+// requête : la base répondait bien. Cinq écrans copiaient leur magasin dans un
+// `useState` au montage, l'amorçage d'`AdminLayout` arrivant juste après — sur un
+// poste neuf, l'écran restait donc vide pendant que la base était pleine ; et dans
+// l'autre sens il affichait le vieux cache, que l'opérateur enregistrait par-dessus
+// la configuration d'un collègue. Ces contrôles vérifient que l'abonnement est là
+// et que rien ne se repeuple tout seul.
+
+const ECRANS = {
+  payments: 'app/[locale]/admin/payments/page.tsx',
+  currencies: 'app/[locale]/admin/currencies/page.tsx',
+  admin: 'app/[locale]/admin/settings/page.tsx',
+  taxonomies: 'app/[locale]/admin/taxonomies/page.tsx',
+  notify: 'app/[locale]/admin/messages/page.tsx',
+  shop: 'app/[locale]/admin/shop-config/page.tsx',
+};
+
+for (const [kind, rel] of Object.entries(ECRANS)) {
+  const src = readFileSync(join(ROOT, rel), 'utf8');
+  const abonné =
+    /useDocRefresh\(\s*'[a-z]+'/.test(src) ||
+    /addEventListener\(\s*'(sari-shop-config-changed|sari-settings-doc-changed)'/.test(src);
+  const relit = /set[A-Z]\w+\(\s*(load|all)/.test(src) || /refresh\(\)/.test(src);
+  check(
+    `écran ${kind}: abonné à la descente de la base`,
+    abonné,
+    `${rel} lit son magasin au montage mais n'écoute ni l'événement des documents ni celui de son magasin — un poste neuf affiche une liste vide`,
+  );
+  check(`écran ${kind}: relit bien son magasin quelque part`, relit, rel);
+}
+
+// La lecture qui écrit : le jeu par défaut posé dans le cache au premier appel.
+// Depuis que ces magasins sont réplifiés, ce n'est plus une paresse inoffensive —
+// `localHasContent()` prend le jeu pour une saisie, la branche `seed` de
+// `pullDoc()` l'envoie en base, et la configuration d'un autre poste est écrasée
+// par des lignes que personne n'a écrites.
+for (const file of ['lib/shop-store.ts', 'lib/currencies.ts', 'lib/notify-store.ts']) {
+  const src = readFileSync(join(ROOT, file), 'utf8');
+  check(
+    `${file}: une lecture ne fabrique pas le magasin`,
+    !/setItem\(\s*(key|KEY)\s*,\s*JSON\.stringify\(\s*fallback\s*\)\s*\)/.test(src),
+    'remplacer par `if (!raw) return fallback;` — le repli reste une valeur rendue, pas une donnée écrite',
+  );
+}
+
+// Un changement venu de la base doit être visible aux composants qui écoutent leur
+// magasin (en-têtes de prix, sélecteurs), pas seulement aux écrans de réglages.
+check(
+  'writeCache émet aussi l’événement propre au magasin touché',
+  /EXTRA_EVENTS\[kind\]/.test(clientSrc) &&
+    /currencies:\s*\['sari-currencies'\]/.test(clientSrc) &&
+    /taxonomies:\s*\['sari-taxonomies'\]/.test(clientSrc) &&
+    /payments:\s*\['sari-payments-changed'\]/.test(clientSrc),
+  'sinon le composant abonné garde sa valeur du chargement jusqu’au rechargement de la page',
+);
+
+// Et l'adoption de la réponse du serveur ne vaut QUE pour les listes nues : la
+// réponse d'un objet est la projection de la liste blanche du serveur, repartir
+// d'elle effacerait du cache tout champ qu'elle ne connaît pas encore.
+check(
+  'syncDoc n’adopte la réponse que pour les listes nues',
+  /shape === 'array' && after/.test(clientSrc),
+  'sur une forme objet, cette adoption effacerait `smtp`, `db`, `erp` et tout champ non encore admis côté serveur',
+);
+
 console.log(
   failures === 0
-    ? '\n  ✓ écran et serveur d\u2019accord\n'
+    ? '\n  ✓ écran, serveur et navigation d\u2019accord\n'
     : `\n  ${failures} désaccord(s) — voir ci-dessus\n`,
 );
 process.exit(failures === 0 ? 0 : 1);

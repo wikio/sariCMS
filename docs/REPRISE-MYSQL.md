@@ -177,6 +177,24 @@ Il couvre d'ailleurs les deux migrations d'un seul coup (`20260919_add_order_shi
 et `20260921_add_coupons_and_tax_rules`), ce qui évite d'avoir à décider lequel
 des deux a déjà été joué à moitié.
 
+**Le client Prisma périmé, ce 500 qui n'a rien à voir avec la migration.** Un modèle
+ajouté au schéma n'existe pas dans le client généré tant que `prisma generate` n'a
+pas tourné — et `postinstall` du backend lance `prisma generate || true`, donc un
+échec de génération (fichier verrouillé sous Windows, binaire indisponible hors
+ligne) ne se signale pas à l'installation. Symptôme : l'API démarre, la vitrine
+fonctionne, et un seul écran d'administration répond 500 — par exemple
+`Modèle Prisma « paymentRecord » introuvable dans le client généré`. Depuis cette
+vague, l'API écrit la liste complète des modèles manquants **au démarrage**
+(`PrismaService.onModuleInit`), ce qui se voit avant que quelqu'un ouvre l'écran.
+Le remède est le même dans les deux cas :
+
+```bash
+cd backend && npx prisma generate && npm run build && npm run start
+```
+
+Puis, si la table n'a pas été créée non plus, la migration du même nom
+(`sql/migrate-payment-records.mysql.sql`, ou `prisma migrate deploy`).
+
 **Option 3 — `prisma db push`.** Crée les tables et colonnes manquantes d'après
 `schema.prisma`, sans jamais supprimer une colonne existante.
 

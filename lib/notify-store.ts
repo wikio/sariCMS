@@ -69,10 +69,10 @@ function read<T>(key: string, fallback: T): T {
   if (typeof window === 'undefined') return fallback;
   try {
     const raw = localStorage.getItem(key);
-    if (!raw) {
-      localStorage.setItem(key, JSON.stringify(fallback));
-      return fallback;
-    }
+    // Une lecture n'écrit pas : ces gabarits sont réplifiés en base, et le jeu par
+    // défaut laissé dans le cache du premier poste ouvert passerait pour une saisie
+    // de l'opérateur — donc pour une configuration à partager.
+    if (!raw) return fallback;
     return JSON.parse(raw) as T;
   } catch {
     return fallback;

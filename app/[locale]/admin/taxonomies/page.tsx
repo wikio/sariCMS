@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { syncDoc } from '@/lib/settings-doc';
+import { useDocRefresh } from '@/lib/use-settings-doc';
 import { Eye, Plus, Pencil, Trash2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import {
@@ -57,10 +58,11 @@ export default function TaxonomiesPage() {
   const refresh = () => setGroups(allTaxonomies());
   useEffect(() => {
     refresh();
-    const on = () => refresh();
-    window.addEventListener('sari-taxonomies', on);
-    return () => window.removeEventListener('sari-taxonomies', on);
   }, []);
+  // L'événement du magasin ne prévient que des écritures locales ; `useDocRefresh`
+  // couvre celles qui viennent de la base (amorçage, enregistrement d'un autre
+  // poste), qui passent par `writeCache()` et son événement générique.
+  useDocRefresh('taxonomies', refresh);
 
   const current = useMemo(() => groups.find((g) => g.key === tab) || groups[0], [groups, tab]);
 
