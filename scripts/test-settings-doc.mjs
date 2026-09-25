@@ -257,6 +257,40 @@ check(
   'sur une forme objet, cette adoption effacerait `smtp`, `db`, `erp` et tout champ non encore admis côté serveur',
 );
 
+// Le bandeau « d'où vient cette liste » n'a de sens que si les trois états sont
+// distingués à la lecture : prendre la base quand `source === 'default'` reviendrait
+// à vider tous les postes parce qu'un document n'a jamais été enregistré.
+check(
+  'pullDoc ne prend la base que sur source « db »',
+  /source === 'db'/.test(clientSrc) && /serverPresent \? 1 : 0/.test(clientSrc),
+  'sinon un document jamais enregistré écrase le cache local d’un poste qui, lui, a des lignes',
+);
+
+check(
+  'docStatus rend trois états distincts (db, default, na)',
+  /'db' \| 'default' \| 'na'/.test(clientSrc) &&
+    /export async function docStatus/.test(clientSrc) &&
+    /export function restoreDocBackup/.test(clientSrc),
+  'un écran qui ne distingue pas « enregistré vide » de « jamais enregistré » ne peut pas proposer le bon remède',
+);
+
+// Les types de paiement sont une constante du magasin, pas une table : l'écran doit
+// les présenter tous. Un type ajouté à `PaymentType` et oublié dans `TYPES` ne se
+// choisit nulle part — et rien ne le dit, ni au build ni à l'exécution.
+const storeSrc = readFileSync(join(ROOT, 'lib/shop-store.ts'), 'utf8');
+const screenSrc = readFileSync(join(ROOT, 'app/[locale]/admin/payments/page.tsx'), 'utf8');
+const union = /export type PaymentType =([^;]+);/.exec(storeSrc)?.[1] ?? '';
+const declared = [...union.matchAll(/'([a-z-]+)'/g)].map((m) => m[1]);
+const offered = [...screenSrc.matchAll(/\{ value: '([a-z-]+)', labelKey/g)].map((m) => m[1]);
+check(
+  'l’écran « Modes de paiement » offre tous les types du magasin',
+  declared.length > 0 &&
+    offered.length > 0 &&
+    declared.filter((v) => v !== 'pending').every((v) => offered.includes(v)),
+  `PaymentType connaît ${declared.join(', ')} ; le sélecteur n'offre que ${offered.join(', ')} — ` +
+    '« pending » est exclus à dessein (marqueur « à choisir »), tout autre oubli est un type injoignable',
+);
+
 console.log(
   failures === 0
     ? '\n  ✓ écran, serveur et navigation d\u2019accord\n'

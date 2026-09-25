@@ -297,6 +297,38 @@ même `count()` de `/settings/status` est maintenant tolérant : une collection 
 répond pas sort de `counts` et entre dans `unavailable`, que l'accueil affiche. Avant
 cela, une table manquante suffisait à vider toute la page d'accueil de ses chiffres.
 
+### « Modes de paiement » : ce qui est en base, et ce qui ne l'est pas
+
+Deux listes différentes vivent sur cet écran, et les confondre produit exactement la
+question « est-ce que ces infos sont dans la BD ? ».
+
+- **Les types** — virement, carte CIB, carte internationale, PayPal, chèque, paiement
+  à la livraison, autre — sont une **constante du code** (`PaymentType`,
+  `lib/shop-store.ts`, présentée par le `TYPES` de l'écran). Ils ne sont pas en base
+  et n'y seront jamais : chaque type pilote un comportement du site (champ IBAN
+  contrôlé pour le virement, e-mail pour PayPal, frais en dinars et non en pourcent
+  pour la livraison, 3D Secure pour la carte). Une liste de types éditable en base
+  serait un réglage capable de casser le code qui le lit. Ce qu'on crée par un clic,
+  c'est un **mode** posé sur l'un de ces types (« Virement agence Est », type
+  `transfer`) — et là, oui, c'est en base.
+- **Les modes** (les lignes du tableau) sont le document `doc_payments` de la table
+  `settings`. Leurs valeurs par défaut — les six modes livrés avec le produit — ne
+  sont **pas** en base : elles vivent dans `DEFAULT_PAYMENTS`, et n'y entrent qu'au
+  premier enregistrement fait depuis l'écran.
+
+L'écran dit maintenant lequel de ces états il voit, parce qu'un tableau vide se lit
+de trois façons et se répare trois fois différemment :
+
+| État | Ce que l'écran affiche | Remède proposé |
+| --- | --- | --- |
+| `doc_payments` absent | « jamais enregistré en base » + la liste par défaut du poste | bouton **Enregistrer en base** |
+| `doc_payments` présent, vide | « enregistré vide » | **Repartir des valeurs livrées**, ou **Rendre la copie locale** (`sari_doc_backup_payments`) si ce poste la garde |
+| route muette ou 403 | « la base n'a pas répondu » | droits `payments:read`, puis recharger |
+
+Le bouton de la copie locale est le premier endroit où `sari_doc_backup_<kind>` se
+consulte sans console : c'était le seul recours documenté d'une liste écrasée par une
+base vide, et il demandait d'ouvrir les outils de développement pour y lire du JSON.
+
 Depuis, l'accueil de l'administration porte un panneau **« Données & source »** qui
 répond à la même question sans console : pour chaque écran concerné, le nom de la
 table ou du document, le nombre de lignes en base, et un macaron « en base » ou

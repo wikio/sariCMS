@@ -98,6 +98,71 @@ function readJson<T>(key: string, fallback: T): T {
   }
 }
 
+export type DocSource = 'db' | 'default' | 'na';
+
+/**
+ * D'où vient ce que l'écran affiche, et combien la base en contient.
+ *
+ * Les trois états se ressemblent à l'œil et se soignent différemment, ce qui
+ * explique la moitié des « ma liste est vide » remontés sur les écrans de
+ * réglages :
+ *
+ * - `db` avec des lignes  → l'écran montre la base, tout va bien ;
+ * - `db` à zéro ligne      → le document **a été enregistré vide** (un poste au
+ *   cache vide a poussé son vide) : la liste est vide pour tout le monde, et le
+ *   remède est `restoreDocBackup` ou une re-saisie ;
+ * - `default`             → le document **n'existe pas** en base : l'écran montre
+ *   les valeurs par défaut du code, locales à ce poste, non partagées ;
+ * - `na`                  → la route n'a pas répondu (API muette, droit manquant).
+ *   Un 403 et une base vide se présentent identiquement à l'écran ; c'est pour ça
+ *   que cet état existe séparément.
+ */
+export async function docStatus(kind: DocKind): Promise<{ source: DocSource; rows: number; backupRows: number }> {
+  let source: DocSource = 'na';
+  let rows = 0;
+  try {
+    const status = await cmsAdminFetch<DocStatus>(`/settings/doc/${kind}`, { timeoutMs: 8000 });
+    if (status) {
+      source = status.source === 'db' ? 'db' : 'default';
+      const payload = status.payload;
+      rows = Array.isArray(payload)
+        ? payload.length
+        : payload && typeof payload === 'object'
+          ? Object.keys(payload).length
+          : 0;
+    }
+  } catch {
+    /* la route n'a pas répondu : source reste 'na', l'écran doit le dire */
+  }
+  const backup = readJson<unknown>(backupKey(kind), null);
+  const backupRows = Array.isArray(backup)
+    ? backup.length
+    : backup && typeof backup === 'object'
+      ? Object.keys(backup).length
+      : 0;
+  return { source, rows, backupRows };
+}
+
+/**
+ * Rend la copie locale d'avant, si elle existe et si elle dit quelque chose.
+ *
+ * `pullDoc` copie le cache avant toute réécriture (`sari_doc_backup_<kind>`) :
+ * c'est le seul endroit où vit encore une liste écrasée par une base vide. Sans
+ * ce bouton, le seul recours de l'exploitant est d'ouvrir la console du
+ * navigateur — et personne ne l'ouvre avant d'avoir tout perdu.
+ */
+export function restoreDocBackup(kind: DocKind): boolean {
+  if (typeof window === 'undefined') return false;
+  const backup = readJson<unknown>(backupKey(kind), null);
+  const usable = Array.isArray(backup)
+    ? backup.length > 0
+    : !!backup && typeof backup === 'object' && Object.keys(backup).length > 0;
+  if (!usable) return false;
+  writeCache(kind, backup);
+  syncDoc(kind);
+  return true;
+}
+
 /** Contenu du poste, sans les champs confidentiels. */
 export function readLocalDoc(kind: DocKind): unknown {
   const spec = DOC_SPECS[kind];

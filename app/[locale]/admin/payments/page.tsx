@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { syncDoc } from '@/lib/settings-doc';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { docStatus, restoreDocBackup, syncDoc, type DocSource } from '@/lib/settings-doc';
 import { useDocRefresh } from '@/lib/use-settings-doc';
 import { Eye, ListOrdered, Pencil, Plus, Trash2 } from 'lucide-react';
-import { formatIban, formatRib, isValidIban, loadPayments, savePayments, type PaymentMethod, type PaymentType } from '@/lib/shop-store';
+import { defaultPaymentMethods, formatIban, formatRib, isValidIban, loadPayments, savePayments, type PaymentMethod, type PaymentType } from '@/lib/shop-store';
 import { normalizeOrderPaymentType } from '@/lib/payments';
 import { loadOrders } from '@/lib/crm-store';
 import { useToast } from '@/components/admin/Toast';
@@ -39,11 +39,26 @@ export default function PaymentsPage() {
   const [q, setQ] = useState('');
   const [selected, setSelected] = useState<string[]>([]);
   const [ordersByType, setOrdersByType] = useState<PaymentMethod | null>(null);
+  const [origin, setOrigin] = useState<{ source: DocSource; rows: number; backupRows: number } | null>(null);
 
-  useEffect(() => { setRows(loadPayments()); }, []);
+  // « Vide » ne veut pas dire une seule chose : un document jamais enregistré, un
+  // document enregistré vide et une base muette se ressemblent à l'œil et se
+  // réparent différemment. L'écran pose donc la question à la base, et l'affiche.
+  const reloadOrigin = useCallback(
+    () => docStatus('payments').then(setOrigin).catch(() => setOrigin(null)),
+    [],
+  );
+
+  useEffect(() => {
+    setRows(loadPayments());
+    void reloadOrigin();
+  }, [reloadOrigin]);
   // Le cache est lu au montage, l'amorçage arrive après : sans cette seconde
   // lecture, un poste neuf affiche une liste vide pendant que la base est pleine.
-  useDocRefresh('payments', () => setRows(loadPayments()));
+  useDocRefresh('payments', () => {
+    setRows(loadPayments());
+    void reloadOrigin();
+  });
 
   const ordersFor = useMemo(() => {
     if (!ordersByType) return [];
@@ -72,6 +87,68 @@ export default function PaymentsPage() {
         </div>
         <button className="ad-btn ad-btn-primary" onClick={() => { setError(''); setMode('edit'); setDraft(empty()); }}><Plus className="w-4 h-4" />{t("add")}</button>
       </header>
+      {origin && (
+        <div className="ad-card p-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+          <p className="text-sm flex-1 min-w-[16rem]" style={{ color: 'var(--ad-muted)' }}>
+            {origin.source === 'db' && origin.rows > 0 &&
+              t('originDb', { defaultMessage: '{n} mode(s) lu(s) de la base — document `doc_payments`, partagé par tous les postes.', n: origin.rows })}
+            {origin.source === 'db' && origin.rows === 0 &&
+              t('originDbEmpty', {
+                defaultMessage:
+                  'La base contient le document `doc_payments` et il est vide : quelqu’un l’a enregistré vide, et c’est maintenant la liste de tout le monde. Repartez des valeurs livrées, ou rendez la copie locale de ce poste.',
+              })}
+            {origin.source === 'default' &&
+              t('originNever', {
+                defaultMessage:
+                  'Jamais enregistré en base : ce que vous voyez ici est la liste par défaut de ce navigateur, elle n’est partagée avec personne. Un enregistrement la met en base.',
+              })}
+            {origin.source === 'na' &&
+              t('originNa', { defaultMessage: 'La base n’a pas répondu (API muette ou droit `payments:read` manquant) : le poste affiche son cache local.' })}
+          </p>
+          {origin.source !== 'db' || origin.rows === 0 ? (
+            <button
+              className="ad-btn ad-btn-ghost"
+              onClick={() => {
+                persist(defaultPaymentMethods(), t('defaultsSaved', { defaultMessage: 'Valeurs livrées rechargées et envoyées en base' }));
+                // `syncDoc` n'est pas attendu : le macaron se recalcule une seconde
+                // après, et une réponse en retard ne coûte qu'un rafraîchissement.
+                setTimeout(() => void reloadOrigin(), 1000);
+              }}
+            >
+              <ListOrdered className="w-4 h-4" /> {t('useDefaults', { defaultMessage: 'Repartir des valeurs livrées' })}
+            </button>
+          ) : null}
+          {origin.source === 'default' && origin.rows === 0 ? (
+            <button
+              className="ad-btn ad-btn-primary"
+              onClick={() => {
+                savePayments(rows);
+                syncDoc('payments');
+                setTimeout(() => void reloadOrigin(), 1000);
+                showToast(t('pushed', { defaultMessage: 'Liste envoyée en base' }), 'success');
+              }}
+            >
+              {t('pushNow', { defaultMessage: 'Enregistrer en base' })}
+            </button>
+          ) : null}
+          {origin.backupRows > 0 ? (
+            <button
+              className="ad-btn ad-btn-ghost"
+              onClick={() => {
+                if (restoreDocBackup('payments')) {
+                  setRows(loadPayments());
+                  showToast(t('backupRestored', { defaultMessage: 'Copie locale rendue ({n} ligne(s))', n: origin.backupRows }), 'success');
+                  setTimeout(() => void reloadOrigin(), 1000);
+                } else {
+                  showToast(t('backupEmpty', { defaultMessage: 'Aucune copie locale exploitable sur ce poste.' }), 'warning');
+                }
+              }}
+            >
+              {t('useBackup', { defaultMessage: 'Rendre la copie locale ({n})', n: origin.backupRows })}
+            </button>
+          ) : null}
+        </div>
+      )}
       <div className="ad-card p-3"><SearchField value={q} onChange={setQ} placeholder={t("searchPlaceholder")} /></div>
       {selected.length > 0 && (
         <div className="flex gap-2">
@@ -130,6 +207,12 @@ export default function PaymentsPage() {
               <select className="ad-select" disabled={mode === 'consult'} value={draft.type} onChange={(e) => setDraft({ ...draft, type: e.target.value as PaymentType })}>
                 {TYPES.map((opt) => <option key={opt.value} value={opt.value}>{t(opt.labelKey)}</option>)}
               </select>
+              <p className="ad-field-hint">
+                {t('typesAreCode', {
+                  defaultMessage:
+                    'La liste des types (virement, CIB, carte, PayPal, chèque, livraison) est fixée par le code, pas par la base : chaque type pilote un comportement — IBAN pour le virement, e-mail pour PayPal, frais en dinars pour la livraison. Un mode neuf se crée ici, sur n’importe lequel de ces types.',
+                })}
+              </p>
             </label>
             <label className="block space-y-1.5">
               <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>{t("fees")}</span>

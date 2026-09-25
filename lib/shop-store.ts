@@ -115,6 +115,17 @@ function read<T>(key: string, fallback: T): T {
 }
 
 export function loadPayments() { return read(PAY_KEY, DEFAULT_PAYMENTS); }
+
+/**
+ * Le jeu de modes livré avec le produit, en copie.
+ *
+ * Exposé pour que l'écran « Modes de paiement » puisse proposer d'en repartir
+ * quand la base contient un document vide — sans que l'écran ait à recopier la
+ * liste, ce qui serait une seconde vérité sur ce que vaut un mode par défaut.
+ */
+export function defaultPaymentMethods(): PaymentMethod[] {
+  return DEFAULT_PAYMENTS.map((row) => ({ ...row }));
+}
 export function savePayments(rows: PaymentMethod[]) { localStorage.setItem(PAY_KEY, JSON.stringify(rows)); }
 export function loadCoupons(): Coupon[] {
   return read(COUPON_KEY, DEFAULT_COUPONS).map((c) => ({

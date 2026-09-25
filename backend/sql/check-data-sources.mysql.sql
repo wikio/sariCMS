@@ -52,9 +52,15 @@ SELECT
 --                                une fois dans l'écran, l'envoi crée la ligne.
 --      • items = 0              → quelqu'un a ENREGISTRÉ une liste vide (ou un
 --                                poste au cache vide l'a poussée). C'est une
---                                décision d'opérateur, pas un bug ; la copie
---                                d'avant est dans `sari_doc_backup_payments`, côté
---                                navigateur, et se remet en place depuis l'écran.
+--                                décision d'opérateur, pas un bug, et elle se
+--                                défait depuis l'écran lui-même : « Repartir des
+--                                valeurs livrées » réécute les six modes du
+--                                produit, « Rendre la copie locale » récupère
+--                                `sari_doc_backup_payments` du navigateur.
+--      Les TYPES de paiement (virement, CIB, carte, PayPal…) ne sont pas ici :
+--      c'est une constante du code (`PaymentType`), parce que chaque type pilote un
+--      comportement du site. Seuls les MODES — les lignes que l'opérateur nomme,
+--      règle et active — sont en base.
 --      • items > 0 et écran vide → le poste ne lit pas ce document : vérifier
 --                                `payments:read` / `settings:read` du rôle (un 403
 --                                muet se présente comme une base vide).

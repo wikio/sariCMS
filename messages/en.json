@@ -973,7 +973,19 @@
       "apiKeyHint": "Hidden on display. Never paste a production key in a ticket.",
       "close": "Close",
       "inactiveHint": "An inactive method no longer appears at checkout.",
-      "required": "required"
+      "required": "required",
+      "originDb": "{n} method(s) read from the database — `doc_payments` document, shared by every workstation.",
+      "originDbEmpty": "The database holds the `doc_payments` document and it is empty: someone saved it empty, and that is now everyone’s list. Start again from the shipped values, or restore this workstation’s local copy.",
+      "originNever": "Never saved to the database: what you see here is this browser’s default list, shared with nobody. One save puts it in the database.",
+      "originNa": "The database did not answer (silent API or missing `payments:read` right): the workstation shows its local cache.",
+      "useDefaults": "Start from the shipped values",
+      "defaultsSaved": "Shipped values reloaded and sent to the database",
+      "pushNow": "Save to the database",
+      "pushed": "List sent to the database",
+      "useBackup": "Restore local copy ({n})",
+      "backupRestored": "Local copy restored ({n} row(s))",
+      "backupEmpty": "No usable local copy on this workstation.",
+      "typesAreCode": "The list of types (transfer, CIB, card, PayPal, cheque, cash on delivery) is fixed by the code, not by the database: each type drives a behaviour — IBAN for a transfer, e-mail for PayPal, flat fees for delivery. A new method is created here, on any of these types."
     },
     "taxes": {
       "title": "Taxes",

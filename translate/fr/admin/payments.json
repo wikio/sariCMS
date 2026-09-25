@@ -44,5 +44,17 @@
   "apiKeyHint": "Masquée à l’affichage. Ne jamais coller une clé de production dans un ticket.",
   "close": "Fermer",
   "inactiveHint": "Un mode inactif n’apparaît plus au checkout.",
-  "required": "obligatoire"
+  "required": "obligatoire",
+  "originDb": "{n} mode(s) lu(s) de la base — document `doc_payments`, partagé par tous les postes.",
+  "originDbEmpty": "La base contient le document `doc_payments` et il est vide : quelqu’un l’a enregistré vide, et c’est maintenant la liste de tout le monde. Repartez des valeurs livrées, ou rendez la copie locale de ce poste.",
+  "originNever": "Jamais enregistré en base : ce que vous voyez ici est la liste par défaut de ce navigateur, elle n’est partagée avec personne. Un enregistrement la met en base.",
+  "originNa": "La base n’a pas répondu (API muette ou droit `payments:read` manquant) : le poste affiche son cache local.",
+  "useDefaults": "Repartir des valeurs livrées",
+  "defaultsSaved": "Valeurs livrées rechargées et envoyées en base",
+  "pushNow": "Enregistrer en base",
+  "pushed": "Liste envoyée en base",
+  "useBackup": "Rendre la copie locale ({n})",
+  "backupRestored": "Copie locale rendue ({n} ligne(s))",
+  "backupEmpty": "Aucune copie locale exploitable sur ce poste.",
+  "typesAreCode": "La liste des types (virement, CIB, carte, PayPal, chèque, livraison) est fixée par le code, pas par la base : chaque type pilote un comportement — IBAN pour le virement, e-mail pour PayPal, frais en dinars pour la livraison. Un mode neuf se crée ici, sur n’importe lequel de ces types."
 }

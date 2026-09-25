@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import PixelGridLoader from '@/components/admin/PixelGridLoader';
 import { cmsAdminFetch, cmsHealth, cmsStatus } from '@/lib/cms-admin';
+import { docStatus } from '@/lib/settings-doc';
 import { unwrapList } from '@/lib/cms';
 import type { PaymentRecord } from '@/lib/payments';
 import DateText from '@/components/shared/DateText';
@@ -113,17 +114,12 @@ export default function AdminDashboardPage() {
       setLedger((prev) => ({ ...prev, source: 'na' }));
     }
 
-    // Les modes de paiement, et surtout d'où ils viennent : `source: 'db'` veut
-    // dire « enregistré en base », `'default'` veut dire « jamais enregistré —
-    // l'écran affiche ses valeurs par défaut ». La distinction est la question que
-    // l'exploitant pose quand une liste lui semble vide.
-    try {
-      const doc = await cmsAdminFetch<{ source?: string; payload?: unknown }>('/settings/doc/payments', { timeoutMs: 8000 });
-      const items = Array.isArray(doc?.payload) ? doc.payload : [];
-      setMethods({ count: items.length, fromBase: doc?.source === 'db' });
-    } catch {
-      setMethods(null);
-    }
+    // Les modes de paiement, et surtout d'où ils viennent. Lu par `docStatus`, la
+    // même fonction que l'écran « Modes de paiement » : deux manières
+    // d'interpréter « document en base, zéro ligne » seraient deux vérités sur la
+    // même situation, et c'est exactement la question qui revient.
+    const doc = await docStatus('payments');
+    setMethods(doc.source === 'na' ? null : { count: doc.rows, fromBase: doc.source === 'db' });
     setLoading(false);
   }, []);
 
