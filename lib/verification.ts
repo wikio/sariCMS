@@ -64,6 +64,8 @@ export interface VerificationApiSettings {
   response: { code: string; type: string; issuer: string; message: string };
   /** Si l'API est injoignable, retomber sur le registre local plutôt qu'afficher une erreur. */
   fallbackToLocal: boolean;
+  /** Afficher la section « Codes de démonstration » sur la page publique /verification. */
+  showDemoCodes: boolean;
 }
 
 export interface VerificationStore {
@@ -149,6 +151,7 @@ export const DEFAULT_VERIFICATION_API: VerificationApiSettings = {
   hashParam: 'hash',
   response: { code: 'code', type: 'type', issuer: 'issuer', message: 'message' },
   fallbackToLocal: true,
+  showDemoCodes: true,
 };
 
 export function defaultVerificationStore(): VerificationStore {
@@ -288,6 +291,10 @@ export function sanitizeApiSettings(input: Record<string, unknown> | null | unde
     throw new VerificationError("L'URL de l'API doit commencer par http:// ou https://.", 'PARAMETRES');
   }
   const timeout = Number(input.timeoutMs);
+  // Rétro-compat : les fichiers verification.json antérieurs n'ont pas showDemoCodes → on l'affiche (true).
+  // Si l'admin l'a explicitement coupé (false), on respecte.
+  const showDemoCodes = (input as Record<string, unknown>).showDemoCodes === false ? false : true;
+  // Cas particulier : si la clé revient masquée depuis le GET admin, ne pas l'écraser en dur.
   return {
     enabled: input.enabled === true,
     url,
@@ -304,6 +311,7 @@ export function sanitizeApiSettings(input: Record<string, unknown> | null | unde
       message: text((input.response as Record<string, unknown>)?.message, 60, base.response.message),
     },
     fallbackToLocal: input.fallbackToLocal !== false,
+    showDemoCodes,
   };
 }
 
@@ -519,6 +527,7 @@ export async function publicVerificationStatus() {
   return {
     enabled: store.api.enabled && !!store.api.url,
     fallbackToLocal: store.api.fallbackToLocal,
+    showDemoCodes: store.api.showDemoCodes !== false,
     method: store.api.method,
   };
 }

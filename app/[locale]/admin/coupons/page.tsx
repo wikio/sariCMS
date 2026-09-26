@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Copy, Eye, Pencil, Plus, Trash2 } from 'lucide-react';
 import { couponStatus, generateCouponCode, loadCouponUses, loadCoupons, saveCoupons, type Coupon } from '@/lib/shop-store';
+import { hydrateShop } from '@/lib/shop-sync';
 import { listTaxonomy } from '@/lib/taxonomies';
 import { useToast } from '@/components/admin/Toast';
 import Drawer from '@/components/admin/Drawer';
@@ -32,7 +33,26 @@ export default function CouponsPage() {
   const cats = listTaxonomy('products.category').map((t) => t.label);
   const uses = loadCouponUses();
 
-  useEffect(() => { setRows(loadCoupons()); }, []);
+  useEffect(() => {
+    // Le cache d'abord, pour que l'écran s'affiche immédiatement ; la base
+    // prend le relais dès qu'elle répond. Voir lib/shop-sync.ts.
+    setRows(loadCoupons());
+    let alive = true;
+    void hydrateShop().then((info) => {
+      if (!alive) return;
+      setRows(loadCoupons());
+      // Premier contact avec la base : le catalogue local a été monté d'office
+      // plutôt qu'écrasé par la liste vide. L'administrateur doit le savoir,
+      // sinon la reprise passe pour un bug.
+      if (info.seededCoupons > 0) {
+        showToast(
+          `${info.seededCoupons} coupon${info.seededCoupons > 1 ? 's' : ''} repris${info.seededCoupons > 1 ? 's' : ''} de ce poste et enregistré${info.seededCoupons > 1 ? 's' : ''} en base`,
+          'success',
+        );
+      }
+    });
+    return () => { alive = false; };
+  }, []);
 
   const persist = (next: Coupon[], toast = 'Coupon enregistré') => {
     setRows(next);

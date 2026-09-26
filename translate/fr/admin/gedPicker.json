@@ -14,5 +14,11 @@
   "replaceFile": "Remplacer {name}",
   "selectFile": "Sélectionner un fichier",
   "save": "Enregistrer",
-  "cancel": "Annuler"
+  "cancel": "Annuler",
+  "deleteConfirm": "Supprimer le fichier \"{name}\" ?",
+  "deleteError": "Impossible de déterminer le chemin du fichier",
+  "uploadError": "Erreur lors de l'upload du fichier",
+  "deleteFileError": "Erreur lors de la suppression du fichier",
+  "renameError": "Erreur lors du renommage du fichier",
+  "replaceError": "Erreur lors du remplacement du fichier"
 }

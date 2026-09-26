@@ -1,16 +1,18 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useAdminBrand } from '@/components/admin/BrandContext';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { ArrowLeft, Lock, LogIn, Shield } from 'lucide-react';
 import PixelGridLoader from '@/components/admin/PixelGridLoader';
 import ServerCaptcha from '@/components/ServerCaptcha';
 import { cmsFetch, CmsError } from '@/lib/cms';
-import { clearAuthCache } from '@/components/admin/useAdminAuth';
+import { clearAuthCache, setAuthCache, type AdminUser } from '@/components/admin/useAdminAuth';
 import { loadAdminSettings } from '@/lib/admin-settings';
 
 export default function AdminLoginPage() {
+  const { brand } = useAdminBrand();
   const router = useRouter();
   const locale = useLocale();
   const t = useTranslations('admin.login');
@@ -23,6 +25,7 @@ export default function AdminLoginPage() {
   const [blocked, setBlocked] = useState(false);
   const [security, setSecurity] = useState({ admin2fa: false, adminCaptcha: true, siteCaptcha: true });
   const [captchaOk, setCaptchaOk] = useState(false);
+  const [captchaData, setCaptchaData] = useState<{ id: string; value: string } | null>(null);
 
   useEffect(() => {
     fetch('/api/admin/auth/me', { credentials: 'same-origin', cache: 'no-store' })
@@ -43,30 +46,58 @@ export default function AdminLoginPage() {
     setSecurity(s.security);
   }, []);
 
-  const accept = (result: unknown) => {
-    const data = result as { user?: { type?: string }; requires2fa?: boolean; challengeToken?: string } | null;
+  /**
+   * Traite la réponse de connexion.
+   *
+   * @returns true seulement si la connexion aboutit et que la navigation vers le
+   * tableau de bord est lancée — l'appelant garde alors l'indicateur de
+   * chargement allumé jusqu'à ce que l'écran d'accueil prenne la place.
+   */
+  const accept = (result: unknown): boolean => {
+    const data = result as { user?: AdminUser & { type?: string }; requires2fa?: boolean; challengeToken?: string } | null;
     if (data?.requires2fa && data?.challengeToken) {
       setChallengeToken(data.challengeToken);
-      return;
+      return false;
     }
     if (!data?.user) {
       setError(t('wrongPassword'));
-      return;
+      return false;
     }
     if (data.user.type !== 'admin') {
       clearAuthCache();
       setError(t('notAdmin'));
-      return;
+      return false;
     }
-    clearAuthCache();
+    // On connaît déjà l'administrateur : inutile de laisser le tableau de bord
+    // refaire un aller-retour /me (puis un refresh) avant d'afficher l'écran.
+    setAuthCache(data.user);
     router.push(`/${locale}/admin/dashboard`);
+    return true;
   };
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    // Audit C1 : captcha serveur obligatoire quand adminCaptcha activé.
+    // On bloque côté client pour UX, la vraie vérification est côté serveur
+    // dans /api/admin/auth/login (verifyAdminCaptcha). Sans captcha, un appel
+    // direct à l'API resterait possible, mais le serveur refusera si captchaId présent et invalide.
+    // Pour ne pas bloquer l'accès si le captcha ne charge pas (réseau), on autorise
+    // le submit sans captcha en mode dégradé, mais on l'envoie quand il est disponible.
+    if (security.adminCaptcha && !captchaOk && !challengeToken) {
+      // Si le captcha est affiché mais pas rempli, on l'exige (5 caractères)
+      const currentValue = captchaData?.value || '';
+      if (currentValue.length !== 5) {
+        setError(t('captchaError') || 'Veuillez saisir le code captcha (5 caractères)');
+        return;
+      }
+    }
     setLoading(true);
     try {
+      // Inclure le captcha dans le payload pour vérification atomique côté serveur
+      const captchaPayload = security.adminCaptcha && captchaData?.id && captchaData?.value
+        ? { captchaId: captchaData.id, captchaAnswer: captchaData.value }
+        : {};
       // Passer par la route Next : c'est elle qui pose les cookies httpOnly
       // (un appel direct au backend ne pose aucun cookie => /me répond 401 => retour login).
       const res = await fetch('/api/admin/auth/login', {
@@ -74,18 +105,32 @@ export default function AdminLoginPage() {
         headers: { 'Content-Type': 'application/json' },
         credentials: 'same-origin',
         body: JSON.stringify(challengeToken
-          ? { challengeToken, code: totpCode }
-          : { email, password, ...(totpCode ? { totpCode } : {}) }),
+          ? { challengeToken, code: totpCode, ...captchaPayload }
+          : { email, password, ...(totpCode ? { totpCode } : {}), ...captchaPayload }),
       });
       const result = await res.json().catch(() => null);
       if (!res.ok) {
-        setError((result as { error?: string } | null)?.error || t('wrongPassword'));
+        const errCode = (result as { code?: string } | null)?.code;
+        const errMsg = (result as { error?: string } | null)?.error || t('wrongPassword');
+        if (errCode === 'CAPTCHA_INVALID' || errCode === 'CAPTCHA_REQUIRED') {
+          // Le captcha a été consommé (même si incorrect), il faut le régénérer
+          setCaptchaOk(false);
+          setCaptchaData(null);
+        }
+        setError(errMsg);
+        setLoading(false);
         return;
       }
-      accept(result);
+      /*
+       * Succès : on NE remet pas `loading` à false. Sans ça, le formulaire de
+       * connexion réapparaissait une fraction de seconde pendant que le tableau
+       * de bord se chargeait. Le chargeur reste affiché, et comme aucune page
+       * `loading.tsx` n'existe sous /admin, Next laisse cet écran en place
+       * jusqu'à ce que la route d'accueil soit prête à s'afficher.
+       */
+      if (!accept(result)) setLoading(false);
     } catch (err) {
       setError(err instanceof CmsError ? (err.status === 401 ? t('wrongPassword') : err.message) : t('apiUnreachable'));
-    } finally {
       setLoading(false);
     }
   };
@@ -96,8 +141,16 @@ export default function AdminLoginPage() {
       <div className="ad-card relative z-10 w-full max-w-md p-8 ad-rise overflow-hidden">
         <div className="absolute inset-x-0 top-0 h-1" style={{ background: 'linear-gradient(90deg, var(--ad-accent), var(--ad-accent-2), var(--ad-warn))' }} />
         <div className="text-center mb-8">
-          <div className="mx-auto mb-4 w-16 h-16 rounded-3xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, var(--ad-accent), #0d7a9e)' }}>
-            <Shield className="w-8 h-8 text-white" />
+          {brand.logo ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={brand.logo} alt={brand.title} className="mx-auto mb-4 w-16 h-16 object-contain" />
+          ) : (
+            <div className="mx-auto mb-4 w-16 h-16 rounded-3xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, var(--ad-accent), #0d7a9e)' }}>
+              <Shield className="w-8 h-8 text-white" />
+            </div>
+          )}
+          <div className="text-[11px] uppercase tracking-[0.22em] font-bold mb-1" style={{ color: 'var(--ad-muted)' }}>
+            {brand.title}
           </div>
           <h1 className="text-2xl font-black">{t('title')}</h1>
           <p className="text-sm mt-1" style={{ color: 'var(--ad-muted)' }}>{t('subtitle')}</p>
@@ -118,11 +171,23 @@ export default function AdminLoginPage() {
               <input className="ad-input text-center tracking-[0.4em]" value={totpCode} onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="000000" />
             )}
             {security.adminCaptcha && (
-              <ServerCaptcha onChange={setCaptchaOk} locale={locale} endpoint="/api/admin/auth/captcha" />
+              <ServerCaptcha
+                onChange={setCaptchaOk}
+                onCaptchaData={setCaptchaData}
+                autoVerify={false}
+                locale={locale}
+                endpoint="/api/admin/auth/captcha"
+              />
             )}
-            <button className="ad-btn ad-btn-primary w-full py-3" disabled={loading}>
+            <button
+              className="ad-btn ad-btn-primary w-full py-3"
+              disabled={loading || (security.adminCaptcha && !captchaOk && !challengeToken)}
+            >
               <LogIn className="w-4 h-4" /> {challengeToken ? t('verifyTotp') : t('submit')}
             </button>
+            {security.adminCaptcha && !captchaOk && !challengeToken && (
+              <p className="text-xs text-amber-600 dark:text-amber-400 text-center">Saisissez le code à 5 caractères ci-dessus</p>
+            )}
           </form>
         )}
         <button onClick={() => router.push(`/${locale}`)} className="mt-6 text-sm flex items-center gap-1 mx-auto" style={{ color: 'var(--ad-muted)' }}>

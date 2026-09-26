@@ -220,6 +220,8 @@ export async function cmsStatus(): Promise<{
   driver: string;
   connected: boolean;
   counts: Record<string, number>;
+  /** Compteurs que la base n'a pas fournis (table absente, droit manquant). */
+  unavailable?: string[];
 } | null> {
   try {
     return await cmsAdminFetch('/settings/status', { timeoutMs: 5000 });

@@ -87,8 +87,8 @@ export default function MediaPage() {
     body.append('label', file.name);
     body.append('title', file.name.replace(/\.[^.]+$/, ''));
     const res = await fetch('/api/admin/upload', { method: 'POST', body });
-    if (!res.ok) { showToast('Upload refusé', 'error'); }
-    else { showToast('Fichier ajouté à la GED', 'success'); }
+    if (!res.ok) { showToast(t("uploadRejected"), 'error'); }
+    else { showToast(t("fileAdded"), 'success'); }
     setBusy(false);
     load();
   };
@@ -151,22 +151,22 @@ export default function MediaPage() {
       showToast(error instanceof Error ? error.message : 'Fiche non enregistrée', 'error');
       return;
     }
-    showToast('Métadonnées enregistrées', 'success');
+    showToast(t("metadataSaved"), 'success');
     setEditing(null);
     load();
   };
 
   const remove = async (f: MediaItem) => {
-    if (!confirm(`Supprimer « ${f.title || f.label} » définitivement ?`)) return;
+    if (!confirm(t("confirmDelete", {name: f.title || f.label}))) return;
     const res = await fetch(`/api/admin/upload?file=${encodeURIComponent(f.file)}`, { method: 'DELETE' });
-    if (!res.ok) { showToast('Suppression impossible', 'error'); return; }
-    showToast('Fichier supprimé', 'success');
+    if (!res.ok) { showToast(t("deleteFailed"), 'error'); return; }
+    showToast(t("fileDeleted"), 'success');
     load();
   };
 
   const copyUrl = (f: MediaItem) => {
     navigator.clipboard.writeText(f.url);
-    showToast('URL copiée', 'success');
+    showToast(t("urlCopied"), 'success');
   };
 
   return (
@@ -175,16 +175,16 @@ export default function MediaPage() {
         <div>
           <div className="text-[11px] uppercase tracking-[0.2em] font-black" style={{ color: 'var(--ad-muted)' }}>{t("ged")}</div>
           <h1 className="text-3xl font-black">{t("title")}</h1>
-          <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>Gestion des fichiers : renommage, titre, description, catégorie, édition d’images.</p>
+          <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>{t("subtitle")}</p>
         </div>
         <label className="ad-btn ad-btn-primary cursor-pointer">
-          <Upload className="w-4 h-4" /> {busy ? 'Import…' : 'Importer'}
+          <Upload className="w-4 h-4" /> {busy ? t("importing") : t("importBtn")}
           <input type="file" className="hidden" multiple accept="image/*,.pdf,.svg" onChange={(e) => { Array.from(e.target.files || []).forEach(upload); e.target.value = ''; }} />
         </label>
       </header>
 
       <div className="ad-card p-3 grid md:grid-cols-4 gap-2">
-        <SearchField value={q} onChange={setQ} placeholder="Titre, nom, description…" />
+        <SearchField value={q} onChange={setQ} placeholder={t("searchPlaceholder")} />
         <select className="ad-select" value={moduleName} onChange={(e) => setModuleName(e.target.value)}>
           <option value="">{t("allModules")}</option>
           {modules.map((m) => <option key={m} value={m}>{m}</option>)}
@@ -207,7 +207,7 @@ export default function MediaPage() {
         onDragLeave={() => setOver(false)}
         onDrop={(e) => { e.preventDefault(); setOver(false); Array.from(e.dataTransfer.files || []).forEach(upload); }}
       >
-        Glissez-déposez des fichiers ici, ou utilisez le bouton « Importer ».
+        {t("dropHint")}
       </div>
 
       {loading ? (
@@ -279,14 +279,14 @@ export default function MediaPage() {
       {/* Drawer métadonnées / renommage */}
       <Drawer
         open={!!editing}
-        title="Informations du fichier"
+        title={t("fileInfo")}
         subtitle={editing?.file}
         onClose={() => setEditing(null)}
         width={520}
         footer={
           <>
-            <button type="button" className="ad-btn ad-btn-ghost" onClick={() => setEditing(null)}>Annuler</button>
-            <button type="button" className="ad-btn ad-btn-primary" onClick={saveMeta}>Enregistrer</button>
+            <button type="button" className="ad-btn ad-btn-ghost" onClick={() => setEditing(null)}>{t("cancel")}</button>
+            <button type="button" className="ad-btn ad-btn-primary" onClick={saveMeta}>{t("save")}</button>
           </>
         }
       >
@@ -298,27 +298,27 @@ export default function MediaPage() {
               </div>
             )}
             <label className="space-y-1.5 block">
-              <span className="field-label">Nom du fichier (renommage)</span>
+              <span className="field-label">{t("fileName")}</span>
               <input className="ad-input" value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} />
-              <p className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>Renomme le fichier sur le disque. L’URL change en conséquence.</p>
+              <p className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>{t("renameHint")}</p>
             </label>
             <label className="space-y-1.5 block">
-              <span className="field-label">Titre</span>
+              <span className="field-label">{t("titleLabel")}</span>
               <input className="ad-input" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
             </label>
             <label className="space-y-1.5 block">
-              <span className="field-label">Description</span>
+              <span className="field-label">{t("description")}</span>
               <textarea className="ad-textarea" rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
             </label>
             <div className="grid grid-cols-2 gap-3">
               <label className="space-y-1.5 block">
-                <span className="field-label">Module</span>
+                <span className="field-label">{t("module")}</span>
                 <select className="ad-select" value={form.module} onChange={(e) => setForm({ ...form, module: e.target.value })}>
                   {modules.map((m) => <option key={m} value={m}>{m}</option>)}
                 </select>
               </label>
               <label className="space-y-1.5 block">
-                <span className="field-label">Catégorie</span>
+                <span className="field-label">{t("category")}</span>
                 <input className="ad-input" list="ged-categories" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
                 <datalist id="ged-categories">
                   {categories.map((c) => <option key={c} value={c} />)}
@@ -326,8 +326,8 @@ export default function MediaPage() {
               </label>
             </div>
             <div className="text-[11px] space-y-0.5" style={{ color: 'var(--ad-muted)' }}>
-              <div>Nom d’origine : {editing.originalName}</div>
-              <div>Ajouté le : <DateText value={editing.createdAt} /></div>
+              <div>{t("originalName")} : {editing.originalName}</div>
+              <div>{t("addedOn")} : <DateText value={editing.createdAt} /></div>
             </div>
           </div>
         )}

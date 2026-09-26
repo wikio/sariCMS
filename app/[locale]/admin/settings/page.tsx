@@ -1,24 +1,34 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useLocale } from 'next-intl';
+import { useSearchParams } from 'next/navigation';
 import { FolderOpen, Image as ImageIcon, Save, Search, Upload } from 'lucide-react';
 import { DEFAULT_SETTINGS, loadAdminSettings, saveAdminSettings, type AdminSettings } from '@/lib/admin-settings';
+import { useDocRefresh } from '@/lib/use-settings-doc';
+import { hydrateSiteLogo, saveSiteLogo } from '@/lib/site-contact';
 import { previewCode, DEFAULT_TEMPLATES, type CodeKind } from '@/lib/codes';
 import VerificationSettingsSection from '@/components/admin/VerificationSettingsSection';
+import SmtpSection from '@/components/admin/SmtpSection';
+import MailCenterSection from '@/components/admin/MailCenterSection';
+import MaintenanceSection from '@/components/admin/MaintenanceSection';
+import DemoDataSection from '@/components/admin/DemoDataSection';
+import BrandSection from '@/components/admin/BrandSection';
 import { testErpConnection } from '@/lib/erp';
 import { useToast } from '@/components/admin/Toast';
 import GedPicker from '@/components/admin/GedPicker';
 import DateFormatPicker from '@/components/admin/DateFormatPicker';
 import { notifyDateSettingsChanged } from '@/lib/use-date-format';
 
-type SectionId = 'general' | 'commerce' | 'security' | 'integrations' | 'seo';
-type TabId = 'general' | 'dates' | 'products' | 'codes' | 'quotes' | 'invoicing' | 'security' | 'smtp' | 'database' | 'verification' | 'seo';
+type SectionId = 'general' | 'commerce' | 'security' | 'integrations' | 'emails' | 'seo';
+type TabId = 'general' | 'dates' | 'products' | 'codes' | 'quotes' | 'invoicing' | 'security' | 'smtp' | 'database' | 'maintenance' | 'verification' | 'mail' | 'seo' | 'brand' | 'demo';
 
 interface TabDef { id: TabId; label: string }
 interface SectionDef { id: SectionId; label: string; tabs: TabDef[] }
 
 const SECTIONS: SectionDef[] = [
   { id: 'general', label: 'Général', tabs: [
+    { id: 'brand', label: 'Identité du back-office' },
     { id: 'general', label: 'Identité & langue' },
     { id: 'dates', label: 'Dates & heures' },
   ] },
@@ -35,6 +45,11 @@ const SECTIONS: SectionDef[] = [
     { id: 'smtp', label: 'SMTP / Email' },
     { id: 'verification', label: 'Vérification des documents' },
     { id: 'database', label: 'Base de données' },
+    { id: 'maintenance', label: 'Journaux & maintenance' },
+    { id: 'demo', label: 'Import & jeu de démonstration' },
+  ] },
+  { id: 'emails', label: 'Emails', tabs: [
+    { id: 'mail', label: 'Emails & notifications' },
   ] },
   { id: 'seo', label: 'SEO', tabs: [
     { id: 'seo', label: 'Référencement' },
@@ -43,6 +58,7 @@ const SECTIONS: SectionDef[] = [
 
 // Index de recherche : onglet → mots-clés.
 const SEARCH_INDEX: Record<TabId, string> = {
+  brand: 'marque nom titre accroche logo icone icône favicon identité back-office administration en-tête barre latérale épinglette brand',
   general: 'langue langue origine logo site vitrine identité société entreprise',
   dates: 'date heure format affichage jour mois année calendrier iso horodatage relatif',
   products: 'produit stock réapprovisionnement crop largeur hauteur catalogue rupture',
@@ -53,19 +69,53 @@ const SEARCH_INDEX: Record<TabId, string> = {
   smtp: 'smtp hôte port utilisateur mot de passe expéditeur tls ssl email',
   verification: 'vérification vérif document code clé hash api externe qr anti-robot catalogue expire révoqué falsifié captcha',
   database: 'base de données driver mysql postgresql mongodb json url schéma',
+  maintenance: 'journaux log audit logs rétention conservation purge corbeille cron planification tâche jetons expirés audit_logs refresh_tokens',
+  mail: 'email emails notification message objet modèle gabarit template constructeur variable fusion commande devis candidature newsletter politique envoi plafond désinscription journal',
   seo: 'seo titre description mots-clés open graph twitter favicon canonical robots',
+  demo: 'démo demo démonstration jeu données fictives catalogue import réimporter seed amorçage commande fictive devis fictif recette maquette bac à sable sandbox data fr en ar',
 };
 
 export default function AdminSettingsPage() {
   const { showToast } = useToast();
+  const locale = useLocale();
+  const params = useSearchParams();
   const [settings, setSettings] = useState<AdminSettings>(DEFAULT_SETTINGS);
   const [section, setSection] = useState<SectionId>('general');
   const [tab, setTab] = useState<TabId>('general');
   const [q, setQ] = useState('');
 
-  useEffect(() => { setSettings(loadAdminSettings()); }, []);
+  // Lien profond `?tab=<onglet>` : l'accueil envoie vers « Import & jeu de
+  // démonstration », qu'il ne fallait plus chercher dans les six sections. Un
+  // onglet inconnu est ignoré plutôt qu'ouvert — atterrir sur une section vide
+  // serait plus déroutant que rester sur « Général ».
+  useEffect(() => {
+    const wanted = params?.get('tab') as TabId | null;
+    if (!wanted) return;
+    const owner = SECTIONS.find((sec) => sec.tabs.some((tb) => tb.id === wanted));
+    if (!owner) return;
+    setSection(owner.id);
+    setTab(wanted);
+  }, [params]);
 
-  const setSmtp = (patch: Partial<AdminSettings['smtp']>) => setSettings({ ...settings, smtp: { ...settings.smtp, ...patch } });
+  useEffect(() => { setSettings(loadAdminSettings()); }, []);
+  // Idem : les réglages partagés descendent de la base juste après ce montage.
+  useDocRefresh('admin', () => setSettings(loadAdminSettings()));
+
+  // Le logo de vitrine se lit dans `ContactInfo`, pas dans le cache du poste :
+  // c'est la seule valeur que le rendu serveur de l'en-tête applique, donc la
+  // seule que voit un visiteur. Un poste qui en avait saisi un avant cette
+  // bascule le voit monté en base plutôt qu'écrasé par la valeur vide.
+  useEffect(() => {
+    let alive = true;
+    hydrateSiteLogo(locale)
+      .then(({ logo }) => {
+        if (!alive) return;
+        setSettings((prev) => (prev.siteLogo === logo ? prev : { ...prev, siteLogo: logo }));
+      })
+      .catch(() => { /* hors ligne : le cache local reste affiché */ });
+    return () => { alive = false; };
+  }, [locale]);
+
   const setDb = (patch: Partial<AdminSettings['db']>) => setSettings({ ...settings, db: { ...settings.db, ...patch } });
   const setQuote = (patch: Partial<AdminSettings['quote']>) => setSettings({ ...settings, quote: { ...settings.quote, ...patch } });
   const setCodes = (patch: Partial<AdminSettings['codes']>) => setSettings({ ...settings, codes: { ...settings.codes, ...patch } });
@@ -165,7 +215,17 @@ export default function AdminSettingsPage() {
               <h2 className="ad-section-title">Identité &amp; langue</h2>
               <div className="space-y-1.5">
                 <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Logo du site vitrine</span>
-                <SiteLogoField value={settings.siteLogo || ''} onChange={(v) => setSettings({ ...settings, siteLogo: v })} />
+                <SiteLogoField
+                  value={settings.siteLogo || ''}
+                  onChange={(v) => {
+                    setSettings({ ...settings, siteLogo: v });
+                    // Le cache local donne le retour visuel immédiat à l'opérateur ;
+                    // la base, elle, est ce que le visiteur recevra au prochain rendu.
+                    saveSiteLogo(locale, v)
+                      .then(() => showToast('Logo de vitrine enregistré en base', 'success'))
+                      .catch(() => showToast('Logo non enregistré en base', 'error'));
+                  }}
+                />
                 <p className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>
                   Utilisé dans l’en-tête et le pied de page de la vitrine. Laissez vide pour conserver le logo configuré dans les données du site.
                 </p>
@@ -313,30 +373,25 @@ export default function AdminSettingsPage() {
             </section>
           )}
 
-          {tab === 'smtp' && (
-            <section className="ad-card p-5 space-y-4">
-              <h2 className="ad-section-title">SMTP avancé</h2>
-              <p className="text-xs" style={{ color: 'var(--ad-muted)' }}>Ces valeurs alimentent le connecteur mail du backend. Laissez « Hôte » vide pour le mode fichier (outbox).</p>
-              <div className="grid md:grid-cols-2 gap-3">
-                <Field label="Hôte" value={settings.smtp.host} onChange={(v) => setSmtp({ host: v })} />
-                <Field label="Port" value={String(settings.smtp.port)} onChange={(v) => setSmtp({ port: Number(v) || 587 })} />
-                <Field label="Utilisateur" value={settings.smtp.user} onChange={(v) => setSmtp({ user: v })} />
-                <label className="space-y-1.5">
-                  <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Mot de passe</span>
-                  <input className="ad-input" type="password" value={settings.smtp.pass} onChange={(e) => setSmtp({ pass: e.target.value })} />
-                </label>
-                <Field label="Expéditeur" value={settings.smtp.from} onChange={(v) => setSmtp({ from: v })} />
-                <Field label="Reply-To" value={settings.smtp.replyTo} onChange={(v) => setSmtp({ replyTo: v })} />
-              </div>
-              <button type="button" className={`ad-btn ${settings.smtp.secure ? 'ad-btn-lime' : 'ad-btn-ghost'}`} onClick={() => setSmtp({ secure: !settings.smtp.secure })}>
-                TLS/SSL : {settings.smtp.secure ? 'activé' : 'désactivé'}
-              </button>
-            </section>
-          )}
+          {/*
+            SMTP a sa propre section : c'est le seul onglet dont les réglages
+            doivent atteindre le serveur d'API. L'ancien formulaire écrivait dans
+            le `localStorage`, donc jamais jusqu'au transport — voir
+            `components/admin/SmtpSection.tsx`.
+          */}
+          {tab === 'smtp' && <SmtpSection />}
 
           {tab === 'verification' && <VerificationSettingsSection />}
 
+          {tab === 'mail' && <MailCenterSection />}
+
           {tab === 'seo' && <SeoSection />}
+
+          {tab === 'maintenance' && <MaintenanceSection />}
+
+          {tab === 'demo' && <DemoDataSection />}
+
+          {tab === 'brand' && <BrandSection />}
 
           {tab === 'database' && (
             <section className="ad-card p-5 space-y-4">

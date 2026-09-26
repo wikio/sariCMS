@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Download } from 'lucide-react';
 import { BarChart, DonutChart } from '@/components/admin/charts/MiniCharts';
 import { loadOrders, loadQuotes, quoteConversion, type Order } from '@/lib/crm-store';
-import { loadCouponUses, loadCoupons, loadTaxes, type Coupon } from '@/lib/shop-store';
+import { loadCouponUses, loadCoupons, loadTaxes, type Coupon, type TaxRule } from '@/lib/shop-store';
+import { hydrateShop } from '@/lib/shop-sync';
 import { computeTotals, money } from '@/lib/commerce-math';
 import { useTranslations } from 'next-intl';
 
@@ -39,15 +40,25 @@ export default function ShopStatsPage() {
   const [to, setTo] = useState('2026-12-31');
   const [orders, setOrders] = useState<Order[]>([]);
   const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [taxes, setTaxes] = useState<TaxRule[]>([]);
   const quotes = typeof window === 'undefined' ? [] : loadQuotes();
 
   useEffect(() => {
     setOrders(loadOrders());
     setCoupons(loadCoupons());
+    setTaxes(loadTaxes());
+    // Les coupons et les taxes viennent de la base ; le cache sert au premier
+    // rendu. Voir lib/shop-sync.ts.
+    let alive = true;
+    void hydrateShop().then(() => {
+      if (!alive) return;
+      setCoupons(loadCoupons());
+      setTaxes(loadTaxes());
+    });
+    return () => { alive = false; };
   }, []);
 
   const scoped = orders.filter((o) => inRange(o.date, from, to));
-  const taxes = loadTaxes();
   const uses = loadCouponUses();
   const delivered = scoped.filter((o) => o.status === 'delivered');
   const progress = scoped.filter((o) => o.status === 'processing' || o.status === 'pending' || o.status === 'shipped');
@@ -72,14 +83,14 @@ export default function ShopStatsPage() {
 
   const byStatus = [
     { label: t("finalized"), value: delivered.length, color: '#C6DA34' },
-    { label: 'En cours', value: progress.length, color: '#EBB518' },
+    { label: t("inProgress"), value: progress.length, color: '#EBB518' },
     { label: t("cancelled", { defaultMessage: "Annulées" }), value: cancelled.length, color: '#e11d48' },
   ];
 
   const byPay = useMemo(() => {
     const map: Record<string, number> = {};
-    for (const o of scoped) map[o.payment || 'autre'] = (map[o.payment || 'autre'] || 0) + o.total;
-    return Object.entries(map).map(([label, value], i) => ({ label, value, color: ['#199ACA', '#C6DA34', '#EBB518', '#12323c', '#66757e'][i % 5] }));
+    for (const o of scoped) map[o.payment || t("otherPayment")] = (map[o.payment || t("otherPayment")] || 0) + o.total;
+    return Object.entries(map).map(([label, value], i) => ({ label, value: Math.round(value * 100) / 100, color: ['#199ACA', '#C6DA34', '#EBB518', '#12323c', '#66757e'][i % 5] }));
   }, [scoped]);
 
   const topProducts = useMemo(() => {
@@ -95,7 +106,7 @@ export default function ShopStatsPage() {
   const topCats = useMemo(() => {
     const map: Record<string, number> = {};
     for (const o of delivered) for (const it of o.items || []) {
-      const k = it.category || 'Autre';
+      const k = it.category || t("otherCategory");
       map[k] = (map[k] || 0) + it.quantity * it.price;
     }
     return Object.entries(map).sort((a, b) => b[1] - a[1]).slice(0, 6);
@@ -113,15 +124,15 @@ export default function ShopStatsPage() {
 
   const exportCsv = () => {
     const lines = [
-      ['periode', period, from, to].join(';'),
-      ['metrique', 'valeur'].join(';'),
-      ['CA livré', ca].join(';'),
-      ['Marge', ca - costs].join(';'),
+      [t("periodLabel"), period, from, to].join(';'),
+      [t("metric"), t("value")].join(';'),
+      [t("caDelivered"), ca].join(';'),
+      [t("netMarginCsv"), ca - costs].join(';'),
       [t("taxesCollected"), Math.round(taxCollected)].join(';'),
-      ['Remises coupons', discounted].join(';'),
-      ['Taux conversion devis', `${Math.round(conv.rate * 100)}%`].join(';'),
+      [t("couponDiscounts"), discounted].join(';'),
+      [t("conversionRateCsv"), `${Math.round(conv.rate * 100)}%`].join(';'),
       '',
-      ['produit', 'qte', 'ca'].join(';'),
+      [t("product"), t("qty"), t("ca")].join(';'),
       ...topProducts.map(([n, v]) => [n, v.qty, v.ca].join(';')),
     ];
     const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
@@ -135,7 +146,7 @@ export default function ShopStatsPage() {
     <div className="space-y-4">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <div className="ad-breadcrumb">E-shop / Statistiques avancées</div>
+          <div className="ad-breadcrumb">{t("breadcrumb")}</div>
           <h1 className="text-3xl font-black">{t("title")}</h1>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -147,17 +158,17 @@ export default function ShopStatsPage() {
             <option value="month">{t("month")}</option>
             <option value="year">{t("year")}</option>
           </select>
-          <button className="ad-btn ad-btn-ghost" onClick={exportCsv}><Download className="w-4 h-4" /> Export CSV</button>
+          <button className="ad-btn ad-btn-ghost" onClick={exportCsv}><Download className="w-4 h-4" />{t("csvExport")}</button>
         </div>
       </header>
       <div className="grid md:grid-cols-4 xl:grid-cols-6 gap-3">
         {[
-          [money(ca), 'CA livré'],
-          [money(ca - costs), 'Marge nette'],
-          [progress.length, 'En cours'],
+          [money(ca), t("caDelivered")],
+          [money(ca - costs), t("netMargin")],
+          [progress.length, t("inProgress")],
           [cancelled.length, t("cancelled", { defaultMessage: "Annulées" })],
           [money(taxCollected), t("taxesCollected")],
-          [money(coupons.reduce((s, c) => s + c.revenue, 0)), 'CA coupons'],
+          [money(coupons.reduce((s, c) => s + c.revenue, 0)), t("couponRevenue")],
         ].map(([v, l]) => (
           <div key={String(l)} className="ad-card p-4">
             <div className="text-2xl font-black tabular-nums">{v}</div>
@@ -166,29 +177,29 @@ export default function ShopStatsPage() {
         ))}
       </div>
       <div className="grid lg:grid-cols-2 gap-3">
-        <section className="ad-card p-5"><h2 className="ad-section-title">Évolution des ventes ({period})</h2><BarChart items={byTime} /></section>
-        <section className="ad-card p-5"><h2 className="ad-section-title">Finalisées / en cours / annulées</h2><DonutChart items={byStatus} /></section>
+        <section className="ad-card p-5"><h2 className="ad-section-title">{t("salesEvolution", {period})}</h2><BarChart items={byTime} /></section>
+        <section className="ad-card p-5"><h2 className="ad-section-title">{t("finalizedInProgressCancelled")}</h2><DonutChart items={byStatus} /></section>
         <section className="ad-card p-5"><h2 className="ad-section-title">{t("byPaymentMethod")}</h2><DonutChart items={byPay} /></section>
         <section className="ad-card p-5 space-y-2">
-          <h2 className="ad-section-title">Devis → commandes</h2>
-          <p className="text-sm">Taux de transformation : <strong>{Math.round(conv.rate * 100)} %</strong></p>
-          <p className="text-sm">Délai moyen : <strong>{conv.avgDelay.toFixed(1)} j</strong></p>
-          <p className="text-sm">Valeur moyenne convertis : <strong>{money(conv.convertedAvg)}</strong></p>
-          <p className="text-sm">Valeur moyenne non convertis : <strong>{money(conv.otherAvg)}</strong></p>
-          <p className="text-sm">Remises coupons sur la période : <strong>{money(discounted)}</strong></p>
+          <h2 className="ad-section-title">{t("quotesToOrders")}</h2>
+          <p className="text-sm">{t("conversionRate")} <strong>{Math.round(conv.rate * 100)} %</strong></p>
+          <p className="text-sm">{t("avgDelay")} <strong>{conv.avgDelay.toFixed(1)} j</strong></p>
+          <p className="text-sm">{t("avgConverted")} <strong>{money(conv.convertedAvg)}</strong></p>
+          <p className="text-sm">{t("avgNotConverted")} <strong>{money(conv.otherAvg)}</strong></p>
+          <p className="text-sm">{t("couponDiscountsPeriod")} <strong>{money(discounted)}</strong></p>
         </section>
       </div>
       <div className="grid lg:grid-cols-3 gap-3">
         <section className="ad-card p-5">
-          <h2 className="ad-section-title">Top produits</h2>
+          <h2 className="ad-section-title">{t("topProducts")}</h2>
           <ul className="text-sm space-y-1">{topProducts.map(([n, v]) => <li key={n} className="flex justify-between gap-2"><span className="truncate">{n}</span><strong>{money(v.ca)}</strong></li>)}</ul>
         </section>
         <section className="ad-card p-5">
-          <h2 className="ad-section-title">Top catégories</h2>
+          <h2 className="ad-section-title">{t("topCategories")}</h2>
           <ul className="text-sm space-y-1">{topCats.map(([n, v]) => <li key={n} className="flex justify-between gap-2"><span>{n}</span><strong>{money(v)}</strong></li>)}</ul>
         </section>
         <section className="ad-card p-5">
-          <h2 className="ad-section-title">Top clients</h2>
+          <h2 className="ad-section-title">{t("topClients")}</h2>
           <ul className="text-sm space-y-1">{topClients.map(([n, v]) => <li key={n} className="flex justify-between gap-2"><span className="truncate">{n}</span><strong>{money(v.ca)}</strong></li>)}</ul>
         </section>
       </div>

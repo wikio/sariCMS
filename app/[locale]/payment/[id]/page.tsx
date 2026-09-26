@@ -6,8 +6,8 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import {
-  CreditCard, User, Building, FileText, Globe, Lock, Copy, Upload,
-  CheckCircle, AlertCircle, Clock, Info, ExternalLink, Send, Loader, Banknote,
+  CreditCard, User, Building, FileText, Globe, Lock, Copy, Upload, ArrowLeft,
+  CheckCircle, AlertCircle, Clock, Info, ExternalLink, Send, Loader, Banknote, X, AlertTriangle, ShieldAlert, Sparkles,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrders } from '@/contexts/OrdersContext';
@@ -28,7 +28,7 @@ export default function PaymentPage() {
   const router = useRouter();
   const t = useTranslations('pages.payment');
   const { isAuthenticated, user } = useAuth();
-  const { orders, updateOrderStatus } = useOrders();
+  const { orders, updateOrderStatus, updateOrder } = useOrders();
   const { clearCart } = useCart();
   const { format: formatMoney, withSymbol } = useCurrency();
 
@@ -41,6 +41,7 @@ export default function PaymentPage() {
   const [customerInfo, setCustomerInfo] = useState({ name: '', email: '', phone: '', company: '', address: '' });
   const [isProcessing, setIsProcessing] = useState(false);
   const [completed, setCompleted] = useState(false);
+  const [alertInfo, setAlertInfo] = useState<{ title: string; message: string; type?: 'error' | 'info' | 'success' } | null>(null);
 
   // Modes de paiement actifs (configurés dans l'admin).
   const methods = useMemo(() => loadPayments().filter((p) => p.active), []);
@@ -77,25 +78,25 @@ export default function PaymentPage() {
     e.preventDefault();
 
     if (!method) {
-      alert(t('selectMethod', { defaultMessage: 'Veuillez sélectionner une méthode de paiement' }));
+      setAlertInfo({ title: 'Méthode requise', message: t('selectMethod', { defaultMessage: 'Veuillez sélectionner une méthode de paiement' }), type: 'error' });
       return;
     }
     if (isCard && (!cardData.cardNumber || !cardData.cardName || !cardData.expiry || !cardData.cvv)) {
-      alert(t('fillCardInfo', { defaultMessage: 'Veuillez remplir toutes les informations de la carte' }));
+      setAlertInfo({ title: 'Informations carte incomplètes', message: t('fillCardInfo', { defaultMessage: 'Veuillez remplir toutes les informations de la carte' }), type: 'error' });
       return;
     }
     if (method.type === 'paypal' && !paypalEmail) {
-      alert(t('fillPaypalEmail', { defaultMessage: "Veuillez saisir l'email PayPal" }));
+      setAlertInfo({ title: 'Email PayPal requis', message: t('fillPaypalEmail', { defaultMessage: "Veuillez saisir l'email PayPal" }), type: 'error' });
       return;
     }
     if (method.type === 'transfer' || method.type === 'check') {
       if (!paymentProof) {
-        alert(t('uploadProof', { defaultMessage: 'Veuillez uploader la preuve de paiement' }));
+        setAlertInfo({ title: 'Preuve requise', message: t('uploadProof', { defaultMessage: 'Veuillez uploader la preuve de paiement' }), type: 'error' });
         return;
       }
     }
     if (!isAuthenticated && (!customerInfo.name || !customerInfo.email)) {
-      alert(t('fillInfo', { defaultMessage: 'Veuillez remplir vos informations' }));
+      setAlertInfo({ title: 'Informations manquantes', message: t('fillInfo', { defaultMessage: 'Veuillez remplir vos informations' }), type: 'error' });
       return;
     }
 
@@ -114,10 +115,38 @@ export default function PaymentPage() {
           cardLast4: isCard ? cardLast4(cardData.cardNumber) : undefined,
         });
         const auto = isAutoValidated(method.type);
-        updateOrderStatus(order.id, auto ? 'paid' : 'pending_payment');
+        // Met à jour le type de paiement et le statut de façon atomique (lie vitrine ↔ admin via crm-store + ctx)
+        try {
+          if (updateOrder) {
+            updateOrder(order.id, { payment: method.type, status: auto ? 'paid' : 'pending_payment' } as any);
+          } else {
+            updateOrderStatus(order.id, auto ? 'paid' : 'pending_payment');
+            // fallback si updateOrder indisponible
+            const paymentVal = method.type;
+            const ctxRaw = localStorage.getItem('sari_orders_ctx');
+            if (ctxRaw) {
+              const ctxOrders = JSON.parse(ctxRaw);
+              const updCtx = ctxOrders.map((o:any)=> String(o.id)===String(order.id) ? {...o, payment: paymentVal} : o);
+              localStorage.setItem('sari_orders_ctx', JSON.stringify(updCtx));
+            }
+            const crmRaw = localStorage.getItem('sari_orders');
+            if (crmRaw) {
+              const crmOrders = JSON.parse(crmRaw);
+              const updCrm = crmOrders.map((o:any)=> String(o.id)===String(order.id) ? {...o, payment: paymentVal} : o);
+              localStorage.setItem('sari_orders', JSON.stringify(updCrm));
+            }
+          }
+        } catch {
+          updateOrderStatus(order.id, auto ? 'paid' : 'pending_payment');
+        }
+        try {
+          window.dispatchEvent(new Event('sari_orders_ctx_changed'));
+        } catch {}
       }
       setIsProcessing(false);
       setCompleted(true);
+      // Garde le panier jusqu'à confirmation : on ne vide qu'après paiement enregistré, mais on garde une copie pending pour restauration si besoin
+      try { localStorage.removeItem('sari_pending_cart'); } catch {}
       clearCart();
       setTimeout(() => router.push(`/${locale}/dashboard`), 1600);
     }, 1500);
@@ -184,10 +213,12 @@ export default function PaymentPage() {
           { label: t('cart', { defaultMessage: 'Panier' }), href: '/panier' },
           { label: t('payment', { defaultMessage: 'Paiement' }) },
         ]} />
+        <button onClick={()=>router.push(`/${locale}/cart`)} className="mb-6 inline-flex items-center gap-2 px-5 py-3 bg-white dark:bg-[#1a1a1a] border-2 border-gray-200 dark:border-gray-700 rounded-full font-bold hover:border-sari-blue hover:text-sari-blue transition shadow-sm"><ArrowLeft className="w-4 h-4"/> Retour au panier — garder les articles jusqu'à confirmation</button>
 
-        <h1 className="text-4xl font-bold text-sari-dark dark:text-white mb-8">
+        <h1 className="text-4xl font-bold text-sari-dark dark:text-white mb-2">
           {t('title', { defaultMessage: 'Finaliser votre commande' })}
         </h1>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-8 flex items-center gap-2"><Info className="w-4 h-4 text-sari-blue"/> Vos articles restent dans le panier jusqu'à validation du paiement. Vous pouvez revenir en arrière à tout moment sans perdre votre sélection.</p>
 
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Colonne principale */}
@@ -362,7 +393,7 @@ export default function PaymentPage() {
                       <button
                         onClick={() => {
                           navigator.clipboard.writeText(`Titulaire: ${method.account || 'SARI Système SARL'}\nRIB: ${method.rib || ''}\nIBAN: ${method.iban || ''}\nRéférence: ${order.id}`);
-                          alert(t('copied', { defaultMessage: 'Coordonnées copiées !' }));
+                          setAlertInfo({ title: 'Copié !', message: t('copied', { defaultMessage: 'Coordonnées copiées !' }), type: 'success' });
                         }}
                         className="mt-4 text-sm text-sari-blue hover:underline inline-flex items-center gap-1"
                       >
@@ -430,9 +461,9 @@ export default function PaymentPage() {
                   <span className="text-gray-600 dark:text-gray-400">{t('tax', { defaultMessage: 'TVA (19%)' })} :</span>
                   <span className="font-semibold text-sari-dark dark:text-white">{formatMoney(order.taxAmount || 0, { decimals: 2 })}</span>
                 </div>
-                <div className="flex justify-between text-lg pt-2 border-t border-gray-200 dark:border-gray-800">
-                  <span className="font-bold text-sari-dark dark:text-white">{t('total', { defaultMessage: 'Total' })} :</span>
-                  <span className="font-bold text-sari-lime">{formatMoney(order.grandTotal || 0, { decimals: 2 })}</span>
+                <div className="flex justify-between items-center gap-6 text-lg pt-2 border-t border-gray-200 dark:border-gray-800">
+                  <span className="font-bold text-sari-dark dark:text-white flex-shrink-0">{t('total', { defaultMessage: 'Total' })} :</span>
+                  <span className="font-bold text-sari-lime text-right flex-shrink-0 tabular-nums">{formatMoney(order.grandTotal || 0, { decimals: 2 })}</span>
                 </div>
               </div>
               <button
@@ -455,6 +486,27 @@ export default function PaymentPage() {
           </div>
         </div>
       </div>
+      {/* Modal alerte stylé pour les types de paiement */}
+      {alertInfo && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200" role="dialog" aria-modal="true">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setAlertInfo(null)} />
+          <div className="relative bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden animate-in zoom-in-95 duration-200 border border-gray-200 dark:border-gray-800">
+            <div className={`h-1.5 w-full bg-gradient-to-r ${alertInfo.type === 'success' ? 'from-emerald-500 to-green-600' : alertInfo.type === 'error' ? 'from-red-500 to-orange-600' : 'from-sari-blue to-blue-600'}`} />
+            <button onClick={() => setAlertInfo(null)} className="absolute top-3 right-3 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" aria-label="Fermer"><X className="w-5 h-5 text-gray-500" /></button>
+            <div className="p-6 sm:p-8 text-center">
+              <div className={`w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 rounded-2xl flex items-center justify-center shadow-lg animate-in zoom-in-50 duration-300 ${alertInfo.type === 'success' ? 'bg-gradient-to-br from-emerald-400 to-green-600' : alertInfo.type === 'error' ? 'bg-gradient-to-br from-red-500 to-orange-600' : 'bg-gradient-to-br from-sari-blue to-blue-600'}`}>
+                {alertInfo.type === 'success' ? <CheckCircle className="w-8 h-8 sm:w-10 sm:h-10 text-white" /> : alertInfo.type === 'error' ? <AlertTriangle className="w-8 h-8 sm:w-10 sm:h-10 text-white" /> : <ShieldAlert className="w-8 h-8 sm:w-10 sm:h-10 text-white" />}
+              </div>
+              <h3 className="text-xl sm:text-2xl font-black text-sari-dark dark:text-white mb-2">{alertInfo.title}</h3>
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-6">{alertInfo.message}</p>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button onClick={() => setAlertInfo(null)} className={`flex-1 px-6 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-2 text-white ${alertInfo.type === 'success' ? 'bg-gradient-to-r from-emerald-500 to-green-600 hover:from-green-600 hover:to-emerald-500' : alertInfo.type === 'error' ? 'bg-gradient-to-r from-red-500 to-orange-600 hover:from-orange-600 hover:to-red-500' : 'bg-gradient-to-r from-sari-blue to-blue-600 hover:from-blue-600 hover:to-sari-blue'}`}><CheckCircle className="w-5 h-5" /> Compris</button>
+                <button onClick={() => setAlertInfo(null)} className="px-6 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-xl font-semibold hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">Fermer</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

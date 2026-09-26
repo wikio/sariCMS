@@ -95,5 +95,8 @@
   "seededChip": "from the site",
   "importBanner": "This block currently shows content read from the site's files: nothing has been saved here yet. Saving the block freezes that content; “Take over” writes it into the configuration, where you can edit or remove it.",
   "browseSource": "Module being browsed",
-  "freeOnlySource": "The band is set to “Studio blocks only”: it uses no module records, only the blocks written below."
+  "freeOnlySource": "The band is set to “Studio blocks only”: it uses no module records, only the blocks written below.",
+  "visitPage": "Visit page",
+  "chooseSection": "Choose a block on the left",
+  "blockSettings": "Block settings"
 }

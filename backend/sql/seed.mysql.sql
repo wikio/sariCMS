@@ -143,14 +143,29 @@ INSERT IGNORE INTO `permissions` (`id`, `resource`, `action`, `description`, `cr
 (127, 'newsletter', 'read', 'Consulter newsletter', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
 (128, 'newsletter', 'update', 'Modifier newsletter', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
 (129, 'newsletter', 'delete', 'Supprimer newsletter', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
-(130, 'newsletter', 'admin', 'Administrer newsletter', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000');
+(130, 'newsletter', 'admin', 'Administrer newsletter', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+(131, 'payments', 'create', 'Créer payments', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+(132, 'payments', 'read', 'Consulter payments', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+(133, 'payments', 'update', 'Modifier payments', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+(134, 'payments', 'delete', 'Supprimer payments', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+(135, 'payments', 'admin', 'Administrer payments', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+(136, 'coupons', 'create', 'Créer coupons', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+(137, 'coupons', 'read', 'Consulter coupons', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+(138, 'coupons', 'update', 'Modifier coupons', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+(139, 'coupons', 'delete', 'Supprimer coupons', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+(140, 'coupons', 'admin', 'Administrer coupons', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+(141, 'taxes', 'create', 'Créer taxes', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+(142, 'taxes', 'read', 'Consulter taxes', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+(143, 'taxes', 'update', 'Modifier taxes', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+(144, 'taxes', 'delete', 'Supprimer taxes', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+(145, 'taxes', 'admin', 'Administrer taxes', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000');
 
 -- ---------------------------------------------------------------------------
 -- Rôles
 -- ---------------------------------------------------------------------------
 INSERT IGNORE INTO `roles` (`id`, `name`, `slug`, `description`, `isSystem`, `permissionIds`, `createdAt`, `updatedAt`) VALUES
-(1, 'Super Administrateur', 'super-admin', 'Accès complet au système (contourne le contrôle de permissions).', 1, '[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,128,129,130]', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
-(2, 'Administrateur', 'admin', 'Gestion du contenu, du catalogue et des commandes.', 1, '[16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,47,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,128,129,130]', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+(1, 'Super Administrateur', 'super-admin', 'Accès complet au système (contourne le contrôle de permissions).', 1, '[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,128,129,130,131,132,133,134,135,136,137,138,139,140,141,142,143,144,145]', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+(2, 'Administrateur', 'admin', 'Gestion du contenu, du catalogue et des commandes.', 1, '[16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,47,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,128,129,130,131,132,133,134,135,136,137,138,139,140,141,142,143,144,145]', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
 (3, 'Éditeur de contenu', 'editor', 'Rédaction et mise à jour du contenu de la vitrine.', 1, '[16,17,18,21,22,23,26,27,28,31,32,33,37,41,42,43,47,56,57,58,61,62,63,66,67,68,71,72,73,76,77,78,81,82,83,86,87,88,91,92,93,97,116,117,118,121,122,123,127]', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
 (4, 'Lecteur', 'viewer', 'Accès en lecture seule au back-office.', 1, '[17,22,27,32,37,42,47,57,62,67,72,77,82,87,92,97,117,122,127]', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000');
 
@@ -288,6 +303,21 @@ INSERT IGNORE INTO `role_permissions` (`roleId`, `permissionId`) VALUES
 (1, 128),
 (1, 129),
 (1, 130),
+(1, 131),
+(1, 132),
+(1, 133),
+(1, 134),
+(1, 135),
+(1, 136),
+(1, 137),
+(1, 138),
+(1, 139),
+(1, 140),
+(1, 141),
+(1, 142),
+(1, 143),
+(1, 144),
+(1, 145),
 (2, 16),
 (2, 17),
 (2, 18),
@@ -399,6 +429,21 @@ INSERT IGNORE INTO `role_permissions` (`roleId`, `permissionId`) VALUES
 (2, 128),
 (2, 129),
 (2, 130),
+(2, 131),
+(2, 132),
+(2, 133),
+(2, 134),
+(2, 135),
+(2, 136),
+(2, 137),
+(2, 138),
+(2, 139),
+(2, 140),
+(2, 141),
+(2, 142),
+(2, 143),
+(2, 144),
+(2, 145),
 (3, 16),
 (3, 17),
 (3, 18),
@@ -472,11 +517,11 @@ INSERT IGNORE INTO `role_permissions` (`roleId`, `permissionId`) VALUES
 -- Utilisateurs
 -- ---------------------------------------------------------------------------
 INSERT IGNORE INTO `users` (`id`, `email`, `passwordHash`, `firstName`, `lastName`, `phone`, `company`, `type`, `status`, `locale`, `roleId`, `address`, `wilaya`, `country`, `position`, `createdAt`, `updatedAt`) VALUES
-(1, 'admin@sarisysteme.com', '$2a$10$/0JoFHObW9O6gfDjJomLj.8Um/vaSC6lPfkecztaBtsFUuPN3tO7O', 'Karim', 'BENALI', '(+213) 23 52 42 72', 'SARI Système SARL', 'admin', 'active', 'fr', 1, NULL, 'Alger', 'Algérie', 'Gérant', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
-(2, 'gestion@sarisysteme.com', '$2a$10$/0JoFHObW9O6gfDjJomLj.8Um/vaSC6lPfkecztaBtsFUuPN3tO7O', 'Yasmine', 'CHERIF', '(+213) 550 12 34 56', 'SARI Système SARL', 'admin', 'active', 'fr', 2, NULL, 'Alger', 'Algérie', 'Responsable commerciale', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
-(3, 'client@clinique-elafia.dz', '$2a$10$/0JoFHObW9O6gfDjJomLj.8Um/vaSC6lPfkecztaBtsFUuPN3tO7O', 'Clinique', 'El Afia', '(+213) 21 63 45 78', 'Clinique El Afia', 'client', 'active', 'fr', NULL, 'Rue Didouche Mourad, Alger-Centre', 'Alger', 'Algérie', NULL, '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
-(4, 'contact@meditech.dz', '$2a$10$/0JoFHObW9O6gfDjJomLj.8Um/vaSC6lPfkecztaBtsFUuPN3tO7O', 'MediTech', 'Algérie', '(+213) 41 33 22 11', 'MediTech Algérie', 'partner', 'active', 'fr', NULL, NULL, 'Oran', 'Algérie', NULL, '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
-(5, 'mohamed.saidi@gmail.com', '$2a$10$/0JoFHObW9O6gfDjJomLj.8Um/vaSC6lPfkecztaBtsFUuPN3tO7O', 'Mohamed', 'SAIDI', '(+213) 661 22 33 44', NULL, 'candidate', 'pending', 'fr', NULL, NULL, 'Constantine', 'Algérie', 'Technicien biomédical', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000');
+(1, 'admin@sarisysteme.com', '$2a$10$V0B8pvHgzGBd4GL6NKKtZumEJJHmHKDY2zKx4cDhrRCyI9nSKaHfa', 'Karim', 'BENALI', '(+213) 23 52 42 72', 'SARI Système SARL', 'admin', 'active', 'fr', 1, NULL, 'Alger', 'Algérie', 'Gérant', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+(2, 'gestion@sarisysteme.com', '$2a$10$V0B8pvHgzGBd4GL6NKKtZumEJJHmHKDY2zKx4cDhrRCyI9nSKaHfa', 'Yasmine', 'CHERIF', '(+213) 550 12 34 56', 'SARI Système SARL', 'admin', 'active', 'fr', 2, NULL, 'Alger', 'Algérie', 'Responsable commerciale', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+(3, 'client@clinique-elafia.dz', '$2a$10$V0B8pvHgzGBd4GL6NKKtZumEJJHmHKDY2zKx4cDhrRCyI9nSKaHfa', 'Clinique', 'El Afia', '(+213) 21 63 45 78', 'Clinique El Afia', 'client', 'active', 'fr', NULL, 'Rue Didouche Mourad, Alger-Centre', 'Alger', 'Algérie', NULL, '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+(4, 'contact@meditech.dz', '$2a$10$V0B8pvHgzGBd4GL6NKKtZumEJJHmHKDY2zKx4cDhrRCyI9nSKaHfa', 'MediTech', 'Algérie', '(+213) 41 33 22 11', 'MediTech Algérie', 'partner', 'active', 'fr', NULL, NULL, 'Oran', 'Algérie', NULL, '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+(5, 'mohamed.saidi@gmail.com', '$2a$10$V0B8pvHgzGBd4GL6NKKtZumEJJHmHKDY2zKx4cDhrRCyI9nSKaHfa', 'Mohamed', 'SAIDI', '(+213) 661 22 33 44', NULL, 'candidate', 'pending', 'fr', NULL, NULL, 'Constantine', 'Algérie', 'Technicien biomédical', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000');
 
 -- ---------------------------------------------------------------------------
 -- Coordonnées (contact_info)

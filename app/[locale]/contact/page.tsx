@@ -17,6 +17,9 @@ import { loadAdminSettings } from '@/lib/admin-settings';
 import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
 import { maskPhone } from '@/lib/masks';
 
+/** Motifs proposés par le formulaire — `?subject=` doit rester dans cette liste. */
+const SUBJECTS = ['devis', 'technique', 'commercial', 'rh', 'partenaire', 'client'] as const;
+
 export default function ContactPage() {
   const [config, setConfig] = useState<Config | null>(null);
   const [menu, setMenu] = useState<Menu | null>(null);
@@ -33,6 +36,24 @@ export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [captchaOk, setCaptchaOk] = useState(false);
+  // Le captcha est vérifié par /api/contact, pas par le navigateur : `autoVerify`
+  // est désactivé pour que le code ne soit pas consommé avant l'envoi du formulaire.
+  const [captcha, setCaptcha] = useState<{ id: string; value: string }>({ id: '', value: '' });
+  const [formError, setFormError] = useState('');
+
+  // Un autre écran peut amener ici avec le motif déjà choisi — la page de
+  // connexion le fait pour un problème de compte. Toute valeur hors liste est
+  // ignorée : l'URL ne doit pas pouvoir inventer un motif.
+  //
+  // Lu dans `window.location` plutôt que via `useSearchParams()` : ce dernier
+  // exige une balise Suspense au prerender, pour un simple pré-remplissage au
+  // montage qui n'a pas besoin d'être réactif.
+  useEffect(() => {
+    const wanted = new URLSearchParams(window.location.search).get('subject');
+    if (wanted && (SUBJECTS as readonly string[]).includes(wanted)) {
+      setFormData((prev) => ({ ...prev, subject: wanted }));
+    }
+  }, []);
 
   const locale = useLocale();
   const t = useTranslations('pages.contact');
@@ -49,10 +70,14 @@ export default function ContactPage() {
     loadData();
   }, [locale]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!captchaOk) return;
+
+    setFormError('');
+    if (captcha.value.trim().length < 5) {
+      setFormError(t('captchaError'));
+      return;
+    }
 
     // La case « newsletter » est lue avant l'envoi : le formulaire sera
     // réinitialisé juste après, et l'adresse doit partir dans la liste
@@ -60,42 +85,57 @@ export default function ContactPage() {
     const wantsNewsletter = Boolean(formData.newsletter) && String(formData.email || '').includes('@');
 
     setIsSubmitting(true);
-    // Envoi au backend Nest (POST /contact/messages) — fallback local si hors-ligne.
-    fetch('/api/v1/contact/messages', {
+    // /api/contact enregistre le message côté serveur, vérifie le captcha, puis
+    // déclenche l'accusé de réception configuré dans Paramètres → Emails.
+    const res = await fetch('/api/contact', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
+        company: formData.company,
         subject: formData.subject,
         message: formData.message,
+        locale,
+        captchaId: captcha.id,
+        captchaAnswer: captcha.value,
       }),
-    }).catch(() => undefined).finally(() => {
-      if (wantsNewsletter) {
-        void subscribeToNewsletter({
-          email: String(formData.email).trim().toLowerCase(),
-          name: formData.name || undefined,
-          locale,
-          source: 'contact',
-          consent: true,
-        });
-      }
+    }).catch(() => null);
+    const json = (await res?.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
+
+    if (!res?.ok || json?.ok === false) {
+      // Le formulaire est conservé : le visiteur ne retape pas son message.
       setIsSubmitting(false);
-      setSubmitted(true);
-      setFormData({
-        subject: 'devis',
-        name: '',
-        email: '',
-        phone: '',
-        company: '',
-        message: '',
-        newsletter: false,
-        acceptTerms: false
+      setCaptcha({ id: '', value: '' });
+      setFormError(json?.error || t('captchaError'));
+      return;
+    }
+
+    if (wantsNewsletter) {
+      void subscribeToNewsletter({
+        email: String(formData.email).trim().toLowerCase(),
+        name: formData.name || undefined,
+        locale,
+        source: 'contact',
+        consent: true,
       });
-      setCaptchaOk(false);
-      setTimeout(() => setSubmitted(false), 5000);
+    }
+    setIsSubmitting(false);
+    setSubmitted(true);
+    setFormData({
+      subject: 'devis',
+      name: '',
+      email: '',
+      phone: '',
+      company: '',
+      message: '',
+      newsletter: false,
+      acceptTerms: false
     });
+    setCaptchaOk(false);
+    setCaptcha({ id: '', value: '' });
+    setTimeout(() => setSubmitted(false), 5000);
   };
 
   if (!config || !menu) {
@@ -295,16 +335,18 @@ export default function ContactPage() {
                 </div>
               )}
 
-              {/* Message de blocage CAPTCHA - géré côté serveur via ServerCaptcha */}
-              {false && (
-                <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-500 p-6 mb-8 flex items-start gap-4 animate-fade-in-up">
+              {/* Échec d'envoi — captcha refusé par le serveur, champ manquant,
+                  ou backend indisponible. Le formulaire est conservé tel quel. */}
+              {formError && (
+                <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-500 p-6 mb-8 flex items-start gap-4 animate-fade-in-up" role="alert">
                   <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0">
-                    <div className="w-6 h-6 text-red-500" />
+                    <Send className="w-6 h-6 text-red-500" />
                   </div>
                   <div>
                     <h3 className="font-bold text-red-700 dark:text-red-400 text-lg">
                       {t('captchaBlocked')}
                     </h3>
+                    <p className="text-gray-600 dark:text-gray-400 mt-1">{formError}</p>
                   </div>
                 </div>
               )}
@@ -469,7 +511,7 @@ export default function ContactPage() {
                     <Shield className="w-4 h-4 text-sari-blue" />
                     {t('captchaLabel')} <span className="text-red-500">*</span>
                   </label>
-                  <ServerCaptcha onChange={setCaptchaOk} locale={locale} />
+                  <ServerCaptcha onChange={setCaptchaOk} onCaptchaData={setCaptcha} autoVerify={false} locale={locale} />
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                     {t('captchaHelp')}
                   </p>

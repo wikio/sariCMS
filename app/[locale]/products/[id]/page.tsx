@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import {
   ChevronLeft, ChevronRight, Check, ShoppingCart, Loader,
-  Download, Package, AlertTriangle
+  Download, Package, AlertTriangle, X, Info, Sparkles, ShieldAlert
 } from 'lucide-react';
 import { getProducts } from '@/lib/data';
 import { matchesEntity } from '@/lib/ids';
@@ -34,6 +34,8 @@ export default function ProductDetailPage() {
   const [qty, setQty] = useState(1);
   const [addedToCart, setAddedToCart] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
+  const [optionAlert, setOptionAlert] = useState<string | null>(null);
+  const [missingOptions, setMissingOptions] = useState<string[]>([]);
 
   useEffect(() => {
     const loadProduct = async () => {
@@ -104,17 +106,81 @@ export default function ProductDetailPage() {
   const nextImage = () => setActiveImage((prev) => (prev + 1) % gallery.length);
   const prevImage = () => setActiveImage((prev) => (prev - 1 + gallery.length) % gallery.length);
 
+  // Calcule le prix selon la variante sélectionnée (plusieurs prix par type)
+  const getVariantPrice = (): number => {
+    const base = parseFloat(String(product.price).replace(/[^0-9.]/g,''))||0;
+    if (!product.options?.length || !Object.keys(selectedOptions).length) return base;
+    let price: number | null = null;
+    for (const opt of product.options as any[]) {
+      const choice = selectedOptions[opt.name];
+      if (!choice) continue;
+      // prix direct dans l'option
+      if (opt.prices && opt.prices[choice] != null) {
+        const p = Number(opt.prices[choice]);
+        if (Number.isFinite(p)) price = p;
+      }
+      // prix via variantPrices global
+      const vp = (product as any).variantPrices;
+      if (vp) {
+        const key1 = `${opt.name}:${choice}`;
+        const key2 = choice;
+        if (vp[key1] != null) price = Number(vp[key1]);
+        else if (vp[key2] != null) price = Number(vp[key2]);
+      }
+    }
+    return price != null ? price : base;
+  };
+  const variantPrice = getVariantPrice();
+  const optionSummary = Object.keys(selectedOptions).length ? Object.entries(selectedOptions).map(([k,v])=> `${k}: ${v}`).join(' • ') : undefined;
+  const variantKey = Object.keys(selectedOptions).length ? Object.entries(selectedOptions).map(([k,v])=> `${k}:${v}`).join('|') : undefined;
+  // SKU variante
+  const getVariantSku = (): string | undefined => {
+    let suffix = '';
+    for (const opt of (product.options as any[])||[]) {
+      const choice = selectedOptions[opt.name];
+      if (choice && opt.skus?.[choice]) suffix += `-${opt.skus[choice]}`;
+    }
+    if (suffix) return `${(product as any).sku || product.id}${suffix}`;
+    return (product as any).sku;
+  };
+
   const handleAddToCart = () => {
+    // Validation : tous les types/variantes doivent être choisis
+    if (product.options?.length) {
+      const missing = product.options.filter((opt:any) => !selectedOptions[opt.name]);
+      if (missing.length) {
+        setMissingOptions(missing.map((o:any)=>o.name));
+        setOptionAlert(`Veuillez choisir : ${missing.map((o:any)=>o.name).join(', ')}`);
+        return;
+      }
+    }
+    // Vérifie catégorie manquante (optionnel)
+    if (!product.category || product.category.trim() === '' || product.category === '—') {
+      // n'empêche pas l'ajout mais on pourrait alerter; on laisse passer sans modal pour ne pas bloquer
+    }
     setIsAdding(true);
     setTimeout(() => {
       addToCart({
         id: product.id,
-        name: product.name,
-        price: product.price,
+        name: product.name + (optionSummary ? ` (${optionSummary})` : ''),
+        price: variantPrice || product.price,
         quantity: qty,
         image: currentImage,
         category: product.category,
-      });
+        sku: getVariantSku(),
+        discountValue: (product as any).discountValue,
+        discountType: (product as any).discountType,
+        vatRate: (product as any).vatRate,
+        vatIncluded: (product as any).vatIncluded,
+        shippingFee: (product as any).shippingFee,
+        shippingType: (product as any).shippingType,
+        zones: (product as any).zones,
+        weight: (product as any).weight,
+        selectedOptions: Object.keys(selectedOptions).length ? {...selectedOptions} : undefined,
+        variantKey,
+        variantPrice,
+        optionSummary,
+      } as any);
       setAddedToCart(true);
       setIsAdding(false);
       setTimeout(() => setAddedToCart(false), 3000);
@@ -128,6 +194,61 @@ export default function ProductDetailPage() {
         <div className="fixed top-24 right-4 bg-green-500 text-white px-6 py-3 shadow-lg z-50 animate-fade-in-up rounded-lg flex items-center gap-2">
           <Check className="w-5 h-5" />
           {t('addedToQuote')}
+        </div>
+      )}
+
+      {/* Modal alerte options manquantes - centré, animé, responsive */}
+      {optionAlert && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200" role="dialog" aria-modal="true">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setOptionAlert(null)} />
+          <div className="relative bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden animate-in zoom-in-95 duration-200 border border-gray-200 dark:border-gray-800">
+            <div className="bg-gradient-to-r from-amber-500 to-orange-600 p-[1.5px]" />
+            <button
+              onClick={() => setOptionAlert(null)}
+              className="absolute top-3 right-3 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              aria-label="Fermer"
+            >
+              <X className="w-5 h-5 text-gray-500" />
+            </button>
+            <div className="p-6 sm:p-8 text-center">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center shadow-lg animate-in zoom-in-50 duration-300">
+                <ShieldAlert className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
+              </div>
+              <h3 className="text-xl sm:text-2xl font-black text-sari-dark dark:text-white mb-2 flex items-center justify-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-amber-500" /> Sélection requise
+              </h3>
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-4">
+                Veuillez choisir une option pour continuer. Tous les types/variantes doivent être sélectionnés avant d’ajouter au panier.
+              </p>
+              {missingOptions.length > 0 && (
+                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-3 mb-4 text-left">
+                  <div className="text-xs font-black uppercase tracking-widest text-amber-800 dark:text-amber-300 mb-2 flex items-center gap-1.5"><Info className="w-3.5 h-3.5" /> Options manquantes</div>
+                  <div className="flex flex-wrap gap-2">
+                    {missingOptions.map((opt) => (
+                      <span key={opt} className="px-3 py-1.5 bg-white dark:bg-[#1a1a1a] border border-amber-200 dark:border-amber-700 rounded-full text-sm font-bold text-amber-800 dark:text-amber-200 flex items-center gap-1.5 shadow-sm">
+                        <Sparkles className="w-3.5 h-3.5 text-amber-500" /> {opt}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={() => setOptionAlert(null)}
+                  className="flex-1 bg-gradient-to-r from-sari-blue to-blue-600 hover:from-blue-600 hover:to-sari-blue text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-2"
+                >
+                  <Check className="w-5 h-5" /> Compris
+                </button>
+                <button
+                  onClick={() => setOptionAlert(null)}
+                  className="px-6 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-xl font-semibold hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                >
+                  Fermer
+                </button>
+              </div>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-3">Astuce : cliquez sur une taille/couleur ci-dessus pour la sélectionner.</p>
+            </div>
+          </div>
         </div>
       )}
 
@@ -201,7 +322,8 @@ export default function ProductDetailPage() {
             {product.name}
           </h1>
           <div className="flex items-center gap-4 mb-6">
-            <span className="text-3xl font-bold text-sari-lime">{withSymbol(product.price)}</span>
+            <span className="text-3xl font-bold text-sari-lime">{withSymbol(variantPrice || product.price)}</span>
+            {variantPrice !== parseFloat(String(product.price).replace(/[^0-9.]/g,'')) && <span className="text-sm line-through opacity-60">{withSymbol(product.price)}</span>}
             {product.inStock ? (
               <span className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-sm font-semibold flex items-center gap-1 rounded-full">
                 <Check className="w-4 h-4" />
@@ -213,6 +335,16 @@ export default function ProductDetailPage() {
               </span>
             )}
           </div>
+          {/* Commerce enrichi : livraison / remise / TVA / zones */}
+          {(((product as any).shippingFee || (product as any).discountValue || (product as any).vatRate || (product as any).zones?.length)) && (
+            <div className="flex flex-wrap gap-2 mb-4 text-xs">
+              {(product as any).discountValue ? <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full font-bold">Remise {(product as any).discountValue}{(product as any).discountType==='fixed'?' DA':'%'} / unité</span> : null}
+              {(product as any).vatRate ? <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full">TVA {(product as any).vatRate}% {(product as any).vatIncluded?'incluse':''}</span> : null}
+              {(product as any).shippingFee ? <span className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full">Livraison {(product as any).shippingFee} DA {(product as any).shippingType==='per_qty'?'×Qté':(product as any).shippingType==='free'?'offerte':''}</span> : null}
+              {(product as any).zones?.length ? <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full">Zones: {(product as any).zones.join(', ')}</span> : <span className="bg-gray-50 text-gray-500 px-3 py-1 rounded-full border">Livrable toutes zones</span>}
+              {(product as any).weight ? <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full">{(product as any).weight} kg</span> : null}
+            </div>
+          )}
           <p className="text-gray-600 dark:text-gray-400 mb-8 text-lg leading-relaxed">
             {product.shortDesc}
           </p>
@@ -226,19 +358,25 @@ export default function ProductDetailPage() {
                     {opt.name}
                   </label>
                   <div className="flex flex-wrap gap-3">
-                    {opt.choices.map((choice, j) => (
+                    {opt.choices.map((choice, j) => {
+                      const price = (opt as any).prices?.[choice];
+                      const isSelected = selectedOptions[opt.name] === choice;
+                      return (
                       <button
                         key={j}
                         onClick={() => setSelectedOptions({ ...selectedOptions, [opt.name]: choice })}
-                        className={`px-4 py-2 border-2 font-medium transition-all rounded-lg ${
-                          selectedOptions[opt.name] === choice
-                            ? 'border-sari-blue bg-sari-blue/10 text-sari-blue'
-                            : 'border-gray-300 dark:border-gray-700 hover:border-sari-blue/50'
+                        className={`px-4 py-2 border-2 font-medium transition-all rounded-xl flex flex-col items-center gap-1 min-w-[90px] ${
+                          isSelected
+                            ? 'border-sari-blue bg-sari-blue text-white shadow-lg scale-105'
+                            : 'border-gray-300 dark:border-gray-700 hover:border-sari-blue/50 bg-white dark:bg-[#1a1a1a]'
                         }`}
                       >
-                        {choice}
+                        <span className="font-bold">{choice}</span>
+                        {price != null && <span className={`text-xs px-2 py-0.5 rounded-full font-black ${isSelected?'bg-white text-sari-blue':'bg-sari-lime text-sari-dark'}`}>{price} DA</span>}
+                        {isSelected && <span className="text-[10px] opacity-80">✓ Sélectionné</span>}
                       </button>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               ))}

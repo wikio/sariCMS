@@ -58,5 +58,8 @@
   "whyJoin4": "Évolution de carrière",
   "applicationsClosed": "Les candidatures sont actuellement fermées.",
   "startJourney": "Commencer le parcours",
-  "applyDisabled": "Les candidatures sont closes pour cette offre."
+  "applyDisabled": "Les candidatures sont closes pour cette offre.",
+  "captchaLabel": "Vérification anti-spam",
+  "captchaError": "Veuillez saisir le code captcha (5 caractères)",
+  "notifyFailed": "Votre candidature est bien enregistrée, mais la confirmation par e-mail n’a pas pu partir. Nous vous contacterons directement."
 }

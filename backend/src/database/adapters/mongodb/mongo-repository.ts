@@ -95,6 +95,11 @@ export class MongoRepository<T extends BaseEntity> implements ICrudRepository<T>
     return res.deletedCount ?? 0;
   }
 
+  async deleteOlderThan(field: string, cutoff: Date): Promise<number> {
+    const res = await this.model.deleteMany({ [field]: { $lt: cutoff } }).exec();
+    return res.deletedCount ?? 0;
+  }
+
   async count(where: Record<string, unknown> = {}, includeDeleted = false): Promise<number> {
     const filter = { ...where };
     if (!includeDeleted) filter.deletedAt = null;

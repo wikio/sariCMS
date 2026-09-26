@@ -21,6 +21,7 @@
  * la synchronisation reprend au prochain chargement.
  */
 
+import { cmsFetch, CmsError } from '@/lib/cms';
 import { cmsAdminFetch } from '@/lib/cms-admin';
 import { ORDERS_KEY, QUOTES_KEY, type Order, type Quote } from '@/lib/crm-store';
 import { APPS_KEY, type Application } from '@/lib/recruitment';
@@ -97,6 +98,17 @@ function toPayload(row: Row): Row {
       if (Number.isFinite(n) && n > 0) out.careerId = n;
       continue;
     }
+    if (k === 'items' && Array.isArray(v)) {
+      // Normalise les lignes commerce : discountValue -> discount, vatRate -> taxRate (compat CommerceDesk)
+      out[k] = (v as Row[]).map((it) => {
+        const copy: Row = { ...it };
+        if (copy.discountValue !== undefined && copy.discount === undefined) copy.discount = copy.discountValue as number;
+        if (copy.vatRate !== undefined && copy.taxRate === undefined) copy.taxRate = copy.vatRate as number;
+        // Le DTO accepte désormais discountValue/vatRate en compat, mais on garde la forme canonique
+        return copy;
+      });
+      continue;
+    }
     out[k] = v;
   }
   return out;
@@ -161,20 +173,50 @@ export async function pullAll(): Promise<Partial<Record<SyncResource, number>>> 
 /**
  * Réplique une ligne vers l'API (création ou mise à jour).
  * Ne lève jamais : l'échec ne doit pas bloquer l'écran.
+ * Pour `orders`/`quotes` la route POST/PATCH est désormais @Public() (vitrine) :
+ * on tente d'abord `cmsFetch` (sans token, pas de redirect /admin), puis fallback `cmsAdminFetch`
+ * au cas où le serveur n'aurait pas encore redémarré avec le fix public.
  */
 export async function push(resource: SyncResource, row: Row): Promise<void> {
+  const serverId = serverIdFor(resource, row.id);
+  const payload = toPayload(row);
+  const doFetch = async <T>(path: string, opts: Parameters<typeof cmsFetch>[1]): Promise<T> => {
+    try {
+      return await cmsFetch<T>(path, { timeoutMs: 8000, ...opts });
+    } catch (e) {
+      if (e instanceof CmsError) {
+        // 404 = ressource inconnue, inutile de retenter en admin
+        if (e.status === 404) throw e;
+        // 400/409/422 = validation / conflit → remonte tel quel (pas de fallback)
+        if ([400, 409, 422].includes(e.status)) throw e;
+      }
+      // Sinon (401, réseau, timeout, serveur non redémarré) → retente en admin (avec refresh/redirect)
+      return cmsAdminFetch<T>(path, { timeoutMs: 12000, ...opts } as never);
+    }
+  };
   try {
-    const serverId = serverIdFor(resource, row.id);
-    const payload = toPayload(row);
     if (serverId) {
-      await cmsAdminFetch(`/${resource}/${serverId}`, { method: 'PATCH', json: payload });
+      await doFetch(`/${resource}/${serverId}`, { method: 'PATCH', json: payload });
     } else {
-      const created = await cmsAdminFetch<Row>(`/${resource}`, { method: 'POST', json: payload });
+      const created = await doFetch<Row>(`/${resource}`, { method: 'POST', json: payload });
       const newId = (created as { id?: unknown })?.id ?? (created as { data?: { id?: unknown } })?.data?.id;
       if (newId !== undefined) rememberId(resource, row.id, newId);
     }
-  } catch {
-    // Silencieux : la synchronisation reprendra au prochain pull().
+  } catch (err) {
+    // Log 400/409/422 toujours (validation), sinon seulement si debug
+    const isValidation = err instanceof CmsError && [400, 409, 422, 500].includes(err.status);
+    if (typeof window !== 'undefined') {
+      try {
+        const debug = localStorage.getItem('__SARI_DEBUG') || (window as unknown as { __SARI_DEBUG?: boolean }).__SARI_DEBUG;
+        if (isValidation || debug) {
+          const body = err instanceof CmsError ? err.body : null;
+          const msg = err instanceof CmsError ? err.message : String(err);
+          // Stringify pour que Fast Refresh ne collapse pas l'objet
+          // eslint-disable-next-line no-console
+          console.error(`[crm-sync] push ${resource} #${String(row.id)} ${err instanceof CmsError ? err.status : ''} ${msg}`, '\nPAYLOAD:', JSON.stringify(payload, null, 2), '\nBODY:', JSON.stringify(body, null, 2));
+        }
+      } catch {}
+    }
   }
 }
 

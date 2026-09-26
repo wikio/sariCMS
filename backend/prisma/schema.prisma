@@ -52,6 +52,7 @@ model User {
   updatedBy   Int?
 
   refreshTokens RefreshToken[]
+  passwordResetTokens PasswordResetToken[]
   auditLogs     AuditLog[]     @relation("ActorLogs")
   orders        Order[]        @relation("UserOrders")
   quotes        Quote[]        @relation("UserQuotes")
@@ -82,6 +83,36 @@ model RefreshToken {
   @@index([expiresAt])
   @@index([deletedAt])
   @@map("refresh_tokens")
+}
+
+/// Jeton de réinitialisation de mot de passe.
+///
+/// Table distincte de `refresh_tokens`, et ce n'est pas un détail de propreté :
+/// `AuthService.refresh()` cherche un jeton par `tokenHash` seul, sans filtre
+/// d'usage. Un jeton de réinitialisation rangé dans `refresh_tokens` serait donc
+/// accepté par `POST /auth/refresh` et donnerait une session complète.
+///
+/// `tokenHash` ne contient jamais le jeton lui-même mais son SHA-256 : une fuite
+/// de la table ne permet pas de réinitialiser un mot de passe. `usedAt` rend le
+/// jeton à usage unique.
+model PasswordResetToken {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  createdBy Int?
+  updatedBy Int?
+  ip        String?
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([deletedAt])
+  @@map("password_reset_tokens")
 }
 
 model Role {
@@ -625,12 +656,37 @@ model Order {
   address     String?   @db.Text
   payment     String?
   paid        Boolean   @default(false)
+  // Suivi logistique & horodatages métier.
+  // Sans eux, les gabarits « order_shipped » / «order_delivered » / « order_payment »
+  // du Centre de courrier demandent des variables que la fiche ne sait pas fournir.
+  trackingNumber String?   @db.VarChar(80)
+  carrier        String?   @db.VarChar(80)
+  shippedAt      DateTime?
+  deliveredAt    DateTime?
+  paidAt         DateTime?
   coupon      String?
   quoteId     Int?
   zone        String?
   ip          String?
   history     Json?
   invoice     Json?
+  // Détail montants (édition admin directe, vitrine & PDF instantanés)
+  subtotal        Decimal? @db.Decimal(14, 2)
+  discountTotal   Decimal? @db.Decimal(14, 2)
+  productDiscount Decimal? @db.Decimal(14, 2)
+  globalDiscount  Decimal? @db.Decimal(14, 2)
+  couponDiscount  Decimal? @db.Decimal(14, 2)
+  shippingFee     Decimal? @db.Decimal(14, 2)
+  productShipping Decimal? @db.Decimal(14, 2)
+  globalShipping  Decimal? @db.Decimal(14, 2)
+  taxTotal        Decimal? @db.Decimal(14, 2)
+  taxLines        Json?
+  deliveryZone    String?  @db.VarChar(80)
+  saleZone        String?  @db.VarChar(80)
+  deliveryAddress String?  @db.Text
+  country         String?  @db.VarChar(80)
+  notes           String?  @db.Text
+  adminNotes      String?  @db.Text
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
@@ -672,6 +728,21 @@ model Quote {
   country      String?
   attachments  Json?
   response     Json?
+  // Détail montants (cohérence avec Order)
+  subtotal        Decimal? @db.Decimal(14, 2)
+  discountTotal   Decimal? @db.Decimal(14, 2)
+  productDiscount Decimal? @db.Decimal(14, 2)
+  globalDiscount  Decimal? @db.Decimal(14, 2)
+  couponDiscount  Decimal? @db.Decimal(14, 2)
+  shippingFee     Decimal? @db.Decimal(14, 2)
+  productShipping Decimal? @db.Decimal(14, 2)
+  globalShipping  Decimal? @db.Decimal(14, 2)
+  taxTotal        Decimal? @db.Decimal(14, 2)
+  taxLines        Json?
+  deliveryZone    String?  @db.VarChar(80)
+  saleZone        String?  @db.VarChar(80)
+  deliveryAddress String?  @db.Text
+  adminNotes      String?  @db.Text
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   deletedAt    DateTime?
@@ -683,6 +754,125 @@ model Quote {
   @@index([userId])
   @@index([deletedAt])
   @@map("quotes")
+}
+
+// ---------------------------------------------------------------------------
+// Commerce — coupons et taxes
+//
+// Ces deux tables existaient jusque-là uniquement dans le `localStorage` du
+// navigateur de l'administrateur (lib/shop-store.ts). Elles passent en base
+// pour deux raisons :
+//   1. un poste remplacé, un autre navigateur ou un nettoyage des données du
+//      site perdaient tout le catalogue ;
+//   2. le panier public lisait le même `localStorage` et, vide chez un client,
+//      retombait sur les coupons et taxes de démonstration — les coupons réels
+//      n'étaient donc jamais applicables à la commande.
+//
+// Les montants sont en `Float`, pas en `Decimal` : Prisma renvoie un objet
+// `Decimal` qui se sérialise en chaîne JSON (« 10.00 »), et `lib/commerce-math.ts`
+// calcule `coupon.amount / 100` sans coercition. Ce sont des valeurs de
+// configuration et des agrégats, pas des écritures comptables ; les montants de
+// ledger restent `Decimal(14,2)` sur `orders` et `quotes`.
+// ---------------------------------------------------------------------------
+
+model Coupon {
+  id             Int       @id @default(autoincrement())
+  code           String    @unique @db.VarChar(40)
+  type           String    @default("percent")
+  amount         Float     @default(0)
+  maxDiscount    Float?
+  minOrder       Float?
+  startDate      DateTime?
+  endDate        DateTime?
+  limitGlobal    Int?
+  limitPerClient Int?
+  used           Int       @default(0)
+  scope          String    @default("all")
+  scopeValues    Json?
+  excludeValues  Json?
+  stackable      Boolean   @default(false)
+  active         Boolean   @default(true)
+  revenue        Float     @default(0)
+  notes          String?   @db.Text
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+  createdBy      Int?
+  updatedBy      Int?
+
+  @@index([active])
+  @@index([deletedAt])
+  @@map("coupons")
+}
+
+model TaxRule {
+  id          Int       @id @default(autoincrement())
+  name        String
+  names       Json?
+  labels      Json?
+  mode        String    @default("percent")
+  rate        Float     @default(0)
+  zone        String    @default("DZ")
+  category    String?
+  scope       String    @default("all")
+  scopeValues Json?
+  included    Boolean   @default(false)
+  priority    Int       @default(0)
+  active      Boolean   @default(true)
+  isDefault   Boolean   @default(false)
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  createdBy   Int?
+  updatedBy   Int?
+
+  @@index([active, priority])
+  @@index([deletedAt])
+  @@map("tax_rules")
+}
+
+/// Encaissements enregistrés par l'administration et par le parcours de commande.
+///
+/// Ce magasin vivait dans `sari_payment_records`, le `localStorage` du poste : le
+/// seul endroit où ces lignes existaient, sans sauvegarde, sans partage entre
+/// deux administrateurs, et invisible en cas de changement de navigateur. C'est
+/// une donnée comptable — un virement attendu, une carte refusée avec son motif.
+///
+/// `externalId` porte la contrainte d'unicité, et c'est ce qui rend l'envoi
+/// idempotent : le navigateur envoie ses lignes avec l'identifiant qu'il leur a
+/// donné, et un double envoi ne crée pas de doublon. (Le catalogue produits n'a
+/// pas cet arrangement sur son `sku` : `String?` sans `@unique`, ce qui a laissé
+/// passer les références doubles — voir `sku-seq.service.ts`.)
+///
+/// `cardMasked` n'est PAS une colonne : il se déduit de `cardLast4` à la lecture.
+/// Stocker les deux, c'est deux valeurs qui peuvent se contredire.
+model PaymentRecord {
+  id          Int      @id @default(autoincrement())
+  externalId  String   @unique @db.VarChar(64)
+  orderId     Int?
+  orderCode   String?     @db.VarChar(40)
+  client      String      @db.VarChar(160)
+  email       String?     @db.VarChar(160)
+  method      String      @db.VarChar(24)
+  methodName  String?     @db.VarChar(60)
+  amount      Decimal     @default(0) @db.Decimal(14, 2)
+  status      String      @default("pending") @db.VarChar(20)
+  cardLast4   String?     @db.VarChar(4)
+  note        String?     @db.Text
+  date        DateTime
+  validatedAt DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  deletedAt   DateTime?
+  createdBy   Int?
+  updatedBy   Int?
+
+  @@index([status, date])
+  @@index([orderId])
+  @@index([deletedAt])
+  @@map("payment_records")
 }
 
 model JobApplication {

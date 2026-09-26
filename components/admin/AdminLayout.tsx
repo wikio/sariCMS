@@ -1,5 +1,6 @@
 'use client';
 
+import CsrfPatch from '@/components/admin/CsrfPatch';
 import { ReactNode, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -14,6 +15,9 @@ import {
   Tags, UserPlus, UserRound, Paintbrush, Banknote, MessageSquareText, Eye,
   LayoutTemplate, MailPlus,
 } from 'lucide-react';
+
+import { useAdminBrand } from '@/components/admin/BrandContext';
+import { brandDocumentTitle } from '@/lib/brand';
 import '@/app/admin.css';
 import { ToastProvider } from '@/components/admin/Toast';
 import AdminLanguageSwitcher from '@/components/admin/AdminLanguageSwitcher';
@@ -31,7 +35,7 @@ interface Item {
   children?: Child[];
 }
 
-function Shell({ children }: { children: ReactNode }) {
+function Shell({ children, page }: { children: ReactNode; page?: string }) {
   const router = useRouter();
   const pathname = usePathname();
   const locale = useLocale();
@@ -39,13 +43,22 @@ function Shell({ children }: { children: ReactNode }) {
   const isRTL = locale === 'ar';
   const { theme, setTheme } = useAdminTheme();
   const { user, loading, logout, isLoginPage } = useAdminAuth();
+  const { brand } = useAdminBrand();
   const [open, setOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [themesOpen, setThemesOpen] = useState(false);
   const [userOpen, setUserOpen] = useState(false);
-  const [expanded, setExpanded] = useState<string>('products');
+  const [expanded, setExpanded] = useState<string>('eshop');
   const [q, setQ] = useState('');
   const [unread, setUnread] = useState(0);
+
+  // La prop `title` d'AdminLayout était déclarée et jamais lue : les écrans qui
+  // la passent (Configuration du site, et les suivants) n'avaient aucun effet
+  // sur l'onglet. On applique « Page · Marque » ; sans `page`, la marque seule.
+  useEffect(() => {
+    const next = brandDocumentTitle(brand, page);
+    if (typeof document !== 'undefined' && document.title !== next) document.title = next;
+  }, [brand, page]);
 
   useEffect(() => {
     const refresh = () => setUnread(unreadForAdmin());
@@ -70,7 +83,50 @@ function Shell({ children }: { children: ReactNode }) {
         window.dispatchEvent(new Event('sari-payments-changed'));
       })
       .catch(() => {});
+    // Réglages d'écran (Paramètres, boutique, taxonomies, devises, modes de
+    // paiement) : même traitement, ouvert au même moment. Centralisé ici et
+    // non dans chaque écran, parce qu'un administrateur qui n'ouvre jamais
+    // l'écran Devises n'en subit pas moins leurs formats de prix ailleurs.
+    import('@/lib/settings-doc')
+      .then((m) => m.hydrateDocs())
+      .then(() => {
+        if (cancelled) return;
+        window.dispatchEvent(new Event('sari-threads-changed'));
+        window.dispatchEvent(new Event('sari-shop-config-changed'));
+      })
+      .catch(() => {});
+    // Relevé d'encaissements : ouvert au même moment et pour la même raison — une
+    // saisie a pu avoir lieu sur un autre poste, et un relevé figé sur un seul
+    // navigateur n'est pas un relevé. Import dynamique, comme au-dessus, pour ne
+    // pas alourdir le premier chargement de l'administration. L'écran écoute
+    // `sari-payments-changed` : c'est lui qui redemande la liste après le
+    // rapatriement, pas un composant qui devinerait qu'il faut se rafraîchir.
+    import('@/lib/payment-records-sync')
+      .then((m) => m.hydratePaymentRecords())
+      .then(() => {
+        if (cancelled) return;
+        window.dispatchEvent(new Event('sari-payments-changed'));
+      })
+      .catch(() => {});
     return () => { cancelled = true; };
+  }, [isLoginPage, user]);
+
+  // Toute écriture de `saveAdminSettings()` part en base. Passé par le crochet
+  // du magasin plutôt que par l'écran : l'unique écran qui écrit aujourd'hui
+  // n'est pas une garantie pour les suivants.
+  useEffect(() => {
+    if (isLoginPage || !user) return;
+    let disposed = false;
+    import('@/lib/settings-doc').then((m) => {
+      if (disposed) return;
+      import('@/lib/admin-settings').then((store) => {
+        store.registerAdminSettingsSaveHook(() => m.syncDoc('admin'));
+      });
+    });
+    return () => {
+      disposed = true;
+      import('@/lib/admin-settings').then((store) => store.registerAdminSettingsSaveHook(null)).catch(() => {});
+    };
   }, [isLoginPage, user]);
 
   useEffect(() => {
@@ -104,8 +160,6 @@ function Shell({ children }: { children: ReactNode }) {
         { id: 'shop-stats', label: t('menu.shopStats'), href: `/${locale}/admin/shop-stats` },
         { id: 'payments', label: t('menu.payments'), href: `/${locale}/admin/payments` },
         { id: 'payment-records', label: t('menu.paymentRecords'), href: `/${locale}/admin/payment-records` },
-        { id: 'coupons', label: t('menu.coupons'), href: `/${locale}/admin/coupons` },
-        { id: 'taxes', label: t('menu.taxes'), href: `/${locale}/admin/taxes` },
       ],
     },
     { type: 'divider', label: t('menu.contentSection') },
@@ -133,7 +187,6 @@ function Shell({ children }: { children: ReactNode }) {
     { type: 'divider', label: t('menu.advancedSection') },
     { id: 'taxonomies', icon: Tags, label: t('menu.taxonomies'), href: `/${locale}/admin/taxonomies` },
     { id: 'visibility', icon: Eye, label: t('menu.visibility'), href: `/${locale}/admin/visibility` },
-    { id: 'currencies', icon: Banknote, label: t('menu.currencies'), href: `/${locale}/admin/currencies` },
     { id: 'messages', icon: MessageSquareText, label: t('menu.messages'), href: `/${locale}/admin/messages` },
     { id: 'users', icon: UserCog, label: t('menu.users'), href: `/${locale}/admin/users` },
     { id: 'permissions', icon: Shield, label: t('menu.permissions'), href: `/${locale}/admin/permissions` },
@@ -143,7 +196,16 @@ function Shell({ children }: { children: ReactNode }) {
     { id: 'builder', icon: Paintbrush, label: t('menu.builder'), href: `/${locale}/admin/builder` },
     { id: 'canvas', icon: Palette, label: t('menu.canvas'), href: `/${locale}/admin/canvas` },
     { id: 'verification-codes', icon: ShieldCheck, label: t('menu.verificationCodes'), href: `/${locale}/admin/verification-codes` },
-    { id: 'settings', icon: Sliders, label: t('menu.settings'), href: `/${locale}/admin/settings` },
+    {
+      id: 'commerce-settings', type: 'group', icon: Sliders, label: t('menu.commerceSettings'),
+      children: [
+        { id: 'shop-config', label: t('menu.shopConfig'), href: `/${locale}/admin/shop-config` },
+        { id: 'taxes', label: t('menu.taxes'), href: `/${locale}/admin/taxes` },
+        { id: 'coupons', label: t('menu.coupons'), href: `/${locale}/admin/coupons` },
+        { id: 'currencies', label: t('menu.currencies'), href: `/${locale}/admin/currencies` },
+      ],
+    },
+    { id: 'settings', icon: Settings, label: t('menu.settings'), href: `/${locale}/admin/settings` },
     { id: 'profile', icon: UserRound, label: t('menu.profile'), href: `/${locale}/admin/profile` },
   ], [locale, t]);
 
@@ -158,6 +220,7 @@ function Shell({ children }: { children: ReactNode }) {
   if (isLoginPage) {
     return (
       <div data-admin-theme={theme} dir={isRTL ? 'rtl' : 'ltr'} className="ad-app min-h-screen relative overflow-hidden">
+        <CsrfPatch />
         <div className="ad-grid-bg absolute inset-0 opacity-70" />
         <div className="absolute top-5 right-5 z-10 flex gap-2"><AdminLanguageSwitcher /></div>
         {children}
@@ -167,12 +230,18 @@ function Shell({ children }: { children: ReactNode }) {
 
   return (
     <div data-admin-theme={theme} dir={isRTL ? 'rtl' : 'ltr'} className="ad-app">
+      <CsrfPatch />
       <aside className={`ad-sidebar ${open ? 'w-[272px]' : 'w-[76px]'} fixed inset-y-0 z-40 flex flex-col transition-all duration-300 ${isRTL ? 'right-0' : 'left-0'} ${mobileOpen ? 'is-open' : 'is-closed'}`} style={{ background: 'var(--ad-sidebar)', color: 'var(--ad-sidebar-ink)' }}>
         <div className="h-[72px] px-4 flex items-center gap-3 border-b border-white/10">
-          <div className="w-10 h-10 flex items-center justify-center" style={{ background: 'var(--ad-accent-2)', color: 'var(--ad-accent-2-ink)', borderRadius: 10 }}>
-            <Shield className="w-5 h-5" />
-          </div>
-          {open && <div className="leading-tight"><div className="font-black tracking-tight">SARI OS</div><div className="text-[10px] uppercase tracking-[0.18em] opacity-60">Admin · Studio</div></div>}
+          {brand.logo ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={brand.logo} alt={brand.title} className="w-10 h-10 object-contain" style={{ borderRadius: 10 }} />
+          ) : (
+            <div className="w-10 h-10 flex items-center justify-center" style={{ background: 'var(--ad-accent-2)', color: 'var(--ad-accent-2-ink)', borderRadius: 10 }}>
+              <Shield className="w-5 h-5" />
+            </div>
+          )}
+          {open && <div className="leading-tight"><div className="font-black tracking-tight truncate max-w-[168px]">{brand.title}</div>{brand.subtitle ? <div className="text-[10px] uppercase tracking-[0.18em] opacity-60 truncate max-w-[168px]">{brand.subtitle}</div> : null}</div>}
         </div>
         <nav className="flex-1 overflow-y-auto ad-scroll py-3" onClick={closeMobile}>
           {menu.map((item, i) => {
@@ -273,11 +342,11 @@ function Shell({ children }: { children: ReactNode }) {
   );
 }
 
-export default function AdminLayout({ children }: { children: ReactNode; title?: string }) {
+export default function AdminLayout({ children, title }: { children: ReactNode; title?: string }) {
   return (
     <AdminThemeProvider>
       <ToastProvider>
-        <Shell>{children}</Shell>
+        <Shell page={title}>{children}</Shell>
       </ToastProvider>
     </AdminThemeProvider>
   );

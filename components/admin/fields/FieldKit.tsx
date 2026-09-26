@@ -972,17 +972,64 @@ function SpecsEditor({ value, onChange }: { value: Record<string, string>; onCha
   );
 }
 
-function OptionsEditor({ value, onChange }: { value: Array<{ name: string; choices: string[] }>; onChange: (v: Array<{ name: string; choices: string[] }>) => void }) {
+function OptionsEditor({ value, onChange }: { value: Array<{ name: string; choices: string[]; prices?: Record<string, number>; skus?: Record<string, string> }>; onChange: (v: Array<{ name: string; choices: string[]; prices?: Record<string, number>; skus?: Record<string, string> }>) => void }) {
   return (
     <div className="space-y-3">
       {value.map((opt, i) => (
-        <div key={i} className="ad-card p-3 space-y-2">
-          <input className="ad-input" placeholder="Nom de l’option (ex. Sonde)" value={opt.name} onChange={(e) => onChange(value.map((v, j) => (j === i ? { ...v, name: e.target.value } : v)))} />
-          <ListEditor value={opt.choices || []} onChange={(choices) => onChange(value.map((v, j) => (j === i ? { ...v, choices } : v)))} placeholder="Choix" />
-          <button type="button" className="ad-btn ad-btn-danger" onClick={() => onChange(value.filter((_, j) => j !== i))}>Retirer l’option</button>
+        <div key={i} className="ad-card p-3 space-y-3 border-2">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-black uppercase tracking-widest" style={{color:'var(--ad-muted)'}}>Type / Variante {i+1}</span>
+            <span className="ml-auto text-[11px] px-2 py-1 rounded-full bg-sari-blue/10 text-sari-blue font-bold">Séparé par variante dans le panier</span>
+          </div>
+          <input className="ad-input font-bold" placeholder="Nom du type (ex. Taille, Couleur, Modèle, Sous-catégorie)" value={opt.name} onChange={(e) => onChange(value.map((v, j) => (j === i ? { ...v, name: e.target.value } : v)))} />
+          <div className="space-y-2">
+            <div className="text-xs font-bold flex items-center gap-2"><span>Choix / Sous-catégories</span><span className="text-[11px] font-normal opacity-60">— chaque choix peut avoir son prix</span></div>
+            {(opt.choices || []).map((choice, ci) => (
+              <div key={ci} className="grid grid-cols-12 gap-2 items-center">
+                <input className="ad-input col-span-5" placeholder="Valeur (ex. M, Rouge, 15W)" value={choice} onChange={(e) => {
+                  const newChoices = [...(opt.choices||[])];
+                  const oldVal = newChoices[ci];
+                  newChoices[ci] = e.target.value;
+                  const newPrices = {...(opt.prices||{})};
+                  const newSkus = {...(opt.skus||{})};
+                  if (oldVal !== e.target.value) {
+                    if (newPrices[oldVal] != null) { newPrices[e.target.value] = newPrices[oldVal]; delete newPrices[oldVal]; }
+                    if (newSkus[oldVal] != null) { newSkus[e.target.value] = newSkus[oldVal]; delete newSkus[oldVal]; }
+                  }
+                  onChange(value.map((v,j)=> j===i ? {...v, choices: newChoices, prices: newPrices, skus: newSkus} : v));
+                }} />
+                <div className="col-span-3 flex items-center gap-1">
+                  <span className="text-xs opacity-60">DA</span>
+                  <input className="ad-input" type="number" placeholder="Prix" value={opt.prices?.[choice] ?? ''} onChange={(e)=>{
+                    const newPrices = {...(opt.prices||{})};
+                    const val = e.target.value;
+                    if (val==='' ) delete newPrices[choice]; else newPrices[choice]=Number(val);
+                    onChange(value.map((v,j)=> j===i ? {...v, prices: newPrices} : v));
+                  }} />
+                </div>
+                <input className="ad-input col-span-3 font-mono text-xs" placeholder="SKU suffix" value={opt.skus?.[choice] ?? ''} onChange={(e)=>{
+                  const newSkus = {...(opt.skus||{})};
+                  if (e.target.value==='') delete newSkus[choice]; else newSkus[choice]=e.target.value;
+                  onChange(value.map((v,j)=> j===i ? {...v, skus: newSkus} : v));
+                }} />
+                <button type="button" className="ad-btn ad-btn-icon ad-btn-danger col-span-1" onClick={()=>{
+                  const newChoices = (opt.choices||[]).filter((_,k)=>k!==ci);
+                  const newPrices={...(opt.prices||{})}; delete newPrices[choice];
+                  const newSkus={...(opt.skus||{})}; delete newSkus[choice];
+                  onChange(value.map((v,j)=> j===i ? {...v, choices:newChoices, prices:newPrices, skus:newSkus}:v));
+                }}><Trash2 className="w-3 h-3"/></button>
+              </div>
+            ))}
+            <button type="button" className="ad-btn ad-btn-ghost text-xs" onClick={()=>{
+              const newChoice = `Choix ${(opt.choices||[]).length+1}`;
+              onChange(value.map((v,j)=> j===i ? {...v, choices:[...(v.choices||[]), newChoice]} : v));
+            }}><Plus className="w-3 h-3"/> Ajouter un choix</button>
+          </div>
+          <button type="button" className="ad-btn ad-btn-danger w-full" onClick={() => onChange(value.filter((_, j) => j !== i))}>Retirer ce type</button>
         </div>
       ))}
-      <button type="button" className="ad-btn ad-btn-ghost" onClick={() => onChange([...value, { name: '', choices: [] }])}><Plus className="w-4 h-4" /> Option</button>
+      <button type="button" className="ad-btn ad-btn-ghost" onClick={() => onChange([...value, { name: '', choices: [] }])}><Plus className="w-4 h-4" /> Ajouter un type / variante (prix par choix)</button>
+      <p className="text-xs opacity-60">Même article avec des choix différents = lignes séparées dans le panier, groupées par catégorie/type/taille. Laisser prix vide = prix de base du produit.</p>
     </div>
   );
 }
@@ -1041,9 +1088,13 @@ function asRecord(v: unknown): Record<string, string> {
   }
   return {};
 }
-function asOptions(v: unknown): Array<{ name: string; choices: string[] }> {
+function asOptions(v: unknown): Array<{ name: string; choices: string[]; prices?: Record<string, number>; skus?: Record<string, string> }> {
   if (!Array.isArray(v)) return [];
-  return v.map((it) => ({ name: String((it as { name?: string }).name || ''), choices: asStringArray((it as { choices?: unknown }).choices) }));
+  return v.map((it) => {
+    const prices = (it as any).prices && typeof (it as any).prices === 'object' ? Object.fromEntries(Object.entries((it as any).prices as Record<string, unknown>).map(([k,val])=>[k, Number(val)]).filter(([,n])=>Number.isFinite(n as number))) : undefined;
+    const skus = (it as any).skus && typeof (it as any).skus === 'object' ? Object.fromEntries(Object.entries((it as any).skus as Record<string, unknown>).map(([k,val])=>[k, String(val)])) : undefined;
+    return { name: String((it as { name?: string }).name || ''), choices: asStringArray((it as { choices?: unknown }).choices), ...(prices?{prices}:{}), ...(skus?{skus}:{}) };
+  });
 }
 function asBlocks(v: unknown): Array<Record<string, unknown>> {
   if (!Array.isArray(v)) return [];

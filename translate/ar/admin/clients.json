@@ -19,5 +19,7 @@
   "save": "حفظ",
   "deleteConfirm": "حذف هذا العميل؟",
   "saveSuccess": "تم حفظ العملاء!",
-  "noClients": "لم يتم العثور على عملاء"
+  "noClients": "لم يتم العثور على عملاء",
+  "breadcrumb": "CRM / العملاء",
+  "searchPlaceholder": "ابحث عن عميل (الاسم، البريد، الشركة…)…"
 }

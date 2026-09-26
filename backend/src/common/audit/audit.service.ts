@@ -39,8 +39,7 @@ export class AuditService {
         return;
       }
       const now = new Date();
-      await this.repo.create({
-        actorId: entry.actorId ?? null,
+      const data: Partial<AuditLogEntity> & Record<string, unknown> = {
         action: entry.action,
         resource: entry.resource,
         resourceId: entry.resourceId ?? null,
@@ -50,7 +49,13 @@ export class AuditService {
         createdAt: now,
         updatedAt: now,
         deletedAt: null,
-      } as Partial<AuditLogEntity>);
+      } as Partial<AuditLogEntity> & Record<string, unknown>;
+      // actorId null -> on omet complètement le champ : sur create Prisma n'accepte pas `actor: {disconnect:true}` (uniquement connect/create).
+      // Laisser undefined = le délégué ne touche pas à la relation et la colonne reste NULL.
+      if (entry.actorId !== undefined && entry.actorId !== null) {
+        (data as Record<string, unknown>).actorId = entry.actorId;
+      }
+      await this.repo.create(data as Partial<AuditLogEntity>);
     } catch (err) {
       this.logger.warn(`Failed to persist audit log: ${(err as Error).message}`);
     }

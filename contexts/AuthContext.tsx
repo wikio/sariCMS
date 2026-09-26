@@ -33,9 +33,10 @@ export interface User {
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
+  isLoading: boolean;
   login: (email: string, password: string, type?: string) => Promise<boolean>;
   logout: () => void;
-  register: (userData: Partial<User> & { password: string }) => Promise<boolean>;
+  register: (userData: Partial<User> & { password: string; captchaId?: string; captchaAnswer?: string; locale?: string }) => Promise<boolean>;
   refreshUser: () => void;
 }
 
@@ -74,16 +75,31 @@ function writeRegistry(users: Array<User & { password: string }>) {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const stored = localStorage.getItem(USER_KEY);
-    if (stored) {
-      try {
+    try {
+      const stored = localStorage.getItem(USER_KEY);
+      if (stored) {
         setUser(JSON.parse(stored));
-      } catch {
-        localStorage.removeItem(USER_KEY);
       }
+    } catch {
+      try { localStorage.removeItem(USER_KEY); } catch {}
+    } finally {
+      setIsLoading(false);
     }
+    // Synchronise les onglets : si l'utilisateur se connecte/déconnecte ailleurs, on suit.
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === USER_KEY) {
+        try {
+          setUser(e.newValue ? JSON.parse(e.newValue) : null);
+        } catch {
+          setUser(null);
+        }
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
   }, []);
 
   const persist = (u: User) => {
@@ -163,7 +179,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   /** Inscription : backend /users d'abord, sinon registre local. */
-  const register = async (userData: Partial<User> & { password: string }): Promise<boolean> => {
+  const register = async (userData: Partial<User> & { password: string; captchaId?: string; captchaAnswer?: string; locale?: string }): Promise<boolean> => {
     const email = String(userData.email ?? '');
     const fullName = userData.name || [userData.firstName, userData.lastName].filter(Boolean).join(' ');
     const [firstName = '', lastName = ''] = (userData.name || '').split(' ');
@@ -178,21 +194,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       company: userData.company,
     };
 
-    // Backend : POST /users (nécessite un mot de passe fort côté Nest).
+    // Backend via /api/register : cette route serveur applique la limite de
+    // débit, vérifie le captcha, crée le compte puis envoie `user_welcome` —
+    // autant de choses qu'un appel direct du navigateur ne pouvait pas faire.
     try {
-      await cmsFetch('/users', {
+      await fetch('/api/register', {
         method: 'POST',
-        json: {
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          name: newUser.name,
           email: userData.email,
           password: userData.password,
-          firstName: newUser.firstName || name,
-          lastName: newUser.lastName || '',
           type: newUser.type,
           phone: newUser.phone,
           company: newUser.company,
-          locale: 'fr',
-        },
-        timeoutMs: 12000,
+          locale: userData.locale || 'fr',
+          captchaId: userData.captchaId,
+          captchaAnswer: userData.captchaAnswer,
+        }),
       });
     } catch {
       // API hors-ligne ou validations Nest → on continue en local.
@@ -210,7 +229,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, logout, register, refreshUser }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, logout, register, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

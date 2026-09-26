@@ -19,6 +19,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { cmsFetch } from '@/lib/cms';
+import { companyVars, requestOrigin, sendMailCenterEvent } from '@/lib/mail-center-send';
 import { cmsOr, forwardedIp, userAgent } from '@/lib/server/cms-or';
 import { issueCaptcha, rateLimited, verifyCaptcha } from '@/lib/newsletter-captcha';
 import { confirmSubscriber, subscribe, unsubscribe } from '@/lib/newsletter-store';
@@ -180,6 +181,38 @@ export async function POST(req: NextRequest) {
         : value.created === false
           ? 'already-subscribed'
           : 'created';
+
+  // — Accusé de réception : un seul email, à la première inscription —
+  //
+  // `created` uniquement : une réinscription ou une adresse déjà présente ne
+  // redéclenche rien, et la clé `newsletter-<adresse>-newsletter_welcome` rend
+  // l'envoi idempotent quoi qu'il arrive. Le consentement est vérifié ici, pas
+  // supposé : sans lui, aucun email ne part. L'envoi est décroché de la réponse
+  // (le visiteur n'attend pas le serveur SMTP) mais journalisé dans
+  // `data/mail/sent-log.json`, succès comme échec.
+  if (status === 'created' && payload.consent === true && EMAIL_RE.test(email)) {
+    const origin = requestOrigin(req);
+    const token = String((value.subscriber as { token?: string } | undefined)?.token || '');
+    const locale = String(payload.locale || 'fr');
+    const unsubscribe = token
+      ? `${origin}/${locale}/newsletter/unsubscribe?token=${encodeURIComponent(token)}`
+      : `${origin}/${locale}/newsletter`;
+    void (async () => {
+      const vars: Record<string, string> = {
+        ...(await companyVars(locale, origin)),
+        nom_client: payload.name || email,
+        email_client: email,
+        lien_desinscription: unsubscribe,
+      };
+      await sendMailCenterEvent({
+        event: 'newsletter_welcome',
+        to: email,
+        toName: payload.name || undefined,
+        dedupeKey: `newsletter-${email}-newsletter_welcome`,
+        vars,
+      });
+    })().catch(() => undefined);
+  }
 
   return NextResponse.json({
     ok: true,

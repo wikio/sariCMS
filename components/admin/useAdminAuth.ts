@@ -64,8 +64,23 @@ export function useAdminAuth() {
       authCheckPromise = (async () => {
         try {
           log('Fetching /api/admin/auth/me');
-          const res = await fetch('/api/admin/auth/me', { credentials: 'same-origin', cache: 'no-store' });
+          let res = await fetch('/api/admin/auth/me', { credentials: 'same-origin', cache: 'no-store' });
           log('Auth check response:', res.status);
+          if (res.status === 401) {
+            // Access token expiré ? Tenter un refresh silencieux via cookie httpOnly
+            log('401 -> attempting refresh');
+            try {
+              const refreshRes = await fetch('/api/admin/auth/refresh', { method: 'POST', credentials: 'same-origin', cache: 'no-store' });
+              log('Refresh response:', refreshRes.status);
+              if (refreshRes.ok) {
+                // Réessayer /me après refresh
+                res = await fetch('/api/admin/auth/me', { credentials: 'same-origin', cache: 'no-store' });
+                log('Retry me after refresh:', res.status);
+              }
+            } catch (e) {
+              logError('Refresh attempt failed', e);
+            }
+          }
           if (res.ok) {
             const data = await res.json();
             log('Auth check data:', data);
@@ -128,5 +143,21 @@ export function useAdminAuth() {
 export function clearAuthCache() {
   log('Clearing auth cache');
   cachedUser = null;
+  authCheckPromise = null;
+}
+
+/**
+ * Amorce le cache avec un utilisateur dont l'identité vient d'être vérifiée.
+ *
+ * La page de connexion connaît déjà l'administrateur (la route
+ * `/api/admin/auth/login` répond `{ ok: true, user }`). Elle vidait pourtant le
+ * cache avant de naviguer, ce qui forçait le tableau de bord à refaire un
+ * aller-retour `/api/admin/auth/me` — parfois suivi d'un refresh — avant
+ * d'afficher quoi que ce soit. En amorçant le cache, l'écran d'accueil se rend
+ * immédiatement.
+ */
+export function setAuthCache(user: AdminUser) {
+  log('Seeding auth cache');
+  cachedUser = user;
   authCheckPromise = null;
 }

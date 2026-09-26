@@ -9,7 +9,10 @@ export interface CommerceItem {
   name: string;
   quantity: number;
   price: number;
-  discount?: number;
+  discount?: number; // legacy % (0-100)
+  // Remise enrichie : fixe ou % (prioritaire sur discount legacy si présent)
+  discountValue?: number;
+  discountType?: 'fixed' | 'percent';
   category?: string;
   /** Unité de mesure (pièce, kg, carton, m²…) */
   unit?: string;
@@ -17,8 +20,18 @@ export interface CommerceItem {
   description?: string;
   /** Nom du fichier de référence joint */
   attachment?: string;
-  /** Taux de taxe (%) appliqué par ligne (côté Admin) */
+  /** Taux de taxe (%) appliqué par ligne (côté Admin) — prioritaire */
   taxRate?: number;
+  vatRate?: number; // alias de taxRate pour produits
+  vatIncluded?: boolean;
+  // Frais livraison spécifiques produit
+  shippingFee?: number;
+  shippingType?: 'fixed' | 'per_qty' | 'free';
+  zones?: string[];
+  weight?: number;
+  sku?: string;
+  // Pour affichage panier
+  image?: string;
 }
 
 export interface OrderInvoice {
@@ -44,15 +57,48 @@ export interface Order {
   date: string;
   status: OrderStatus;
   total: number;
+  // Totaux détaillés (pour affichage et édition admin)
+  subtotal?: number;
+  discountTotal?: number; // somme remises produit + globale + coupon
+  shippingFee?: number; // frais livraison (produit + global zone)
+  taxTotal?: number;
+  globalDiscount?: number;
+  /** Remise produit / remise coupon / livraisons détaillées.
+   *  Colonnes réelles de `orders` et lues par le PDF (`lib/pdf-templates.ts`) :
+   *  absentes du type, elles étaient silencieusement perdues à la conversion
+   *  panier → commande admin, et le détail disparaissait du document. */
+  productDiscount?: number;
+  couponDiscount?: number;
+  productShipping?: number;
+  globalShipping?: number;
+  taxLines?: Array<{ id: string; name: string; amount: number; base?: number; rate: number; mode: string; included?: boolean }>;
   items: CommerceItem[];
   address?: string;
+  // Zones & livraison
+  deliveryZone?: string;
+  saleZone?: string;
+  deliveryAddress?: string;
+  shippingMethod?: string;
+  saleConditionsAccepted?: boolean;
+  notes?: string; // notes client
+  adminNotes?: string; // notes admin avant confirmation
   payment?: string;
   /** Paiement confirmé (requis pour lier une facture si activé). */
   paid?: boolean;
+  /** Numéro de suivi du colis — variable `suivi_colis` du mail d'expédition. */
+  trackingNumber?: string;
+  /** Transporteur — variable `transporteur` du mail d'expédition. */
+  carrier?: string;
+  /** Date d'expédition (ISO), posée au passage à « expédiée ». */
+  shippedAt?: string;
+  /** Date de livraison (ISO) — variable `date_livraison`. */
+  deliveredAt?: string;
+  /** Date de règlement (ISO), posée au passage à « payée » ou au-delà. */
+  paidAt?: string;
   cost?: number;
   coupon?: string;
   quoteId?: number;
-  zone?: string;
+  zone?: string; // legacy alias deliveryZone
   ip?: string;
   history?: Array<{ status: string; at: string; note?: string }>;
   /** Facture de vente liée (ERP ou upload manuel). */
@@ -265,10 +311,88 @@ export function loadOrders(): Order[] {
   if (!stored) {
     const seeded = backfillOrderCodes(DEFAULT_ORDERS);
     if (typeof window !== 'undefined') localStorage.setItem(ORDERS_KEY, JSON.stringify(seeded));
-    return seeded;
+    return mergeWithCtxOrders(seeded);
   }
   const parsed = readJson<Order[]>(ORDERS_KEY, DEFAULT_ORDERS);
-  return backfillOrderCodes(parsed.map((o) => ({ ...o, total: Number(o.total) || 0, items: normalizeItems(o.items) })));
+  const normalized = backfillOrderCodes(parsed.map((o) => ({ ...o, total: Number(o.total) || 0, items: normalizeItems(o.items) })));
+  return mergeWithCtxOrders(normalized);
+}
+
+/** Nombre exploitable, ou `undefined` — jamais 0 par défaut. */
+export function numOrUndef(v: unknown): number | undefined {
+  if (v === undefined || v === null || v === '') return undefined;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : undefined;
+}
+
+function mergeWithCtxOrders(orders: Order[]): Order[] {
+  if (typeof window === 'undefined') return orders;
+  try {
+    const ctxRaw = localStorage.getItem('sari_orders_ctx');
+    if (!ctxRaw) return orders;
+    const ctxParsed = JSON.parse(ctxRaw);
+    if (!Array.isArray(ctxParsed) || !ctxParsed.length) return orders;
+    const existingIds = new Set(orders.map(o=> String(o.id)));
+    const toAdd: Order[] = [];
+    for (const c of ctxParsed) {
+      // Ignore quotes (isQuote true) — they belong to quotes list
+      if ((c as any).isQuote || (c as any).status === 'quote_requested') continue;
+      const idStr = String((c as any).id);
+      if (existingIds.has(idStr)) continue;
+      // Convert ctx shape to CRM Order
+      const code = (c as any).code || nextCodeFor('order', orders.map(o=>o.code||'').concat(toAdd.map(o=>o.code||'')));
+      const cTotal = Number((c as any).grandTotal || (c as any).totalAmount || 0);
+      const cItems = Array.isArray((c as any).items) ? (c as any).items.map((it:any)=> ({ id: Number(it.id)||Date.now(), name: it.name, quantity: Number(it.quantity)||1, price: Number(String(it.price).replace(/[^0-9.]/g,''))||0, category: it.category })) : [];
+      const crm: Order = {
+        id: Number((c as any).id) || Date.now(),
+        code,
+        client: (c as any).customerName || 'Client',
+        email: (c as any).customerEmail || '',
+        phone: (c as any).customerPhone || '',
+        company: (c as any).customerCompany || '',
+        date: (c as any).createdAt ? String((c as any).createdAt).slice(0,10) : new Date().toISOString().slice(0,10),
+        status: 'pending',
+        total: cTotal,
+        subtotal: Number((c as any).subtotal || cTotal),
+        shippingFee: Number((c as any).shippingFee || 0),
+        taxTotal: Number((c as any).taxTotal || (c as any).taxAmount || 0),
+        discountTotal: Number((c as any).discountTotal || 0),
+        /*
+         * Détail des remises, de la livraison et de la TVA.
+         *
+         * Le panier les calcule et les stocke (`app/[locale]/cart/page.tsx`
+         * écrit `globalDiscount` et `taxLines`), mais cette conversion ne les
+         * reprenait pas : la commande admin arrivait sans détail, et le PDF ne
+         * pouvait plus afficher ni la remise globale, ni la TVA par taux avec
+         * son assiette. Les champs absents restent `undefined` plutôt que 0,
+         * pour ne pas faire croire à une remise nulle là où il n'y en a pas.
+         */
+        productDiscount: numOrUndef((c as any).productDiscount),
+        globalDiscount: numOrUndef((c as any).globalDiscount),
+        couponDiscount: numOrUndef((c as any).couponDiscount),
+        productShipping: numOrUndef((c as any).productShipping),
+        globalShipping: numOrUndef((c as any).globalShipping),
+        taxLines: Array.isArray((c as any).taxLines) ? (c as any).taxLines : undefined,
+        items: cItems.length ? cItems : [{ id: 1, name: 'Commande', quantity: 1, price: cTotal }],
+        zone: (c as any).deliveryZone || (c as any).saleZone || '',
+        deliveryZone: (c as any).deliveryZone || '',
+        saleZone: (c as any).saleZone || '',
+        address: (c as any).deliveryAddress || '',
+        deliveryAddress: (c as any).deliveryAddress || '',
+        country: (c as any).country || '',
+        coupon: (c as any).coupon || '',
+        notes: (c as any).notes || '',
+        payment: 'pending',
+      } as Order;
+      toAdd.push(crm);
+      existingIds.add(idStr);
+    }
+    if (toAdd.length) {
+      // Prepend ctx orders so recent client orders appear first
+      return [...toAdd, ...orders];
+    }
+    return orders;
+  } catch { return orders; }
 }
 
 /** Attribue un code auto-généré aux commandes qui n'en ont pas encore. */
@@ -293,13 +417,54 @@ export function loadQuotes(): Quote[] {
   if (!stored) {
     const seeded = backfillQuoteReferences(DEFAULT_QUOTES);
     if (typeof window !== 'undefined') localStorage.setItem(QUOTES_KEY, JSON.stringify(seeded));
-    return seeded;
+    return mergeWithCtxQuotes(seeded);
   }
-  return backfillQuoteReferences(readJson<Quote[]>(QUOTES_KEY, DEFAULT_QUOTES).map((q) => ({
+  const parsed = backfillQuoteReferences(readJson<Quote[]>(QUOTES_KEY, DEFAULT_QUOTES).map((q) => ({
     ...q,
     total: Number(q.total) || 0,
     items: normalizeItems(q.items),
   })));
+  return mergeWithCtxQuotes(parsed);
+}
+
+function mergeWithCtxQuotes(quotes: Quote[]): Quote[] {
+  if (typeof window === 'undefined') return quotes;
+  try {
+    const ctxRaw = localStorage.getItem('sari_orders_ctx');
+    if (!ctxRaw) return quotes;
+    const ctxParsed = JSON.parse(ctxRaw);
+    if (!Array.isArray(ctxParsed) || !ctxParsed.length) return quotes;
+    const existingIds = new Set(quotes.map(q=> String(q.id)));
+    const toAdd: Quote[] = [];
+    for (const c of ctxParsed) {
+      if (!((c as any).isQuote || (c as any).status === 'quote_requested')) continue;
+      const idStr = String((c as any).id);
+      if (existingIds.has(idStr)) continue;
+      const ref = (c as any).code || nextCodeFor('quote', quotes.map(q=>q.reference||'').concat(toAdd.map(q=>q.reference||'')));
+      const qTotal = Number((c as any).grandTotal || (c as any).totalAmount || 0);
+      const qItems = Array.isArray((c as any).items) ? (c as any).items.map((it:any)=> ({ id: Number(it.id)||Date.now(), name: it.name, quantity: Number(it.quantity)||1, price: Number(String(it.price).replace(/[^0-9.]/g,''))||0, category: it.category })) : [];
+      const q: Quote = {
+        id: Number((c as any).id) || Date.now(),
+        client: (c as any).customerName || 'Client',
+        email: (c as any).customerEmail || '',
+        phone: (c as any).customerPhone || '',
+        company: (c as any).customerCompany || '',
+        date: (c as any).createdAt ? String((c as any).createdAt).slice(0,10) : new Date().toISOString().slice(0,10),
+        status: 'pending',
+        total: qTotal,
+        validity: '30 jours',
+        reference: ref,
+        items: qItems.length ? qItems : [{ id: 1, name: 'Devis', quantity: 1, price: qTotal }],
+        zone: (c as any).deliveryZone || (c as any).saleZone || '',
+        address: (c as any).deliveryAddress || '',
+        country: (c as any).country || '',
+      } as Quote;
+      toAdd.push(q);
+      existingIds.add(idStr);
+    }
+    if (toAdd.length) return [...toAdd, ...quotes];
+    return quotes;
+  } catch { return quotes; }
 }
 
 /** Attribue une référence auto-générée aux devis qui n'en ont pas encore. */

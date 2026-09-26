@@ -14,5 +14,11 @@
   "replaceFile": "استبدال {name}",
   "selectFile": "اختر ملف",
   "save": "حفظ",
-  "cancel": "إلغاء"
+  "cancel": "إلغاء",
+  "deleteConfirm": "حذف الملف “{name}”؟",
+  "deleteError": "تعذر تحديد مسار الملف",
+  "uploadError": "خطأ أثناء رفع الملف",
+  "deleteFileError": "خطأ أثناء حذف الملف",
+  "renameError": "خطأ أثناء إعادة تسمية الملف",
+  "replaceError": "خطأ أثناء استبدال الملف"
 }

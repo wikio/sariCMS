@@ -32,6 +32,7 @@ import {
 import Drawer from '@/components/admin/Drawer';
 import { useToast } from '@/components/admin/Toast';
 import TopicsPicker from '@/components/admin/newsletter/TopicsPicker';
+import CampaignPanel from '@/components/admin/newsletter/CampaignPanel';
 import { reasonLabel } from '@/lib/newsletter-reasons';
 import {
   bulkSubscribers,
@@ -97,6 +98,7 @@ export default function AdminNewsletterPage() {
   const [savingForm, setSavingForm] = useState(false);
   const [pageSize, setPageSize] = useState<number>(DEFAULT_PAGE_SIZE);
   const [topics, setTopics] = useState<TopicSuggestion[]>([]);
+  const [campaignOpen, setCampaignOpen] = useState(false);
 
   const query = useMemo(() => ({ ...filters }), [filters]);
 
@@ -261,6 +263,13 @@ export default function AdminNewsletterPage() {
         <span className={`ad-chip ${stored === 'api' ? 'ad-chip-ok' : 'ad-chip-warn'}`}>
           {stored === 'api' ? t('storedApi') : t('storedFile')}
         </span>
+        <button
+          type="button"
+          className="ad-btn ad-btn-sm ad-btn-ghost"
+          onClick={() => setCampaignOpen((v) => !v)}
+        >
+          <Send className="w-4 h-4" /> {t('campaign.open')}
+        </button>
         <button
           type="button"
           className="ad-btn ad-btn-sm ad-btn-ghost"
@@ -541,6 +550,15 @@ export default function AdminNewsletterPage() {
           </div>
         </div>
       </div>
+
+      <CampaignPanel
+        open={campaignOpen}
+        onClose={() => setCampaignOpen(false)}
+        filters={filters}
+        picked={picked}
+        locale={locale}
+        onToast={(message, kind) => showToast(message, kind)}
+      />
 
       <Drawer
         open={Boolean(editing)}

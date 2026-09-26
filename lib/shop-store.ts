@@ -1,4 +1,4 @@
-export type PaymentType = 'card-intl' | 'cib' | 'transfer' | 'paypal' | 'check' | 'cod' | 'other';
+export type PaymentType = 'card-intl' | 'cib' | 'transfer' | 'paypal' | 'check' | 'cod' | 'other' | 'pending';
 
 export interface PaymentMethod {
   id: string;
@@ -59,6 +59,8 @@ export interface TaxRule {
   included: boolean;
   priority: number;
   active: boolean;
+  /** Si true, cette taxe est la TVA globale par défaut ajoutée automatiquement à chaque commande */
+  isDefault?: boolean;
   start?: string;
   end?: string;
 }
@@ -84,7 +86,7 @@ const DEFAULT_COUPONS: Coupon[] = [
 ];
 
 const DEFAULT_TAXES: TaxRule[] = [
-  { id: 't1', name: 'TVA standard', names: { fr: 'TVA standard', en: 'Standard VAT', ar: 'ضريبة القيمة المضافة' }, labels: { fr: 'TVA 19 %', en: 'VAT 19%', ar: 'ض.ق.م 19٪' }, mode: 'percent', rate: 19, zone: 'DZ', scope: 'all', scopeValues: [], included: false, priority: 1, active: true },
+  { id: 't1', name: 'TVA standard', names: { fr: 'TVA standard', en: 'Standard VAT', ar: 'ضريبة القيمة المضافة' }, labels: { fr: 'TVA 19 %', en: 'VAT 19%', ar: 'ض.ق.م 19٪' }, mode: 'percent', rate: 19, zone: 'DZ', scope: 'all', scopeValues: [], included: false, priority: 1, active: true, isDefault: true },
   { id: 't2', name: 'TVA réduite consommables', names: { fr: 'TVA réduite consommables', en: 'Reduced VAT consumables', ar: 'ضريبة مخفضة' }, labels: { fr: 'TVA 9 %', en: 'VAT 9%', ar: 'ض.ق.م 9٪' }, mode: 'percent', rate: 9, zone: 'DZ', category: 'Consommables', scope: 'category', scopeValues: ['Consommables'], included: false, priority: 2, active: true },
   { id: 't3', name: 'Éco-taxe', names: { fr: 'Éco-taxe', en: 'Eco-tax', ar: 'ضريبة بيئية' }, labels: { fr: 'Éco-taxe', en: 'Eco-tax', ar: 'ضريبة بيئية' }, mode: 'fixed', rate: 250, zone: 'DZ', scope: 'all', scopeValues: [], included: true, priority: 3, active: true },
 ];
@@ -99,10 +101,13 @@ function read<T>(key: string, fallback: T): T {
   if (typeof window === 'undefined') return fallback;
   try {
     const raw = localStorage.getItem(key);
-    if (!raw) {
-      localStorage.setItem(key, JSON.stringify(fallback));
-      return fallback;
-    }
+    // Une lecture n'écrit pas. Écrire le repli dans le cache à la première lecture
+    // avait deux effets qu'aucun test ne voyait : le jeu par défaut entrait dans le
+    // cache du premier navigateur ouvert — et, depuis que ces magasins sont
+    // réplifiés, il passait pour une saisie de l'opérateur et remontait dans la
+    // base partagée, où il écrasait la configuration d'un collègue. Le repli reste
+    // une valeur rendue à l'affichage ; il ne devient pas une donnée.
+    if (!raw) return fallback;
     return JSON.parse(raw) as T;
   } catch {
     return fallback;
@@ -110,6 +115,17 @@ function read<T>(key: string, fallback: T): T {
 }
 
 export function loadPayments() { return read(PAY_KEY, DEFAULT_PAYMENTS); }
+
+/**
+ * Le jeu de modes livré avec le produit, en copie.
+ *
+ * Exposé pour que l'écran « Modes de paiement » puisse proposer d'en repartir
+ * quand la base contient un document vide — sans que l'écran ait à recopier la
+ * liste, ce qui serait une seconde vérité sur ce que vaut un mode par défaut.
+ */
+export function defaultPaymentMethods(): PaymentMethod[] {
+  return DEFAULT_PAYMENTS.map((row) => ({ ...row }));
+}
 export function savePayments(rows: PaymentMethod[]) { localStorage.setItem(PAY_KEY, JSON.stringify(rows)); }
 export function loadCoupons(): Coupon[] {
   return read(COUPON_KEY, DEFAULT_COUPONS).map((c) => ({
@@ -120,7 +136,52 @@ export function loadCoupons(): Coupon[] {
     revenue: Number(c.revenue) || 0,
   }));
 }
-export function saveCoupons(rows: Coupon[]) { localStorage.setItem(COUPON_KEY, JSON.stringify(rows)); }
+/* -------------------------------------------------------------------------- *
+ * Persistance serveur
+ *
+ * Coupons et taxes ne vivaient que dans ce `localStorage` : invisibles d'un
+ * poste à l'autre, perdus au vidage du cache, et surtout inutilisables par un
+ * client — le panier public lisait la même clé et, vide chez lui, retombait sur
+ * les coupons de démonstration ci-dessus.
+ *
+ * Ils sont désormais en base (`coupons`, `tax_rules`) et `lib/shop-sync.ts` les
+ * réplique. L'interface synchrone est conservée, exactement comme `lib/crm-sync.ts`
+ * le fait pour commandes/devis/candidatures : le localStorage devient un cache,
+ * les écrans continuent d'appeler `loadCoupons()`/`saveCoupons()` sans `await`,
+ * et chaque écriture est poussée vers l'API en arrière-plan.
+ *
+ * Le point d'accroche évite une importation circulaire : `shop-sync.ts` dépend
+ * de ce module, pas l'inverse.
+ * -------------------------------------------------------------------------- */
+
+export type ShopSaveHook = (payload: {
+  kind: 'coupons' | 'taxes';
+  previous: unknown[];
+  next: unknown[];
+}) => void;
+
+let saveHook: ShopSaveHook | null = null;
+
+/** Installe (ou retire avec `null`) la réplication vers l'API. */
+export function registerShopSaveHook(hook: ShopSaveHook | null): void {
+  saveHook = hook;
+}
+
+function readRawArray(key: string): unknown[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const parsed = JSON.parse(localStorage.getItem(key) || '[]');
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveCoupons(rows: Coupon[]) {
+  const previous = readRawArray(COUPON_KEY);
+  localStorage.setItem(COUPON_KEY, JSON.stringify(rows));
+  saveHook?.({ kind: 'coupons', previous, next: rows });
+}
 export function loadTaxes(): TaxRule[] {
   return read(TAX_KEY, DEFAULT_TAXES).map((t) => ({
     ...t,
@@ -128,9 +189,41 @@ export function loadTaxes(): TaxRule[] {
     labels: t.labels || { fr: t.name },
     scope: t.scope || (t.category ? 'category' : 'all'),
     scopeValues: t.scopeValues || (t.category ? [t.category] : []),
+    isDefault: Boolean(t.isDefault),
   }));
 }
-export function saveTaxes(rows: TaxRule[]) { localStorage.setItem(TAX_KEY, JSON.stringify(rows)); }
+export function saveTaxes(rows: TaxRule[]) {
+  // Unicité du défaut : au plus une taxe par défaut
+  let seen = false;
+  const normalized = rows.map((r) => {
+    if (r.isDefault && !seen) { seen = true; return r; }
+    if (r.isDefault && seen) return { ...r, isDefault: false };
+    return r;
+  });
+  const previousTaxes = readRawArray(TAX_KEY);
+  localStorage.setItem(TAX_KEY, JSON.stringify(normalized));
+  saveHook?.({ kind: 'taxes', previous: previousTaxes, next: normalized });
+  // synchronise le ShopConfig.globalTaxId si présent
+  try {
+    const def = normalized.find((t) => t.isDefault && t.active);
+    if (typeof window !== 'undefined') {
+      const raw = localStorage.getItem('sari_shop_config');
+      if (raw) {
+        const cfg = JSON.parse(raw);
+        const nextId = def ? def.id : null;
+        if (cfg.globalTaxId !== nextId) {
+          cfg.globalTaxId = nextId;
+          localStorage.setItem('sari_shop_config', JSON.stringify(cfg));
+          window.dispatchEvent(new Event('sari-shop-config-changed'));
+        }
+      }
+    }
+  } catch {}
+}
+export function getDefaultTax(): TaxRule | null {
+  const all = loadTaxes();
+  return all.find((t) => t.isDefault && t.active) || all.find((t) => t.active) || null;
+}
 export function loadCouponUses() { return read(USE_KEY, DEFAULT_USES); }
 export function saveCouponUses(rows: CouponUse[]) { localStorage.setItem(USE_KEY, JSON.stringify(rows)); }
 
