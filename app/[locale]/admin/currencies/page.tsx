@@ -1,8 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { syncDoc } from '@/lib/settings-doc';
-import { useDocRefresh } from '@/lib/use-settings-doc';
 import { Check, Eye, Pencil, Plus, Star, Trash2 } from 'lucide-react';
 import {
   defaultCurrency,
@@ -27,9 +25,8 @@ export default function CurrenciesPage() {
   const [selected, setSelected] = useState<string[]>([]);
 
   useEffect(() => { setRows(loadCurrencies()); }, []);
-  useDocRefresh('currencies', () => setRows(loadCurrencies()));
   const persist = (next: Currency[], toast = 'Devises enregistrées') => {
-    setRows(next); saveCurrencies(next); syncDoc('currencies'); showToast(toast, 'success'); setDraft(null); setSelected([]);
+    setRows(next); saveCurrencies(next); showToast(toast, 'success'); setDraft(null); setSelected([]);
   };
 
   // Devise réellement appliquée : si la ligne marquée par défaut a été

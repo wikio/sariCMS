@@ -35,7 +35,7 @@ SET NAMES utf8mb4;
 -- ===========================================================================
 
 -- 1.1 Permissions attendues et absentes de la table. Le barème complet fait
--- 29 ressources × 5 actions, soit 145 lignes attendues.
+-- 26 ressources × 5 actions, soit 130 lignes attendues.
 
 SELECT res.`resource` AS `ressource`, act.`action` AS `action`
   FROM (
@@ -65,9 +65,6 @@ SELECT res.`resource` AS `ressource`, act.`action` AS `action`
   UNION ALL SELECT 'authors'
   UNION ALL SELECT 'home'
   UNION ALL SELECT 'newsletter'
-  UNION ALL SELECT 'payments'
-  UNION ALL SELECT 'coupons'
-  UNION ALL SELECT 'taxes'
   ) AS res
   CROSS JOIN (
   SELECT 'create' AS `action`
@@ -206,9 +203,6 @@ SELECT res.`resource`,
   UNION ALL SELECT 'authors'
   UNION ALL SELECT 'home'
   UNION ALL SELECT 'newsletter'
-  UNION ALL SELECT 'payments'
-  UNION ALL SELECT 'coupons'
-  UNION ALL SELECT 'taxes'
   ) AS res
   CROSS JOIN (
   SELECT 'create' AS `action`
@@ -337,9 +331,9 @@ SELECT r.`slug` AS `rôle`,
 
 -- 5.3 Le barème, pour comparer 5.2 à la main.
 
-  SELECT 'super-admin' AS `rôle`, 145 AS `permissions attendues`
+  SELECT 'super-admin' AS `rôle`, 130 AS `permissions attendues`
   UNION ALL
-  SELECT 'admin' AS `rôle`, 126 AS `permissions attendues`
+  SELECT 'admin' AS `rôle`, 111 AS `permissions attendues`
   UNION ALL
   SELECT 'editor' AS `rôle`, 49 AS `permissions attendues`
   UNION ALL

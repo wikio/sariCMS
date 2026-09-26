@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useTranslations } from 'next-intl';
 import { LayoutGrid, List as ListIcon, MessageSquareText, Plus, Trash2, User } from 'lucide-react';
 import PixelGridLoader from '@/components/admin/PixelGridLoader';
 import SearchField from '@/components/admin/SearchField';
@@ -36,8 +35,6 @@ export default function PeopleDesk({
   title: string;
   singular: string;
 }) {
-  const t = useTranslations('admin.people');
-  const tc = useTranslations('admin.common');
   const { showToast } = useToast();
   const [rows, setRows] = useState<Person[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,7 +52,7 @@ export default function PeopleDesk({
       const list = await cmsAdminList<Person>('users', { filter: JSON.stringify({ type }) });
       setRows(list);
     } catch (err) {
-      showToast(err instanceof CmsError ? err.message : t("loadError"), 'error');
+      showToast(err instanceof CmsError ? err.message : 'Chargement impossible', 'error');
     } finally {
       setLoading(false);
     }
@@ -73,7 +70,7 @@ export default function PeopleDesk({
   const save = async () => {
     if (!editing) return;
     if (!String(editing.email || '').trim()) {
-      showToast(t("emailRequired"), 'error');
+      showToast('Email obligatoire', 'error');
       return;
     }
     setSaving(true);
@@ -85,7 +82,7 @@ export default function PeopleDesk({
       const saved = editing.id
         ? await cmsAdminUpdate<Person>('users', String(editing.id), payload)
         : await cmsAdminCreate<Person>('users', payload);
-      showToast(t("saved"), 'success');
+      showToast('Fiche enregistrée', 'success');
       setEditing(null);
       await load();
       if (saved?.id) setRows((prev) => prev.some((p) => p.id === saved.id) ? prev : [saved, ...prev]);
@@ -97,11 +94,11 @@ export default function PeopleDesk({
   };
 
   const remove = async (id: string) => {
-    if (!confirm(t("confirmDelete", {singular}))) return;
+    if (!confirm(`Supprimer ce ${singular} ?`)) return;
     try {
       await cmsAdminDelete('users', id);
       setRows((prev) => prev.filter((r) => r.id !== id));
-      showToast(t("deleted"), 'success');
+      showToast('Supprimé', 'success');
     } catch (err) {
       showToast(err instanceof CmsError ? err.message : 'Erreur', 'error');
     }
@@ -123,18 +120,18 @@ export default function PeopleDesk({
             <button type="button" className={`ad-btn ad-btn-icon ${view === 'cards' ? 'ad-btn-primary' : 'ad-btn-ghost'}`} onClick={() => setView('cards')}><LayoutGrid className="w-4 h-4" /></button>
           </div>
           <button className="ad-btn ad-btn-primary" onClick={() => setEditing({ type, status: 'active', firstName: '', lastName: '', email: '' })}>
-            <Plus className="w-4 h-4" /> {t("newRecord", {singular})}
+            <Plus className="w-4 h-4" /> Nouveau {singular}
           </button>
         </div>
       </header>
 
       <div className="ad-card p-3 space-y-3 ad-rise">
-        <SearchField value={draft} onChange={setDraft} onSubmit={() => setQ(draft)} showSubmit placeholder={t("searchPlaceholder", {singular})} />
+        <SearchField value={draft} onChange={setDraft} onSubmit={() => setQ(draft)} showSubmit placeholder={`Rechercher un ${singular} (nom, e-mail, société…)…`} />
         <select className="ad-select sm:w-56" value={status} onChange={(e) => setStatus(e.target.value)}>
-          <option value="">{t("allStatuses")}</option>
-          <option value="active">{t("active")}</option>
-          <option value="pending">{t("pending")}</option>
-          <option value="blocked">{t("blocked")}</option>
+          <option value="">Tous les statuts</option>
+          <option value="active">Actif</option>
+          <option value="pending">En attente</option>
+          <option value="blocked">Bloqué</option>
         </select>
       </div>
 
@@ -143,11 +140,11 @@ export default function PeopleDesk({
           <table className="ad-table min-w-[720px]">
             <thead>
               <tr>
-                <th>{t("name")}</th>
-                <th>{t("email")}</th>
-                <th>{type === 'candidate' ? t("position") : t("company")}</th>
-                <th>{t("countryIp")}</th>
-                <th>{t("status")}</th>
+                <th>Nom</th>
+                <th>Email</th>
+                <th>{type === 'candidate' ? 'Poste' : 'Société'}</th>
+                <th>Pays / IP</th>
+                <th>Statut</th>
                 <th></th>
               </tr>
             </thead>
@@ -161,12 +158,12 @@ export default function PeopleDesk({
                   <td><span className="ad-chip ad-chip-acc">{String(p.status || '')}</span></td>
                   <td className="text-right whitespace-nowrap">
                     <button className="ad-btn ad-btn-icon ad-btn-ghost" title="Message" onClick={() => setMessageTo(p)}><MessageSquareText className="w-4 h-4" /></button>
-                    <button className="ad-btn ad-btn-ghost" onClick={() => setEditing({ ...p, notes: p.id ? localStorage.getItem(`sari_notes_${p.id}`) || '' : '' })}>{t("open")}</button>
+                    <button className="ad-btn ad-btn-ghost" onClick={() => setEditing({ ...p, notes: p.id ? localStorage.getItem(`sari_notes_${p.id}`) || '' : '' })}>Ouvrir</button>
                     {p.id && <button className="ad-btn ad-btn-icon ad-btn-danger ml-1" onClick={() => remove(String(p.id))}><Trash2 className="w-4 h-4" /></button>}
                   </td>
                 </tr>
               ))}
-              {shown.length === 0 && <tr><td colSpan={6} className="text-center py-10" style={{ color: 'var(--ad-muted)' }}>{t("noRecord", {singular})}</td></tr>}
+              {shown.length === 0 && <tr><td colSpan={6} className="text-center py-10" style={{ color: 'var(--ad-muted)' }}>Aucun {singular}</td></tr>}
             </tbody>
           </table>
         </div>
@@ -185,7 +182,7 @@ export default function PeopleDesk({
               </div>
               <p className="text-sm">{type === 'candidate' ? p.position : p.company}</p>
               <div className="flex gap-1">
-                <button className="ad-btn ad-btn-ghost" onClick={() => setEditing({ ...p })}>{t("open")}</button>
+                <button className="ad-btn ad-btn-ghost" onClick={() => setEditing({ ...p })}>Éditer</button>
                 <button className="ad-btn ad-btn-icon ad-btn-ghost" title="Message" onClick={() => setMessageTo(p)}><MessageSquareText className="w-4 h-4" /></button>
                 {p.id && <button className="ad-btn ad-btn-icon ad-btn-danger ml-auto" onClick={() => remove(String(p.id))}><Trash2 className="w-4 h-4" /></button>}
               </div>
@@ -197,16 +194,16 @@ export default function PeopleDesk({
       {editing && (
         <div className="ad-modal" onClick={() => setEditing(null)}>
           <div className="ad-modal-card space-y-3" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-xl font-black">{editing.id ? t("editRecord", {singular}) : t("newRecord", {singular})}</h2>
+            <h2 className="text-xl font-black">{editing.id ? `Fiche ${singular}` : `Nouveau ${singular}`}</h2>
             <div className="grid md:grid-cols-2 gap-3">
-              <Field label={t("firstName")} required value={String(editing.firstName || '')} onChange={(v) => setEditing({ ...editing, firstName: v })} />
-              <Field label={t("lastName")} required value={String(editing.lastName || '')} onChange={(v) => setEditing({ ...editing, lastName: v })} />
-              <Field label={t("email")} required value={String(editing.email || '')} onChange={(v) => setEditing({ ...editing, email: v })} />
-              <Field label={t("phone")} value={String(editing.phone || '')} onChange={(v) => setEditing({ ...editing, phone: v })} />
+              <Field label="Prénom" required value={String(editing.firstName || '')} onChange={(v) => setEditing({ ...editing, firstName: v })} />
+              <Field label="Nom" required value={String(editing.lastName || '')} onChange={(v) => setEditing({ ...editing, lastName: v })} />
+              <Field label="Email" required value={String(editing.email || '')} onChange={(v) => setEditing({ ...editing, email: v })} />
+              <Field label="Téléphone" value={String(editing.phone || '')} onChange={(v) => setEditing({ ...editing, phone: v })} />
               {type === 'candidate'
-                ? <Field label={t("positionField")} value={String(editing.position || '')} onChange={(v) => setEditing({ ...editing, position: v })} />
-                : <Field label={t("companyField")} value={String(editing.company || '')} onChange={(v) => setEditing({ ...editing, company: v })} />}
-              <Field label={t("addressIp")} value={String(editing.ip || '')} onChange={(v) => setEditing({ ...editing, ip: v })} />
+                ? <Field label="Poste visé" value={String(editing.position || '')} onChange={(v) => setEditing({ ...editing, position: v })} />
+                : <Field label="Société" value={String(editing.company || '')} onChange={(v) => setEditing({ ...editing, company: v })} />}
+              <Field label="Adresse IP" value={String(editing.ip || '')} onChange={(v) => setEditing({ ...editing, ip: v })} />
               {editing.ip && (
                 <label className="space-y-1.5">
                   <span className="text-[11px] font-black uppercase tracking-[0.14em]" style={{ color: 'var(--ad-muted)' }}>Pays</span>
@@ -214,11 +211,11 @@ export default function PeopleDesk({
                 </label>
               )}
               <label className="space-y-1.5">
-                <span className="text-[11px] font-black uppercase tracking-[0.14em]" style={{ color: 'var(--ad-muted)' }}>{t("status")} <span className="ad-chip ad-chip-mute">{t("optional")}</span></span>
+                <span className="text-[11px] font-black uppercase tracking-[0.14em]" style={{ color: 'var(--ad-muted)' }}>Statut <span className="ad-chip ad-chip-mute">Optionnel</span></span>
                 <select className="ad-select" value={String(editing.status || 'active')} onChange={(e) => setEditing({ ...editing, status: e.target.value })}>
-                  <option value="active">{t("active")}</option>
-                  <option value="pending">{t("pending")}</option>
-                  <option value="blocked">{t("blocked")}</option>
+                  <option value="active">Actif</option>
+                  <option value="pending">En attente</option>
+                  <option value="blocked">Bloqué</option>
                 </select>
               </label>
             </div>
@@ -226,8 +223,8 @@ export default function PeopleDesk({
               <ClientStats email={String(editing.email)} />
             )}
             <div className="flex justify-end gap-2 pt-2">
-              <button className="ad-btn ad-btn-ghost" onClick={() => setEditing(null)}>{t("close")}</button>
-              <button className="ad-btn ad-btn-primary" disabled={saving} onClick={save}>{saving ? '…' : t("save")}</button>
+              <button className="ad-btn ad-btn-ghost" onClick={() => setEditing(null)}>Fermer</button>
+              <button className="ad-btn ad-btn-primary" disabled={saving} onClick={save}>{saving ? '…' : 'Enregistrer'}</button>
             </div>
           </div>
         </div>
@@ -246,7 +243,6 @@ export default function PeopleDesk({
 }
 
 function ClientStats({ email }: { email: string }) {
-  const t = useTranslations('admin.people');
   const orders = loadOrders().filter((o) => o.email === email);
   const quotes = loadQuotes().filter((q) => q.email === email);
   const delivered = orders.filter((o) => o.status === 'delivered').length;
@@ -255,25 +251,25 @@ function ClientStats({ email }: { email: string }) {
   return (
     <div className="ad-card p-3 space-y-2 text-sm ad-rise">
       <div className="font-black flex items-center justify-between">
-        <span>{t("commercialActivity")}</span>
-        <span className="ad-chip ad-chip-ok">{delivered} {t("delivered")}</span>
+        <span>Activité commerciale</span>
+        <span className="ad-chip ad-chip-ok">{delivered} livrées</span>
       </div>
       <div className="grid grid-cols-3 gap-2 text-center">
         <div className="ad-card p-2" style={{ background: 'var(--ad-surface-2)' }}>
           <div className="text-xl font-black">{orders.length}</div>
-          <div className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--ad-muted)' }}>{t("orders")}</div>
+          <div className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--ad-muted)' }}>Commandes</div>
         </div>
         <div className="ad-card p-2" style={{ background: 'var(--ad-surface-2)' }}>
           <div className="text-xl font-black">{quotes.length}</div>
-          <div className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--ad-muted)' }}>{t("quotes")}</div>
+          <div className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--ad-muted)' }}>Devis</div>
         </div>
         <div className="ad-card p-2" style={{ background: 'var(--ad-surface-2)' }}>
           <div className="text-xl font-black">{totalSpent.toLocaleString()}</div>
-          <div className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--ad-muted)' }}>{t("cumulativeDa")}</div>
+          <div className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--ad-muted)' }}>DA cumulés</div>
         </div>
       </div>
       <div className="text-xs" style={{ color: 'var(--ad-muted)' }}>
-        {t("inProgressValue", {count: String(inProgress), value: money(orderRevenue(orders))})}
+        {inProgress} en cours · {money(orderRevenue(orders))} livrés
       </div>
       <div className="space-y-1">
         {orders.slice(0, 4).map((o) => (
@@ -289,11 +285,10 @@ function ClientStats({ email }: { email: string }) {
 }
 
 function Field({ label, value, onChange, required }: { label: string; value: string; onChange: (v: string) => void; required?: boolean }) {
-  const t = useTranslations('admin.people');
   return (
     <label className="space-y-1.5">
       <span className="text-[11px] font-black uppercase tracking-[0.14em] flex items-center gap-2" style={{ color: 'var(--ad-muted)' }}>
-        {label} {required ? <span className="ad-chip ad-chip-warn">{t("required")}</span> : <span className="ad-chip ad-chip-mute">{t("optional")}</span>}
+        {label} {required ? <span className="ad-chip ad-chip-warn">Obligatoire</span> : <span className="ad-chip ad-chip-mute">Optionnel</span>}
       </span>
       <input className="ad-input" value={value} placeholder={label} onChange={(e) => onChange(e.target.value)} />
     </label>

@@ -16,7 +16,7 @@ import { PrismaRepository } from './prisma-repository';
 
 type Repo = {
   toPrisma(data: Record<string, unknown>): Record<string, unknown>;
-  explainReadError(error: unknown): never;
+  explainDate(error: unknown): never;
   buildWhere(options: Record<string, unknown>): Record<string, unknown>;
 };
 
@@ -83,7 +83,7 @@ describe('PrismaRepository — colonnes de date', () => {
   it('nomme la table et le fichier de réparation quand la lecture échoue', () => {
     let message = '';
     try {
-      r().explainReadError({ code: 'P2023', message: 'Value out of range for the type: …' });
+      r().explainDate({ code: 'P2023', message: 'Value out of range for the type: …' });
     } catch (error) {
       message = (error as Error).message;
     }
@@ -91,46 +91,9 @@ describe('PrismaRepository — colonnes de date', () => {
     expect(message).toContain('backend/sql/fix-zero-dates.mysql.sql');
   });
 
-  it('dit quelle migration jouer quand la table est absente de la base', () => {
-    let message = '';
-    try {
-      r().explainReadError({
-        code: 'P2021',
-        message:
-          'The table `payment_records` does not exist in this database.\n' +
-          '    at PrismaClient._r.request (…)',
-      });
-    } catch (error) {
-      message = (error as Error).message;
-    }
-    // Trois choses à savoir, dans l'ordre : ce qui manque, où est le rattrapage,
-    // et pourquoi « prisma migrate deploy » n'est pas la réponse ici.
-    expect(message).toContain('payment_records');
-    expect(message).toContain('db:schema-fix');
-    expect(message).toContain('migrate-payment-records.mysql.sql');
-    expect(message).toContain('DROP');
-    expect(message).toContain('migrate deploy');
-    expect(message).not.toContain('at PrismaClient');
-  });
-
-  it('traite une colonne absente comme un schéma plus ancien, pas comme un bug', () => {
-    let message = '';
-    try {
-      r().explainReadError({
-        code: 'P2022',
-        message: 'The column `u830983108_sari_cms.newsletter_subscribers.unsubscribeReason` does not exist in the current database.',
-      });
-    } catch (error) {
-      message = (error as Error).message;
-    }
-    expect(message).toContain('plus ancien');
-    expect(message).toContain('db:schema-check');
-    expect(message).toContain('unsubscribeReason');
-  });
-
   it("relaie sans rien changer une erreur qui n'est pas une date", () => {
     const boom = { code: 'P2002', message: 'Unique constraint failed' };
-    expect(() => r().explainReadError(boom)).toThrow(boom as never);
+    expect(() => r().explainDate(boom)).toThrow(boom as never);
   });
 });
 

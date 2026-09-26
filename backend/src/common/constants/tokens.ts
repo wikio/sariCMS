@@ -4,7 +4,6 @@ export const USER_REPOSITORY = Symbol('USER_REPOSITORY');
 export const ROLE_REPOSITORY = Symbol('ROLE_REPOSITORY');
 export const PERMISSION_REPOSITORY = Symbol('PERMISSION_REPOSITORY');
 export const REFRESH_TOKEN_REPOSITORY = Symbol('REFRESH_TOKEN_REPOSITORY');
-export const PASSWORD_RESET_TOKEN_REPOSITORY = Symbol('PASSWORD_RESET_TOKEN_REPOSITORY');
 export const PAGE_REPOSITORY = Symbol('PAGE_REPOSITORY');
 export const FAQ_REPOSITORY = Symbol('FAQ_REPOSITORY');
 export const TESTIMONIAL_REPOSITORY = Symbol('TESTIMONIAL_REPOSITORY');
@@ -28,16 +27,12 @@ export const APPLICATION_REPOSITORY = Symbol('APPLICATION_REPOSITORY');
 export const AUTHOR_REPOSITORY = Symbol('AUTHOR_REPOSITORY');
 export const HOME_REPOSITORY = Symbol('HOME_REPOSITORY');
 export const NEWSLETTER_REPOSITORY = Symbol('NEWSLETTER_REPOSITORY');
-export const COUPON_REPOSITORY = Symbol('COUPON_REPOSITORY');
-export const TAX_RULE_REPOSITORY = Symbol('TAX_RULE_REPOSITORY');
-export const PAYMENT_RECORD_REPOSITORY = Symbol('PAYMENT_RECORD_REPOSITORY');
 
 export const COLLECTIONS = {
   users: 'users',
   roles: 'roles',
   permissions: 'permissions',
   refreshTokens: 'refresh_tokens',
-  passwordResetTokens: 'password_reset_tokens',
   pages: 'pages',
   faqs: 'faqs',
   testimonials: 'testimonials',
@@ -61,9 +56,6 @@ export const COLLECTIONS = {
   authors: 'authors',
   homeSections: 'home_sections',
   newsletter: 'newsletter_subscribers',
-  coupons: 'coupons',
-  taxRules: 'tax_rules',
-  paymentRecords: 'payment_records',
 } as const;
 
 export type CollectionName = (typeof COLLECTIONS)[keyof typeof COLLECTIONS];
@@ -73,7 +65,6 @@ export const PRISMA_MODEL_BY_COLLECTION: Record<string, string> = {
   roles: 'role',
   permissions: 'permission',
   refresh_tokens: 'refreshToken',
-  password_reset_tokens: 'passwordResetToken',
   pages: 'page',
   faqs: 'faq',
   testimonials: 'testimonial',
@@ -97,7 +88,4 @@ export const PRISMA_MODEL_BY_COLLECTION: Record<string, string> = {
   authors: 'author',
   home_sections: 'homeSection',
   newsletter_subscribers: 'newsletterSubscriber',
-  coupons: 'coupon',
-  tax_rules: 'taxRule',
-  payment_records: 'paymentRecord',
 };

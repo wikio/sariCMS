@@ -75,45 +75,13 @@ export async function readHomeFile(locale: string): Promise<HomeFile | null> {
   }
 }
 
-/** Compteur de fichiers temporaires, voir `writeHomeFile`. */
-let tmpSeq = 0;
-
-/**
- * Écriture atomique : la vitrine lit ce fichier à chaque rendu.
- *
- * Le temporaire porte le PID **et** un compteur. Avec un nom fixe, deux
- * écritures menées de front visaient le même chemin : la première le renommait,
- * la seconde échouait en `ENOENT` et le fichier restait tronqué. Un échec nettoie
- * son temporaire.
- */
+/** Écriture atomique : la vitrine lit ce fichier à chaque rendu. */
 async function writeHomeFile(locale: string, file: HomeFile): Promise<void> {
   const target = homeFile(locale);
   await fs.mkdir(path.dirname(target), { recursive: true });
-  const tmp = `${target}.${process.pid}.${(tmpSeq += 1)}.tmp`;
-  try {
-    await fs.writeFile(tmp, JSON.stringify(file, null, 2), 'utf8');
-    await fs.rename(tmp, target);
-  } catch (err) {
-    await fs.rm(tmp, { force: true }).catch(() => undefined);
-    throw err;
-  }
-}
-
-/**
- * Met bout à bout les lire-modifier-écrire d'une même langue.
- *
- * Les réglages de la page d'accueil se relisent puis se réécrivent en entier :
- * deux enregistrements menés de front partaient de la même version et le dernier
- * écrasait l'autre. Une file par langue — deux langues différentes restent
- * libres de s'écrire en parallèle.
- */
-const homeLocks = new Map<string, Promise<unknown>>();
-
-function withHomeLock<T>(locale: string, task: () => Promise<T>): Promise<T> {
-  const previous = homeLocks.get(locale) || Promise.resolve();
-  const run = previous.then(task, task);
-  homeLocks.set(locale, run.then(() => undefined, () => undefined));
-  return run;
+  const tmp = `${target}.tmp`;
+  await fs.writeFile(tmp, JSON.stringify(file, null, 2), 'utf8');
+  await fs.rename(tmp, target);
 }
 
 /** Lit la configuration API, sans jamais lever : `null` = indisponible. */
@@ -260,23 +228,21 @@ export async function saveHomeSection(input: {
 
 /** En secours, la configuration vit dans le fichier de la langue. */
 async function patchHomeFile(locale: string, key: HomeSectionKey, config: HomeSectionConfig) {
-  await withHomeLock(locale, async () => {
-    const file = (await readHomeFile(locale)) || { version: 1, sections: {} };
-    const sections: HomeSections = { ...(file.sections || {}) };
-    const payload: HomeSectionConfig =
-      locale === HOME_REF_LOCALE
-        ? config
-        : {
-            ...(sections[key] || config),
-            key,
-            texts: config.texts || {},
-            items: config.items || [],
-            builder: config.builder || { mode: 'native' },
-            status: config.status || 'published',
-          };
-    sections[key] = payload;
-    await writeHomeFile(locale, { ...file, version: 1, order: file.order, sections });
-  });
+  const file = (await readHomeFile(locale)) || { version: 1, sections: {} };
+  const sections: HomeSections = { ...(file.sections || {}) };
+  const payload: HomeSectionConfig =
+    locale === HOME_REF_LOCALE
+      ? config
+      : {
+          ...(sections[key] || config),
+          key,
+          texts: config.texts || {},
+          items: config.items || [],
+          builder: config.builder || { mode: 'native' },
+          status: config.status || 'published',
+        };
+  sections[key] = payload;
+  await writeHomeFile(locale, { ...file, version: 1, order: file.order, sections });
 }
 
 export async function reorderHome(input: { locale: string; order: HomeSectionKey[]; token?: string | null }) {
@@ -293,26 +259,24 @@ export async function reorderHome(input: { locale: string; order: HomeSectionKey
     await touchStorefrontCache();
     return { stored: 'api' as const };
   }
-  await withHomeLock(locale, async () => {
-    const file = (await readHomeFile(locale)) || { version: 1, sections: {} };
-    const sections: HomeSections = { ...(file.sections || {}) };
-    input.order.forEach((key, index) => {
-      const previous = sections[key];
-      sections[key] = {
-        key,
-        sortOrder: index,
-        enabled: previous?.enabled ?? true,
-        status: 'published',
-        texts: previous?.texts || {},
-        selection: previous?.selection || EMPTY_SELECTION,
-        settings: previous?.settings || {},
-        style: previous?.style || {},
-        items: previous?.items || [],
-        builder: previous?.builder || { mode: 'native' },
-      };
-    });
-    await writeHomeFile(locale, { ...file, version: 1, order: input.order, sections });
+  const file = (await readHomeFile(locale)) || { version: 1, sections: {} };
+  const sections: HomeSections = { ...(file.sections || {}) };
+  input.order.forEach((key, index) => {
+    const previous = sections[key];
+    sections[key] = {
+      key,
+      sortOrder: index,
+      enabled: previous?.enabled ?? true,
+      status: 'published',
+      texts: previous?.texts || {},
+      selection: previous?.selection || EMPTY_SELECTION,
+      settings: previous?.settings || {},
+      style: previous?.style || {},
+      items: previous?.items || [],
+      builder: previous?.builder || { mode: 'native' },
+    };
   });
+  await writeHomeFile(locale, { ...file, version: 1, order: input.order, sections });
   await touchStorefrontCache();
   return { stored: 'file' as const };
 }
@@ -342,18 +306,16 @@ export async function copyHomeStructure(input: {
   for (const target of input.to) {
     const locale = safeLocale(target);
     if (locale === input.from) continue;
-    await withHomeLock(locale, async () => {
-      const file = (await readHomeFile(locale)) || { version: 1, sections: {} };
-      const sections: HomeSections = { ...(file.sections || {}) };
-      for (const [key, config] of Object.entries(source) as Array<[HomeSectionKey, HomeSectionConfig]>) {
-        if (input.key && key !== input.key) continue;
-        sections[key] = input.withTexts
-          ? config
-          : { ...config, texts: {}, builder: { mode: 'native' } };
-        copied += 1;
-      }
-      await writeHomeFile(locale, { ...file, version: 1, order: file.order, sections });
-    });
+    const file = (await readHomeFile(locale)) || { version: 1, sections: {} };
+    const sections: HomeSections = { ...(file.sections || {}) };
+    for (const [key, config] of Object.entries(source) as Array<[HomeSectionKey, HomeSectionConfig]>) {
+      if (input.key && key !== input.key) continue;
+      sections[key] = input.withTexts
+        ? config
+        : { ...config, texts: {}, builder: { mode: 'native' } };
+      copied += 1;
+    }
+    await writeHomeFile(locale, { ...file, version: 1, order: file.order, sections });
   }
   await touchStorefrontCache();
   return { stored: 'file' as const, result: { copied } };
@@ -372,12 +334,10 @@ export async function resetHomeSection(input: { key: HomeSectionKey; locale: str
     await touchStorefrontCache();
     return { stored: 'api' as const, ...cleared };
   }
-  await withHomeLock(locale, async () => {
-    const file = (await readHomeFile(locale)) || { version: 1, sections: {} };
-    const sections: HomeSections = { ...(file.sections || {}) };
-    delete sections[input.key];
-    await writeHomeFile(locale, { ...file, version: 1, sections });
-  });
+  const file = (await readHomeFile(locale)) || { version: 1, sections: {} };
+  const sections: HomeSections = { ...(file.sections || {}) };
+  delete sections[input.key];
+  await writeHomeFile(locale, { ...file, version: 1, sections });
   await touchStorefrontCache();
   return { stored: 'file' as const, reset: true };
 }

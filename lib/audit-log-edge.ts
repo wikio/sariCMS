@@ -75,9 +75,6 @@ export const auditLog = {
   rateLimited: (data: { ip: string; path: string; ua?: string; limit: number }) =>
     writeAuditLog({ type: 'api.rate_limited', severity: 'warning', ip: data.ip, userAgent: data.ua, resource: 'api', resourceId: data.path, action: 'rate_limit', outcome: 'blocked', details: { limit: data.limit } }),
 
-  authFailure: (data: { ip?: string; path: string; ua?: string; reason: string }) =>
-    writeAuditLog({ type: 'auth.login.failure', severity: 'warning', ip: data.ip, userAgent: data.ua, resource: 'auth', resourceId: data.path, action: 'auth_check', outcome: 'failure', error: data.reason }),
-
   suspiciousRequest: (data: { ip: string; path: string; reason: string; ua?: string; payload?: unknown }) =>
     writeAuditLog({ type: 'api.suspicious_request', severity: 'error', ip: data.ip, userAgent: data.ua, resource: 'api', resourceId: data.path, action: 'suspicious', outcome: 'blocked', error: data.reason, details: { payload: sanitizeDetails(data.payload as Record<string, unknown>) } }),
 };

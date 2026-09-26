@@ -62,50 +62,11 @@ export async function readStore(): Promise<Store> {
   return { version: 1, rows: [] };
 }
 
-/** Compteur de fichiers temporaires, voir `writeStore`. */
-let tmpSeq = 0;
-
-/**
- * Écriture atomique.
- *
- * Le nom du temporaire porte le PID **et** un compteur : avec un nom fixe, deux
- * écritures menées de front visaient le même chemin, la première le renommait et
- * la seconde échouait en `ENOENT` — et le fichier pouvait rester tronqué. Un
- * échec nettoie son temporaire au lieu de le laisser derrière lui.
- */
 async function writeStore(store: Store): Promise<void> {
   await fs.mkdir(path.dirname(FILE), { recursive: true });
-  const tmp = `${FILE}.${process.pid}.${(tmpSeq += 1)}.tmp`;
-  try {
-    await fs.writeFile(tmp, JSON.stringify(store, null, 2), 'utf8');
-    await fs.rename(tmp, FILE);
-  } catch (err) {
-    await fs.rm(tmp, { force: true }).catch(() => undefined);
-    throw err;
-  }
-}
-
-/**
- * File d'exclusion des mutateurs.
- *
- * Chacun fait lire-modifier-écrire sur le fichier entier : deux appels menés de
- * front lisaient la même version, puis le dernier écrasait l'autre. Douze
- * inscriptions simultanées n'en laissaient qu'une. Les mettre bout à bout suffit
- * — la liste est petite et ces appels sont rares.
- *
- * Un rejet n'empoisonne pas la file : le suivant part quand même.
- */
-let storeLock: Promise<unknown> = Promise.resolve();
-
-function exclusive<T>(task: () => Promise<T>): Promise<T> {
-  const run = storeLock.then(task, task);
-  storeLock = run.then(() => undefined, () => undefined);
-  return run;
-}
-
-/** Enveloppe un mutateur sans lui faire perdre sa signature. */
-function exclusiveFn<Args extends unknown[], Out>(fn: (...args: Args) => Promise<Out>) {
-  return (...args: Args): Promise<Out> => exclusive(() => fn(...args));
+  const tmp = `${FILE}.tmp`;
+  await fs.writeFile(tmp, JSON.stringify(store, null, 2), 'utf8');
+  await fs.rename(tmp, FILE);
 }
 
 const ACTIVE_STATUSES = new Set<SubscriberStatus>(['pending', 'subscribed']);
@@ -118,7 +79,7 @@ const ACTIVE_STATUSES = new Set<SubscriberStatus>(['pending', 'subscribed']);
  * dire plutôt qu'annoncer une nouvelle inscription), `reactivated` qu'elle avait
  * été retirée et revient.
  */
-async function subscribeImpl(input: {
+export async function subscribe(input: {
   email: string;
   name?: string;
   locale?: string;
@@ -168,7 +129,7 @@ async function subscribeImpl(input: {
   return { created: true, duplicate: false, reactivated: false, row };
 }
 
-async function unsubscribeImpl(input: {
+export async function unsubscribe(input: {
   email?: string;
   token?: string;
   reason?: string;
@@ -194,7 +155,7 @@ async function unsubscribeImpl(input: {
 }
 
 /** Confirmation d'une inscription (double opt-in). */
-async function confirmSubscriberImpl(token: string): Promise<SubscriberRow | null> {
+export async function confirmSubscriber(token: string): Promise<SubscriberRow | null> {
   if (!token) return null;
   const store = await readStore();
   const row = store.rows.find((item) => item.token === token);
@@ -228,7 +189,7 @@ export async function listSubscribers(query: {
   return rows.sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
 }
 
-async function createSubscriberImpl(input: Partial<SubscriberRow> & { email: string }): Promise<SubscriberRow> {
+export async function createSubscriber(input: Partial<SubscriberRow> & { email: string }): Promise<SubscriberRow> {
   const store = await readStore();
   const email = normalizeEmail(input.email);
   const now = new Date().toISOString();
@@ -256,7 +217,7 @@ async function createSubscriberImpl(input: Partial<SubscriberRow> & { email: str
   return row;
 }
 
-async function updateSubscriberImpl(id: string, patch: Partial<SubscriberRow>): Promise<SubscriberRow | null> {
+export async function updateSubscriber(id: string, patch: Partial<SubscriberRow>): Promise<SubscriberRow | null> {
   const store = await readStore();
   const row = store.rows.find((item) => item.id === id);
   if (!row) return null;
@@ -267,7 +228,7 @@ async function updateSubscriberImpl(id: string, patch: Partial<SubscriberRow>): 
 }
 
 /** Corbeille (flag) puis purge définitive sur demande. */
-async function deleteSubscriberImpl(id: string, hard = false): Promise<boolean> {
+export async function deleteSubscriber(id: string, hard = false): Promise<boolean> {
   const store = await readStore();
   const idx = store.rows.findIndex((item) => item.id === id);
   if (idx < 0) return false;
@@ -277,7 +238,7 @@ async function deleteSubscriberImpl(id: string, hard = false): Promise<boolean> 
   return true;
 }
 
-async function restoreSubscriberImpl(id: string): Promise<boolean> {
+export async function restoreSubscriber(id: string): Promise<boolean> {
   const store = await readStore();
   const row = store.rows.find((item) => item.id === id);
   if (!row) return false;
@@ -287,7 +248,7 @@ async function restoreSubscriberImpl(id: string): Promise<boolean> {
   return true;
 }
 
-async function bulkStatusImpl(ids: string[], status: string, reason?: string): Promise<number> {
+export async function bulkStatus(ids: string[], status: string, reason?: string): Promise<number> {
   const store = await readStore();
   const now = new Date().toISOString();
   let done = 0;
@@ -357,19 +318,3 @@ export function toCsv<T extends object>(rows: readonly T[]): string {
     ...rows.map((row) => head.map((k) => esc((row as unknown as Record<string, unknown>)[k])).join(',')),
   ].join('\n');
 }
-
-/**
- * Mutateurs exportés, mis bout à bout par `exclusive`.
- *
- * Les lecteurs (`readStore`, `listSubscribers`, `subscriberStats`,
- * `distinctTopics`) restent hors file : ils ne modifient rien et n'ont pas à
- * attendre un envoi en cours.
- */
-export const subscribe = exclusiveFn(subscribeImpl);
-export const unsubscribe = exclusiveFn(unsubscribeImpl);
-export const confirmSubscriber = exclusiveFn(confirmSubscriberImpl);
-export const createSubscriber = exclusiveFn(createSubscriberImpl);
-export const updateSubscriber = exclusiveFn(updateSubscriberImpl);
-export const deleteSubscriber = exclusiveFn(deleteSubscriberImpl);
-export const restoreSubscriber = exclusiveFn(restoreSubscriberImpl);
-export const bulkStatus = exclusiveFn(bulkStatusImpl);

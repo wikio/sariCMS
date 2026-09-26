@@ -12,7 +12,6 @@ import { authenticator } from 'otplib';
 import * as QRCode from 'qrcode';
 import { SUPER_ADMIN_SLUG } from '../../common/constants/permissions';
 import {
-  PASSWORD_RESET_TOKEN_REPOSITORY,
   PERMISSION_REPOSITORY,
   REFRESH_TOKEN_REPOSITORY,
   ROLE_REPOSITORY,
@@ -34,14 +33,6 @@ interface RefreshTokenEntity extends BaseEntity {
   ip?: string | null;
 }
 
-interface PasswordResetTokenEntity extends BaseEntity {
-  userId: number;
-  tokenHash: string;
-  expiresAt: Date | string;
-  usedAt?: Date | string | null;
-  ip?: string | null;
-}
-
 @Injectable()
 export class AuthService {
   constructor(
@@ -49,8 +40,6 @@ export class AuthService {
     @Inject(ROLE_REPOSITORY) private readonly roles: ICrudRepository<RoleEntity>,
     @Inject(PERMISSION_REPOSITORY) private readonly permissions: ICrudRepository<PermissionEntity>,
     @Inject(REFRESH_TOKEN_REPOSITORY) private readonly refreshTokens: ICrudRepository<RefreshTokenEntity>,
-    @Inject(PASSWORD_RESET_TOKEN_REPOSITORY)
-    private readonly resetTokens: ICrudRepository<PasswordResetTokenEntity>,
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
     private readonly cache: AppCacheService,
@@ -116,9 +105,7 @@ export class AuthService {
       throw new UnauthorizedException('Refresh token expired');
     }
     const user = await this.users.findById(stored.userId);
-    if (!user || (user.status && user.status !== 'active')) {
-      throw new UnauthorizedException('Account is not active');
-    }
+    if (!user || user.status !== 'active') throw new UnauthorizedException('Account is not active');
     await this.refreshTokens.update(stored.id, { revokedAt: new Date().toISOString() } as Partial<RefreshTokenEntity>);
     return this.issueSession(user, meta);
   }
@@ -185,103 +172,6 @@ export class AuthService {
     }
 
     return { changed: true };
-  }
-
-  /** Durée de vie d'un jeton de réinitialisation. */
-  private static readonly RESET_TTL_MS = 30 * 60 * 1000;
-
-  /**
-   * La table ne contient jamais le jeton, seulement son SHA-256 : une fuite de
-   * la base ne permet pas de réinitialiser un mot de passe.
-   */
-  private hashResetToken(token: string): string {
-    return createHash('sha256').update(String(token)).digest('hex');
-  }
-
-  /**
-   * Émet un jeton de réinitialisation.
-   *
-   * Réservé au serveur Next.js (voir `AuthController.requestReset`) : le jeton
-   * est renvoyé à l'appelant, qui s'en sert pour construire le lien envoyé par
-   * email. Rendre ce point d'entrée public reviendrait à laisser n'importe qui
-   * demander le jeton de n'importe quelle adresse.
-   *
-   * L'absence de compte ne se lit pas dans la réponse : `found: false` et rien
-   * d'autre, même forme que le reste. C'est la route Next qui renvoie dans tous
-   * les cas le même message au visiteur.
-   */
-  async requestPasswordReset(email: string, meta: { ip?: string }) {
-    const normalized = String(email || '').toLowerCase().trim();
-    const user = await this.users.findOne({ email: normalized });
-    // `status` absent = actif : les comptes créés avant que l'inscription ne
-    // pose explicitement `active` n'ont pas la colonne, et le pilote JSON
-    // n'applique pas les défauts du schéma. Seuls `blocked` et `pending`
-    // comptent comme inactifs.
-    if (!user || (user.status && user.status !== 'active')) {
-      return { found: false as const };
-    }
-
-    const token = randomBytes(32).toString('base64url');
-    const expiresAt = new Date(Date.now() + AuthService.RESET_TTL_MS).toISOString();
-    await this.resetTokens.create({
-      userId: user.id,
-      tokenHash: this.hashResetToken(token),
-      expiresAt,
-      ip: meta.ip || null,
-    } as Partial<PasswordResetTokenEntity>);
-
-    const nom = [user.firstName, user.lastName].filter(Boolean).join(' ').trim();
-    return { found: true as const, token, email: normalized, name: nom, expiresAt };
-  }
-
-  /**
-   * Consomme un jeton et pose le nouveau mot de passe.
-   *
-   * Un jeton ne sert qu'une fois (`usedAt`), expire, et les sessions ouvertes
-   * sont révoquées : réinitialiser un mot de passe veut le plus souvent dire que
-   * l'ancien a fuité.
-   */
-  async resetPassword(dto: { token: string; password: string }) {
-    const stored = await this.resetTokens.findOne({ tokenHash: this.hashResetToken(dto.token) });
-    if (!stored || stored.usedAt) {
-      throw new UnauthorizedException('Invalid or already used reset token');
-    }
-    if (new Date(stored.expiresAt) < new Date()) {
-      throw new UnauthorizedException('Reset token expired');
-    }
-
-    const user = await this.users.findById(stored.userId);
-    if (!user || user.status !== 'active') throw new UnauthorizedException('Account is not active');
-
-    // Le jeton est consommé avant le changement : deux requêtes simultanées ne
-    // peuvent pas toutes deux passer.
-    await this.resetTokens.update(stored.id, {
-      usedAt: new Date().toISOString(),
-    } as Partial<PasswordResetTokenEntity>);
-
-    await this.users.update(user.id, {
-      passwordHash: bcrypt.hashSync(dto.password, 10),
-    } as Partial<UserEntity>);
-
-    try {
-      const { data } = await this.refreshTokens.findMany({
-        limit: 200,
-        filters: [{ field: 'userId', op: 'eq', value: user.id }],
-      });
-      await Promise.all(
-        (data || [])
-          .filter((jeton) => !jeton.revokedAt)
-          .map((jeton) =>
-            this.refreshTokens.update(jeton.id, {
-              revokedAt: new Date().toISOString(),
-            } as Partial<RefreshTokenEntity>),
-          ),
-      );
-    } catch {
-      /* Révocation impossible : le mot de passe est changé malgré tout. */
-    }
-
-    return { ok: true as const };
   }
 
   async setupTotp(userId: number) {

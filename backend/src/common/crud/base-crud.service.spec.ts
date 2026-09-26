@@ -76,15 +76,6 @@ class MemoryRepo implements ICrudRepository<Item> {
     this.items = this.items.filter((i) => !i.deletedAt || new Date(String(i.deletedAt)) > olderThan);
     return before - this.items.length;
   }
-  async deleteOlderThan(field: string, cutoff: Date): Promise<number> {
-    const before = this.items.length;
-    this.items = this.items.filter((i) => {
-      const raw = (i as unknown as Record<string, unknown>)[field];
-      const at = raw === undefined || raw === null ? null : new Date(String(raw));
-      return !(at && !Number.isNaN(at.getTime()) && at < cutoff);
-    });
-    return before - this.items.length;
-  }
   async count(): Promise<number> {
     return this.items.filter((i) => !i.deletedAt).length;
   }
@@ -324,81 +315,5 @@ describe('BaseCrudService — legacyId selon le modèle', () => {
     expect(repo.items[0].legacyId).toBe('grp-1');
     await service.create({ title: 'B', status: 'ok' } as Partial<Item>);
     expect(String(repo.items[1].legacyId)).toMatch(/^appl-/);
-  });
-});
-
-describe('BaseCrudService — payload de la piste d’audit', () => {
-  let repo: MemoryRepo;
-  let audit: { record: jest.Mock };
-  let service: TestService;
-
-  beforeEach(() => {
-    repo = new MemoryRepo();
-    audit = { record: jest.fn().mockResolvedValue(undefined) };
-    service = new TestService(repo, mockCache(), audit as unknown as AuditService);
-  });
-
-  /** Dernière entrée journalisée, ou undefined. */
-  const lastEntry = () =>
-    audit.record.mock.calls.length
-      ? (audit.record.mock.calls[audit.record.mock.calls.length - 1][0] as Record<string, unknown>)
-      : undefined;
-
-  it('sur une mise à jour, ne journalise que les champs modifiés', async () => {
-    const created = (await service.create({ title: 'Avant', status: 'draft' } as Partial<Item>)) as Item;
-    audit.record.mockClear();
-
-    await service.update(created.id!, { title: 'Après', status: 'draft' } as Partial<Item>);
-
-    const entry = lastEntry()!;
-    expect(entry.action).toBe('update');
-    expect(entry.resourceId).toBe(created.id);
-    // `status` n’a pas bougé : il ne doit pas réapparaître dans la payload.
-    expect(entry.payload).toEqual({ title: 'Après' });
-  });
-
-  it('journalise l’action même quand rien n’a changé, mais sans payload', async () => {
-    const created = (await service.create({ title: 'Stable', status: 'draft' } as Partial<Item>)) as Item;
-    audit.record.mockClear();
-
-    await service.update(created.id!, { title: 'Stable', status: 'draft' } as Partial<Item>);
-
-    const entry = lastEntry()!;
-    expect(entry.action).toBe('update');
-    expect(entry.payload).toBeUndefined();
-  });
-
-  it('borne le contenu volumineux au lieu de le copier', async () => {
-    const long = 'x'.repeat(20_000);
-    await service.create({ title: 'Article', status: 'draft', body: long } as unknown as Partial<Item>);
-
-    const payload = lastEntry()!.payload as Record<string, string>;
-    expect(payload.body.length).toBeLessThan(1_000);
-    expect(payload.body.endsWith('car.]')).toBe(true);
-  });
-
-  it('ne journalise jamais un secret, même sur création', async () => {
-    await service.create({
-      title: 'Compte',
-      status: 'ok',
-      passwordHash: '$2b$10$secret',
-    } as Partial<Item>);
-
-    const payload = lastEntry()!.payload as Record<string, unknown>;
-    expect(payload.passwordHash).toBeUndefined();
-    expect(payload.title).toBe('Compte');
-  });
-
-  it('conserve l’acteur, l’IP et l’agent utilisateur', async () => {
-    await service.create({ title: 'Pisté', status: 'ok' } as Partial<Item>, {
-      id: 7,
-      ip: '10.0.0.1',
-      userAgent: 'jest',
-    });
-
-    const entry = lastEntry()!;
-    expect(entry.actorId).toBe(7);
-    expect(entry.ip).toBe('10.0.0.1');
-    expect(entry.userAgent).toBe('jest');
   });
 });

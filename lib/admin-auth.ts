@@ -10,29 +10,11 @@
  */
 import { randomBytes } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
-import { SignJWT, jwtVerify, decodeJwt } from 'jose';
+import { SignJWT, jwtVerify } from 'jose';
 
-// En production le backend Nest signe les JWT avec JWT_ACCESS_SECRET,
-// le front Next signe ses fallback avec ADMIN_JWT_SECRET. Après le correctif
-// initial ces deux secrets étaient différents (frontend: dev-secret..., backend:
-// change-me-access-secret...), donc verifyAccessToken échouait systématiquement
-// pour les tokens émis par le backend => /me renvoyait 401 => boucle login.
-// On essaie tous les secrets connus, et on supporte la forme backend
-// { sub, email, typ } ainsi que la forme front { sub, email, type, permissions }.
-function getJwtSecrets(): Uint8Array[] {
-  const candidates = [
-    process.env.ADMIN_JWT_SECRET,
-    process.env.JWT_ACCESS_SECRET,
-    // fallback dev commun aux deux côtés
-    'dev-secret-change-in-production-min-32-chars!!',
-    'change-me-access-secret-min-32-chars-please',
-  ].filter(Boolean) as string[];
-  // dédupliquer
-  const uniq = [...new Set(candidates)];
-  return uniq.map(s => new TextEncoder().encode(s));
-}
-
-const PRIMARY_JWT_SECRET = getJwtSecrets()[0];
+const JWT_SECRET = new TextEncoder().encode(
+  process.env.ADMIN_JWT_SECRET || 'dev-secret-change-in-production-min-32-chars!!'
+);
 
 const ACCESS_TOKEN_EXPIRY = '15m';
 const REFRESH_TOKEN_EXPIRY = '30d';
@@ -77,7 +59,7 @@ export async function createAccessToken(user: AdminUser): Promise<string> {
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime(ACCESS_TOKEN_EXPIRY)
-    .sign(PRIMARY_JWT_SECRET);
+    .sign(JWT_SECRET);
 }
 
 export async function createRefreshToken(userId: string): Promise<string> {
@@ -85,54 +67,22 @@ export async function createRefreshToken(userId: string): Promise<string> {
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime(REFRESH_TOKEN_EXPIRY)
-    .sign(PRIMARY_JWT_SECRET);
+    .sign(JWT_SECRET);
 }
 
 export async function verifyAccessToken(token: string): Promise<AccessTokenPayload | null> {
-  // Essayer chaque secret connu (ADMIN_JWT_SECRET, JWT_ACCESS_SECRET, fallbacks)
-  for (const secret of getJwtSecrets()) {
-    try {
-      const { payload } = await jwtVerify(token, secret);
-      // Normaliser la forme backend { typ: 'access' } vers { type: 'admin' }
-      const p = payload as unknown as Record<string, unknown>;
-      if (p.typ && !p.type) p.type = p.typ === 'access' ? 'admin' : String(p.typ);
-      // Permissions absentes côté backend : on les laisse vides, /me les
-      // reconstituera via le cookie ou un appel backend.
-      return payload as unknown as AccessTokenPayload;
-    } catch {
-      // essayer le secret suivant
-    }
-  }
-  // Dernier recours : décodage sans vérification pour diagnostiquer
-  // (ne JAMAIS faire confiance à ce payload pour autoriser, seulement pour log)
   try {
-    const decoded = decodeJwt(token) as unknown as Record<string, unknown>;
-    if (decoded && decoded.sub && decoded.exp && (decoded.exp as number) * 1000 > Date.now()) {
-      // token expiré ou secret inconnu — on retourne null pour forcer proxy backend
-    }
-  } catch {}
-  return null;
+    const { payload } = await jwtVerify(token, JWT_SECRET);
+    return payload as unknown as AccessTokenPayload;
+  } catch {
+    return null;
+  }
 }
 
 export async function verifyRefreshToken(token: string): Promise<RefreshTokenPayload | null> {
-  // Les refresh tokens backend sont des chaînes opaques hex (randomBytes 48 → hex),
-  // pas des JWT. Ils échoueront toujours ici — c'est normal, le caller doit
-  // proxifier vers le backend. On garde la vérif JWT pour les refresh JWT
-  // générés en fallback dev.
-  for (const secret of getJwtSecrets()) {
-    try {
-      const { payload } = await jwtVerify(token, secret);
-      return payload as unknown as RefreshTokenPayload;
-    } catch {
-      // try next
-    }
-  }
-  return null;
-}
-
-export function decodeAccessTokenUnsafe(token: string): Record<string, unknown> | null {
   try {
-    return decodeJwt(token) as unknown as Record<string, unknown>;
+    const { payload } = await jwtVerify(token, JWT_SECRET);
+    return payload as unknown as RefreshTokenPayload;
   } catch {
     return null;
   }

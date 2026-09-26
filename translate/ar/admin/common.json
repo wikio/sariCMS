@@ -37,12 +37,12 @@
   "approved": "معتمد",
   "rejected": "مرفوض",
   "accepted": "مقبول",
-  "inProgress": "قيد المعالجة",
+  "inProgress": "قيد التنفيذ",
   "completed": "مكتمل",
-  "cancelled": "ملغاة",
+  "cancelled": "ملغي",
   "paid": "مدفوع",
   "unpaid": "غير مدفوع",
-  "delivered": "مسلمة",
+  "delivered": "تم التسليم",
   "shipped": "تم الشحن",
   "processing": "قيد المعالجة",
   "actions": "الإجراءات",
@@ -108,10 +108,5 @@
   "bulkStatusNoop": "بالفعل «{status}»",
   "bulkError": "تعذّر تنفيذ الإجراء الجماعي",
   "clearSelection": "إلغاء التحديد",
-  "bulkPartial": "تمت معالجة {done}، فشل {failed}",
-  "breadcrumbShop": "المتجر",
-  "shop": "المتجر",
-  "eShop": "المتجر",
-  "filter": "تصفية",
-  "validated": "مُصادق"
+  "bulkPartial": "تمت معالجة {done}، فشل {failed}"
 }

@@ -17,7 +17,12 @@ qu'elle figure ici avec son verdict. Une clé ajoutée sans ligne meurt au contr
 npm run storage:audit        # la carte dit-elle la vérité sur le code ?
 npm run settings-doc:test    # les réglages d'écran : accord écran/serveur/navigation
 npm run upload:test          # uploads : type, magic bytes, SVG, entêtes
-cd backend && npx jest       # backend (372 tests)
+cd backend && npx jest       # backend : 34 suites, 374 tests, tous verts
+                       # ⚠ les scripts `storage:audit`, `upload:test`, `shop:test`,
+                       # `settings-doc:test`, `payments:test`, `intl:*` vivent à la
+                       # RACINE du dépôt, pas dans `backend` — `npm run storage:audit`
+                       # lancé depuis `backend` répond « Missing script » : ce n'est pas
+                       # l'installation qui est cassée, c'est le répertoire courant.
 ./node_modules/.bin/tsc --noEmit && npx next build --webpack
 ```
 
@@ -363,6 +368,7 @@ Vérification faite paquet par paquet, et elle change le classement.
 | `lodash` (`_.template`), `js-yaml`, `deepmerge-ts`, `qs`, `uuid` | high/moderate | **non** — zéro occurrence de ces appels dans le dépôt | ils partiront avec la migration Nest ; ne pas les courir un par un |
 | `prisma` / `@prisma/config` | high | chemin d'installation du moteur et de génération du client, pas la requête d'un visiteur | dernière corrective de la mineure, `npx prisma generate`, puis `npm run sql:schema` en contrôle |
 | `@nestjs/*` (core, platform-express, swagger, config, schedule, cache-manager) | high/moderate | surface réelle (HTTP, limites, journal) — mais les correctifs sont en **Nest 12** | migration à planifier à part, pas la veille d'un déploiement ; à chiffrer avant |
+| `otplib` 12 → 13 | *hors audit* : **dépréciation annoncée par npm à l'installation**, pas une faille répertoriée | oui, et c'est le chemin le plus sensible du dépôt — le second facteur de la connexion (`generateSecret`, `keyuri`, `verify` dans `src/modules/auth/auth.service.ts`) | à monter **seul**, parcours 2FA rejoué à la main : configuration, bon code, code expiré, même code une seconde fois. Non monté ici : un TOTP qu'on ne peut pas vérifier dans le bac à sable vaut moins qu'un TOTP déprécié mais juste |
 
 Ordre proposé, du moins risqué au plus engageant — chaque palier se vérifie par le build
 et par les contrôles de §7.1 avant le suivant :
@@ -457,10 +463,18 @@ la main).
 
 ### 7.1 Sur ce dépôt (moi, ou vous, dans l'ordre)
 
-1. `cd backend && npm ci && npm run build && npx jest` → 0 échec **autre** que les trois
-   connus (`orders.service.spec.ts` ×2, `quotes.service.spec.ts` ×1, préexistants à ces
-   vagues).
-2. `npm run storage:audit` → « carte d'aplomb ». C'est le contrôle de ce document.
+1. `cd backend && npm ci && npm run build && npx jest` → **34 suites, 374 tests, 0 échec**.
+   Trois échecs y traînaient depuis `86ceba0` (`orders.service.spec.ts` ×2,
+   `quotes.service.spec.ts` ×1) : pas un défaut du produit, mais un mock de dépôt devenu
+   faux quand les services ont ajouté la génération du `{code,reference}`. `create()` pose
+   les valeurs par défaut, puis le service rappelle `update()` ; le mock repartait de
+   `existing` — vide à la création — et renvoyait une ligne amputée de `status`, `currency`,
+   `email`. L'assertion tombait donc pour une raison sans rapport avec la production, où le
+   dépôt relit la ligne. Le mock suit maintenant une ligne unique de `create` à `update` :
+   assertions redevenues justes, et vertes. **Après ce document, un `npx jest` rouge n'est
+   plus acceptable** — ce seuil-là est net, il ne demande de judgment à personne.
+2. Revenir **à la racine du dépôt** (deux crans au-dessus de `backend`) : `npm run
+   storage:audit` → « carte d'aplomb ». C'est le contrôle de ce document.
 3. `npm run settings-doc:test`, `npm run upload:test`, `npm run shop:test`,
    `npm run payments:test`, `npm run intl:check`.
 4. `./node_modules/.bin/tsc --noEmit && npx next build --webpack` → 0 erreur, 218 pages.

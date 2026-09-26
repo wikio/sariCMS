@@ -54,17 +54,9 @@ export default function LogsPage() {
         <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>{t("subtitle")}</p>
       </header>
 
-      {/*
-        Grille explicite plutôt que `flex-1` : la répartition ne dépend plus de
-        la façon dont le formulaire de `SearchField` (lui-même une grille à deux
-        colonnes, avec `width: 100%`) négocie sa taille dans un conteneur
-        flexible. Le filtre texte prend tout l'espace disponible, le sélecteur
-        est ramené à 12rem — il n'a besoin que de la largeur d'un nom de
-        ressource.
-      */}
-      <div className="ad-card p-3 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_12rem] gap-2 items-center">
-        <SearchField className="w-full min-w-0" value={q} onChange={setQ} placeholder="Action, ressource, acteur…" />
-        <select className="ad-select w-full min-w-0" value={resource} onChange={(e) => setResource(e.target.value)}>
+      <div className="ad-card p-3 flex flex-col lg:flex-row gap-2">
+        <SearchField className="flex-1" value={q} onChange={setQ} placeholder="Action, ressource, acteur…" />
+        <select className="ad-select lg:w-48" value={resource} onChange={(e) => setResource(e.target.value)}>
           <option value="">{t("allResources")}</option>
           {resources.map((r) => <option key={r} value={r}>{r}</option>)}
         </select>

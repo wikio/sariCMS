@@ -10,10 +10,6 @@ const logError = (...args: unknown[]) => DEBUG && console.error('[ServerCaptcha 
 
 interface ServerCaptchaProps {
   onChange?: (ok: boolean) => void;
-  /** Appelé à chaque changement d'id/valeur — permet au parent d'envoyer le captcha au serveur lors du submit (audit C1). */
-  onCaptchaData?: (data: { id: string; value: string }) => void;
-  /** Si true (défaut), vérifie automatiquement côté serveur quand 5 caractères sont saisis (contact, newsletter). Si false, la vérification est déléguée au parent (login admin). */
-  autoVerify?: boolean;
   className?: string;
   dark?: boolean;
   locale?: string;
@@ -23,8 +19,6 @@ interface ServerCaptchaProps {
 
 export default function ServerCaptcha({
   onChange,
-  onCaptchaData,
-  autoVerify = true,
   className = '',
   dark = false,
   locale = 'fr',
@@ -56,7 +50,6 @@ export default function ServerCaptcha({
           setInput('');
           setVerified(false);
           onChange?.(false);
-          onCaptchaData?.({ id: data.id, value: '' });
           log('Captcha loaded successfully');
         } else {
           logError('Réponse invalide - missing id or imageUrl:', data);
@@ -115,22 +108,8 @@ export default function ServerCaptcha({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const v = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 5);
     setInput(v);
-    onCaptchaData?.({ id: captchaId, value: v });
-    // En mode autoVerify (contact/newsletter) on vérifie immédiatement côté serveur.
-    // En mode deferVerify (admin login) on laisse le parent envoyer id+value au serveur lors du POST /login,
-    // afin d'éviter une double consommation (verify endpoint supprime l'entrée) et garantir
-    // une vérification atomique avec les identifiants (audit C1).
-    if (autoVerify && v.length === 5) {
+    if (v.length === 5) {
       handleVerify();
-    } else if (!autoVerify) {
-      // Mode admin : on considère "ok" dès que 5 caractères sont saisis,
-      // la vraie vérification sera faite côté serveur lors du login.
-      if (v.length === 5) {
-        onChange?.(true);
-      } else if (v.length < 5) {
-        onChange?.(false);
-        if (verified) setVerified(false);
-      }
     }
   };
 
@@ -175,29 +154,20 @@ export default function ServerCaptcha({
           )}
         </button>
         <input
-          type="text"
-          inputMode="text"
-          autoComplete="off"
-          autoCapitalize="characters"
-          spellCheck={false}
-          className="ad-input flex-1 uppercase tracking-[0.3em] font-bold text-center bg-white dark:bg-[#1a1a1a] !border-2 !border-sari-blue/30 focus:!border-sari-blue focus:!ring-2 focus:!ring-sari-blue/20 shadow-sm"
+          className="ad-input flex-1 uppercase tracking-[0.3em] font-bold text-center"
           value={input}
           onChange={handleInputChange}
           onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
           placeholder="CODE"
           aria-label="Saisir le code affiché"
           disabled={loading || verified}
-          maxLength={5}
-          style={{ borderColor: 'rgb(var(--color-sari-blue) / 0.3)' }}
         />
         <button
           type="button"
-          className="ad-btn ad-btn-icon ad-btn-ghost shrink-0 w-11 h-11 flex items-center justify-center self-stretch"
+          className="ad-btn ad-btn-icon ad-btn-ghost shrink-0"
           onClick={fetchCaptcha}
           disabled={loading}
           title={t('refresh')}
-          aria-label={t('refresh')}
-          style={{ borderRadius: 'var(--ad-radius-sm, 8px)', border: '1px solid var(--ad-line, #e3eef2)' }}
         >
           <RefreshCw className="w-4 h-4" />
         </button>

@@ -40,11 +40,7 @@ export class CmsError extends Error {
 
 type CmsEnvelope<T> = { success?: boolean; data?: T; message?: string; statusCode?: number };
 
-/**
- * Le backend enveloppe ses réponses : `{ success, data }`. Les appelants veulent
- * la donnée, pas l'enveloppe — d'où ce dépliage, partagé avec `internalPost`.
- */
-export function unwrap<T>(json: unknown): T {
+function unwrap<T>(json: unknown): T {
   if (json && typeof json === 'object' && 'success' in (json as object)) {
     const env = json as CmsEnvelope<T>;
     return env.data as T;

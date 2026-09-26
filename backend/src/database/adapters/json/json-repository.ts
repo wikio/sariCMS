@@ -144,20 +144,6 @@ export class JsonRepository<T extends BaseEntity> implements ICrudRepository<T> 
     return removed;
   }
 
-  async deleteOlderThan(field: string, cutoff: Date): Promise<number> {
-    const all = this.store.read(this.collection);
-    const keep: Record<string, unknown>[] = [];
-    let removed = 0;
-    for (const item of all) {
-      const raw = item[field];
-      const at = raw === undefined || raw === null ? null : new Date(String(raw));
-      if (at && !Number.isNaN(at.getTime()) && at < cutoff) removed += 1;
-      else keep.push(item);
-    }
-    if (removed) await this.store.write(this.collection, keep);
-    return removed;
-  }
-
   async count(where: Record<string, unknown> = {}, includeDeleted = false): Promise<number> {
     return this.store.read(this.collection).filter((item) => {
       if (item.deletedAt && !includeDeleted) return false;

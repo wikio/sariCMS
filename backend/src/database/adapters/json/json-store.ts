@@ -13,8 +13,6 @@ export class JsonStore {
   private readonly dir: string;
   private readonly cache = new Map<string, Record<string, unknown>[]>();
   private readonly queues = new Map<string, Promise<void>>();
-  /** Counter for temp file names — see the write path in `write`. */
-  private tmpSeq = 0;
 
   constructor(dir: string) {
     this.dir = path.resolve(dir);
@@ -61,21 +59,9 @@ export class JsonStore {
     try {
       this.cache.set(collection, items);
       const file = this.fileOf(collection);
-      // Unique per write: a fixed `.tmp` name let a concurrent writer (another
-      // process — e.g. `npm run seed` while the server is up) rename the file
-      // first, leaving this one with ENOENT and the JSON truncated.
-      const tmp = `${file}.${process.pid}.${++this.tmpSeq}.tmp`;
-      try {
-        fs.writeFileSync(tmp, JSON.stringify(items, null, 2), 'utf8');
-        fs.renameSync(tmp, file);
-      } catch (err) {
-        try {
-          fs.rmSync(tmp, { force: true });
-        } catch {
-          /* best effort */
-        }
-        throw err;
-      }
+      const tmp = `${file}.tmp`;
+      fs.writeFileSync(tmp, JSON.stringify(items, null, 2), 'utf8');
+      fs.renameSync(tmp, file);
     } finally {
       release();
     }

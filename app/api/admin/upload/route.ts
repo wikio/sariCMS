@@ -6,7 +6,7 @@ import { isManifestFile, parseAssetName } from '@/lib/ged/prefix.mjs';
 import { isStateFile } from '@/lib/ged/manifest.mjs';
 import { bufferFromDataUrl, extensionFromDataUrl } from '@/lib/ged/http';
 import { gedStore } from '@/lib/ged/store.mjs';
-import { validateUpload, sanitizeFileName, sanitizeSvgBuffer, ALLOWED_MIME_TYPES } from '@/lib/upload-validation';
+import { validateUpload, sanitizeFileName, ALLOWED_MIME_TYPES } from '@/lib/upload-validation';
 
 const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads');
 const MAX_UPLOAD_SIZE = 50 * 1024 * 1024; // 50MB
@@ -271,12 +271,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Chemin de fichier invalide', code: 'PATH_TRAVERSAL' }, { status: 400 });
     }
 
-    // Un SVG est nettoyé avant d'atteindre le disque : le fichier sera servi sur
-    // l'origine du site, et ouvert directement il exécute ce qu'il contient.
-    // Voir `sanitizeSvgBuffer` (lib/upload-validation.ts).
+    // Lire et sauvegarder le fichier
     const bytes = await file.arrayBuffer();
-    const { buffer, removed } = sanitizeSvgBuffer(Buffer.from(bytes), validation.mimeType);
-    if (removed.length) console.warn('[Upload API] SVG nettoyé :', removed.join(', '));
+    const buffer = Buffer.from(bytes);
     await writeFile(filePath, buffer);
 
     const url = `/uploads/${folder}/${fileName}`;
@@ -343,11 +340,6 @@ async function postFromJson(request: NextRequest) {
     console.warn('[Upload API] JSON Warnings:', validation.warnings);
   }
 
-  // Même nettoyage côté data URL : l'atelier de recadrage passe par là, et un SVG
-  // y arrive aussi bien que par `multipart/form-data`.
-  const scrubbed = sanitizeSvgBuffer(buffer, validation.mimeType);
-  if (scrubbed.removed.length) console.warn('[Upload API] SVG nettoyé :', scrubbed.removed.join(', '));
-
   const overwrite = body.overwrite ? String(body.overwrite) : body.file ? String(body.file) : '';
   // Une réédition écrit à côté de l'asset remplacé (y compris à la racine de
   // `public/uploads`) ; une création prend le module demandé, `ged` par défaut.
@@ -374,7 +366,7 @@ async function postFromJson(request: NextRequest) {
       // rallonges où le module était écrit deux fois.
       name: overwrite ? undefined : slugifyName(name),
       extension,
-      buffer: scrubbed.buffer,
+      buffer,
       overwrite: overwrite ? toRef(overwrite) : undefined,
       manifest: {
         title: String(body.label || body.title || name).slice(0, 200),

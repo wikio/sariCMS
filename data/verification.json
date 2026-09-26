@@ -14,8 +14,7 @@
       "issuer": "issuer",
       "message": "message"
     },
-    "fallbackToLocal": true,
-    "showDemoCodes": true
+    "fallbackToLocal": true
   },
   "codes": [
     {

@@ -14,11 +14,5 @@
   "replaceFile": "Replace {name}",
   "selectFile": "Select file",
   "save": "Save",
-  "cancel": "Cancel",
-  "deleteConfirm": "Delete file “{name}”?",
-  "deleteError": "Unable to determine file path",
-  "uploadError": "Error uploading file",
-  "deleteFileError": "Error deleting file",
-  "renameError": "Error renaming file",
-  "replaceError": "Error replacing file"
+  "cancel": "Cancel"
 }

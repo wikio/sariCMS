@@ -11,7 +11,7 @@ import {
   ArrowRight, CheckCircle
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import ServerCaptcha from '@/components/ServerCaptcha';
+import ImageCaptcha from '@/components/ImageCaptcha';
 import { loadAdminSettings } from '@/lib/admin-settings';
 import { maskPhone } from '@/lib/masks';
 
@@ -35,9 +35,6 @@ export default function RegisterPage() {
   const [captchaQuestion, setCaptchaQuestion] = useState('');
   const [captchaExpected, setCaptchaExpected] = useState(0);
   const [captchaOk, setCaptchaOk] = useState(false);
-  // Le code est vérifié par /api/register, pas par le navigateur :
-  // `autoVerify={false}` évite de le consommer avant l'envoi du formulaire.
-  const [captcha, setCaptcha] = useState<{ id: string; value: string }>({ id: '', value: '' });
   const [siteCaptcha, setSiteCaptcha] = useState(true);
   const [partnerCode, setPartnerCode] = useState('');
   const [secretKey, setSecretKey] = useState('');
@@ -103,9 +100,6 @@ export default function RegisterPage() {
       type: formData.type as 'client' | 'partner' | 'candidate',
       phone: formData.phone,
       company: formData.company,
-      locale,
-      captchaId: siteCaptcha ? captcha.id : undefined,
-      captchaAnswer: siteCaptcha ? captcha.value : undefined,
     }).then(() => {
       setIsLoading(false);
       router.push(`/${locale}/dashboard`);
@@ -343,7 +337,7 @@ export default function RegisterPage() {
                           {t('captchaLabel')} <span className="text-red-500">*</span>
                         </label>
                         {siteCaptcha ? (
-                          <ServerCaptcha onChange={setCaptchaOk} onCaptchaData={setCaptcha} autoVerify={false} locale={locale} />
+                          <ImageCaptcha onChange={setCaptchaOk} />
                         ) : (
                           <div className="flex items-center gap-4">
                             <div className="flex-1 bg-white dark:bg-[#1a1a1a] border border-gray-300 dark:border-gray-700 px-4 py-3 text-center rounded-lg">

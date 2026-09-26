@@ -64,8 +64,6 @@ export default function VerificationCodesAdminPage() {
   const [codes, setCodes] = useState<CodeDef[] | null>(null);
   const [draft, setDraft] = useState<CodeDef | null>(null);
   const [saving, setSaving] = useState(false);
-  const [showDemoCodes, setShowDemoCodes] = useState<boolean | null>(null);
-  const [demoSaving, setDemoSaving] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -74,16 +72,9 @@ export default function VerificationCodesAdminPage() {
         const json = await res.json();
         const rows: CodeDef[] = Array.isArray(json?.codes) ? json.codes : [];
         setCodes(rows.sort((a, b) => a.sortOrder - b.sortOrder));
-        // Lecture de la visibilité des Codes de démonstration (même fichier verification.json)
-        if (json?.api && typeof json.api.showDemoCodes === 'boolean') {
-          setShowDemoCodes(json.api.showDemoCodes);
-        } else {
-          setShowDemoCodes(true);
-        }
       } catch {
         showToast(t('loadError'), 'error');
         setCodes([]);
-        setShowDemoCodes(true);
       }
     })();
     // Une lecture à l'entrée de l'écran : c'est l'édition qui réécrit, pas un minuteur.
@@ -116,32 +107,6 @@ export default function VerificationCodesAdminPage() {
 
   const label = (c: CodeDef) => c.labels?.[locale as 'fr' | 'en' | 'ar'] || c.labels?.fr || c.code;
 
-  const persistDemoVisibility = async (next: boolean) => {
-    setDemoSaving(true);
-    try {
-      const res = await fetch('/api/admin/verification', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ api: { showDemoCodes: next } }),
-      });
-      const json = await res.json().catch(() => null);
-      if (!res.ok) {
-        showToast((json as { error?: string } | null)?.error || t('saveError'), 'error');
-        return;
-      }
-      setShowDemoCodes(next);
-      // Le serveur merge avec sanitizeApiSettings qui garde les autres champs ; on reflète l'état
-      if (json && (json as { api?: { showDemoCodes?: boolean } }).api) {
-        setShowDemoCodes((json as { api: { showDemoCodes: boolean } }).api.showDemoCodes);
-      }
-      showToast(next ? 'Codes de démonstration affichés sur la vitrine.' : 'Codes de démonstration masqués sur la vitrine.', 'success');
-    } catch {
-      showToast(t('saveError'), 'error');
-    } finally {
-      setDemoSaving(false);
-    }
-  };
-
   return (
     <div className="space-y-4">
       <header className="ad-rise flex flex-wrap items-end justify-between gap-3">
@@ -167,45 +132,6 @@ export default function VerificationCodesAdminPage() {
           </Link>
         </div>
       </header>
-
-      {/* Visibilité des Codes de démonstration — même réglage que Paramètres > Vérification */}
-      <section className="ad-card p-4 flex flex-wrap items-start justify-between gap-4">
-        <div className="space-y-1 max-w-2xl">
-          <div className="text-sm font-bold flex items-center gap-2">
-            Codes de démonstration sur la page publique
-            {showDemoCodes !== null && (
-              <span className={`text-[11px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${showDemoCodes ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'}`}>
-                {showDemoCodes ? 'Affichés' : 'Masqués'}
-              </span>
-            )}
-          </div>
-          <div className="text-xs leading-relaxed" style={{ color: 'var(--ad-muted)' }}>
-            Contrôle la section d'exemples sous le formulaire <code>/{locale}/verification</code> de la vitrine. Même réglage que{' '}
-            <Link href={`/${locale}/admin/settings`} className="underline decoration-dotted font-semibold">Paramètres → Vérification des documents</Link>.
-            {showDemoCodes === false && ' — Les 6 codes d’exemple sont actuellement masqués côté public.'}
-          </div>
-        </div>
-        <button
-          type="button"
-          disabled={showDemoCodes === null || demoSaving}
-          onClick={() => showDemoCodes !== null && persistDemoVisibility(!showDemoCodes)}
-          className={`ad-toggle ${showDemoCodes ? 'is-on' : ''} shrink-0`}
-          aria-pressed={!!showDemoCodes}
-          role="switch"
-        >
-          {showDemoCodes ? (
-            <>
-              <span className="ad-toggle-label">Affichés</span>
-              <span className="ad-toggle-knob" />
-            </>
-          ) : (
-            <>
-              <span className="ad-toggle-knob" />
-              <span className="ad-toggle-label">Masqués</span>
-            </>
-          )}
-        </button>
-      </section>
 
       {!codes ? (
         <section className="ad-card p-5 text-sm" style={{ color: 'var(--ad-muted)' }}>{t('loading')}</section>

@@ -25,7 +25,6 @@ import { loadAdminSettings } from '@/lib/admin-settings';
 import { maskPhone } from '@/lib/masks';
 import { useVisibility } from '@/lib/site-visibility';
 import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
-import ServerCaptcha from '@/components/ServerCaptcha';
 
 export default function JobDetailPage() {
   const params = useParams();
@@ -36,10 +35,6 @@ export default function JobDetailPage() {
   const searchParams = useSearchParams();
   const { user, isAuthenticated } = useAuth();
   const { addApplication, hasApplied } = useApplications();
-  // Le captcha est vérifié par /api/applications/notify, pas par le
-  // navigateur : `autoVerify={false}` évite de consommer le code avant l'envoi.
-  const [captcha, setCaptcha] = useState<{ id: string; value: string }>({ id: '', value: '' });
-  const [notifyError, setNotifyError] = useState('');
   const visibility = useVisibility();
   const canApply = visibility['action.apply'] !== false;
 
@@ -124,13 +119,11 @@ export default function JobDetailPage() {
     if (appFormData.phone.trim() && !/^[+\d][\d\s().-]{6,}$/.test(appFormData.phone.trim())) errs.phone = 'Numéro de téléphone invalide.';
     if (!appFormData.motivation.trim()) errs.motivation = 'Votre motivation est requise.';
     if (!appFormData.acceptTerms) errs.acceptTerms = 'Vous devez accepter les conditions.';
-    if (captcha.value.trim().length < 5) errs.captcha = t('captchaError');
     if (Object.keys(errs).length > 0) { setFormErrors(errs); return; }
     setFormErrors({});
-    setNotifyError('');
 
     if (job) {
-      const created = addApplication({
+      addApplication({
         jobId: job.id,
         title: job.title,
         image: job.image || '',
@@ -147,34 +140,6 @@ export default function JobDetailPage() {
       setApplicationSubmitted(true);
       setAddedToCart(true);
       setTimeout(() => setAddedToCart(false), 3000);
-
-      // La candidature est déjà enregistrée localement (et sera synchronisée par
-      // lib/crm-sync.ts). Cet appel ne déclenche que les emails : le centre de
-      // courrier décide s'ils partent, et le serveur applique sa politique
-      // (plafonds, dédoublonnage, heures silencieuses). Un échec ici ne remet
-      // jamais en cause le dépôt — le candidat est prévenu, rien n'est perdu.
-      void (async () => {
-        try {
-          const res = await fetch('/api/applications/notify', {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({
-              name: appFormData.name,
-              email: appFormData.email,
-              phone: appFormData.phone,
-              jobTitle: job.title,
-              reference: String(created.id),
-              locale,
-              captchaId: captcha.id,
-              captchaAnswer: captcha.value,
-            }),
-          });
-          const json = (await res.json().catch(() => null)) as { error?: string } | null;
-          if (!res.ok) setNotifyError(json?.error || t('notifyFailed'));
-        } catch {
-          setNotifyError(t('notifyFailed'));
-        }
-      })();
     }
   };
 
@@ -474,18 +439,6 @@ export default function JobDetailPage() {
                       className={`w-full px-4 py-3 border rounded-lg outline-none resize-none transition-colors dark:bg-[#111111] dark:text-white ${formErrors.motivation ? 'border-red-500 focus:border-red-500' : 'border-gray-300 dark:border-gray-700 focus:border-sari-blue'}`}></textarea>
                     {formErrors.motivation && <p className="text-xs text-red-500 mt-1">{formErrors.motivation}</p>}
                   </div>
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-1">
-                      {t('captchaLabel')} <span className="text-red-500">*</span>
-                    </label>
-                    <ServerCaptcha onCaptchaData={setCaptcha} autoVerify={false} locale={locale} />
-                    {formErrors.captcha && <p className="text-xs text-red-500 mt-1">{formErrors.captcha}</p>}
-                  </div>
-                  {notifyError && (
-                    <div role="alert" className="text-xs rounded-lg border border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200 px-3 py-2">
-                      {notifyError}
-                    </div>
-                  )}
                   <div className="flex items-start gap-2">
                     <input type="checkbox" id="accept-terms" checked={appFormData.acceptTerms}
                       onChange={(e) => { setAppFormData({ ...appFormData, acceptTerms: e.target.checked }); setFormErrors((p) => { const { acceptTerms: _n, ...r } = p; return r; }); }} className="w-4 h-4 mt-1" />

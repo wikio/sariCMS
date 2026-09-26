@@ -8,11 +8,27 @@ const cache = { delByPrefix: jest.fn(), get: jest.fn(), set: jest.fn(), del: jes
 const audit = { record: jest.fn() } as unknown as AuditService;
 
 function makeRepo(existing?: QuoteEntity) {
+  /*
+   * Un dépôt réel relit la ligne après une écriture. Ce n'est pas un détail de
+   * théâtre : `create()` applique les valeurs par défaut, puis le service rappelle
+   * `update()` pour poser le `reference` généré. Un mock qui repart de `existing` à
+   * chaque `update` renvoie donc une ligne amputée de tout ce qui a été posé à la
+   * création — et l'assertion sur `status`/`currency` tombe, pour une raison qui
+   * n'a rien à voir avec le comportement de production. La ligne se suit ici comme
+   * elle se suit en base.
+   */
+  let row = { ...(existing as Record<string, unknown> | undefined) } as Record<string, unknown>;
   return {
     collection: 'quotes',
-    create: jest.fn(async (d: Partial<QuoteEntity>) => d as QuoteEntity),
-    update: jest.fn(async (_id: unknown, d: Partial<QuoteEntity>) => ({ ...existing, ...d }) as QuoteEntity),
-    findById: jest.fn().mockResolvedValue(existing ?? null),
+    create: jest.fn(async (d: Partial<QuoteEntity>) => {
+      row = { ...row, ...d };
+      return row as QuoteEntity;
+    }),
+    update: jest.fn(async (_id: unknown, d: Partial<QuoteEntity>) => {
+      row = { ...row, ...d };
+      return row as QuoteEntity;
+    }),
+    findById: jest.fn(async () => (existing ? (row as QuoteEntity) : null)),
     findOne: jest.fn().mockResolvedValue(null),
   } as unknown as ICrudRepository<QuoteEntity>;
 }

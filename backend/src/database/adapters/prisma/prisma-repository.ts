@@ -101,9 +101,7 @@ export class PrismaRepository<T extends BaseEntity> implements ICrudRepository<T
     const orderBy = { [options.sortBy ?? 'createdAt']: options.sortOrder ?? 'desc' };
 
     const [total, rows] = await Promise.all([
-      // Gardé comme findMany : sur une table absente, c'est count() qui répond le
-      // premier, et son message brut serait arrivé tout seul à l'écran.
-      this.db.count({ where }).catch((error: unknown) => this.explainReadError(error)),
+      this.db.count({ where }),
       this.db
         .findMany({
           where,
@@ -111,7 +109,7 @@ export class PrismaRepository<T extends BaseEntity> implements ICrudRepository<T
           skip: (page - 1) * limit,
           take: limit,
         })
-        .catch((error: unknown) => this.explainReadError(error)),
+        .catch((error: unknown) => this.explainDate(error)),
     ]);
 
     return {
@@ -126,7 +124,7 @@ export class PrismaRepository<T extends BaseEntity> implements ICrudRepository<T
   }
 
   async findById(id: number, includeDeleted = false): Promise<T | null> {
-    const row = await this.db.findUnique({ where: { id } }).catch((error: unknown) => this.explainReadError(error));
+    const row = await this.db.findUnique({ where: { id } }).catch((error: unknown) => this.explainDate(error));
     if (!row) return null;
     if (row.deletedAt && !includeDeleted) return null;
     return row as T;
@@ -140,79 +138,20 @@ export class PrismaRepository<T extends BaseEntity> implements ICrudRepository<T
         ...(includeDeleted ? {} : { deletedAt: null }),
       },
     })
-      .catch((error: unknown) => this.explainReadError(error));
+      .catch((error: unknown) => this.explainDate(error));
     return (row as T) ?? null;
   }
 
   async create(data: Partial<T>): Promise<T> {
-    let payload: Record<string, unknown> = this.toPrisma(data) as Record<string, unknown>;
-    for (let attempt = 0; attempt < 12; attempt += 1) {
-      try {
-        return (await this.db.create({ data: payload })) as T;
-      } catch (e: unknown) {
-        const msg = String((e as { message?: string })?.message || e);
-        const m = /Unknown argument `([^`]+)`/.exec(msg);
-        if (m) {
-          const field = m[1];
-          if (field in payload) {
-            this.warnUnknownField(field);
-            const { [field]: _drop, ...rest } = payload;
-            payload = rest;
-            continue;
-          }
-          const dataRec = data as Record<string, unknown>;
-          if (field in dataRec) {
-            this.warnUnknownField(field);
-            delete (dataRec as Record<string, unknown>)[field];
-            payload = this.toPrisma(data) as Record<string, unknown>;
-            continue;
-          }
-        }
-        this.explainReadError(e);
-        throw e;
-      }
-    }
-    return (await this.db.create({ data: payload })) as T;
+    return (await this.db.create({ data: this.toPrisma(data) })) as T;
   }
 
   async update(id: number, data: Partial<T>): Promise<T> {
-    // Retry loop pour drift schéma : si le client Prisma n'a pas encore la colonne (ex: shippingFee),
-    // le DTO envoie le champ, model-fields le laisse passer, mais Prisma jette Unknown argument.
-    // On retire le champ incriminé et on rejoue — le statut et les autres champs passent quand même.
-    let payload: Record<string, unknown> = this.toPrisma(data) as Record<string, unknown>;
-    for (let attempt = 0; attempt < 12; attempt += 1) {
-      try {
-        return (await this.db.update({ where: { id }, data: payload })) as T;
-      } catch (e: unknown) {
-        const msg = String((e as { message?: string })?.message || e);
-        const m = /Unknown argument `([^`]+)`/.exec(msg);
-        if (m) {
-          const field = m[1];
-          if (field in payload) {
-            this.warnUnknownField(field);
-            const { [field]: _drop, ...rest } = payload;
-            payload = rest;
-            continue;
-          }
-          // Champ dans un sous-objet (ex: data.shippingFee) : tente quand même de le retirer du data d'origine
-          const dataRec = data as Record<string, unknown>;
-          if (field in dataRec) {
-            this.warnUnknownField(field);
-            delete (dataRec as Record<string, unknown>)[field];
-            payload = this.toPrisma(data) as Record<string, unknown>;
-            continue;
-          }
-        }
-        // Date cassée ou table absente : le helper nomme le remède, l'erreur remonte traduite
-        this.explainReadError(e);
-        throw e;
-      }
-    }
-    // Dernier essai sans les champs inconnus (tous retirés)
-    return (await this.db.update({ where: { id }, data: payload })) as T;
+    return (await this.db.update({
+      where: { id },
+      data: this.toPrisma(data),
+    })) as T;
   }
-
-
 
   async softDelete(id: number): Promise<T> {
     return (await this.db.update({
@@ -241,22 +180,13 @@ export class PrismaRepository<T extends BaseEntity> implements ICrudRepository<T
     return res.count ?? 0;
   }
 
-  async deleteOlderThan(field: string, cutoff: Date): Promise<number> {
-    const res = await this.db.deleteMany({
-      where: { [field]: { lt: cutoff } },
-    });
-    return res.count ?? 0;
-  }
-
   async count(where: Record<string, unknown> = {}, includeDeleted = false): Promise<number> {
-    return this.db
-      .count({
-        where: {
-          ...where,
-          ...(includeDeleted ? {} : { deletedAt: null }),
-        },
-      })
-      .catch((error: unknown) => this.explainReadError(error));
+    return this.db.count({
+      where: {
+        ...where,
+        ...(includeDeleted ? {} : { deletedAt: null }),
+      },
+    });
   }
 
   async autocomplete(field: string, q: string, limit: number): Promise<AutocompleteHit[]> {
@@ -351,41 +281,15 @@ export class PrismaRepository<T extends BaseEntity> implements ICrudRepository<T
   }
 
   /**
-   * Un échec de lecture côté Prisma, traduit en ce que l'exploitant peut faire.
-   *
-   * Deux familles, parce que les deux se présentent comme « la liste est en erreur »
-   * et que les deux remèdes sont à portée de main dans le dépôt :
-   *
-   * - **P2023**, une ligne date-au-zéro : « The column `updatedAt` contained an
-   *   invalid datetime value », sans table ni ligne, avec l'air d'un bug de la
-   *   requête en cours — alors qu'une seule date illisible pourrit la lecture de
-   *   toute la table.
-   * - **P2021 / P2022**, la table ou une colonne absente de CETTE base : le schéma
-   *   du dépôt est plus récent que la base (migration non jouée, ou base reprise
-   *   hors Prisma). Le message brut — « The table `payment_records` does not exist
-   *   in this database » — ne dit pas qu'un fichier SQL additive du dépôt la crée.
+   * Un PrismaClientKnownRequestError P2023 sur une liste ne disait rien d'utile :
+   * « The column `updatedAt` contained an invalid datetime value… », sans table,
+   * sans ligne, et avec l'air d'un bug de la requête en cours — alors qu'une seule
+   * ligne date-au-zéro pourrit la lecture de toute la table. Le message renvoyé
+   * porte désormais le diagnostic et la correction.
    */
-  private explainReadError(error: unknown): never {
+  private explainDate(error: unknown): never {
     const code = (error as { code?: string } | null)?.code;
     const message = (error as { message?: string } | null)?.message || String(error);
-    const missing =
-      code === 'P2021' ||
-      code === 'P2022' ||
-      /no such table|Unknown column|does(n'?t| not) exist in (this|the) (current )?database/i.test(message);
-    if (missing) {
-      const objet = /\bcolumn\b/i.test(message) ? 'une colonne' : 'la table';
-      throw new Error(
-        `${this.collection}: le schéma de cette base est plus ancien que le code — ${objet} ` +
-          `attendue est absente. Le rattrapage n'ajoute que ce qui manque : dans backend/, ` +
-          `« npm run db:schema-check » puis « npm run db:schema-fix ». Sans accès Node à la base, ` +
-          `jouez dans votre client SQL le fichier additif du dépôt qui crée cette table — ` +
-          `backend/sql/migrate-payment-records.mysql.sql pour un relevé d'encaissements, ` +
-          `backend/sql/migrate-coupons-taxes.mysql.sql pour coupons et taxes. ` +
-          `Deux pièges : « schema.mysql.sql » commence par des DROP, ne le jouez JAMAIS sur une base ` +
-          `peuplée ; et « prisma migrate deploy » refuse une base reprise hors Prisma, faute d'historique ` +
-          `_prisma_migrations. Le détail technique : ${message.split('\n')[0].slice(0, 200)}`,
-      );
-    }
     if (code === 'P2023' || /invalid datetime|out of range for the type/i.test(message)) {
       const detail = (message.split('\n').find((line) => /column|datetime/i.test(line)) || '').trim();
       throw new Error(

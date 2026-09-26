@@ -19,7 +19,5 @@
   "save": "Sauvegarder",
   "deleteConfirm": "Supprimer ce client ?",
   "saveSuccess": "Clients sauvegardés !",
-  "noClients": "Aucun client trouvé",
-  "breadcrumb": "CRM / Clients",
-  "searchPlaceholder": "Rechercher un client (nom, e-mail, société…)…"
+  "noClients": "Aucun client trouvé"
 }

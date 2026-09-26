@@ -29,13 +29,10 @@ function read<T>(key: string, fallback: T): T {
   if (typeof window === 'undefined') return fallback;
   try {
     const raw = localStorage.getItem(key);
-    // Une lecture n'écrit pas. Écrire le repli dans le cache à la première lecture
-    // avait deux effets qu'aucun test ne voyait : le jeu par défaut entrait dans le
-    // cache du premier navigateur ouvert — et, depuis que ces magasins sont
-    // réplifiés, il passait pour une saisie de l'opérateur et remontait dans la
-    // base partagée, où il écrasait la configuration d'un collègue. Le repli reste
-    // une valeur rendue à l'affichage ; il ne devient pas une donnée.
-    if (!raw) return fallback;
+    if (!raw) {
+      localStorage.setItem(key, JSON.stringify(fallback));
+      return fallback;
+    }
     return JSON.parse(raw) as T;
   } catch {
     return fallback;

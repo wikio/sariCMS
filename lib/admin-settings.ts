@@ -172,34 +172,17 @@ export function loadAdminSettings(): AdminSettings {
   }
 }
 
-/**
- * Accroche de réplication, même disposition que `registerShopSaveHook` dans
- * `lib/shop-store.ts` : les dix-huit lecteurs de ces réglages les attendent
- * **synchroniquement** (`loadAdminSettings()`), et les passer en `await` aurait
- * touché la vitrine entière. On garde donc le cache local pour la lecture, et la
- * sauvegarde part en arrière-plan vers la base.
- *
- * Non branché côté vitrine : seule l'administration écrit.
- */
-export type AdminSettingsSaveHook = (next: AdminSettings) => void;
-let saveHook: AdminSettingsSaveHook | null = null;
-export function registerAdminSettingsSaveHook(hook: AdminSettingsSaveHook | null): void {
-  saveHook = hook;
-}
-
 export function saveAdminSettings(next: AdminSettings) {
   localStorage.setItem(KEY, JSON.stringify(next));
-  saveHook?.(next);
 }
 
-/*
- * `nextSku()` vivait ici : compteur dans `sari_sku_seq`, format appliqué dans le
- * navigateur. Supprimé, et volontairement non remplacé. Un compteur par poste est
- * précisément le défaut — deux administrateurs publiaient la même référence, et
- * `products.sku` n'a aucune contrainte d'unicité pour la refuser. La référence est
- * attribuée à l'écriture par `ProductsService`, qui consulte `SkuSeqService`
- * (`backend/src/modules/settings/sku-seq.service.ts`).
- *
- * La clé `sari_sku_seq` peut rester dans un cache déjà en place : plus rien ne la
- * lit, et la nettoyer depuis une page d'administration n'apporterait rien.
- */
+export function nextSku(format = loadAdminSettings().codes.product): string {
+  const n = Number(typeof window !== 'undefined' ? localStorage.getItem('sari_sku_seq') : 0) + 1;
+  if (typeof window !== 'undefined') localStorage.setItem('sari_sku_seq', String(n));
+  const y = new Date().getFullYear();
+  const yy = String(y % 100).padStart(2, '0');
+  return format
+    .replace(/\{XX\}/g, yy)
+    .replace(/\{YY\}/g, yy)
+    .replace(/\{ID\}/g, String(n).padStart(5, '0'));
+}

@@ -19,7 +19,5 @@
   "save": "Save",
   "deleteConfirm": "Delete this client?",
   "saveSuccess": "Clients saved!",
-  "noClients": "No clients found",
-  "breadcrumb": "CRM / Clients",
-  "searchPlaceholder": "Search a client (name, e-mail, company…)…"
+  "noClients": "No clients found"
 }

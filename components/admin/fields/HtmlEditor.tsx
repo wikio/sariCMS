@@ -18,19 +18,12 @@ export default function HtmlEditor({
   placeholder = 'Rédigez le contenu…',
   readOnly = false,
   mergeVars = false,
-  mergeVarsList,
 }: {
   value: string;
   onChange: (html: string) => void;
   placeholder?: string;
   readOnly?: boolean;
   mergeVars?: boolean;
-  /**
-   * Variables proposées dans le sélecteur « Insérer une variable… ».
-   * Par défaut : la liste historique de `lib/notify-store`. Le centre de
-   * courrier passe la sienne, limitée aux variables de l'événement en cours.
-   */
-  mergeVarsList?: { key: string; label: string }[];
 }) {
   const [code, setCode] = useState(false);
   const [ged, setGed] = useState(false);
@@ -103,9 +96,7 @@ export default function HtmlEditor({
               }}
             >
               <option value="">Insérer une variable…</option>
-              {(mergeVarsList && mergeVarsList.length ? mergeVarsList : MERGE_VARS).map((v) => (
-                <option key={v.key} value={v.key}>{v.label} · {v.key}</option>
-              ))}
+              {MERGE_VARS.map((v) => <option key={v.key} value={v.key}>{v.label} · {v.key}</option>)}
             </select>
           )}
         </div>

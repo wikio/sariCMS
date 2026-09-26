@@ -16,6 +16,7 @@ import { useToast } from '@/components/admin/Toast';
 import { cmsAdminCreate, cmsAdminDelete, cmsAdminList, cmsAdminUpdate } from '@/lib/cms-admin';
 import type { CmsModule } from '@/lib/cms-modules';
 import { CmsError } from '@/lib/cms';
+import { nextSku } from '@/lib/admin-settings';
 import { slugify } from '@/lib/slugify';
 import DateText from '@/components/shared/DateText';
 import { useAdminLabels } from '@/lib/admin-labels';
@@ -120,8 +121,7 @@ export default function CmsList({ mod }: { mod: CmsModule }) {
         slug: slugify(`${row[mod.titleKey] || 'copie'}-copie`),
         [mod.titleKey]: `${row[mod.titleKey] || ''} (copie)`,
         status: 'draft',
-        // Produits : la référence est réattribuée par le serveur, pas copiée.
-        sku: mod.key === 'products' ? undefined : row.sku,
+        sku: mod.key === 'products' ? nextSku() : row.sku,
       });
       showToast(t("duplicated"), 'success');
       setRows((prev) => [saved as Record<string, unknown>, ...prev]);

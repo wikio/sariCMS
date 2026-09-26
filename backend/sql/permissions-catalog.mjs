@@ -53,13 +53,6 @@ export const SEED_ORDER = [
   'contact', 'translations', 'audit', 'settings', 'news', 'events', 'products',
   'services', 'partners', 'careers', 'solutions', 'hero', 'dashboard',
   'orders', 'quotes', 'applications', 'authors', 'home', 'newsletter',
-  // Les trois qui suivent arrivent avec la mise en base des coupons, des taxes et
-  // du relevé d'encaissements : leurs routes étaient pilotées par un
-  // `@CrudResource` sans que la ressource soit déclarée dans `RESOURCES`, donc
-  // aucune ligne de permission n'existait pour elles. Elles sont ajoutées ici en fin de liste,
-  // et non insérées par ordre alphabétique pour la raison écrite au-dessus :
-  // les ids du seed sont séquentiels et les rôles y font référence.
-  'payments', 'coupons', 'taxes',
 ];
 
 const unknown = SEED_ORDER.filter((r) => !API_RESOURCES.includes(r));

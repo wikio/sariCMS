@@ -122,12 +122,7 @@ export default function ImageCaptcha({
           </svg>
         </button>
         <input
-          type="text"
-          inputMode="text"
-          autoComplete="off"
-          autoCapitalize="characters"
-          spellCheck={false}
-          className="ad-input flex-1 uppercase tracking-[0.3em] font-bold text-center bg-white dark:bg-[#1a1a1a] !border-2 !border-sari-blue/30 focus:!border-sari-blue focus:!ring-2 focus:!ring-sari-blue/20 shadow-sm"
+          className="ad-input flex-1 uppercase tracking-[0.3em] font-bold text-center"
           value={input}
           onChange={(e) => {
             const v = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
@@ -136,17 +131,8 @@ export default function ImageCaptcha({
           }}
           placeholder="CODE"
           aria-label="Saisir le code affiché"
-          maxLength={6}
-          style={{ borderColor: 'rgb(var(--color-sari-blue) / 0.3)' }}
         />
-        <button
-          type="button"
-          className="ad-btn ad-btn-icon ad-btn-ghost shrink-0 w-11 h-11 flex items-center justify-center self-stretch"
-          onClick={generate}
-          title={t("refresh")}
-          aria-label={t("refresh")}
-          style={{ borderRadius: 'var(--ad-radius-sm, 8px)', border: '1px solid var(--ad-line, #e3eef2)' }}
-        >
+        <button type="button" className="ad-btn ad-btn-icon ad-btn-ghost shrink-0" onClick={generate} title={t("refresh")}>
           <RefreshCw className="w-4 h-4" />
         </button>
       </div>

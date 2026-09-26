@@ -76,31 +76,31 @@ export default function AdminApplicationsPage() {
     commit(rows.map((r) => set.has(r.id)
       ? { ...r, status: next as Application['status'], history: [...(r.history || []), { status: next, at: new Date().toISOString() }] }
       : r));
-    showToast(t("statusUpdated", {count: String(ids.length)}), 'success');
+    showToast(`Statut mis à jour (${ids.length})`, 'success');
   };
 
   const setRatingOf = (ids: number[], rating: number) => {
     const set = new Set(ids);
     commit(rows.map((r) => set.has(r.id) ? { ...r, rating } : r));
-    showToast(t("ratingApplied", {rating: String(rating), count: String(ids.length)}), 'success');
+    showToast(`Note ${rating}/5 appliquée (${ids.length})`, 'success');
   };
 
   const setNoteOf = (ids: number[], note: string) => {
     const set = new Set(ids);
     commit(rows.map((r) => set.has(r.id) ? { ...r, note } : r));
-    showToast(t("noteSaved"), 'success');
+    showToast('Note du recruteur enregistrée', 'success');
   };
 
   const setScoreOf = (ids: number[], score: number) => {
     const set = new Set(ids);
     commit(rows.map((r) => set.has(r.id) ? { ...r, score } : r));
-    showToast(t("scoreApplied", {score: String(score), count: String(ids.length)}), 'success');
+    showToast(`Score ${score} appliqué (${ids.length})`, 'success');
   };
 
   const remove = (id: number) => commit(rows.filter((r) => r.id !== id));
 
   const bulkRemove = () => {
-    if (!selected.length || !confirm(t("confirmDelete", {count: String(selected.length)}))) return;
+    if (!selected.length || !confirm(`Supprimer ${selected.length} candidature(s) ?`)) return;
     const set = new Set(selected);
     commit(rows.filter((r) => !set.has(r.id)));
     setSelected([]);
@@ -115,7 +115,7 @@ export default function AdminApplicationsPage() {
 
   const exportCurrent = () => {
     exportApplicationsCsv(shown, offerFilter || undefined);
-    showToast(t("exportCsv"), 'success');
+    showToast('Export CSV généré', 'success');
   };
 
   const toggle = (id: number) => setSelected((p) => p.includes(id) ? p.filter((x) => x !== id) : [...p, id]);
@@ -144,7 +144,7 @@ export default function AdminApplicationsPage() {
       </div>
 
       <div className="ad-card p-3 space-y-3 ad-rise ad-rise-2">
-        <SearchField value={draft} onChange={setDraft} onSubmit={() => setQ(draft)} showSubmit placeholder={t("searchPlaceholder")} />
+        <SearchField value={draft} onChange={setDraft} onSubmit={() => setQ(draft)} showSubmit placeholder="Candidat, e-mail, offre…" />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <select className="ad-select" value={status} onChange={(e) => setStatus(e.target.value)}>
             <option value="">{t("allStatuses")}</option>
@@ -159,7 +159,7 @@ export default function AdminApplicationsPage() {
 
       {selected.length > 0 && (
         <div className="ad-card p-3 flex flex-wrap items-center gap-2 ad-rise">
-          <span className="text-sm font-bold flex items-center gap-2"><Users className="w-4 h-4" /> {t("selected", {count: String(selected.length)})}</span>
+          <span className="text-sm font-bold flex items-center gap-2"><Users className="w-4 h-4" /> {selected.length} sélectionné(s)</span>
           <div className="flex items-center gap-1">
             {[1, 2, 3, 4, 5].map((n) => (
               <button key={n} type="button" className="ad-btn ad-btn-icon ad-btn-ghost" title={`Noter ${n}/5`}
@@ -167,13 +167,13 @@ export default function AdminApplicationsPage() {
             ))}
           </div>
           <select className="ad-select !w-auto !h-9" value={bulkStatus} onChange={(e) => { setBulkStatus(e.target.value); if (e.target.value) setStatusOf(selected, e.target.value); }}>
-            <option value="">{t("changeStep")}</option>
+            <option value="">Changer d’étape…</option>
             {APP_STEPS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
           </select>
           <input className="ad-input flex-1 min-w-[180px]" placeholder="Note commune du recruteur…" value={bulkNote} onChange={(e) => setBulkNote(e.target.value)} />
           <button className="ad-btn ad-btn-ghost" onClick={() => setNoteOf(selected, bulkNote)}>{t("applyNote")}</button>
           <button className="ad-btn ad-btn-ghost" onClick={() => { setStatusOf(selected, 'interview'); }}>{t("activateInterview")}</button>
-          <button className="ad-btn ad-btn-danger" onClick={bulkRemove}><Trash2 className="w-4 h-4" /> {t("delete", {defaultMessage: "Supprimer"})}</button>
+          <button className="ad-btn ad-btn-danger" onClick={bulkRemove}><Trash2 className="w-4 h-4" /> Supprimer</button>
           <button className="ad-btn ad-btn-icon ad-btn-ghost ml-auto" onClick={() => setSelected([])}><X className="w-4 h-4" /></button>
         </div>
       )}
@@ -183,7 +183,7 @@ export default function AdminApplicationsPage() {
           <thead>
             <tr>
               <th className="w-8"><input type="checkbox" checked={selected.length === shown.length && shown.length > 0} onChange={(e) => setSelected(e.target.checked ? shown.map((r) => r.id) : [])} /></th>
-              <th>{t("candidate")}</th><th>{t("offer")}</th><th>{t("note")}</th><th>{t("date", {defaultMessage: "Date"})}</th><th>{t("status", {defaultMessage: "Statut"})}</th><th className="text-right">Actions</th>
+              <th>{t("candidate")}</th><th>{t("offer")}</th><th>{t("note")}</th><th>Date</th><th>Statut</th><th className="text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -210,9 +210,9 @@ export default function AdminApplicationsPage() {
                     </td>
                     <td className="text-right" onClick={(e) => e.stopPropagation()}>
                       <div className="flex justify-end gap-1 flex-wrap">
-                        <button className="ad-btn ad-btn-icon ad-btn-ghost" title={t("viewCv")} onClick={() => openDoc('cv', row)}><FileText className="w-4 h-4" /></button>
-                        <button className="ad-btn ad-btn-icon ad-btn-ghost" title={t("downloadCv")} onClick={() => { row.cv ? downloadText(`CV-${row.candidate.replace(/\s+/g, '-')}.txt`, row.cv) : showToast(t("noCv"), 'warning'); }}><Download className="w-4 h-4" /></button>
-                        <Link href={`/${locale}/admin/applications/compare?offer=${encodeURIComponent(row.jobTitle)}`} className="ad-btn ad-btn-ghost" title={t("compareOffer")}><GitCompare className="w-4 h-4" /></Link>
+                        <button className="ad-btn ad-btn-icon ad-btn-ghost" title="Voir le CV" onClick={() => openDoc('cv', row)}><FileText className="w-4 h-4" /></button>
+                        <button className="ad-btn ad-btn-icon ad-btn-ghost" title="Télécharger le CV" onClick={() => { row.cv ? downloadText(`CV-${row.candidate.replace(/\s+/g, '-')}.txt`, row.cv) : showToast('CV non fourni', 'warning'); }}><Download className="w-4 h-4" /></button>
+                        <Link href={`/${locale}/admin/applications/compare?offer=${encodeURIComponent(row.jobTitle)}`} className="ad-btn ad-btn-ghost" title="Comparer cette offre"><GitCompare className="w-4 h-4" /></Link>
                         <button className="ad-btn ad-btn-icon ad-btn-danger" onClick={() => remove(row.id)}><Trash2 className="w-4 h-4" /></button>
                       </div>
                     </td>
@@ -228,7 +228,7 @@ export default function AdminApplicationsPage() {
               );
             })}
             {shown.length === 0 && (
-              <tr><td colSpan={7} className="text-center py-10" style={{ color: 'var(--ad-muted)' }}>{t("noApplications")}</td></tr>
+              <tr><td colSpan={7} className="text-center py-10" style={{ color: 'var(--ad-muted)' }}>Aucune candidature</td></tr>
             )}
           </tbody>
         </table>
@@ -237,12 +237,12 @@ export default function AdminApplicationsPage() {
       <Drawer
         open={!!viewer}
         title={viewer?.title || ''}
-        subtitle={t("viewDoc")}
+        subtitle="Consultez le document puis téléchargez-le."
         onClose={() => setViewer(null)}
         footer={viewer ? (
           <>
-            <button className="ad-btn ad-btn-ghost" onClick={() => setViewer(null)}>{t("close")}</button>
-            <button className="ad-btn ad-btn-primary" onClick={() => downloadText(viewer.filename, viewer.content)}><Download className="w-4 h-4" /> {t("download")}</button>
+            <button className="ad-btn ad-btn-ghost" onClick={() => setViewer(null)}>Fermer</button>
+            <button className="ad-btn ad-btn-primary" onClick={() => downloadText(viewer.filename, viewer.content)}><Download className="w-4 h-4" /> Télécharger</button>
           </>
         ) : null}
       >
@@ -268,14 +268,7 @@ function StatTile({ label, value, icon: Icon, accent }: { label: string; value: 
   );
 }
 
-/*
- * Composant local : un fichier de page App Router ne peut exporter que
- * `default`, `config`, `metadata`, `viewport`, `generateStaticParams`, etc.
- * Exporter `StarRating` d'ici faisait échouer `next build` à l'étape
- * « Running TypeScript » (TS2344 sur le type de route généré). Rien d'autre
- * ne l'importe, il reste donc privé à ce fichier.
- */
-function StarRating({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+export function StarRating({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   return (
     <span className="inline-flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
       {[1, 2, 3, 4, 5].map((n) => (
@@ -288,31 +281,30 @@ function StarRating({ value, onChange }: { value: number; onChange: (v: number) 
 }
 
 function OfferDetails({ offer, app, onOpenDoc, onNote, onScore }: { offer?: Offer; app: Application; onOpenDoc: (kind: 'cv' | 'lm') => void; onNote: (v: string) => void; onScore: (v: number) => void }) {
-  const t = useTranslations('admin.applications');
   return (
     <div className="p-3 space-y-3">
       <div className="flex flex-wrap items-center gap-2">
         <h4 className="font-black">{offer ? offer.title : app.jobTitle}</h4>
         <span className="ad-chip ad-chip-acc">{offer?.type || '—'}</span>
-        <span className="ad-chip ad-chip-mute">{offer?.location || t("locationNotSpecified")}</span>
+        <span className="ad-chip ad-chip-mute">{offer?.location || 'Lieu non précisé'}</span>
         {offer?.salary && <span className="ad-chip ad-chip-ok">{String(offer.salary)}</span>}
       </div>
       {offer?.shortDesc && <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>{offer.shortDesc}</p>}
-      <p className="text-sm italic" style={{ color: 'var(--ad-muted)' }}>{t("motivationLabel")} {app.motivation}</p>
+      <p className="text-sm italic" style={{ color: 'var(--ad-muted)' }}>Motivation : {app.motivation}</p>
       <div className="flex flex-wrap gap-2">
-        <button className="ad-btn ad-btn-ghost" onClick={() => onOpenDoc('cv')}><Eye className="w-4 h-4" /> {t("viewCv")}</button>
-        <button className="ad-btn ad-btn-ghost" onClick={() => onOpenDoc('lm')}><FileText className="w-4 h-4" /> {t("viewCover", {defaultMessage: "Voir lettre de motivation"})}</button>
+        <button className="ad-btn ad-btn-ghost" onClick={() => onOpenDoc('cv')}><Eye className="w-4 h-4" /> Voir CV</button>
+        <button className="ad-btn ad-btn-ghost" onClick={() => onOpenDoc('lm')}><FileText className="w-4 h-4" /> Voir lettre de motivation</button>
       </div>
       {offer && <FlowProgression offer={offer} app={app} />}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <label className="block space-y-1">
-          <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>{t("score")}</span>
+          <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Score</span>
           <input
             className="ad-input"
             type="number"
             min={0}
             step={1}
-            placeholder={t("scorePlaceholder")}
+            placeholder="Score (ex. 85)…"
             defaultValue={app.score != null ? String(app.score) : ''}
             onBlur={(e) => {
               const v = parseInt(e.target.value, 10);
@@ -321,8 +313,8 @@ function OfferDetails({ offer, app, onOpenDoc, onNote, onScore }: { offer?: Offe
           />
         </label>
         <label className="block space-y-1">
-          <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>{t("recruiterNote")}</span>
-          <input className="ad-input" placeholder={t("recruiterNotePlaceholder")} defaultValue={app.note || ''} onBlur={(e) => onNote(e.target.value)} />
+          <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Note du recruteur</span>
+          <input className="ad-input" placeholder="Commentaire / évaluation du recruteur…" defaultValue={app.note || ''} onBlur={(e) => onNote(e.target.value)} />
         </label>
       </div>
     </div>
@@ -331,7 +323,6 @@ function OfferDetails({ offer, app, onOpenDoc, onNote, onScore }: { offer?: Offe
 
 /** Progression du candidat dans le parcours de candidature + lien de reprise. */
 function FlowProgression({ offer, app }: { offer: Offer; app: Application }) {
-  const t = useTranslations('admin.applications');
   const { showToast } = useToast();
   const steps = loadFlow(offer.id);
   const progress = loadProgress(offer.id, app.id);
@@ -346,7 +337,7 @@ function FlowProgression({ offer, app }: { offer: Offer; app: Application }) {
     <div className="ad-card p-3 space-y-2" style={{ borderColor: 'color-mix(in srgb, var(--ad-accent) 30%, var(--ad-line))' }}>
       <div className="flex items-center justify-between">
         <div className="font-black text-sm flex items-center gap-2">
-          <Layers className="w-4 h-4" style={{ color: 'var(--ad-accent)' }} /> {t("progression")}
+          <Layers className="w-4 h-4" style={{ color: 'var(--ad-accent)' }} /> Progression dans le parcours
         </div>
         <span className="text-xs font-black tabular-nums" style={{ color: 'var(--ad-accent)' }}>{doneCount}/{total} · {pct}%</span>
       </div>
@@ -374,10 +365,10 @@ function FlowProgression({ offer, app }: { offer: Offer; app: Application }) {
       <button
         type="button"
         className="ad-btn ad-btn-ghost text-xs"
-        onClick={() => { navigator.clipboard?.writeText(window.location.origin + resume); showToast(t("copyResumeLink"), 'success'); }}
-        title={t("resumeLink", {url: resume})}
+        onClick={() => { navigator.clipboard?.writeText(window.location.origin + resume); showToast('Lien de reprise copié', 'success'); }}
+        title="Copier le lien de reprise (à envoyer par email au candidat)"
       >
-        <LinkIcon className="w-3.5 h-3.5" /> {t("resumeLink", {url: resume})}
+        <LinkIcon className="w-3.5 h-3.5" /> Lien de reprise : {resume}
       </button>
     </div>
   );

@@ -221,17 +221,7 @@ export class CatalogImportService {
     return { path: root, locales, replace, imported, skipped, failed };
   }
 
-  /**
-   * Ce que la base contient, collection par collection, pour l'accueil.
-   *
-   * Une collection qui ne répond pas n'est PAS un zéro : elle est omise de
-   * `counts` et nommée dans `unavailable`. Le cas est réel et il est laid — une
-   * table absente (`payment_records` non migrée) faisait échouer `count()` en
-   * P2021, donc l'endpoint entier en 500, donc l'accueil sans aucun chiffre, y
-   * compris ceux qui se mesuraient très bien. Un poste qui ne peut pas répondre
-   * doit se voir nommé, pas vider la page.
-   */
-  async inventory(): Promise<{ counts: Record<string, number>; unavailable: string[] }> {
+  async counts(): Promise<Record<string, number>> {
     const keys: Array<[string, string]> = [
       ['products', COLLECTIONS.products],
       ['services', COLLECTIONS.services],
@@ -245,33 +235,12 @@ export class CatalogImportService {
       ['pages', COLLECTIONS.pages],
       ['menus', COLLECTIONS.menus],
       ['users', COLLECTIONS.users],
-      // Les compteurs de ce qui N'EST pas du contenu traduisible mais qui occupe
-      // l'accueil du back-office. Ajoutés parce que le tableau de bord affichait
-      // ses commandes et ses devis depuis le `localStorage` du poste — donc depuis
-      // un cache qui, vide, se repeuple avec un jeu de démonstration : un
-      // administrateur pouvait voir 4 500 000 DA « livrés » sur une base neuve.
-      // La réponse est simple : demander les chiffres à la base.
-      ['orders', COLLECTIONS.orders],
-      ['quotes', COLLECTIONS.quotes],
-      ['applications', COLLECTIONS.applications],
-      ['coupons', COLLECTIONS.coupons],
-      ['taxRules', COLLECTIONS.taxRules],
-      ['paymentRecords', COLLECTIONS.paymentRecords],
     ];
     const out: Record<string, number> = {};
-    const unavailable: string[] = [];
     for (const [key, col] of keys) {
-      try {
-        out[key] = await this.factory(col).count();
-      } catch (e) {
-        const msg = String((e as { message?: string })?.message || e)
-          .split('\n')[0]
-          .slice(0, 160);
-        unavailable.push(`${key}: ${msg}`);
-        this.logger.warn(`compteur indisponible pour « ${key} » — ${msg}`);
-      }
+      out[key] = await this.factory(col).count();
     }
-    return { counts: out, unavailable };
+    return out;
   }
 
   private resolveDataRoot(): string {

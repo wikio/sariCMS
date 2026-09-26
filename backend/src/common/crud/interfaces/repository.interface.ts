@@ -71,16 +71,6 @@ export interface ICrudRepository<T extends BaseEntity> {
   restore(id: number): Promise<T>;
   hardDelete(id: number): Promise<void>;
   purgeExpired(olderThan: Date): Promise<number>;
-  /**
-   * Supprime définitivement les lignes dont le champ date `field` est antérieur
-   * à `cutoff`.
-   *
-   * À ne pas confondre avec `purgeExpired`, qui ne vide que la corbeille (lignes
-   * déjà marquées `deletedAt`). Cette méthode sert à la rétention : journaux et
-   * jetons ne passent jamais par la corbeille, `purgeExpired` n'y supprimerait
-   * rien.
-   */
-  deleteOlderThan(field: string, cutoff: Date): Promise<number>;
   count(where?: Record<string, unknown>, includeDeleted?: boolean): Promise<number>;
   autocomplete(field: string, q: string, limit: number): Promise<AutocompleteHit[]>;
   /**

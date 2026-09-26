@@ -13,7 +13,7 @@ import { cmsAdminCreate, cmsAdminDelete, cmsAdminFetch, cmsAdminList, cmsAdminUp
 import type { CmsModule } from '@/lib/cms-modules';
 import { slugify } from '@/lib/slugify';
 import { CmsError } from '@/lib/cms';
-import { loadAdminSettings } from '@/lib/admin-settings';
+import { loadAdminSettings, nextSku } from '@/lib/admin-settings';
 import { isTranslatableField, loadFicheLocale, saveFicheLocale } from '@/lib/fiche-i18n';
 import { useAdminLabels } from '@/lib/admin-labels';
 
@@ -259,10 +259,7 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
       
       if (mod.key === 'products') {
         if (!String(payload.slug || '').trim()) payload.slug = slugify(String(payload.name || ''));
-        // Référence laissée vide : le serveur l'attribue sur son compteur partagé.
-        // Un numéro généré ici serait un compteur par navigateur — deux postes
-        // publiant la même référence, la base sans contrainte d'unicité pour le
-        // refuser. `pick()` écarte de toute façon une chaîne vide pour `sku`.
+        if (!String(payload.sku || '').trim()) payload.sku = nextSku(settings.codes.product);
       }
       const saved = id === 'new' || !record.id
         ? await cmsAdminCreate(mod.resource, payload)
@@ -302,7 +299,7 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
         slug: slugify(`${record[mod.titleKey] || 'copie'}-copie`),
         [mod.titleKey]: `${record[mod.titleKey] || ''} (copie)`,
         status: 'draft',
-        // Pas de `sku` : la copie reçoit sa propre référence à l'enregistrement.
+        sku: nextSku(settings.codes.product),
       };
       const saved = await cmsAdminCreate(mod.resource, copy);
       showToast('Fiche dupliquée', 'success');

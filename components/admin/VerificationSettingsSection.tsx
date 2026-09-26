@@ -32,7 +32,6 @@ interface ApiSettings {
   hashParam: string;
   response: { code: string; type: string; issuer: string; message: string };
   fallbackToLocal: boolean;
-  showDemoCodes: boolean;
 }
 
 const EMPTY: ApiSettings = {
@@ -46,7 +45,6 @@ const EMPTY: ApiSettings = {
   hashParam: 'hash',
   response: { code: 'code', type: 'type', issuer: 'issuer', message: 'message' },
   fallbackToLocal: true,
-  showDemoCodes: true,
 };
 
 export default function VerificationSettingsSection() {
@@ -62,12 +60,7 @@ export default function VerificationSettingsSection() {
       try {
         const res = await fetch('/api/admin/verification', { cache: 'no-store' });
         const json = await res.json();
-        if (json && json.api) {
-          const srv = json.api as ApiSettings & { apiKey?: string };
-          // Le GET masque la clé (***MASKED***) : ne pas l'afficher, laisser vide pour « conserver »
-          const apiKey = srv.apiKey === '***MASKED***' ? '' : (srv.apiKey as string);
-          setApi({ ...EMPTY, ...srv, apiKey, response: { ...EMPTY.response, ...((srv as unknown as { response?: ApiSettings['response'] }).response || {}) } });
-        }
+        if (json && json.api) setApi({ ...EMPTY, ...json.api, response: { ...EMPTY.response, ...(json.api.response || {}) } });
       } catch {
         showToast('Réglages de vérification illisibles — les valeurs par défaut sont affichées.', 'error');
       } finally {
@@ -262,29 +255,6 @@ export default function VerificationSettingsSection() {
               <>
                 <span className="ad-toggle-knob" />
                 <span className="ad-toggle-label">Désactivé</span>
-              </>
-            )}
-          </button>
-        </div>
-
-        <div className="md:col-span-2 flex items-start justify-between gap-4 py-2 rounded-lg px-3" style={{ border: '1px solid var(--ad-line)' }}>
-          <div className="space-y-0.5">
-            <div className="text-sm font-bold">Afficher les Codes de démonstration sur la page publique</div>
-            <div className="text-xs" style={{ color: 'var(--ad-muted)' }}>
-              Affiche la section « Codes de démonstration » sous le formulaire <code>/{locale}/verification</code>. Désactivé, aucun
-              code d’exemple n’est proposé — utile en production pour ne pas exposer les exemples du registre local.
-            </div>
-          </div>
-          <button type="button" onClick={() => set({ showDemoCodes: !api.showDemoCodes })} className={`ad-toggle ${api.showDemoCodes ? 'is-on' : ''}`} aria-pressed={api.showDemoCodes} role="switch">
-            {api.showDemoCodes ? (
-              <>
-                <span className="ad-toggle-label">Affichés</span>
-                <span className="ad-toggle-knob" />
-              </>
-            ) : (
-              <>
-                <span className="ad-toggle-knob" />
-                <span className="ad-toggle-label">Masqués</span>
               </>
             )}
           </button>

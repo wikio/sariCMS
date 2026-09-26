@@ -108,10 +108,5 @@
   "bulkStatusNoop": "Already “{status}”",
   "bulkError": "Bulk action failed",
   "clearSelection": "Clear selection",
-  "bulkPartial": "{done} done, {failed} failed",
-  "breadcrumbShop": "E-shop",
-  "shop": "Shop",
-  "eShop": "E-shop",
-  "filter": "Filter",
-  "validated": "Validated"
+  "bulkPartial": "{done} done, {failed} failed"
 }

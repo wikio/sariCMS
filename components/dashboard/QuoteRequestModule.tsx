@@ -616,7 +616,7 @@ function QuoteDetail({ quote, locale, onBack, onRefresh }: { quote: Quote; local
       email: cfg.meta.email,
       address: cfg.meta.address,
       logo: cfg.meta.logo,
-    }, locale);
+    });
     printHtml(quote.reference || `Devis #${quote.id}`, html);
   };
 

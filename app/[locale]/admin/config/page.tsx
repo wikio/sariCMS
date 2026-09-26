@@ -6,7 +6,6 @@ import { useLocale, useTranslations } from 'next-intl';
 import { Settings, Phone, Share2, BarChart, Code, Download, Save, Image as ImageIconLucide } from 'lucide-react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { useToast } from '@/components/admin/Toast';
-import { findContactRow, fromRow, saveSiteContact, type SiteContact } from '@/lib/site-contact';
 
 export default function AdminConfigPage() {
   const locale = useLocale();
@@ -21,56 +20,23 @@ export default function AdminConfigPage() {
     loadConfig();
   }, [locale]);
 
-  const DEFAULTS: SiteContact = {
-    meta: {
-      companyName: 'SARI Système', tagline: 'L\'excellence médicale', logo: '',
-      description: '', phone: '', email: '', address: '', hours: '', social: {},
-    },
-    stats: { clients: '500+', experience: '20', support: '24/7', satisfaction: '98%' },
-  };
-
-  /*
-   * La fiche `contact_info` de la locale fait autorité : c'est elle que le rendu
-   * serveur de l'en-tête et du pied de page applique, donc ce que voit un visiteur.
-   *
-   * L'écran lisait jusqu'ici `sari_config_<locale>` — le cache du poste — et
-   * n'écrivait que là : une configuration saisie ici ne changeait jamais la vitrine
-   * d'autrui. Le cache local ne sert plus que de rattrapage, pour qu'une base encore
-   * vierge reçoive la saisie antérieure au lieu de l'écraser sous des valeurs par
-   * défaut.
-   */
   const loadConfig = async () => {
     setLoading(true);
-    const stored = (() => {
-      try {
-        const raw = localStorage.getItem(`sari_config_${locale}`);
-        return raw ? (JSON.parse(raw) as Partial<SiteContact>) : null;
-      } catch {
-        return null; // un cache illisible ne doit pas empêcher la fiche de s'afficher
-      }
-    })();
-    const withDefaults = (part: Partial<SiteContact> | null): SiteContact => ({
-      meta: { ...DEFAULTS.meta, ...((part && part.meta) || {}) },
-      stats: { ...DEFAULTS.stats, ...((part && part.stats) || {}) },
-    });
     try {
-      const row = await findContactRow(locale);
-      if (row) {
-        setConfigData(fromRow(row));
-      } else if (stored) {
-        const seeded = withDefaults(stored);
-        setConfigData(seeded);
-        // Premier contact de cette locale avec la base : on y monte ce que le poste
-        // portait, sinon la fiche resterait absente pour les visiteurs.
-        await saveSiteContact(locale, seeded).catch(() => undefined);
+      // Phase 1 : localStorage fallback
+      const stored = localStorage.getItem(`sari_config_${locale}`);
+      if (stored) {
+        setConfigData(JSON.parse(stored));
       } else {
-        setConfigData(DEFAULTS);
+        // Fallback par défaut
+        setConfigData({
+          meta: { companyName: 'SARI Système', tagline: 'L\'excellence médicale', logo: '', description: '', phone: '', email: '', address: '', hours: '', social: {} },
+          stats: { clients: '500+', experience: '20', support: '24/7', satisfaction: '98%' }
+        });
       }
-    } catch {
-      // Le réseau a manqué : afficher la copie locale plutôt qu'un formulaire vide,
-      // car un enregistrement sur vide effacerait la fiche en base.
-      showToast('Fiche de contact indisponible, copie locale affichée', 'warning');
-      setConfigData(withDefaults(stored));
+    } catch (err) {
+      showToast('Fichier config non trouvé', 'warning');
+      setConfigData({});
     } finally {
       setLoading(false);
     }
@@ -100,18 +66,12 @@ export default function AdminConfigPage() {
     }));
   };
 
-  const handleSave = async () => {
+  const handleSave = () => {
     try {
-      // La base d'abord : c'est elle qui rend l'en-tête, le pied de page et les
-      // coordonnées côté visiteur. La copie locale reste écrite parce que l'en-tête,
-      // dans le navigateur de l'opérateur, la consulte en premier — les deux valeurs
-      // doivent rester alignées, pas se contredire.
-      await saveSiteContact(locale, configData);
       localStorage.setItem(`sari_config_${locale}`, JSON.stringify(configData));
-      showToast(t('configEditor.saveSuccess') || 'Configuration enregistrée sur le serveur', 'success');
-    } catch {
-      // Rien d'écrit en base : prévenir, et ne pas laisser croire que c'est passé.
-      showToast(t('configEditor.saveError') || 'Sauvegarde impossible : serveur injoignable', 'error');
+      showToast(t('configEditor.saveSuccess') || 'Configuration sauvegardée !', 'success');
+    } catch (err) {
+      showToast(t('configEditor.saveError') || 'Erreur lors de la sauvegarde', 'error');
     }
   };
 

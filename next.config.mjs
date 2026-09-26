@@ -101,33 +101,6 @@ const nextConfig = {
           },
         ],
       },
-      {
-        // Un fichier déposé dans la GED est servi sur l'origine du site. Un SVG y
-        // est un document, et un document peut contenir du script : cette règle le
-        // rend inerte. Elle ne remplace pas le nettoyage à l'écriture
-        // (`sanitizeSvgBuffer`, lib/upload-validation.ts) — elle est ce qui tient
-        // encore quand le fichier est arrivé par un autre chemin qu'un dépôt : une
-        // restauration, un scp, un collègui qui a glissé un `.svg` à la main.
-        //
-        // `default-src 'none'` autorise le tracé du SVG lui-même (formes, styles
-        // internes) et refuse toute sortie : ni script, ni image distante, ni
-        // exfiltration par requete d'une image d'un octet vers un hôte tiers.
-        source: '/uploads/:path*',
-        headers: [
-          {
-            key: 'Content-Security-Policy',
-            value: [
-              "default-src 'none'",
-              "style-src 'unsafe-inline'",
-              "img-src 'self' data:",
-              "base-uri 'none'",
-              "form-action 'none'",
-              "frame-ancestors 'none'",
-            ].join('; '),
-          },
-          { key: 'X-Content-Type-Options', value: 'nosniff' },
-        ],
-      },
     ];
   },
   async redirects() {
