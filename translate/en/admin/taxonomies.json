@@ -1,0 +1,8 @@
+{
+  "title": "Taxonomy configuration",
+  "subtitle": "One tab per family. Translate labels in all three languages.",
+  "value": "Value",
+  "internalValue": "Value (internal key)",
+  "displayName": "Display name (source)",
+  "french": "French"
+}

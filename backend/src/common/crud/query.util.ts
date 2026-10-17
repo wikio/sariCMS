@@ -137,3 +137,13 @@ export function slugify(input: string): string {
     .replace(/^-+|-+$/g, '')
     .slice(0, 80);
 }
+
+/** Restrict a public vitrine query to published rows (full payload by default). */
+export function publishedQuery(query: QueryDto, extra: Record<string, unknown> = {}): QueryDto {
+  return {
+    ...query,
+    view: query.view || 'block',
+    limit: query.limit || 100,
+    filter: { ...(query.filter ?? {}), status: 'published', ...extra },
+  };
+}

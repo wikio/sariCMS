@@ -1,0 +1,287 @@
+'use client';
+
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useLocale } from 'next-intl';
+import { Check, CornerDownLeft, FileText, Folder, Globe, Link2 } from 'lucide-react';
+import { cmsAdminList } from '@/lib/cms-admin';
+import { slugify } from '@/lib/slugify';
+import IconMark from '@/components/admin/IconMark';
+
+/* ============================================================
+   Sélecteur de slug pour les liens de menu :
+   - lien libre
+   - page statique (routes fixes de la vitrine)
+   - page dynamique (produit, service, solution, actualité,
+     événement, offre d'emploi, page générique) avec autocomplete
+   ============================================================ */
+
+export type SlugKind =
+  | 'free'
+  | 'static'
+  | 'products'
+  | 'services'
+  | 'solutions'
+  | 'news'
+  | 'events'
+  | 'careers'
+  | 'pages';
+
+const KIND_OPTIONS: Array<{ id: SlugKind; label: string }> = [
+  { id: 'free', label: 'Lien libre (URL manuelle)' },
+  { id: 'static', label: 'Page statique' },
+  { id: 'products', label: 'Produit' },
+  { id: 'services', label: 'Service' },
+  { id: 'solutions', label: 'Solution' },
+  { id: 'news', label: 'Article d’actualité' },
+  { id: 'events', label: 'Événement' },
+  { id: 'careers', label: 'Offre d’emploi' },
+  { id: 'pages', label: 'Page générique' },
+];
+
+const STATIC_PATHS: Array<{ path: string; label: string; icon: string }> = [
+  { path: '/', label: 'Accueil', icon: 'home' },
+  { path: '/about', label: 'À propos', icon: 'info' },
+  { path: '/products', label: 'Produits (catalogue)', icon: 'package' },
+  { path: '/services', label: 'Services', icon: 'wrench' },
+  { path: '/solutions', label: 'Solutions', icon: 'layers' },
+  { path: '/news', label: 'Actualités', icon: 'newspaper' },
+  { path: '/events', label: 'Événements', icon: 'calendar' },
+  { path: '/careers', label: 'Carrières', icon: 'briefcase' },
+  { path: '/contact', label: 'Contact', icon: 'mail' },
+  { path: '/legal', label: 'Pages légales', icon: 'scale' },
+];
+
+/** Ressource backend + clés d'affichage par module dynamique. */
+const MODULE_DEFS: Record<Exclude<SlugKind, 'free' | 'static'>, {
+  resource: string;
+  titleKey: string;
+  icon: string;
+  build: (item: Record<string, unknown>) => string;
+}> = {
+  products: {
+    resource: 'products',
+    titleKey: 'name',
+    icon: 'package',
+    build: (i) => `/products/${pubId(i)}-${slugify(String(i.name || i.title || ''))}`,
+  },
+  services: {
+    resource: 'services',
+    titleKey: 'title',
+    icon: 'wrench',
+    build: (i) => `/services/${pubId(i)}`,
+  },
+  solutions: {
+    resource: 'solutions',
+    titleKey: 'title',
+    icon: 'layers',
+    build: (i) => `/solutions/${String(i.slug || pubId(i))}`,
+  },
+  news: {
+    resource: 'news',
+    titleKey: 'title',
+    icon: 'newspaper',
+    build: (i) => `/news/${pubId(i)}-${slugify(String(i.title || i.name || ''))}`,
+  },
+  events: {
+    resource: 'events',
+    titleKey: 'title',
+    icon: 'calendar',
+    build: (i) => `/events/${pubId(i)}-${slugify(String(i.title || i.name || ''))}`,
+  },
+  careers: {
+    resource: 'careers',
+    titleKey: 'title',
+    icon: 'briefcase',
+    build: (i) => `/jobs/${pubId(i)}-${slugify(String(i.title || i.name || ''))}`,
+  },
+  pages: {
+    resource: 'pages',
+    titleKey: 'title',
+    icon: 'file-text',
+    build: (i) => `/content/${pubId(i)}`,
+  },
+};
+
+function pubId(item: Record<string, unknown>): string | number {
+  if (typeof item.legacyId === 'number') return item.legacyId;
+  if (typeof item.id === 'number') return item.id;
+  if (typeof item.id === 'string' && /^\d+$/.test(item.id)) return Number(item.id);
+  return String(item.id ?? '');
+}
+
+/** Devine le type de lien à partir d'un href existant. */
+export function inferSlugKind(href: string): SlugKind {
+  const h = (href || '').trim();
+  if (!h || h === '#') return 'free';
+  if (STATIC_PATHS.some((s) => s.path === h)) return 'static';
+  if (h.startsWith('/products/')) return 'products';
+  if (h.startsWith('/services/')) return 'services';
+  if (h.startsWith('/solutions/')) return 'solutions';
+  if (h.startsWith('/news/')) return 'news';
+  if (h.startsWith('/events/')) return 'events';
+  if (h.startsWith('/jobs/') || h.startsWith('/careers/')) return 'careers';
+  if (h.startsWith('/content/')) return 'pages';
+  return 'free';
+}
+
+export default function SlugPicker({
+  value,
+  onChange,
+  label,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  label?: string;
+}) {
+  const locale = useLocale();
+  const [kind, setKind] = useState<SlugKind>(() => inferSlugKind(value));
+  const [free, setFree] = useState(value);
+  const [q, setQ] = useState('');
+  const [hits, setHits] = useState<Record<string, unknown>[]>([]);
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const boxRef = useRef<HTMLDivElement>(null);
+
+  const def = MODULE_DEFS[kind as Exclude<SlugKind, 'free' | 'static'>];
+
+  // Ferme le panneau au clic extérieur.
+  useEffect(() => {
+    const onDoc = (e: MouseEvent) => {
+      if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, []);
+
+  const search = async (query: string) => {
+    if (kind === 'static') {
+      const needle = query.trim().toLowerCase();
+      setHits(
+        (needle ? STATIC_PATHS.filter((s) => s.label.toLowerCase().includes(needle) || s.path.includes(needle)) : STATIC_PATHS)
+          .map((s) => ({ __path: s.path, __label: s.label, __icon: s.icon })) as unknown as Record<string, unknown>[],
+      );
+      return;
+    }
+    if (!def) return;
+    setBusy(true);
+    try {
+      const rows = await cmsAdminList<Record<string, unknown>>(def.resource, {
+        search: query,
+        filter: JSON.stringify({ locale }),
+        limit: '20',
+      });
+      setHits(rows.slice(0, 20));
+    } catch {
+      setHits([]);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  useEffect(() => {
+    const t = window.setTimeout(() => { search(q); setOpen(true); }, 220);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [q, kind, locale]);
+
+  const selectStatic = (item: Record<string, unknown>) => {
+    const path = String(item.__path || '/');
+    setFree(path);
+    onChange(path);
+    setQ('');
+    setOpen(false);
+  };
+
+  const selectEntity = (item: Record<string, unknown>) => {
+    const path = def ? def.build(item) : '/';
+    setFree(path);
+    onChange(path);
+    setQ('');
+    setOpen(false);
+  };
+
+  const titleOf = (item: Record<string, unknown>) => {
+    if (kind === 'static') return String(item.__label || '');
+    return String(item[def?.titleKey || 'title'] || item.name || item.title || '—');
+  };
+
+  return (
+    <div className="space-y-1.5" ref={boxRef}>
+      {label && (
+        <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>{label}</span>
+      )}
+      <div className="flex flex-col sm:flex-row gap-2">
+        <select className="ad-select sm:w-56 shrink-0" value={kind} onChange={(e) => {
+          const k = e.target.value as SlugKind;
+          setKind(k);
+          setQ('');
+          setHits([]);
+          if (k === 'free') { setOpen(false); }
+          else { setOpen(true); search(''); }
+        }}>
+          {KIND_OPTIONS.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
+        </select>
+
+        {kind === 'free' ? (
+          <div className="ad-search flex-1">
+            <Link2 className="ad-search-ico w-4 h-4" style={{ color: 'var(--ad-accent)' }} />
+            <input
+              className="ad-input"
+              placeholder="/chemin-ou-url"
+              value={free}
+              onChange={(e) => { setFree(e.target.value); onChange(e.target.value); }}
+            />
+          </div>
+        ) : (
+          <div className="relative flex-1">
+            <div className="ad-search">
+              {kind === 'static' ? <Globe className="ad-search-ico w-4 h-4" style={{ color: 'var(--ad-accent)' }} /> : <FileText className="ad-search-ico w-4 h-4" style={{ color: 'var(--ad-accent)' }} />}
+              <input
+                className="ad-input"
+                placeholder={kind === 'static' ? 'Rechercher une page statique…' : `Rechercher par titre, id, code, module…`}
+                value={q}
+                onFocus={() => setOpen(true)}
+                onChange={(e) => setQ(e.target.value)}
+              />
+            </div>
+
+            {open && (
+              <div className="ad-combo-list ad-scroll max-h-64">
+                {busy && <div className="ad-combo-item text-xs" style={{ color: 'var(--ad-muted)' }}>Recherche…</div>}
+                {!busy && hits.length === 0 && <div className="ad-combo-item text-xs" style={{ color: 'var(--ad-muted)' }}>Aucun résultat</div>}
+                {hits.map((item, i) => {
+                  const isStatic = kind === 'static';
+                  const title = titleOf(item);
+                  const path = isStatic ? String(item.__path || '') : def ? def.build(item) : '';
+                  const id = isStatic ? '' : String(pubId(item));
+                  return (
+                    <button key={i} type="button" className="ad-combo-item items-center gap-2" onClick={() => (isStatic ? selectStatic(item) : selectEntity(item))}>
+                      {isStatic ? (
+                        <IconMark name={String(item.__icon || '')} className="w-4 h-4 shrink-0" />
+                      ) : (
+                        <IconMark name={def?.icon || ''} className="w-4 h-4 shrink-0" />
+                      )}
+                      <span className="truncate flex-1 text-start">{title}</span>
+                      {id && <span className="font-mono text-[10px] opacity-60">#{id}</span>}
+                      <span className="font-mono text-[10px] opacity-60 max-w-[45%] truncate">{path}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Aperçu du lien sélectionné */}
+      <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--ad-muted)' }}>
+        <Folder className="w-3.5 h-3.5" />
+        <span className="font-mono">{value || '/'}</span>
+        {value && <span className="inline-flex items-center gap-1"><Check className="w-3 h-3" style={{ color: 'var(--ad-ok)' }} /> <span style={{ color: 'var(--ad-muted)' }}>sera préfixé par <code>/{locale}</code> sur la vitrine</span></span>}
+      </div>
+      <p className="text-[11px] flex items-center gap-1" style={{ color: 'var(--ad-muted)' }}>
+        <CornerDownLeft className="w-3 h-3" /> Le slug est enregistré sans la locale ; la vitrine ajoute la langue courante automatiquement.
+      </p>
+    </div>
+  );
+}

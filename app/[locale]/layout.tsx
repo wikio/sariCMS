@@ -2,7 +2,6 @@
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { notFound } from 'next/navigation';
-import { Inter } from 'next/font/google';
 import { locales, isRtl, type Locale } from '@/lib/i18n';
 import { getConfig, getMenu } from '@/lib/data';
 import SiteWrapper from '@/components/layout/SiteWrapper';
@@ -12,12 +11,6 @@ import { CartProvider } from '@/contexts/CartContext';
 import { OrdersProvider } from '@/contexts/OrdersContext';
 import { ApplicationsProvider } from '@/contexts/ApplicationsContext';
 import '@/app/globals.css';
-
-const inter = Inter({
-  subsets: ['latin', 'arabic'],
-  display: 'swap',
-  variable: '--font-inter',
-});
 
 export const viewport = {
   width: 'device-width',
@@ -31,10 +24,42 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  const config = await getConfig(locale);
+  const [{ getSeo }] = await Promise.all([import('@/lib/seo')]);
+  const [config, seo] = await Promise.all([getConfig(locale), getSeo(locale)]);
+  const title = seo.title || `${config.meta.companyName} - ${config.meta.tagline}`;
+  const description = seo.description || config.meta.description;
+  let metadataBase: URL | undefined;
+  try {
+    if (seo.canonical) metadataBase = new URL(seo.canonical);
+  } catch {
+    metadataBase = undefined;
+  }
   return {
-    title: `${config.meta.companyName} - ${config.meta.tagline}`,
-    description: config.meta.description,
+    title: {
+      default: title,
+      template: seo.titleTemplate || '%s | SARI Système',
+    },
+    description,
+    keywords: seo.keywords ? seo.keywords.split(',').map((k) => k.trim()).filter(Boolean) : undefined,
+    robots: seo.robots || 'index, follow',
+    metadataBase,
+    alternates: seo.canonical ? { canonical: seo.canonical } : undefined,
+    openGraph: {
+      title: seo.ogTitle || title,
+      description: seo.ogDescription || description,
+      images: seo.ogImage ? [{ url: seo.ogImage }] : undefined,
+      locale,
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      site: seo.twitter || undefined,
+      title: seo.ogTitle || title,
+      description: seo.ogDescription || description,
+      images: seo.ogImage ? [seo.ogImage] : undefined,
+    },
+    verification: seo.googleSiteVerification ? { google: seo.googleSiteVerification } : undefined,
+    icons: seo.favicon ? { icon: seo.favicon } : undefined,
   };
 }
 
@@ -59,7 +84,7 @@ export default async function LocaleLayout({
   const menu = await getMenu(locale);
 
   return (
-    <html lang={locale} dir={dir} className={inter.variable} suppressHydrationWarning>
+    <html lang={locale} dir={dir} suppressHydrationWarning>
       <body 
         className="antialiased bg-gray-50 dark:bg-[#111111] text-sari-dark dark:text-gray-200 font-sans"
         suppressHydrationWarning

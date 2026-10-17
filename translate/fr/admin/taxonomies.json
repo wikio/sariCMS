@@ -1,0 +1,8 @@
+{
+  "title": "Configuration des taxonomies",
+  "subtitle": "Un onglet par famille. Traduisez les libellés dans les trois langues.",
+  "value": "Valeur",
+  "internalValue": "Valeur (clé interne)",
+  "displayName": "Nom affiché (source)",
+  "french": "Français"
+}

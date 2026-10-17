@@ -1,0 +1,11 @@
+{
+  "title": "Emails",
+  "smtpConnected": "SMTP connecté",
+  "subject": "Sujet",
+  "welcomeSubject": "Bienvenue chez SARI Système",
+  "quoteSubject": "Accusé devis",
+  "applicationSubject": "Candidature reçue",
+  "newsSubject": "Les nouveautés SARI",
+  "hello": "Bonjour,",
+  "thankYou": "Merci de votre confiance."
+}

@@ -1,0 +1,14 @@
+{
+  "article": "Item",
+  "qty": "Qty",
+  "unitPrice": "Unit price",
+  "totalHT": "Subtotal",
+  "globalDiscount": "Global discount",
+  "shippingFees": "Shipping fees",
+  "globalDiscountLabel": "Global discount",
+  "totalTaxes": "Total taxes (VAT)",
+  "shipping": "Shipping",
+  "totalTTC": "Total incl. tax",
+  "chooseFile": "Choose file",
+  "commentPlaceholder": "Write the comment accompanying the quote…"
+}

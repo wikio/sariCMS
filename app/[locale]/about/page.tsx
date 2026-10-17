@@ -6,6 +6,7 @@ import { Heart, Shield, Users } from 'lucide-react';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import SectionTitle from '@/components/ui/SectionTitle';
 import Divider from '@/components/shared/Divider';
+import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: Locale }> }) {
   const { locale } = await params;
@@ -32,6 +33,7 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
   ];
 
   return (
+    <PageVisibilityGuard visibilityKey="page.about">
     <div className="pt-32 pb-24 min-h-screen">
       {/* Header parallaxe */}
       <div 
@@ -61,7 +63,7 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
         <div className="prose dark:prose-invert max-w-none text-gray-600 dark:text-gray-400 text-lg leading-relaxed mb-12">
           <p>{t('historyP1')}</p>
           <p>{t('historyP2')}</p>
-          <Link href={`/${locale}/contenu/1`} className="text-sari-blue hover:underline">
+          <Link href={`/${locale}/content/1`} className="text-sari-blue hover:underline">
             {t('qualityLink')}
           </Link>
         </div>
@@ -88,5 +90,6 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
         </div>
       </div>
     </div>
+    </PageVisibilityGuard>
   );
 }

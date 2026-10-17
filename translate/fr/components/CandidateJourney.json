@@ -1,0 +1,11 @@
+{
+  "endMessage": "Votre réponse met fin à cette candidature. Merci pour votre temps.",
+  "applicationEnded": "Candidature terminée.",
+  "applicationSaved": "Merci ! Votre candidature a bien été enregistrée.",
+  "applicationEndedTitle": "Candidature terminée",
+  "experiencePlaceholder": "Poste occupé, entreprise, durée…",
+  "answerPlaceholder": "Votre réponse…",
+  "uploadCV": "Déposer votre CV (PDF, DOCX)",
+  "finish": "Terminer",
+  "next": "Suivant"
+}

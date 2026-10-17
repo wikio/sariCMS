@@ -127,7 +127,7 @@ export default function TestimonialsSlider({ testimonials }: TestimonialsSliderP
           <button
             onClick={goToPrevious}
             className="absolute top-1/2 -translate-y-1/2 -left-4 md:-left-6 z-10 w-12 h-12 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-full shadow-lg flex items-center justify-center hover:bg-sari-blue hover:text-white hover:border-sari-blue transition-all group"
-            aria-label="Précédent"
+            aria-label={t("previous", { defaultMessage: "Précédent" })}
           >
             <ChevronLeft className="w-6 h-6 group-hover:-translate-x-0.5 transition-transform" />
           </button>
@@ -135,7 +135,7 @@ export default function TestimonialsSlider({ testimonials }: TestimonialsSliderP
           <button
             onClick={goToNext}
             className="absolute top-1/2 -translate-y-1/2 -right-4 md:-right-6 z-10 w-12 h-12 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-full shadow-lg flex items-center justify-center hover:bg-sari-blue hover:text-white hover:border-sari-blue transition-all group"
-            aria-label="Suivant"
+            aria-label={t("next", { defaultMessage: "Suivant" })}
           >
             <ChevronRight className="w-6 h-6 group-hover:translate-x-0.5 transition-transform" />
           </button>
@@ -151,7 +151,7 @@ export default function TestimonialsSlider({ testimonials }: TestimonialsSliderP
                     ? 'bg-sari-blue w-8 h-3'
                     : 'bg-gray-300 dark:bg-gray-600 w-3 h-3 hover:bg-sari-blue/50'
                 }`}
-                aria-label={`Témoignage ${idx + 1}`}
+                aria-label={t("testimonialNumber", { number: idx + 1, defaultMessage: `Témoignage ${idx + 1}` })}
               />
             ))}
           </div>

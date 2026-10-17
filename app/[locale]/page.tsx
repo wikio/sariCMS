@@ -11,9 +11,11 @@ import AlternatingSections from '@/components/sections/AlternatingSections';
 import StatsSection from '@/components/sections/StatsSection';
 import TestimonialsSlider from '@/components/sections/TestimonialsSlider';
 import LatestEvents from '@/components/sections/LatestEvents';
+import LatestNews from '@/components/sections/LatestNews';
 import NewsletterSection from '@/components/sections/NewsletterSection';
 import PartnersSection from '@/components/sections/PartnersSection';
 import CTASection from '@/components/sections/CTASection';
+import VisibleSection from '@/components/shared/VisibleSection';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: Locale }> }) {
   const { locale } = await params;
@@ -40,19 +42,45 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
 
   return (
     <div>
-      <HeroSlider slides={hero} />
-      <MarqueePartners partners={partners} />
-      <NavigationGrid />
-      <ParallaxSection locale={locale} />
-      <FeaturedProducts products={products} count={4} />
-      <AlternatingSections />
-      {/* ✅ Passage explicite des props */}
-      <StatsSection config={config} />
-      <TestimonialsSlider testimonials={testimonials} />
-      <LatestEvents events={events} count={3} />
-      <NewsletterSection />
-      <PartnersSection partners={partners} />
-      <CTASection />
+      <VisibleSection visibilityKey="section.hero">
+        <HeroSlider slides={hero} />
+      </VisibleSection>
+      <VisibleSection visibilityKey="section.partners">
+        <MarqueePartners partners={partners} />
+      </VisibleSection>
+      <VisibleSection visibilityKey="section.navigation">
+        <NavigationGrid />
+      </VisibleSection>
+      <VisibleSection visibilityKey="section.mission">
+        <ParallaxSection locale={locale} />
+      </VisibleSection>
+      <VisibleSection visibilityKey="section.products">
+        <FeaturedProducts products={products} count={4} />
+      </VisibleSection>
+      <VisibleSection visibilityKey="section.solutions">
+        <AlternatingSections />
+      </VisibleSection>
+      <VisibleSection visibilityKey="section.stats">
+        <StatsSection config={config} />
+      </VisibleSection>
+      <VisibleSection visibilityKey="section.testimonials">
+        <TestimonialsSlider testimonials={testimonials} />
+      </VisibleSection>
+      <VisibleSection visibilityKey="section.events">
+        <LatestEvents events={events} count={3} />
+      </VisibleSection>
+      <VisibleSection visibilityKey="section.news">
+        <LatestNews news={news} count={3} />
+      </VisibleSection>
+      <VisibleSection visibilityKey="section.newsletter">
+        <NewsletterSection />
+      </VisibleSection>
+      <VisibleSection visibilityKey="section.partners">
+        <PartnersSection partners={partners} />
+      </VisibleSection>
+      <VisibleSection visibilityKey="section.cta">
+        <CTASection />
+      </VisibleSection>
     </div>
   );
 }

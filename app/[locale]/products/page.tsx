@@ -11,6 +11,7 @@ import ProductCard from '@/components/cards/ProductCard';
 import Pagination from '@/components/ui/Pagination';
 import Tag from '@/components/shared/Tag';
 import Breadcrumb from '@/components/ui/Breadcrumb';
+import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
 
 export default function ProductsPage({ params }: { params: Promise<{ locale: string }> }) {
   // ✅ Récupérer la locale depuis les params
@@ -167,6 +168,7 @@ export default function ProductsPage({ params }: { params: Promise<{ locale: str
   }
 
   return (
+    <PageVisibilityGuard visibilityKey="module.products">
     <div className="pt-32 pb-24 min-h-screen bg-gray-50 dark:bg-[#111111]">
       <div className="bg-white dark:bg-[#1a1a1a] border-b border-gray-200 dark:border-gray-800">
         <div className="container mx-auto px-6 py-8">
@@ -457,5 +459,6 @@ export default function ProductsPage({ params }: { params: Promise<{ locale: str
         </div>
       </div>
     </div>
+    </PageVisibilityGuard>
   );
 }

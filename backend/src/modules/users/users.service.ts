@@ -59,11 +59,11 @@ export class UsersService extends BaseCrudService<UserEntity> {
     return out;
   }
 
-  async setStatus(id: string, status: string, actor?: ActorContext) {
+  async setStatus(id: number, status: string, actor?: ActorContext) {
     return this.update(id, { status } as Partial<UserEntity>, actor);
   }
 
-  async generateTempPassword(id: string, actor?: ActorContext) {
+  async generateTempPassword(id: number, actor?: ActorContext) {
     await this.requireById(id);
     const password = `Tmp${randomBytes(5).toString('base64url')}!1A`;
     await this.update(id, { password } as unknown as Partial<UserEntity>, actor);
@@ -76,7 +76,7 @@ export class UsersService extends BaseCrudService<UserEntity> {
     return { password };
   }
 
-  async generatePartnerCredentials(id: string, actor?: ActorContext) {
+  async generatePartnerCredentials(id: number, actor?: ActorContext) {
     const user = await this.requireById(id);
     const partnerCode = `PART-${randomBytes(3).toString('hex').toUpperCase()}`;
     const partnerKey = `sk_live_${randomBytes(16).toString('hex')}`;

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Patch } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Post, Patch } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Actor } from '../../common/decorators/actor.decorator';
 import { CrudResource } from '../../common/decorators/crud-resource.decorator';
@@ -19,7 +19,7 @@ export class TranslationsController extends BaseCrudController<TranslationEntity
 
   @Get('entity/:entityType/:entityId')
   @ApiOperation({ summary: 'Toutes les traductions d’une entité' })
-  forEntity(@Param('entityType') entityType: string, @Param('entityId') entityId: string) {
+  forEntity(@Param('entityType') entityType: string, @Param('entityId', new ParseIntPipe()) entityId: number) {
     return this.service.forEntity(entityType, entityId);
   }
 
@@ -30,7 +30,7 @@ export class TranslationsController extends BaseCrudController<TranslationEntity
 
   @Patch(':id')
   override update(
-    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Param('id', new ParseIntPipe()) id: number,
     @Body() dto: UpdateTranslationDto,
     @Actor() actor: ActorContext,
   ) {

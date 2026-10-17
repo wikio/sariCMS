@@ -49,14 +49,14 @@ export class AuthController {
   @Get('me')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Profil de l’utilisateur authentifié + permissions' })
-  me(@CurrentUser('id') id: string) {
+  me(@CurrentUser('id') id: number) {
     return this.auth.me(id);
   }
 
   @Post('2fa/setup')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Générer un secret TOTP + QR (pas encore activé)' })
-  setup(@CurrentUser('id') id: string) {
+  setup(@CurrentUser('id') id: number) {
     return this.auth.setupTotp(id);
   }
 
@@ -64,7 +64,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Confirmer le secret TOTP avec un code pour activer la 2FA' })
-  enable(@CurrentUser('id') id: string, @Body() dto: EnableTotpDto) {
+  enable(@CurrentUser('id') id: number, @Body() dto: EnableTotpDto) {
     return this.auth.enableTotp(id, dto.code);
   }
 
@@ -72,7 +72,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Désactiver la 2FA (code TOTP requis)' })
-  disable(@CurrentUser('id') id: string, @Body() dto: VerifyTotpDto) {
+  disable(@CurrentUser('id') id: number, @Body() dto: VerifyTotpDto) {
     return this.auth.disableTotp(id, dto.code);
   }
 }

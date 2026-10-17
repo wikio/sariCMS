@@ -5,7 +5,7 @@ export interface RoleEntity extends BaseEntity {
   slug: string;
   description?: string | null;
   isSystem?: boolean;
-  permissionIds?: string[];
+  permissionIds?: number[];
 }
 
 export interface PermissionEntity extends BaseEntity {

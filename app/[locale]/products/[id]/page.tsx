@@ -10,9 +10,12 @@ import {
   Download, Package, AlertTriangle
 } from 'lucide-react';
 import { getProducts } from '@/lib/data';
+import { matchesEntity } from '@/lib/ids';
 import { useCart } from '@/contexts/CartContext';
+import { useVisibility } from '@/lib/site-visibility';
 import type { Product } from '@/types';
 import Breadcrumb from '@/components/ui/Breadcrumb';
+import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -20,6 +23,7 @@ export default function ProductDetailPage() {
   const locale = useLocale();
   const t = useTranslations('pages.productDetail');
   const { addToCart } = useCart();
+  const visibility = useVisibility();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
@@ -33,7 +37,7 @@ export default function ProductDetailPage() {
     const loadProduct = async () => {
       const data = await getProducts(locale);
       setProducts(data);
-      const found = data.find((p) => p.id === parseInt(id));
+      const found = data.find((p) => matchesEntity(p, id));
       setProduct(found || null);
     };
     loadProduct();
@@ -116,6 +120,7 @@ export default function ProductDetailPage() {
   };
 
   return (
+    <PageVisibilityGuard visibilityKey="module.products">
     <div className="pt-44 pb-24 container mx-auto px-6 min-h-screen page-enter">
       {addedToCart && (
         <div className="fixed top-24 right-4 bg-green-500 text-white px-6 py-3 shadow-lg z-50 animate-fade-in-up rounded-lg flex items-center gap-2">
@@ -238,7 +243,8 @@ export default function ProductDetailPage() {
             </div>
           )}
 
-          {/* Quantité + Ajouter au panier */}
+          {/* Quantité + Ajouter au panier (masquable depuis Admin → Visibilité) */}
+          {visibility['action.order'] !== false && (
           <div className="flex flex-col sm:flex-row gap-4 mb-8">
             <div className="flex items-center border-2 border-gray-300 dark:border-gray-700 rounded-lg overflow-hidden">
               <button
@@ -275,6 +281,7 @@ export default function ProductDetailPage() {
               )}
             </button>
           </div>
+          )}
 
           {/* PDF */}
           {product.catalogPdf && product.catalogPdf !== '#' && (
@@ -336,5 +343,6 @@ export default function ProductDetailPage() {
         </div>
       </div>
     </div>
+    </PageVisibilityGuard>
   );
 }

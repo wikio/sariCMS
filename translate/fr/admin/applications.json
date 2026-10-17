@@ -1,0 +1,18 @@
+{
+  "title": "Candidatures",
+  "compare": "Comparer",
+  "allStatuses": "Tous les statuts",
+  "allOffers": "Toutes les offres",
+  "applyNote": "Appliquer la note",
+  "activateInterview": "Activer (entretien)",
+  "candidate": "Candidat",
+  "offer": "Offre",
+  "note": "Note",
+  "noCandidates": "Aucun candidat pour cette offre.",
+  "comparisonTitle": "Comparaison des candidats",
+  "accepted": "Acceptés",
+  "experience": "Expérience",
+  "motivation": "Motivation",
+  "comment": "Commentaire",
+  "documents": "Documents"
+}

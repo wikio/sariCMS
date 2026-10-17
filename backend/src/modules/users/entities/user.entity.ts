@@ -14,7 +14,7 @@ export interface UserEntity extends BaseEntity {
   type: UserType | string;
   status: UserStatus | string;
   locale?: string;
-  roleId?: string | null;
+  roleId?: number | null;
   totpEnabled?: boolean;
   totpSecret?: string | null;
   partnerCode?: string | null;

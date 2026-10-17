@@ -7,7 +7,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
-import { createHash, randomBytes, randomUUID } from 'crypto';
+import { createHash, randomBytes } from 'crypto';
 import { authenticator } from 'otplib';
 import * as QRCode from 'qrcode';
 import { SUPER_ADMIN_SLUG } from '../../common/constants/permissions';
@@ -25,7 +25,7 @@ import { PermissionEntity, RoleEntity } from '../roles/entities/role.entity';
 import { LoginDto, TwoFaLoginDto } from './dto/auth.dto';
 
 interface RefreshTokenEntity extends BaseEntity {
-  userId: string;
+  userId: number;
   tokenHash: string;
   expiresAt: Date | string;
   revokedAt?: Date | string | null;
@@ -76,7 +76,7 @@ export class AuthService {
   }
 
   async verifyTwoFactor(dto: TwoFaLoginDto, meta: { ip?: string; userAgent?: string }) {
-    let payload: { sub: string; typ?: string };
+    let payload: { sub: string | number; typ?: string };
     try {
       payload = this.jwt.verify(dto.challengeToken, {
         secret: this.config.get('JWT_ACCESS_SECRET'),
@@ -85,7 +85,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid or expired 2FA challenge');
     }
     if (payload.typ !== '2fa') throw new UnauthorizedException('Invalid token type');
-    const user = await this.users.findById(payload.sub);
+    const user = await this.users.findById(Number(payload.sub));
     if (!user || !user.totpEnabled) throw new UnauthorizedException('2FA is not enabled');
     this.assertTotp(user, dto.code);
     return this.issueSession(user, meta);
@@ -113,7 +113,7 @@ export class AuthService {
     return { loggedOut: true };
   }
 
-  async me(userId: string) {
+  async me(userId: number) {
     const user = await this.users.findById(userId);
     if (!user) throw new UnauthorizedException();
     const permissions = await this.resolvePermissions(user);
@@ -122,7 +122,7 @@ export class AuthService {
     return { ...safe, role, permissions, totpEnabled: Boolean(user.totpEnabled) };
   }
 
-  async setupTotp(userId: string) {
+  async setupTotp(userId: number) {
     const user = await this.users.findById(userId);
     if (!user) throw new UnauthorizedException();
     const secret = authenticator.generateSecret();
@@ -133,7 +133,7 @@ export class AuthService {
     return { secret, otpauth, qrDataUrl };
   }
 
-  async enableTotp(userId: string, code: string) {
+  async enableTotp(userId: number, code: string) {
     const secret = await this.cache.get<string>(`totp-setup:${userId}`);
     if (!secret) throw new BadRequestException('No TOTP setup in progress');
     const valid = authenticator.verify({ token: code, secret });
@@ -144,7 +144,7 @@ export class AuthService {
     return { totpEnabled: true };
   }
 
-  async disableTotp(userId: string, code: string) {
+  async disableTotp(userId: number, code: string) {
     const user = await this.users.findById(userId);
     if (!user?.totpEnabled || !user.totpSecret) {
       throw new BadRequestException('2FA is not enabled');
@@ -197,7 +197,6 @@ export class AuthService {
     const days = this.parseTtlDays(this.config.get('JWT_REFRESH_TTL') || '7d');
     const expiresAt = new Date(Date.now() + days * 86_400_000);
     await this.refreshTokens.create({
-      id: randomUUID(),
       userId: user.id,
       tokenHash: this.hashToken(refreshRaw),
       expiresAt: expiresAt.toISOString(),

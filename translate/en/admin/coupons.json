@@ -1,0 +1,11 @@
+{
+  "allStatuses": "All statuses",
+  "allTypes": "All types",
+  "percentage": "Percentage",
+  "fixedAmount": "Fixed amount",
+  "stackable": "Stackable?",
+  "sortByCode": "Sort: code",
+  "sortByStatus": "Sort: status",
+  "exhausted": "exhausted",
+  "upcoming": "upcoming"
+}

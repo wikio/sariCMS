@@ -1,0 +1,14 @@
+{
+  "noUser": "No user logged in.",
+  "account": "Account",
+  "twoFactor": "Two-factor authentication (2FA)",
+  "enabled": "Enabled",
+  "disabled": "Disabled",
+  "disable2FA": "Disable 2FA",
+  "totpCode": "Current TOTP code",
+  "secretKey": "Secret key",
+  "twoFactorEnabled": "Login now requires a 6-digit TOTP code.",
+  "twoFactorDesc": "Enable 2FA to secure your account with an authenticator app.",
+  "showProfile": "Show profile",
+  "updateProfile": "Update profile"
+}

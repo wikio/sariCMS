@@ -1,0 +1,13 @@
+{
+  "title": "Dashboard",
+  "stats": "Statistics",
+  "logs": "Logs",
+  "contentDistribution": "Content distribution",
+  "recentActivity": "Recent activity",
+  "actions": "Actions",
+  "catalogue": "Catalog",
+  "loadDemo": "Load demo data",
+  "delivered": "Delivered",
+  "cancelled": "Cancelled",
+  "events": "Events"
+}

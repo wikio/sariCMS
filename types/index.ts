@@ -43,7 +43,8 @@ export interface Menu {
 }
 
 export interface Product {
-  id: number;
+  id: number | string;
+  slug?: string;
   name: string;
   category: string;
   price: string;
@@ -63,10 +64,17 @@ export interface Product {
 }
 
 export interface Event {
-  id: number;
+  id: number | string;
+  locale?: string; // Langue du contenu (fr, en, ar)
+  legacyId?: string; // ID unique pour toutes les versions linguistiques
+  slug?: string;
   title: string;
   type: string;
+  category?: string;
   date: string;
+  startDate?: string;
+  endDate?: string;
+  targetAudience?: string;
   location: string;
   shortDesc: string;
   fullContent?: string;
@@ -74,11 +82,25 @@ export interface Event {
   agenda?: string[];
 }
 
+export interface Author {
+  id: number | string;
+  name: string;
+  email?: string;
+  bio?: string;
+  photo?: string;
+  role?: string;
+  articlesCount?: number;
+}
+
 export interface News {
-  id: number;
+  id: number | string;
+  locale?: string; // Langue du contenu (fr, en, ar)
+  legacyId?: string; // ID unique pour toutes les versions linguistiques
+  slug?: string;
   title: string;
   category: string;
   date: string;
+  publicationDate?: string;
   author?: string;
   shortDesc: string;
   fullContent?: string;
@@ -90,7 +112,8 @@ export interface News {
 }
 
 export interface Career {
-  id: number;
+  id: number | string;
+  slug?: string;
   title: string;
   type: string;
   location: string;
@@ -106,12 +129,16 @@ export interface Career {
   workflow?: string[];
   benefits?: string[];
   contact?: string;
+  applyAuth?: 'required' | 'optional' | 'inherit';
 }
 
 export interface Service {
-  id: number;
+  id: number | string;
+  slug?: string;
   title: string;
   icon: string;
+  color?: string;
+  image?: string;
   shortDesc: string;
   fullDesc?: string;
   features?: string[];
@@ -119,7 +146,7 @@ export interface Service {
 }
 
 export interface Testimonial {
-  id: number;
+  id: number | string;
   name: string;
   role: string;
   clinic: string;
@@ -129,21 +156,28 @@ export interface Testimonial {
 }
 
 export interface Partner {
-  id: number;
+  id: number | string;
   name: string;
   logo: string;
   category?: string;
 }
 
+export interface LegalDoc {
+  title: string;
+  content: string;
+  lastUpdate?: string;
+}
+
 export interface Legal {
-  mentions: { title: string; content: string };
-  privacy: { title: string; content: string };
-  cgv: { title: string; content: string };
-  about: { title: string; content: string };
+  mentions: LegalDoc;
+  privacy: LegalDoc;
+  conditions: LegalDoc;
+  about: LegalDoc;
+  [key: string]: LegalDoc;
 }
 
 export interface GenericContent {
-  id: number;
+  id: number | string;
   title: string;
   subtitle?: string;
   category?: string;
@@ -180,15 +214,26 @@ export interface VerificationCode {
   revocationReason?: string;
 }
 
+export interface HeroSlide {
+  id: number | string;
+  title: string;
+  subtitle: string;
+  description: string;
+  image: string;
+  cta: string;
+  ctaLink: string;
+}
+
 export interface SolutionCategory {
   id: string;
+  slug?: string;
   title: string;
   shortDesc: string;
   fullDesc?: string;
   icon: string;
   image: string;
   color: string;
-  productIds: number[];
+  productIds: Array<number | string>;
   features?: string[];
   faq?: Array<{ q: string; a: string }>;
 }

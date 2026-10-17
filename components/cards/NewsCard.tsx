@@ -28,11 +28,17 @@ export default function NewsCard({ news, variant = 'standard' }: NewsCardProps) 
         className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl hover:shadow-lg transition-all cursor-pointer overflow-hidden group flex flex-col md:flex-row"
       >
         <div className="relative md:w-64 h-48 md:h-auto overflow-hidden flex-shrink-0">
-          <img
-            src={news.image}
-            alt={news.title}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-          />
+          {news.image ? (
+            <img
+              src={news.image}
+              alt={news.title}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 text-gray-400">
+              <Calendar className="w-16 h-16" />
+            </div>
+          )}
           <div className="absolute top-4 left-4 bg-sari-blue text-white px-3 py-1 text-xs font-bold uppercase rounded">
             {news.category}
           </div>
@@ -68,11 +74,17 @@ export default function NewsCard({ news, variant = 'standard' }: NewsCardProps) 
       className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl hover:shadow-lg transition-all cursor-pointer overflow-hidden group h-full flex flex-col"
     >
       <div className="relative h-48 overflow-hidden">
-        <img
-          src={news.image}
-          alt={news.title}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-        />
+        {news.image ? (
+          <img
+            src={news.image}
+            alt={news.title}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 text-gray-400">
+            <Calendar className="w-16 h-16" />
+          </div>
+        )}
         <div className="absolute top-4 left-4 bg-sari-blue text-white px-3 py-1 text-xs font-bold uppercase rounded">
           {news.category}
         </div>

@@ -10,6 +10,7 @@ export interface NewsEntity extends BaseEntity {
   authorName?: string | null;
   authorId?: string | null;
   date?: Date | string | null;
+  publicationDate?: Date | string | null;
   readTime?: string | null;
   shortDesc?: string | null;
   fullContent?: string | null;
@@ -17,4 +18,7 @@ export interface NewsEntity extends BaseEntity {
   tags?: string[] | unknown;
   status: string;
   publishedAt?: Date | string | null;
+  legacyId?: string | null;
+  parentId?: number | null;
+  isDefault?: boolean;
 }

@@ -1,0 +1,11 @@
+{
+  "title": "Taxes",
+  "searchPlaceholder": "Search a tax, zone or category…",
+  "activeTax": "Active",
+  "inactiveTax": "Inactive",
+  "included": "Included",
+  "added": "Added",
+  "rate": "Rate",
+  "zone": "Zone",
+  "target": "Target"
+}

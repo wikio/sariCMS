@@ -11,6 +11,10 @@ import {
 import { getConfig, getMenu } from '@/lib/data';
 import type { Config, Menu } from '@/types';
 import SocialLinks from '@/components/shared/SocialLinks';
+import ImageCaptcha from '@/components/ImageCaptcha';
+import { loadAdminSettings } from '@/lib/admin-settings';
+import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
+import { maskPhone } from '@/lib/masks';
 
 export default function ContactPage() {
   const [config, setConfig] = useState<Config | null>(null);
@@ -34,6 +38,8 @@ export default function ContactPage() {
   const [captchaExpected, setCaptchaExpected] = useState(0);
   const [captchaAttempts, setCaptchaAttempts] = useState(0);
   const [captchaBlocked, setCaptchaBlocked] = useState(false);
+  const [captchaOk, setCaptchaOk] = useState(false);
+  const [siteCaptcha, setSiteCaptcha] = useState(true);
 
   const locale = useLocale();
   const t = useTranslations('pages.contact');
@@ -75,14 +81,17 @@ export default function ContactPage() {
 
   useEffect(() => {
     generateCaptcha();
+    try { setSiteCaptcha(loadAdminSettings().security.siteCaptcha); } catch { /* */ }
   }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (captchaBlocked) return;
-    
-    if (parseInt(captchaAnswer) !== captchaExpected) {
+
+    if (siteCaptcha) {
+      if (!captchaOk) return;
+    } else if (parseInt(captchaAnswer) !== captchaExpected) {
       setCaptchaAttempts(prev => prev + 1);
       if (captchaAttempts >= 4) {
         setCaptchaBlocked(true);
@@ -98,8 +107,18 @@ export default function ContactPage() {
     }
 
     setIsSubmitting(true);
-    setTimeout(() => {
-      console.log('Message envoyé:', formData);
+    // Envoi au backend Nest (POST /contact/messages) — fallback local si hors-ligne.
+    fetch('/api/v1/contact/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        subject: formData.subject,
+        message: formData.message,
+      }),
+    }).catch(() => undefined).finally(() => {
       setIsSubmitting(false);
       setSubmitted(true);
       setFormData({
@@ -116,14 +135,15 @@ export default function ContactPage() {
       setCaptchaAttempts(0);
       generateCaptcha();
       setTimeout(() => setSubmitted(false), 5000);
-    }, 1500);
+    });
   };
 
   if (!config || !menu) {
-    return <div className="min-h-screen flex items-center justify-center">Chargement...</div>;
+    return <div className="min-h-screen flex items-center justify-center">{t("loading", { defaultMessage: "Chargement..." })}</div>;
   }
 
   return (
+    <PageVisibilityGuard visibilityKey="module.contact">
     <div className="pt-32 pb-24 min-h-screen page-enter">
       {/* Header parallaxe */}
       <div
@@ -358,6 +378,23 @@ export default function ContactPage() {
                       </button>
                     ))}
                   </div>
+
+                  {/* CTA dashboard pour une demande de devis détaillée */}
+                  {formData.subject === 'devis' && (
+                    <div className="mt-3 bg-sari-blue/5 border border-sari-blue/30 rounded-lg p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {t('quoteCtaText', { defaultMessage: 'Pour une demande de devis plus détaillée (plusieurs produits, suivi de votre demande), créez un compte client et connectez-vous à votre dashboard.' })}
+                      </p>
+                      <div className="flex gap-2 shrink-0">
+                        <Link href={`/${locale}/connexion?source=produit`} className="btn-primary text-white px-4 py-2 text-sm font-semibold rounded-lg whitespace-nowrap">
+                          {t('quoteCtaLogin', { defaultMessage: 'Se connecter' })}
+                        </Link>
+                        <Link href={`/${locale}/inscription?source=produit`} className="border border-sari-blue text-sari-blue px-4 py-2 text-sm font-semibold rounded-lg whitespace-nowrap">
+                          {t('quoteCtaRegister', { defaultMessage: 'Créer un compte' })}
+                        </Link>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Nom et Email */}
@@ -399,7 +436,7 @@ export default function ContactPage() {
                     <input
                       type="tel"
                       value={formData.phone}
-                      onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                      onChange={(e) => setFormData({...formData, phone: maskPhone(e.target.value)})}
                       className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none"
                       placeholder="+33 1 23 45 67 89"
                     />
@@ -472,31 +509,35 @@ export default function ContactPage() {
                     <Shield className="w-4 h-4 text-sari-blue" />
                     {t('captchaLabel')} <span className="text-red-500">*</span>
                   </label>
-                  <div className="flex items-center gap-4">
-                    <div className="flex-1 bg-white dark:bg-[#1a1a1a] border border-gray-300 dark:border-gray-700 px-4 py-3 text-center">
-                      <span className="text-xl font-bold text-sari-dark dark:text-white font-mono">
-                        {captchaQuestion}
-                      </span>
+                  {siteCaptcha ? (
+                    <ImageCaptcha onChange={setCaptchaOk} />
+                  ) : (
+                    <div className="flex items-center gap-4">
+                      <div className="flex-1 bg-white dark:bg-[#1a1a1a] border border-gray-300 dark:border-gray-700 px-4 py-3 text-center">
+                        <span className="text-xl font-bold text-sari-dark dark:text-white font-mono">
+                          {captchaQuestion}
+                        </span>
+                      </div>
+                      <input
+                        type="number"
+                        value={captchaAnswer}
+                        onChange={(e) => setCaptchaAnswer(e.target.value)}
+                        placeholder="?"
+                        disabled={captchaBlocked}
+                        className="w-24 px-4 py-3 border-2 border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none transition-colors text-center font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={generateCaptcha}
+                        disabled={captchaBlocked}
+                        className="p-3 bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        title={t('newCaptcha')}
+                      >
+                        <RefreshCw className="w-5 h-5 text-sari-dark dark:text-white" />
+                      </button>
                     </div>
-                    <input
-                      type="number"
-                      value={captchaAnswer}
-                      onChange={(e) => setCaptchaAnswer(e.target.value)}
-                      placeholder="?"
-                      disabled={captchaBlocked}
-                      className="w-24 px-4 py-3 border-2 border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none transition-colors text-center font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={generateCaptcha}
-                      disabled={captchaBlocked}
-                      className="p-3 bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      title={t('newCaptcha')}
-                    >
-                      <RefreshCw className="w-5 h-5 text-sari-dark dark:text-white" />
-                    </button>
-                  </div>
+                  )}
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                     {t('captchaHelp')}
                   </p>
@@ -563,5 +604,6 @@ export default function ContactPage() {
         </div>
       </div>
     </div>
+    </PageVisibilityGuard>
   );
 }

@@ -1,0 +1,11 @@
+{
+  "allStatuses": "جميع الحالات",
+  "allTypes": "جميع الأنواع",
+  "percentage": "نسبة مئوية",
+  "fixedAmount": "مبلغ ثابت",
+  "stackable": "قابل للجمع؟",
+  "sortByCode": "ترتيب: الرمز",
+  "sortByStatus": "ترتيب: الحالة",
+  "exhausted": "مستنفد",
+  "upcoming": "قادم"
+}

@@ -1,0 +1,12 @@
+{
+  "preparing": "قيد التحضير",
+  "shipped": "تم الشحن",
+  "answered": "تم الرد",
+  "revisionRequested": "طلب مراجعة",
+  "convertedToOrder": "تم التحويل إلى طلب",
+  "autoExpired": "انتهت صلاحيته تلقائياً",
+  "allStatuses": "جميع الحالات",
+  "client": "العميل",
+  "totalTTC": "المجموع شامل الضريبة",
+  "invoice": "الفاتورة"
+}

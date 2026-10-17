@@ -2,7 +2,7 @@
   "navigation": "التنقل",
   "legalSecurity": "قانوني وأمان",
   "legalNotice": "الإشعارات القانونية",
-  "privacy": "الخصوصية",
+  "privacy": "سياسة الخصوصية",
   "terms": "الشروط والأحكام",
   "verification": "التحقق من الأصالة",
   "contact": "اتصل بنا",
@@ -10,5 +10,7 @@
   "designedWith": "مصمم بشغف للمهنيين الصحيين",
   "contactUs": "اتصل بنا",
   "logoFallback": "الشعار",
-  "companyName": "صولوسيون صاري سيستام"
+  "companyName": "صولوسيون صاري سيستام",
+  "mentions": "الإشعار القانوني",
+  "conditions": "الشروط والأحكام"
 }

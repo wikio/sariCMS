@@ -45,7 +45,7 @@ export class PrismaRepository<T extends BaseEntity> implements ICrudRepository<T
     };
   }
 
-  async findById(id: string, includeDeleted = false): Promise<T | null> {
+  async findById(id: number, includeDeleted = false): Promise<T | null> {
     const row = await this.db.findUnique({ where: { id } });
     if (!row) return null;
     if (row.deletedAt && !includeDeleted) return null;
@@ -66,28 +66,28 @@ export class PrismaRepository<T extends BaseEntity> implements ICrudRepository<T
     return (await this.db.create({ data: this.toPrisma(data) })) as T;
   }
 
-  async update(id: string, data: Partial<T>): Promise<T> {
+  async update(id: number, data: Partial<T>): Promise<T> {
     return (await this.db.update({
       where: { id },
       data: this.toPrisma(data),
     })) as T;
   }
 
-  async softDelete(id: string): Promise<T> {
+  async softDelete(id: number): Promise<T> {
     return (await this.db.update({
       where: { id },
       data: { deletedAt: new Date() },
     })) as T;
   }
 
-  async restore(id: string): Promise<T> {
+  async restore(id: number): Promise<T> {
     return (await this.db.update({
       where: { id },
       data: { deletedAt: null },
     })) as T;
   }
 
-  async hardDelete(id: string): Promise<void> {
+  async hardDelete(id: number): Promise<void> {
     await this.db.delete({ where: { id } });
   }
 

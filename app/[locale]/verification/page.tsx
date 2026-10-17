@@ -15,6 +15,8 @@ import { getVerificationCodes } from '@/lib/data';
 import type { VerificationCode } from '@/types';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import FAQ from '@/components/ui/FAQ';
+import ImageCaptcha from '@/components/ImageCaptcha';
+import { loadAdminSettings } from '@/lib/admin-settings';
 
 export default function VerificationPage() {
   const locale = useLocale();
@@ -32,6 +34,7 @@ export default function VerificationPage() {
   const [captchaExpected, setCaptchaExpected] = useState(0);
   const [captchaAttempts, setCaptchaAttempts] = useState(0);
   const [captchaBlocked, setCaptchaBlocked] = useState(false);
+  const [captchaOk, setCaptchaOk] = useState(false);
   
   const [verificationCodes, setVerificationCodes] = useState<VerificationCode[]>([]);
   const resultRef = useRef<HTMLDivElement>(null);
@@ -98,20 +101,18 @@ export default function VerificationPage() {
     // Vérification du blocage
     if (captchaBlocked) return;
 
-    // Vérification du CAPTCHA
-    if (parseInt(captchaAnswer) !== captchaExpected) {
+    // Vérification du CAPTCHA image
+    if (!captchaOk) {
       setResult({
         status: 'captcha_error',
         message: t('results.captchaMessage')
       });
-      generateCaptcha();
       setCaptchaAttempts(prev => prev + 1);
       if (captchaAttempts >= 4) {
         setCaptchaBlocked(true);
         setTimeout(() => {
           setCaptchaBlocked(false);
           setCaptchaAttempts(0);
-          generateCaptcha();
         }, 300000); // 5 minutes
       }
       return;
@@ -405,31 +406,7 @@ export default function VerificationPage() {
                     <Shield className="w-4 h-4 text-sari-blue" />
                     {t('form.captchaLabel')} <span className="text-red-500">*</span>
                   </label>
-                  <div className="flex items-center gap-4">
-                    <div className="flex-1 bg-white dark:bg-[#1a1a1a] border border-gray-300 dark:border-gray-700 px-4 py-3 text-center rounded">
-                      <span className="text-xl font-bold text-sari-dark dark:text-white font-mono">
-                        {captchaQuestion}
-                      </span>
-                    </div>
-                    <input
-                      type="number"
-                      value={captchaAnswer}
-                      onChange={(e) => setCaptchaAnswer(e.target.value)}
-                      placeholder="?"
-                      disabled={captchaBlocked}
-                      className="w-24 px-4 py-3 border-2 border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none transition-colors text-center font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed rounded-lg"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={generateCaptcha}
-                      disabled={captchaBlocked}
-                      className="p-3 bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed rounded-lg"
-                      title={t('form.newCaptcha')}
-                    >
-                      <RefreshCw className="w-5 h-5 text-sari-dark dark:text-white" />
-                    </button>
-                  </div>
+                  <ImageCaptcha onChange={setCaptchaOk} />
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                     {t('form.captchaHelp')}
                   </p>

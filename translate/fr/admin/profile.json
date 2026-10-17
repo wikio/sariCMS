@@ -1,0 +1,14 @@
+{
+  "noUser": "Aucun utilisateur connecté.",
+  "account": "Compte",
+  "twoFactor": "Double authentification (2FA)",
+  "enabled": "Activée",
+  "disabled": "Désactivée",
+  "disable2FA": "Désactiver la 2FA",
+  "totpCode": "Code TOTP actuel",
+  "secretKey": "Clé secrète",
+  "twoFactorEnabled": "La connexion exige désormais un code TOTP à 6 chiffres.",
+  "twoFactorDesc": "Activez la 2FA pour sécuriser votre compte avec une appli d'authentification.",
+  "showProfile": "Afficher le profil",
+  "updateProfile": "Mettre à jour le profil"
+}

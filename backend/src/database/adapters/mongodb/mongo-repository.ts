@@ -46,7 +46,7 @@ export class MongoRepository<T extends BaseEntity> implements ICrudRepository<T>
     };
   }
 
-  async findById(id: string, includeDeleted = false): Promise<T | null> {
+  async findById(id: number, includeDeleted = false): Promise<T | null> {
     const row = await this.model.findOne({ id }).lean().exec();
     if (!row) return null;
     const doc = row as Record<string, unknown>;
@@ -62,11 +62,13 @@ export class MongoRepository<T extends BaseEntity> implements ICrudRepository<T>
   }
 
   async create(data: Partial<T>): Promise<T> {
+    // Mongo n'a pas d'auto-incrément : fallback numérique (driver optionnel).
+    if (data.id === undefined) (data as Record<string, unknown>).id = Date.now();
     const created = await this.model.create(data);
     return this.toEntity(created.toObject());
   }
 
-  async update(id: string, data: Partial<T>): Promise<T> {
+  async update(id: number, data: Partial<T>): Promise<T> {
     const row = await this.model
       .findOneAndUpdate({ id }, { $set: data }, { new: true })
       .lean()
@@ -74,15 +76,15 @@ export class MongoRepository<T extends BaseEntity> implements ICrudRepository<T>
     return this.toEntity((row ?? {}) as Record<string, unknown>);
   }
 
-  async softDelete(id: string): Promise<T> {
+  async softDelete(id: number): Promise<T> {
     return this.update(id, { deletedAt: new Date() } as Partial<T>);
   }
 
-  async restore(id: string): Promise<T> {
+  async restore(id: number): Promise<T> {
     return this.update(id, { deletedAt: null } as Partial<T>);
   }
 
-  async hardDelete(id: string): Promise<void> {
+  async hardDelete(id: number): Promise<void> {
     await this.model.deleteOne({ id }).exec();
   }
 

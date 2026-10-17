@@ -1,0 +1,11 @@
+{
+  "title": "Paiements",
+  "subtitle": "Journal des paiements effectués et validés sur la vitrine.",
+  "order": "Commande",
+  "client": "Client",
+  "method": "Méthode",
+  "card": "Carte",
+  "amount": "Montant",
+  "noPayments": "Aucun paiement.",
+  "reject": "Rejeter"
+}

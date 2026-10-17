@@ -1,0 +1,13 @@
+{
+  "title": "Tableau de bord",
+  "stats": "Statistiques",
+  "logs": "Journaux",
+  "contentDistribution": "Répartition du contenu",
+  "recentActivity": "Activité récente",
+  "actions": "Actions",
+  "catalogue": "Catalogue",
+  "loadDemo": "Charger le jeu de démo",
+  "delivered": "Livrées",
+  "cancelled": "Annulées",
+  "events": "Événements"
+}

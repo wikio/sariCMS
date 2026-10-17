@@ -9,10 +9,14 @@ import { getNews } from '@/lib/data';
 import { buildSlugUrl } from '@/lib/slugify';
 import type { News } from '@/types';
 import Pagination from '@/components/ui/Pagination';
+import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
+import ImageWithFallback from '@/components/ui/ImageWithFallback';
+import { formatDate } from '@/lib/date-utils';
 
 export default function NewsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [news, setNews] = useState<News[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const itemsPerPage = 6;
   const locale = useLocale();
   const t = useTranslations('pages.news');
@@ -26,8 +30,16 @@ export default function NewsPage() {
     loadNews();
   }, [locale]);
 
-  const totalPages = Math.ceil(news.length / itemsPerPage);
-  const currentItems = news.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  // Filtrer par catégorie si sélectionnée
+  const filteredNews = selectedCategory
+    ? news.filter(item => item.category === selectedCategory)
+    : news;
+
+  const totalPages = Math.ceil(filteredNews.length / itemsPerPage);
+  const currentItems = filteredNews.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  // Obtenir la liste unique des catégories
+  const categories = Array.from(new Set(news.map(item => item.category))).filter(Boolean);
 
   if (news.length === 0) {
     return (
@@ -49,6 +61,7 @@ export default function NewsPage() {
   }
 
   return (
+    <PageVisibilityGuard visibilityKey="module.news">
     <div className="pt-44 pb-24 container mx-auto px-6 min-h-screen">
       <div className="text-center mb-16">
         <span className="text-sari-blue font-bold uppercase tracking-wider text-sm">
@@ -58,20 +71,68 @@ export default function NewsPage() {
           {t('latestNews')}
         </h1>
       </div>
+
+      {/* Filtres par catégorie */}
+      {categories.length > 0 && (
+        <div className="flex flex-wrap gap-2 justify-center mb-12">
+          <button
+            onClick={() => {
+              setSelectedCategory(null);
+              setCurrentPage(1);
+            }}
+            className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
+              selectedCategory === null
+                ? 'bg-sari-blue text-white'
+                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-sari-blue hover:text-white'
+            }`}
+          >
+            {t('allCategories', { defaultMessage: 'Toutes les catégories' })}
+          </button>
+          {categories.map(category => (
+            <button
+              key={category}
+              onClick={() => {
+                setSelectedCategory(category);
+                setCurrentPage(1);
+              }}
+              className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
+                selectedCategory === category
+                  ? 'bg-sari-blue text-white'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-sari-blue hover:text-white'
+              }`}
+            >
+              {category}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
         {currentItems.map(item => (
           <article key={item.id} className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 card-hover h-full flex flex-col group rounded-xl overflow-hidden">
             <div className="aspect-[16/9] overflow-hidden relative">
-              <img src={item.image} alt={item.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-              <div className="absolute top-4 left-4 bg-sari-blue text-white px-3 py-1 text-xs font-bold uppercase rounded">
+              <ImageWithFallback
+                src={item.image}
+                alt={item.title}
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                fallbackIcon="calendar"
+                placeholderSize="lg"
+              />
+              <button
+                onClick={() => {
+                  setSelectedCategory(item.category);
+                  setCurrentPage(1);
+                }}
+                className="absolute top-4 left-4 bg-sari-blue text-white px-3 py-1 text-xs font-bold uppercase rounded hover:bg-sari-blue/80 transition-colors cursor-pointer"
+              >
                 {item.category}
-              </div>
+              </button>
             </div>
             <div className="p-6 flex flex-col flex-grow">
               <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400 mb-3">
                 <span className="flex items-center gap-1">
                   <Calendar className="w-3 h-3" />
-                  {item.date}
+                  {formatDate(item.date, locale as any, { format: 'medium' })}
                 </span>
                 <span>•</span>
                 <span>{item.readTime || '3 min'}</span>
@@ -98,5 +159,6 @@ export default function NewsPage() {
         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
       )}
     </div>
+    </PageVisibilityGuard>
   );
 }

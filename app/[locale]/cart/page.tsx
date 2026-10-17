@@ -55,7 +55,7 @@ export default function CartPage() {
     if (cart.length === 0) return;
     if (isAuthenticated) {
       const order = createOrderAndRedirect();
-      router.push(`/${locale}/paiement/${order.id}`);
+      router.push(`/${locale}/payment/${order.id}`);
     } else {
       setShowCheckoutModal(true);
     }
@@ -68,7 +68,7 @@ export default function CartPage() {
     } else if (option === 'pay') {
       const order = createOrderAndRedirect();
       setShowCheckoutModal(false);
-      router.push(`/${locale}/paiement/${order.id}`);
+      router.push(`/${locale}/payment/${order.id}`);
     } else if (option === 'quote') {
       createOrderAndRedirect({ isQuote: true });
       setShowCheckoutModal(false);
