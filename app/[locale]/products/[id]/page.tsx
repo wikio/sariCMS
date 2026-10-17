@@ -10,6 +10,7 @@ import {
   Download, Package, AlertTriangle
 } from 'lucide-react';
 import { getProducts } from '@/lib/data';
+import { matchesEntity } from '@/lib/ids';
 import { useCart } from '@/contexts/CartContext';
 import type { Product } from '@/types';
 import Breadcrumb from '@/components/ui/Breadcrumb';
@@ -33,7 +34,7 @@ export default function ProductDetailPage() {
     const loadProduct = async () => {
       const data = await getProducts(locale);
       setProducts(data);
-      const found = data.find((p) => p.id === parseInt(id));
+      const found = data.find((p) => matchesEntity(p, id));
       setProduct(found || null);
     };
     loadProduct();

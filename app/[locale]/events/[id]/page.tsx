@@ -10,6 +10,7 @@ import {
   CheckCircle, ChevronLeft, ChevronRight, Bell
 } from 'lucide-react';
 import { getEvents } from '@/lib/data';
+import { matchesEntity } from '@/lib/ids';
 import type { Event } from '@/types';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 
@@ -32,7 +33,7 @@ export default function EventDetailPage() {
     const loadEvent = async () => {
       const events = await getEvents(locale);
       setAllEvents(events);
-      const found = events.find((e) => e.id === parseInt(id));
+      const found = events.find((e) => matchesEntity(e, id));
       setEvent(found || null);
     };
     loadEvent();

@@ -26,6 +26,11 @@ import { AuditLogsModule } from './modules/audit-logs/audit-logs.module';
 import { NewsModule } from './modules/news/news.module';
 import { EventsModule } from './modules/events/events.module';
 import { ProductsModule } from './modules/products/products.module';
+import { ServicesModule } from './modules/services/services.module';
+import { PartnersModule } from './modules/partners/partners.module';
+import { CareersModule } from './modules/careers/careers.module';
+import { SolutionsModule } from './modules/solutions/solutions.module';
+import { HeroModule } from './modules/hero/hero.module';
 import { HealthModule } from './modules/health/health.module';
 import { SettingsModule } from './modules/settings/settings.module';
 
@@ -74,6 +79,11 @@ import { SettingsModule } from './modules/settings/settings.module';
     NewsModule,
     EventsModule,
     ProductsModule,
+    ServicesModule,
+    PartnersModule,
+    CareersModule,
+    SolutionsModule,
+    HeroModule,
     HealthModule,
     SettingsModule,
   ],

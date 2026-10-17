@@ -68,6 +68,11 @@ async function bootstrap() {
     .addTag('news', 'Actualités')
     .addTag('events', 'Événements')
     .addTag('products', 'Catalogue produits')
+    .addTag('services', 'Prestations')
+    .addTag('partners', 'Partenaires')
+    .addTag('careers', 'Offres d’emploi')
+    .addTag('solutions', 'Catégories de solutions')
+    .addTag('hero', 'Slides hero')
     .addTag('public', 'Endpoints publics vitrine')
     .addTag('health', 'Santé')
     .build();

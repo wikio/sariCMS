@@ -36,9 +36,10 @@ export class CreateEventDto {
   @MaxLength(80)
   type?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Date libre (ISO ou libellé vitrine)' })
   @IsOptional()
-  @IsDateString()
+  @IsString()
+  @MaxLength(80)
   date?: string;
 
   @ApiPropertyOptional()
