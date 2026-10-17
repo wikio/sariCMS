@@ -1,6 +1,8 @@
 [
   {
     "id": 1,
+    "slug": "nouvelle-gamme-echographes-portables-derniere-generation",
+    "legacyId": "news-1",
     "title": "Nouvelle gamme d'échographes portables dernière génération",
     "date": "15 Janvier 2024",
     "author": "Dr. Marie Laurent",
@@ -14,6 +16,8 @@
   },
   {
     "id": 2,
+    "slug": "partenariat-strategique-avec-un-leader-mondial-de-imagerie",
+    "legacyId": "news-2",
     "title": "Partenariat stratégique avec un leader mondial de l'imagerie",
     "date": "10 Janvier 2024",
     "author": "Jean Dupont",
@@ -27,6 +31,8 @@
   },
   {
     "id": 3,
+    "slug": "formation-continue-2024-calendrier-disponible",
+    "legacyId": "news-3",
     "title": "Formation continue 2024 : calendrier disponible",
     "date": "5 Janvier 2024",
     "author": "Service Formation",
@@ -40,6 +46,8 @@
   },
   {
     "id": 4,
+    "slug": "sari-systeme-obtient-la-certification-iso-13485",
+    "legacyId": "news-4",
     "title": "SARI Système obtient la certification ISO 13485",
     "date": "20 Décembre 2023",
     "author": "Direction Qualité",
@@ -53,6 +61,8 @@
   },
   {
     "id": 5,
+    "slug": "les-avantages-de-la-sterilisation-classe-b-en-cabinet",
+    "legacyId": "news-5",
     "title": "Les avantages de la stérilisation Classe B en cabinet",
     "date": "15 Décembre 2023",
     "author": "Dr. Philippe Martin",
@@ -66,6 +76,8 @@
   },
   {
     "id": 6,
+    "slug": "innovation-les-concentrateurs-oxygene-nouvelle-generation",
+    "legacyId": "news-6",
     "title": "Innovation : Les concentrateurs d'oxygène nouvelle génération",
     "date": "10 Décembre 2023",
     "author": "Service Technique",
@@ -79,6 +91,8 @@
   },
   {
     "id": 7,
+    "slug": "retour-sur-le-salon-medical-international-2023",
+    "legacyId": "news-7",
     "title": "Retour sur le Salon Médical International 2023",
     "date": "1 Décembre 2023",
     "author": "Équipe SARI",
@@ -92,6 +106,8 @@
   },
   {
     "id": 8,
+    "slug": "comment-choisir-son-tensiometre-professionnel",
+    "legacyId": "news-8",
     "title": "Comment choisir son tensiomètre professionnel ?",
     "date": "25 Novembre 2023",
     "author": "Dr. Marie Laurent",
@@ -105,6 +121,8 @@
   },
   {
     "id": 9,
+    "slug": "nouvelle-reglementation-sur-les-dispositifs-medicaux",
+    "legacyId": "news-9",
     "title": "Nouvelle réglementation sur les dispositifs médicaux",
     "date": "20 Novembre 2023",
     "author": "Service Juridique",
@@ -118,6 +136,8 @@
   },
   {
     "id": 10,
+    "slug": "importance-de-la-maintenance-preventive",
+    "legacyId": "news-10",
     "title": "L'importance de la maintenance préventive",
     "date": "15 Novembre 2023",
     "author": "Service SAV",
@@ -131,6 +151,8 @@
   },
   {
     "id": 11,
+    "slug": "zoom-sur-nos-packs-consommables-ecologiques",
+    "legacyId": "news-11",
     "title": "Zoom sur nos packs consommables écologiques",
     "date": "10 Novembre 2023",
     "author": "Équipe RSE",
@@ -144,6 +166,8 @@
   },
   {
     "id": 12,
+    "slug": "webinar-avenir-de-la-telemedecine",
+    "legacyId": "news-12",
     "title": "Webinar : L'avenir de la télémédecine",
     "date": "5 Novembre 2023",
     "author": "Dr. Thomas Bernard",
@@ -157,6 +181,8 @@
   },
   {
     "id": 13,
+    "slug": "recrutement-nous-agrandissons-equipe",
+    "legacyId": "news-13",
     "title": "Recrutement : Nous agrandissons l'équipe !",
     "date": "1 Novembre 2023",
     "author": "Service RH",
@@ -170,6 +196,8 @@
   },
   {
     "id": 14,
+    "slug": "etude-de-cas-equipement-complet-une-nouvelle-clinique",
+    "legacyId": "news-14",
     "title": "Étude de cas : Équipement complet d'une nouvelle clinique",
     "date": "25 Octobre 2023",
     "author": "Service Commercial",
@@ -183,6 +211,8 @@
   },
   {
     "id": 15,
+    "slug": "les-tendances-technologiques-medicales-pour-2024",
+    "legacyId": "news-15",
     "title": "Les tendances technologiques médicales pour 2024",
     "date": "20 Octobre 2023",
     "author": "Direction Innovation",

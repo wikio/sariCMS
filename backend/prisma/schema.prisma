@@ -53,6 +53,9 @@ model User {
 
   refreshTokens RefreshToken[]
   auditLogs     AuditLog[]     @relation("ActorLogs")
+  orders        Order[]        @relation("UserOrders")
+  quotes        Quote[]        @relation("UserQuotes")
+  applications  JobApplication[] @relation("UserApplications")
 
   @@index([type, status])
   @@index([deletedAt])
@@ -339,8 +342,10 @@ model NewsArticle {
   category       String?
   classification String?
   sujet          String?
+  /** Nom libre, conservé pour les articles repris sans fiche auteur. */
   authorName     String?
   authorId    Int?
+  author         Author?   @relation(fields: [authorId], references: [id])
   date           DateTime?
   publicationDate DateTime?
   readTime       String?
@@ -537,6 +542,8 @@ model Career {
   createdBy   Int?
   updatedBy   Int?
 
+  applications JobApplication[]
+
   @@unique([slug, locale])
   @@index([status, location])
   @@index([legacyId])
@@ -598,4 +605,156 @@ model HeroSlide {
   @@index([locale, status, sortOrder])
   @@index([deletedAt])
   @@map("hero_slides")
+}
+
+model Order {
+  id          Int       @id @default(autoincrement())
+  code        String?   @unique
+  userId      Int?
+  user        User?     @relation("UserOrders", fields: [userId], references: [id])
+  client      String
+  email       String
+  phone       String?
+  company     String?
+  date        DateTime  @default(now())
+  status      String    @default("pending")
+  total       Decimal   @default(0) @db.Decimal(14, 2)
+  cost        Decimal?  @db.Decimal(14, 2)
+  currency    String    @default("DZD")
+  items       Json?
+  address     String?   @db.Text
+  payment     String?
+  paid        Boolean   @default(false)
+  coupon      String?
+  quoteId     Int?
+  zone        String?
+  ip          String?
+  history     Json?
+  invoice     Json?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  createdBy   Int?
+  updatedBy   Int?
+
+  @@index([status, date])
+  @@index([email])
+  @@index([userId])
+  @@index([deletedAt])
+  @@map("orders")
+}
+
+model Quote {
+  id           Int       @id @default(autoincrement())
+  reference    String?   @unique
+  userId       Int?
+  user         User?     @relation("UserQuotes", fields: [userId], references: [id])
+  client       String
+  email        String
+  phone        String?
+  company      String?
+  date         DateTime  @default(now())
+  status       String    @default("submitted")
+  total        Decimal   @default(0) @db.Decimal(14, 2)
+  currency     String    @default("DZD")
+  validity     String?
+  items        Json?
+  coupon       String?
+  orderId      Int?
+  zone         String?
+  ip           String?
+  history      Json?
+  nature       String?
+  natureOther  String?
+  note         String?   @db.Text
+  desiredDate  DateTime?
+  address      String?   @db.Text
+  country      String?
+  attachments  Json?
+  response     Json?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+  createdBy    Int?
+  updatedBy    Int?
+
+  @@index([status, date])
+  @@index([email])
+  @@index([userId])
+  @@index([deletedAt])
+  @@map("quotes")
+}
+
+model JobApplication {
+  id         Int       @id @default(autoincrement())
+  reference  String?   @unique
+  userId     Int?
+  user       User?     @relation("UserApplications", fields: [userId], references: [id])
+  careerId   Int?
+  career     Career?   @relation(fields: [careerId], references: [id])
+  candidate  String
+  email      String
+  phone      String?
+  jobTitle   String?
+  status     String    @default("new")
+  date       DateTime  @default(now())
+  experience String?
+  motivation String?   @db.Text
+  rating     Int?
+  score      Int?
+  note       String?   @db.Text
+  cv         String?
+  lm         String?
+  history    Json?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
+  createdBy  Int?
+  updatedBy  Int?
+
+  @@index([status, date])
+  @@index([email])
+  @@index([userId])
+  @@index([careerId])
+  @@index([deletedAt])
+  @@map("job_applications")
+}
+
+model Author {
+  id          Int       @id @default(autoincrement())
+  locale      String    @default("fr")
+  slug        String?
+  name        String
+  email       String?
+  /** Qualification affichée sous le nom sur la fiche article. */
+  role        String?
+  /** Résumé de présentation affiché dans le bloc « À propos de l'auteur ». */
+  bio         String?   @db.Text
+  photo       String?
+  /**
+   * Auteur retenu quand un article n'en désigne aucun. Un seul à la fois :
+   * le service bascule les autres à false.
+   */
+  isFallback  Boolean   @default(false)
+  sortOrder   Int       @default(0)
+  status      String    @default("published")
+  legacyId    String?
+  parentId    Int?
+  isDefault   Boolean   @default(false)
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  createdBy   Int?
+  updatedBy   Int?
+
+  articles    NewsArticle[]
+
+  @@unique([slug, locale])
+  @@index([status, sortOrder])
+  @@index([isFallback])
+  @@index([legacyId])
+  @@index([parentId])
+  @@index([deletedAt])
+  @@map("authors")
 }

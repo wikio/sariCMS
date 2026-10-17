@@ -14,6 +14,7 @@ export const RESOURCES = [
   'audit',
   'settings',
   'news',
+  'authors',
   'events',
   'products',
   'services',
@@ -22,6 +23,9 @@ export const RESOURCES = [
   'solutions',
   'hero',
   'dashboard',
+  'orders',
+  'quotes',
+  'applications',
 ] as const;
 export type Resource = (typeof RESOURCES)[number];
 

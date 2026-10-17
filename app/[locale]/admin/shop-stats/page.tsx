@@ -5,7 +5,7 @@ import { Download } from 'lucide-react';
 import { BarChart, DonutChart } from '@/components/admin/charts/MiniCharts';
 import { loadOrders, loadQuotes, quoteConversion, type Order } from '@/lib/crm-store';
 import { loadCouponUses, loadCoupons, loadTaxes, type Coupon } from '@/lib/shop-store';
-import { computeTotals } from '@/lib/commerce-math';
+import { computeTotals, money } from '@/lib/commerce-math';
 import { useTranslations } from 'next-intl';
 
 type Period = 'day' | 'week' | 'month' | 'year';
@@ -152,12 +152,12 @@ export default function ShopStatsPage() {
       </header>
       <div className="grid md:grid-cols-4 xl:grid-cols-6 gap-3">
         {[
-          [ca.toLocaleString() + ' DA', 'CA livré'],
-          [(ca - costs).toLocaleString() + ' DA', 'Marge nette'],
+          [money(ca), 'CA livré'],
+          [money(ca - costs), 'Marge nette'],
           [progress.length, 'En cours'],
           [cancelled.length, t("cancelled", { defaultMessage: "Annulées" })],
-          [Math.round(taxCollected).toLocaleString() + ' DA', t("taxesCollected")],
-          [coupons.reduce((s, c) => s + c.revenue, 0).toLocaleString() + ' DA', 'CA coupons'],
+          [money(taxCollected), t("taxesCollected")],
+          [money(coupons.reduce((s, c) => s + c.revenue, 0)), 'CA coupons'],
         ].map(([v, l]) => (
           <div key={String(l)} className="ad-card p-4">
             <div className="text-2xl font-black tabular-nums">{v}</div>
@@ -173,23 +173,23 @@ export default function ShopStatsPage() {
           <h2 className="ad-section-title">Devis → commandes</h2>
           <p className="text-sm">Taux de transformation : <strong>{Math.round(conv.rate * 100)} %</strong></p>
           <p className="text-sm">Délai moyen : <strong>{conv.avgDelay.toFixed(1)} j</strong></p>
-          <p className="text-sm">Valeur moyenne convertis : <strong>{Math.round(conv.convertedAvg).toLocaleString()} DA</strong></p>
-          <p className="text-sm">Valeur moyenne non convertis : <strong>{Math.round(conv.otherAvg).toLocaleString()} DA</strong></p>
-          <p className="text-sm">Remises coupons sur la période : <strong>{discounted.toLocaleString()} DA</strong></p>
+          <p className="text-sm">Valeur moyenne convertis : <strong>{money(conv.convertedAvg)}</strong></p>
+          <p className="text-sm">Valeur moyenne non convertis : <strong>{money(conv.otherAvg)}</strong></p>
+          <p className="text-sm">Remises coupons sur la période : <strong>{money(discounted)}</strong></p>
         </section>
       </div>
       <div className="grid lg:grid-cols-3 gap-3">
         <section className="ad-card p-5">
           <h2 className="ad-section-title">Top produits</h2>
-          <ul className="text-sm space-y-1">{topProducts.map(([n, v]) => <li key={n} className="flex justify-between gap-2"><span className="truncate">{n}</span><strong>{v.ca.toLocaleString()} DA</strong></li>)}</ul>
+          <ul className="text-sm space-y-1">{topProducts.map(([n, v]) => <li key={n} className="flex justify-between gap-2"><span className="truncate">{n}</span><strong>{money(v.ca)}</strong></li>)}</ul>
         </section>
         <section className="ad-card p-5">
           <h2 className="ad-section-title">Top catégories</h2>
-          <ul className="text-sm space-y-1">{topCats.map(([n, v]) => <li key={n} className="flex justify-between gap-2"><span>{n}</span><strong>{v.toLocaleString()} DA</strong></li>)}</ul>
+          <ul className="text-sm space-y-1">{topCats.map(([n, v]) => <li key={n} className="flex justify-between gap-2"><span>{n}</span><strong>{money(v)}</strong></li>)}</ul>
         </section>
         <section className="ad-card p-5">
           <h2 className="ad-section-title">Top clients</h2>
-          <ul className="text-sm space-y-1">{topClients.map(([n, v]) => <li key={n} className="flex justify-between gap-2"><span className="truncate">{n}</span><strong>{v.ca.toLocaleString()} DA</strong></li>)}</ul>
+          <ul className="text-sm space-y-1">{topClients.map(([n, v]) => <li key={n} className="flex justify-between gap-2"><span className="truncate">{n}</span><strong>{money(v.ca)}</strong></li>)}</ul>
         </section>
       </div>
     </div>

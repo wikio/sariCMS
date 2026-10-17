@@ -124,14 +124,27 @@ export default function AdminTranslationEditorPage() {
         </div>
       </div>
       <div className="grid lg:grid-cols-4 gap-4 lg:h-[calc(100vh-230px)] lg:min-h-[420px]">
-        <aside className="ad-card p-3 ad-rise ad-rise-2 h-full max-h-[70vh] lg:max-h-none min-h-0 min-w-0 overflow-y-auto overflow-x-auto ad-scroll">
-          <div className="flex items-center justify-between mb-2 sticky top-0 z-10" style={{ background: 'var(--ad-surface)' }}>
+        {/*
+          En-tête fixe et liste défilante, comme les fenêtres modales : le
+          cadre ne bouge pas, seul l'arbre défile. Sur petit écran la hauteur
+          est bornée en `dvh` — `vh` compte la barre d'adresse des mobiles et
+          rendait le bas de la liste inatteignable.
+        */}
+        <aside className="ad-card ad-frame ad-rise ad-rise-2 h-full max-h-[70dvh] lg:max-h-none min-h-0 min-w-0 flex flex-col">
+          <div
+            className="flex items-center justify-between gap-2 px-3 py-2.5 border-b shrink-0"
+            style={{ borderColor: 'var(--ad-line)' }}
+          >
             <span className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--ad-muted)' }}>{t("tree")}</span>
-            <button onClick={loadTree}><RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /></button>
+            <button onClick={loadTree} title={t("refresh")} aria-label={t("refresh")}>
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            </button>
           </div>
-          {tree.map((n) => renderNode(n))}
+          <div className="ad-pane ad-pane-fill ad-scroll p-2">
+            {tree.map((n) => renderNode(n))}
+          </div>
         </aside>
-        <section className="lg:col-span-3 min-w-0 ad-card p-4 ad-rise ad-rise-3 h-full min-h-0 flex flex-col overflow-hidden">
+        <section className="lg:col-span-3 min-w-0 ad-card ad-frame p-4 ad-rise ad-rise-3 h-full min-h-0 flex flex-col">
           {!node ? (
             <div className="h-full flex items-center justify-center" style={{ color: 'var(--ad-muted)' }}>{t("chooseFile")}</div>
           ) : loading ? (
@@ -152,7 +165,7 @@ export default function AdminTranslationEditorPage() {
                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--ad-muted)' }} />
                 <input className="ad-input pl-9" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("filterPlaceholder")} />
               </div>
-              <div className="space-y-2 flex-1 min-h-0 overflow-y-auto ad-scroll">
+              <div className="space-y-2 flex-1 ad-pane ad-scroll">
                 {shown.map(([key, value]) => (
                   <label key={key} className="block ad-card p-3">
                     <code className="text-[11px] font-mono" style={{ color: 'var(--ad-accent)' }}>{key}</code>

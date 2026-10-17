@@ -8,6 +8,7 @@ import {
   markThreadRead, sendMessage, threadsForUser, unreadForThread, threadLabel,
   type Thread,
 } from '@/lib/messages';
+import DateText from '@/components/shared/DateText';
 
 /**
  * Messagerie côté utilisateur (client / candidat / partenaire).
@@ -67,7 +68,7 @@ export default function MessagesModule({ user }: { user: User }) {
                     : 'bg-gray-100 dark:bg-gray-800 text-sari-dark dark:text-white rounded-bl-sm'
                 }`}>
                   <div className="mb-1 text-[10px] uppercase tracking-wide opacity-70 font-bold">
-                    {m.role === 'user' ? t('you') : t('admin')} · {new Date(m.at).toLocaleString()}
+                    {m.role === 'user' ? t('you') : t('admin')} · <DateText value={m.at} />
                   </div>
                   {m.body}
                 </div>
@@ -131,7 +132,7 @@ export default function MessagesModule({ user }: { user: User }) {
                   <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
                     {last ? `${last.role === 'user' ? t('you') : t('admin')} : ${last.body}` : t('emptyThread')}
                   </div>
-                  <div className="text-xs text-gray-400">{last ? new Date(last.at).toLocaleString() : new Date(th.createdAt).toLocaleString()}</div>
+                  <div className="text-xs text-gray-400"><DateText value={last ? last.at : th.createdAt} /></div>
                 </div>
                 {unread > 0 && <span className="shrink-0 text-xs px-2.5 py-1 bg-red-500 text-white rounded-full font-bold">{unread}</span>}
               </button>

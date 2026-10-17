@@ -113,16 +113,36 @@ INSERT IGNORE INTO `permissions` (`id`, `resource`, `action`, `description`, `cr
 (97, 'dashboard', 'read', 'Consulter dashboard', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
 (98, 'dashboard', 'update', 'Modifier dashboard', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
 (99, 'dashboard', 'delete', 'Supprimer dashboard', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
-(100, 'dashboard', 'admin', 'Administrer dashboard', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000');
+(100, 'dashboard', 'admin', 'Administrer dashboard', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+(101, 'orders', 'create', 'Créer orders', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+(102, 'orders', 'read', 'Consulter orders', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+(103, 'orders', 'update', 'Modifier orders', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+(104, 'orders', 'delete', 'Supprimer orders', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+(105, 'orders', 'admin', 'Administrer orders', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+(106, 'quotes', 'create', 'Créer quotes', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+(107, 'quotes', 'read', 'Consulter quotes', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+(108, 'quotes', 'update', 'Modifier quotes', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+(109, 'quotes', 'delete', 'Supprimer quotes', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+(110, 'quotes', 'admin', 'Administrer quotes', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+(111, 'applications', 'create', 'Créer applications', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+(112, 'applications', 'read', 'Consulter applications', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+(113, 'applications', 'update', 'Modifier applications', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+(114, 'applications', 'delete', 'Supprimer applications', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+(115, 'applications', 'admin', 'Administrer applications', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+(116, 'authors', 'create', 'Créer authors', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+(117, 'authors', 'read', 'Consulter authors', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+(118, 'authors', 'update', 'Modifier authors', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+(119, 'authors', 'delete', 'Supprimer authors', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+(120, 'authors', 'admin', 'Administrer authors', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000');
 
 -- ---------------------------------------------------------------------------
 -- Rôles
 -- ---------------------------------------------------------------------------
 INSERT IGNORE INTO `roles` (`id`, `name`, `slug`, `description`, `isSystem`, `permissionIds`, `createdAt`, `updatedAt`) VALUES
-(1, 'Super Administrateur', 'super-admin', 'Accès complet au système (contourne le contrôle de permissions).', 1, '[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100]', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
-(2, 'Administrateur', 'admin', 'Gestion du contenu, du catalogue et des commandes.', 1, '[16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,47,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100]', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
-(3, 'Éditeur de contenu', 'editor', 'Rédaction et mise à jour du contenu de la vitrine.', 1, '[16,17,18,21,22,23,26,27,28,31,32,33,41,42,43,56,57,58,61,62,63,66,67,68,71,72,73,76,77,78,81,82,83,86,87,88,91,92,93,97]', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
-(4, 'Lecteur', 'viewer', 'Accès en lecture seule au back-office.', 1, '[17,22,27,32,37,42,47,57,62,67,72,77,82,87,92,97]', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000');
+(1, 'Super Administrateur', 'super-admin', 'Accès complet au système (contourne le contrôle de permissions).', 1, '[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120]', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+(2, 'Administrateur', 'admin', 'Gestion du contenu, du catalogue et des commandes.', 1, '[16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,47,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120]', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+(3, 'Éditeur de contenu', 'editor', 'Rédaction et mise à jour du contenu de la vitrine.', 1, '[16,17,18,21,22,23,26,27,28,31,32,33,41,42,43,56,57,58,61,62,63,66,67,68,71,72,73,76,77,78,81,82,83,86,87,88,91,92,93,97,116,117,118]', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+(4, 'Lecteur', 'viewer', 'Accès en lecture seule au back-office.', 1, '[17,22,27,32,37,42,47,57,62,67,72,77,82,87,92,97,117]', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000');
 
 -- ---------------------------------------------------------------------------
 -- role_permissions (liens rôles ↔ permissions)
@@ -228,6 +248,26 @@ INSERT IGNORE INTO `role_permissions` (`roleId`, `permissionId`) VALUES
 (1, 98),
 (1, 99),
 (1, 100),
+(1, 101),
+(1, 102),
+(1, 103),
+(1, 104),
+(1, 105),
+(1, 106),
+(1, 107),
+(1, 108),
+(1, 109),
+(1, 110),
+(1, 111),
+(1, 112),
+(1, 113),
+(1, 114),
+(1, 115),
+(1, 116),
+(1, 117),
+(1, 118),
+(1, 119),
+(1, 120),
 (2, 16),
 (2, 17),
 (2, 18),
@@ -309,6 +349,26 @@ INSERT IGNORE INTO `role_permissions` (`roleId`, `permissionId`) VALUES
 (2, 98),
 (2, 99),
 (2, 100),
+(2, 101),
+(2, 102),
+(2, 103),
+(2, 104),
+(2, 105),
+(2, 106),
+(2, 107),
+(2, 108),
+(2, 109),
+(2, 110),
+(2, 111),
+(2, 112),
+(2, 113),
+(2, 114),
+(2, 115),
+(2, 116),
+(2, 117),
+(2, 118),
+(2, 119),
+(2, 120),
 (3, 16),
 (3, 17),
 (3, 18),
@@ -349,6 +409,9 @@ INSERT IGNORE INTO `role_permissions` (`roleId`, `permissionId`) VALUES
 (3, 92),
 (3, 93),
 (3, 97),
+(3, 116),
+(3, 117),
+(3, 118),
 (4, 17),
 (4, 22),
 (4, 27),
@@ -364,17 +427,18 @@ INSERT IGNORE INTO `role_permissions` (`roleId`, `permissionId`) VALUES
 (4, 82),
 (4, 87),
 (4, 92),
-(4, 97);
+(4, 97),
+(4, 117);
 
 -- ---------------------------------------------------------------------------
 -- Utilisateurs
 -- ---------------------------------------------------------------------------
 INSERT IGNORE INTO `users` (`id`, `email`, `passwordHash`, `firstName`, `lastName`, `phone`, `company`, `type`, `status`, `locale`, `roleId`, `address`, `wilaya`, `country`, `position`, `createdAt`, `updatedAt`) VALUES
-(1, 'admin@sarisysteme.com', '$2a$10$EXZ.3ROo8T/4JO39RLf74enILvsvQG70mE1b/ee58VJpvSedHEhNe', 'Karim', 'BENALI', '(+213) 23 52 42 72', 'SARI Système SARL', 'admin', 'active', 'fr', 1, NULL, 'Alger', 'Algérie', 'Gérant', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
-(2, 'gestion@sarisysteme.com', '$2a$10$EXZ.3ROo8T/4JO39RLf74enILvsvQG70mE1b/ee58VJpvSedHEhNe', 'Yasmine', 'CHERIF', '(+213) 550 12 34 56', 'SARI Système SARL', 'admin', 'active', 'fr', 2, NULL, 'Alger', 'Algérie', 'Responsable commerciale', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
-(3, 'client@clinique-elafia.dz', '$2a$10$EXZ.3ROo8T/4JO39RLf74enILvsvQG70mE1b/ee58VJpvSedHEhNe', 'Clinique', 'El Afia', '(+213) 21 63 45 78', 'Clinique El Afia', 'client', 'active', 'fr', NULL, 'Rue Didouche Mourad, Alger-Centre', 'Alger', 'Algérie', NULL, '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
-(4, 'contact@meditech.dz', '$2a$10$EXZ.3ROo8T/4JO39RLf74enILvsvQG70mE1b/ee58VJpvSedHEhNe', 'MediTech', 'Algérie', '(+213) 41 33 22 11', 'MediTech Algérie', 'partner', 'active', 'fr', NULL, NULL, 'Oran', 'Algérie', NULL, '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
-(5, 'mohamed.saidi@gmail.com', '$2a$10$EXZ.3ROo8T/4JO39RLf74enILvsvQG70mE1b/ee58VJpvSedHEhNe', 'Mohamed', 'SAIDI', '(+213) 661 22 33 44', NULL, 'candidate', 'pending', 'fr', NULL, NULL, 'Constantine', 'Algérie', 'Technicien biomédical', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000');
+(1, 'admin@sarisysteme.com', '$2a$10$3cS.EJwJt9O1FSl2AugOc.rt7n/PJfwWycaRUwkUYJbFe1YgsyUvW', 'Karim', 'BENALI', '(+213) 23 52 42 72', 'SARI Système SARL', 'admin', 'active', 'fr', 1, NULL, 'Alger', 'Algérie', 'Gérant', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+(2, 'gestion@sarisysteme.com', '$2a$10$3cS.EJwJt9O1FSl2AugOc.rt7n/PJfwWycaRUwkUYJbFe1YgsyUvW', 'Yasmine', 'CHERIF', '(+213) 550 12 34 56', 'SARI Système SARL', 'admin', 'active', 'fr', 2, NULL, 'Alger', 'Algérie', 'Responsable commerciale', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+(3, 'client@clinique-elafia.dz', '$2a$10$3cS.EJwJt9O1FSl2AugOc.rt7n/PJfwWycaRUwkUYJbFe1YgsyUvW', 'Clinique', 'El Afia', '(+213) 21 63 45 78', 'Clinique El Afia', 'client', 'active', 'fr', NULL, 'Rue Didouche Mourad, Alger-Centre', 'Alger', 'Algérie', NULL, '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+(4, 'contact@meditech.dz', '$2a$10$3cS.EJwJt9O1FSl2AugOc.rt7n/PJfwWycaRUwkUYJbFe1YgsyUvW', 'MediTech', 'Algérie', '(+213) 41 33 22 11', 'MediTech Algérie', 'partner', 'active', 'fr', NULL, NULL, 'Oran', 'Algérie', NULL, '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000'),
+(5, 'mohamed.saidi@gmail.com', '$2a$10$3cS.EJwJt9O1FSl2AugOc.rt7n/PJfwWycaRUwkUYJbFe1YgsyUvW', 'Mohamed', 'SAIDI', '(+213) 661 22 33 44', NULL, 'candidate', 'pending', 'fr', NULL, NULL, 'Constantine', 'Algérie', 'Technicien biomédical', '2026-08-21 10:00:00.000', '2026-08-21 10:00:00.000');
 
 -- ---------------------------------------------------------------------------
 -- Coordonnées (contact_info)

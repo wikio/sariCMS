@@ -18,22 +18,25 @@ export default function PartnerCard({ partner, showName = false }: PartnerCardPr
       {/* Logo avec fallback */}
       <div className="relative w-full h-16 flex items-center justify-center">
         {partner.logo ? (
-            <img
-              src={partner.logo}
-          alt={partner.name}
-          className="max-h-16 w-auto object-contain opacity-70 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300 grayscale group-hover:grayscale-0"
-          onError={(e) => {
-            const target = e.target as HTMLImageElement;
-            target.style.display = 'none';
-            const parent = target.parentElement;
-            if (parent) {
-              const fallback = document.createElement('div');
-              fallback.className = 'text-2xl font-bold text-sari-blue';
-              fallback.textContent = partner.name.charAt(0);
-              parent.appendChild(fallback);
-            }
-          }}
-        />
+          <img
+            src={partner.logo}
+            alt={partner.name}
+            className="max-h-16 w-auto object-contain opacity-70 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300 grayscale group-hover:grayscale-0"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.style.display = 'none';
+              const parent = target.parentElement;
+              if (parent) {
+                const fallback = document.createElement('div');
+                fallback.className = 'text-2xl font-bold text-sari-blue';
+                fallback.textContent = partner.name.charAt(0);
+                parent.appendChild(fallback);
+              }
+            }}
+          />
+        ) : (
+          <div className="text-2xl font-bold text-sari-blue">{partner.name.charAt(0)}</div>
+        )}
       </div>
 
       {showName && (

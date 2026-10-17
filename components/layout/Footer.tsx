@@ -84,23 +84,52 @@ export default function Footer({ config, menu }: { config: Config; menu: MenuTyp
     return `/${locale}/${cleanPath}`;
   };
 
-  // Traduit un libellé de menu :
-  //  - navigation → common.nav
-  //  - légal      → pages.legal puis Footer
-  //  sinon conserve le libellé fourni (données CMS déjà localisées).
-  const getNavLabel = (item: { id?: string; label: string }) => {
-    if (!item.id) return item.label;
-    const viaNav = tNav(item.id as never);
-    if (viaNav && viaNav !== item.id) return viaNav;
-    return item.label;
+  /*
+    Libellé d'une entrée de menu.
+
+    Les menus sont enregistrés par langue en base (contrainte d'unicité
+    location + locale) : le libellé reçu est donc déjà celui de la langue
+    courante et fait autorité. Les clés de traduction ne servent que de
+    repli historique pour les entrées du menu statique d'origine
+    (`home`, `products`…), qui n'ont pas de libellé saisi.
+
+    Deux règles en découlent :
+
+      1. Un libellé non vide l'emporte. Sans cela, renommer une entrée dans
+         l'admin restait sans effet dès que son id correspondait encore à une
+         ancienne clé : la traduction écrasait le nouveau titre.
+
+      2. On ne demande une clé que si elle existe. Les entrées créées dans
+         l'admin portent un identifiant aléatoire (UUID) ; l'interroger
+         faisait journaliser une erreur MISSING_MESSAGE à chaque rendu, pour
+         chaque entrée et à chaque langue.
+  */
+  const translateId = (
+    id: string,
+    ...lookups: Array<{ has?: (key: string) => boolean; (key: never): string }>
+  ) => {
+    for (const lookup of lookups) {
+      if (!lookup.has?.(id)) continue;
+      try {
+        const value = lookup(id as never);
+        if (value && value !== id) return value;
+      } catch {
+        // Clé absente malgré la vérification : on passe au repli suivant.
+      }
+    }
+    return null;
   };
-  const getLegalLabel = (item: { id?: string; label: string }) => {
+
+  const getNavLabel = (item: { id?: string; label: string }) => {
+    if (item.label?.trim()) return item.label;
     if (!item.id) return item.label;
-    const viaLegal = tLegal(item.id as never);
-    if (viaLegal && viaLegal !== item.id) return viaLegal;
-    const viaFooter = t(item.id as never);
-    if (viaFooter && viaFooter !== item.id) return viaFooter;
-    return item.label;
+    return translateId(item.id, tNav) ?? item.label;
+  };
+
+  const getLegalLabel = (item: { id?: string; label: string }) => {
+    if (item.label?.trim()) return item.label;
+    if (!item.id) return item.label;
+    return translateId(item.id, tLegal, t) ?? item.label;
   };
 
   return (

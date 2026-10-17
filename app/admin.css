@@ -276,7 +276,18 @@
   background-attachment: fixed;
   animation: auroraDrift 22s ease-in-out infinite alternate;
 }
-[data-admin-theme="aurora"] .ad-card {
+/*
+ * Effet de verre dépoli des cartes.
+ *
+ * `:not(.ad-modal)` est indispensable : ce sélecteur est plus spécifique que
+ * `.ad-modal` (0-2-0 contre 0-1-0) et réimposait donc à la fenêtre modale la
+ * surface semi-transparente du thème, laissant le voile sombre transparaître.
+ * Le `backdrop-filter` posait un second problème : sur un ancêtre, il crée un
+ * bloc conteneur pour les descendants `position: fixed`, si bien que le voile
+ * se positionnait par rapport à la carte au lieu de la fenêtre — d'où une
+ * fiche décentrée.
+ */
+[data-admin-theme="aurora"] .ad-card:not(.ad-sheet) {
   background: var(--ad-surface);
   border: 1px solid var(--ad-line);
   backdrop-filter: blur(18px);
@@ -316,7 +327,7 @@
 [data-admin-theme="brutal"] .ad-app {
   background: var(--ad-bg);
 }
-[data-admin-theme="brutal"] .ad-card {
+[data-admin-theme="brutal"] .ad-card:not(.ad-sheet) {
   border: 2px solid #111111;
   box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.9);
   transition: transform 0.12s ease, box-shadow 0.12s ease;
@@ -410,6 +421,125 @@
   overflow: visible;
 }
 
+/*
+ * Liste de suggestions d'un champ à autocomplétion.
+ *
+ * Même piège que la fenêtre modale : `.ad-card` impose `overflow: visible` et
+ * admin.css passe après Tailwind, donc `overflow-y-auto` était sans effet et
+ * la liste débordait sans ascenseur. La hauteur est bornée ici, et le
+ * défilement déclaré sur la même règle pour qu'aucune ne l'emporte.
+ */
+.ad-options {
+  max-height: 16rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  /* Le pointeur doit pouvoir faire défiler la liste sur mobile. */
+  -webkit-overflow-scrolling: touch;
+}
+
+/*
+ * Panneau défilant bâti sur une carte.
+ *
+ * `.ad-card` impose `overflow: visible` — les listes déroulantes en
+ * dépendent — et `admin.css` est chargé après Tailwind : à spécificité
+ * égale, cette règle l'emportait sur un `overflow-y-auto` posé en classe
+ * utilitaire, et le contenu débordait sans ascenseur. Une classe dédiée
+ * règle le cas sans recourir à `!important`.
+ *
+ * La hauteur vient du conteneur (grille ou flex), d'où `height: 100%` et
+ * `min-height: 0` : sans ce dernier, un enfant flex refuse de rétrécir
+ * sous sa taille de contenu et déborde malgré tout.
+ */
+.ad-pane {
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+/*
+ * Variante qui remplit son conteneur. Séparée de `.ad-pane` : un panneau
+ * borné par `max-height` n'a pas de parent de hauteur fixe, et lui imposer
+ * `height: 100%` le ferait retomber sur sa hauteur de contenu — donc plus
+ * d'ascenseur du tout.
+ */
+.ad-pane-fill {
+  height: 100%;
+}
+
+/*
+ * Cadre qui rogne son contenu, à poser sur la carte qui contient un
+ * `.ad-pane`. Même raison que ci-dessus : `overflow-hidden` en classe
+ * utilitaire ne passe pas devant `.ad-card`, et le contenu débordait des
+ * coins arrondis.
+ */
+.ad-frame {
+  overflow: hidden;
+}
+
+/*
+ * Voile de la fenêtre modale.
+ *
+ * Il occupe tout l'écran et centre son contenu. `position: fixed` se réfère à
+ * la fenêtre, sauf si un ancêtre porte `transform`, `filter` ou
+ * `backdrop-filter` : c'est le cas du thème « aurora ». On neutralise donc
+ * l'héritage sur le voile lui-même.
+ */
+.ad-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(8, 12, 20, 0.55);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  overflow: hidden;
+}
+
+/*
+ * Fenêtre modale : en-tête et pied fixes, contenu défilant.
+ *
+ * `admin.css` est chargé après Tailwind : la règle `.ad-card` ci-dessus
+ * l'emportait donc sur un `overflow-y-auto` posé en classe utilitaire, et le
+ * bas des formulaires longs devenait inatteignable. On sépare ici le cadre
+ * (qui ne défile pas) du corps (qui défile), plutôt que de forcer la règle
+ * avec `!important`.
+ */
+/*
+ * Panneau d'une fenêtre modale (le cadre, pas le voile).
+ *
+ * Nommé `ad-sheet` et non `ad-modal` : cette dernière existe déjà plus bas et
+ * désigne le VOILE plein écran. Deux règles de même nom, la seconde
+ * l'emportant, transformaient le panneau en voile — d'où une fiche
+ * décentrée au fond translucide.
+ */
+.ad-sheet {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  /*
+   * Fond toujours opaque : le thème « aurora » rend `--ad-surface`
+   * semi-transparent (rgba …, 0.55) pour l'effet de verre dépoli des cartes.
+   * Sur une fenêtre modale, le voile sombre transparaissait au travers et le
+   * texte devenait illisible.
+   */
+  background-color: var(--ad-sheet-surface, var(--ad-surface));
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+}
+/* Thèmes à surface translucide : on impose une teinte pleine. */
+[data-admin-theme="aurora"] .ad-sheet { --ad-sheet-surface: #141c42; }
+.ad-modal-body {
+  overflow-y: auto;
+  overflow-x: visible;
+  flex: 1 1 auto;
+  min-height: 0; /* sans cela, un enfant flex refuse de rétrécir et déborde */
+  overscroll-behavior: contain;
+}
+
 .ad-btn {
   display: inline-flex;
   align-items: center;
@@ -489,9 +619,15 @@
   width: 100%;
   min-width: 0;
 }
+/*
+  Propriétés logiques (`inset-inline-start`, `padding-inline-start`) plutôt que
+  `left` / `padding-left` : en arabe le champ passe en RTL, et une icône ancrée
+  à gauche se superposait au texte saisi comme au placeholder, qui commencent
+  alors à droite. Les propriétés logiques suivent le sens d'écriture.
+*/
 .ad-search-ico {
   position: absolute;
-  left: 0.85rem;
+  inset-inline-start: 0.85rem;
   top: 50%;
   transform: translateY(-50%);
   pointer-events: none;
@@ -500,7 +636,7 @@
 }
 .ad-search > .ad-input,
 .ad-input.ad-input-icon {
-  padding-left: 2.65rem;
+  padding-inline-start: 2.65rem;
 }
 .ad-textarea {
   height: auto;
@@ -508,6 +644,75 @@
   line-height: 1.5;
   padding: 0.7rem 0.8rem;
 }
+
+/*
+ * Champ avec icône au début et boutons à la fin.
+ *
+ * Les classes utilitaires `pl-9` / `right-2` sont figées à gauche et à droite :
+ * en arabe, l'icône de recherche se retrouvait collée au texte et les boutons
+ * du mot de passe débordaient sur la bordure. Les propriétés logiques
+ * ci-dessous suivent le sens d'écriture, et la réserve de place tient compte
+ * du nombre réel de boutons.
+ */
+.ad-affix {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+.ad-affix-start,
+.ad-affix-end {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+  z-index: 1;
+}
+.ad-affix-start {
+  inset-inline-start: 0.85rem;
+  pointer-events: none;
+  color: var(--ad-muted);
+}
+.ad-affix-end {
+  /* Aligné sur l'arrondi du champ : au ras de la bordure les boutons la touchaient. */
+  inset-inline-end: 0.4rem;
+}
+.ad-affix > .ad-input {
+  padding-inline-start: 2.65rem;
+  padding-inline-end: 0.8rem;
+}
+.ad-affix.has-start > .ad-input { padding-inline-start: 2.65rem; }
+.ad-affix:not(.has-start) > .ad-input { padding-inline-start: 0.8rem; }
+/* Une réserve par bouton : 2 rem chacun, plus la marge de la bordure. */
+.ad-affix.end-1 > .ad-input { padding-inline-end: 2.5rem; }
+.ad-affix.end-2 > .ad-input { padding-inline-end: 4.5rem; }
+.ad-affix.end-3 > .ad-input { padding-inline-end: 6.5rem; }
+
+/*
+ * Bouton d'action logé dans un champ : dimensionné pour ne jamais toucher la
+ * bordure (hauteur du champ 2,75 rem, bordures comprises).
+ */
+.ad-affix-btn {
+  width: 1.9rem;
+  height: 1.9rem;
+  padding: 0;
+  border-radius: var(--ad-radius-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ad-muted);
+  cursor: pointer;
+  flex: 0 0 auto;
+  transition: background 0.15s, color 0.15s;
+}
+.ad-affix-btn:hover {
+  background: var(--ad-surface-2);
+  color: var(--ad-ink);
+}
+.ad-affix-btn svg { width: 1rem; height: 1rem; }
 .ad-input:focus, .ad-select:focus, .ad-textarea:focus {
   border-color: var(--ad-accent);
   box-shadow: 0 0 0 1px var(--ad-accent);
@@ -625,12 +830,21 @@
   justify-content: center;
   padding: 1rem;
   background: rgba(8, 16, 20, 0.55);
+  overflow: hidden;
 }
+/*
+ * Le panneau reçoit la teinte pleine du thème. `aurora` la définit sur
+ * `.ad-sheet` ; on la répète ici pour les fenêtres bâties sur
+ * `.ad-modal-card`, qui sont les plus nombreuses.
+ */
+[data-admin-theme="aurora"] .ad-modal-card { --ad-sheet-surface: #141c42; }
 .ad-modal-card {
   width: min(640px, 100%);
-  max-height: 90vh;
+  /* `dvh` : sur mobile la barre d'adresse rogne `vh` et coupe le pied. */
+  max-height: 90dvh;
   overflow: auto;
-  background: var(--ad-surface);
+  /* Opaque même sous « aurora », dont la surface est semi-transparente. */
+  background: var(--ad-sheet-surface, var(--ad-surface));
   border: 1px solid var(--ad-line);
   border-radius: var(--ad-radius);
   box-shadow: var(--ad-shadow);
@@ -798,9 +1012,10 @@
   position: relative;
   display: block;
 }
+/* Propriétés logiques : remplacent la surcharge [dir="rtl"] qui suivait. */
 .ad-price-ico {
   position: absolute;
-  left: 0.85rem;
+  inset-inline-start: 0.85rem;
   top: 50%;
   width: 1rem;
   height: 1rem;
@@ -810,17 +1025,10 @@
   z-index: 1;
 }
 .ad-price-box .ad-input {
-  padding-left: 2.65rem;
+  padding-inline-start: 2.65rem;
+  padding-inline-end: 0.8rem;
   font-variant-numeric: tabular-nums;
   font-weight: 650;
-}
-[dir="rtl"] .ad-price-ico {
-  left: auto;
-  right: 0.85rem;
-}
-[dir="rtl"] .ad-price-box .ad-input {
-  padding-left: 0.8rem;
-  padding-right: 2.65rem;
 }
 .ad-price-chips {
   display: flex;

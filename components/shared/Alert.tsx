@@ -46,7 +46,7 @@ export default function Alert({
   type = 'info',
   title,
   message,
-  icon = null,
+  icon = undefined,
   onClose,
   dismissible = false,
   variant = 'default',

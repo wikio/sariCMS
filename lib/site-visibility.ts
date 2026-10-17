@@ -5,7 +5,18 @@ import { useEffect, useState } from 'react';
 /**
  * Visibilité de la vitrine : permet de masquer/afficher des menus, pages,
  * modules, sections, boutons et actions depuis l'admin (sans toucher au code).
- * Les valeurs sont stockées en localStorage (clé `sari_site_visibility`).
+ *
+ * Les réglages sont enregistrés EN BASE, une entrée par langue. Ils valent
+ * donc pour tous les visiteurs, et masquer un lien en français ne le masque
+ * plus en arabe.
+ *
+ * Auparavant ils vivaient dans le `localStorage` du navigateur : le réglage
+ * était commun à toutes les langues et n'existait que sur le poste où il
+ * avait été modifié. Le `localStorage` ne sert plus que de secours hors ligne,
+ * lorsque l'API est injoignable.
+ *
+ * Seules les exceptions sont transmises : une clé absente vaut la valeur par
+ * défaut déclarée dans `VISIBILITY_GROUPS`.
  */
 
 export interface VisibilityItem {
@@ -123,68 +134,210 @@ export const VISIBILITY_GROUPS: VisibilityGroup[] = [
   },
 ];
 
+/** Secours hors ligne : ne sert que si l'API est injoignable. */
 const KEY = 'sari_site_visibility';
 const EVENT = 'sari-visibility-changed';
 
+/** Valeurs par défaut, identiques serveur et client. */
 const ALL_DEFAULTS: Record<string, boolean> = {};
 for (const g of VISIBILITY_GROUPS) for (const i of g.items) ALL_DEFAULTS[i.key] = i.defaultOn;
 
-function readOverrides(): Record<string, boolean> {
+export function defaultVisibility(): Record<string, boolean> {
+  return { ...ALL_DEFAULTS };
+}
+
+/**
+ * Applique des exceptions sur les valeurs par défaut.
+ *
+ * Utilisable côté serveur comme côté client : c'est la seule façon de
+ * transformer les données de l'API en dictionnaire complet.
+ */
+export function mergeVisibility(overrides?: Record<string, boolean> | null): Record<string, boolean> {
+  const out: Record<string, boolean> = { ...ALL_DEFAULTS };
+  if (!overrides) return out;
+  for (const [k, v] of Object.entries(overrides)) {
+    if (typeof v === 'boolean') out[k] = v;
+  }
+  return out;
+}
+
+/* ------------------------------------------------------------------ cache */
+
+/**
+ * Dernier état connu, alimenté par le serveur au premier rendu.
+ *
+ * Sans lui, chaque composant repartirait des valeurs par défaut le temps que
+ * l'API réponde : un lien masqué apparaîtrait brièvement avant de disparaître.
+ */
+let current: Record<string, boolean> | null = null;
+let currentLocale = '';
+
+/** Renseigné par le fournisseur au montage, avec les données du serveur. */
+export function primeVisibility(locale: string, overrides: Record<string, boolean>) {
+  currentLocale = locale;
+  current = mergeVisibility(overrides);
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem(KEY, JSON.stringify({ locale, overrides }));
+    } catch {
+      /* quota ou navigation privée : le secours hors ligne est optionnel */
+    }
+  }
+}
+
+/** Exceptions mises de côté lors de la dernière visite, par langue. */
+function readFallback(locale: string): Record<string, boolean> {
   if (typeof window === 'undefined') return {};
   try {
     const raw = localStorage.getItem(KEY);
-    const parsed = raw ? JSON.parse(raw) : {};
-    return parsed && typeof parsed === 'object' ? (parsed as Record<string, boolean>) : {};
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    // Ancien format : dictionnaire à plat, toutes langues confondues.
+    if (parsed && typeof parsed === 'object' && !('overrides' in parsed)) {
+      return parsed as Record<string, boolean>;
+    }
+    if (parsed?.locale && parsed.locale !== locale) return {};
+    return (parsed?.overrides as Record<string, boolean>) || {};
   } catch {
     return {};
   }
 }
 
-export function loadVisibility(): Record<string, boolean> {
-  const overrides = readOverrides();
-  const out: Record<string, boolean> = { ...ALL_DEFAULTS };
-  for (const [k, v] of Object.entries(overrides)) out[k] = Boolean(v);
-  return out;
+/** État courant : le serveur s'il a répondu, sinon le secours, sinon les défauts. */
+export function loadVisibility(locale?: string): Record<string, boolean> {
+  if (current) return { ...current };
+  return mergeVisibility(readFallback(locale || currentLocale));
 }
 
 export function isEnabled(key: string): boolean {
   return loadVisibility()[key] !== false;
 }
 
-export function setVisibility(key: string, on: boolean) {
-  const overrides = readOverrides();
-  overrides[key] = on;
-  localStorage.setItem(KEY, JSON.stringify(overrides));
-  window.dispatchEvent(new CustomEvent(EVENT));
+/* ------------------------------------------------------------------- API */
+
+const API_BASE = (
+  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'
+).replace(/\/$/, '');
+
+/**
+ * Réglages d'une langue, lus depuis l'API.
+ *
+ * L'implémentation vit dans `lib/visibility-server.ts`, sans directive
+ * `'use client'`, pour rester appelable depuis un composant serveur ; on la
+ * réexporte ici par commodité pour le code client.
+ */
+import { fetchVisibility } from './visibility-server';
+
+export { fetchVisibility };
+
+/* ------------------------------------------------------------- mutations */
+
+/** Jeton d'administration, posé par le contexte d'authentification. */
+function adminToken(): string {
+  if (typeof window === 'undefined') return '';
+  try {
+    return localStorage.getItem('sari_admin_access') || '';
+  } catch {
+    return '';
+  }
 }
 
-export function setVisibilityGroup(groupKey: string, on: boolean) {
+async function push(locale: string, path: string, body: unknown, method = 'POST') {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method,
+    headers: {
+      'content-type': 'application/json',
+      accept: 'application/json',
+      ...(adminToken() ? { authorization: `Bearer ${adminToken()}` } : {}),
+    },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const detail = await res.json().catch(() => ({}));
+    throw new Error(detail?.message || `HTTP ${res.status}`);
+  }
+  const payload = await res.json().catch(() => ({}));
+  const value = payload?.data ?? payload;
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    primeVisibility(locale, value as Record<string, boolean>);
+  }
+  notify();
+  return value;
+}
+
+function notify() {
+  if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent(EVENT));
+}
+
+/** Bascule une clé pour UNE langue. */
+export async function setVisibility(locale: string, key: string, on: boolean) {
+  return push(locale, `/visibility/${encodeURIComponent(locale)}`, { key, on }, 'PATCH');
+}
+
+/** Bascule tout un groupe pour UNE langue. */
+export async function setVisibilityGroup(locale: string, groupKey: string, on: boolean) {
   const group = VISIBILITY_GROUPS.find((g) => g.key === groupKey);
   if (!group) return;
-  const overrides = readOverrides();
+  const overrides = { ...loadVisibility(locale) };
   for (const item of group.items) overrides[item.key] = on;
-  localStorage.setItem(KEY, JSON.stringify(overrides));
-  window.dispatchEvent(new CustomEvent(EVENT));
+  return push(locale, `/visibility/${encodeURIComponent(locale)}`, { overrides });
 }
 
-export function resetVisibility() {
-  localStorage.removeItem(KEY);
-  window.dispatchEvent(new CustomEvent(EVENT));
+/** Rétablit les valeurs par défaut pour UNE langue. */
+export async function resetVisibility(locale: string) {
+  const res = await fetch(`${API_BASE}/visibility/${encodeURIComponent(locale)}`, {
+    method: 'DELETE',
+    headers: {
+      accept: 'application/json',
+      ...(adminToken() ? { authorization: `Bearer ${adminToken()}` } : {}),
+    },
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  primeVisibility(locale, {});
+  notify();
 }
 
-/** Hook réactif : re-rend à chaque modification (même onglet + onglets distants).
- *  SSR-safe : retourne les valeurs par défaut au premier rendu (serveur + hydration),
- *  puis charge localStorage après le montage pour éviter les mismatches. */
+/** Copie les réglages d'une langue vers les autres. */
+export async function copyVisibility(from: string, to?: string[]) {
+  const res = await fetch(`${API_BASE}/visibility/copy/all`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      accept: 'application/json',
+      ...(adminToken() ? { authorization: `Bearer ${adminToken()}` } : {}),
+    },
+    body: JSON.stringify({ from, ...(to?.length ? { to } : {}) }),
+  });
+  if (!res.ok) {
+    const detail = await res.json().catch(() => ({}));
+    throw new Error(detail?.message || `HTTP ${res.status}`);
+  }
+  notify();
+  return res.json().catch(() => ({}));
+}
+
+/** Réglages de toutes les langues, pour l'écran d'administration. */
+export async function fetchAllVisibility(locales: string[]): Promise<Record<string, Record<string, boolean>>> {
+  const out: Record<string, Record<string, boolean>> = {};
+  await Promise.all(locales.map(async (l) => { out[l] = await fetchVisibility(l); }));
+  return out;
+}
+
+/* ------------------------------------------------------------------ hook */
+
+/**
+ * Hook réactif.
+ *
+ * La signature est inchangée — un dictionnaire complet clé → booléen — pour
+ * que les composants existants n'aient rien à modifier. La donnée provient
+ * désormais du serveur, injectée par `VisibilityProvider` avant le premier
+ * rendu : il n'y a donc pas de scintillement.
+ */
 export function useVisibility(): Record<string, boolean> {
-  // Initialiser avec les défauts (identiques serveur/client → pas de mismatch)
-  const [state, setState] = useState<Record<string, boolean>>(() => ({ ...ALL_DEFAULTS }));
-  const [mounted, setMounted] = useState(false);
+  const [state, setState] = useState<Record<string, boolean>>(() => loadVisibility());
 
   useEffect(() => {
-    // Après le montage, charger les overrides localStorage et mettre à jour
-    setMounted(true);
     setState(loadVisibility());
-
     const refresh = () => setState(loadVisibility());
     window.addEventListener(EVENT, refresh);
     window.addEventListener('storage', refresh);
@@ -194,6 +347,5 @@ export function useVisibility(): Record<string, boolean> {
     };
   }, []);
 
-  // Pendant SSR + hydration : retourner les défauts ; après montage : l'état réel
-  return mounted ? state : { ...ALL_DEFAULTS };
+  return state;
 }

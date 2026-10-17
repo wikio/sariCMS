@@ -58,9 +58,24 @@ export interface InvoicingSettings {
   autoFetchInvoice: boolean;
 }
 
+export interface DateSettings {
+  /**
+   * Format d'affichage des dates. Soit un préréglage (`short`, `medium`,
+   * `long`, `full`, `iso`), soit un motif libre composé de jetons
+   * (`DD/MM/YYYY HH:mm`). Voir `lib/date-format.ts`.
+   */
+  format: string;
+  /** Motif utilisé quand la valeur porte aussi une heure. */
+  dateTimeFormat: string;
+  /** Afficher l'heure lorsque la valeur en contient une. */
+  showTime: boolean;
+}
+
 export interface AdminSettings {
   defaultLocale: 'fr' | 'en' | 'ar';
   skuFormat: string;
+  /** Format d'affichage des dates, admin et vitrine. */
+  dates: DateSettings;
   cropWidth: number;
   cropHeight: number;
   restockMessage: string;
@@ -82,6 +97,11 @@ const KEY = 'sari_admin_settings';
 export const DEFAULT_SETTINGS: AdminSettings = {
   defaultLocale: 'fr',
   skuFormat: 'PRO-{ID}',
+  dates: {
+    format: 'medium',
+    dateTimeFormat: 'medium',
+    showTime: true,
+  },
   cropWidth: 800,
   cropHeight: 600,
   restockMessage: 'Votre commande sera traitée dans les meilleurs délais, un nouvel arrivage étant prévu le {{date_reapprovisionnement}}.',
@@ -138,6 +158,7 @@ export function loadAdminSettings(): AdminSettings {
     return {
       ...DEFAULT_SETTINGS,
       ...parsed,
+      dates: { ...DEFAULT_SETTINGS.dates, ...(parsed.dates || {}) },
       security: { ...DEFAULT_SETTINGS.security, ...(parsed.security || {}) },
       smtp: { ...DEFAULT_SETTINGS.smtp, ...(parsed.smtp || {}) },
       db: { ...DEFAULT_SETTINGS.db, ...(parsed.db || {}) },

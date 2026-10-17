@@ -13,6 +13,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useOrders } from '@/contexts/OrdersContext';
 import { useCart } from '@/contexts/CartContext';
 import Breadcrumb from '@/components/ui/Breadcrumb';
+import { useCurrency } from '@/lib/use-currency';
 import { loadPayments, type PaymentMethod, type PaymentType } from '@/lib/shop-store';
 import { addPaymentRecord, isAutoValidated } from '@/lib/payments';
 import { cardLast4, maskCardNumber, maskCvv, maskExpiry, maskPhone } from '@/lib/masks';
@@ -29,6 +30,7 @@ export default function PaymentPage() {
   const { isAuthenticated, user } = useAuth();
   const { orders, updateOrderStatus } = useOrders();
   const { clearCart } = useCart();
+  const { format: formatMoney, withSymbol } = useCurrency();
 
   const order = orders.find(o => o.id === parseInt(id)) || null;
 
@@ -414,7 +416,7 @@ export default function PaymentPage() {
                     <img src={item.image} alt={item.name} className="w-16 h-16 object-cover rounded" />
                     <div className="flex-1">
                       <div className="font-semibold text-sari-dark dark:text-white text-sm mb-1">{item.name}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">{item.quantity} x {item.price}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">{item.quantity} x {withSymbol(item.price)}</div>
                     </div>
                   </div>
                 ))}
@@ -422,15 +424,15 @@ export default function PaymentPage() {
               <div className="space-y-2 mb-6 pt-4 border-t border-gray-200 dark:border-gray-800">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600 dark:text-gray-400">{t('subtotal', { defaultMessage: 'Sous-total' })} :</span>
-                  <span className="font-semibold text-sari-dark dark:text-white">{(order.totalAmount || 0).toFixed(2)} €</span>
+                  <span className="font-semibold text-sari-dark dark:text-white">{formatMoney(order.totalAmount || 0, { decimals: 2 })}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600 dark:text-gray-400">{t('tax', { defaultMessage: 'TVA (19%)' })} :</span>
-                  <span className="font-semibold text-sari-dark dark:text-white">{(order.taxAmount || 0).toFixed(2)} €</span>
+                  <span className="font-semibold text-sari-dark dark:text-white">{formatMoney(order.taxAmount || 0, { decimals: 2 })}</span>
                 </div>
                 <div className="flex justify-between text-lg pt-2 border-t border-gray-200 dark:border-gray-800">
                   <span className="font-bold text-sari-dark dark:text-white">{t('total', { defaultMessage: 'Total' })} :</span>
-                  <span className="font-bold text-sari-lime">{(order.grandTotal || 0).toFixed(2)} €</span>
+                  <span className="font-bold text-sari-lime">{formatMoney(order.grandTotal || 0, { decimals: 2 })}</span>
                 </div>
               </div>
               <button

@@ -11,7 +11,8 @@ import type { Event } from '@/types';
 import Pagination from '@/components/ui/Pagination';
 import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
 import ImageWithFallback from '@/components/ui/ImageWithFallback';
-import { formatDate, formatDateParts } from '@/lib/date-utils';
+import { useDateUtils } from '@/lib/use-date-format';
+import { useGroupFilter } from '@/lib/use-group-filter';
 
 export default function EventsPage() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -19,6 +20,7 @@ export default function EventsPage() {
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const itemsPerPage = 6;
   const locale = useLocale();
+  const { formatDate, formatDateParts } = useDateUtils();
   const t = useTranslations('pages.events');
   const isRtl = locale === 'ar';
 
@@ -30,6 +32,15 @@ export default function EventsPage() {
     loadEvents();
   }, [locale]);
 
+  // Types disponibles, calculés sur la liste complète pour que les onglets ne
+  // se réduisent pas au type courant.
+  const eventTypes = Array.from(new Set(events.map((event) => event.type))).filter(
+    Boolean,
+  ) as string[];
+
+  // Un lien de menu « par type » arrive avec ?type=… : on présélectionne.
+  useGroupFilter('type', eventTypes, setSelectedType, () => setCurrentPage(1));
+
   // Filtrer par type si sélectionné
   const filteredEvents = selectedType
     ? events.filter(event => event.type === selectedType)
@@ -37,9 +48,6 @@ export default function EventsPage() {
 
   const totalPages = Math.ceil(filteredEvents.length / itemsPerPage);
   const currentItems = filteredEvents.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-
-  // Obtenir la liste unique des types d'événements
-  const eventTypes = Array.from(new Set(events.map(event => event.type))).filter(Boolean);
 
   if (events.length === 0) {
     return (

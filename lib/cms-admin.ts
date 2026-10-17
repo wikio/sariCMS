@@ -13,6 +13,7 @@ export const RESOURCE_BY_TYPE: Record<string, string> = {
   services: 'services',
   careers: 'careers',
   news: 'news',
+  authors: 'authors',
   events: 'events',
   testimonials: 'testimonials',
   partners: 'partners',
@@ -39,9 +40,10 @@ export const WRITABLE_FIELDS: Record<string, string[]> = {
     'contact', 'applyAuth', 'status',
   ],
   news: [
-    'title', 'slug', 'locale', 'category', 'classification', 'sujet', 'authorName', 'date', 'publicationDate',
+    'title', 'slug', 'locale', 'category', 'classification', 'sujet', 'authorName', 'authorId', 'date', 'publicationDate',
     'readTime', 'shortDesc', 'fullContent', 'image', 'tags', 'status',
   ],
+  authors: ['name', 'slug', 'locale', 'role', 'bio', 'email', 'photo', 'isFallback', 'sortOrder', 'status'],
   events: [
     'title', 'slug', 'locale', 'type', 'date', 'startDate', 'endDate', 'location', 'shortDesc', 'fullContent',
     'image', 'agenda', 'status',
@@ -59,8 +61,11 @@ export const WRITABLE_FIELDS: Record<string, string[]> = {
   ],
   menus: ['name', 'location', 'items', 'locale', 'status'],
   users: [
+    // `wilaya` existe en base et dans le DTO serveur : sans lui ici, `pick()`
+    // le retirait silencieusement de la charge utile et la wilaya saisie
+    // n'était jamais enregistrée.
     'email', 'password', 'firstName', 'lastName', 'phone', 'company', 'type', 'status',
-    'roleId', 'locale', 'avatar', 'address', 'position', 'experience', 'motivation', 'cvUrl',
+    'roleId', 'locale', 'avatar', 'address', 'wilaya', 'position', 'experience', 'motivation', 'cvUrl',
     'ip', 'country',
   ],
   roles: ['name', 'slug', 'description', 'permissionIds', 'isSystem'],
@@ -71,6 +76,7 @@ const DEFAULTS: Record<string, Record<string, unknown>> = {
   services: { title: 'Nouveau service', status: 'draft', icon: 'wrench' },
   careers: { title: 'Nouvelle offre', status: 'draft', type: 'CDI' },
   news: { title: 'Nouvel article', status: 'draft' },
+  authors: { name: 'Nouvel auteur', status: 'published' },
   events: { title: 'Nouvel événement', status: 'draft' },
   testimonials: { name: 'Nouveau témoignage', text: 'Avis client', rating: 5, status: 'published' },
   partners: { name: 'Nouveau partenaire', status: 'published' },
@@ -162,6 +168,23 @@ export async function cmsAdminList<T = Record<string, unknown>>(
   return unwrapList<T>(payload);
 }
 
+/**
+ * Charge une fiche complète.
+ *
+ * La liste renvoie une projection allégée (`view=block`) : `position` et
+ * `roleId`, par exemple, en sont absents. Ouvrir un formulaire d'édition à
+ * partir d'une ligne de liste afficherait donc ces champs vides, et les
+ * effacerait à l'enregistrement. On relit la fiche entière avant d'éditer.
+ */
+export async function cmsAdminGet<T = Record<string, unknown>>(
+  resource: string,
+  id: string,
+): Promise<T> {
+  const payload = await cmsAdminFetch<unknown>(`/${resource}/${id}`);
+  const corps = payload as { data?: unknown };
+  return ((corps && typeof corps === 'object' && 'data' in corps ? corps.data : payload) || {}) as T;
+}
+
 export async function cmsAdminCreate<T = Record<string, unknown>>(
   resource: string,
   item: Record<string, unknown>,
@@ -212,11 +235,32 @@ export async function cmsImportCatalog(replace = false) {
   );
 }
 
+/**
+ * Ressources dont les enregistrements ne sont pas des traductions.
+ *
+ * Le back-office liste la plupart des contenus une langue à la fois : une
+ * actualité existe en français, en anglais et en arabe sous trois
+ * enregistrements distincts, et afficher les trois mélangés n'aurait pas de
+ * sens. Les comptes utilisateurs, eux, n'existent qu'une fois. Leur champ
+ * `locale` dit dans quelle langue la personne veut voir le site, pas dans
+ * quelle langue sa fiche est rédigée : filtrer dessus faisait disparaître de
+ * la liste tous les comptes réglés sur une autre langue que celle du
+ * sélecteur — la liste devenait même vide en arabe.
+ */
+const RESSOURCES_SANS_TRADUCTION = new Set(['users']);
+
+/** Un module liste-t-il des enregistrements propres à une langue ? */
+export function estTraduitParLangue(dataType: string): boolean {
+  return !RESSOURCES_SANS_TRADUCTION.has(dataType);
+}
+
 export function extraFiltersForType(dataType: string, locale: string): Record<string, string> {
-  const filter: Record<string, string> = { locale };
+  const filter: Record<string, string> = {};
+  if (estTraduitParLangue(dataType)) filter.locale = locale;
   if (dataType === 'legal') filter.kind = 'legal';
   if (dataType === 'genericContent') filter.kind = 'generic';
-  return { filter: JSON.stringify(filter) };
+  // Un filtre vide vaut mieux qu'un `filter={}` inutile dans l'URL.
+  return Object.keys(filter).length ? { filter: JSON.stringify(filter) } : {};
 }
 
 export async function cmsAdminAutocomplete(

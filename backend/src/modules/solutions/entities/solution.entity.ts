@@ -7,6 +7,8 @@ export interface SolutionFaq {
 
 export interface SolutionEntity extends BaseEntity {
   locale: string;
+  /** Identifiant partagé par les versions FR/EN/AR d'une même solution. */
+  legacyId?: string | null;
   slug: string;
   title: string;
   shortDesc?: string | null;

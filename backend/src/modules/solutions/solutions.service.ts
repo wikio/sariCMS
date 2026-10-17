@@ -34,16 +34,12 @@ export class SolutionsService extends BaseCrudService<SolutionEntity> {
       out.locale = out.locale || 'fr';
       out.status = out.status || 'draft';
       if (out.sortOrder === undefined) out.sortOrder = 0;
+      // Chaque solution reçoit un legacyId : c'est la clé qui relie les
+      // versions FR/EN/AR entre elles. Fournir explicitement le legacyId d'une
+      // fiche existante crée sa traduction ; sinon on démarre un nouveau groupe.
+      if (!out.legacyId) out.legacyId = `sol-${Date.now().toString(36)}`;
     }
     return out;
   }
 
-  async findPublished(idOrSlug: string, locale?: string) {
-    const bySlug = await this.repository.findOne(locale ? { slug: idOrSlug, locale } : { slug: idOrSlug });
-    const numericId = Number(idOrSlug);
-    const entity = bySlug ?? (Number.isFinite(numericId) && /^\d+$/.test(String(idOrSlug)) ? await this.repository.findById(numericId) : null);
-    if (!entity || entity.status !== 'published') return null;
-    if (locale && entity.locale && entity.locale !== locale) return null;
-    return this.toView(entity, 'block');
-  }
 }

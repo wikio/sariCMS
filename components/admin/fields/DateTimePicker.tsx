@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Calendar, Clock, X } from 'lucide-react';
+import { useDateFormat } from '@/lib/use-date-format';
 
 interface DateTimePickerProps {
   value?: string;
@@ -24,6 +25,7 @@ export default function DateTimePicker({
   placeholder,
   required = false,
 }: DateTimePickerProps) {
+  const { format: formatPreview } = useDateFormat();
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
 
@@ -146,16 +148,10 @@ export default function DateTimePicker({
         )}
       </div>
 
-      {/* Affichage de la valeur formatée */}
+      {/* Aperçu : rendu exact tel qu'il apparaîtra sur la vitrine. */}
       {value && (
         <p className="text-xs text-gray-500 dark:text-gray-400">
-          {new Date(value).toLocaleString('fr-FR', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            ...(includeTime && time ? { hour: '2-digit', minute: '2-digit' } : {}),
-          })}
+          {formatPreview(value, { includeTime: includeTime && Boolean(time) })}
         </p>
       )}
     </div>

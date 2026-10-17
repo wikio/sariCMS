@@ -17,6 +17,17 @@ export class PublicSolutionsController {
     return this.solutions.findAll(publishedQuery(query, locale ? { locale } : {}));
   }
 
+  // Déclaré avant ':idOrSlug' : sinon Nest capterait « translations » comme un slug.
+  @Get(':idOrSlug/translations')
+  @ApiOperation({
+    summary: "Versions linguistiques d'une solution (même legacyId)",
+    description:
+      "Permet au sélecteur de langue de rediriger vers l'URL équivalente, ex. fr/solutions/1-diagnostic → ar/solutions/101-التشخيص-والتصوير.",
+  })
+  translations(@Param('idOrSlug') idOrSlug: string) {
+    return this.solutions.findTranslations(idOrSlug);
+  }
+
   @Get(':idOrSlug')
   @ApiOperation({ summary: 'Solution publiée par slug ou id' })
   async bySlug(@Param('idOrSlug') idOrSlug: string, @Query('locale') locale?: string) {

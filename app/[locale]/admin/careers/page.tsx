@@ -18,6 +18,7 @@ import ProcessFlow, { normalizeSteps } from '@/components/admin/ProcessFlow';
 import {
   exportApplicationsCsv, loadApplications, loadOffers, type Application, type Offer,
 } from '@/lib/recruitment';
+import DateText from '@/components/shared/DateText';
 
 export default function AdminCareersPage() {
   const locale = useLocale();
@@ -207,7 +208,7 @@ function OfferConsult({ offer, appCount, t }: { offer: Offer; appCount: number; 
         <div><span style={{ color: 'var(--ad-muted)' }}>{t("hrContact")}</span><div>{String(offer.contact || '—')}</div></div>
         {offer.publishedAt && (
           <div className="col-span-2"><span style={{ color: 'var(--ad-muted)' }}>{t("publishDate")}</span>
-            <div className="inline-flex items-center gap-1"><CalendarDays className="w-3.5 h-3.5" /> {new Date(offer.publishedAt).toLocaleDateString()}</div>
+            <div className="inline-flex items-center gap-1"><CalendarDays className="w-3.5 h-3.5" /> <DateText value={offer.publishedAt} dateOnly /></div>
           </div>
         )}
       </div>

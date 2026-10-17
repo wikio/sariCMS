@@ -2,13 +2,79 @@ import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsArray,
+  IsBoolean,
   IsIn,
+  IsInt,
   IsOptional,
   IsString,
   MaxLength,
+  Min,
   MinLength,
   ValidateNested,
 } from 'class-validator';
+
+/** Modules pouvant alimenter un sous-menu généré (voir lib/menu-auto.ts). */
+export const AUTO_SOURCES = ['solutions', 'services', 'products', 'news', 'events'] as const;
+
+/**
+ * Règle de sous-menu généré depuis le contenu.
+ *
+ * On enregistre la règle, pas la liste : la vitrine la résout à l'affichage,
+ * si bien qu'une fiche publiée ensuite apparaît d'elle-même et qu'une fiche
+ * archivée disparaît sans repasser par l'administration.
+ */
+export class MenuAutoDto {
+  @ApiProperty({ enum: AUTO_SOURCES })
+  @IsIn(AUTO_SOURCES)
+  source!: (typeof AUTO_SOURCES)[number];
+
+  /**
+   * `groups` liste les catégories du module, et non ses fiches ; `ids` porte
+   * alors des noms de catégories.
+   */
+  @ApiProperty({ enum: ['all', 'pick', 'groups'] })
+  @IsIn(['all', 'pick', 'groups'])
+  mode!: 'all' | 'pick' | 'groups';
+
+  @ApiPropertyOptional({ type: [String] })
+  @IsOptional()
+  @IsArray()
+  ids?: Array<string | number>;
+
+  @ApiPropertyOptional({ description: '0 = pas de limite' })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  limit?: number;
+
+  /**
+   * Reprendre la description courte de la fiche sous son titre.
+   * Absent = vrai, pour ne pas vider les menus déjà enregistrés.
+   */
+  @ApiPropertyOptional({ default: true })
+  @IsOptional()
+  @IsBoolean()
+  showDesc?: boolean;
+
+  /**
+   * Reprendre l'icône de la fiche devant son titre.
+   * Absent = faux ; sans effet sur les modules dépourvus de champ `icon`.
+   */
+  @ApiPropertyOptional({ default: false })
+  @IsOptional()
+  @IsBoolean()
+  showIcon?: boolean;
+
+  /**
+   * Reprendre l'image de la fiche en vignette.
+   * Absent = faux ; sans objet en mode `groups`, une catégorie n'ayant pas
+   * d'image propre.
+   */
+  @ApiPropertyOptional({ default: false })
+  @IsOptional()
+  @IsBoolean()
+  showImage?: boolean;
+}
 
 export class MenuItemDto {
   @ApiPropertyOptional()
@@ -39,12 +105,34 @@ export class MenuItemDto {
   @MaxLength(60)
   icon?: string;
 
+  /**
+   * Sous-liens saisis à la main.
+   *
+   * L'administration a toujours envoyé `submenu` ; le DTO ne déclarait que
+   * `children`, et `forbidNonWhitelisted` rejetait donc l'enregistrement avec
+   * « property submenu should not exist ». Les deux noms sont désormais
+   * acceptés, `children` restant pour les menus déjà en base.
+   */
+  @ApiPropertyOptional({ type: () => [MenuItemDto] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => MenuItemDto)
+  submenu?: MenuItemDto[];
+
   @ApiPropertyOptional({ type: () => [MenuItemDto] })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => MenuItemDto)
   children?: MenuItemDto[];
+
+  /** Règle de génération ; `submenu` est alors calculé côté vitrine. */
+  @ApiPropertyOptional({ type: () => MenuAutoDto, nullable: true })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => MenuAutoDto)
+  auto?: MenuAutoDto | null;
 }
 
 export const MENU_LOCATIONS = ['main', 'footer-nav', 'footer-legal', 'social'] as const;

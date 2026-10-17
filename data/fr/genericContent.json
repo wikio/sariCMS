@@ -1,6 +1,8 @@
 [
   {
     "id": 1,
+    "slug": "notre-engagement-pour-la-qualite",
+    "legacyId": "pag-1",
     "type": "simple",
     "title": "Notre Engagement pour la Qualité",
     "subtitle": "Excellence et rigueur depuis 2003",
@@ -10,6 +12,8 @@
   },
   {
     "id": 2,
+    "slug": "a-propos-de-sari-systeme",
+    "legacyId": "pag-2",
     "type": "about",
     "title": "À Propos de SARI Système",
     "subtitle": "Leader en équipements médicaux en Algérie",
@@ -26,6 +30,8 @@
   },
   {
     "id": 3,
+    "slug": "nos-realisations-en-images",
+    "legacyId": "pag-3",
     "type": "gallery",
     "title": "Nos Réalisations en Images",
     "subtitle": "Plus de 500 établissements équipés",
@@ -42,6 +48,8 @@
   },
   {
     "id": 4,
+    "slug": "promotion-ete-2024",
+    "legacyId": "pag-4",
     "type": "flyer",
     "title": "Promotion Été 2024",
     "subtitle": "Jusqu'à -30% sur tous les équipements",
@@ -52,6 +60,8 @@
   },
   {
     "id": 5,
+    "slug": "sari-systeme-en-mouvement",
+    "legacyId": "pag-5",
     "type": "slide",
     "title": "SARI Système en Mouvement",
     "subtitle": "Une présentation interactive",
@@ -88,6 +98,8 @@
   },
   {
     "id": 6,
+    "slug": "decouvrez-sari-systeme",
+    "legacyId": "pag-6",
     "type": "scroll",
     "title": "Découvrez SARI Système",
     "subtitle": "Un voyage à travers notre histoire",
@@ -133,6 +145,8 @@
   },
   {
     "id": 7,
+    "slug": "guide-complet-choisir-son-echographe",
+    "legacyId": "pag-7",
     "type": "full",
     "title": "Guide Complet : Choisir son Échographe",
     "subtitle": "Le guide ultime pour les professionnels de santé",
@@ -142,6 +156,8 @@
   },
   {
     "id": 8,
+    "slug": "intelligence-artificielle-en-medecine",
+    "legacyId": "pag-8",
     "type": "full",
     "title": "L'Intelligence Artificielle en Médecine",
     "subtitle": "Comment l'IA révolutionne le diagnostic médical",
@@ -151,6 +167,8 @@
   },
   {
     "id": 9,
+    "slug": "nos-equipements-phares",
+    "legacyId": "pag-9",
     "type": "gallery",
     "title": "Nos Équipements Phares",
     "subtitle": "La crème des technologies médicales",
@@ -167,6 +185,8 @@
   },
   {
     "id": 10,
+    "slug": "temoignages-de-nos-clients",
+    "legacyId": "pag-10",
     "type": "slide",
     "title": "Témoignages de nos Clients",
     "subtitle": "Ils nous font confiance",

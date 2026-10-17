@@ -11,6 +11,9 @@ export class MenusService extends BaseCrudService<MenuEntity> {
   protected readonly repository: ICrudRepository<MenuEntity>;
   protected readonly options: CrudServiceOptions = {
     resource: 'menus',
+    // Table sans colonne `legacyId` (contenu non traduit par fiches sœurs) :
+    // l'injecter faisait échouer la création sous MySQL.
+    hasLegacyId: false,
     searchFields: ['name', 'location'],
     sortableFields: ['location', 'name', 'updatedAt'],
     listFields: ['id', 'name', 'location', 'locale', 'status', 'updatedAt'],

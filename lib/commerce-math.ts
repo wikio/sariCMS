@@ -1,5 +1,6 @@
 import type { CommerceItem } from '@/lib/crm-store';
 import type { Coupon, TaxRule } from '@/lib/shop-store';
+import { defaultCurrency } from '@/lib/currencies';
 
 export interface TaxLine {
   id: string;
@@ -78,6 +79,14 @@ export function computeTotals(
   };
 }
 
-export function money(n: number, suffix = 'DA') {
-  return `${Math.round(n).toLocaleString('fr-DZ')} ${suffix}`;
+/**
+ * Formate un montant avec la devise configurée dans l'administration.
+ *
+ * Le suffixe reste surchargeable pour les rares appels qui imposent une
+ * devise précise ; sans argument, on suit le réglage de la page Devises au
+ * lieu du dinar codé en dur.
+ */
+export function money(n: number, suffix?: string) {
+  const symbol = suffix ?? defaultCurrency().symbol;
+  return `${Math.round(n).toLocaleString('fr-DZ')} ${symbol}`;
 }

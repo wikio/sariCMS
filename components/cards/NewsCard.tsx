@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Calendar, ChevronRight, ChevronLeft } from 'lucide-react';
 import { slugify } from '@/lib/slugify';
 import type { News } from '@/types';
+import { useDateUtils } from '@/lib/use-date-format';
 
 interface NewsCardProps {
   news: News;
@@ -13,6 +14,7 @@ interface NewsCardProps {
 }
 
 export default function NewsCard({ news, variant = 'standard' }: NewsCardProps) {
+  const { formatDate } = useDateUtils();
   const locale = useLocale();
   const t = useTranslations('components.cards.NewsCard');
   const isRtl = locale === 'ar';
@@ -47,7 +49,7 @@ export default function NewsCard({ news, variant = 'standard' }: NewsCardProps) 
           <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400 mb-3">
             <span className="flex items-center gap-1">
               <Calendar className="w-3 h-3" />
-              {news.date}
+              {formatDate(news.publicationDate || news.date)}
             </span>
             <span>•</span>
             <span>{news.readTime || '3 min'}</span>
@@ -93,7 +95,7 @@ export default function NewsCard({ news, variant = 'standard' }: NewsCardProps) 
         <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400 mb-3">
           <span className="flex items-center gap-1">
             <Calendar className="w-3 h-3" />
-            {news.date}
+            {formatDate(news.publicationDate || news.date)}
           </span>
           <span>•</span>
           <span>{news.readTime || '3 min'}</span>

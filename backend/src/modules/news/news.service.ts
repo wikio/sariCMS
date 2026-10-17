@@ -44,7 +44,6 @@ export class NewsService extends BaseCrudService<NewsEntity> {
     op: 'create' | 'update',
     existing?: NewsEntity,
   ): Partial<NewsEntity> {
-    console.log('[NewsService.beforeSave] Input DTO:', JSON.stringify(dto, null, 2));
     
     const out = { ...dto };
     if (!out.slug && out.title) out.slug = slugify(String(out.title));
@@ -68,22 +67,19 @@ export class NewsService extends BaseCrudService<NewsEntity> {
       out.publicationDate = out.publicationDate || out.publishedAt;
     }
     
-    console.log('[NewsService.beforeSave] Output DTO:', JSON.stringify(out, null, 2));
     return out;
   }
 
-  async statsByAuthor(authorId: string) {
-    const published = await this.repository.count({ authorId, status: 'published' });
-    const drafts = await this.repository.count({ authorId, status: 'draft' });
-    return { authorId, published, drafts, total: published + drafts };
+  /**
+   * Comptage des articles d'un auteur. L'identifiant arrive en chaîne depuis
+   * l'URL alors qu'il est stocké en entier : sans conversion, la comparaison
+   * échoue et le total renvoyé est toujours nul.
+   */
+  async statsByAuthor(authorId: string | number) {
+    const id = Number(authorId);
+    const published = await this.repository.count({ authorId: id, status: 'published' });
+    const drafts = await this.repository.count({ authorId: id, status: 'draft' });
+    return { authorId: id, published, drafts, total: published + drafts };
   }
 
-  async findPublished(idOrSlug: string, locale?: string) {
-    const bySlug = await this.repository.findOne(locale ? { slug: idOrSlug, locale } : { slug: idOrSlug });
-    const numericId = Number(idOrSlug);
-    const entity = bySlug ?? (Number.isFinite(numericId) && /^\d+$/.test(String(idOrSlug)) ? await this.repository.findById(numericId) : null);
-    if (!entity || entity.status !== 'published') return null;
-    if (locale && entity.locale && entity.locale !== locale) return null;
-    return this.toView(entity, 'block');
-  }
 }

@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { ChevronRight, ChevronLeft } from 'lucide-react';
 import { getServices } from '@/lib/data';
 import { loadFicheLocale } from '@/lib/fiche-i18n';
+import { entityUrl } from '@/lib/entity-url';
 import ServiceCard from '@/components/cards/ServiceCard';
 import FAQ from '@/components/ui/FAQ';
 import SectionTitle from '@/components/ui/SectionTitle';
@@ -41,9 +42,25 @@ export default function ServicesPage() {
           fullDesc: (fiche.fullDesc as string) || service.fullDesc,
           features: (fiche.features as string[]) || service.features,
           faq: (fiche.faq as Array<{ q: string; a: string }>) || service.faq,
+          // Le slug traduit doit suivre, sinon l'URL garde le slug français.
+          slug: (fiche.slug as string) || service.slug,
         };
       });
-      
+
+      console.info(
+        `[services/liste] ${translatedServices.length} services en ${locale}` +
+          translatedServices
+            .map(
+              (s: any) =>
+                `\n  • id=${s.id} legacyId=${s.legacyId ?? '(aucun)'} → ${entityUrl(
+                  locale,
+                  'services',
+                  s,
+                )}`,
+            )
+            .join(''),
+      );
+
       setServices(translatedServices);
     };
     loadServices();

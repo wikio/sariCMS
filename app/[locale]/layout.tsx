@@ -5,6 +5,8 @@ import { notFound } from 'next/navigation';
 import { locales, isRtl, type Locale } from '@/lib/i18n';
 import { getConfig, getMenu } from '@/lib/data';
 import SiteWrapper from '@/components/layout/SiteWrapper';
+import VisibilityProvider from '@/components/layout/VisibilityProvider';
+import { fetchVisibility } from '@/lib/visibility-server';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { CartProvider } from '@/contexts/CartContext';
@@ -82,6 +84,9 @@ export default async function LocaleLayout({
   // ✅ Charger config et menu pour les passer au SiteWrapper
   const config = await getConfig(locale);
   const menu = await getMenu(locale);
+  // Visibilité propre à cette langue, lue en base : le rendu serveur part donc
+  // du bon état, sans scintillement au montage.
+  const visibility = await fetchVisibility(locale);
 
   return (
     <html lang={locale} dir={dir} suppressHydrationWarning>
@@ -96,9 +101,11 @@ export default async function LocaleLayout({
                 <OrdersProvider>
                   <ApplicationsProvider>
                     {/* ✅ SiteWrapper reçoit config et menu pour gérer l'affichage conditionnel */}
-                    <SiteWrapper config={config} menu={menu}>
-                      {children}
-                    </SiteWrapper>
+                    <VisibilityProvider locale={locale} overrides={visibility}>
+                      <SiteWrapper config={config} menu={menu}>
+                        {children}
+                      </SiteWrapper>
+                    </VisibilityProvider>
                   </ApplicationsProvider>
                 </OrdersProvider>
               </CartProvider>

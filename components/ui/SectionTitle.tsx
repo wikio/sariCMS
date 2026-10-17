@@ -23,7 +23,7 @@ export default function SectionTitle({
   title,
   description,
   align = 'center',
-  action = null,
+  action = undefined,
 }: SectionTitleProps) {
   const locale = useLocale();
   const isRtl = locale === 'ar';

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { BadgeCheck, Clock, ShoppingCart, ChevronRight, Package } from 'lucide-react';
 import { slugify } from '@/lib/slugify';
 import type { Product } from '@/types';
+import { useCurrency } from '@/lib/use-currency';
 
 interface ProductCardProps {
   product: Product;
@@ -16,6 +17,7 @@ interface ProductCardProps {
 export default function ProductCard({ product, variant = 'standard', onClick }: ProductCardProps) {
   const locale = useLocale();
   const t = useTranslations('components.cards.ProductCard');
+  const { withSymbol } = useCurrency();
 
   const handleClick = (e: React.MouseEvent) => {
     if (onClick) {
@@ -58,7 +60,7 @@ export default function ProductCard({ product, variant = 'standard', onClick }: 
           <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mt-1">
             {product.shortDesc}
           </p>
-          <div className="text-sari-lime font-bold mt-2">{product.price}</div>
+          <div className="text-sari-lime font-bold mt-2">{withSymbol(product.price)}</div>
         </div>
       </Link>
     );
@@ -86,7 +88,7 @@ export default function ProductCard({ product, variant = 'standard', onClick }: 
           )}
           <div className="absolute top-4 right-4">
             <span className="bg-sari-lime text-sari-dark px-2 py-1 text-xs font-bold rounded">
-              {product.price}
+              {withSymbol(product.price)}
             </span>
           </div>
           {!product.inStock && (
@@ -157,7 +159,7 @@ export default function ProductCard({ product, variant = 'standard', onClick }: 
 
       {/* Prix et stock */}
       <div className="flex justify-between items-center mb-4">
-        <div className="text-sari-lime font-bold text-xl">{product.price}</div>
+        <div className="text-sari-lime font-bold text-xl">{withSymbol(product.price)}</div>
         {product.inStock ? (
           <span className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-1 text-xs font-semibold rounded flex items-center gap-1">
             <BadgeCheck className="w-3 h-3" />
