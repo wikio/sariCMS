@@ -1,0 +1,14 @@
+{
+  "icon": "syringe",
+  "color": "green-500",
+  "title": "Surgery",
+  "desc": "Instruments, sterilizers, surgical lights and tables",
+  "cta": "Discover",
+  "link": "#solutions/chirurgie",
+  "features": [
+    "Surgical instruments",
+    "Class B autoclaves",
+    "LED surgical lights",
+    "Operating tables"
+  ]
+}

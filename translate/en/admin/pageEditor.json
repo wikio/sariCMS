@@ -1,0 +1,23 @@
+{
+  "title": "Page Editor",
+  "description": "Select a page to edit. Changes will be applied in real-time on the site.",
+  "home": "Home",
+  "about": "About",
+  "solutions": "Solutions",
+  "services": "Services",
+  "products": "Products",
+  "careers": "Careers",
+  "news": "News",
+  "events": "Events",
+  "contact": "Contact",
+  "editPage": "Edit:",
+  "phase1Info": "Phase 1: Inline page editing will be available in Phase 2 with the backend. For now, use data editors (Products, Services, etc.) to modify content.",
+  "pageTitle": "Page title",
+  "metaDescription": "Meta description (SEO)",
+  "metaPlaceholder": "Description for search engines...",
+  "mainContent": "Main content (HTML)",
+  "wysiwygPhase2": "WYSIWYG editor available in Phase 2",
+  "cancel": "Cancel",
+  "save": "Save",
+  "saveSuccess": "Changes saved!"
+}

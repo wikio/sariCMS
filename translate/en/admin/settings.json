@@ -1,0 +1,9 @@
+{
+  "general": "General",
+  "identityLanguage": "Identity & language",
+  "security": "Security",
+  "accessCaptcha": "Access & CAPTCHA",
+  "integrations": "Integrations",
+  "database": "Database",
+  "seo": "SEO"
+}

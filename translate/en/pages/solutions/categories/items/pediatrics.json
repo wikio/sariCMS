@@ -1,0 +1,14 @@
+{
+  "icon": "baby",
+  "color": "pink-500",
+  "title": "Pediatrics",
+  "desc": "Incubators, scales, phototherapy and adapted equipment",
+  "cta": "Discover",
+  "link": "#solutions/pediatrie",
+  "features": [
+    "Neonatal incubators",
+    "Pediatric scales",
+    "Phototherapy lights",
+    "Adapted equipment"
+  ]
+}

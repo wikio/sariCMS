@@ -1,0 +1,23 @@
+{
+  "subtitle": "Our Featured Solutions",
+  "title": "Equipment that makes the difference",
+  "description": "Discover our selection of the most efficient equipment on the market",
+  "items": [
+    {
+      "key": "diagnostic",
+      "image": "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=1200"
+    },
+    {
+      "key": "cardiology",
+      "image": "https://images.unsplash.com/photo-1559757175-5700dde675bc?w=1200"
+    },
+    {
+      "key": "imaging",
+      "image": "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=1200"
+    },
+    {
+      "key": "informatics",
+      "image": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1200"
+    }
+  ]
+}

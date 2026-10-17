@@ -4,18 +4,19 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 interface CartItem {
-  id: number;
+  id: number | string;
   name: string;
-  price: number;
+  price: number | string;
   quantity: number;
   image: string;
+  category?: string;
 }
 
 interface CartContextType {
   items: CartItem[];
   addToCart: (item: CartItem) => void;
-  removeFromCart: (id: number) => void;
-  updateQuantity: (id: number, quantity: number) => void;
+  removeFromCart: (id: number | string) => void;
+  updateQuantity: (id: number | string, quantity: number) => void;
   clearCart: () => void;
   total: number;
 }
@@ -42,31 +43,40 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const addToCart = (item: CartItem) => {
     setItems((prev) => {
-      const existing = prev.find((i) => i.id === item.id);
+      const existing = prev.find((i) => String(i.id) === String(item.id));
       if (existing) {
         return prev.map((i) =>
-          i.id === item.id ? { ...i, quantity: i.quantity + item.quantity } : i
+          String(i.id) === String(item.id) ? { ...i, quantity: i.quantity + item.quantity } : i
         );
       }
       return [...prev, item];
     });
   };
 
-  const removeFromCart = (id: number) => {
-    setItems((prev) => prev.filter((i) => i.id !== id));
+  const removeFromCart = (id: number | string) => {
+    setItems((prev) => prev.filter((i) => String(i.id) !== String(id)));
   };
 
-  const updateQuantity = (id: number, quantity: number) => {
+  const updateQuantity = (id: number | string, quantity: number) => {
     if (quantity <= 0) {
       removeFromCart(id);
       return;
     }
-    setItems((prev) => prev.map((i) => (i.id === id ? { ...i, quantity } : i)));
+    setItems((prev) => prev.map((i) => (String(i.id) === String(id) ? { ...i, quantity } : i)));
   };
 
   const clearCart = () => setItems([]);
 
-  const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  // Le prix peut arriver sous forme de chaîne selon la source : on le
+  // normalise avant de calculer, sinon le total vaut NaN.
+  const toNumber = (value: number | string): number => {
+    if (typeof value === 'number') return value;
+    const cleaned = String(value).replace(/[^0-9.,-]/g, '').replace(/\s/g, '').replace(',', '.');
+    const parsed = Number.parseFloat(cleaned);
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+
+  const total = items.reduce((sum, item) => sum + toNumber(item.price) * item.quantity, 0);
 
   return (
     <CartContext.Provider value={{ items, addToCart, removeFromCart, updateQuantity, clearCart, total }}>

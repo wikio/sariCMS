@@ -1,0 +1,15 @@
+{
+  "heroDesc": "Choose which slides appear, tune them one by one and set the slideshow behaviour.",
+  "marqueeDesc": "What scrolls is chosen here: partner logos, news, events, job offers, products, a mix of those modules, or blocks written in the studio. Title optional, margins and item size configurable.",
+  "navigationDesc": "Navigation tiles (solutions, services, products, events, news, careers).",
+  "missionDesc": "Text band over a background image with a button — texts, style and page builder.",
+  "productsDesc": "Title, description, number of products and which cards to feature.",
+  "blocksDesc": "Alternating image / text blocks: add, edit, or hand the block over to the page builder.",
+  "statsDesc": "Values and labels edited directly inside the block.",
+  "testimonialsDesc": "Pick the testimonials, set the images and order them.",
+  "eventsDesc": "Which events appear on the home page, and in which order.",
+  "newsDesc": "Which articles appear on the home page, and in which order.",
+  "newsletterDesc": "Block texts and real address sign-up (the list lives in Newsletter).",
+  "partnersDesc": "Which partners are featured on the home page.",
+  "ctaDesc": "The “Ready to start your project?” block: texts, buttons and colours, language by language."
+}

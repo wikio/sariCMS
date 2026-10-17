@@ -1,0 +1,14 @@
+{
+  "icon": "scan",
+  "color": "purple-500",
+  "title": "Imaging",
+  "desc": "CT scanners, MRI, digital radiology and ultrasound",
+  "cta": "Discover",
+  "link": "#solutions/imagerie",
+  "features": [
+    "CT scanners",
+    "High-resolution MRI",
+    "Digital radiology",
+    "Fixed ultrasound"
+  ]
+}

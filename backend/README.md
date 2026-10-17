@@ -1,4 +1,4 @@
-# SARI CMS — Backend (étape 1)
+# SARI CMS — Backend (étapes 1–2)
 
 API NestJS du CMS SARI Système. Elle remplace progressivement les fichiers JSON statiques du site vitrine Next.js (`/data/{fr,en,ar}/*.json`) par une API versionnée, authentifiée et multi-bases.
 
@@ -55,7 +55,7 @@ SEED_ADMIN_PASSWORD=ChangeMe_Sari2026!
 ```
 
 ```bash
-npm test                      # BaseCrudService + News + Events + Products
+npm test                      # BaseCrudService + News + Events + Products + groupe 3
 ```
 
 ---
@@ -86,6 +86,20 @@ Aucune classe `*Service` n’importe Prisma ni Mongoose. Le `DatabaseModule` con
 Passage MySQL → PostgreSQL : types volontairement portables (`String @db.Text`, `Json`, UUID). Modifier uniquement le `provider` Prisma.
 
 ---
+
+## La base est en retard sur le schéma
+
+« The column `ma_base.table.colonne` does not exist in the current database » sur
+une liste du back-office : le client Prisma connaît la colonne, la base non.
+
+```bash
+npm run db:schema-check    # l'inventaire des écarts, et sql/schema-sync.mysql.sql
+npm run db:schema-fix      # applique les additions (uniquement des additions)
+```
+
+Le comparateur lit `information_schema` et ne modifie aucune colonne existante, ne
+change aucun type, ne supprime rien. Voir `sql/README.md`, section « Une liste répond
+“The column … does not exist” ».
 
 ## Auth & sécurité
 
@@ -122,6 +136,45 @@ POST   /{resource}/:id/purge               → { confirm, expiresIn }
 DELETE /{resource}/:id/purge?confirm=
 ```
 
+**Écriture d'une clé étrangère.** Une colonne qui supporte une relation dans
+`prisma/schema.prisma` (`careerId` + `career Career? @relation(fields: [careerId]…)`)
+ne s'écrit pas directement : l'ORM la refuse au `create` — « Unknown argument
+`careerId`. Did you mean `career`? » — et veut `career: { connect: { id } }`. Elle se
+lit, elle, normalement, et tous nos émetteurs l'ignorent : le formulaire
+d'administration, `Importer le catalogue`, `crm-sync` et les fichiers JSON reprennent
+la fiche telle quelle. L'adaptateur Prisma traduit donc à l'entrée
+(`relation-scalars.ts`, généré), pour les neuf ressources concernées —
+candidatures, commandes, devis, actualités, utilisateurs, journaux d'audit :
+
+```bash
+cd backend
+npm run prisma:maps    # régénère relation-scalars.ts et model-fields.ts après un changement de schéma
+```
+
+(`prisma:relations` reste un alias de la même commande.) Un contrôle
+(`relation-scalars.spec.ts`) recalcule la liste depuis le schéma et échoue si le
+fichier a pris du retard — la classe d'erreurs ne peut plus revenir en silence.
+
+**Un champ que le modèle ne déclare pas.** L'autre moitié du même 500 : une clé que
+le modèle Prisma ne connaît pas du tout — `legacyId` sur une candidature, par exemple,
+que le service CRUD ajoute d'office parce que les autres fiches, elles, sont
+traduites. Prisma ne laisse rien passer : il rejette **la ligne entière**, et avec
+elle les huit candidatures postées, le lot d'import en cours, et l'écran qui les
+listait. Deux garde-fous, tous deux issus du schéma :
+
+- le service ne l'invente pas. Le `legacyId` n'est ajouté que si le modèle a la
+  colonne ; `hasLegacyId: false` le déclare pour les tables qui ne sont pas
+  traduites — candidatures, messages reçus, coordonnées, journal d'audit ;
+- si un émetteur l'envoie quand même (formulaire d'administration, JSON repris,
+  `Importer le catalogue`), l'adaptateur écarte la clé et **avertit une fois** au lieu
+  de tout rejeter.
+
+`model-fields.ts` — les champs de chaque modèle, générés par la même commande — sert
+à ces deux questions, et son contrôle (`model-fields.spec.ts`) refait le calcul depuis
+`schema.prisma`. Le avertissement nomme la ressource, le champ, et dit quoi faire :
+ajouter la colonne au schéma (`npm run sql:schema` puis `npm run db:schema-fix`, qui
+la crée en base) ou retirer le champ de l'expédition.
+
 Filtres dynamiques :
 
 ```
@@ -139,19 +192,28 @@ Filtres dynamiques :
 | GET | `/public/testimonials` | Témoignages |
 | GET | `/public/menus` `/public/menus/:location` | Navigation |
 | GET | `/public/contact?locale=fr` | Coordonnées |
+| GET | `/public/news` `/public/news/:slug` | Actualités |
+| GET | `/public/events` `/public/events/:slug` | Événements |
+| GET | `/public/products` `/public/products/:slug` | Catalogue |
+| GET | `/public/services` `/public/services/:slug` | Prestations |
+| GET | `/public/partners` | Partenaires |
+| GET | `/public/careers` `/public/careers/:slug` | Offres d’emploi |
+| GET | `/public/solutions` `/public/solutions/:slug` | Catégories de solutions |
+| GET | `/public/hero` | Slides hero |
 | POST | `/contact/messages` | Formulaire de contact (throttlé) |
 | GET | `/health` | Driver + uptime |
 
 ---
 
-## Modules livrés (groupes 1 et 2 + socle tests)
+## Modules livrés (groupes 1 à 3)
 
 **Groupe 1** — `auth`, `users`, `roles`, `permissions`  
 **Groupe 2** — `pages` (kinds `legal|about|generic`, subtypes `simple|gallery|flyer|slide|scroll|full`), `faqs`, `testimonials`, `menus`, `contact`  
+**Groupe 3** — `services`, `partners`, `careers`, `solutions`, `hero`  
 **Transverse** — `translations`, `audit-logs`, `settings` (purge corbeille)  
-**Socle tests / pont groupe 3-5** — `news` (stats auteur), `events` (agenda JSON), `products` (galerie, specs, options)
+**Socle tests** — `news` (stats auteur), `events` (agenda JSON), `products` (galerie, specs, options)
 
-Les groupes 3–8 restants (offres d’emploi, solutions, GED, newsletter, GrapesJS…) réutiliseront `BaseCrudService` / `BaseCrudController` sans réécrire le CRUD.
+Les groupes 4–8 restants (GED, newsletter, GrapesJS, e-shop commandes…) réutilisent `BaseCrudService` / `BaseCrudController` sans réécrire le CRUD.
 
 Arborescence imposée par module :
 
@@ -181,16 +243,20 @@ Le cache fichier (`storage/cache/keyv.json`) et le store JSON doivent être pers
 
 ## Brancher le frontend existant
 
-Aujourd’hui `lib/data.ts` importe `@/data/{locale}/*.json`. Cible :
+`lib/data.ts` interroge d’abord l’API publique, puis retombe sur `@/data/{locale}/*.json` si le backend est down **ou** si la collection est vide (seed structurel).
+
+Le navigateur n’appelle jamais `localhost` : il tape `/api/v1/*`, réécrit par Next vers `CMS_API_INTERNAL_URL` (défaut `http://127.0.0.1:3001/api/v1`).
 
 ```
 GET /api/v1/public/pages?locale=fr&view=block
-GET /api/v1/public/menus/main?locale=fr
-GET /api/v1/public/testimonials?locale=fr&view=card
+GET /api/v1/public/menus?locale=fr
+GET /api/v1/public/testimonials?locale=fr&view=block
+GET /api/v1/public/products?locale=fr&view=block
 GET /api/v1/public/contact?locale=fr
+POST /api/v1/auth/login
 ```
 
-Le back-office Next.js + shadcn consommera les routes admin JWT. IndexedDB / Dexie reste un cache navigateur optionnel, jamais une source de vérité.
+Le login admin (`/[locale]/admin`) consomme JWT + 2FA optionnelle. Le tableau de bord affiche l’état de l’API et un bouton **Importer le catalogue** (`POST /settings/import-catalog`) qui charge `data/{fr,en,ar}/*.json` dans le CMS. Les écrans Produits / Services / Actualités / Utilisateurs lisent et écrivent l’API (plus de localStorage).
 
 ---
 
@@ -201,6 +267,10 @@ src/common/crud/base-crud.service.spec.ts   CRUD, vues, corbeille, jeton de purg
 src/modules/news/news.service.spec.ts        slug, publication, stats auteur
 src/modules/events/events.service.spec.ts    agenda JSON, upcoming
 src/modules/products/products.service.spec.ts slug, stock, specs
+src/modules/services/services.service.spec.ts slug, défauts
+src/modules/partners/partners.service.spec.ts défauts
+src/modules/careers/careers.service.spec.ts   slug, publishedAt
+src/modules/solutions/solutions.service.spec.ts slug explicite
 ```
 
 Les services sont testés contre un `ICrudRepository` mocké — aucun driver réel n’est requis.

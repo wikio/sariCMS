@@ -1,0 +1,20 @@
+{
+  "title": "Nos Produits",
+  "catalog": "Catalogue",
+  "allCategories": "Toutes les catégories",
+  "inStock": "En stock",
+  "outOfStock": "Rupture de stock",
+  "onQuote": "Sur devis",
+  "addToQuote": "Ajouter au devis",
+  "viewProduct": "Voir le produit",
+  "specifications": "Caractéristiques techniques",
+  "features": "Points forts",
+  "relatedProducts": "Produits similaires",
+  "filter": "Filtrer",
+  "sortBy": "Trier par",
+  "relevance": "Pertinence",
+  "nameAsc": "Nom (A-Z)",
+  "nameDesc": "Nom (Z-A)",
+  "priceAsc": "Prix croissant",
+  "priceDesc": "Prix décroissant"
+}

@@ -1,4 +1,4 @@
-import { Body, Controller, Param, ParseUUIDPipe, Post, Patch } from '@nestjs/common';
+import { Body, Controller, Param, ParseIntPipe, Post, Patch } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Actor } from '../../common/decorators/actor.decorator';
@@ -29,7 +29,7 @@ export class ContactMessagesController extends BaseCrudController<ContactMessage
 
   @Patch(':id')
   override update(
-    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Param('id', new ParseIntPipe()) id: number,
     @Body() dto: UpdateContactMessageDto,
     @Actor() actor: ActorContext,
   ) {

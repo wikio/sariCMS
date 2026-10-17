@@ -1,0 +1,45 @@
+{
+  "title": "Pédiatrie",
+  "desc": "Couveuses néonatales, balances pédiatriques, photothérapie",
+  "icon": "baby",
+  "image": "https://images.unsplash.com/photo-1583947215259-38e31be8751f?w=1920",
+  "productIds": [
+    12
+  ],
+  "features": [
+    {
+      "icon": "baby",
+      "text": "Couveuses néonatales"
+    },
+    {
+      "icon": "scale",
+      "text": "Balances pédiatriques 5g"
+    },
+    {
+      "icon": "sun",
+      "text": "Lampes de photothérapie"
+    },
+    {
+      "icon": "thermometer",
+      "text": "Thermomètres infrarouges"
+    },
+    {
+      "icon": "heart-pulse",
+      "text": "Moniteurs néonatals"
+    },
+    {
+      "icon": "shield-check",
+      "text": "Matériel adapté enfants"
+    }
+  ],
+  "faq": [
+    {
+      "q": "Les couveuses sont-elles adaptées aux prématurés ?",
+      "a": "Oui, nos couveuses sont adaptées aux prématurés dès 28 semaines de gestation, avec contrôle précis de la température, humidité et oxygène."
+    },
+    {
+      "q": "Les balances sont-elles précises ?",
+      "a": "Oui, nos balances pédiatriques ont une précision de 5g avec fonction maintien (Hold) pour les bébés agités et fonction tare pour les couches."
+    }
+  ]
+}

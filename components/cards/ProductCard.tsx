@@ -6,16 +6,28 @@ import Link from 'next/link';
 import { BadgeCheck, Clock, ShoppingCart, ChevronRight, Package } from 'lucide-react';
 import { slugify } from '@/lib/slugify';
 import type { Product } from '@/types';
+import { useCurrency } from '@/lib/use-currency';
 
 interface ProductCardProps {
   product: Product;
   variant?: 'standard' | 'compact' | 'featured';
   onClick?: (product: Product) => void;
+  /** Le bloc « produits phares » de la page d'accueil peut masquer le prix… */
+  showPrice?: boolean;
+  /** …et la mention de disponibilité. */
+  showStock?: boolean;
 }
 
-export default function ProductCard({ product, variant = 'standard', onClick }: ProductCardProps) {
+export default function ProductCard({
+  product,
+  variant = 'standard',
+  onClick,
+  showPrice = true,
+  showStock = true,
+}: ProductCardProps) {
   const locale = useLocale();
   const t = useTranslations('components.cards.ProductCard');
+  const { withSymbol } = useCurrency();
 
   const handleClick = (e: React.MouseEvent) => {
     if (onClick) {
@@ -36,11 +48,17 @@ export default function ProductCard({ product, variant = 'standard', onClick }: 
         className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 p-4 rounded-lg hover:shadow-md transition-all cursor-pointer flex gap-4 group"
       >
         <div className="w-24 h-24 rounded-lg flex-shrink-0 overflow-hidden bg-gray-100 dark:bg-gray-800">
-          <img
-            src={product.image}
-            alt={product.name}
-            className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500"
-          />
+          {product.image ? (
+            <img
+              src={product.image}
+              alt={product.name}
+              className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-gray-400">
+              <Package className="w-8 h-8" />
+            </div>
+          )}
         </div>
         <div className="flex-1 min-w-0">
           <span className="inline-block px-2 py-0.5 bg-sari-blue/10 text-sari-blue text-xs font-semibold rounded mb-1">
@@ -52,7 +70,7 @@ export default function ProductCard({ product, variant = 'standard', onClick }: 
           <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mt-1">
             {product.shortDesc}
           </p>
-          <div className="text-sari-lime font-bold mt-2">{product.price}</div>
+          <div className="text-sari-lime font-bold mt-2">{withSymbol(product.price)}</div>
         </div>
       </Link>
     );
@@ -67,24 +85,32 @@ export default function ProductCard({ product, variant = 'standard', onClick }: 
         className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 overflow-hidden card-hover group flex flex-col h-full"
       >
         <div className="aspect-square overflow-hidden relative">
-          <img
-            src={product.image}
-            alt={product.name}
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-          />
-          <div className="absolute top-4 right-4">
-            <span className="bg-sari-lime text-sari-dark px-2 py-1 text-xs font-bold rounded">
-              {product.price}
-            </span>
-          </div>
-          {!product.inStock && (
+          {product.image ? (
+            <img
+              src={product.image}
+              alt={product.name}
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 text-gray-400">
+              <Package className="w-16 h-16" />
+            </div>
+          )}
+          {showPrice ? (
+            <div className="absolute top-4 right-4">
+              <span className="bg-sari-lime text-sari-dark px-2 py-1 text-xs font-bold rounded">
+                {withSymbol(product.price)}
+              </span>
+            </div>
+          ) : null}
+          {showStock && !product.inStock ? (
             <div className="absolute top-4 left-4">
               <span className="bg-red-500 text-white px-2 py-1 text-xs font-bold rounded flex items-center gap-1">
                 <Clock className="w-3 h-3" />
                 {t('outOfStock')}
               </span>
             </div>
-          )}
+          ) : null}
           <div className="absolute inset-0 bg-sari-blue/90 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
             <span className="bg-white text-sari-blue px-6 py-3 font-semibold transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
               {t('viewDetails')}
@@ -115,11 +141,17 @@ export default function ProductCard({ product, variant = 'standard', onClick }: 
     >
       {/* Image */}
       <div className="aspect-[4/3] mb-4 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
-        <img
-          src={product.image}
-          alt={product.name}
-          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-        />
+        {product.image ? (
+          <img
+            src={product.image}
+            alt={product.name}
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-gray-400">
+            <Package className="w-16 h-16" />
+          </div>
+        )}
       </div>
 
       {/* Badge catégorie */}
@@ -139,7 +171,7 @@ export default function ProductCard({ product, variant = 'standard', onClick }: 
 
       {/* Prix et stock */}
       <div className="flex justify-between items-center mb-4">
-        <div className="text-sari-lime font-bold text-xl">{product.price}</div>
+        <div className="text-sari-lime font-bold text-xl">{withSymbol(product.price)}</div>
         {product.inStock ? (
           <span className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-1 text-xs font-semibold rounded flex items-center gap-1">
             <BadgeCheck className="w-3 h-3" />

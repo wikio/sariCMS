@@ -6,11 +6,14 @@ import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { ChevronRight, ChevronLeft } from 'lucide-react';
 import { getServices } from '@/lib/data';
+import { loadFicheLocale } from '@/lib/fiche-i18n';
+import { entityUrl } from '@/lib/entity-url';
 import ServiceCard from '@/components/cards/ServiceCard';
 import FAQ from '@/components/ui/FAQ';
 import SectionTitle from '@/components/ui/SectionTitle';
 import Divider from '@/components/shared/Divider';
 import EmptyState from '@/components/ui/EmptyState';
+import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
 
 export default function ServicesPage() {
   const locale = useLocale();
@@ -20,7 +23,45 @@ export default function ServicesPage() {
   useEffect(() => {
     const loadServices = async () => {
       const data = await getServices(locale);
-      setServices(data);
+      
+      // Appliquer les traductions pour les icônes et couleurs
+      const translatedServices = data.map(service => {
+        if (locale === 'fr') return service;
+        
+        // Charger les traductions depuis localStorage
+        const fiche = loadFicheLocale('services', String(service.id), locale);
+        
+        return {
+          ...service,
+          // Fallback sur la version française si pas de traduction
+          icon: (fiche.icon as string) || service.icon,
+          color: (fiche.color as string) || service.color,
+          image: (fiche.image as string) || service.image,
+          title: (fiche.title as string) || service.title,
+          shortDesc: (fiche.shortDesc as string) || service.shortDesc,
+          fullDesc: (fiche.fullDesc as string) || service.fullDesc,
+          features: (fiche.features as string[]) || service.features,
+          faq: (fiche.faq as Array<{ q: string; a: string }>) || service.faq,
+          // Le slug traduit doit suivre, sinon l'URL garde le slug français.
+          slug: (fiche.slug as string) || service.slug,
+        };
+      });
+
+      console.info(
+        `[services/liste] ${translatedServices.length} services en ${locale}` +
+          translatedServices
+            .map(
+              (s: any) =>
+                `\n  • id=${s.id} legacyId=${s.legacyId ?? '(aucun)'} → ${entityUrl(
+                  locale,
+                  'services',
+                  s,
+                )}`,
+            )
+            .join(''),
+      );
+
+      setServices(translatedServices);
     };
     loadServices();
   }, [locale]);
@@ -42,6 +83,7 @@ export default function ServicesPage() {
   }
 
   return (
+    <PageVisibilityGuard visibilityKey="module.services">
     <div className="pt-32 page-enter">
       <div
         className="parallax-bg py-24 flex items-center justify-center text-center text-white relative"
@@ -100,5 +142,6 @@ export default function ServicesPage() {
         </div>
       </div>
     </div>
+    </PageVisibilityGuard>
   );
 }

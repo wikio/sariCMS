@@ -1,0 +1,6 @@
+{
+  "title": "Éditeur de configuration",
+  "saveSuccess": "Configuration enregistrée",
+  "saveError": "Échec de l'enregistrement",
+  "exportSuccess": "Configuration exportée"
+}

@@ -1,0 +1,9 @@
+{
+  "dropHere": "Drop an image here",
+  "orUrl": "or paste a URL",
+  "formats": "JPG, PNG, WebP or SVG — 5 MB max",
+  "preview": "Preview",
+  "remove": "Remove image",
+  "invalidType": "Unsupported file format",
+  "tooLarge": "File too large"
+}

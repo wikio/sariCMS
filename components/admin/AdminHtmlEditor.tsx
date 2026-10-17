@@ -27,7 +27,7 @@ export default function AdminHtmlEditor({
     setHtml(value || '');
   }, [value]);
 
-  const execCommand = (command: string, cmdValue: string | null = null) => {
+  const execCommand = (command: string, cmdValue?: string) => {
     document.execCommand(command, false, cmdValue);
     if (editorRef.current) {
       editorRef.current.focus();

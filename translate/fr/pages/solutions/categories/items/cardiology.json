@@ -1,0 +1,14 @@
+{
+  "icon": "heart-pulse",
+  "color": "red-500",
+  "title": "Cardiologie",
+  "desc": "ECG, défibrillateurs, moniteurs cardiaques et holters",
+  "cta": "Découvrir",
+  "link": "#solutions/cardiology",
+  "features": [
+    "ECG 12 dérivations",
+    "Défibrillateurs DSA",
+    "Moniteurs cardiaques",
+    "Holters ECG"
+  ]
+}

@@ -1,4 +1,7 @@
 {
   "excellence": "التميز الطبي",
-  "discover": "اكتشف"
+  "discover": "اكتشف",
+  "previous": "السابق",
+  "next": "التالي",
+  "slideNumber": "الشريحة {number}"
 }

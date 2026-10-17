@@ -1,6 +1,8 @@
 [
   {
     "id": 1,
+    "slug": "notre-engagement-pour-la-qualite",
+    "legacyId": "pag-1",
     "type": "simple",
     "title": "Notre Engagement pour la Qualité",
     "subtitle": "Excellence et rigueur depuis 2003",
@@ -10,6 +12,8 @@
   },
   {
     "id": 2,
+    "slug": "a-propos-de-sari-systeme",
+    "legacyId": "pag-2",
     "type": "about",
     "title": "À Propos de SARI Système",
     "subtitle": "Leader en équipements médicaux en Algérie",
@@ -26,6 +30,8 @@
   },
   {
     "id": 3,
+    "slug": "nos-realisations-en-images",
+    "legacyId": "pag-3",
     "type": "gallery",
     "title": "Nos Réalisations en Images",
     "subtitle": "Plus de 500 établissements équipés",
@@ -42,6 +48,8 @@
   },
   {
     "id": 4,
+    "slug": "promotion-ete-2024",
+    "legacyId": "pag-4",
     "type": "flyer",
     "title": "Promotion Été 2024",
     "subtitle": "Jusqu'à -30% sur tous les équipements",
@@ -52,6 +60,8 @@
   },
   {
     "id": 5,
+    "slug": "sari-systeme-en-mouvement",
+    "legacyId": "pag-5",
     "type": "slide",
     "title": "SARI Système en Mouvement",
     "subtitle": "Une présentation interactive",
@@ -88,6 +98,8 @@
   },
   {
     "id": 6,
+    "slug": "decouvrez-sari-systeme",
+    "legacyId": "pag-6",
     "type": "scroll",
     "title": "Découvrez SARI Système",
     "subtitle": "Un voyage à travers notre histoire",
@@ -133,6 +145,8 @@
   },
   {
     "id": 7,
+    "slug": "guide-complet-choisir-son-echographe",
+    "legacyId": "pag-7",
     "type": "full",
     "title": "Guide Complet : Choisir son Échographe",
     "subtitle": "Le guide ultime pour les professionnels de santé",
@@ -142,6 +156,8 @@
   },
   {
     "id": 8,
+    "slug": "intelligence-artificielle-en-medecine",
+    "legacyId": "pag-8",
     "type": "full",
     "title": "L'Intelligence Artificielle en Médecine",
     "subtitle": "Comment l'IA révolutionne le diagnostic médical",
@@ -151,6 +167,8 @@
   },
   {
     "id": 9,
+    "slug": "nos-equipements-phares",
+    "legacyId": "pag-9",
     "type": "gallery",
     "title": "Nos Équipements Phares",
     "subtitle": "La crème des technologies médicales",
@@ -167,6 +185,8 @@
   },
   {
     "id": 10,
+    "slug": "temoignages-de-nos-clients",
+    "legacyId": "pag-10",
     "type": "slide",
     "title": "Témoignages de nos Clients",
     "subtitle": "Ils nous font confiance",
@@ -201,5 +221,29 @@
         "description": "« Les équipements de pédiatrie sont parfaitement adaptés aux besoins des enfants. L'équipe SARI a été à l'écoute de nos spécificités. »"
       }
     ]
+  },
+  {
+    "id": 11,
+    "slug": "offre-pack-imagerie-portable",
+    "legacyId": "pag-11",
+    "type": "constructor",
+    "title": "Pack imagerie portable — offre de lancement",
+    "subtitle": "Sonde sans fil, licence illimitée, formation incluse. Offre valable jusqu’au 31 décembre.",
+    "category": "Offres",
+    "status": "published",
+    "media": "/media/marquee/atelier.svg",
+    "content": "<style data-sari-builder=\"1\">\n/* Une page construite garde sa propre feuille : ici la couleur d'action de la\n   campagne remplace le vert du site, sans toucher au reste. */\n.sari-page { --sari-lime: #ffcf5c; }\n.sari-hero__bg img { filter: saturate(1.05); }\n</style>\n<section class=\"sari-hero\"><figure class=\"sari-hero__bg\"><img src=\"/media/marquee/webinaire.svg\" alt=\"\"></figure><div class=\"sari-wrap\"><span class=\"sari-eyebrow\">Offre 2026</span><h1>Présentez votre offre en une page</h1><p class=\"sari-lead\">Un bandeau, trois arguments, une preuve et un bouton : ce qu'il faut pour qu'un visiteur appelle.</p><div class=\"sari-actions\"><a class=\"sari-btn sari-btn--lime sari-btn--lg sari-btn--arrow\" href=\"/contact\">Demander un rappel</a><a class=\"sari-btn sari-btn--outline\" href=\"/media/marquee/prix-innovation.svg\" download>Télécharger le flyer</a></div></div></section><section class=\"sari-band sari-band--gray\"><div class=\"sari-wrap\"><h2>Ce que vous y gagnez</h2><div class=\"sari-grid sari-grid--3\"><article class=\"sari-card\"><h3>Installé en 48 h</h3><p>Une équipe sur site, le matériel réglé, la formation incluse.</p></article><article class=\"sari-card\"><h3>Suivi sur mesure</h3><p>Contrat de maintenance adapté à votre activité et à vos volumes.</p></article><article class=\"sari-card\"><h3>Pièces garanties</h3><p>Stock local et intervention garantie sous 24 h ouvrées.</p></article></div></div></section><section class=\"sari-band sari-band--blue sari-band--tight\"><div class=\"sari-wrap\"><div class=\"sari-grid sari-grid--3\"><div class=\"sari-center\"><div class=\"sari-num\">20 ans</div><p class=\"sari-lead\">au service des cliniques</p></div><div class=\"sari-center\"><div class=\"sari-num\">500+</div><p class=\"sari-lead\">installations réalisées</p></div><div class=\"sari-center\"><div class=\"sari-num\">24 h</div><p class=\"sari-lead\">de délai d'intervention</p></div></div></div></section><section class=\"sari-band\"><div class=\"sari-wrap sari-cta-strip\"><div><h2>Parlons de votre projet</h2><p class=\"sari-muted\">Un devis chiffré sous trois jours ouvrés.</p></div><a class=\"sari-btn\" href=\"/contact\">Nous contacter</a></div></section><section class=\"sari-band sari-band--lime\"><div class=\"sari-wrap sari-grid sari-grid--4\"><div><div class=\"sari-num\">20</div><p>années d'activité</p></div><div><div class=\"sari-num\">500+</div><p>installations</p></div><div><div class=\"sari-num\">24 h</div><p>délai d'intervention</p></div><div><div class=\"sari-num\">98 %</div><p>de contrats honorés</p></div></div></section><section class=\"sari-band\"><div class=\"sari-wrap\"><h2>Notre parc matériel en images</h2><div class=\"sari-gallery\" data-sari-lightbox><a class=\"sari-gallery__item\" href=\"/media/marquee/atelier.svg\"><img src=\"/media/marquee/atelier.svg\" alt=\"Atelier de formation\"><span class=\"sari-gallery__cap\">Atelier de formation</span></a><a class=\"sari-gallery__item\" href=\"/media/marquee/webinaire.svg\"><img src=\"/media/marquee/webinaire.svg\" alt=\"Webinaire\"><span class=\"sari-gallery__cap\">Webinaire produit</span></a><a class=\"sari-gallery__item\" href=\"/media/marquee/recrute.svg\"><img src=\"/media/marquee/recrute.svg\" alt=\"Recrutement\"><span class=\"sari-gallery__cap\">Nous recrutons</span></a><a class=\"sari-gallery__item\" href=\"/media/marquee/prix-innovation.svg\"><img src=\"/media/marquee/prix-innovation.svg\" alt=\"Prix de l'innovation\"><span class=\"sari-gallery__cap\">Prix de l'innovation</span></a></div></div></section><section class=\"sari-band sari-band--gray\"><div class=\"sari-wrap sari-wrap--narrow\"><h2>Questions fréquentes</h2><div class=\"sari-faq\"><details open><summary>Le matériel est-il garanti hors atelier ?</summary><p>Oui, trois ans pièces et main-d'œuvre, intervention sur site sous 24 h ouvrées.</p></details><details><summary>Proposez-vous la location ?</summary><p>Sur 24 ou 36 mois, avec option d'achat en fin de contrat.</p></details><details><summary>Formez-vous nos équipes ?</summary><p>La formation est incluse à la livraison, et une session de rappel est possible à six mois.</p></details></div></div></section>"
+  },
+  {
+    "id": 12,
+    "slug": "journee-imagerie-2026",
+    "legacyId": "pag-12",
+    "type": "constructor",
+    "title": "Journée de l’imagerie portable, 14 octobre 2026",
+    "subtitle": "Démonstrations, retours d’usage et essais libres à Alger. Entrée libre sur inscription.",
+    "category": "Événements",
+    "status": "published",
+    "media": "/media/marquee/atelier.svg",
+    "content": "<style data-sari-builder=\"1\">\n/* Le flyer se lit aussi sur papier : la feuille de la page ne change que\n   ce que l'impression a besoin de changer. */\n.sari-flyer__price { font-size: clamp(28px, 5vw, 44px); }\n</style>\n<section class=\"sari-band sari-band--ink\"><div class=\"sari-wrap\"><article class=\"sari-flyer\"><header class=\"sari-flyer__head\"><span class=\"sari-eyebrow\">14 octobre 2026 · Alger</span><h2>Journée de l'imagerie portable</h2><p class=\"sari-lead\">Démonstrations, tables rondes et essais sur site.</p></header><div class=\"sari-flyer__body\"><div><h3>Programme</h3><ul class=\"sari-flyer__list\"><li>09 h 00 — Accueil et café technique</li><li>10 h 30 — Démonstrations en salle de radiologie</li><li>14 h 00 — Retour d'usage de trois cliniques</li><li>16 h 30 — Échanges et essais libres</li></ul></div><aside class=\"sari-flyer__callout\"><span class=\"sari-eyebrow\">Entrée libre</span><p>Inscription avant le 30 septembre, nombre de places limité.</p><a class=\"sari-btn sari-btn--block sari-btn--lime\" href=\"/contact\">Je m'inscris</a></aside></div></article></div></section><section class=\"sari-band\"><div class=\"sari-wrap\"><div class=\"sari-slides\" data-sari-slides data-interval=\"5000\"><figure class=\"sari-slide is-active\"><img src=\"/media/marquee/atelier.svg\" alt=\"Atelier\"><figcaption class=\"sari-slide__caption\"><h3>Atelier de prise en main</h3><p>Deux heures sur votre site, par groupe de six.</p></figcaption></figure><figure class=\"sari-slide\"><img src=\"/media/marquee/webinaire.svg\" alt=\"Webinaire\"><figcaption class=\"sari-slide__caption\"><h3>Webinaire produit</h3><p>Une heure, en direct, avec questions.</p></figcaption></figure><figure class=\"sari-slide\"><img src=\"/media/marquee/recrute.svg\" alt=\"Recrutement\"><figcaption class=\"sari-slide__caption\"><h3>Nous recrutons</h3><p>Techniciens biomédicaux en CDI.</p></figcaption></figure></div></div></section><section class=\"sari-band sari-band--gray sari-band--tight\"><div class=\"sari-wrap sari-logos\"><img src=\"/logo.png\" alt=\"SARI\"><img src=\"/media/marquee/prix-innovation.svg\" alt=\"Prix de l'innovation\"><img src=\"/media/marquee/prix-innovation.svg\" alt=\"Partenaire\"><img src=\"/media/marquee/prix-innovation.svg\" alt=\"Partenaire\"></div></section>"
   }
 ]

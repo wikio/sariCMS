@@ -1,0 +1,14 @@
+{
+  "icon": "monitor",
+  "color": "indigo-500",
+  "title": "Medical Informatics",
+  "desc": "EMR, professional software, telemedicine, PACS and cybersecurity",
+  "cta": "Discover",
+  "link": "#solutions/informatique",
+  "features": [
+    "Shared Medical Record",
+    "Professional software",
+    "Telemedicine",
+    "PACS solutions"
+  ]
+}

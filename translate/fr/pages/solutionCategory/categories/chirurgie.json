@@ -1,0 +1,46 @@
+{
+  "title": "Chirurgie",
+  "desc": "Instruments chirurgicaux, autoclaves, lampes scialytiques",
+  "icon": "syringe",
+  "image": "https://images.unsplash.com/photo-1551076805-e1869033e561?w=1920",
+  "productIds": [
+    3,
+    9
+  ],
+  "features": [
+    {
+      "icon": "scissors",
+      "text": "Instruments chirurgicaux inox"
+    },
+    {
+      "icon": "flame",
+      "text": "Autoclaves classe B"
+    },
+    {
+      "icon": "lightbulb",
+      "text": "Lampes scialytiques LED"
+    },
+    {
+      "icon": "bed",
+      "text": "Tables opératoires électriques"
+    },
+    {
+      "icon": "shield-check",
+      "text": "Stérilisation certifiée"
+    },
+    {
+      "icon": "wrench",
+      "text": "Maintenance et SAV"
+    }
+  ],
+  "faq": [
+    {
+      "q": "Vos autoclaves sont-ils classe B ?",
+      "a": "Oui, tous nos autoclaves sont classe B, conformes aux normes européennes EN 13060, avec cycle de séchage sous vide et traçabilité complète."
+    },
+    {
+      "q": "Les lampes scialytiques sont-elles LED ?",
+      "a": "Oui, toutes nos lampes scialytiques sont LED avec une durée de vie de 50 000 heures, un IRC > 95 et une intensité jusqu'à 150 000 Lux."
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "home": "Home",
+  "about": "About",
+  "solutions": "Solutions",
+  "services": "Services",
+  "products": "Products",
+  "events": "Events",
+  "news": "News",
+  "careers": "Careers",
+  "contact": "Contact",
+  "login": "Login",
+  "register": "Register",
+  "dashboard": "Dashboard",
+  "logout": "Logout",
+  "search": "Search"
+}

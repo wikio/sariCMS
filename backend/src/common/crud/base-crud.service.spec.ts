@@ -20,6 +20,7 @@ interface Item extends BaseEntity {
 class MemoryRepo implements ICrudRepository<Item> {
   readonly collection = 'items';
   items: Item[] = [];
+  private seq = 0;
 
   async findMany(options: QueryOptions): Promise<PaginatedResult<Item>> {
     let rows = this.items.filter((i) => (options.onlyDeleted ? i.deletedAt : !i.deletedAt));
@@ -34,7 +35,7 @@ class MemoryRepo implements ICrudRepository<Item> {
       meta: { total, page, limit, totalPages: Math.max(1, Math.ceil(total / limit)) },
     };
   }
-  async findById(id: string, includeDeleted = false): Promise<Item | null> {
+  async findById(id: number, includeDeleted = false): Promise<Item | null> {
     const hit = this.items.find((i) => i.id === id) ?? null;
     if (hit?.deletedAt && !includeDeleted) return null;
     return hit;
@@ -45,22 +46,29 @@ class MemoryRepo implements ICrudRepository<Item> {
     );
   }
   async create(data: Partial<Item>): Promise<Item> {
-    const item = { ...data } as Item;
+    const now = new Date().toISOString();
+    const item = {
+      ...data,
+      id: (data as { id?: number }).id ?? ++this.seq,
+      createdAt: now,
+      updatedAt: now,
+      deletedAt: null,
+    } as Item;
     this.items.push(item);
     return item;
   }
-  async update(id: string, data: Partial<Item>): Promise<Item> {
+  async update(id: number, data: Partial<Item>): Promise<Item> {
     const idx = this.items.findIndex((i) => i.id === id);
     this.items[idx] = { ...this.items[idx], ...data };
     return this.items[idx];
   }
-  async softDelete(id: string): Promise<Item> {
+  async softDelete(id: number): Promise<Item> {
     return this.update(id, { deletedAt: new Date().toISOString() });
   }
-  async restore(id: string): Promise<Item> {
+  async restore(id: number): Promise<Item> {
     return this.update(id, { deletedAt: null });
   }
-  async hardDelete(id: string): Promise<void> {
+  async hardDelete(id: number): Promise<void> {
     this.items = this.items.filter((i) => i.id !== id);
   }
   async purgeExpired(olderThan: Date): Promise<number> {
@@ -75,7 +83,7 @@ class MemoryRepo implements ICrudRepository<Item> {
     return this.items
       .filter((i) => String((i as any)[field] ?? '').toLowerCase().includes(q.toLowerCase()))
       .slice(0, limit)
-      .map((i) => ({ id: i.id, value: String((i as any)[field]) }));
+      .map((i) => ({ id: String(i.id), value: String((i as any)[field]) }));
   }
 }
 
@@ -190,7 +198,27 @@ describe('BaseCrudService', () => {
     const block = (await service.findOne(created.id, 'block')) as Record<string, unknown>;
     expect(card.title).toBe('V');
     expect(block.id).toBe(created.id);
-    expect(Object.keys(card).sort()).toEqual(['createdAt', 'id', 'status', 'title'].sort());
+    // `legacyId` s'ajoute aux champs projetés : c'est une clé de routage
+    // conservée dans toutes les vues pour que le sélecteur de langue puisse
+    // relier les versions linguistiques d'une même fiche.
+    expect(Object.keys(card).sort()).toEqual(
+      ['createdAt', 'id', 'legacyId', 'status', 'title'].sort(),
+    );
+  });
+
+  it('conserve les clés de routage (legacyId, locale) dans les vues list/card', async () => {
+    const created = (await service.create({
+      title: 'Traduisible',
+      status: 'ok',
+      legacyId: 'grp-1',
+      locale: 'fr',
+    } as Partial<Item>)) as Item;
+
+    const card = (await service.findOne(created.id, 'card')) as Record<string, unknown>;
+    // Sans ces clés, la vitrine ne peut pas retrouver la fiche équivalente
+    // dans la langue cible et retombe sur l'id courant (mauvaise fiche/404).
+    expect(card.legacyId).toBe('grp-1');
+    expect(card.locale).toBe('fr');
   });
 
   it('autocompletes on allowed fields only', async () => {
@@ -200,5 +228,92 @@ describe('BaseCrudService', () => {
     await expect(service.autocomplete({ q: 'x', field: 'passwordHash', limit: 5 })).rejects.toBeInstanceOf(
       BadRequestException,
     );
+  });
+});
+
+/**
+ * Le `legacyId` que le modèle ne veut pas.
+ *
+ * Le service en dote chaque fiche créée, parce que c'est le lien entre les
+ * versions FR / EN / AR d'une même ressource. Mais toutes les tables ne sont pas
+ * traduites — une candidature, un message reçu, une ligne de journal — et celles-là
+ * n'ont pas la colonne : Prisma refuse l'argument et la création répond 500. Le
+ * drapeau `hasLegacyId` le déclare, et le magasin peut le confirmer lui-même ; dans
+ * les deux cas, un `legacyId` fourni par le client est retiré plutôt que perdu.
+ */
+describe('BaseCrudService — legacyId selon le modèle', () => {
+  /** Un dépôt à colonnes étroites, comme l'adaptateur Prisma : il sait ce qu'il a. */
+  class SchemaRepo extends MemoryRepo {
+    constructor(private readonly columns: string[]) {
+      super();
+    }
+    knowsField(name: string): boolean {
+      return this.columns.includes(name);
+    }
+  }
+
+  const NARROW = ['id', 'title', 'status', 'locale', 'createdAt', 'updatedAt', 'deletedAt', 'createdBy', 'updatedBy'];
+  const WIDE = ['id', 'title', 'status', 'locale', 'legacyId', 'createdAt', 'updatedAt', 'deletedAt'];
+
+  class ApplicationsService extends BaseCrudService<Item> {
+    protected readonly repository: ICrudRepository<Item>;
+    protected readonly options: CrudServiceOptions = {
+      resource: 'applications',
+      searchFields: ['title'],
+      listFields: ['id', 'title'],
+      cardFields: ['id', 'title'],
+    };
+    constructor(repo: ICrudRepository<Item>, cache: AppCacheService, audit: AuditService) {
+      super(cache, audit);
+      this.repository = repo;
+    }
+  }
+
+  class FlaggedService extends ApplicationsService {
+    protected override readonly options: CrudServiceOptions = {
+      resource: 'applications',
+      searchFields: ['title'],
+      listFields: ['id', 'title'],
+      hasLegacyId: false,
+    };
+  }
+
+  it('n’en invente pas quand le modèle n’a pas la colonne', async () => {
+    const repo = new SchemaRepo(NARROW);
+    await new ApplicationsService(repo, mockCache(), mockAudit()).create({
+      title: 'A',
+      status: 'ok',
+    } as Partial<Item>);
+    expect(repo.items[0]).not.toHaveProperty('legacyId');
+  });
+
+  it('écarte celui que le client envoie, au lieu de perdre la ligne', async () => {
+    const repo = new SchemaRepo(NARROW);
+    await new ApplicationsService(repo, mockCache(), mockAudit()).create({
+      title: 'A',
+      status: 'ok',
+      legacyId: 'appl-x',
+    } as unknown as Partial<Item>);
+    // Le champ n'a nulle part où être stocké : il reste en route, la candidature passe.
+    expect(repo.items[0]).not.toHaveProperty('legacyId');
+    expect(repo.items[0].title).toBe('A');
+  });
+
+  it('respecte le drapeau du service, même sur un magasin muet', async () => {
+    const repo = new MemoryRepo();
+    await new FlaggedService(repo, mockCache(), mockAudit()).create({
+      title: 'A',
+      status: 'ok',
+    } as Partial<Item>);
+    expect(repo.items[0]).not.toHaveProperty('legacyId');
+  });
+
+  it('le continue de poser quand le modèle a la colonne', async () => {
+    const repo = new SchemaRepo(WIDE);
+    const service = new ApplicationsService(repo, mockCache(), mockAudit());
+    await service.create({ title: 'A', status: 'ok', legacyId: 'grp-1' } as unknown as Partial<Item>);
+    expect(repo.items[0].legacyId).toBe('grp-1');
+    await service.create({ title: 'B', status: 'ok' } as Partial<Item>);
+    expect(String(repo.items[1].legacyId)).toMatch(/^appl-/);
   });
 });

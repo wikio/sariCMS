@@ -1,0 +1,90 @@
+{
+  "version": 1,
+  "_comment": "Configuration des blocs de la page d'accueil (langue en). Enregistrée par l'administration (Studio → Page d'accueil). Les blocs absents gardent les valeurs par défaut du code et les textes des traductions du site. Structure commune aux trois langues : elle se règle en français.",
+  "order": [
+    "hero",
+    "partners-marquee",
+    "navigation",
+    "mission",
+    "products",
+    "blocks",
+    "stats",
+    "testimonials",
+    "events",
+    "news",
+    "newsletter",
+    "partners",
+    "cta"
+  ],
+  "sections": {
+    "partners-marquee": {
+      "_comment": "Example shipped with the module: the band scrolls the news list as image + text tiles, with a heading. Edit or delete it from Studio → Home page.",
+      "enabled": true,
+      "sortOrder": 1,
+      "texts": {
+        "label": "Latest news",
+        "title": "What the newsroom is working on",
+        "description": "Every tile links to its article."
+      },
+      "selection": {
+        "mode": "auto",
+        "ids": [],
+        "limit": 8,
+        "sort": "byDateDesc"
+      },
+      "settings": {
+        "source": "news",
+        "itemKind": "image-text",
+        "showImage": true,
+        "showTitle": true,
+        "showText": true,
+        "itemHeight": 64,
+        "mediaWidth": 112,
+        "mediaFit": "cover",
+        "mediaRadius": 8,
+        "mediaGap": 14,
+        "textSize": "base",
+        "textLines": 2,
+        "itemGap": 48,
+        "itemPadding": 0,
+        "marginTop": 8,
+        "marginBottom": 8,
+        "valign": "middle",
+        "cardStyle": "plain",
+        "edgeFade": true,
+        "linkItems": true,
+        "showSeparator": true,
+        "separator": "/",
+        "speed": 45,
+        "direction": "left",
+        "pauseOnHover": true
+      },
+      "style": {
+        "background": "sariGray",
+        "paddingY": 40,
+        "invert": false,
+        "showHeader": true
+      },
+      "items": [
+        {
+          "id": "item-exemple-atelier",
+          "from": "free",
+          "kind": "image-text",
+          "enabled": true,
+          "title": "Innovation award, 2026",
+          "text": "For the open CMS we ship with this site.",
+          "image": "/media/marquee/prix-innovation.svg",
+          "href": "/about"
+        },
+        {
+          "id": "item-exemple-support",
+          "from": "free",
+          "kind": "text",
+          "enabled": true,
+          "title": "Support on the phone, not in a ticket queue.",
+          "href": "/contact"
+        }
+      ]
+    }
+  }
+}

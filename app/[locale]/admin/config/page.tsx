@@ -69,9 +69,9 @@ export default function AdminConfigPage() {
   const handleSave = () => {
     try {
       localStorage.setItem(`sari_config_${locale}`, JSON.stringify(configData));
-      showToast(t('configEditor.saveSuccess', 'Configuration sauvegardée !'), 'success');
+      showToast(t('configEditor.saveSuccess') || 'Configuration sauvegardée !', 'success');
     } catch (err) {
-      showToast(t('configEditor.saveError', 'Erreur lors de la sauvegarde'), 'error');
+      showToast(t('configEditor.saveError') || 'Erreur lors de la sauvegarde', 'error');
     }
   };
 
@@ -82,12 +82,12 @@ export default function AdminConfigPage() {
     const a = document.createElement('a');
     a.href = url; a.download = `config_${locale}.json`; a.click();
     URL.revokeObjectURL(url);
-    showToast(t('configEditor.exportSuccess', 'Fichier JSON exporté !'), 'success');
+    showToast(t('configEditor.exportSuccess') || 'Fichier JSON exporté !', 'success');
   };
 
   if (loading || !configData) {
     return (
-      <AdminLayout title={t('configEditor.title', 'Configuration du site')}>
+      <AdminLayout title={t('configEditor.title') || 'Configuration du site'}>
         <div className="text-center py-12">
           <div className="w-12 h-12 border-4 border-sari-blue border-t-transparent animate-spin mx-auto mb-4"></div>
           <p className="text-gray-500">Chargement...</p>
@@ -118,7 +118,7 @@ export default function AdminConfigPage() {
                   activeTab === tab.id ? 'text-sari-blue border-b-2 border-sari-blue' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
                 }`}
               >
-                <Icon className="w-4 h-4" /> {t(`configEditor.${tab.id}`, tab.label)}
+                <Icon className="w-4 h-4" /> {t(`configEditor.${tab.id}`) || tab.label}
               </button>
             );
           })}

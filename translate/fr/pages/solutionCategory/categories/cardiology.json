@@ -1,0 +1,45 @@
+{
+  "title": "Cardiologie",
+  "desc": "ECG, défibrillateurs, moniteurs cardiaques et holters",
+  "icon": "heart-pulse",
+  "image": "https://images.unsplash.com/photo-1559757175-5700dde675bc?w=1920",
+  "productIds": [
+    7
+  ],
+  "features": [
+    {
+      "icon": "activity",
+      "text": "ECG 3/5/12 dérivations"
+    },
+    {
+      "icon": "zap",
+      "text": "Défibrillateurs DSA et DAE"
+    },
+    {
+      "icon": "monitor",
+      "text": "Moniteurs cardiaques temps réel"
+    },
+    {
+      "icon": "clock",
+      "text": "Holters ECG 24/48/72h"
+    },
+    {
+      "icon": "shield-check",
+      "text": "Conformité CE médical"
+    },
+    {
+      "icon": "headphones",
+      "text": "Support technique 24/7"
+    }
+  ],
+  "faq": [
+    {
+      "q": "Vos ECG sont-ils 12 dérivations ?",
+      "a": "Oui, nous proposons des ECG 3, 6 et 12 dérivations selon vos besoins. Tous nos ECG disposent d'un écran tactile et d'une imprimante thermique intégrée."
+    },
+    {
+      "q": "Les défibrillateurs sont-ils faciles à utiliser ?",
+      "a": "Oui, tous nos DSA sont conçus pour une utilisation simple avec guide vocal pas à pas et analyse automatique du rythme en moins de 10 secondes."
+    }
+  ]
+}

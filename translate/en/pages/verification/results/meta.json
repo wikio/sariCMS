@@ -1,0 +1,6 @@
+{
+  "code": "Returned code:",
+  "api": "Answer from the official verification service",
+  "local": "Answer from the local registry",
+  "apiUnreachable": "External service unreachable — falling back to the local registry"
+}

@@ -1,0 +1,14 @@
+{
+  "icon": "stethoscope",
+  "color": "sari-blue",
+  "title": "Diagnostic",
+  "desc": "Échographes, tensiomètres, microscopes et outils d'auscultation",
+  "cta": "Découvrir",
+  "link": "#solutions/diagnostic",
+  "features": [
+    "Échographes portables",
+    "Tensiomètres digitaux",
+    "Microscopes binoculaires",
+    "Stéthoscopes"
+  ]
+}

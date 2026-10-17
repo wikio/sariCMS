@@ -1,0 +1,14 @@
+{
+  "article": "المادة",
+  "qty": "الكمية",
+  "unitPrice": "سعر الوحدة",
+  "totalHT": "المجموع بدون ضريبة",
+  "globalDiscount": "خصم عام",
+  "shippingFees": "رسوم الشحن",
+  "globalDiscountLabel": "خصم عام",
+  "totalTaxes": "إجمالي الضرائب",
+  "shipping": "الشحن",
+  "totalTTC": "المجموع شامل الضريبة",
+  "chooseFile": "اختر ملف",
+  "commentPlaceholder": "اكتب التعليق المرافق للعرض…"
+}

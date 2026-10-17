@@ -1,0 +1,12 @@
+{
+  "title": "Document non reconnu",
+  "message": "Document non reconnu dans notre base de données.",
+  "actions": "Actions recommandées :",
+  "steps": [
+    "1. Vérifiez la saisie du code et de la clé",
+    "2. Assurez-vous que le document provient de SARI Système SARL",
+    "3. Ne procédez à aucun paiement si c'est une facture",
+    "4. Contactez notre support en cas de doute"
+  ],
+  "legal": "Législation algérienne : La falsification de documents est punie par les Articles 214, 217 et 147 du Code pénal algérien."
+}

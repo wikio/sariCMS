@@ -1,0 +1,132 @@
+{
+  "version": 1,
+  "templates": [
+    {
+      "id": "post-carre",
+      "title": "Post carré 1080",
+      "description": "Un titre, une accroche, un appel. Fond dégradé, accent modifiable.",
+      "category": "réseaux",
+      "format": {
+        "width": 1080,
+        "height": 1080,
+        "name": "Carré 1080",
+        "orientation": "carré"
+      },
+      "palette": [
+        "#0B1220",
+        "#199ACA",
+        "#C6DA34",
+        "#F7F9FB"
+      ],
+      "preview": null,
+      "file": "templates/post-carre.json",
+      "version": 1,
+      "tags": [
+        "réseaux",
+        "dégradé"
+      ],
+      "updatedAt": "2026-09-08T00:00:00.000Z"
+    },
+    {
+      "id": "story-verte",
+      "title": "Story verticale",
+      "description": "Format 9:16, séquence de barres en haut, flèche de balayage en bas.",
+      "category": "réseaux",
+      "format": {
+        "width": 1080,
+        "height": 1920,
+        "name": "Story 1080×1920",
+        "orientation": "portrait"
+      },
+      "palette": [
+        "#070E18",
+        "#1B3A54",
+        "#C6DA34"
+      ],
+      "preview": null,
+      "file": "templates/story-verte.json",
+      "version": 1,
+      "tags": [
+        "réseaux",
+        "story"
+      ],
+      "updatedAt": "2026-09-08T00:00:00.000Z"
+    },
+    {
+      "id": "banniere-web",
+      "title": "Bannière web 1600×640",
+      "description": "Bloc de texte à gauche, cadre d’image à droite, bouton sombre.",
+      "category": "web",
+      "format": {
+        "width": 1600,
+        "height": 640,
+        "name": "Bannière",
+        "orientation": "paysage"
+      },
+      "palette": [
+        "#F7F9FB",
+        "#199ACA",
+        "#0B1220"
+      ],
+      "preview": null,
+      "file": "templates/banniere-web.json",
+      "version": 1,
+      "tags": [
+        "web",
+        "bannière"
+      ],
+      "updatedAt": "2026-09-08T00:00:00.000Z"
+    },
+    {
+      "id": "affiche-a3",
+      "title": "Affiche A3",
+      "description": "Bandeau titré, corps de texte, trois lignes à puces, pied de page.",
+      "category": "impression",
+      "format": {
+        "width": 1754,
+        "height": 2480,
+        "name": "A3 150 dpi",
+        "orientation": "portrait"
+      },
+      "palette": [
+        "#F7F9FB",
+        "#0B1220",
+        "#199ACA",
+        "#C6DA34"
+      ],
+      "preview": null,
+      "file": "templates/affiche-a3.json",
+      "version": 1,
+      "tags": [
+        "impression",
+        "affiche"
+      ],
+      "updatedAt": "2026-09-08T00:00:00.000Z"
+    },
+    {
+      "id": "carte-visite",
+      "title": "Carte de visite",
+      "description": "90 × 54 mm à 300 dpi : nom, fonction, coordonnées, logo.",
+      "category": "impression",
+      "format": {
+        "width": 1063,
+        "height": 638,
+        "name": "Carte 90×54 mm",
+        "orientation": "paysage"
+      },
+      "palette": [
+        "#0B1220",
+        "#C6DA34",
+        "#C8D6E0"
+      ],
+      "preview": null,
+      "file": "templates/carte-visite.json",
+      "version": 1,
+      "tags": [
+        "impression",
+        "carte"
+      ],
+      "updatedAt": "2026-09-08T00:00:00.000Z"
+    }
+  ]
+}

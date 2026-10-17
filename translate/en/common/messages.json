@@ -1,0 +1,14 @@
+{
+  "success": "Success",
+  "error": "Error",
+  "warning": "Warning",
+  "info": "Information",
+  "loading": "Loading...",
+  "noResults": "No results found",
+  "confirm": "Confirm",
+  "areYouSure": "Are you sure?",
+  "captchaIncorrect": "Incorrect CAPTCHA answer",
+  "blocked": "Too many attempts. Please refresh the page.",
+  "loginError": "Incorrect email, password or account type",
+  "connectionError": "Error loading data"
+}

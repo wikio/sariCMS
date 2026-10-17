@@ -3,5 +3,14 @@
   "message": "Désolé, la page que vous recherchez n'existe pas ou a été déplacée.",
   "whatToDo": "Que souhaitez-vous faire ?",
   "backHome": "Retour à l'accueil",
-  "contactUs": "Nous contacter"
+  "contactUs": "Nous contacter",
+  "description": "La page que vous cherchez n'existe pas ou a été déplacée.",
+  "backToHome": "Retour à l'accueil",
+  "goBack": "Page précédente",
+  "suggestions": "Ces pages peuvent vous intéresser",
+  "browseProducts": "Parcourir le catalogue",
+  "ourServices": "Nos services",
+  "ourSolutions": "Nos solutions",
+  "needHelp": "Besoin d'aide ?",
+  "contactSupport": "Contacter le support"
 }

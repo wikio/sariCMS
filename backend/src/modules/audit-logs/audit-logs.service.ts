@@ -10,6 +10,9 @@ export class AuditLogsService extends BaseCrudService<AuditLogEntity> {
   protected readonly repository: ICrudRepository<AuditLogEntity>;
   protected readonly options: CrudServiceOptions = {
     resource: 'audit',
+    // Journal des faits, pas une fiche traduite : pas de colonne `legacyId`.
+    hasLegacyId: false,
+
     searchFields: ['action', 'resource', 'resourceId', 'actorId'],
     sortableFields: ['createdAt', 'action', 'resource'],
     listFields: ['id', 'action', 'resource', 'resourceId', 'actorId', 'createdAt'],

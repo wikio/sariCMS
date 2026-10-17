@@ -24,5 +24,9 @@
   "optionPayDesc": "إتمام الدفع دون إنشاء حساب",
   "optionQuote": "طلب عرض سعر",
   "optionQuoteDesc": "احصل على عرض سعر مخصص خلال 24 ساعة",
-  "cancel": "إلغاء"
+  "cancel": "إلغاء",
+  "preparingPayment": "جارٍ تحضير الدفع",
+  "preparingPaymentDesc": "يتم إنشاء طلبك، ستتم إعادة توجيهك.",
+  "taxIncluded": "مشمولة",
+  "captchaRequired": "يرجى إكمال التحقق من الرسائل المزعجة"
 }

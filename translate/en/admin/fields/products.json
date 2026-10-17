@@ -1,0 +1,9 @@
+{
+  "name": "Commercial name",
+  "slug": "URL slug",
+  "status": "Publication",
+  "image": "Main image",
+  "fullDesc": "Detailed description",
+  "features": "Key points",
+  "inStock": "Stock"
+}

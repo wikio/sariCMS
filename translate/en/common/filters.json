@@ -1,0 +1,11 @@
+{
+  "all": "All",
+  "category": "Category",
+  "allCategories": "All Categories",
+  "sortBy": "Sort by",
+  "relevance": "Relevance",
+  "nameAsc": "Name (A-Z)",
+  "type": "Content Type",
+  "availability": "Availability",
+  "priceRange": "Price Range"
+}

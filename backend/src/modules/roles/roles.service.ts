@@ -11,6 +11,9 @@ export class RolesService extends BaseCrudService<RoleEntity> {
   protected readonly repository: ICrudRepository<RoleEntity>;
   protected readonly options: CrudServiceOptions = {
     resource: 'roles',
+    // Table sans colonne `legacyId` (contenu non traduit par fiches sœurs) :
+    // l'injecter faisait échouer la création sous MySQL.
+    hasLegacyId: false,
     searchFields: ['name', 'slug', 'description'],
     sortableFields: ['name', 'slug', 'createdAt', 'updatedAt'],
     uniqueFields: ['slug'],

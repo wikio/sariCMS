@@ -30,7 +30,6 @@
   "createClientAccount": "Créer un compte client",
   "becomePartner": "Devenir partenaire",
   "createCandidateAccount": "Créer un compte candidat",
-  "createAccount": "Créer un compte",
   "spaceBenefits": "Avantages de votre espace",
   "secureConnection": "Connexion sécurisée",
   "sslProtection": "Vos données sont protégées par un chiffrement SSL et conformes à la loi algérienne sur la protection des données personnelles.",
@@ -59,10 +58,13 @@
     "Alertes pour les nouvelles offres",
     "Communication directe avec les RH"
   ],
-  "title":"Connexion",
-  "remember":"Se souvenir de moi",
-  "loginButton":"Se connecter",
-  "email":"Adresse email",
-  "loginError":"Email ou mot de passe incorrect",
-  "loggingIn":"Connexion en cours..."
+  "title": "Connexion",
+  "email": "Adresse e-mail",
+  "remember": "Se souvenir de moi",
+  "loginButton": "Se connecter",
+  "loggingIn": "Connexion en cours…",
+  "loginError": "Identifiants incorrects",
+  "captchaError": "Veuillez valider le captcha",
+  "createAccount": "Créer un compte",
+  "demoHint": "Compte de démonstration"
 }

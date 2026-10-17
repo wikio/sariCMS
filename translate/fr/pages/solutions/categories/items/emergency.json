@@ -1,0 +1,14 @@
+{
+  "icon": "activity",
+  "color": "orange-500",
+  "title": "Urgence",
+  "desc": "Défibrillateurs, chariots d'urgence, moniteurs et aspirateurs",
+  "cta": "Découvrir",
+  "link": "#solutions/urgence",
+  "features": [
+    "Défibrillateurs DSA",
+    "Chariots d'urgence",
+    "Moniteurs multiparamètres",
+    "Aspirateurs portables"
+  ]
+}

@@ -10,16 +10,22 @@ import {
   Download, Package, AlertTriangle
 } from 'lucide-react';
 import { getProducts } from '@/lib/data';
+import { matchesEntity } from '@/lib/ids';
 import { useCart } from '@/contexts/CartContext';
+import { useVisibility } from '@/lib/site-visibility';
 import type { Product } from '@/types';
 import Breadcrumb from '@/components/ui/Breadcrumb';
+import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
+import { useCurrency } from '@/lib/use-currency';
 
 export default function ProductDetailPage() {
   const params = useParams();
   const id = params.id as string;
   const locale = useLocale();
   const t = useTranslations('pages.productDetail');
+  const { withSymbol } = useCurrency();
   const { addToCart } = useCart();
+  const visibility = useVisibility();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
@@ -33,7 +39,7 @@ export default function ProductDetailPage() {
     const loadProduct = async () => {
       const data = await getProducts(locale);
       setProducts(data);
-      const found = data.find((p) => p.id === parseInt(id));
+      const found = data.find((p) => matchesEntity(p, id));
       setProduct(found || null);
     };
     loadProduct();
@@ -116,6 +122,7 @@ export default function ProductDetailPage() {
   };
 
   return (
+    <PageVisibilityGuard visibilityKey="module.products">
     <div className="pt-44 pb-24 container mx-auto px-6 min-h-screen page-enter">
       {addedToCart && (
         <div className="fixed top-24 right-4 bg-green-500 text-white px-6 py-3 shadow-lg z-50 animate-fade-in-up rounded-lg flex items-center gap-2">
@@ -194,7 +201,7 @@ export default function ProductDetailPage() {
             {product.name}
           </h1>
           <div className="flex items-center gap-4 mb-6">
-            <span className="text-3xl font-bold text-sari-lime">{product.price}</span>
+            <span className="text-3xl font-bold text-sari-lime">{withSymbol(product.price)}</span>
             {product.inStock ? (
               <span className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-sm font-semibold flex items-center gap-1 rounded-full">
                 <Check className="w-4 h-4" />
@@ -238,7 +245,8 @@ export default function ProductDetailPage() {
             </div>
           )}
 
-          {/* Quantité + Ajouter au panier */}
+          {/* Quantité + Ajouter au panier (masquable depuis Admin → Visibilité) */}
+          {visibility['action.order'] !== false && (
           <div className="flex flex-col sm:flex-row gap-4 mb-8">
             <div className="flex items-center border-2 border-gray-300 dark:border-gray-700 rounded-lg overflow-hidden">
               <button
@@ -275,6 +283,7 @@ export default function ProductDetailPage() {
               )}
             </button>
           </div>
+          )}
 
           {/* PDF */}
           {product.catalogPdf && product.catalogPdf !== '#' && (
@@ -336,5 +345,6 @@ export default function ProductDetailPage() {
         </div>
       </div>
     </div>
+    </PageVisibilityGuard>
   );
 }

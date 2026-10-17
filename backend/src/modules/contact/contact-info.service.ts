@@ -11,6 +11,9 @@ export class ContactInfoService extends BaseCrudService<ContactInfoEntity> {
   protected readonly repository: ICrudRepository<ContactInfoEntity>;
   protected readonly options: CrudServiceOptions = {
     resource: 'contact',
+    // Une fiche de contact par langue, repérée par sa locale : pas de `legacyId`.
+    hasLegacyId: false,
+
     searchFields: ['company', 'email', 'phone', 'address'],
     sortableFields: ['locale', 'updatedAt'],
     uniqueFields: ['locale'],

@@ -1,0 +1,12 @@
+{
+  "label": "Cartes",
+  "icon": "credit-card",
+  "files": [
+    "EventCard",
+    "NewsCard",
+    "PartnerCard",
+    "ProductCard",
+    "ServiceCard",
+    "TestimonialCard"
+  ]
+}

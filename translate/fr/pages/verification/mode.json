@@ -1,0 +1,6 @@
+{
+  "api": "Service officiel",
+  "demo": "Démonstration locale",
+  "apiHelp": "Le couple est soumis à l'API de vérification configurée par l'émetteur du document.",
+  "demoHelp": "L'API externe n'est pas activée : la réponse vient du registre local de démonstration."
+}

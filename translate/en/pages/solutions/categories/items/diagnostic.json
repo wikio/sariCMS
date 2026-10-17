@@ -1,0 +1,14 @@
+{
+  "icon": "stethoscope",
+  "color": "sari-blue",
+  "title": "Diagnostic",
+  "desc": "Ultrasound, blood pressure monitors, microscopes and auscultation tools",
+  "cta": "Discover",
+  "link": "#solutions/diagnostic",
+  "features": [
+    "Portable ultrasound",
+    "Digital blood pressure",
+    "Binocular microscopes",
+    "Stethoscopes"
+  ]
+}

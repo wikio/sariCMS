@@ -1,0 +1,15 @@
+{
+  "title": "العنوان",
+  "slug": "الرابط",
+  "locale": "اللغة",
+  "status": "الحالة",
+  "icon": "أيقونة Lucide",
+  "shortDesc": "المقدمة",
+  "fullDesc": "العرض",
+  "features": "الالتزامات",
+  "faq": "الأسئلة الشائعة",
+  "groupIdentité": "الهوية",
+  "groupContenu": "المحتوى",
+  "groupDétails": "التفاصيل",
+  "hintIcon": "ابحث عن اسم Lucide، ستظهر الأيقونة بجانبه."
+}

@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { useToast } from '@/components/admin/Toast';
+import { resolveColor, withAlpha } from '@/lib/colors';
 
 interface ContentItem {
   id: number;
@@ -68,7 +69,7 @@ export default function AdminContentsPage() {
       setIsDirty(false);
     } catch (err) {
       console.error('Erreur chargement contenus:', err);
-      showToast(t('dataManager.loadError', 'Erreur de chargement'), 'error');
+      showToast(t('dataManager.loadError') || 'Erreur de chargement', 'error');
     } finally {
       setLoading(false);
     }
@@ -79,9 +80,9 @@ export default function AdminContentsPage() {
     setIsDirty(true);
     try {
       localStorage.setItem('sari_admin_genericContent', JSON.stringify(newContents));
-      showToast(t('dataManager.saveSuccess', 'Sauvegardé !'), 'success');
+      showToast(t('dataManager.saveSuccess') || 'Sauvegardé !', 'success');
     } catch (err) {
-      showToast(t('dataManager.saveError', 'Erreur'), 'error');
+      showToast(t('dataManager.saveError') || 'Erreur', 'error');
     }
   };
 
@@ -89,7 +90,7 @@ export default function AdminContentsPage() {
     const newContent: ContentItem = {
       id: Date.now(),
       type: 'simple',
-      title: t('dataManager.newElement', 'Nouveau contenu'),
+      title: t('dataManager.newElement') || 'Nouveau contenu',
       subtitle: '',
       category: '',
       media: '',
@@ -103,7 +104,7 @@ export default function AdminContentsPage() {
   };
 
   const handleDeleteContent = (id: number) => {
-    if (confirm(t('dataManager.deleteConfirm', 'Supprimer ?'))) {
+    if (confirm(t('dataManager.deleteConfirm') || 'Supprimer ?')) {
       saveData(contents.filter(c => c.id !== id));
     }
   };
@@ -156,7 +157,7 @@ export default function AdminContentsPage() {
     a.download = `genericContent_${locale}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    showToast(t('dataManager.exportSuccess', 'Exporté !'), 'success');
+    showToast(t('dataManager.exportSuccess') || 'Exporté !', 'success');
   };
 
   const filteredContents = contents.filter(c =>
@@ -207,7 +208,12 @@ export default function AdminContentsPage() {
                     )}
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-${typeInfo.color}/10 text-${typeInfo.color}`}>
+                    {/* Couleurs en style inline : une classe Tailwind construite
+                        dynamiquement (`bg-${...}`) est éliminée au build. */}
+                    <span
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold"
+                      style={{ backgroundColor: withAlpha(typeInfo.color, 0.1), color: resolveColor(typeInfo.color) }}
+                    >
                       <TypeIcon className="w-3 h-3" />
                       {typeInfo.label}
                     </span>
@@ -234,7 +240,7 @@ export default function AdminContentsPage() {
               <tr>
                 <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
                   <Inbox className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                  <p>{t('dataManager.noElements', 'Aucun élément')}</p>
+                  <p>{t('dataManager.noElements') || 'Aucun élément'}</p>
                 </td>
               </tr>
             )}
@@ -257,7 +263,7 @@ export default function AdminContentsPage() {
           <div className="flex items-center gap-2 text-sm text-gray-500">
             <button onClick={handleBackToList} className="hover:text-sari-blue flex items-center gap-1">
               <ArrowLeft className="w-4 h-4" />
-              {t('dataManager.contents', 'Contenus')}
+              {t('dataManager.contents') || 'Contenus'}
             </button>
             <span>/</span>
             <span className="text-sari-dark dark:text-white font-semibold">#{editingContent.id}</span>
@@ -267,7 +273,7 @@ export default function AdminContentsPage() {
             className="px-4 py-2 bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-lg text-sm flex items-center gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
-            {t('dataManager.backToList', 'Retour à la liste')}
+            {t('dataManager.backToList') || 'Retour à la liste'}
           </button>
         </div>
 
@@ -275,7 +281,7 @@ export default function AdminContentsPage() {
         <div className="bg-sari-blue/5 border border-sari-blue/20 p-4 rounded-lg mb-6">
           <h3 className="font-bold text-sari-dark dark:text-white mb-4 flex items-center gap-2">
             <Info className="w-5 h-5 text-sari-blue" />
-            {t('contentsEditor.metadata', 'Métadonnées')}
+            {t('contentsEditor.metadata') || 'Métadonnées'}
           </h3>
           <div className="grid md:grid-cols-2 gap-4">
             <div>
@@ -289,7 +295,7 @@ export default function AdminContentsPage() {
             </div>
             <div>
               <label className="block text-sm font-bold text-sari-dark dark:text-white mb-2">
-                {t('contentsEditor.type', 'Type')} <span className="text-red-500">*</span>
+                {t('contentsEditor.type') || 'Type'} <span className="text-red-500">*</span>
               </label>
               <select
                 value={editingContent.type}
@@ -303,7 +309,7 @@ export default function AdminContentsPage() {
             </div>
             <div>
               <label className="block text-sm font-bold text-sari-dark dark:text-white mb-2">
-                {t('dataManager.title', 'Titre')} <span className="text-red-500">*</span>
+                {t('dataManager.title') || 'Titre'} <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -314,7 +320,7 @@ export default function AdminContentsPage() {
             </div>
             <div>
               <label className="block text-sm font-bold text-sari-dark dark:text-white mb-2">
-                {t('dataManager.category', 'Catégorie')}
+                {t('dataManager.category') || 'Catégorie'}
               </label>
               <input
                 type="text"
@@ -325,7 +331,7 @@ export default function AdminContentsPage() {
             </div>
             <div className="md:col-span-2">
               <label className="block text-sm font-bold text-sari-dark dark:text-white mb-2">
-                {t('contentsEditor.subtitle', 'Sous-titre')}
+                {t('contentsEditor.subtitle') || 'Sous-titre'}
               </label>
               <input
                 type="text"
@@ -375,7 +381,7 @@ export default function AdminContentsPage() {
               {renderHtmlField('content', editingContent.content, (val) => handleEditField(editingContent.id, 'content', val))}
               <div>
                 <label className="block text-sm font-bold text-sari-dark dark:text-white mb-2">
-                  {t('contentsEditor.pdf', 'Fichier PDF')}
+                  {t('contentsEditor.pdf') || 'Fichier PDF'}
                 </label>
                 <input
                   type="text"
@@ -458,7 +464,7 @@ export default function AdminContentsPage() {
   const renderFeaturesField = (features: string[], onChange: (val: string[]) => void) => (
     <div>
       <label className="block text-sm font-bold text-sari-dark dark:text-white mb-2 flex items-center gap-2">
-        {t('contentsEditor.features', 'Caractéristiques')}
+        {t('contentsEditor.features') || 'Caractéristiques'}
       </label>
       <div className="space-y-2">
         {features.map((feat, idx) => (
@@ -486,7 +492,7 @@ export default function AdminContentsPage() {
           className="w-full py-2 border-2 border-dashed border-sari-blue text-sari-blue rounded-lg hover:bg-sari-blue/5 text-sm font-semibold"
         >
           <Plus className="w-4 h-4 inline mr-1" />
-          {t('dataManager.add', 'Ajouter')}
+          {t('dataManager.add') || 'Ajouter'}
         </button>
       </div>
     </div>
@@ -496,7 +502,7 @@ export default function AdminContentsPage() {
     <div>
       <label className="block text-sm font-bold text-sari-dark dark:text-white mb-2 flex items-center gap-2">
         <ImageIcon className="w-4 h-4 text-sari-blue" />
-        {t('contentsEditor.gallery', 'Galerie d\'images')}
+        {t('contentsEditor.gallery') || 'Galerie d\'images'}
       </label>
       <div className="space-y-3">
         {images.map((img, idx) => (
@@ -560,7 +566,7 @@ export default function AdminContentsPage() {
           className="w-full py-2 border-2 border-dashed border-sari-blue text-sari-blue rounded-lg hover:bg-sari-blue/5 text-sm font-semibold"
         >
           <Plus className="w-4 h-4 inline mr-1" />
-          {t('contentsEditor.addImage', 'Ajouter une image')}
+          {t('contentsEditor.addImage') || 'Ajouter une image'}
         </button>
       </div>
     </div>
@@ -570,7 +576,7 @@ export default function AdminContentsPage() {
     <div>
       <label className="block text-sm font-bold text-sari-dark dark:text-white mb-2 flex items-center gap-2">
         <Presentation className="w-4 h-4 text-sari-blue" />
-        {t('contentsEditor.slides', 'Slides du carrousel')}
+        {t('contentsEditor.slides') || 'Slides du carrousel'}
       </label>
       <div className="space-y-4">
         {slides.map((slide, idx) => (
@@ -625,7 +631,7 @@ export default function AdminContentsPage() {
           className="w-full py-2 border-2 border-dashed border-sari-blue text-sari-blue rounded-lg hover:bg-sari-blue/5 text-sm font-semibold"
         >
           <Plus className="w-4 h-4 inline mr-1" />
-          {t('contentsEditor.addSlide', 'Ajouter un slide')}
+          {t('contentsEditor.addSlide') || 'Ajouter un slide'}
         </button>
       </div>
     </div>
@@ -635,7 +641,7 @@ export default function AdminContentsPage() {
     <div>
       <label className="block text-sm font-bold text-sari-dark dark:text-white mb-2 flex items-center gap-2">
         <MousePointerClick className="w-4 h-4 text-sari-blue" />
-        {t('contentsEditor.sections', 'Sections scrollables')}
+        {t('contentsEditor.sections') || 'Sections scrollables'}
       </label>
       <div className="space-y-4">
         {sections.map((section, idx) => (
@@ -690,7 +696,7 @@ export default function AdminContentsPage() {
           className="w-full py-2 border-2 border-dashed border-sari-blue text-sari-blue rounded-lg hover:bg-sari-blue/5 text-sm font-semibold"
         >
           <Plus className="w-4 h-4 inline mr-1" />
-          {t('contentsEditor.addSection', 'Ajouter une section')}
+          {t('contentsEditor.addSection') || 'Ajouter une section'}
         </button>
       </div>
     </div>
@@ -722,8 +728,8 @@ export default function AdminContentsPage() {
             </h2>
             <p className="text-sm text-gray-500 mt-1">
               {jsonViewScope === 'all'
-                ? t('contentsEditor.fullJson', 'Contenu complet du fichier')
-                : t('contentsEditor.singleJson', 'Contenu d\'un seul élément')}
+                ? t('contentsEditor.fullJson') || 'Contenu complet du fichier'
+                : t('contentsEditor.singleJson') || 'Contenu d\'un seul élément'}
             </p>
           </div>
           <div className="flex gap-2">
@@ -770,33 +776,33 @@ export default function AdminContentsPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-sari-dark dark:text-white">
-              {t('dataManager.contents', 'Contenus')}
+              {t('dataManager.contents') || 'Contenus'}
             </h1>
             <p className="text-sm text-gray-500">
-              {contents.length} {t('dataManager.totalElements', 'élément(s)')}
-              {isDirty && <span className="text-orange-500 ml-2">• {t('dataManager.modified', 'Modifié')}</span>}
+              {contents.length} {t('dataManager.totalElements') || 'élément(s)'}
+              {isDirty && <span className="text-orange-500 ml-2">• {t('dataManager.modified') || 'Modifié'}</span>}
             </p>
           </div>
         </div>
         <div className="flex gap-2 flex-wrap">
           <button onClick={loadData} className="px-4 py-2 bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-lg text-sm flex items-center gap-2">
             <RefreshCw className="w-4 h-4" />
-            {t('dataManager.reload', 'Recharger')}
+            {t('dataManager.reload') || 'Recharger'}
           </button>
           <button onClick={handleExport} className="px-4 py-2 bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-lg text-sm flex items-center gap-2">
             <Download className="w-4 h-4" />
-            {t('dataManager.export', 'Exporter')}
+            {t('dataManager.export') || 'Exporter'}
           </button>
           <button
             onClick={() => setViewMode(viewMode === 'json' ? 'list' : 'json')}
             className="px-4 py-2 bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-lg text-sm flex items-center gap-2"
           >
             {viewMode === 'json' ? <Table className="w-4 h-4" /> : <Code className="w-4 h-4" />}
-            {viewMode === 'json' ? t('dataManager.viewList', 'Vue Liste') : t('dataManager.viewJson', 'Vue JSON')}
+            {viewMode === 'json' ? t('dataManager.viewList') || 'Vue Liste' : t('dataManager.viewJson') || 'Vue JSON'}
           </button>
           <button onClick={handleAddContent} className="btn-primary text-white px-4 py-2 font-semibold rounded-lg text-sm flex items-center gap-2">
             <Plus className="w-4 h-4" />
-            {t('dataManager.add', 'Ajouter')}
+            {t('dataManager.add') || 'Ajouter'}
           </button>
         </div>
       </div>
@@ -809,7 +815,7 @@ export default function AdminContentsPage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={`${t('dataManager.search', 'Rechercher')}...`}
+              placeholder={`${t('dataManager.search') || 'Rechercher'}...`}
               className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-700 dark:bg-[#1a1a1a] dark:text-white rounded-lg outline-none focus:border-sari-blue"
             />
           </div>

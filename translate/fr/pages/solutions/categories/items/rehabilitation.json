@@ -1,0 +1,14 @@
+{
+  "icon": "accessibility",
+  "color": "cyan-500",
+  "title": "Rééducation",
+  "desc": "Kinésithérapie, électrothérapie, équipements adaptés et mobilité",
+  "cta": "Découvrir",
+  "link": "#solutions/reeducation",
+  "features": [
+    "Tables de kinésithérapie",
+    "Électrothérapie",
+    "Fauteuils roulants",
+    "Aides à la mobilité"
+  ]
+}

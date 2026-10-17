@@ -1,0 +1,8 @@
+{
+  "title": "Search",
+  "placeholder": "Search for a product, article, event...",
+  "noResults": "No results found",
+  "noResultsDesc": "Try different terms or modify your filters.",
+  "resultsFor": "Results for",
+  "found": "found"
+}

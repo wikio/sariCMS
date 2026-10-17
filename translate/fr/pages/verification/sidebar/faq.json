@@ -1,0 +1,25 @@
+{
+  "title": "Questions fréquentes",
+  "questions": [
+    {
+      "q": "Où trouver le code et la clé ?",
+      "a": "Sur tous les documents officiels SARI Système SARL : factures, devis, certificats, étiquettes produits. Le code suit le format SARI-XXX##-#####."
+    },
+    {
+      "q": "Que signifie le format du code ?",
+      "a": "SARI (préfixe entreprise) + Code type (FAC, DVV, etc.) + Année + Numéro de séquence. Ex: SARI-FAC24-00001 = Facture 2024 n°00001."
+    },
+    {
+      "q": "Que faire si le document n'est pas reconnu ?",
+      "a": "Contactez immédiatement notre support. Il peut s'agir d'une contrefaçon ou d'une erreur de saisie."
+    },
+    {
+      "q": "Quelle est la différence entre 'révoqué' et 'invalide' ?",
+      "a": "'Révoqué' signifie que le document a été annulé par nos soins (ex: commande annulée). 'Invalide' signifie que le document a été signalé comme falsifié ou altéré."
+    },
+    {
+      "q": "Combien de temps les documents restent-ils valides ?",
+      "a": "Les factures et devis sont valides indéfiniment. Les certificats ont une durée de validité variable (1 à 5 ans selon le type)."
+    }
+  ]
+}

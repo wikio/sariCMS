@@ -66,6 +66,12 @@ export class QueryDto {
   @IsIn(['asc', 'desc'])
   sortOrder?: 'asc' | 'desc' = 'desc';
 
+  @ApiPropertyOptional({ description: 'Langue (locale) — utilisée par les endpoints publics' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(8)
+  locale?: string;
+
   @ApiPropertyOptional({ description: 'Recherche texte libre (champs configurés par module)' })
   @IsOptional()
   @IsString()

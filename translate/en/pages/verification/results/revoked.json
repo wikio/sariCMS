@@ -1,0 +1,6 @@
+{
+  "title": "Revoked Document",
+  "message": "Revoked document",
+  "reason": "Reason:",
+  "warning": "This document has been officially cancelled. Do not use it."
+}

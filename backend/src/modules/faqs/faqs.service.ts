@@ -11,6 +11,9 @@ export class FaqsService extends BaseCrudService<FaqEntity> {
   protected readonly repository: ICrudRepository<FaqEntity>;
   protected readonly options: CrudServiceOptions = {
     resource: 'faqs',
+    // Table sans colonne `legacyId` (contenu non traduit par fiches sœurs) :
+    // l'injecter faisait échouer la création sous MySQL.
+    hasLegacyId: false,
     searchFields: ['question', 'answer', 'category'],
     sortableFields: ['sortOrder', 'createdAt', 'updatedAt', 'category'],
     listFields: ['id', 'question', 'category', 'locale', 'status', 'sortOrder'],

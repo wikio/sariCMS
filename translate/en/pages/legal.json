@@ -1,10 +1,13 @@
 {
-  "pageNotFound": "Page Not Found",
+  "pageNotFound": "Page not found",
   "backHome": "Back to Home",
   "lastUpdate": "Last update",
   "otherLegalDocs": "Other Legal Documents",
-  "mentions": "Legal Notice",
+  "legalNotice": "Legal Notice",
   "privacy": "Privacy",
-  "conditions": "Terms & Conditions",
-  "verification": "Authenticity Verification"
+  "cgv": "Terms & Conditions",
+  "verification": "Authenticity Verification",
+  "legalDoc": "Legal document",
+  "mentions": "Legal notice",
+  "conditions": "Terms and conditions"
 }

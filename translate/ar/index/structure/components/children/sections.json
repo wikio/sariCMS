@@ -1,0 +1,18 @@
+{
+  "label": "الأقسام",
+  "icon": "layers",
+  "files": [
+    "AlternatingSections",
+    "CTASection",
+    "FeaturedProducts",
+    "HeroSlider",
+    "LatestEvents",
+    "MarqueePartners",
+    "NavigationGrid",
+    "NewsletterSection",
+    "ParallaxSection",
+    "PartnersSection",
+    "StatsSection",
+    "TestimonialsSlider"
+  ]
+}

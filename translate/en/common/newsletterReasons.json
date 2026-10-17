@@ -1,0 +1,9 @@
+{
+  "no-longer-wants": "I no longer want these e-mails",
+  "too-many-emails": "Too many e-mails",
+  "not-relevant": "The content is not relevant to me",
+  "never-subscribed": "I don’t remember subscribing",
+  "other": "Another reason",
+  "unspecified": "No reason given",
+  "unsubscribed-by-admin": "Removed from the back office"
+}

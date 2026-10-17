@@ -1,0 +1,23 @@
+{
+  "placeholder": "Rechercher un auteur…",
+  "loading": "Chargement…",
+  "noResult": "Aucun auteur trouvé",
+  "change": "Changer",
+  "clear": "Retirer l'auteur",
+  "fallbackBadge": "Par défaut",
+  "createTitle": "Nouvel auteur",
+  "createSubtitle": "La fiche est créée immédiatement et sélectionnée pour cet article.",
+  "name": "Nom complet",
+  "namePlaceholder": "Ex : Dr. Martin Dupont",
+  "role": "Qualification",
+  "rolePlaceholder": "Ex : Directrice médicale",
+  "roleHint": "Affichée sous le nom de l'auteur sur la page de l'article.",
+  "bio": "Description",
+  "bioPlaceholder": "Présentez l'auteur en quelques lignes…",
+  "bioHint": "Reprise dans le bloc « À propos de l'auteur » de la vitrine.",
+  "cancel": "Annuler",
+  "save": "Créer l'auteur",
+  "saving": "Création…",
+  "nameRequired": "Le nom est obligatoire.",
+  "createFailed": "Création impossible."
+}

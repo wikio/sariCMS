@@ -1,107 +1,216 @@
 // components/sections/AlternatingSections.tsx
 'use client';
 
-import { useEffect, useRef } from 'react';
+/**
+ * « Blocs impairs » de la page d'accueil : une liste d'éléments image/texte
+ * alternés, entièrement composés dans le studio (ajouter, supprimer, réordonner,
+ * alterner image à gauche ou à droite).
+ *
+ * Chaque élément porte son propre titre, sa description, son étiquette et son
+ * bouton ; les textes sont stockés par langue. Tant qu'aucun élément n'est
+ * enregistré, le bloc retombe sur les trois visées historiques issues des
+ * traductions, pour que la page ne se vide pas au premier déploiement.
+ */
+import { useEffect } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { Check } from 'lucide-react';
+import { ArrowRight, CheckCircle2 } from 'lucide-react';
+import ImageWithFallback from '@/components/shared/ImageWithFallback';
+import {
+  localizeHref,
+  numberSetting,
+  setting,
+  txt,
+  visibleItems,
+  type HomeItem,
+  type HomeSectionConfig,
+} from '@/lib/home/config';
+import SectionFrame, { HS_CARD_RADIUS } from '@/components/sections/SectionFrame';
 
-export default function AlternatingSections() {
+interface AlternatingSectionsProps {
+  config?: HomeSectionConfig;
+}
+
+const PLACEHOLDER = [
+  {
+    image: 'https://images.unsplash.com/photo-1519494026892-88bb237b200d?w=800',
+    title: 'Usine intelligente',
+    desc: 'IoT industriel et maintenance prédictive',
+    img: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800',
+  },
+  {
+    image: 'https://images.unsplash.com/photo-1553877522-43269d4ea984?w=800',
+    title: 'Santé connectée',
+    desc: 'Équipements médicaux et télémédecine',
+    img: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800',
+  },
+  {
+    image: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800',
+    title: 'Commerce digital',
+    desc: 'Plateformes e-commerce et paiement',
+    img: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800',
+  },
+];
+
+function itemField(item: HomeItem, key: string): string {
+  return String(item[key] ?? '').trim();
+}
+
+function itemChecks(item: HomeItem): string[] {
+  const raw = item.bullets ?? item.checks;
+  if (Array.isArray(raw)) return raw.map((line) => String(line)).filter(Boolean);
+  if (typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed.map((line) => String(line)).filter(Boolean);
+    } catch {
+      /* liste texte libre, ligne à ligne */
+    }
+    return raw
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean);
+  }
+  return [];
+}
+
+export default function AlternatingSections({ config }: AlternatingSectionsProps) {
   const locale = useLocale();
   const t = useTranslations('components.sections.AlternatingSections');
-  const sectionRef = useRef<HTMLElement>(null);
 
-  // ✅ IntersectionObserver pour déclencher l'animation
+  const blocks = visibleItems(config);
+  const fallbackViewAll = setting(config, 'showViewAll', true);
+  const ctaLabel = txt(config, 'ctaLabel', t('ctaText'));
+  const ctaHref = localizeHref(config?.settings?.ctaHref, locale, `/${locale}/solutions`);
+  const gap = numberSetting(config, 'gap', 60);
+  const invert = config?.style?.invert === true;
+
+  const items = blocks.length
+    ? blocks
+    : PLACEHOLDER.map((legacy, index) => ({
+        id: `legacy-${index}`,
+        badge: t('title'),
+        title: legacy.title,
+        description: legacy.desc,
+        image: legacy.img,
+        checks: [],
+      }));
+
+  if (!items.length) return null;
+
+  // Les éléments image/texte entrent en scène au défilement, comme avant : la
+  // feuille de style masque `.reveal`, `.reveal-left` et `.reveal-right` tant
+  // que `.visible` n'est pas ajouté. Sans cet observateur, la page resterait
+  // correcte (les classes ne sont pas posées) mais entièrement fixe.
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('visible');
-          }
-        });
-      },
-      { threshold: 0.15 }
+    const targets = document.querySelectorAll(
+      '#home-blocks .reveal, #home-blocks .reveal-left, #home-blocks .reveal-right',
     );
-
-    const elements = sectionRef.current?.querySelectorAll('.reveal, .reveal-left, .reveal-right');
-    elements?.forEach((el) => observer.observe(el));
-
+    if (!targets.length) return;
+    const observer = new IntersectionObserver(
+      (entries) => entries.forEach((entry) => entry.target.classList.add('visible')),
+      { threshold: 0.15 },
+    );
+    targets.forEach((el) => observer.observe(el));
     return () => observer.disconnect();
-  }, []);
+  }, [items.length]);
 
-  const sections = [
-    {
-      key: 'block1',
-      image: 'https://images.unsplash.com/photo-1579154204601-01588f351e67?w=800',
-      position: 'left' as const,
-      defaultLink: '/solutions',
-    },
-    {
-      key: 'block2',
-      image: 'https://images.unsplash.com/photo-1581595220892-b0739db3ba8c?w=800',
-      position: 'right' as const,
-      defaultLink: '/services',
-    },
-    {
-      key: 'block3',
-      image: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800',
-      position: 'left' as const,
-      defaultLink: '/products',
-    },
-  ];
+  const renderChecks = (checks: string[], withIcon: boolean) => {
+    if (!checks.length) return null;
+    return (
+      <ul className="space-y-4 mb-8">
+        {checks.map((check, checkIndex) => (
+          <li key={checkIndex} className={`flex gap-3 ${invert ? 'text-gray-300' : 'text-gray-600 dark:text-gray-400'}`}>
+            {withIcon ? <CheckCircle2 className="w-5 h-5 text-sari-lime flex-shrink-0 mt-0.5" /> : null}
+            <span>{check}</span>
+          </li>
+        ))}
+      </ul>
+    );
+  };
+
+  const startRight = String(setting(config, 'startWith', 'image')) === 'image-right';
 
   return (
-    <section ref={sectionRef} className="py-24 bg-gray-50 dark:bg-[#111111]">
-      <div className="container mx-auto px-6">
-        {sections.map((section, index) => (
-          <div
-            key={section.key}
-            className={`flex flex-col ${
-              section.position === 'right' ? 'lg:flex-row-reverse' : 'lg:flex-row'
-            } items-center gap-12 mb-24 last:mb-0`}
-          >
-            {/* Image */}
-            <div
-              className={`w-full lg:w-1/2 ${
-                section.position === 'right' ? 'reveal-right' : 'reveal-left'
-              }`}
-            >
-              <div className="relative rounded-2xl overflow-hidden shadow-2xl">
-                <img
-                  src={section.image}
-                  alt={t(`${section.key}Title`)}
-                  className="w-full h-[400px] object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-sari-blue/20 to-transparent"></div>
+    <SectionFrame
+      sectionKey="blocks"
+      config={config}
+      header={{
+        fallbacks: { subtitle: t('subtitle'), title: t('title') },
+        action: fallbackViewAll ? (
+          <Link href={ctaHref} className="btn-primary text-white px-6 py-3 font-semibold inline-flex items-center gap-2">
+            {ctaLabel}
+            <ArrowRight className="w-5 h-5" />
+          </Link>
+        ) : null,
+      }}
+    >
+      <div style={{ ['--hs-gap' as string]: `${gap}px` }}>
+        {items.map((item: HomeItem, index: number) => {
+          const position = itemField(item, 'position');
+          const imageOnRight = position
+            ? position === 'image-right'
+            : startRight
+              ? index % 2 === 0
+              : index % 2 !== 0;
+          const checks = itemChecks(item);
+          const radius = config?.style?.radius ?? 16;
+          const shadow = config?.style?.shadow !== false;
+          const imageHeight = numberSetting(config, 'imageHeight', 400);
+          const media = (
+            <div className={`w-full lg:w-1/2 ${imageOnRight ? 'reveal-right' : 'reveal-left'}`}>
+              <div
+                className={`relative overflow-hidden ${HS_CARD_RADIUS} ${shadow ? 'shadow-2xl' : ''}`}
+                style={{ borderRadius: `${radius}px` }}
+              >
+                {/* La hauteur de l'image se règle dans le studio ; `ImageWithFallback`
+                    pose ses classes sur son conteneur, qui prend toute la place. */}
+                <div style={{ height: `${imageHeight}px` }}>
+                  <ImageWithFallback
+                    src={itemField(item, 'image') || PLACEHOLDER[index % PLACEHOLDER.length].image}
+                    alt={itemField(item, 'title') || t('title')}
+                    className="w-full h-full"
+                  />
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-sari-blue/20 to-transparent" />
               </div>
             </div>
-
-            {/* Contenu */}
-            <div className="w-full lg:w-1/2 reveal">
-              <span className="text-sari-lime font-bold uppercase tracking-wider text-sm">
-                {t(`${section.key}Subtitle`)}
-              </span>
-              <h3 className="text-3xl md:text-4xl font-bold text-sari-dark dark:text-white mt-4 mb-6">
-                {t(`${section.key}Title`)}
-              </h3>
-              <p className="text-lg text-gray-600 dark:text-gray-400 leading-relaxed mb-8">
-                {t(`${section.key}Desc`)}
-              </p>
-              <Link
-                href={`/${locale}${t(`${section.key}Link`)}`}
-                className="btn-primary text-white px-8 py-4 font-semibold inline-flex items-center gap-2"
-              >
-                {t(`${section.key}Cta`)}
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M5 12h14"></path>
-                  <path d="m12 5 7 7-7 7"></path>
-                </svg>
-              </Link>
+          );
+          return (
+            <div
+              key={String(item.id ?? index)}
+              className={`flex flex-col items-center gap-12 mb-[var(--hs-gap,48px)] last:mb-0 ${
+                imageOnRight ? 'lg:flex-row-reverse' : 'lg:flex-row'
+              }`}
+            >
+              {media}
+              <div className="w-full lg:w-1/2 reveal">
+                <span className={`font-bold uppercase tracking-wider text-sm ${invert ? 'text-sari-lime' : 'text-sari-lime'}`}>
+                  {itemField(item, 'badge') || txt(config, 'subtitle', t('subtitle'))}
+                </span>
+                <h3 className={`text-3xl md:text-4xl font-bold mt-4 mb-6 ${invert ? 'text-white' : 'text-sari-dark dark:text-white'}`}>
+                  {itemField(item, 'title') || t('title')}
+                </h3>
+                <p className={`text-lg leading-relaxed mb-8 ${invert ? 'text-blue-50' : 'text-gray-600 dark:text-gray-400'}`}>
+                  {itemField(item, 'description') || t('description')}
+                </p>
+                {renderChecks(checks, true)}
+                <Link
+                  href={localizeHref(
+                    itemField(item, 'ctaHref') || String(config?.settings?.ctaHref || ''),
+                    locale,
+                    `/${locale}/solutions`,
+                  )}
+                  className="btn-primary text-white px-8 py-4 font-semibold inline-flex items-center gap-2"
+                >
+                  {itemField(item, 'ctaLabel') || ctaLabel}
+                  <ArrowRight className="w-5 h-5" />
+                </Link>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
-    </section>
+    </SectionFrame>
   );
 }

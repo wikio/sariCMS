@@ -1,0 +1,14 @@
+{
+  "icon": "activity",
+  "color": "orange-500",
+  "title": "Emergency",
+  "desc": "Defibrillators, emergency carts, monitors and aspirators",
+  "cta": "Discover",
+  "link": "#solutions/urgence",
+  "features": [
+    "AED defibrillators",
+    "Emergency carts",
+    "Multiparameter monitors",
+    "Portable aspirators"
+  ]
+}

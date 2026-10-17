@@ -1,0 +1,43 @@
+{
+  "title": "Medical Imaging",
+  "desc": "CT scanners, MRI, digital radiology and PACS solutions",
+  "icon": "scan",
+  "image": "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=1920",
+  "productIds": [],
+  "features": [
+    {
+      "icon": "scan",
+      "text": "CT scanners 16 to 128 slices"
+    },
+    {
+      "icon": "magnet",
+      "text": "MRI 1.5T and 3T"
+    },
+    {
+      "icon": "image",
+      "text": "DR/CR digital radiology"
+    },
+    {
+      "icon": "monitor",
+      "text": "PACS/RIS solutions"
+    },
+    {
+      "icon": "shield-check",
+      "text": "HDS compliance"
+    },
+    {
+      "icon": "wrench",
+      "text": "Preventive maintenance"
+    }
+  ],
+  "faq": [
+    {
+      "q": "Do you offer CT scanners?",
+      "a": "Yes, from entry-level 16-slice to high-end 128-slice, with installation and training included."
+    },
+    {
+      "q": "Are the MRI scanners suitable for all patients?",
+      "a": "Yes, our MRI scanners suit every patient profile, including children and people with claustrophobia (open MRI available)."
+    }
+  ]
+}

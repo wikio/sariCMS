@@ -1,0 +1,17 @@
+{
+  "title": "Verification Form",
+  "codeLabel": "Document Code",
+  "codePlaceholder": "Ex: SARI-FAC24-00001",
+  "keyLabel": "Verification Key",
+  "keyPlaceholder": "Ex: CTdxXe6ZdFVzWQ==",
+  "captchaLabel": "Anti-robot verification",
+  "captchaPlaceholder": "?",
+  "newCaptcha": "New CAPTCHA",
+  "captchaHelp": "Solve this operation to prove you are human",
+  "verify": "Verify",
+  "verifying": "Verifying...",
+  "reset": "Reset",
+  "demoCodes": "Demo codes:",
+  "codeMissing": "The document code is missing — it appears at the top of the document, next to the key.",
+  "keyMissing": "The verification key is missing — it appears at the bottom of the document, next to the code."
+}

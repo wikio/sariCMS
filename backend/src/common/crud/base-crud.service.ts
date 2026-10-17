@@ -17,7 +17,7 @@ import {
 import { queryDtoToOptions } from './query.util';
 
 export interface ActorContext {
-  id?: string;
+  id?: number;
   email?: string;
   ip?: string;
   userAgent?: string;
@@ -31,6 +31,16 @@ export interface CrudServiceOptions {
   cacheTtl?: number;
   listFields?: string[];
   cardFields?: string[];
+  /**
+   * La table porte-t-elle une colonne `legacyId` ?
+   *
+   * `legacyId` relie les versions FR/EN/AR d'une même fiche : il n'a de sens
+   * que pour les contenus traduisibles. Les tables techniques (menus, rôles,
+   * utilisateurs, permissions…) ne l'ont pas, et le leur envoyer faisait
+   * échouer la création sous MySQL/Postgres avec « Unknown argument
+   * `legacyId` ». Le défaut `true` reste juste pour les modules de contenu.
+   */
+  hasLegacyId?: boolean;
 }
 
 @Injectable()
@@ -57,7 +67,7 @@ export abstract class BaseCrudService<T extends BaseEntity> {
     };
   }
 
-  async findOne(id: string, view: ViewMode = 'block', includeDeleted = false): Promise<unknown> {
+  async findOne(id: number, view: ViewMode = 'block', includeDeleted = false): Promise<unknown> {
     const entity = await this.requireById(id, includeDeleted);
     return this.toView(entity, view);
   }
@@ -66,8 +76,7 @@ export abstract class BaseCrudService<T extends BaseEntity> {
     await this.assertUniques(dto);
     const now = new Date();
     const payload = {
-      ...this.beforeSave(dto, 'create'),
-      id: (dto.id as string) || randomUUID(),
+      ...this.withLegacyId(this.beforeSave(dto, 'create')),
       createdAt: now,
       updatedAt: now,
       deletedAt: null,
@@ -88,7 +97,7 @@ export abstract class BaseCrudService<T extends BaseEntity> {
     return this.toView(created, 'block');
   }
 
-  async update(id: string, dto: Partial<T>, actor?: ActorContext): Promise<unknown> {
+  async update(id: number, dto: Partial<T>, actor?: ActorContext): Promise<unknown> {
     const existing = await this.requireById(id);
     await this.assertUniques(dto, id);
     const payload = {
@@ -110,7 +119,7 @@ export abstract class BaseCrudService<T extends BaseEntity> {
     return this.toView(updated, 'block');
   }
 
-  async softDelete(id: string, actor?: ActorContext): Promise<unknown> {
+  async softDelete(id: number, actor?: ActorContext): Promise<unknown> {
     await this.requireById(id);
     const deleted = await this.repository.softDelete(id);
     await this.invalidateCache();
@@ -125,7 +134,7 @@ export abstract class BaseCrudService<T extends BaseEntity> {
     return this.toView(deleted, 'block');
   }
 
-  async restore(id: string, actor?: ActorContext): Promise<unknown> {
+  async restore(id: number, actor?: ActorContext): Promise<unknown> {
     const existing = await this.repository.findById(id, true);
     if (!existing) throw new NotFoundException(`${this.options.resource} not found`);
     if (!existing.deletedAt) {
@@ -144,7 +153,7 @@ export abstract class BaseCrudService<T extends BaseEntity> {
     return this.toView(restored, 'block');
   }
 
-  async requestPurge(id: string, actor?: ActorContext): Promise<{ confirm: string; expiresIn: number }> {
+  async requestPurge(id: number, actor?: ActorContext): Promise<{ confirm: string; expiresIn: number }> {
     await this.requireById(id, true);
     const token = randomUUID();
     const ttl = Number(process.env.PURGE_CONFIRM_TTL_SECONDS ?? 300);
@@ -160,7 +169,7 @@ export abstract class BaseCrudService<T extends BaseEntity> {
     return { confirm: token, expiresIn: ttl };
   }
 
-  async confirmPurge(id: string, token: string, actor?: ActorContext): Promise<{ deleted: true }> {
+  async confirmPurge(id: number, token: string, actor?: ActorContext): Promise<{ deleted: true }> {
     if (!token) {
       throw new BadRequestException('Confirmation token is required for permanent deletion');
     }
@@ -201,6 +210,100 @@ export abstract class BaseCrudService<T extends BaseEntity> {
     return this.findAll({ ...query, onlyDeleted: true, includeDeleted: true });
   }
 
+  /**
+   * Retrouve une fiche publiée par son id, son slug, ou le segment `id-slug`
+   * utilisé dans les URLs de la vitrine (`/fr/news/1-nouvelle-gamme`).
+   *
+   * Le slug complet est essayé en premier : il est le plus spécifique, et un
+   * slug commençant par des chiffres resterait sinon inaccessible.
+   */
+  async findPublishedEntity(idOrSlug: string, locale?: string): Promise<T | null> {
+    const key = decodeURIComponent(String(idOrSlug || '')).trim();
+    if (!key) return null;
+
+    const bySlug = await this.repository.findOne(
+      locale ? { slug: key, locale } : { slug: key },
+    );
+    if (bySlug) return bySlug;
+
+    // Segment `12-mon-slug` : l'id préfixe, le slug suit (cf. lib/entity-url).
+    const head = key.split('-')[0];
+    const numeric = /^\d+$/.test(key) ? key : /^\d+$/.test(head) ? head : '';
+    if (numeric) {
+      const byId = await this.repository.findById(Number(numeric));
+      // L'id seul ignore la langue demandée : c'est voulu, il sert de porte
+      // d'entrée quand le slug traduit est inconnu de l'appelant.
+      if (byId) return byId;
+    }
+
+    // Dernier recours : la partie slug du segment (URL dont l'id a changé).
+    if (numeric && key.length > numeric.length + 1) {
+      const tail = key.slice(numeric.length + 1);
+      const byTail = await this.repository.findOne(
+        locale ? { slug: tail, locale } : { slug: tail },
+      );
+      if (byTail) return byTail;
+    }
+    return null;
+  }
+
+  /**
+   * Fiche publiée exposée à la vitrine, ou `null` si elle n'est pas visible.
+   *
+   * Accepte l'id, le slug ou le segment `id-slug` des URLs publiques.
+   */
+  async findPublished(idOrSlug: string, locale?: string): Promise<unknown | null> {
+    const entity = await this.findPublishedEntity(idOrSlug, locale);
+    if (!entity || entity.status !== 'published') return null;
+    if (locale && entity.locale && entity.locale !== locale) return null;
+    return this.toView(entity, 'block');
+  }
+
+  /**
+   * Versions linguistiques d'une fiche, reliées par `legacyId`.
+   *
+   * C'est ce qui permet au sélecteur de langue de la vitrine de rediriger vers
+   * la bonne fiche : `/fr/news/1-slug-fr` → `/ar/news/3-slug-ar`. Sans cela, on
+   * garderait l'id de la langue d'origine, qui désigne une autre fiche (ou
+   * rien) dans la langue cible.
+   *
+   * Une fiche sans `legacyId` n'a pas de groupe de traductions : elle se
+   * renvoie elle-même, ce qui laisse l'appelant retomber sur son repli.
+   */
+  async findTranslations(idOrSlug: string): Promise<unknown[]> {
+    const source = await this.findPublishedEntity(idOrSlug);
+    if (!source) return [];
+
+    const legacyId = source.legacyId != null ? String(source.legacyId) : '';
+    if (!legacyId) return [this.toView(source, 'block')];
+
+    const { data } = await this.repository.findMany({
+      filters: [
+        { field: 'legacyId', op: 'eq', value: legacyId },
+        { field: 'status', op: 'eq', value: 'published' },
+      ],
+      limit: 20,
+    });
+
+    // La fiche source peut être un brouillon : on la garde pour que l'appelant
+    // dispose toujours d'au moins un résultat.
+    const rows = data.length ? data : [source];
+    return rows.map((row) => this.toView(row, 'block'));
+  }
+
+  /**
+   * Champs toujours exposés, quelle que soit la vue.
+   *
+   * `legacyId` relie les versions linguistiques d'une même fiche et `locale`
+   * indique laquelle on tient. Les vues « list » / « card » les filtraient :
+   * la vitrine recevait donc des listes sans legacyId, et le sélecteur de
+   * langue ne pouvait plus rapprocher la fiche FR de son équivalent AR/EN —
+   * il retombait sur l'id courant, qui désigne une autre fiche dans la langue
+   * cible. Ces deux clés sont de la plomberie de routage, jamais des données
+   * sensibles : on les conserve systématiquement.
+   */
+  private static readonly ROUTING_FIELDS = ['id', 'legacyId', 'locale', 'slug'];
+
   protected toView(entity: T, view: ViewMode): unknown {
     const clone = this.sanitize(entity);
     if (view === 'block') return clone;
@@ -210,8 +313,8 @@ export abstract class BaseCrudService<T extends BaseEntity> {
         : this.options.listFields;
     if (!fields?.length) return clone;
     const picked: Record<string, unknown> = {};
-    for (const field of fields) {
-      if (field in clone) picked[field] = clone[field];
+    for (const field of [...BaseCrudService.ROUTING_FIELDS, ...fields]) {
+      if (field in clone && !(field in picked)) picked[field] = clone[field];
     }
     return picked;
   }
@@ -228,6 +331,54 @@ export abstract class BaseCrudService<T extends BaseEntity> {
     return { ...dto };
   }
 
+  /**
+   * Garantit un `legacyId` à la création : c'est la clé qui relie les versions
+   * FR / EN / AR d'une même fiche.
+   *
+   * Fournir explicitement le `legacyId` d'une fiche existante crée sa
+   * traduction ; sinon un nouveau groupe démarre. Les modules qui gèrent déjà
+   * leur `legacyId` dans `beforeSave` ne sont pas affectés, la valeur présente
+   * étant conservée.
+   */
+  protected withLegacyId(dto: Partial<T>): Partial<T> {
+    // Table sans colonne `legacyId` : ne rien injecter, sinon Prisma rejette
+    // l'argument inconnu et la création répond 500. Le drapeau du service est la
+    // déclaration d'intention ; quand le magasin répond, lui, on ne lui demande
+    // pas la permission deux fois — et une valeur déjà présente est retirée, parce
+    // qu'elle n'a nulle part où être stockée.
+    if (this.options.hasLegacyId === false) return dto;
+    if (this.rejectsLegacyId()) return this.withoutLegacyId(dto);
+    if (dto.legacyId) return dto;
+    const prefix = this.options.resource.slice(0, 4).replace(/[^a-z0-9]/gi, '') || 'ent';
+    return {
+      ...dto,
+      legacyId: `${prefix}-${Date.now().toString(36)}-${randomUUID().slice(0, 6)}`,
+    };
+  }
+
+  /**
+   * Le magasin connaît-il la colonne ? Un magasin muet — un document JSON, qui
+   * accepte n'importe quelle clé — laisse passer : seule une réponse explicite
+   * « non » arrête l'injection.
+   */
+  private rejectsLegacyId(): boolean {
+    const repository = this.repository;
+    return repository.knowsField ? repository.knowsField('legacyId') === false : false;
+  }
+
+  /**
+   * Retire un `legacyId` que le modèle ne peut pas stocker. La valeur peut venir du
+   * client — une fiche reprise avec son lien de traduction, un lot rejoué — et
+   * l'écarter vaut mieux que de perdre la ligne : le lien, lui, n'a nulle part où
+   * vivre tant que la colonne n'existe pas.
+   */
+  private withoutLegacyId(dto: Partial<T>): Partial<T> {
+    if (dto.legacyId === undefined) return dto;
+    const rest: Record<string, unknown> = { ...dto };
+    delete rest.legacyId;
+    return rest as Partial<T>;
+  }
+
   protected safeAuditPayload(data: unknown): Record<string, unknown> | undefined {
     if (!data || typeof data !== 'object') return undefined;
     const clone = { ...(data as Record<string, unknown>) };
@@ -240,13 +391,13 @@ export abstract class BaseCrudService<T extends BaseEntity> {
     return clone;
   }
 
-  protected async requireById(id: string, includeDeleted = false): Promise<T> {
+  protected async requireById(id: number, includeDeleted = false): Promise<T> {
     const entity = await this.repository.findById(id, includeDeleted);
     if (!entity) throw new NotFoundException(`${this.options.resource} not found`);
     return entity;
   }
 
-  protected async assertUniques(dto: Partial<T>, excludeId?: string): Promise<void> {
+  protected async assertUniques(dto: Partial<T>, excludeId?: number): Promise<void> {
     const fields = this.options.uniqueFields ?? [];
     for (const field of fields) {
       const value = (dto as Record<string, unknown>)[field];

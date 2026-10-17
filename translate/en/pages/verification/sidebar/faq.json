@@ -1,0 +1,25 @@
+{
+  "title": "Frequently Asked Questions",
+  "questions": [
+    {
+      "q": "Where to find the code and key?",
+      "a": "On all official SARI Système SARL documents: invoices, quotes, certificates, product labels. The code follows the format SARI-XXX##-#####."
+    },
+    {
+      "q": "What does the code format mean?",
+      "a": "SARI (company prefix) + Type code (FAC, DVV, etc.) + Year + Sequence number. Ex: SARI-FAC24-00001 = Invoice 2024 #00001."
+    },
+    {
+      "q": "What to do if the document is not recognized?",
+      "a": "Contact our support immediately. It could be a forgery or an entry error."
+    },
+    {
+      "q": "What's the difference between 'revoked' and 'invalid'?",
+      "a": "'Revoked' means the document was cancelled by us (e.g., cancelled order). 'Invalid' means the document was reported as forged or altered."
+    },
+    {
+      "q": "How long do documents remain valid?",
+      "a": "Invoices and quotes are valid indefinitely. Certificates have a variable validity period (1 to 5 years depending on the type)."
+    }
+  ]
+}

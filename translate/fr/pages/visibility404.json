@@ -1,0 +1,9 @@
+{
+  "pageUnavailable": "Page non disponible",
+  "pageUnavailableDesc": "Cette page est actuellement indisponible. Veuillez réessayer plus tard ou retourner à l'accueil.",
+  "pageNotFound": "Page introuvable",
+  "pageNotFoundDesc": "La page que vous recherchez n'existe pas ou a été déplacée. Vérifiez l'URL ou retournez à l'accueil.",
+  "backHome": "Retour à l'accueil",
+  "previousPage": "Page précédente",
+  "searchSite": "Rechercher sur le site"
+}

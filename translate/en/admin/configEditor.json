@@ -1,0 +1,6 @@
+{
+  "title": "Configuration editor",
+  "saveSuccess": "Configuration saved",
+  "saveError": "Save failed",
+  "exportSuccess": "Configuration exported"
+}

@@ -1,0 +1,38 @@
+{
+  "title": "Comment vérifier ?",
+  "desc": "Tous les documents officiels SARI Système comportent un code unique au format",
+  "format": "SARI-XXX##-#####",
+  "andKey": "et une clé de vérification cryptée.",
+  "steps": [
+    {
+      "number": "1",
+      "title": "Localisez les codes",
+      "desc": "Trouvez le code et la clé sur votre document ou scannez le QR code"
+    },
+    {
+      "number": "2",
+      "title": "Saisissez les informations",
+      "desc": "Entrez le code et la clé dans le formulaire ci-dessous"
+    },
+    {
+      "number": "3",
+      "title": "Obtenez le résultat",
+      "desc": "Vérification instantanée de l'authenticité"
+    }
+  ],
+  "verifiableTypes": "Types de documents vérifiables :",
+  "types": [
+    "Factures (achat/vente)",
+    "Devis",
+    "Bons de commande",
+    "Bons de livraison",
+    "Certificats",
+    "Produits",
+    "Clients",
+    "Fournisseurs",
+    "Inventaires",
+    "NIF / NIS / NAI",
+    "G50",
+    "Documents fiscaux"
+  ]
+}

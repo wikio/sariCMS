@@ -1,36 +1,48 @@
 [
   {
     "id": 1,
+    "slug": "meditech-international",
+    "legacyId": "ptr-1",
     "name": "MediTech International",
     "logo": "https://via.placeholder.com/150x80/169EC9/FFFFFF?text=MEDI+TECH",
     "category": "Équipements"
   },
   {
     "id": 2,
+    "slug": "healthcare-solutions",
+    "legacyId": "ptr-2",
     "name": "HealthCare Solutions",
     "logo": "https://via.placeholder.com/150x80/C6DA34/333333?text=HEALTHCARE",
     "category": "Consommables"
   },
   {
     "id": 3,
+    "slug": "biomedical-pro",
+    "legacyId": "ptr-3",
     "name": "BioMedical Pro",
     "logo": "https://via.placeholder.com/150x80/EAB616/333333?text=BIOMED",
     "category": "Diagnostic"
   },
   {
     "id": 4,
+    "slug": "surgicare",
+    "legacyId": "ptr-4",
     "name": "SurgiCare",
     "logo": "https://via.placeholder.com/150x80/169EC9/FFFFFF?text=SURGICARE",
     "category": "Chirurgie"
   },
   {
     "id": 5,
+    "slug": "medequip-global",
+    "legacyId": "ptr-5",
     "name": "MedEquip Global",
     "logo": "https://via.placeholder.com/150x80/333333/FFFFFF?text=MEDEQUIP",
     "category": "Équipements"
   },
   {
     "id": 6,
+    "slug": "pharmadist",
+    "legacyId": "ptr-6",
     "name": "PharmaDist",
     "logo": "https://via.placeholder.com/150x80/C6DA34/333333?text=PHARMA",
     "category": "Consommables"

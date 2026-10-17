@@ -1,0 +1,18 @@
+{
+  "title": "محرر الترجمات",
+  "editLanguage": "لغة التحرير",
+  "selectLanguage": "اختر اللغة للتعديل",
+  "treeStructure": "هيكل الشجرة",
+  "components": "المكونات",
+  "pages": "الصفحات",
+  "keys": "مفتاح(مفاتيح)",
+  "export": "تصدير",
+  "save": "حفظ",
+  "searchKey": "البحث عن مفتاح...",
+  "loading": "جاري التحميل...",
+  "noKeys": "لم يتم العثور على مفاتيح",
+  "fileNotFound": "الملف غير موجود",
+  "saveSuccess": "تم حفظ الترجمات!",
+  "saveError": "خطأ أثناء الحفظ",
+  "exportSuccess": "تم تصدير ملف JSON!"
+}

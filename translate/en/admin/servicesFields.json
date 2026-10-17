@@ -1,0 +1,15 @@
+{
+  "title": "Title",
+  "slug": "Slug",
+  "locale": "Language",
+  "status": "Status",
+  "icon": "Lucide icon",
+  "shortDesc": "Hook",
+  "fullDesc": "Presentation",
+  "features": "Commitments",
+  "faq": "FAQ",
+  "groupIdentité": "Identity",
+  "groupContenu": "Content",
+  "groupDétails": "Details",
+  "hintIcon": "Search for the Lucide name, the icon will appear next to it."
+}

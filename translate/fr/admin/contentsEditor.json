@@ -1,0 +1,16 @@
+{
+  "metadata": "Métadonnées",
+  "type": "Type",
+  "subtitle": "Sous-titre",
+  "typeSpecific": "Champs spécifiques au type",
+  "features": "Caractéristiques",
+  "gallery": "Galerie d'images",
+  "pdf": "Fichier PDF",
+  "slides": "Slides du carrousel",
+  "sections": "Sections scrollables",
+  "addImage": "Ajouter une image",
+  "addSlide": "Ajouter un slide",
+  "addSection": "Ajouter une section",
+  "fullJson": "Contenu complet du fichier",
+  "singleJson": "Contenu d'un seul élément"
+}

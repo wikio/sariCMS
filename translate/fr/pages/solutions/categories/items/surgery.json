@@ -1,0 +1,14 @@
+{
+  "icon": "syringe",
+  "color": "green-500",
+  "title": "Chirurgie",
+  "desc": "Instruments, stérilisateurs, lampes scialytiques et tables",
+  "cta": "Découvrir",
+  "link": "#solutions/chirurgie",
+  "features": [
+    "Instruments chirurgicaux",
+    "Autoclaves classe B",
+    "Lampes scialytiques LED",
+    "Tables opératoires"
+  ]
+}

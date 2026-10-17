@@ -1,0 +1,18 @@
+{
+  "title": "DMS Media Library",
+  "importBtn": "Import",
+  "importing": "Importing…",
+  "close": "Close",
+  "searchPlaceholder": "Search a file…",
+  "allModules": "All modules",
+  "allCategories": "All categories",
+  "noFiles": "No files",
+  "rename": "Rename",
+  "replace": "Replace",
+  "delete": "Delete",
+  "renameFile": "Rename file",
+  "replaceFile": "Replace {name}",
+  "selectFile": "Select file",
+  "save": "Save",
+  "cancel": "Cancel"
+}

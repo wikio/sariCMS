@@ -1,4 +1,3 @@
-import { randomUUID } from 'crypto';
 import {
   AutocompleteHit,
   BaseEntity,
@@ -61,8 +60,8 @@ export class JsonRepository<T extends BaseEntity> implements ICrudRepository<T> 
     };
   }
 
-  async findById(id: string, includeDeleted = false): Promise<T | null> {
-    const row = this.store.read(this.collection).find((item) => String(item.id) === id);
+  async findById(id: number, includeDeleted = false): Promise<T | null> {
+    const row = this.store.read(this.collection).find((item) => String(item.id) === String(id));
     if (!row) return null;
     if (row.deletedAt && !includeDeleted) return null;
     return this.hydrate(row);
@@ -78,11 +77,21 @@ export class JsonRepository<T extends BaseEntity> implements ICrudRepository<T> 
     return row ? this.hydrate(row) : null;
   }
 
+  private nextId(): number {
+    const rows = this.store.read(this.collection);
+    let max = 0;
+    for (const r of rows) {
+      const v = Number(r.id);
+      if (Number.isFinite(v) && v > max) max = v;
+    }
+    return max + 1;
+  }
+
   async create(data: Partial<T>): Promise<T> {
     const now = new Date().toISOString();
     const entity = {
       ...data,
-      id: data.id || randomUUID(),
+      id: data.id ?? this.nextId(),
       createdAt: data.createdAt || now,
       updatedAt: data.updatedAt || now,
       deletedAt: data.deletedAt ?? null,
@@ -92,9 +101,9 @@ export class JsonRepository<T extends BaseEntity> implements ICrudRepository<T> 
     return this.hydrate(entity);
   }
 
-  async update(id: string, data: Partial<T>): Promise<T> {
+  async update(id: number, data: Partial<T>): Promise<T> {
     const all = this.store.read(this.collection);
-    const idx = all.findIndex((item) => String(item.id) === id);
+    const idx = all.findIndex((item) => String(item.id) === String(id));
     if (idx < 0) throw new Error(`${this.collection}#${id} not found`);
     const merged = {
       ...all[idx],
@@ -107,16 +116,16 @@ export class JsonRepository<T extends BaseEntity> implements ICrudRepository<T> 
     return this.hydrate(merged);
   }
 
-  async softDelete(id: string): Promise<T> {
+  async softDelete(id: number): Promise<T> {
     return this.update(id, { deletedAt: new Date().toISOString() } as Partial<T>);
   }
 
-  async restore(id: string): Promise<T> {
+  async restore(id: number): Promise<T> {
     return this.update(id, { deletedAt: null } as Partial<T>);
   }
 
-  async hardDelete(id: string): Promise<void> {
-    const all = this.store.read(this.collection).filter((item) => String(item.id) !== id);
+  async hardDelete(id: number): Promise<void> {
+    const all = this.store.read(this.collection).filter((item) => String(item.id) !== String(id));
     await this.store.write(this.collection, all);
   }
 

@@ -1,0 +1,8 @@
+{
+  "title": "Recherche",
+  "placeholder": "Rechercher un produit, un article, un événement...",
+  "noResults": "Aucun résultat trouvé",
+  "noResultsDesc": "Essayez avec d'autres termes ou modifiez vos filtres.",
+  "resultsFor": "Résultats pour",
+  "found": "trouvé"
+}

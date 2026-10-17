@@ -1,0 +1,22 @@
+{
+  "title": "Se désabonner de la newsletter",
+  "intro": "Votre adresse sera retirée de la liste. Vous pouvez nous dire pourquoi : ces motifs sont lus par l’équipe et servent à améliorer les envois.",
+  "emailLabel": "Adresse électronique",
+  "emailPlaceholder": "prenom@exemple.com",
+  "emailRequired": "Indiquez l’adresse à retirer.",
+  "recognized": "Vous êtes reconnu par le lien reçu : il suffit de confirmer.",
+  "reasonLabel": "Pourquoi vous désabonnez-vous ?",
+  "noteLabel": "Un commentaire ? (facultatif)",
+  "notePlaceholder": "Ce que nous devrions changer",
+  "noteHint": "Rien n’est obligatoire : le retrait est enregistré même sans motif.",
+  "submitCta": "Confirmer le désabonnement",
+  "sendingCta": "Envoi en cours…",
+  "doneTitle": "C’est fait",
+  "doneDesc": "Votre adresse ne recevra plus nos courriels. Une dernière lettre peut encore partir si l’envoi était déjà en préparation.",
+  "notFound": "Cette adresse ne figure pas dans notre liste. Vérifiez la saisie, ou utilisez le lien reçu par courriel.",
+  "backHome": "Retour à l’accueil",
+  "error": "Le retrait n’a pas pu être enregistré. Réessayez dans un instant.",
+  "privacy": "Adresse et motif sont conservés uniquement pour tenir la liste à jour.",
+  "again": "Vous souhaitez revenir ?",
+  "againCta": "S’inscrire à nouveau"
+}

@@ -1,0 +1,51 @@
+{
+  "title": "Diagnostic & Imaging",
+  "desc": "Ultrasound, blood pressure monitors, stethoscopes",
+  "icon": "stethoscope",
+  "image": "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=1920",
+  "productIds": [
+    1,
+    4,
+    5
+  ],
+  "features": [
+    {
+      "icon": "scan",
+      "text": "4D high-resolution imaging"
+    },
+    {
+      "icon": "wifi",
+      "text": "WiFi and Bluetooth connectivity"
+    },
+    {
+      "icon": "battery",
+      "text": "Long battery life"
+    },
+    {
+      "icon": "shield-check",
+      "text": "CE and ISO 13485 certified"
+    },
+    {
+      "icon": "monitor",
+      "text": "HD touch screens"
+    },
+    {
+      "icon": "truck",
+      "text": "Delivery and installation included"
+    }
+  ],
+  "faq": [
+    {
+      "q": "What types of ultrasound do you offer?",
+      "a": "We offer portable and fixed ultrasound machines with various probe configurations. All devices are CE certified and ISO 13485 compliant."
+    },
+    {
+      "q": "Are blood pressure monitors medically certified?",
+      "a": "Yes, all our monitors are Class IIa medical devices, CE certified with ESH protocol validation."
+    },
+    {
+      "q": "Do you provide training on how to use the equipment?",
+      "a": "Yes, a basic training session is included with every purchase. Advanced training is available as an option."
+    }
+  ]
+}

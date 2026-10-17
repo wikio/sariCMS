@@ -1,0 +1,5 @@
+{
+  "title": "Verification service unavailable",
+  "message": "The queried service did not answer, or answered outside its protocol. The document is neither validated nor denied — try again shortly; if the problem persists, contact the document issuer.",
+  "retry": "Try again"
+}

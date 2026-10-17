@@ -1,0 +1,5 @@
+{
+  "title": "Service de vérification indisponible",
+  "message": "Le service interrogé n'a pas répondu, ou a répondu hors de son protocole. Le document n'est ni validé ni infirmé — réessayez dans un instant ; si le problème persiste, rapprochez-vous de l'émetteur du document.",
+  "retry": "Réessayer"
+}

@@ -1,23 +1,22 @@
 import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
 import { AUDIT_LOG_REPOSITORY } from '../constants/tokens';
 import { BaseEntity, ICrudRepository } from '../crud/interfaces/repository.interface';
-import { randomUUID } from 'crypto';
 
 export interface AuditEntry {
-  actorId?: string | null;
+  actorId?: number | null;
   action: string;
   resource: string;
-  resourceId?: string | null;
+  resourceId?: number | null;
   payload?: Record<string, unknown>;
   ip?: string;
   userAgent?: string;
 }
 
 export interface AuditLogEntity extends BaseEntity {
-  actorId?: string | null;
+  actorId?: number | null;
   action: string;
   resource: string;
-  resourceId?: string | null;
+  resourceId?: number | null;
   payload?: Record<string, unknown> | null;
   ip?: string | null;
   userAgent?: string | null;
@@ -41,7 +40,6 @@ export class AuditService {
       }
       const now = new Date();
       await this.repo.create({
-        id: randomUUID(),
         actorId: entry.actorId ?? null,
         action: entry.action,
         resource: entry.resource,

@@ -1,0 +1,18 @@
+{
+  "title": "Translation Editor",
+  "editLanguage": "Editing language",
+  "selectLanguage": "Select the language to modify",
+  "treeStructure": "Tree structure",
+  "components": "COMPONENTS",
+  "pages": "PAGES",
+  "keys": "key(s)",
+  "export": "Export",
+  "save": "Save",
+  "searchKey": "Search for a key...",
+  "loading": "Loading...",
+  "noKeys": "No keys found",
+  "fileNotFound": "File not found",
+  "saveSuccess": "Translations saved!",
+  "saveError": "Error while saving",
+  "exportSuccess": "JSON file exported!"
+}

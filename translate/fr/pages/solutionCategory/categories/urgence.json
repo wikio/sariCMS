@@ -1,0 +1,46 @@
+{
+  "title": "Urgence & Réanimation",
+  "desc": "Défibrillateurs, chariots d'urgence, moniteurs multiparamètres",
+  "icon": "activity",
+  "image": "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=1920",
+  "productIds": [
+    7,
+    15
+  ],
+  "features": [
+    {
+      "icon": "zap",
+      "text": "Défibrillateurs DSA/DAE"
+    },
+    {
+      "icon": "siren",
+      "text": "Chariots d'urgence complets"
+    },
+    {
+      "icon": "monitor",
+      "text": "Moniteurs multiparamètres"
+    },
+    {
+      "icon": "wind",
+      "text": "Aspirateurs de sécrétions"
+    },
+    {
+      "icon": "syringe",
+      "text": "Pousse-seringues"
+    },
+    {
+      "icon": "clock",
+      "text": "Support 24/7 garanti"
+    }
+  ],
+  "faq": [
+    {
+      "q": "Les défibrillateurs sont-ils automatiques ?",
+      "a": "Oui, nous proposons des DSA (semi-automatiques) et DAE (entièrement automatiques) avec guide vocal et analyse du rythme en moins de 10 secondes."
+    },
+    {
+      "q": "Les chariots d'urgence sont-ils complets ?",
+      "a": "Oui, nos chariots sont livrés avec tout le matériel nécessaire : défibrillateur, moniteur, aspirateur, oxygène et médicaments d'urgence."
+    }
+  ]
+}

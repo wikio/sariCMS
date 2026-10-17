@@ -1,0 +1,45 @@
+{
+  "title": "Pediatrics",
+  "desc": "Neonatal incubators, pediatric scales, phototherapy",
+  "icon": "baby",
+  "image": "https://images.unsplash.com/photo-1583947215259-38e31be8751f?w=1920",
+  "productIds": [
+    12
+  ],
+  "features": [
+    {
+      "icon": "baby",
+      "text": "Neonatal incubators"
+    },
+    {
+      "icon": "scale",
+      "text": "5g pediatric scales"
+    },
+    {
+      "icon": "sun",
+      "text": "Phototherapy lamps"
+    },
+    {
+      "icon": "heart-pulse",
+      "text": "Neonatal monitors"
+    },
+    {
+      "icon": "heart-pulse",
+      "text": "Neonatal monitors"
+    },
+    {
+      "icon": "shield-check",
+      "text": "Child-friendly equipment"
+    }
+  ],
+  "faq": [
+    {
+      "q": "Are incubators suitable for premature babies?",
+      "a": "Yes, from 28 weeks of gestation with precise temperature, humidity and oxygen control."
+    },
+    {
+      "q": "How accurate are the scales?",
+      "a": "Our paediatric scales are accurate to 5 g, with a hold function for restless babies and a tare function for nappies."
+    }
+  ]
+}

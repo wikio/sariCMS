@@ -1,6 +1,8 @@
 [
   {
     "id": 1,
+    "slug": "dr-marie-laurent",
+    "legacyId": "tst-1",
     "name": "Dr. Marie Laurent",
     "role": "Directrice Médicale",
     "clinic": "Clinique Saint-Louis",
@@ -10,6 +12,8 @@
   },
   {
     "id": 2,
+    "slug": "dr-philippe-martin",
+    "legacyId": "tst-2",
     "name": "Dr. Philippe Martin",
     "role": "Chef de Service Radiologie",
     "clinic": "CHU de Lyon",
@@ -19,6 +23,8 @@
   },
   {
     "id": 3,
+    "slug": "sarah-benali",
+    "legacyId": "tst-3",
     "name": "Sarah Benali",
     "role": "Responsable Achats",
     "clinic": "Groupe Hospitalier Nord",
@@ -28,6 +34,8 @@
   },
   {
     "id": 4,
+    "slug": "dr-thomas-bernard",
+    "legacyId": "tst-4",
     "name": "Dr. Thomas Bernard",
     "role": "Médecin Généraliste",
     "clinic": "Cabinet Médical du Parc",

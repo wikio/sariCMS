@@ -1,4 +1,7 @@
 {
   "excellence": "Medical Excellence",
-  "discover": "Discover"
+  "discover": "Discover",
+  "previous": "Previous",
+  "next": "Next",
+  "slideNumber": "Slide {number}"
 }

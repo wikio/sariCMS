@@ -17,22 +17,26 @@ export default function PartnerCard({ partner, showName = false }: PartnerCardPr
     <div className="bg-gray-50 dark:bg-[#111111] p-8 flex flex-col items-center justify-center border border-gray-200 dark:border-gray-800 rounded-xl hover:border-sari-blue hover:shadow-lg transition-all duration-300 group">
       {/* Logo avec fallback */}
       <div className="relative w-full h-16 flex items-center justify-center">
-        <img
-          src={partner.logo}
-          alt={partner.name}
-          className="max-h-16 w-auto object-contain opacity-70 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300 grayscale group-hover:grayscale-0"
-          onError={(e) => {
-            const target = e.target as HTMLImageElement;
-            target.style.display = 'none';
-            const parent = target.parentElement;
-            if (parent) {
-              const fallback = document.createElement('div');
-              fallback.className = 'text-2xl font-bold text-sari-blue';
-              fallback.textContent = partner.name.charAt(0);
-              parent.appendChild(fallback);
-            }
-          }}
-        />
+        {partner.logo ? (
+          <img
+            src={partner.logo}
+            alt={partner.name}
+            className="max-h-16 w-auto object-contain opacity-70 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300 grayscale group-hover:grayscale-0"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.style.display = 'none';
+              const parent = target.parentElement;
+              if (parent) {
+                const fallback = document.createElement('div');
+                fallback.className = 'text-2xl font-bold text-sari-blue';
+                fallback.textContent = partner.name.charAt(0);
+                parent.appendChild(fallback);
+              }
+            }}
+          />
+        ) : (
+          <div className="text-2xl font-bold text-sari-blue">{partner.name.charAt(0)}</div>
+        )}
       </div>
 
       {showName && (

@@ -1,0 +1,8 @@
+{
+  "title": "Gestionnaire de traductions",
+  "tree": "Arbre",
+  "chooseFile": "Choisissez un fichier JSON",
+  "save": "Sauver",
+  "filterPlaceholder": "Filtrer une clé ou une valeur…",
+  "refresh": "Rafraîchir l’arborescence"
+}

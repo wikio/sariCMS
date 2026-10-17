@@ -1,0 +1,6 @@
+{
+  "length": "At least {min} characters",
+  "upper": "An uppercase letter",
+  "lower": "A lowercase letter",
+  "digit": "A digit"
+}

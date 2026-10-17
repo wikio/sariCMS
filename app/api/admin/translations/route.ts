@@ -2,6 +2,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
+import {
+  TranslationConflictError,
+  TranslationPathError,
+  resolveAtelierFile,
+  saveAtelierFile,
+} from '@/lib/translate-store';
 
 const TRANSLATIONS_DIR = path.join(process.cwd(), 'translate');
 const ALLOWED_LOCALES = ['fr', 'en', 'ar'];
@@ -99,14 +105,14 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// ✅ PUT : Écrire un fichier
+// PUT : écrire un fichier de l'atelier — par le même chemin que l'écran, pour que
+// l'enregistrement atteigne aussi les messages que le site lit (`lib/translate-store.ts`).
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
-    const { locale, path: filePath, content } = body;
+    const { locale, path: filePath, content } = body ?? {};
 
-    // Validation
-    if (!locale || !filePath || !content) {
+    if (!locale || !filePath || content === undefined) {
       return NextResponse.json(
         { error: 'Paramètres manquants (locale, path, content)' },
         { status: 400 }
@@ -120,22 +126,21 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const sanitizedPath = sanitizePath(filePath);
-    const fullPath = path.join(TRANSLATIONS_DIR, locale, sanitizedPath);
-    
-    // Créer le dossier s'il n'existe pas
-    const dir = path.dirname(fullPath);
-    await fs.mkdir(dir, { recursive: true });
-
-    // Écrire le fichier
-    await fs.writeFile(fullPath, JSON.stringify(content, null, 2), 'utf-8');
-
-    return NextResponse.json({ 
-      success: true, 
-      message: 'Fichier sauvegardé',
-      path: filePath 
+    const outcome = await saveAtelierFile(resolveAtelierFile(String(locale), String(filePath)), content);
+    return NextResponse.json({
+      success: true,
+      message: outcome.synced.messages
+        ? 'Fichier sauvegardé, messages à jour'
+        : 'Fichier sauvegardé, mais les messages ne sont pas atteignables en écriture',
+      ...outcome,
     });
   } catch (error) {
+    if (error instanceof TranslationPathError) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+    if (error instanceof TranslationConflictError) {
+      return NextResponse.json({ error: error.message }, { status: 409 });
+    }
     console.error('Erreur PUT:', error);
     return NextResponse.json(
       { error: 'Erreur sauvegarde', details: (error as Error).message },
@@ -144,31 +149,22 @@ export async function PUT(request: NextRequest) {
   }
 }
 
-// ✅ DELETE : Supprimer un fichier
-export async function DELETE(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const locale = searchParams.get('locale');
-  const filePath = searchParams.get('path');
-
-  if (!locale || !filePath) {
-    return NextResponse.json(
-      { error: 'Paramètres manquants' },
-      { status: 400 }
-    );
-  }
-
-  try {
-    const sanitizedPath = sanitizePath(filePath);
-    const fullPath = path.join(TRANSLATIONS_DIR, locale, sanitizedPath);
-    
-    await fs.unlink(fullPath);
-
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Erreur DELETE:', error);
-    return NextResponse.json(
-      { error: 'Erreur suppression' },
-      { status: 500 }
-    );
-  }
+// DELETE : refusé, et c'est voulu.
+//
+// Un fichier de l'atelier n'est pas un dépôt de chaînes, c'est la vue d'une branche
+// des `messages/`. Le supprimer ne désactiverait rien sur le site — les clés
+// resteraient dans les messages — mais l'écran ne montrerait plus l'endroit où les
+// retoucher, et `npm run intl:check` hurlerait juste après. Pour faire disparaître
+// des chaînes de l'interface, c'est dans `messages/<locale>.json` qu'il faut les
+// retirer, puis rejouer `npm run intl:sync`.
+export async function DELETE() {
+  return NextResponse.json(
+    {
+      error:
+        "Un fichier de l'atelier ne se supprime pas : il est la copie d'une branche des messages. " +
+        'Retirez les clés de messages/<locale>.json, puis « npm run intl:sync ».',
+    },
+    { status: 409 }
+  );
 }
+

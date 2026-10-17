@@ -1,0 +1,14 @@
+{
+  "icon": "baby",
+  "color": "pink-500",
+  "title": "Pédiatrie",
+  "desc": "Couveuses, balances, photothérapie et matériel adapté",
+  "cta": "Découvrir",
+  "link": "#solutions/pediatrie",
+  "features": [
+    "Couveuses néonatales",
+    "Balances pédiatriques",
+    "Lampes de photothérapie",
+    "Matériel adapté"
+  ]
+}

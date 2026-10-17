@@ -1,0 +1,23 @@
+{
+  "title": "Clients",
+  "total": "client(s)",
+  "search": "Search...",
+  "export": "Export",
+  "name": "Name",
+  "company": "Company",
+  "phone": "Phone",
+  "email": "Email",
+  "address": "Address",
+  "orders": "Orders",
+  "spent": "Spent",
+  "actions": "Actions",
+  "edit": "Edit",
+  "delete": "Delete",
+  "editClient": "Edit client",
+  "addClient": "Add a client",
+  "cancel": "Cancel",
+  "save": "Save",
+  "deleteConfirm": "Delete this client?",
+  "saveSuccess": "Clients saved!",
+  "noClients": "No clients found"
+}

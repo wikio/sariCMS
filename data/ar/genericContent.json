@@ -1,6 +1,8 @@
 [
   {
     "id": 1,
+    "slug": "التزامنا-بالجودة",
+    "legacyId": "pag-1",
     "type": "simple",
     "title": "التزامنا بالجودة",
     "category": "الشركة",
@@ -9,6 +11,8 @@
   },
   {
     "id": 2,
+    "slug": "عن-ساري-سيستم",
+    "legacyId": "pag-2",
     "type": "about",
     "title": "عن ساري سيستم",
     "category": "عرض تقديمي",
@@ -24,6 +28,8 @@
   },
   {
     "id": 3,
+    "slug": "إنجازاتنا-بالصور",
+    "legacyId": "pag-3",
     "type": "gallery",
     "title": "إنجازاتنا بالصور",
     "category": "معرض",
@@ -39,6 +45,8 @@
   },
   {
     "id": 4,
+    "slug": "عرض-صيف-2024",
+    "legacyId": "pag-4",
     "type": "flyer",
     "title": "عرض صيف 2024",
     "subtitle": "خصم يصل إلى 30% على جميع المعدات",
@@ -49,6 +57,8 @@
   },
   {
     "id": 5,
+    "slug": "ساري-سيستم-في-حركة",
+    "legacyId": "pag-5",
     "type": "slide",
     "title": "ساري سيستم في حركة",
     "category": "عرض تقديمي",
@@ -84,6 +94,8 @@
   },
   {
     "id": 6,
+    "slug": "اكتشف-ساري-سيستم",
+    "legacyId": "pag-6",
     "type": "scroll",
     "title": "اكتشف ساري سيستم",
     "category": "عرض تقديمي",
@@ -128,6 +140,8 @@
   },
   {
     "id": 7,
+    "slug": "الدليل-الشامل-اختيار-جهاز-الموجات-فوق-الصوتية",
+    "legacyId": "pag-7",
     "type": "full",
     "title": "الدليل الشامل: اختيار جهاز الموجات فوق الصوتية",
     "subtitle": "الدليل النهائي للمهنيين الصحيين",
@@ -137,6 +151,8 @@
   },
   {
     "id": 8,
+    "slug": "الذكاء-الاصطناعي-في-الطب",
+    "legacyId": "pag-8",
     "type": "full",
     "title": "الذكاء الاصطناعي في الطب",
     "subtitle": "كيف يحدث الذكاء الاصطناعي ثورة في التشخيص الطبي",
@@ -146,6 +162,8 @@
   },
   {
     "id": 9,
+    "slug": "معداتنا-الرائدة",
+    "legacyId": "pag-9",
     "type": "gallery",
     "title": "معداتنا الرائدة",
     "subtitle": "كريم التقنيات الطبية",
@@ -162,6 +180,8 @@
   },
   {
     "id": 10,
+    "slug": "شهادات-عملائنا",
+    "legacyId": "pag-10",
     "type": "slide",
     "title": "شهادات عملائنا",
     "subtitle": "يثقون بنا",
@@ -196,5 +216,17 @@
         "description": "« معدات طب الأطفال متكيفة تمامًا مع احتياجات الأطفال. كان فريق ساري مستمعًا لخصوصياتنا. »"
       }
     ]
+  },
+  {
+    "id": 11,
+    "slug": "offer-cpr-equipment",
+    "legacyId": "pag-11",
+    "type": "constructor",
+    "title": "عرض تجهيز أقسام الإنعاش",
+    "subtitle": "أسرّة، monitors، وتدريب الفريق. صفحة مستقلة تُرسل مع الحملة البريدية.",
+    "category": "عروض",
+    "status": "published",
+    "media": "/media/marquee/atelier.svg",
+    "content": "<style data-sari-builder=\"1\">\n/* الصفحة تُقرأ من اليمين إلى اليسار: كل المسافات في المجموعة مكتوبة\n   بالخصائص المنطقية، فلا شيء يُعاد كتابته هنا. */\n.sari-page { --sari-lime: #ffe08a; }\n</style>\n<section class=\"sari-hero\"><figure class=\"sari-hero__bg\"><img src=\"/media/marquee/webinaire.svg\" alt=\"\"></figure><div class=\"sari-wrap\"><span class=\"sari-eyebrow\">Offre 2026</span><h1>Présentez votre offre en une page</h1><p class=\"sari-lead\">Un bandeau, trois arguments, une preuve et un bouton : ce qu'il faut pour qu'un visiteur appelle.</p><div class=\"sari-actions\"><a class=\"sari-btn sari-btn--lime sari-btn--lg sari-btn--arrow\" href=\"/contact\">Demander un rappel</a><a class=\"sari-btn sari-btn--outline\" href=\"/media/marquee/prix-innovation.svg\" download>Télécharger le flyer</a></div></div></section><section class=\"sari-band sari-band--gray\"><div class=\"sari-wrap\"><h2>Ce que vous y gagnez</h2><div class=\"sari-grid sari-grid--3\"><article class=\"sari-card\"><h3>Installé en 48 h</h3><p>Une équipe sur site, le matériel réglé, la formation incluse.</p></article><article class=\"sari-card\"><h3>Suivi sur mesure</h3><p>Contrat de maintenance adapté à votre activité et à vos volumes.</p></article><article class=\"sari-card\"><h3>Pièces garanties</h3><p>Stock local et intervention garantie sous 24 h ouvrées.</p></article></div></div></section><section class=\"sari-band sari-band--blue sari-band--tight\"><div class=\"sari-wrap\"><div class=\"sari-grid sari-grid--3\"><div class=\"sari-center\"><div class=\"sari-num\">20 ans</div><p class=\"sari-lead\">au service des cliniques</p></div><div class=\"sari-center\"><div class=\"sari-num\">500+</div><p class=\"sari-lead\">installations réalisées</p></div><div class=\"sari-center\"><div class=\"sari-num\">24 h</div><p class=\"sari-lead\">de délai d'intervention</p></div></div></div></section><section class=\"sari-band\"><div class=\"sari-wrap sari-cta-strip\"><div><h2>Parlons de votre projet</h2><p class=\"sari-muted\">Un devis chiffré sous trois jours ouvrés.</p></div><a class=\"sari-btn\" href=\"/contact\">Nous contacter</a></div></section><section class=\"sari-band sari-band--gray\"><div class=\"sari-wrap sari-wrap--narrow\"><h2>Questions fréquentes</h2><div class=\"sari-faq\"><details open><summary>Le matériel est-il garanti hors atelier ?</summary><p>Oui, trois ans pièces et main-d'œuvre, intervention sur site sous 24 h ouvrées.</p></details><details><summary>Proposez-vous la location ?</summary><p>Sur 24 ou 36 mois, avec option d'achat en fin de contrat.</p></details><details><summary>Formez-vous nos équipes ?</summary><p>La formation est incluse à la livraison, et une session de rappel est possible à six mois.</p></details></div></div></section><section class=\"sari-band sari-band--lime\"><div class=\"sari-wrap sari-grid sari-grid--4\"><div><div class=\"sari-num\">20</div><p>années d'activité</p></div><div><div class=\"sari-num\">500+</div><p>installations</p></div><div><div class=\"sari-num\">24 h</div><p>délai d'intervention</p></div><div><div class=\"sari-num\">98 %</div><p>de contrats honorés</p></div></div></section>"
   }
 ]

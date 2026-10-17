@@ -1,0 +1,11 @@
+{
+  "endMessage": "Your response ends this application. Thank you for your time.",
+  "applicationEnded": "Application ended.",
+  "applicationSaved": "Thank you! Your application has been saved.",
+  "applicationEndedTitle": "Application ended",
+  "experiencePlaceholder": "Position, company, duration…",
+  "answerPlaceholder": "Your answer…",
+  "uploadCV": "Upload your CV (PDF, DOCX)",
+  "finish": "Finish",
+  "next": "Next"
+}

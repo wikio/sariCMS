@@ -1,0 +1,22 @@
+{
+  "title": "Unsubscribe from the newsletter",
+  "intro": "Your address will be removed from the list. You can tell us why: these reasons are read by the team and used to improve what we send.",
+  "emailLabel": "E-mail address",
+  "emailPlaceholder": "name@example.com",
+  "emailRequired": "Enter the address to remove.",
+  "recognized": "You are recognised by the link you received: just confirm.",
+  "reasonLabel": "Why are you unsubscribing?",
+  "noteLabel": "A comment? (optional)",
+  "notePlaceholder": "What we should change",
+  "noteHint": "Nothing is required: the removal is recorded even without a reason.",
+  "submitCta": "Confirm unsubscription",
+  "sendingCta": "Sending…",
+  "doneTitle": "Done",
+  "doneDesc": "Your address will no longer receive our e-mails. One last message may still go out if it was already being prepared.",
+  "notFound": "This address is not on our list. Check the spelling, or use the link sent by e-mail.",
+  "backHome": "Back to home",
+  "error": "The removal could not be saved. Please try again in a moment.",
+  "privacy": "The address and reason are kept only to keep the list accurate.",
+  "again": "Want to come back?",
+  "againCta": "Subscribe again"
+}

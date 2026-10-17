@@ -28,8 +28,6 @@
   "noResults": "Aucun produit trouvé",
   "noResultsDesc": "Aucun produit ne correspond à vos critères de recherche.",
   "resetFilters": "Réinitialiser les filtres",
-  "found": "trouvé",
-  "products": "produits",
-  "product": "produit"
-  
+  "product": "produit",
+  "found": "trouvé"
 }

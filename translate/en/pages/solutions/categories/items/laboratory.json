@@ -1,0 +1,14 @@
+{
+  "icon": "flask-conical",
+  "color": "teal-500",
+  "title": "Laboratory",
+  "desc": "Analyzers, centrifuges, reagents and diagnostic equipment",
+  "cta": "Discover",
+  "link": "#solutions/laboratoire",
+  "features": [
+    "Automatic analyzers",
+    "Centrifuges",
+    "Diagnostic reagents",
+    "Laboratory microscopes"
+  ]
+}

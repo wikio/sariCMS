@@ -1,0 +1,56 @@
+{
+  "title": "Verification codes",
+  "intro": "What the external API returns, and what to do with it. Each row pairs a return code with a public-page behaviour; until the API is enabled, these codes also drive the local registry.",
+  "addNew": "New code",
+  "backToSettings": "API settings",
+  "loading": "Reading the catalogue…",
+  "restoreDefaults": "Restore the four default codes",
+  "restored": "Catalogue restored.",
+  "saved": "Code saved.",
+  "created": "Code added to the catalogue.",
+  "deleted": "Code removed from the catalogue.",
+  "saveError": "Save refused — the catalogue needs at least one “valid” code, and distinct values.",
+  "loadError": "Catalogue unreadable — restore the defaults if needed.",
+  "save": "Save",
+  "saving": "Saving…",
+  "cancel": "Cancel",
+  "edit": "Edit",
+  "delete": "Delete",
+  "activate": "Re-enable",
+  "deactivate": "Disable",
+  "footnote": "A code returned by the API but missing here is never defaulted to “valid”: the public page reports the anomaly and the administrator adds the row. Saving replaces the whole catalogue.",
+  "columns": {
+    "code": "API code",
+    "semantic": "Behaviour",
+    "label": "Displayed label",
+    "details": "Type + Issuer",
+    "active": "Active",
+    "actions": "Actions"
+  },
+  "semantics": {
+    "valid": "Validated — green",
+    "forged": "Forged — red",
+    "expired": "Expired — amber",
+    "revoked": "Revoked — orange",
+    "neutral": "Information — blue"
+  },
+  "empty": {
+    "title": "The catalogue is empty.",
+    "hint": "Without one “validated” row, no document can ever show a green light."
+  },
+  "editor": {
+    "titleNew": "New verification code",
+    "titleEdit": "Edit code",
+    "code": "Value returned by the API",
+    "codeHelp": "Compared as a string, case-insensitive; “01” and “1” match when both are numeric.",
+    "semantic": "Page behaviour",
+    "semanticHelp": "Colour, icon and result panel — independent of the label.",
+    "label": "Label (panel title)",
+    "description": "Description (under the label)",
+    "sortOrder": "Display order",
+    "showDetails": "Show Type + Issuer",
+    "showDetailsHelp": "When the API returns the document type and issuer alongside the code.",
+    "active": "Active",
+    "needCode": "The value returned by the API is required."
+  }
+}

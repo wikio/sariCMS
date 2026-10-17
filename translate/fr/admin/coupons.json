@@ -1,0 +1,11 @@
+{
+  "allStatuses": "Tous les statuts",
+  "allTypes": "Tous les types",
+  "percentage": "Pourcentage",
+  "fixedAmount": "Montant fixe",
+  "stackable": "Cumulable ?",
+  "sortByCode": "Tri : code",
+  "sortByStatus": "Tri : statut",
+  "exhausted": "épuisé",
+  "upcoming": "à venir"
+}
