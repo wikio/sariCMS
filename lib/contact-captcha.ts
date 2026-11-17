@@ -120,7 +120,7 @@ export function issueCaptcha(): CaptchaIssue {
     svg: renderCaptchaSvg(code),
     expiresAt: Date.now() + TTL_MS,
   });
-  return { id, imageUrl: `/api/contact/captcha/image?id=${encodeURIComponent(id)}`, expiresIn: Math.floor(TTL_MS / 1000) };
+  return { id, imageUrl: `/api/contact/captcha?id=${encodeURIComponent(id)}`, expiresIn: Math.floor(TTL_MS / 1000) };
 }
 
 export function captchaImage(id: string): string | null {

@@ -1,25 +1,46 @@
 /**
- * /api/verification/captcha — émission du captcha anti-robot de la vérification.
+ * /api/verification/captcha — émission et rendu du captcha anti-robot de la vérification.
  *
- * `GET` renvoie `{id, imageUrl, expiresIn}` : le code n'existe que dessiné dans
- * l'image servie par `/api/verification/captcha/image`, à usage unique, dix
- * minutes. C'est le carnet du captcha d'inscription (`lib/newsletter-captcha`)
- * qui tient les jetons — même éphémère, même empreinte, mais une image servie
- * sous notre propre route, pour qu'un rechargement de la vérification ne passe
- * jamais par la route du formulaire de newsletter.
+ * - `GET /api/verification/captcha` : renvoie `{id, imageUrl, expiresIn}`.
+ * - `GET /api/verification/captcha?id=…` : sert l'image `image/svg+xml` directement
+ *   (la sous-route `/api/verification/captcha/image` reste conservée en alias).
+ * C'est le carnet du captcha d'inscription (`lib/newsletter-captcha`) qui tient
+ * les jetons — même éphémère, même empreinte, mais une image servie sous notre
+ * propre route.
  */
-import { NextResponse } from 'next/server';
-import { issueCaptcha } from '@/lib/newsletter-captcha';
+import { NextRequest, NextResponse } from 'next/server';
+import { captchaImage, issueCaptcha } from '@/lib/newsletter-captcha';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const id = req.nextUrl.searchParams.get('id');
+  if (id !== null) {
+    const svg = captchaImage(id);
+    if (!svg) {
+      return new NextResponse(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="68"><rect width="200" height="68" fill="#eef2f7"/><text x="16" y="40" font-family="sans-serif" font-size="13" fill="#64748b">Code expire</text></svg>',
+        {
+          status: 410,
+          headers: { 'Content-Type': 'image/svg+xml; charset=utf-8', 'Cache-Control': 'no-store' },
+        },
+      );
+    }
+    return new NextResponse(svg, {
+      headers: {
+        'Content-Type': 'image/svg+xml; charset=utf-8',
+        'Cache-Control': 'no-store, max-age=0',
+        'X-Content-Type-Options': 'nosniff',
+      },
+    });
+  }
+
   const issued = issueCaptcha();
   return NextResponse.json(
     {
       id: issued.id,
-      imageUrl: `/api/verification/captcha/image?id=${encodeURIComponent(issued.id)}`,
+      imageUrl: `/api/verification/captcha?id=${encodeURIComponent(issued.id)}`,
       expiresIn: issued.expiresIn,
     },
     { headers: { 'Cache-Control': 'no-store' } },

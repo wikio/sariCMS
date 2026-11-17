@@ -70,6 +70,7 @@ export default function ServerCaptcha({
   const [verified, setVerified] = useState(false);
   const [loading, setLoading] = useState(false);
   const mounted = useRef(false);
+  const imageRetryCount = useRef(0);
 
   const verifyEndpoint = endpoint.replace('/captcha', '/verify-captcha');
   log('Init:', { endpoint, verifyEndpoint });
@@ -96,6 +97,20 @@ export default function ServerCaptcha({
     } finally {
       if (mounted.current) setLoading(false);
     }
+  };
+
+  const handleManualRefresh = () => {
+    imageRetryCount.current = 0;
+    void fetchCaptcha(true);
+  };
+
+  const handleImageError = () => {
+    if (imageRetryCount.current < 1) {
+      imageRetryCount.current += 1;
+      void fetchCaptcha(true);
+      return;
+    }
+    setCaptchaImageUrl('');
   };
 
   useEffect(() => {
@@ -167,7 +182,7 @@ export default function ServerCaptcha({
       <div className="flex items-stretch gap-2">
         <button
           type="button"
-          onClick={() => void fetchCaptcha(true)}
+          onClick={handleManualRefresh}
           disabled={loading}
           title={t('refresh')}
           className="shrink-0 overflow-hidden"
@@ -187,6 +202,8 @@ export default function ServerCaptcha({
               width="120"
               height="44"
               style={{ display: 'block' }}
+              onLoad={() => { imageRetryCount.current = 0; }}
+              onError={handleImageError}
             />
           ) : (
             <svg width="120" height="44" viewBox="0 0 120 44" role="img" aria-label="CAPTCHA indisponible">
@@ -219,7 +236,7 @@ export default function ServerCaptcha({
         <button
           type="button"
           className="ad-btn ad-btn-icon ad-btn-ghost shrink-0 w-11 h-11 flex items-center justify-center self-stretch"
-          onClick={() => void fetchCaptcha(true)}
+          onClick={handleManualRefresh}
           disabled={loading}
           title={t('refresh')}
           aria-label={t('refresh')}
