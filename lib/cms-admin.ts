@@ -1,12 +1,12 @@
 'use client';
 
-import { cmsFetch, CmsError, unwrapList, type CmsRequestOptions } from '@/lib/cms';
+import { cmsFetch, CmsError, unwrap, unwrapList, type CmsRequestOptions } from '@/lib/cms';
 import {
-  ADMIN_REFRESH_KEY,
   clearAdminSession,
-  persistAdminSession,
   readAdminAccess,
 } from '@/lib/admin-session';
+import { CSRF_HEADER_NAME, getClientCsrfToken } from '@/lib/csrf';
+import { clearAuthCache } from '@/components/admin/useAdminAuth';
 
 export const RESOURCE_BY_TYPE: Record<string, string> = {
   products: 'products',
@@ -106,26 +106,108 @@ function pick(resource: string, item: Record<string, unknown>): Record<string, u
   return out;
 }
 
+const ADMIN_CMS_PROXY = '/api/admin/cms';
+const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+
+let csrfTokenInFlight: Promise<string | null> | null = null;
+
+async function ensureCsrfToken(): Promise<string | null> {
+  const existing = getClientCsrfToken();
+  if (existing) return existing;
+  if (typeof window === 'undefined') return null;
+  if (!csrfTokenInFlight) {
+    csrfTokenInFlight = (async () => {
+      try {
+        const res = await fetch('/api/csrf-token', { credentials: 'same-origin', cache: 'no-store' });
+        if (res.ok) {
+          const data = (await res.json().catch(() => null)) as { csrfToken?: string } | null;
+          return data?.csrfToken || getClientCsrfToken();
+        }
+      } catch {
+        // ignore
+      } finally {
+        csrfTokenInFlight = null;
+      }
+      return getClientCsrfToken();
+    })();
+  }
+  return csrfTokenInFlight;
+}
+
+async function adminProxyFetch<T>(path: string, options: CmsRequestOptions = {}): Promise<T> {
+  const { token, json, timeoutMs = 12000, headers, ...init } = options;
+  const method = String(init.method || 'GET').toUpperCase();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  const url = `${ADMIN_CMS_PROXY}${normalizedPath}`;
+
+  try {
+    const reqHeaders = new Headers(headers as HeadersInit | undefined);
+    if (!reqHeaders.has('Accept')) reqHeaders.set('Accept', 'application/json');
+    if (json !== undefined && !reqHeaders.has('Content-Type')) {
+      reqHeaders.set('Content-Type', 'application/json');
+    }
+    const bearerToken = token || readAdminAccess();
+    if (bearerToken && !reqHeaders.has('Authorization')) {
+      reqHeaders.set('Authorization', `Bearer ${bearerToken}`);
+    }
+    if (MUTATING_METHODS.has(method) && !reqHeaders.has(CSRF_HEADER_NAME)) {
+      const csrf = await ensureCsrfToken();
+      if (csrf) reqHeaders.set(CSRF_HEADER_NAME, csrf);
+    }
+
+    const res = await fetch(url, {
+      ...init,
+      method,
+      credentials: 'same-origin',
+      signal: controller.signal,
+      headers: reqHeaders,
+      body: json !== undefined ? JSON.stringify(json) : init.body,
+      cache: 'no-store',
+    });
+
+    const text = await res.text();
+    let parsed: unknown = null;
+    if (text) {
+      try {
+        parsed = JSON.parse(text);
+      } catch {
+        parsed = text;
+      }
+    }
+
+    if (!res.ok) {
+      const raw =
+        parsed && typeof parsed === 'object' && 'message' in parsed
+          ? (parsed as { message: unknown }).message
+          : parsed && typeof parsed === 'object' && 'error' in parsed
+            ? (parsed as { error: unknown }).error
+            : '';
+      const message = Array.isArray(raw) ? raw.join(' · ') : String(raw || '') || `CMS ${res.status}`;
+      throw new CmsError(message, res.status, parsed);
+    }
+
+    return unwrap<T>(parsed);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 let refreshInFlight: Promise<boolean> | null = null;
+let expiringSession: Promise<void> | null = null;
 
 async function tryRefresh(): Promise<boolean> {
   if (typeof window === 'undefined') return false;
-  const refreshToken = localStorage.getItem(ADMIN_REFRESH_KEY);
-  if (!refreshToken) return false;
   if (!refreshInFlight) {
     refreshInFlight = (async () => {
       try {
-        const session = await cmsFetch<{ accessToken: string; refreshToken?: string; user?: unknown }>(
-          '/auth/refresh',
-          { method: 'POST', json: { refreshToken }, timeoutMs: 8000 },
-        );
-        if (!session.accessToken) return false;
-        persistAdminSession({
-          accessToken: session.accessToken,
-          refreshToken: session.refreshToken || refreshToken,
-          user: session.user as never,
+        const res = await fetch('/api/admin/auth/refresh', {
+          method: 'POST',
+          credentials: 'same-origin',
+          cache: 'no-store',
         });
-        return true;
+        return res.ok;
       } catch {
         return false;
       } finally {
@@ -136,21 +218,49 @@ async function tryRefresh(): Promise<boolean> {
   return refreshInFlight;
 }
 
+async function handleExpiredSession(): Promise<void> {
+  if (typeof window === 'undefined') return;
+  if (!expiringSession) {
+    expiringSession = (async () => {
+      let redirected = false;
+      try {
+        clearAdminSession();
+        clearAuthCache();
+        // Nettoie les cookies httpOnly côté serveur avant toute redirection vers
+        // /{locale}/admin, sinon /api/admin/auth/me répondrait encore 200 et
+        // relancerait une boucle infinie login ↔ dashboard.
+        await fetch('/api/admin/auth/logout', {
+          method: 'POST',
+          credentials: 'same-origin',
+          cache: 'no-store',
+        }).catch(() => {});
+        const pathname = window.location.pathname;
+        const match = pathname.match(/^\/(fr|en|ar)\/admin\/.+/);
+        if (match) {
+          redirected = true;
+          window.location.href = `/${match[1]}/admin`;
+        }
+      } finally {
+        if (!redirected) expiringSession = null;
+      }
+    })();
+  }
+  await expiringSession;
+}
+
 export async function cmsAdminFetch<T = unknown>(path: string, options: CmsRequestOptions = {}): Promise<T> {
-  const token = readAdminAccess();
+  if (typeof window === 'undefined') {
+    return cmsFetch<T>(path, { timeoutMs: 12000, ...options });
+  }
   try {
-    return await cmsFetch<T>(path, { timeoutMs: 12000, ...options, token });
+    return await adminProxyFetch<T>(path, options);
   } catch (err) {
     if (err instanceof CmsError && err.status === 401) {
       const ok = await tryRefresh();
       if (ok) {
-        return cmsFetch<T>(path, { timeoutMs: 12000, ...options, token: readAdminAccess() });
+        return adminProxyFetch<T>(path, options);
       }
-      clearAdminSession();
-      if (typeof window !== 'undefined' && !window.location.pathname.endsWith('/admin')) {
-        const locale = window.location.pathname.split('/')[1] || 'fr';
-        window.location.href = `/${locale}/admin`;
-      }
+      await handleExpiredSession();
     }
     throw err;
   }

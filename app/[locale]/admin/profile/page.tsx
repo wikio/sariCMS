@@ -3,15 +3,17 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { KeyRound, Loader2, QrCode, Save, ShieldCheck, ShieldOff } from 'lucide-react';
-import { persistAdminSession, readAdminAccess, readAdminUser, type AdminUser } from '@/lib/admin-session';
+import { readAdminUser, type AdminUser } from '@/lib/admin-session';
 import { cmsAdminFetch, cmsAdminUpdate } from '@/lib/cms-admin';
 import { CmsError } from '@/lib/cms';
+import { useAdminAuth, setAuthCache } from '@/components/admin/useAdminAuth';
 import { useToast } from '@/components/admin/Toast';
 import { useTranslations } from 'next-intl';
 
 export default function ProfilePage() {
   const params = useSearchParams();
   const edit = params.get('edit') === '1';
+  const { user: authUser } = useAdminAuth();
   const { showToast } = useToast();
   const t = useTranslations('admin.profile');
   const [user, setUser] = useState<AdminUser | null>(null);
@@ -25,24 +27,39 @@ export default function ProfilePage() {
   const [disableCode, setDisableCode] = useState('');
 
   useEffect(() => {
-    const u = readAdminUser();
-    setUser(u);
-    setDraft({
-      firstName: u?.firstName || '',
-      lastName: u?.lastName || '',
-      email: u?.email || '',
-      phone: '',
-    });
-    if (u?.totpEnabled !== undefined) setTotpEnabled(u.totpEnabled);
+    const u = authUser || readAdminUser();
+    if (u) {
+      setUser(u);
+      setDraft((prev) => ({
+        firstName: u.firstName || prev.firstName || '',
+        lastName: u.lastName || prev.lastName || '',
+        email: u.email || prev.email || '',
+        phone: prev.phone || '',
+      }));
+      if (u.totpEnabled !== undefined) setTotpEnabled(u.totpEnabled);
+    }
     refreshMe();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [authUser]);
 
   const refreshMe = async () => {
     try {
-      const me = await cmsAdminFetch<{ totpEnabled?: boolean; email?: string; firstName?: string; lastName?: string }>('/auth/me');
+      const me = await cmsAdminFetch<{ id?: string; totpEnabled?: boolean; email?: string; firstName?: string; lastName?: string; phone?: string; type?: string; role?: string }>('/auth/me');
       if (me?.totpEnabled !== undefined) setTotpEnabled(me.totpEnabled);
-      setUser((prev) => prev ? { ...prev, totpEnabled: Boolean(me.totpEnabled), ...(me.firstName ? { firstName: me.firstName } : {}) } : prev);
+      setUser((prev) => {
+        const merged: AdminUser | null = prev
+          ? { ...prev, totpEnabled: Boolean(me.totpEnabled), ...(me.firstName ? { firstName: me.firstName } : {}), ...(me.lastName ? { lastName: me.lastName } : {}), ...(me.email ? { email: me.email } : {}) }
+          : me?.email
+            ? { id: String(me.id || ''), email: me.email, firstName: me.firstName, lastName: me.lastName, type: me.type, role: me.role, totpEnabled: Boolean(me.totpEnabled) }
+            : null;
+        return merged;
+      });
+      setDraft((prev) => ({
+        firstName: me?.firstName ?? prev.firstName,
+        lastName: me?.lastName ?? prev.lastName,
+        email: me?.email ?? prev.email,
+        phone: me?.phone ?? prev.phone,
+      }));
     } catch {
       /* API hors ligne */
     }
@@ -50,14 +67,14 @@ export default function ProfilePage() {
 
   const save = async () => {
     if (!user) return;
+    const updated = { ...user, ...draft };
     try {
       await cmsAdminUpdate('users', user.id, draft);
-      persistAdminSession({ accessToken: readAdminAccess() || '', user: { ...user, ...draft } });
-      setUser({ ...user, ...draft });
+      setAuthCache(updated);
+      setUser(updated);
       showToast('Profil mis à jour', 'success');
     } catch {
-      persistAdminSession({ accessToken: readAdminAccess() || '', user: { ...user, ...draft } });
-      setUser({ ...user, ...draft });
+      setUser(updated);
       showToast('Profil enregistré localement', 'info');
     }
   };

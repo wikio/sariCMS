@@ -66,8 +66,9 @@ export function loadApplications(): Application[] {
 }
 
 export function saveApplications(rows: Application[]) {
+  const prevRaw = typeof window !== 'undefined' ? localStorage.getItem(APPS_KEY) : null;
   localStorage.setItem(APPS_KEY, JSON.stringify(rows));
-  void import('@/lib/crm-sync').then((m) => m.pushCollection('applications', rows)).catch(() => {});
+  void import('@/lib/crm-sync').then((m) => m.pushCollection('applications', rows, prevRaw)).catch(() => {});
 }
 
 export function statusRank(status: ApplicationStatus): number {

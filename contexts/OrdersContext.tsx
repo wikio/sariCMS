@@ -2,6 +2,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { usePathname } from 'next/navigation';
 import { useAuth, frontToken } from './AuthContext';
 import { cmsFetch } from '@/lib/cms';
 import { nextCodeFor } from '@/lib/codes';
@@ -67,6 +68,8 @@ const OrdersContext = createContext<OrdersContextType | undefined>(undefined);
 export function OrdersProvider({ children }: { children: ReactNode }) {
   const [orders, setOrders] = useState<Order[]>([]);
   const { user } = useAuth();
+  const pathname = usePathname();
+  const isAdminRoute = Boolean(pathname && /^\/(fr|en|ar)\/admin(\/|$)/.test(pathname));
 
   // Stockage séparé : sari_orders_ctx pour l'espace client, sari_orders reste la source admin (crm-store)
   const CTX_KEY = 'sari_orders_ctx';
@@ -117,25 +120,12 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // Synchronise les commandes/devis locaux vers MySQL au montage (remplit la table `orders` vide après passage en public)
-  useEffect(() => {
-    try {
-      const crmOrders = loadCrmOrders();
-      if (crmOrders.length) {
-        void import('@/lib/crm-sync').then((m) => m.pushCollection('orders', crmOrders as any)).catch(() => {});
-      }
-      const crmQuotes = loadCrmQuotes();
-      if (crmQuotes.length) {
-        void import('@/lib/crm-sync').then((m) => m.pushCollection('quotes', crmQuotes as any)).catch(() => {});
-      }
-    } catch {}
-  }, []);
-
-  // Association vitrine ↔ BD : charge les commandes/devis du client depuis MySQL (si connecté)
+  // Association vitrine ↔ BD : charge les commandes/devis du client depuis MySQL (si connecté
+  // sur la vitrine — jamais sur /admin où le back-office synchronise via AdminLayout.pullAll()).
   // - Si un JWT vitrine existe (frontToken), on l'envoie -> le backend résout actor via JwtAuthGuard optionnel
   // - Sinon fallback public par email (démo client@sari.dz sans token) -> query ?email=
   useEffect(() => {
-    if (!user?.id && !user?.email) return;
+    if (isAdminRoute || (!user?.id && !user?.email)) return;
     let cancelled = false;
     const fetchMy = async () => {
       try {
@@ -281,7 +271,7 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
     };
     void fetchMy();
     return () => { cancelled = true; };
-  }, [user?.id, user?.email]);
+  }, [isAdminRoute, user?.id, user?.email]);
 
   const addOrder = (orderData: Omit<Order, 'id' | 'createdAt' | 'code'> & { code?: string }): Order => {
     // Génère un code formaté SARI-WCMD{XX}-{ID} via lib/codes si non fourni, basé sur les commandes existantes

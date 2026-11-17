@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useLocale } from 'next-intl';
+import { clearAdminSession } from '@/lib/admin-session';
 
 const DEBUG = false;
 const log = (...args: unknown[]) => DEBUG && console.log('[useAdminAuth]', ...args);
@@ -26,15 +27,13 @@ export function useAdminAuth() {
   const router = useRouter();
   const pathname = usePathname();
   const locale = useLocale();
+  // Calculé de façon synchrone (sans décalage useState/useEffect) : évite qu'au
+  // premier rendu de /{locale}/admin le layout monte le shell back-office,
+  // déclenche un appel /api/admin/auth/me inutile, puis démonte/remonte la page
+  // de connexion et son captcha au rendu suivant.
+  const isLoginPage = pathname === `/${locale}/admin` || pathname === `/${locale}/admin/`;
   const [user, setUser] = useState<AdminUser | null>(cachedUser);
-  const [loading, setLoading] = useState(!cachedUser);
-  const [isLoginPage, setIsLoginPage] = useState(false);
-
-  useEffect(() => {
-    const isLogin = pathname === `/${locale}/admin` || pathname === `/${locale}/admin/`;
-    log('Pathname changed:', { pathname, isLogin });
-    setIsLoginPage(isLogin);
-  }, [pathname, locale]);
+  const [loading, setLoading] = useState(!isLoginPage && !cachedUser);
 
   useEffect(() => {
     if (isLoginPage) {
@@ -43,21 +42,26 @@ export function useAdminAuth() {
       return;
     }
 
+    let cancelled = false;
     const checkAuth = async () => {
       log('Checking auth, cachedUser:', cachedUser);
       if (cachedUser) {
         log('Using cached user');
-        setUser(cachedUser);
-        setLoading(false);
+        if (!cancelled) {
+          setUser(cachedUser);
+          setLoading(false);
+        }
         return;
       }
 
       if (authCheckPromise) {
         log('Waiting for existing auth check');
-        const user = await authCheckPromise;
-        setUser(user);
-        cachedUser = user;
-        setLoading(false);
+        const resolved = await authCheckPromise;
+        if (!cancelled) {
+          setUser(resolved);
+          cachedUser = resolved;
+          setLoading(false);
+        }
         return;
       }
 
@@ -92,17 +96,22 @@ export function useAdminAuth() {
         return null;
       })();
 
-      const user = await authCheckPromise;
-      log('Auth check result:', user);
-      setUser(user);
-      cachedUser = user;
+      const resolved = await authCheckPromise;
+      log('Auth check result:', resolved);
+      cachedUser = resolved;
       // Ne pas garder en cache un échec : après un login réussi, le prochain
       // contrôle doit refaire un appel /me au lieu de rejouer le 401 précédent.
-      if (!user) authCheckPromise = null;
-      setLoading(false);
+      if (!resolved) authCheckPromise = null;
+      if (!cancelled) {
+        setUser(resolved);
+        setLoading(false);
+      }
     };
 
-    checkAuth();
+    void checkAuth();
+    return () => {
+      cancelled = true;
+    };
   }, [isLoginPage, locale, pathname]);
 
   const logout = async () => {
@@ -112,6 +121,7 @@ export function useAdminAuth() {
     } catch (err) {
       logError('Logout error:', err);
     }
+    clearAdminSession();
     cachedUser = null;
     authCheckPromise = null;
     setUser(null);

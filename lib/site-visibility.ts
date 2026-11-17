@@ -216,10 +216,6 @@ export function isEnabled(key: string): boolean {
 
 /* ------------------------------------------------------------------- API */
 
-const API_BASE = (
-  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'
-).replace(/\/$/, '');
-
 /**
  * Réglages d'une langue, lus depuis l'API.
  *
@@ -228,37 +224,14 @@ const API_BASE = (
  * réexporte ici par commodité pour le code client.
  */
 import { fetchVisibility } from './visibility-server';
+import { cmsAdminFetch } from './cms-admin';
 
 export { fetchVisibility };
 
 /* ------------------------------------------------------------- mutations */
 
-/** Jeton d'administration, posé par le contexte d'authentification. */
-function adminToken(): string {
-  if (typeof window === 'undefined') return '';
-  try {
-    return localStorage.getItem('sari_admin_access') || '';
-  } catch {
-    return '';
-  }
-}
-
 async function push(locale: string, path: string, body: unknown, method = 'POST') {
-  const res = await fetch(`${API_BASE}${path}`, {
-    method,
-    headers: {
-      'content-type': 'application/json',
-      accept: 'application/json',
-      ...(adminToken() ? { authorization: `Bearer ${adminToken()}` } : {}),
-    },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) {
-    const detail = await res.json().catch(() => ({}));
-    throw new Error(detail?.message || `HTTP ${res.status}`);
-  }
-  const payload = await res.json().catch(() => ({}));
-  const value = payload?.data ?? payload;
+  const value = await cmsAdminFetch<unknown>(path, { method, json: body, timeoutMs: 10000 });
   if (value && typeof value === 'object' && !Array.isArray(value)) {
     primeVisibility(locale, value as Record<string, boolean>);
   }
@@ -286,35 +259,20 @@ export async function setVisibilityGroup(locale: string, groupKey: string, on: b
 
 /** Rétablit les valeurs par défaut pour UNE langue. */
 export async function resetVisibility(locale: string) {
-  const res = await fetch(`${API_BASE}/visibility/${encodeURIComponent(locale)}`, {
-    method: 'DELETE',
-    headers: {
-      accept: 'application/json',
-      ...(adminToken() ? { authorization: `Bearer ${adminToken()}` } : {}),
-    },
-  });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  await cmsAdminFetch(`/visibility/${encodeURIComponent(locale)}`, { method: 'DELETE', timeoutMs: 10000 });
   primeVisibility(locale, {});
   notify();
 }
 
 /** Copie les réglages d'une langue vers les autres. */
 export async function copyVisibility(from: string, to?: string[]) {
-  const res = await fetch(`${API_BASE}/visibility/copy/all`, {
+  const res = await cmsAdminFetch<unknown>('/visibility/copy/all', {
     method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      accept: 'application/json',
-      ...(adminToken() ? { authorization: `Bearer ${adminToken()}` } : {}),
-    },
-    body: JSON.stringify({ from, ...(to?.length ? { to } : {}) }),
+    json: { from, ...(to?.length ? { to } : {}) },
+    timeoutMs: 10000,
   });
-  if (!res.ok) {
-    const detail = await res.json().catch(() => ({}));
-    throw new Error(detail?.message || `HTTP ${res.status}`);
-  }
   notify();
-  return res.json().catch(() => ({}));
+  return res ?? {};
 }
 
 /** Réglages de toutes les langues, pour l'écran d'administration. */

@@ -51,7 +51,7 @@ function headers(): HeadersInit {
 }
 
 async function send<T>(url: string, init: RequestInit): Promise<T> {
-  const res = await fetch(url, { ...init, cache: 'no-store' });
+  const res = await fetch(url, { credentials: 'same-origin', ...init, cache: 'no-store' });
   const payload = await res.json().catch(() => null);
   if (!res.ok) {
     throw new Error((payload as { message?: string; error?: string } | null)?.message
@@ -159,6 +159,7 @@ export async function downloadSubscribersCsv(filters: SubscriberFilters = {}, id
   const token = readAdminAccess();
   const selection = ids && ids.length ? `&ids=${ids.join(',')}` : '';
   const res = await fetch(`/api/admin/newsletter?action=export${queryFrom(filters).replace(/^\?/, '&')}${selection}`, {
+    credentials: 'same-origin',
     headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
   });
   if (!res.ok) throw new Error('Export impossible');

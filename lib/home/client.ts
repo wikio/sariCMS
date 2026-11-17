@@ -44,6 +44,7 @@ function headers(): HeadersInit {
 export async function fetchHome(locale: string): Promise<HomeSnapshot> {
   const res = await fetch(`/api/admin/home?locale=${encodeURIComponent(locale)}`, {
     headers: headers(),
+    credentials: 'same-origin',
     cache: 'no-store',
   });
   return json<HomeSnapshot>(res);
@@ -57,13 +58,19 @@ export async function saveHomeSection(input: {
   const res = await fetch('/api/admin/home', {
     method: 'PUT',
     headers: headers(),
+    credentials: 'same-origin',
     body: JSON.stringify(input),
   });
   return json(res);
 }
 
 export async function homeAction(body: Record<string, unknown>): Promise<Record<string, unknown>> {
-  const res = await fetch('/api/admin/home', { method: 'POST', headers: headers(), body: JSON.stringify(body) });
+  const res = await fetch('/api/admin/home', {
+    method: 'POST',
+    headers: headers(),
+    credentials: 'same-origin',
+    body: JSON.stringify(body),
+  });
   return json(res);
 }
 
@@ -92,6 +99,7 @@ export async function importHomeLegacy(input: {
   const res = await fetch('/api/admin/home', {
     method: 'POST',
     headers: headers(),
+    credentials: 'same-origin',
     body: JSON.stringify({ action: 'import', ...input }),
   });
   return json(res);
@@ -112,6 +120,7 @@ export async function fetchHomeOptions(resource: HomeOptionResource, locale: str
   if (hit && Date.now() - hit.at < 30_000) return hit.options;
   const res = await fetch(`/api/admin/home/options?resource=${resource}&locale=${encodeURIComponent(locale)}`, {
     headers: headers(),
+    credentials: 'same-origin',
     cache: 'no-store',
   });
   const payload = await json<{ options?: HomeOption[] }>(res);

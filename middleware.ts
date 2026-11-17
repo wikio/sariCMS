@@ -100,19 +100,21 @@ function getUserAgent(request: NextRequest): string {
 }
 
 const RATE_LIMIT_WINDOW_MS = 60_000;
-const RATE_LIMIT_MAX_REQUESTS = 100;
+const IS_DEV = process.env.NODE_ENV !== 'production';
+const RATE_LIMIT_PUBLIC_MAX = Number(process.env.API_RATE_LIMIT_MAX || (IS_DEV ? 1000 : 300));
+const RATE_LIMIT_ADMIN_MAX = Number(process.env.API_ADMIN_RATE_LIMIT_MAX || (IS_DEV ? 2000 : 600));
 const rateLimitMap = new Map<string, { count: number; windowStart: number }>();
 
-function checkRateLimit(ip: string): boolean {
+function checkRateLimit(key: string, maxRequests: number): boolean {
   const now = Date.now();
-  const entry = rateLimitMap.get(ip);
+  const entry = rateLimitMap.get(key);
   if (!entry || now - entry.windowStart > RATE_LIMIT_WINDOW_MS) {
-    rateLimitMap.set(ip, { count: 1, windowStart: now });
+    rateLimitMap.set(key, { count: 1, windowStart: now });
     if (rateLimitMap.size > 10000) rateLimitMap.clear();
     return false;
   }
   entry.count += 1;
-  return entry.count > RATE_LIMIT_MAX_REQUESTS;
+  return entry.count > maxRequests;
 }
 
 export default async function middleware(request: NextRequest) {
@@ -169,11 +171,16 @@ export default async function middleware(request: NextRequest) {
     }
   }
 
-  // Rate limiting global sur API
+  // Rate limiting global sur API (seaux séparés admin authentifié vs public,
+  // les endpoints sensibles disposant en plus de leurs propres limites strictes).
   if (pathname.startsWith('/api')) {
-    if (checkRateLimit(ip)) {
+    const isAuthenticatedAdmin =
+      isAdminApiRoute(pathname) && !isPublicAdminApi(pathname) && Boolean(request.cookies.get('sari_admin_access')?.value);
+    const bucket = isAuthenticatedAdmin ? 'admin' : 'public';
+    const limit = isAuthenticatedAdmin ? RATE_LIMIT_ADMIN_MAX : RATE_LIMIT_PUBLIC_MAX;
+    if (checkRateLimit(`${bucket}:${ip}`, limit)) {
       // Log rate limit
-      auditLog.rateLimited({ ip, path: pathname, ua, limit: RATE_LIMIT_MAX_REQUESTS }).catch(() => {});
+      auditLog.rateLimited({ ip, path: pathname, ua, limit }).catch(() => {});
       return finalize(
         request,
         new NextResponse(JSON.stringify({ error: 'Trop de requêtes', code: 'RATE_LIMITED' }), {

@@ -62,9 +62,13 @@ export async function GET(req: NextRequest) {
     }
   } catch (e) {
     const err = e as { status?: number; message?: string };
-    log('Backend /auth/me failed, fallback to local JWT', err?.status, err?.message);
-    // Si 401 backend → token invalide, on tente quand même le fallback local
-    // avant de renvoyer 401 définitif
+    log('Backend /auth/me failed', err?.status, err?.message);
+    // Si le backend est joignable et rejette explicitement le jeton (401),
+    // ne pas masquer le refus par le fallback local : le client rafraîchira
+    // la session (/api/admin/auth/refresh) ou reviendra proprement au login.
+    if (err?.status === 401) {
+      return NextResponse.json({ error: 'Token invalide ou expiré', code: 'INVALID_TOKEN' }, { status: 401 });
+    }
   }
 
   // 2) Fallback vérification locale

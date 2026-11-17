@@ -407,9 +407,10 @@ function backfillOrderCodes(orders: Order[]): Order[] {
 }
 
 export function saveOrders(orders: Order[]) {
+  const prevRaw = typeof window !== 'undefined' ? localStorage.getItem(ORDERS_KEY) : null;
   localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
   // Réplication vers la base (asynchrone, sans bloquer l'appelant).
-  void import('@/lib/crm-sync').then((m) => m.pushCollection('orders', orders)).catch(() => {});
+  void import('@/lib/crm-sync').then((m) => m.pushCollection('orders', orders, prevRaw)).catch(() => {});
 }
 
 export function loadQuotes(): Quote[] {
@@ -479,8 +480,9 @@ function backfillQuoteReferences(quotes: Quote[]): Quote[] {
 }
 
 export function saveQuotes(quotes: Quote[]) {
+  const prevRaw = typeof window !== 'undefined' ? localStorage.getItem(QUOTES_KEY) : null;
   localStorage.setItem(QUOTES_KEY, JSON.stringify(quotes));
-  void import('@/lib/crm-sync').then((m) => m.pushCollection('quotes', quotes)).catch(() => {});
+  void import('@/lib/crm-sync').then((m) => m.pushCollection('quotes', quotes, prevRaw)).catch(() => {});
 }
 
 export function orderRevenue(orders: Order[]) {

@@ -11,6 +11,23 @@ import { cmsFetch, CmsError } from '@/lib/cms';
 import { clearAuthCache, setAuthCache, type AdminUser } from '@/components/admin/useAdminAuth';
 import { loadAdminSettings } from '@/lib/admin-settings';
 
+let loginMeCheckInFlight: Promise<{ user?: AdminUser & { type?: string } } | null> | null = null;
+
+function checkExistingAdminSession(): Promise<{ user?: AdminUser & { type?: string } } | null> {
+  if (!loginMeCheckInFlight) {
+    loginMeCheckInFlight = fetch('/api/admin/auth/me', { credentials: 'same-origin', cache: 'no-store' })
+      .then((res) => (res.ok ? res.json() : null))
+      .catch(() => null)
+      .finally(() => {
+        // Laisse un court répit pour dédupliquer le double-montage React StrictMode
+        setTimeout(() => {
+          loginMeCheckInFlight = null;
+        }, 500);
+      });
+  }
+  return loginMeCheckInFlight;
+}
+
 export default function AdminLoginPage() {
   const { brand } = useAdminBrand();
   const router = useRouter();
@@ -28,17 +45,17 @@ export default function AdminLoginPage() {
   const [captchaData, setCaptchaData] = useState<{ id: string; value: string } | null>(null);
 
   useEffect(() => {
-    fetch('/api/admin/auth/me', { credentials: 'same-origin', cache: 'no-store' })
-      .then(res => {
-        if (res.ok) return res.json();
-        return null;
-      })
-      .then(data => {
-        if (data?.user?.type === 'admin') {
-          router.replace(`/${locale}/admin/dashboard`);
-        }
-      })
-      .catch(() => {});
+    let cancelled = false;
+    checkExistingAdminSession().then((data) => {
+      if (cancelled) return;
+      if (data?.user?.type === 'admin') {
+        setAuthCache(data.user);
+        router.replace(`/${locale}/admin/dashboard`);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [router, locale]);
 
   useEffect(() => {
