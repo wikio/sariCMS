@@ -28,6 +28,7 @@ import {
 import { CmsError } from '@/lib/cms';
 import { userRecordHref } from '@/lib/user-links';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 export type CrudVariant =
   | 'catalog'
@@ -797,6 +798,15 @@ function SmartGrid({
   setInline: (v: { id: string; field: string; value: string } | null) => void;
   persistInline: () => void;
 }) {
+  const tCommon = useTranslations('admin.common');
+  const statusLabel = (s: string) => {
+    if (s === 'published') return tCommon('statusPublished');
+    if (s === 'draft') return tCommon('statusDraft');
+    if (s === 'archived') return tCommon('statusArchived');
+    if (s === 'active') return tCommon('active');
+    if (s === 'inactive') return tCommon('inactive');
+    return s;
+  };
   const card = (row: Record<string, unknown>) => {
     const img = cfg.imageField ? String(row[cfg.imageField] || '') : '';
     const title = titleOf(row, cfg);
@@ -827,7 +837,7 @@ function SmartGrid({
               )}
               {sub && <p className="text-xs mt-1" style={{ color: 'var(--ad-muted)' }}>{sub}</p>}
             </div>
-            {status && <span className={`ad-chip ${status === 'published' || status === 'active' ? 'ad-chip-ok' : 'ad-chip-warn'}`}>{status}</span>}
+            {status && <span className={`ad-chip ${status === 'published' || status === 'active' ? 'ad-chip-ok' : 'ad-chip-warn'}`}>{statusLabel(status)}</span>}
           </div>
           {cfg.variant === 'quotes' && <p className="text-sm italic line-clamp-3">“{String(row.text || '')}”</p>}
           {cfg.variant === 'jobs' && (
@@ -837,8 +847,8 @@ function SmartGrid({
             </div>
           )}
           <div className="flex gap-1 pt-2">
-            <button className="ad-btn ad-btn-ghost ad-btn-icon" onClick={() => onEdit(row)} title="Éditer"><Pencil className="w-4 h-4" /></button>
-            <button className="ad-btn ad-btn-ghost ad-btn-icon" onClick={() => onEdit(row)} title="Voir"><Eye className="w-4 h-4" /></button>
+            <button className="ad-btn ad-btn-ghost ad-btn-icon" onClick={() => onEdit(row)} title={tCommon('editBtn')}><Pencil className="w-4 h-4" /></button>
+            <button className="ad-btn ad-btn-ghost ad-btn-icon" onClick={() => onEdit(row)} title={tCommon('consult')}><Eye className="w-4 h-4" /></button>
             <button className="ad-btn ad-btn-danger ad-btn-icon ml-auto" onClick={() => onDelete(String(row.id))}><Trash2 className="w-4 h-4" /></button>
           </div>
         </div>

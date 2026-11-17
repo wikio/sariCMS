@@ -22,17 +22,17 @@ import AuthorPicker from '@/components/admin/fields/AuthorPicker';
 import { activeCurrencies, defaultCurrency, FALLBACK_CURRENCY, loadCurrencies, saveCurrencies, type Currency } from '@/lib/currencies';
 import { useAdminLabels } from '@/lib/admin-labels';
 import { COLOR_PRESETS, resolveColor } from '@/lib/colors';
-import { useMessages, useTranslations } from 'next-intl';
+import { useLocale, useMessages, useTranslations } from 'next-intl';
 
 /** Vérifie silencieusement si une clé de traduction existe dans un namespace */
-function resolveOptionTranslation(messages: Record<string, any>, locale: string, value: string): string | null {
-  const key = `option_${value}`;
-  // Navigate: messages.admin.editor.option_XXX
+function resolveOptionTranslation(messages: Record<string, any>, fieldKey: string, value: string): string | null {
   try {
     const editor = messages?.admin?.editor;
-    if (editor && typeof editor === 'object' && key in editor) {
-      const val = editor[key];
-      if (typeof val === 'string' && val.length > 0) return val;
+    if (editor && typeof editor === 'object') {
+      const specific = `option_${fieldKey}_${value}`;
+      if (typeof editor[specific] === 'string' && editor[specific].length > 0) return editor[specific];
+      const generic = `option_${value}`;
+      if (typeof editor[generic] === 'string' && editor[generic].length > 0) return editor[generic];
     }
   } catch {
     // Silently ignore
@@ -66,7 +66,7 @@ export function FieldShell({ spec, value, origin, originLocale, moduleKey, child
       {children}
       {resolvedHint && <p className="text-[11px] leading-snug" style={{ color: 'var(--ad-muted)' }}>{resolvedHint}</p>}
       {originText && (
-        <p className="ad-origin">{t('origin')} ({(originLocale || 'défaut').toUpperCase()}) : {originText.replace(/<[^>]+>/g, ' ').slice(0, 280)}</p>
+        <p className="ad-origin">{t('origin')} ({(originLocale || t('defaultLocale')).toUpperCase()}) : {originText.replace(/<[^>]+>/g, ' ').slice(0, 280)}</p>
       )}
     </div>
   );
@@ -98,7 +98,7 @@ export function renderField(
   );
   switch (spec.kind) {
     case 'html':
-      return wrap(<HtmlEditor value={String(value || '')} onChange={onChange} placeholder={ph || 'Rédigez le contenu détaillé…'} />);
+      return wrap(<HtmlEditor value={String(value || '')} onChange={onChange} placeholder={ph || t('contentPlaceholder')} />);
     case 'slug': {
       // Utiliser valueOf pour récupérer le titre traduit, sinon fallback sur record
       const titleValue = extra.valueOf 
@@ -108,7 +108,7 @@ export function renderField(
       return wrap(
         <div className="flex gap-2">
           <span className="ad-input !w-auto flex items-center text-xs" style={{ color: 'var(--ad-muted)' }}>/</span>
-          <input className="ad-input font-mono" value={String(value || '')} placeholder={ph || 'url-de-la-fiche'} onChange={(e) => onChange(e.target.value)} />
+          <input className="ad-input font-mono" value={String(value || '')} placeholder={ph || t('slugPlaceholder')} onChange={(e) => onChange(e.target.value)} />
           <button type="button" className="ad-btn ad-btn-ghost" onClick={() => onChange(slugify(titleValue))}>{t('auto')}</button>
         </div>,
       );
@@ -117,7 +117,7 @@ export function renderField(
       return wrap(
         <div className="ad-search">
           <Mail className="ad-search-ico w-4 h-4" style={{ color: 'var(--ad-accent)' }} />
-          <input className="ad-input" type="email" placeholder={ph || 'contact@exemple.com'} value={String(value || '')} onChange={(e) => onChange(e.target.value)} />
+          <input className="ad-input" type="email" placeholder={ph || t('emailPlaceholder')} value={String(value || '')} onChange={(e) => onChange(e.target.value)} />
         </div>,
       );
     case 'phone':
@@ -187,7 +187,7 @@ export function renderField(
     case 'list':
       return wrap(<ListEditor value={asStringArray(value)} onChange={onChange} />);
     case 'tags':
-      return wrap(<ListEditor value={asStringArray(value)} onChange={onChange} placeholder="Tag" />);
+      return wrap(<ListEditor value={asStringArray(value)} onChange={onChange} placeholder={t("tagPlaceholder")} />);
     case 'specs':
       return wrap(<SpecsEditor value={asRecord(value)} onChange={onChange} />);
     case 'options':
@@ -240,6 +240,8 @@ export function renderField(
 }
 
 function TaxonomySelect({ spec, value, onChange, locale }: { spec: FieldSpec; value: string; onChange: (v: string) => void; locale?: string }) {
+  const uiLocale = useLocale();
+  const activeLocale = (uiLocale || locale || 'fr') as 'fr' | 'en' | 'ar';
   const t = useTranslations('admin.editor');
   const messages = useMessages() as Record<string, any>;
   const [open, setOpen] = useState(false);
@@ -290,8 +292,8 @@ function TaxonomySelect({ spec, value, onChange, locale }: { spec: FieldSpec; va
   }, [open]);
 
   const options = useMemo(() => {
-    // Les libellés sont résolus selon la langue de la fiche éditée.
-    const tax = spec.taxonomy ? listTaxonomy(spec.taxonomy, locale) : [];
+    // Les libellés sont résolus selon la langue active de l'interface admin.
+    const tax = spec.taxonomy ? listTaxonomy(spec.taxonomy, activeLocale) : [];
     const base = [...(spec.options || [])];
     
     // Traduire les options selon la locale (silencieux si clé absente)
@@ -299,12 +301,11 @@ function TaxonomySelect({ spec, value, onChange, locale }: { spec: FieldSpec; va
       // 1. Essayer depuis les traductions de taxonomie (localStorage)
       const taxTerm = tax.find(t => t.value === opt.value);
       if (taxTerm?.translations) {
-        const l = (locale || 'fr') as 'fr' | 'en' | 'ar';
-        const fromTax = taxTerm.translations[l];
+        const fromTax = taxTerm.translations[activeLocale];
         if (fromTax) return { ...opt, label: fromTax };
       }
       // 2. Fallback: clés option_ dans messages JSON
-      const translatedLabel = resolveOptionTranslation(messages, locale || 'fr', opt.value);
+      const translatedLabel = resolveOptionTranslation(messages, spec.key, opt.value);
       if (translatedLabel) return { ...opt, label: translatedLabel };
       return opt;
     });
@@ -312,13 +313,12 @@ function TaxonomySelect({ spec, value, onChange, locale }: { spec: FieldSpec; va
     for (const taxItem of tax) {
       if (!translatedBase.some((o) => o.value === taxItem.value)) {
         // Utiliser les traductions localStorage de la taxonomie
-        const l = (locale || 'fr') as 'fr' | 'en' | 'ar';
-        const fromTax = taxItem.translations?.[l];
+        const fromTax = taxItem.translations?.[activeLocale];
         if (fromTax) {
           translatedBase.push({ ...taxItem, label: fromTax });
         } else {
           // Fallback: clés option_ dans messages JSON
-          const taxTranslated = resolveOptionTranslation(messages, locale || 'fr', taxItem.value);
+          const taxTranslated = resolveOptionTranslation(messages, spec.key, taxItem.value);
           if (taxTranslated) {
             translatedBase.push({ ...taxItem, label: taxTranslated });
           } else {
@@ -329,7 +329,7 @@ function TaxonomySelect({ spec, value, onChange, locale }: { spec: FieldSpec; va
     }
     return translatedBase;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [spec.options, spec.taxonomy, tick, locale, t, messages]);
+  }, [spec.key, spec.options, spec.taxonomy, tick, activeLocale, t, messages]);
 
   const filtered = options.filter((o) => {
     const blob = `${o.label} ${o.value}`.toLowerCase();
@@ -509,15 +509,15 @@ function PriceInner({ value, onChange, placeholder }: { value: string; onChange:
             </button>
           ))}
           <button type="button" className="ad-price-chip is-add" onClick={() => setAdding((v) => !v)}>
-            <Plus className="w-3.5 h-3.5" /> Ajouter
+            <Plus className="w-3.5 h-3.5" /> {t("currencyAdd")}
           </button>
         </div>
         {adding && (
           <div className="ad-card p-3 space-y-2 mt-2">
             <div className="grid grid-cols-3 gap-2">
               <input className="ad-input" placeholder={t("code")} value={draft.code} onChange={(e) => setDraft({ ...draft, code: e.target.value })} />
-              <input className="ad-input" placeholder="Symbole" value={draft.symbol} onChange={(e) => setDraft({ ...draft, symbol: e.target.value })} />
-              <input className="ad-input" placeholder="Nom" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
+              <input className="ad-input" placeholder={t("currencySymbol")} value={draft.symbol} onChange={(e) => setDraft({ ...draft, symbol: e.target.value })} />
+              <input className="ad-input" placeholder={t("currencyName")} value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
             </div>
             <div className="flex gap-2 justify-end">
               <button type="button" className="ad-btn ad-btn-ghost" onClick={() => { setAdding(false); setDraft({ code: '', symbol: '', name: '' }); }}>{t('cancel')}</button>
@@ -956,37 +956,38 @@ function SpecsEditor({ value, onChange }: { value: Record<string, string>; onCha
       )}
       {entries.map(([k, v], i) => (
         <div key={i} className="grid grid-cols-2 gap-2">
-          <input className="ad-input" placeholder="Caractéristique" value={k} onChange={(e) => {
+          <input className="ad-input" placeholder={t("specKeyPlaceholder")} value={k} onChange={(e) => {
             const n = [...entries]; n[i] = [e.target.value, v]; set(n);
           }} />
           <div className="flex gap-2">
-            <input className="ad-input" placeholder="Valeur" value={v} onChange={(e) => {
+            <input className="ad-input" placeholder={t("specValuePlaceholder")} value={v} onChange={(e) => {
               const n = [...entries]; n[i] = [k, e.target.value]; set(n);
             }} />
             <button type="button" className="ad-btn ad-btn-icon ad-btn-danger" onClick={() => set(entries.filter((_, j) => j !== i))}><Trash2 className="w-4 h-4" /></button>
           </div>
         </div>
       ))}
-      <button type="button" className="ad-btn ad-btn-ghost" onClick={() => set([...entries, ['', '']])}><Plus className="w-4 h-4" /> Ligne</button>
+      <button type="button" className="ad-btn ad-btn-ghost" onClick={() => set([...entries, ['', '']])}><Plus className="w-4 h-4" /> {t("specAddRow")}</button>
     </div>
   );
 }
 
 function OptionsEditor({ value, onChange }: { value: Array<{ name: string; choices: string[]; prices?: Record<string, number>; skus?: Record<string, string> }>; onChange: (v: Array<{ name: string; choices: string[]; prices?: Record<string, number>; skus?: Record<string, string> }>) => void }) {
+  const t = useTranslations('admin.editor');
   return (
     <div className="space-y-3">
       {value.map((opt, i) => (
         <div key={i} className="ad-card p-3 space-y-3 border-2">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-black uppercase tracking-widest" style={{color:'var(--ad-muted)'}}>Type / Variante {i+1}</span>
-            <span className="ml-auto text-[11px] px-2 py-1 rounded-full bg-sari-blue/10 text-sari-blue font-bold">Séparé par variante dans le panier</span>
+            <span className="text-xs font-black uppercase tracking-widest" style={{color:'var(--ad-muted)'}}>{t("variantTypeN", { n: i + 1 })}</span>
+            <span className="ml-auto text-[11px] px-2 py-1 rounded-full bg-sari-blue/10 text-sari-blue font-bold">{t("variantCartBadge")}</span>
           </div>
-          <input className="ad-input font-bold" placeholder="Nom du type (ex. Taille, Couleur, Modèle, Sous-catégorie)" value={opt.name} onChange={(e) => onChange(value.map((v, j) => (j === i ? { ...v, name: e.target.value } : v)))} />
+          <input className="ad-input font-bold" placeholder={t("variantNamePlaceholder")} value={opt.name} onChange={(e) => onChange(value.map((v, j) => (j === i ? { ...v, name: e.target.value } : v)))} />
           <div className="space-y-2">
-            <div className="text-xs font-bold flex items-center gap-2"><span>Choix / Sous-catégories</span><span className="text-[11px] font-normal opacity-60">— chaque choix peut avoir son prix</span></div>
+            <div className="text-xs font-bold flex items-center gap-2"><span>{t("variantChoicesHeading")}</span><span className="text-[11px] font-normal opacity-60">{t("variantChoicesPriceHint")}</span></div>
             {(opt.choices || []).map((choice, ci) => (
               <div key={ci} className="grid grid-cols-12 gap-2 items-center">
-                <input className="ad-input col-span-5" placeholder="Valeur (ex. M, Rouge, 15W)" value={choice} onChange={(e) => {
+                <input className="ad-input col-span-5" placeholder={t("variantChoiceValuePlaceholder")} value={choice} onChange={(e) => {
                   const newChoices = [...(opt.choices||[])];
                   const oldVal = newChoices[ci];
                   newChoices[ci] = e.target.value;
@@ -1000,14 +1001,14 @@ function OptionsEditor({ value, onChange }: { value: Array<{ name: string; choic
                 }} />
                 <div className="col-span-3 flex items-center gap-1">
                   <span className="text-xs opacity-60">DA</span>
-                  <input className="ad-input" type="number" placeholder="Prix" value={opt.prices?.[choice] ?? ''} onChange={(e)=>{
+                  <input className="ad-input" type="number" placeholder={t("variantPricePlaceholder")} value={opt.prices?.[choice] ?? ''} onChange={(e)=>{
                     const newPrices = {...(opt.prices||{})};
                     const val = e.target.value;
                     if (val==='' ) delete newPrices[choice]; else newPrices[choice]=Number(val);
                     onChange(value.map((v,j)=> j===i ? {...v, prices: newPrices} : v));
                   }} />
                 </div>
-                <input className="ad-input col-span-3 font-mono text-xs" placeholder="SKU suffix" value={opt.skus?.[choice] ?? ''} onChange={(e)=>{
+                <input className="ad-input col-span-3 font-mono text-xs" placeholder={t("variantSkuSuffixPlaceholder")} value={opt.skus?.[choice] ?? ''} onChange={(e)=>{
                   const newSkus = {...(opt.skus||{})};
                   if (e.target.value==='') delete newSkus[choice]; else newSkus[choice]=e.target.value;
                   onChange(value.map((v,j)=> j===i ? {...v, skus: newSkus} : v));
@@ -1021,15 +1022,15 @@ function OptionsEditor({ value, onChange }: { value: Array<{ name: string; choic
               </div>
             ))}
             <button type="button" className="ad-btn ad-btn-ghost text-xs" onClick={()=>{
-              const newChoice = `Choix ${(opt.choices||[]).length+1}`;
+              const newChoice = t("variantDefaultChoice", { n: (opt.choices||[]).length+1 });
               onChange(value.map((v,j)=> j===i ? {...v, choices:[...(v.choices||[]), newChoice]} : v));
-            }}><Plus className="w-3 h-3"/> Ajouter un choix</button>
+            }}><Plus className="w-3 h-3"/> {t("variantAddChoice")}</button>
           </div>
-          <button type="button" className="ad-btn ad-btn-danger w-full" onClick={() => onChange(value.filter((_, j) => j !== i))}>Retirer ce type</button>
+          <button type="button" className="ad-btn ad-btn-danger w-full" onClick={() => onChange(value.filter((_, j) => j !== i))}>{t("variantRemoveType")}</button>
         </div>
       ))}
-      <button type="button" className="ad-btn ad-btn-ghost" onClick={() => onChange([...value, { name: '', choices: [] }])}><Plus className="w-4 h-4" /> Ajouter un type / variante (prix par choix)</button>
-      <p className="text-xs opacity-60">Même article avec des choix différents = lignes séparées dans le panier, groupées par catégorie/type/taille. Laisser prix vide = prix de base du produit.</p>
+      <button type="button" className="ad-btn ad-btn-ghost" onClick={() => onChange([...value, { name: '', choices: [] }])}><Plus className="w-4 h-4" /> {t("variantAddType")}</button>
+      <p className="text-xs opacity-60">{t("variantHelp")}</p>
     </div>
   );
 }
@@ -1054,21 +1055,22 @@ function AgendaEditor({ value, onChange }: { value: unknown; onChange: (v: unkno
 }
 
 function BlocksEditor({ value, onChange }: { value: Array<Record<string, unknown>>; onChange: (v: Array<Record<string, unknown>>) => void }) {
+  const t = useTranslations('admin.editor');
   return (
     <div className="space-y-3">
       {value.map((block, i) => (
         <div key={i} className="ad-card p-3 space-y-2">
           <div className="flex justify-between">
-            <span className="text-[10px] font-black tracking-widest" style={{ color: 'var(--ad-muted)' }}>BLOC {i + 1}</span>
+            <span className="text-[10px] font-black tracking-widest" style={{ color: 'var(--ad-muted)' }}>{t("blockN", { n: i + 1 })}</span>
             <button type="button" className="ad-btn ad-btn-icon ad-btn-danger" onClick={() => onChange(value.filter((_, j) => j !== i))}><Trash2 className="w-3 h-3" /></button>
           </div>
-          <input className="ad-input" placeholder="Titre" value={String(block.title || '')} onChange={(e) => onChange(value.map((b, j) => (j === i ? { ...b, title: e.target.value } : b)))} />
-          <input className="ad-input" placeholder="Sous-titre" value={String(block.subtitle || '')} onChange={(e) => onChange(value.map((b, j) => (j === i ? { ...b, subtitle: e.target.value } : b)))} />
-          <textarea className="ad-textarea" placeholder="Description" value={String(block.description || '')} onChange={(e) => onChange(value.map((b, j) => (j === i ? { ...b, description: e.target.value } : b)))} />
+          <input className="ad-input" placeholder={t("blockTitlePlaceholder")} value={String(block.title || '')} onChange={(e) => onChange(value.map((b, j) => (j === i ? { ...b, title: e.target.value } : b)))} />
+          <input className="ad-input" placeholder={t("blockSubtitlePlaceholder")} value={String(block.subtitle || '')} onChange={(e) => onChange(value.map((b, j) => (j === i ? { ...b, subtitle: e.target.value } : b)))} />
+          <textarea className="ad-textarea" placeholder={t("blockDescriptionPlaceholder")} value={String(block.description || '')} onChange={(e) => onChange(value.map((b, j) => (j === i ? { ...b, description: e.target.value } : b)))} />
           <MediaPicker value={String(block.media || block.image || '')} onChange={(url) => onChange(value.map((b, j) => (j === i ? { ...b, media: url } : b)))} />
         </div>
       ))}
-      <button type="button" className="ad-btn ad-btn-ghost" onClick={() => onChange([...value, { title: '', subtitle: '', description: '', media: '' }])}><Plus className="w-4 h-4" /> Bloc</button>
+      <button type="button" className="ad-btn ad-btn-ghost" onClick={() => onChange([...value, { title: '', subtitle: '', description: '', media: '' }])}><Plus className="w-4 h-4" /> {t("addBlock")}</button>
     </div>
   );
 }

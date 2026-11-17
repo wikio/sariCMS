@@ -121,29 +121,51 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
   const toggleSelect = (id: number) => setSelected(prev => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
   const clearSelection = () => setSelected(new Set());
   
-  // Traduction des statuts
-  const translateStatus = (statusValue: string) => {
+  // Traduction des statuts (commandes et devis)
+  const translateOrderStatus = (statusValue: string) => {
     const orderStatusMap: Record<string, string> = {
-      'pending': t('statusPending'),
-      'processing': t('statusProcessing'),
-      'shipped': t('statusShipped'),
-      'delivered': t('statusDelivered'),
-      'cancelled': t('statusCancelled'),
+      pending: t('statusPending'),
+      pending_payment: t('statusPendingPayment'),
+      paid: t('statusPaid'),
+      processing: t('statusProcessing'),
+      shipped: t('statusShipped'),
+      delivered: t('statusDelivered'),
+      cancelled: t('statusCancelled'),
     };
+    return orderStatusMap[statusValue] || statusValue;
+  };
+  const translateQuoteStatus = (statusValue: string) => {
     const quoteStatusMap: Record<string, string> = {
-      'draft': t('statusDraft'),
-      'submitted': t('statusSubmitted'),
-      'processing': t('statusProcessingQuote'),
-      'replied': t('statusReplied'),
-      'revision': t('statusRevision'),
-      'accepted': t('statusAccepted'),
-      'rejected': t('statusRejected'),
-      'transformed': t('statusTransformed'),
-      'expired': t('statusExpired'),
-      'cancelled': t('statusCancelledQuote'),
+      draft: t('statusDraft'),
+      submitted: t('statusSubmitted'),
+      processing: t('statusProcessingQuote'),
+      replied: t('statusReplied'),
+      revision: t('statusRevision'),
+      accepted: t('statusAccepted'),
+      rejected: t('statusRejected'),
+      transformed: t('statusTransformed'),
+      expired: t('statusExpired'),
+      cancelled: t('statusCancelledQuote'),
     };
-    const statusMap = kind === 'orders' ? orderStatusMap : quoteStatusMap;
-    return statusMap[statusValue] || statusValue;
+    return quoteStatusMap[statusValue] || statusValue;
+  };
+  const translateStatus = (statusValue: string) =>
+    kind === 'orders' ? translateOrderStatus(statusValue) : translateQuoteStatus(statusValue);
+
+  // Traduction des types de paiement (liste, cartes, fiche)
+  const translatePaymentType = (raw: unknown): string => {
+    const norm = normalizeOrderPaymentType(String(raw || 'pending'));
+    const map: Record<string, string> = {
+      pending: t('paymentPending'),
+      cib: t('paymentCib'),
+      'card-intl': t('paymentIntl'),
+      transfer: t('paymentTransfer'),
+      paypal: t('paymentPaypal'),
+      check: t('paymentCheck'),
+      cod: t('paymentCod'),
+      other: t('paymentOther'),
+    };
+    return map[norm] || paymentTypeLabel(norm, locale);
   };
   
   const statuses = kind === 'orders' ? ORDER_STATUS : QUOTE_STATUS;
@@ -205,7 +227,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
     if (!confirm(t("deleteConfirm", {count: String(selected.size)}))) return;
     persist(rows.filter(r => !selected.has(r.id)));
     clearSelection();
-    showToast(`${selected.size} supprimé(s)`, 'success');
+    showToast(t("batchDeleted", { count: selected.size }), 'success');
   };
   const batchStatus = (nextStatus: string) => {
     if (!selected.size || !nextStatus) return;
@@ -218,14 +240,19 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
         if (settings.autoTransformToOrder) {
           const created = convertToOrder(r);
           orderCreated += 1;
-          return { ...r, status: 'transformed' as never, orderId: created.id, history: [...(r.history||[]), { status: 'transformed', at: new Date().toISOString(), note: `Lot: transformé en commande #${created.id}` }] } as Row;
+          return { ...r, status: 'transformed' as never, orderId: created.id, history: [...(r.history||[]), { status: 'transformed', at: new Date().toISOString(), note: t('transformedNote', { id: created.id }) }] } as Row;
         }
       }
-      return { ...r, status: nextStatus as never, history: [...(r.history||[]), { status: nextStatus, at: new Date().toISOString(), note: 'Lot' }] } as Row;
+      return { ...r, status: nextStatus as never, history: [...(r.history||[]), { status: nextStatus, at: new Date().toISOString(), note: 'Batch' }] } as Row;
     });
     persist(next);
     clearSelection();
-    showToast(orderCreated ? `${selected.size} mis à jour, ${orderCreated} commande(s) créée(s)` : `Statut → ${nextStatus} (${selected.size})`, 'success');
+    showToast(
+      orderCreated
+        ? t("batchUpdatedOrders", { count: selected.size, orders: orderCreated })
+        : t("batchStatusUpdated", { status: translateStatus(nextStatus), count: selected.size }),
+      'success',
+    );
   };
 
   const saveOpen = (next: Row) => {
@@ -589,15 +616,15 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
       ? quotePdfHtml(printable as Quote, company, locale)
       : orderPdfHtml(printable as Order, company, locale);
     const title = kind === 'quotes'
-      ? (('reference' in row && row.reference) || `Devis #${row.id}`)
-      : (('code' in row && row.code) || `Commande #${row.id}`);
+      ? (('reference' in row && row.reference) || t('quotePdfTitle', { id: row.id }))
+      : (('code' in row && row.code) || t('orderPdfTitle', { id: row.id }));
     printHtml(title, html);
   };
 
   return (
     <div className="space-y-4">
       <div className="ad-card p-3 text-xs leading-relaxed" style={{ borderColor: 'color-mix(in srgb, var(--ad-accent) 25%, var(--ad-line))', background: 'color-mix(in srgb, var(--ad-accent) 4%, transparent)' }}>
-        <strong>{kind==='orders' ? 'Commande' : 'Devis'} — comment ça marche ?</strong>{' '}
+        <strong>{kind === 'orders' ? t('howItWorksTitleOrder') : t('howItWorksTitleQuote')}</strong>{' '}
         {kind==='orders' ? (
           <>{t("howItWorksOrder")}</>
         ) : (
@@ -606,7 +633,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
       </div>
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-3 ad-rise">
         <div>
-          <div className="text-[11px] uppercase tracking-[0.22em] font-black" style={{ color: 'var(--ad-muted)' }}>E-shop</div>
+          <div className="text-[11px] uppercase tracking-[0.22em] font-black" style={{ color: 'var(--ad-muted)' }}>{t("breadcrumb")}</div>
           <h1 className="text-3xl font-black tracking-tight">{title}</h1>
         </div>
         <div className="flex" style={{ border: '1px solid var(--ad-line)' }}>
@@ -656,7 +683,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                   <td><div className="font-bold">{row.client}</div><div className="text-xs" style={{ color: 'var(--ad-muted)' }}>{row.email}</div></td>
                   <td><DateText value={row.date} dateOnly /></td>
                   <td className="font-black whitespace-nowrap">{money(Number(row.total))}</td>
-                  <td><span className="ad-chip ad-chip-acc font-mono text-xs whitespace-nowrap">{paymentTypeLabel(normalizeOrderPaymentType((row as any).payment || 'pending'))}</span></td>
+                  <td><span className="ad-chip ad-chip-acc font-mono text-xs whitespace-nowrap">{translatePaymentType((row as any).payment)}</span></td>
                   <td>{'invoice' in row && row.invoice ? <span className="ad-chip ad-chip-ok">{row.invoice.number}</span> : <span style={{ color: 'var(--ad-muted)' }}>—</span>}</td>
                   <td><span className={`ad-chip ${row.status === 'delivered' || row.status === 'accepted' ? 'ad-chip-ok' : row.status === 'cancelled' || row.status === 'rejected' ? 'ad-chip-mute' : 'ad-chip-warn'}`}>{translateStatus(row.status)}</span></td>
                   <td className="text-right whitespace-nowrap">
@@ -676,7 +703,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
             <article key={row.id} className="ad-card p-4 space-y-2" style={selected.has(row.id) ? { borderColor: 'var(--ad-accent)', boxShadow: '0 0 0 1px var(--ad-accent)' } : undefined}>
               <div className="flex justify-between"><label className="flex items-center gap-1.5 font-mono text-xs"><input type="checkbox" checked={selected.has(row.id)} onChange={()=>toggleSelect(row.id)} />{('code' in row && (row as any).code) || `#${row.id}`}</label><span className="ad-chip ad-chip-acc">{translateStatus(row.status)}</span></div>
               <h3 className="font-black">{row.client}</h3>
-              <div className="text-xs font-mono" style={{color:'var(--ad-muted)'}}>{paymentTypeLabel(normalizeOrderPaymentType((row as any).payment || 'pending'))}</div>
+              <div className="text-xs font-mono" style={{color:'var(--ad-muted)'}}>{translatePaymentType((row as any).payment)}</div>
               <div className="font-black" style={{ color: 'var(--ad-accent)' }}>{money(Number(row.total))}</div>
               <div className="flex gap-2">
                 <button className="ad-btn ad-btn-ghost flex-1" onClick={() => { setConsult(true); setOpen(row); }}>{t("consult")}</button>
@@ -738,7 +765,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
               <div><span style={{ color: 'var(--ad-muted)' }}>{t("company")}</span><div>{open.company || '—'}</div></div>
               <div><span style={{ color: 'var(--ad-muted)' }}>{t("date")}</span><div className="font-bold"><DateText value={open.date} dateOnly /></div></div>
               <div><span style={{ color: 'var(--ad-muted)' }}>{t("payment")}</span>
-                {consult ? <div className="font-bold">{paymentTypeLabel(normalizeOrderPaymentType((open as any).payment || 'pending'))}</div> : (
+                {consult ? <div className="font-bold">{translatePaymentType((open as any).payment)}</div> : (
                   <select className="ad-select mt-1 w-full" value={(open as any).payment || 'pending'} onChange={(e)=>{ const v=e.target.value; const next={...open, payment:v} as any; setOpen(next); try{ const all=loadOrders(); const upd=all.map((o:any)=> String(o.id)===String(open.id) ? {...o, payment:v} : o); saveOrders(upd); }catch{} try{ const ctxRaw=localStorage.getItem('sari_orders_ctx'); if(ctxRaw){ const ctx=JSON.parse(ctxRaw); const updCtx=ctx.map((o:any)=> String(o.id)===String(open.id) ? {...o, payment:v} : o); localStorage.setItem('sari_orders_ctx', JSON.stringify(updCtx)); window.dispatchEvent(new Event('sari_orders_ctx_changed')); } }catch{} persist(rows.map(r=> String(r.id)===String(open.id) ? {...r, payment:v} as any : r)); showToast(t("paymentUpdated"),'success'); }}>
                     <option value="pending">{t("paymentPending")}</option>
                     <option value="cib">{t("paymentCib")}</option>
@@ -764,7 +791,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                   <div>
                     {t("linkedOrder")}{' '}
                     <button className="underline font-bold" onClick={() => { setOpen(null); window.location.href = `/${locale}/admin/orders`; }}>
-                      #{linkedOrder.id} · {linkedOrder.status} · {money(Number(linkedOrder.total))}
+                      #{linkedOrder.id} · {translateOrderStatus(linkedOrder.status)} · {money(Number(linkedOrder.total))}
                     </button>
                   </div>
                 ) : (
@@ -777,7 +804,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                           ...r,
                           orderId: created.id,
                           status: 'transformed' as never,
-                          history: [...(r.history || []), { status: 'transformed', at: new Date().toISOString(), note: `Transformé en commande #${created.id}` }],
+                          history: [...(r.history || []), { status: 'transformed', at: new Date().toISOString(), note: t('transformedNote', { id: created.id }) }],
                         } as Row : r);
                         persist(next);
                         const updated = next.find((r) => r.id === open.id);
@@ -791,19 +818,19 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
             )}
 
             {linkedQuote && (
-              <div className="ad-origin">Devis d’origine : <button className="underline font-bold" onClick={() => { window.location.href = `/${locale}/admin/quotes`; }}>#{linkedQuote.id} · {linkedQuote.status} · {money(linkedQuote.total)}</button></div>
+              <div className="ad-origin">{t("originQuote")} <button className="underline font-bold" onClick={() => { window.location.href = `/${locale}/admin/quotes`; }}>#{linkedQuote.id} · {translateQuoteStatus(linkedQuote.status)} · {money(linkedQuote.total)}</button></div>
             )}
 
             {kind === 'orders' && (
               <div className="ad-card p-3 space-y-2 text-sm" style={{ borderColor: 'color-mix(in srgb, var(--ad-accent) 35%, var(--ad-line))' }}>
                 <div className="font-black flex items-center gap-2" style={{ color: 'var(--ad-accent)' }}>
-                  <FileCheck2 className="w-4 h-4" /> Facturation
+                  <FileCheck2 className="w-4 h-4" /> {t("invoicing")}
                 </div>
                 {'invoice' in open && open.invoice ? (
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <span className="ad-chip ad-chip-ok">{open.invoice.number}</span>
-                      <span style={{ color: 'var(--ad-muted)' }}>· {open.invoice.source === 'api' ? 'liée via ERP' : 'upload manuel'}</span>
+                      <span style={{ color: 'var(--ad-muted)' }}>· {open.invoice.source === 'api' ? t('invoiceSourceApi') : t('invoiceSourceManual')}</span>
                     </div>
                     {open.invoice.url && (
                       <a className="underline inline-flex items-center gap-1" href={open.invoice.url} target="_blank" rel="noopener noreferrer">
@@ -813,10 +840,10 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                     {!consult && (
                       <div className="flex gap-2 pt-1">
                         <button className="ad-btn ad-btn-ghost" onClick={linkInvoiceFromErp} disabled={invoiceBusy}>
-                          <Link2 className="w-4 h-4" /> {invoiceBusy ? '…' : 'Relier via ERP'}
+                          <Link2 className="w-4 h-4" /> {invoiceBusy ? '…' : t('relinkViaErp')}
                         </button>
                         <label className="ad-btn ad-btn-ghost cursor-pointer">
-                          <Upload className="w-4 h-4" /> Remplacer (upload)
+                          <Upload className="w-4 h-4" /> {t('replaceUpload')}
                           <input type="file" className="hidden" onChange={(e) => e.target.files?.[0]?.name && linkManualInvoice(e.target.files[0].name)} />
                         </label>
                       </div>
@@ -827,7 +854,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                     {isOrderPaid(open as Order) ? (
                       <div className="flex flex-wrap gap-2">
                         <button className="ad-btn ad-btn-primary" onClick={linkInvoiceFromErp} disabled={invoiceBusy}>
-                          <Link2 className="w-4 h-4" /> {invoiceBusy ? 'Récupération…' : 'Lier automatiquement via ERP'}
+                          <Link2 className="w-4 h-4" /> {invoiceBusy ? t('fetchingErp') : t('linkAutoErp')}
                         </button>
                         <label className="ad-btn ad-btn-ghost cursor-pointer">
                           <Upload className="w-4 h-4" /> {t('uploadSalesInvoice')}
@@ -858,7 +885,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                 {related.length === 0 && <li style={{ color: 'var(--ad-muted)' }}>{t("noOtherDocs")}</li>}
                 {related.map((r) => (
                   <li key={r.id} className="flex justify-between">
-                    <button className="underline" onClick={() => setOpen(r)}>#{r.id} · <DateText value={r.date} dateOnly /> · {r.status}</button>
+                    <button className="underline" onClick={() => setOpen(r)}>#{r.id} · <DateText value={r.date} dateOnly /> · {translateStatus(r.status)}</button>
                     <strong>{money(Number(r.total))}</strong>
                   </li>
                 ))}
@@ -878,7 +905,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                     <div className="col-span-12 sm:col-span-6 md:col-span-3">
                       <label className="block">
                         <span className="field-label">{t("article")} <span className="text-red-500">*</span></span>
-                        {consult ? <div className="font-bold pt-1.5 truncate">{it.name || '—'}</div> : <input className="ad-input w-full min-w-0 truncate" placeholder={t('itemNamePlaceholder')} value={it.name} onChange={(e) => patchItem(i, { name: e.target.value.slice(0, 80) })} required maxLength={80} aria-invalid={!it.name || String(it.name).trim().length < 2} title={!it.name ? 'Nom article requis (2–80 caractères)' : ''} />}
+                        {consult ? <div className="font-bold pt-1.5 truncate">{it.name || '—'}</div> : <input className="ad-input w-full min-w-0 truncate" placeholder={t('itemNamePlaceholder')} value={it.name} onChange={(e) => patchItem(i, { name: e.target.value.slice(0, 80) })} required maxLength={80} aria-invalid={!it.name || String(it.name).trim().length < 2} title={!it.name ? t('itemNameRequiredTitle') : ''} />}
                       </label>
                     </div>
                     <div className="col-span-4 sm:col-span-3 md:col-span-2">
@@ -889,8 +916,8 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                     </div>
                     <div className="col-span-8 sm:col-span-3 md:col-span-2">
                       <label className="block">
-                        <span className="field-label">PU HT (DA) <span className="text-red-500">*</span></span>
-                        {consult ? <div className="pt-1.5 font-mono text-right">{Number(it.price).toLocaleString('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2})}</div> : <input className="ad-input w-full text-right tabular-nums font-mono" type="number" inputMode="decimal" step="0.01" min={0} max={10000000} value={it.price} onChange={(e) => { let v = Number(e.target.value); if (isNaN(v)) v = 0; v = Math.max(0, Math.min(10000000, Math.round(v*100)/100)); patchItem(i, { price: v }); }} title="Prix unitaire HT ≥0, 2 décimales, max 10M" aria-invalid={Number(it.price) < 0} />}
+                        <span className="field-label">{t("unitPriceHt")} <span className="text-red-500">*</span></span>
+                        {consult ? <div className="pt-1.5 font-mono text-right">{Number(it.price).toLocaleString('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2})}</div> : <input className="ad-input w-full text-right tabular-nums font-mono" type="number" inputMode="decimal" step="0.01" min={0} max={10000000} value={it.price} onChange={(e) => { let v = Number(e.target.value); if (isNaN(v)) v = 0; v = Math.max(0, Math.min(10000000, Math.round(v*100)/100)); patchItem(i, { price: v }); }} title={t("unitPriceTitle")} aria-invalid={Number(it.price) < 0} />}
                       </label>
                     </div>
                     <div className="col-span-8 sm:col-span-8 md:col-span-3">
@@ -899,7 +926,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                         {consult ? <div className="pt-1.5 font-mono">-{Number(it.discountValue ?? it.discount ?? 0).toLocaleString('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2})}{it.discountType==='fixed'?' DA':'%'}</div> : (
                           <div className="flex gap-1.5 items-stretch">
                             <input className="ad-input flex-1 min-w-[84px] max-w-[140px] text-right tabular-nums font-mono" type="number" inputMode="decimal" step="0.01" min={0} max={it.discountType==='percent'?100: Number(it.price)*Number(it.quantity)} placeholder="0.00" value={it.discountValue ?? it.discount ?? 0} onChange={(e) => { let v = Number(e.target.value); if (isNaN(v)) v = 0; const cap = it.discountType==='percent'?100: Math.max(0, Number(it.price)*Number(it.quantity)); v = Math.max(0, Math.min(cap, Math.round(v*100)/100)); patchItem(i, { discountValue: v, discount: v }); }} title={it.discountType==='percent' ? t("discountPercentTitle") : t("discountFixedTitle")} />
-                            <select className="ad-select w-10 flex-shrink-0 text-center !px-0 !py-0 text-xs font-bold" style={{ paddingRight: '1.1rem', minWidth: '40px' }} value={it.discountType||'percent'} onChange={e=>patchItem(i,{discountType:e.target.value as any})} title="Type remise">
+                            <select className="ad-select w-10 flex-shrink-0 text-center !px-0 !py-0 text-xs font-bold" style={{ paddingRight: '1.1rem', minWidth: '40px' }} value={it.discountType||'percent'} onChange={e=>patchItem(i,{discountType:e.target.value as any})} title={t("discountTypeTitle")}>
                               <option value="percent">%</option>
                               <option value="fixed">DA</option>
                             </select>
@@ -907,16 +934,16 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                         )}
                       </label>
                     </div>
-                    <div className="col-span-4 sm:col-span-4 md:col-span-2 font-black text-right flex items-center justify-end self-end h-[2.75rem] pb-1 whitespace-nowrap tabular-nums bg-gray-50 dark:bg-[#1e1e1e] border border-gray-200 dark:border-gray-700 rounded px-2 ml-1" style={{ minWidth: '92px' }} title="Total HT remisé (2 décimales)">{((Number(it.quantity) * Number(it.price)) - (it.discountType==='fixed' ? (Number(it.discountValue||it.discount||0)*Number(it.quantity)) : (Number(it.quantity) * Number(it.price) * (Number(it.discountValue||it.discount||0)/100)))).toLocaleString('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2})}</div>
+                    <div className="col-span-4 sm:col-span-4 md:col-span-2 font-black text-right flex items-center justify-end self-end h-[2.75rem] pb-1 whitespace-nowrap tabular-nums bg-gray-50 dark:bg-[#1e1e1e] border border-gray-200 dark:border-gray-700 rounded px-2 ml-1" style={{ minWidth: '92px' }} title={t("lineTotalHtTitle")}>{((Number(it.quantity) * Number(it.price)) - (it.discountType==='fixed' ? (Number(it.discountValue||it.discount||0)*Number(it.quantity)) : (Number(it.quantity) * Number(it.price) * (Number(it.discountValue||it.discount||0)/100)))).toLocaleString('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2})}</div>
                   </div>
                   <div className="grid grid-cols-12 gap-2 md:gap-3 items-end">
                     <div className="col-span-6 sm:col-span-3 md:col-span-3">
                       <label className="block">
                         <span className="field-label">{t("vatRate")}</span>
-                        {consult ? <div className="pt-1 text-xs font-mono">{it.vatRate ?? it.taxRate ?? '—'}{it.vatIncluded?' (incl.)':''}</div> : (
+                        {consult ? <div className="pt-1 text-xs font-mono">{it.vatRate ?? it.taxRate ?? '—'}{it.vatIncluded?` (${t("vatInclShort")})`:''}</div> : (
                           <div className="flex gap-1 items-center">
                             <input className="ad-input flex-1 min-w-0 text-right tabular-nums" type="number" inputMode="decimal" step="0.01" min={0} max={100} placeholder="19.00" value={it.vatRate ?? it.taxRate ?? ''} onChange={e=>{ const raw=e.target.value; if(raw===''){ patchItem(i,{vatRate:undefined, taxRate:undefined}); return;} let v=Number(raw); if(isNaN(v)) return; v=Math.max(0, Math.min(100, Math.round(v*100)/100)); patchItem(i,{vatRate:v, taxRate:v});}} title={t("vatTitle")} aria-invalid={it.vatRate!==undefined && (Number(it.vatRate)<0 || Number(it.vatRate)>100)} />
-                            <label className="flex items-center gap-1 text-xs whitespace-nowrap shrink-0"><input type="checkbox" checked={!!it.vatIncluded} onChange={e=>patchItem(i,{vatIncluded:e.target.checked})}/>Incl.</label>
+                            <label className="flex items-center gap-1 text-xs whitespace-nowrap shrink-0"><input type="checkbox" checked={!!it.vatIncluded} onChange={e=>patchItem(i,{vatIncluded:e.target.checked})}/>{t("vatInclShort")}</label>
                           </div>
                         )}
                       </label>
@@ -924,13 +951,13 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                     <div className="col-span-6 sm:col-span-5 md:col-span-4">
                       <label className="block">
                         <span className="field-label">{t("itemShipping")}</span>
-                        {consult ? <div className="pt-1 text-xs font-mono">{it.shippingFee?`${Number(it.shippingFee).toLocaleString('fr-FR',{minimumFractionDigits:2, maximumFractionDigits:2})} DA ${it.shippingType==='per_qty'?'×Qté':it.shippingType==='free'?'offert':'fixe'}`:'—'}</div> : (
+                        {consult ? <div className="pt-1 text-xs font-mono">{it.shippingFee?`${Number(it.shippingFee).toLocaleString('fr-FR',{minimumFractionDigits:2, maximumFractionDigits:2})} DA ${it.shippingType==='per_qty'?t('shippingPerQtyShort'):it.shippingType==='free'?t('shippingFreeShort'):t('shippingFixedShort')}`:'—'}</div> : (
                           <div className="flex gap-1 items-stretch">
                             <input className="ad-input flex-1 min-w-[56px] text-right tabular-nums" type="number" inputMode="decimal" step="0.01" min={0} max={100000} placeholder="0.00" value={it.shippingFee ?? 0} onChange={e=>{ let v=Number(e.target.value); if(isNaN(v)) v=0; v=Math.max(0, Math.min(100000, Math.round(v*100)/100)); patchItem(i,{shippingFee:v});}} title={t("shippingTitle")} />
-                            <select className="ad-select w-20 flex-shrink-0 text-center text-xs !px-1" value={it.shippingType||'fixed'} onChange={e=>patchItem(i,{shippingType:e.target.value as any})} title="Mode livraison">
-                              <option value="fixed">Fixe</option>
-                              <option value="per_qty">/Qté</option>
-                              <option value="free">Offert</option>
+                            <select className="ad-select w-20 flex-shrink-0 text-center text-xs !px-1" value={it.shippingType||'fixed'} onChange={e=>patchItem(i,{shippingType:e.target.value as any})} title={t("shippingModeTitle")}>
+                              <option value="fixed">{t("shippingFixedShort")}</option>
+                              <option value="per_qty">{t("shippingPerQtyShort")}</option>
+                              <option value="free">{t("shippingFreeShort")}</option>
                             </select>
                           </div>
                         )}
@@ -939,16 +966,16 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                     <div className="col-span-10 sm:col-span-3 md:col-span-4">
                       <label className="block">
                         <span className="field-label">{t("zonesEmptyAll")}</span>
-                        {consult ? <div className="pt-1 text-xs font-mono truncate">{(it.zones||[]).join(', ') || '—'}</div> : <input className="ad-input w-full min-w-0 font-mono text-xs truncate" placeholder="DZ-16,DZ-31" value={(it.zones||[]).join(',')} onChange={e=>patchItem(i,{zones:e.target.value.split(',').map((s:string)=>s.trim()).filter(Boolean).slice(0,10).map(s=>s.slice(0,12))})} pattern="^[A-Z0-9-, ]*$" title="Codes zones séparés par virgule, ex: DZ-16,DZ-31 (max 10)" maxLength={80} />}
+                        {consult ? <div className="pt-1 text-xs font-mono truncate">{(it.zones||[]).join(', ') || '—'}</div> : <input className="ad-input w-full min-w-0 font-mono text-xs truncate" placeholder="DZ-16,DZ-31" value={(it.zones||[]).join(',')} onChange={e=>patchItem(i,{zones:e.target.value.split(',').map((s:string)=>s.trim()).filter(Boolean).slice(0,10).map(s=>s.slice(0,12))})} pattern="^[A-Z0-9-, ]*$" title={t("zonesPatternTitle")} maxLength={80} />}
                       </label>
                     </div>
-                    {!consult && <button className="ad-btn ad-btn-icon ad-btn-danger col-span-2 sm:col-span-1 md:col-span-1 self-end" onClick={() => setOpen({ ...open, items: (open.items || []).filter((_, j) => j !== i) })} title="Supprimer ligne" aria-label="Supprimer ligne"><Trash2 className="w-4 h-4" /></button>}
+                    {!consult && <button className="ad-btn ad-btn-icon ad-btn-danger col-span-2 sm:col-span-1 md:col-span-1 self-end" onClick={() => setOpen({ ...open, items: (open.items || []).filter((_, j) => j !== i) })} title={t("deleteLine")} aria-label={t("deleteLine")}><Trash2 className="w-4 h-4" /></button>}
                   </div>
                 </div>
               ))}
               {!consult && (
                 <button className="ad-btn ad-btn-ghost" onClick={() => setOpen({ ...open, items: [...(open.items || []), { id: Date.now(), name: '', quantity: 1, price: 0 } as any] })}>
-                  <Plus className="w-4 h-4" /> Ajouter une ligne
+                  <Plus className="w-4 h-4" /> {t("addLine")}
                 </button>
               )}
             </div>
@@ -956,14 +983,14 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
             {!consult && (
               <div className="grid md:grid-cols-2 gap-3">
                 <label className="block space-y-1.5">
-                  <span className="field-label">Code promo / Coupon</span>
-                  <input className="ad-input w-full min-w-0 font-mono uppercase tracking-wider" placeholder="SARI10" value={(open as any).coupon || open.coupon || ''} onChange={(e) => setOpen({ ...open, coupon: e.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g,'').slice(0,20) } as any)} maxLength={20} pattern="^[A-Z0-9_-]*$" title="Coupon alphanumérique 3–20 car., majuscules" />
+                  <span className="field-label">{t("promoCodeLabel")}</span>
+                  <input className="ad-input w-full min-w-0 font-mono uppercase tracking-wider" placeholder="SARI10" value={(open as any).coupon || open.coupon || ''} onChange={(e) => setOpen({ ...open, coupon: e.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g,'').slice(0,20) } as any)} maxLength={20} pattern="^[A-Z0-9_-]*$" title={t("couponTitle")} />
                 </label>
                 <label className="block space-y-1.5">
                   <span className="field-label">{t("deliveryZone")}</span>
                   <select className="ad-select w-full min-w-0" value={(open as any).deliveryZone || (open as any).zone || ''} onChange={e=>setOpen({ ...open, deliveryZone: e.target.value, zone: e.target.value } as any)}>
                     <option value="">{t("selectPlaceholder")}</option>
-                    {(shopConfig?.saleZones || []).map(z=> <option key={z.code} value={z.code}>{z.label} {z.code}{!z.active?' (indisponible)':''}</option>)}
+                    {(shopConfig?.saleZones || []).map(z=> <option key={z.code} value={z.code}>{z.label} {z.code}{!z.active?` ${t("zoneUnavailable")}`:''}</option>)}
                   </select>
                 </label>
               </div>
@@ -981,7 +1008,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                 <div className="grid md:grid-cols-2 gap-3">
                   <label className="block space-y-1.5">
                     <span className="field-label">{t("globalShippingFee")}</span>
-                    <input className="ad-input w-full min-w-0 text-right tabular-nums" type="number" inputMode="decimal" step="0.01" min={0} max={100000} value={(open as any).shippingFee ?? ''} placeholder="auto (ex: 450.50)" onChange={e=>{ const raw=e.target.value; if(raw===''){ setOpen({ ...open, shippingFee: undefined } as any); return;} let v=Number(raw); if(isNaN(v)) return; v=Math.max(0, Math.min(100000, Math.round(v*100)/100)); setOpen({ ...open, shippingFee: v } as any);}} title={t("globalShippingTitle")} />
+                    <input className="ad-input w-full min-w-0 text-right tabular-nums" type="number" inputMode="decimal" step="0.01" min={0} max={100000} value={(open as any).shippingFee ?? ''} placeholder={t("globalShippingPlaceholder")} onChange={e=>{ const raw=e.target.value; if(raw===''){ setOpen({ ...open, shippingFee: undefined } as any); return;} let v=Number(raw); if(isNaN(v)) return; v=Math.max(0, Math.min(100000, Math.round(v*100)/100)); setOpen({ ...open, shippingFee: v } as any);}} title={t("globalShippingTitle")} />
                   </label>
                   <label className="block space-y-1.5">
                     <span className="field-label">{t("globalDiscount")}</span>
@@ -996,11 +1023,11 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                 <div className="grid md:grid-cols-2 gap-3">
                   <label className="block space-y-1.5">
                     <span className="field-label">{t("clientNotes")}</span>
-                    <textarea className="ad-textarea" rows={2} placeholder="Rappel CGV, instructions..." value={(open as any).notes || ''} onChange={e=>setOpen({...open, notes:e.target.value} as any)} />
+                    <textarea className="ad-textarea" rows={2} placeholder={t("clientNotesPlaceholder")} value={(open as any).notes || ''} onChange={e=>setOpen({...open, notes:e.target.value} as any)} />
                   </label>
                   <label className="block space-y-1.5">
                     <span className="field-label">{t("adminNotes")}</span>
-                    <textarea className="ad-textarea" rows={2} placeholder="Visible admin uniquement" value={(open as any).adminNotes || ''} onChange={e=>setOpen({...open, adminNotes:e.target.value} as any)} />
+                    <textarea className="ad-textarea" rows={2} placeholder={t("adminNotesPlaceholder")} value={(open as any).adminNotes || ''} onChange={e=>setOpen({...open, adminNotes:e.target.value} as any)} />
                   </label>
                 </div>
                 {kind === 'orders' && (
@@ -1016,28 +1043,28 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
                    */
                   <div className="grid md:grid-cols-2 gap-3">
                     <label className="block space-y-1.5">
-                      <span className="field-label">{t("trackingNumber", { defaultMessage: "Numéro de suivi" })}</span>
-                      <input className="ad-input w-full min-w-0" maxLength={80} placeholder="ex. YL123456789DZ" value={(open as any).trackingNumber || ''} onChange={e=>setOpen({...open, trackingNumber:e.target.value.slice(0,80)} as any)} />
+                      <span className="field-label">{t("trackingNumber")}</span>
+                      <input className="ad-input w-full min-w-0" maxLength={80} placeholder={t("trackingPlaceholder")} value={(open as any).trackingNumber || ''} onChange={e=>setOpen({...open, trackingNumber:e.target.value.slice(0,80)} as any)} />
                     </label>
                     <label className="block space-y-1.5">
-                      <span className="field-label">{t("carrier", { defaultMessage: "Transporteur" })}</span>
-                      <input className="ad-input w-full min-w-0" maxLength={80} placeholder="ex. Yalidine, EMS, Maystro" value={(open as any).carrier || ''} onChange={e=>setOpen({...open, carrier:e.target.value.slice(0,80)} as any)} />
+                      <span className="field-label">{t("carrier")}</span>
+                      <input className="ad-input w-full min-w-0" maxLength={80} placeholder={t("carrierPlaceholder")} value={(open as any).carrier || ''} onChange={e=>setOpen({...open, carrier:e.target.value.slice(0,80)} as any)} />
                     </label>
                     <label className="block space-y-1.5">
-                      <span className="field-label">{t("paidAt", { defaultMessage: "Date de paiement" })}</span>
+                      <span className="field-label">{t("paidAt")}</span>
                       <input type="date" className="ad-input w-full min-w-0" value={inputDate((open as any).paidAt)} onChange={e=>setOpen({...open, paidAt:fromInputDate(e.target.value)} as any)} />
                     </label>
                     <label className="block space-y-1.5">
-                      <span className="field-label">{t("shippedAt", { defaultMessage: "Date d’expédition" })}</span>
+                      <span className="field-label">{t("shippedAt")}</span>
                       <input type="date" className="ad-input w-full min-w-0" value={inputDate((open as any).shippedAt)} onChange={e=>setOpen({...open, shippedAt:fromInputDate(e.target.value)} as any)} />
                     </label>
                     <label className="block space-y-1.5">
-                      <span className="field-label">{t("deliveredAt", { defaultMessage: "Date de livraison" })}</span>
+                      <span className="field-label">{t("deliveredAt")}</span>
                       <input type="date" className="ad-input w-full min-w-0" value={inputDate((open as any).deliveredAt)} onChange={e=>setOpen({...open, deliveredAt:fromInputDate(e.target.value)} as any)} />
                     </label>
                   </div>
                 )}
-                {shopConfig?.saleConditions && <div className="text-xs bg-amber-50 dark:bg-amber-900/20 border border-amber-200 p-2 rounded">CGV : {shopConfig.saleConditions.slice(0,300)}{shopConfig.saleConditions.length>300?'…':''}</div>}
+                {shopConfig?.saleConditions && <div className="text-xs bg-amber-50 dark:bg-amber-900/20 border border-amber-200 p-2 rounded">{t("termsShort")} {shopConfig.saleConditions.slice(0,300)}{shopConfig.saleConditions.length>300?'…':''}</div>}
               </div>
             )}
 
@@ -1045,7 +1072,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
               {((open as any).globalDiscount !== undefined && (open as any).globalDiscount !== '' && (open as any).globalDiscount !== null) || ((open as any).shippingFee !== undefined && (open as any).shippingFee !== '' && (open as any).shippingFee !== null) ? <div className="text-xs px-2 py-1 rounded bg-amber-50 dark:bg-amber-900/20 border border-amber-200 text-amber-700">{t("manualValue")}</div> : null}
               <div className="flex justify-between"><span>{t("subtotalHT")}</span><strong>{money(totals.subtotal)}</strong></div>
               {totals.productDiscount>0 && <div className="flex justify-between" style={{color:'var(--ad-muted)'}}><span>{t("productDiscounts")}</span><strong>- {money(totals.productDiscount)}</strong></div>}
-              {totals.globalDiscount>0 && <div className="flex justify-between" style={{color:'var(--ad-muted)'}}><span>{t("globalDiscountLabel")}{(open as any).globalDiscount!==undefined && (open as any).globalDiscount!=='' ? ` {t("manual")}` : ''}</span><strong>- {money(totals.globalDiscount)}</strong></div>}
+              {totals.globalDiscount>0 && <div className="flex justify-between" style={{color:'var(--ad-muted)'}}><span>{t("globalDiscountLabel")}{(open as any).globalDiscount!==undefined && (open as any).globalDiscount!=='' ? ` ${t("manual")}` : ''}</span><strong>- {money(totals.globalDiscount)}</strong></div>}
               {totals.couponDiscount>0 && <div className="flex justify-between" style={{color:'var(--ad-muted)'}}><span>{t("couponLabel")} {(open as any).coupon}</span><strong>- {money(totals.couponDiscount)}</strong></div>}
               {totals.discount>0 && totals.productDiscount===0 && totals.globalDiscount===0 && totals.couponDiscount===0 && <div className="flex justify-between"><span>{t("discountLabel")}</span><strong>- {money(totals.discount)}</strong></div>}
               {totals.productShipping>0 && <div className="flex justify-between"><span>{t("productShipping")}</span><strong>{money(totals.productShipping)}</strong></div>}
@@ -1076,8 +1103,8 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
           type="client"
           subject={
             kind === 'quotes'
-              ? `Votre devis ${('reference' in messageTo && messageTo.reference) || `#${messageTo.id}`}`
-              : `Votre commande ${('code' in messageTo && messageTo.code) || `#${messageTo.id}`}`
+              ? t('quoteEmailSubject', { ref: ('reference' in messageTo && messageTo.reference) || `#${messageTo.id}` })
+              : t('orderEmailSubject', { ref: ('code' in messageTo && messageTo.code) || `#${messageTo.id}` })
           }
           context={
             kind === 'quotes'
@@ -1097,7 +1124,7 @@ export default function CommerceDesk({ kind }: { kind: Kind }) {
               ...r,
               response,
               status: 'replied',
-              history: [...(r.history || []), { status: 'replied', at: new Date().toISOString(), note: 'Réponse au devis envoyée' }],
+              history: [...(r.history || []), { status: 'replied', at: new Date().toISOString(), note: t('quoteRepliedNote') }],
             } as Row) : r));
             persist(next);
             const updated = next.find((r) => r.id === respondTo.id);

@@ -36,6 +36,8 @@ export interface AdminLabels {
   field: (key: string, fallback?: string) => string;
   /** Aide contextuelle traduite (`hint<Champ>`), si définie. */
   hint: (key: string, fallback?: string) => string | undefined;
+  /** Texte indicatif traduit (`placeholder<Champ>`), si défini. */
+  placeholder: (key: string, fallback?: string) => string | undefined;
 }
 
 export function useAdminLabels(moduleKey?: string): AdminLabels {
@@ -93,5 +95,20 @@ export function useAdminLabels(moduleKey?: string): AdminLabels {
     [fields, moduleFields, legacy],
   );
 
-  return { group, field, hint };
+  const placeholder = useCallback(
+    (key: string, fallback?: string) => {
+      if (!key) return fallback;
+      const phKey = `placeholder${key.charAt(0).toUpperCase()}${key.slice(1)}`;
+      const direct = asText(moduleFields[phKey]) || asText(fields[phKey]);
+      if (direct) return direct;
+      for (const dict of legacy) {
+        const found = asText(dict[phKey]);
+        if (found) return found;
+      }
+      return fallback;
+    },
+    [fields, moduleFields, legacy],
+  );
+
+  return { group, field, hint, placeholder };
 }

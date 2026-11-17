@@ -35,11 +35,26 @@ function formatObject(value: unknown): string {
 }
 
 export default function ConsultValue({ spec, value }: { spec: FieldSpec; value: unknown }) {
+  const locale = useLocale();
   const t = useTranslations('admin.editor');
   const tCommon = useTranslations('admin.common');
   const messages = useMessages() as Record<string, any>;
   
   if (value == null || value === '') return <div className="text-sm" style={{ color: 'var(--ad-muted)' }}>—</div>;
+
+  const lookupOption = (strValue: string): string | null => {
+    const editor = messages?.admin?.editor;
+    if (editor && typeof editor === 'object') {
+      const specific = `option_${spec.key}_${strValue}`;
+      if (typeof editor[specific] === 'string' && editor[specific].length > 0) return editor[specific];
+      const generic = `option_${strValue}`;
+      if (typeof editor[generic] === 'string' && editor[generic].length > 0) return editor[generic];
+    }
+    if (strValue === 'published') return tCommon('statusPublished');
+    if (strValue === 'draft') return tCommon('statusDraft');
+    if (strValue === 'archived') return tCommon('statusArchived');
+    return null;
+  };
 
   // Traduire les valeurs select (CDI, Salon, etc.) — silencieux si clé absente
   if (spec.kind === 'select') {
@@ -54,24 +69,15 @@ export default function ConsultValue({ spec, value }: { spec: FieldSpec; value: 
         const terms = listTaxonomy(spec.taxonomy);
         const term = terms.find((t: any) => t.value === strValue);
         if (term?.translations) {
-          const currentLocale = (messages as any)?._locale || 'fr';
-          const fromTax = term.translations[currentLocale];
+          const fromTax = term.translations[locale];
           if (fromTax) return <div className="text-sm font-semibold break-words">{fromTax}</div>;
         }
       } catch {}
     }
     
     // 2. Fallback: lookup dans messages JSON (option_ keys)
-    try {
-      const editor = messages?.admin?.editor;
-      const key = `option_${strValue}`;
-      if (editor && typeof editor === 'object' && key in editor) {
-        const translated = editor[key];
-        if (typeof translated === 'string' && translated.length > 0) {
-          return <div className="text-sm font-semibold break-words">{translated}</div>;
-        }
-      }
-    } catch {}
+    const translated = lookupOption(strValue);
+    if (translated) return <div className="text-sm font-semibold break-words">{translated}</div>;
     
     return <div className="text-sm font-semibold break-words">{fallbackLabel}</div>;
   }
@@ -217,6 +223,8 @@ export default function ConsultValue({ spec, value }: { spec: FieldSpec; value: 
   // Traduire les valeurs radio (options statiques comme langue, statut)
   if (spec.kind === 'radio') {
     const strValue = String(value);
+    const translated = lookupOption(strValue);
+    if (translated) return <div className="text-sm font-semibold break-words">{translated}</div>;
     const option = spec.options?.find(o => o.value === strValue);
     return <div className="text-sm font-semibold break-words">{option?.label || strValue}</div>;
   }

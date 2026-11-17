@@ -598,7 +598,7 @@ export default function DashboardPage() {
                     {realOrders.map((order) => {
                       const isExpanded = !!expandedOrders[String(order.id)];
                       const toggle = () => setExpandedOrders((prev) => ({ ...prev, [String(order.id)]: !prev[String(order.id)] }));
-                      const paymentLabel = paymentTypeLabel(normalizeOrderPaymentType((order as any).payment || 'pending'));
+                      const paymentLabel = paymentTypeLabel(normalizeOrderPaymentType((order as any).payment || 'pending'), locale);
                       const showPay = canShowPayButton(order);
                       const isCancelled = order.status === 'cancelled' || order.status === 'cancel_requested';
                       return (

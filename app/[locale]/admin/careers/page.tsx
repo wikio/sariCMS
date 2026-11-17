@@ -25,6 +25,14 @@ export default function AdminCareersPage() {
   const router = useRouter();
   const { showToast } = useToast();
   const t = useTranslations('admin.careers');
+  const tCommon = useTranslations('admin.common');
+  const statusLabel = (s: unknown) => {
+    const v = String(s || 'draft');
+    if (v === 'published') return tCommon('statusPublished');
+    if (v === 'archived') return tCommon('statusArchived');
+    if (v === 'draft') return tCommon('statusDraft');
+    return v;
+  };
   const [offers, setOffers] = useState<Offer[]>([]);
   const [apps, setApps] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
@@ -143,7 +151,7 @@ export default function AdminCareersPage() {
                     <td className="font-bold">{String(o.title)}</td>
                     <td className="text-sm" style={{ color: 'var(--ad-muted)' }}><span className="inline-flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{String(o.location || '—')}</span></td>
                     <td>{String(o.type || '—')}</td>
-                    <td><span className={`ad-chip ${o.status === 'published' ? 'ad-chip-ok' : 'ad-chip-acc'}`}>{String(o.status || 'draft')}</span></td>
+                    <td><span className={`ad-chip ${o.status === 'published' ? 'ad-chip-ok' : 'ad-chip-acc'}`}>{statusLabel(o.status)}</span></td>
                     <td>
                       <span className="inline-flex items-center gap-1 font-black" style={count ? { color: 'var(--ad-accent)' } : undefined}>
                         <Users className="w-3.5 h-3.5" /> {count}
@@ -173,7 +181,7 @@ export default function AdminCareersPage() {
       <Drawer
         open={!!consult}
         title={consult ? String(consult.title) : ''}
-        subtitle={consult ? `${t("offerSubtitle")} · ${consult.status || "draft"}` : undefined}
+        subtitle={consult ? `${t("offerSubtitle")} · ${statusLabel(consult.status)}` : undefined}
         onClose={() => setConsult(null)}
         width={640}
         footer={consult ? (
@@ -184,13 +192,13 @@ export default function AdminCareersPage() {
           </>
         ) : null}
       >
-        {consult && <OfferConsult offer={consult} appCount={appsFor(consult).length} t={t} />}
+        {consult && <OfferConsult offer={consult} appCount={appsFor(consult).length} t={t} statusLabel={statusLabel} />}
       </Drawer>
     </div>
   );
 }
 
-function OfferConsult({ offer, appCount, t }: { offer: Offer; appCount: number; t: ReturnType<typeof useTranslations> }) {
+function OfferConsult({ offer, appCount, t, statusLabel }: { offer: Offer; appCount: number; t: ReturnType<typeof useTranslations>; statusLabel: (s: unknown) => string }) {
   const steps = normalizeSteps(offer.workflow);
   return (
     <div className="space-y-4">
@@ -198,7 +206,7 @@ function OfferConsult({ offer, appCount, t }: { offer: Offer; appCount: number; 
         <span className="ad-chip ad-chip-acc">{String(offer.type || t('contractUnspecified'))}</span>
         <span className="ad-chip ad-chip-mute"><MapPin className="w-3 h-3" /> {String(offer.location || t('locationUnspecified'))}</span>
         {offer.salary && <span className="ad-chip ad-chip-ok">{String(offer.salary)}</span>}
-        <span className={`ad-chip ${offer.status === 'published' ? 'ad-chip-ok' : 'ad-chip-acc'}`}>{String(offer.status || 'draft')}</span>
+        <span className={`ad-chip ${offer.status === 'published' ? 'ad-chip-ok' : 'ad-chip-acc'}`}>{statusLabel(offer.status)}</span>
       </div>
 
       <div className="grid grid-cols-2 gap-3 text-sm">
