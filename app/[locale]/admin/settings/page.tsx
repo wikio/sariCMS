@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useLocale } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
-import { FolderOpen, Image as ImageIcon, Save, Search, Upload } from 'lucide-react';
+import { FolderOpen, Image as ImageIcon, Save, Search, Sparkles, Upload } from 'lucide-react';
 import { DEFAULT_SETTINGS, loadAdminSettings, saveAdminSettings, type AdminSettings } from '@/lib/admin-settings';
 import { useDocRefresh } from '@/lib/use-settings-doc';
 import { hydrateSiteLogo, saveSiteLogo } from '@/lib/site-contact';
@@ -14,6 +15,7 @@ import MailCenterSection from '@/components/admin/MailCenterSection';
 import MaintenanceSection from '@/components/admin/MaintenanceSection';
 import DemoDataSection from '@/components/admin/DemoDataSection';
 import BrandSection from '@/components/admin/BrandSection';
+import PlaceholderSettingsSection from '@/components/admin/PlaceholderSettingsSection';
 import { testErpConnection } from '@/lib/erp';
 import { useToast } from '@/components/admin/Toast';
 import GedPicker from '@/components/admin/GedPicker';
@@ -21,7 +23,7 @@ import DateFormatPicker from '@/components/admin/DateFormatPicker';
 import { notifyDateSettingsChanged } from '@/lib/use-date-format';
 
 type SectionId = 'general' | 'commerce' | 'security' | 'integrations' | 'emails' | 'seo';
-type TabId = 'general' | 'dates' | 'products' | 'codes' | 'quotes' | 'invoicing' | 'security' | 'smtp' | 'database' | 'maintenance' | 'verification' | 'mail' | 'seo' | 'brand' | 'demo';
+type TabId = 'general' | 'dates' | 'products' | 'codes' | 'quotes' | 'invoicing' | 'security' | 'smtp' | 'database' | 'maintenance' | 'verification' | 'mail' | 'seo' | 'brand' | 'demo' | 'placeholder';
 
 interface TabDef { id: TabId; label: string }
 interface SectionDef { id: SectionId; label: string; tabs: TabDef[] }
@@ -30,6 +32,7 @@ const SECTIONS: SectionDef[] = [
   { id: 'general', label: 'Général', tabs: [
     { id: 'brand', label: 'Identité du back-office' },
     { id: 'general', label: 'Identité & langue' },
+    { id: 'placeholder', label: 'Images & logos' },
     { id: 'dates', label: 'Dates & heures' },
   ] },
   { id: 'commerce', label: 'Commerce', tabs: [
@@ -60,6 +63,7 @@ const SECTIONS: SectionDef[] = [
 const SEARCH_INDEX: Record<TabId, string> = {
   brand: 'marque nom titre accroche logo icone icône favicon identité back-office administration en-tête barre latérale épinglette brand',
   general: 'langue langue origine logo site vitrine identité société entreprise',
+  placeholder: 'image images logo logos placeholder via.placeholder canvas atelier studio générateur generateur icône icone svg png webp couleur palette dimensions dégradé motif vitrine url',
   dates: 'date heure format affichage jour mois année calendrier iso horodatage relatif',
   products: 'produit stock réapprovisionnement crop largeur hauteur catalogue rupture',
   codes: 'code format devis commande facture produit numéro année sku',
@@ -393,6 +397,8 @@ export default function AdminSettingsPage() {
 
           {tab === 'brand' && <BrandSection />}
 
+          {tab === 'placeholder' && <PlaceholderSettingsSection />}
+
           {tab === 'database' && (
             <section className="ad-card p-5 space-y-4">
               <h2 className="ad-section-title">Base de données</h2>
@@ -411,9 +417,11 @@ export default function AdminSettingsPage() {
             </section>
           )}
 
-          <button className="ad-btn ad-btn-primary" onClick={() => { saveAdminSettings(settings); notifyDateSettingsChanged(); showToast('Paramètres enregistrés', 'success'); }}>
-            <Save className="w-4 h-4" /> Enregistrer
-          </button>
+          {tab !== 'placeholder' && (
+            <button className="ad-btn ad-btn-primary" onClick={() => { saveAdminSettings(settings); notifyDateSettingsChanged(); showToast('Paramètres enregistrés', 'success'); }}>
+              <Save className="w-4 h-4" /> Enregistrer
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -570,6 +578,7 @@ function Field({ label, value, onChange }: { label: string; value: string; onCha
 
 function SiteLogoField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const { showToast } = useToast();
+  const locale = useLocale();
   const [ged, setGed] = useState(false);
   const [uploading, setUploading] = useState(false);
 
@@ -617,6 +626,9 @@ function SiteLogoField({ value, onChange }: { value: string; onChange: (v: strin
             <button type="button" className="ad-btn ad-btn-ghost" onClick={() => setGed(true)}>
               <FolderOpen className="w-4 h-4" /> Médiathèque
             </button>
+            <Link href={`/${locale}/admin/media/studio`} className="ad-btn ad-btn-ghost">
+              <Sparkles className="w-4 h-4" /> Créer un logo
+            </Link>
             {value && (
               <button type="button" className="ad-btn ad-btn-ghost" onClick={() => onChange('')}>
                 Retirer

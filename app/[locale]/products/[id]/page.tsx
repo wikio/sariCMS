@@ -276,7 +276,7 @@ export default function ProductDetailPage() {
                 src={currentImage}
                 alt={product.name}
                 className="max-w-full max-h-full object-contain transition-transform duration-500 hover:scale-105"
-                onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/600x600?text=Image'; }}
+                onError={(e) => { (e.target as HTMLImageElement).src = '/api/placeholder/600x600/E2E8F0/475569?text=Produit&icon=package&pattern=grid'; }}
               />
             </div>
             {showArrows && (

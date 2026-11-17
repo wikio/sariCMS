@@ -18,7 +18,7 @@ interface ImageWithFallbackProps {
 export default function ImageWithFallback({
   src,
   alt = '',
-  fallbackSrc = 'https://placehold.co/400x300?text=Image',
+  fallbackSrc = '/api/placeholder/400x300/E2E8F0/475569?text=Image&icon=layers',
   className = '',
   fallbackText = 'Image',
   aspectRatio = null,

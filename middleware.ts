@@ -171,13 +171,18 @@ export default async function middleware(request: NextRequest) {
     }
   }
 
-  // Rate limiting global sur API (seaux séparés admin authentifié vs public,
+  // Rate limiting global sur API (seaux séparés admin authentifié, images dynamiques, vs public,
   // les endpoints sensibles disposant en plus de leurs propres limites strictes).
   if (pathname.startsWith('/api')) {
+    const isPlaceholderAsset = pathname === '/api/placeholder' || pathname.startsWith('/api/placeholder/');
     const isAuthenticatedAdmin =
       isAdminApiRoute(pathname) && !isPublicAdminApi(pathname) && Boolean(request.cookies.get('sari_admin_access')?.value);
-    const bucket = isAuthenticatedAdmin ? 'admin' : 'public';
-    const limit = isAuthenticatedAdmin ? RATE_LIMIT_ADMIN_MAX : RATE_LIMIT_PUBLIC_MAX;
+    const bucket = isPlaceholderAsset ? 'placeholder' : isAuthenticatedAdmin ? 'admin' : 'public';
+    const limit = isPlaceholderAsset
+      ? Math.max(RATE_LIMIT_ADMIN_MAX, 600)
+      : isAuthenticatedAdmin
+        ? RATE_LIMIT_ADMIN_MAX
+        : RATE_LIMIT_PUBLIC_MAX;
     if (checkRateLimit(`${bucket}:${ip}`, limit)) {
       // Log rate limit
       auditLog.rateLimited({ ip, path: pathname, ua, limit }).catch(() => {});
