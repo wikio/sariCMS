@@ -28,6 +28,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cmsFetch } from '@/lib/cms';
 import { forwardedIp } from '@/lib/server/cms-or';
 import { rateLimited, verifyCaptcha } from '@/lib/contact-captcha';
+import { linkClientByEmail } from '@/lib/event-registrations';
 import { companyVars, requestOrigin, sendMailCenterEvent } from '@/lib/mail-center-send';
 
 export const runtime = 'nodejs';
@@ -103,6 +104,13 @@ export async function POST(req: NextRequest) {
       { ok: false, error: message || 'Inscription impossible pour le moment.' },
       { status: status && status >= 400 && status < 600 ? status : 502 },
     );
+  }
+
+  // Associer automatiquement d'éventuelles candidatures aux événements portant cet e-mail
+  const createdUser = (created as { user?: { id?: string | number }; id?: string | number } | null);
+  const createdId = createdUser?.user?.id ?? createdUser?.id;
+  if (createdId !== undefined && createdId !== null) {
+    await linkClientByEmail(email, String(createdId)).catch(() => 0);
   }
 
   const origin = requestOrigin(req);

@@ -56,5 +56,6 @@
   "canvas": "Graphic studio",
   "verificationCodes": "Verification codes",
   "shopConfig": "Shop configuration",
-  "commerceSettings": "Commerce"
+  "commerceSettings": "Commerce",
+  "eventRegistrations": "Event Registrations"
 }

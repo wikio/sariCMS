@@ -138,5 +138,19 @@
   "globalShipping": "شحن المنطقة {zone}",
   "zone": "المنطقة",
   "articlesCount": "المواد · {count}",
-  "offered": "مجاني"
+  "offered": "مجاني",
+  "eventsTab": "الفعاليات",
+  "myEventsTitle": "مشاركاتي في الفعاليات",
+  "myEventsDesc": "تابع طلبات مشاركتك في الفعاليات المرتبطة بحسابك عبر البريد الإلكتروني.",
+  "noEventsYet": "لا توجد مشاركات مسجلة حتى الآن.",
+  "browseEvents": "استكشاف الفعاليات",
+  "viewEvent": "عرض الفعالية",
+  "cancelEventParticipation": "إلغاء مشاركتي",
+  "confirmCancelEvent": "هل تريد إلغاء مشاركتك في هذه الفعالية؟",
+  "eventStatusPending": "قيد الانتظار",
+  "eventStatusConfirmed": "مؤكدة",
+  "eventStatusAttended": "حاضر",
+  "eventStatusWaitlist": "قائمة الانتظار",
+  "eventStatusRejected": "مرفوضة",
+  "eventStatusCancelled": "ملغاة"
 }

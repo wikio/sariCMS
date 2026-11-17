@@ -138,5 +138,19 @@
   "globalShipping": "Zone shipping {zone}",
   "zone": "Zone",
   "articlesCount": "Items · {count}",
-  "offered": "Free"
+  "offered": "Free",
+  "eventsTab": "Events",
+  "myEventsTitle": "My Event Registrations",
+  "myEventsDesc": "Track your event participation applications linked to your account by email.",
+  "noEventsYet": "No event registrations yet.",
+  "browseEvents": "Browse events",
+  "viewEvent": "View event",
+  "cancelEventParticipation": "Cancel participation",
+  "confirmCancelEvent": "Cancel your participation in this event?",
+  "eventStatusPending": "Pending",
+  "eventStatusConfirmed": "Confirmed",
+  "eventStatusAttended": "Attended",
+  "eventStatusWaitlist": "Waitlist",
+  "eventStatusRejected": "Rejected",
+  "eventStatusCancelled": "Cancelled"
 }

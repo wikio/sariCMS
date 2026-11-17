@@ -83,6 +83,9 @@ export function csrfProtectionMiddleware(
   exemptPaths: string[] = [
     '/api/contact/captcha',
     '/api/contact/verify-captcha',
+    '/api/events/captcha',
+    '/api/events/register',
+    '/api/events/my',
     '/api/newsletter/captcha',
     '/api/verification/captcha',
     '/api/verification/verify-captcha',
