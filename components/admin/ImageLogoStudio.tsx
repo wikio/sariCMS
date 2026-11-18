@@ -27,14 +27,12 @@ import { useToast } from '@/components/admin/Toast';
 
 interface QuickTemplate {
   id: string;
-  label: string;
   patch: Partial<PlaceholderSpec>;
 }
 
 const QUICK_TEMPLATES: QuickTemplate[] = [
   {
     id: 'partner',
-    label: 'Logo Partenaire (150×80)',
     patch: {
       width: 150,
       height: 80,
@@ -60,7 +58,6 @@ const QUICK_TEMPLATES: QuickTemplate[] = [
   },
   {
     id: 'medical-hd',
-    label: 'Logo Médical HD',
     patch: {
       width: 400,
       height: 200,
@@ -86,7 +83,6 @@ const QUICK_TEMPLATES: QuickTemplate[] = [
   },
   {
     id: 'app-icon',
-    label: 'Icône Carrée (512×512)',
     patch: {
       width: 512,
       height: 512,
@@ -112,7 +108,6 @@ const QUICK_TEMPLATES: QuickTemplate[] = [
   },
   {
     id: 'product-card',
-    label: 'Carte Produit (800×600)',
     patch: {
       width: 800,
       height: 600,
@@ -138,7 +133,6 @@ const QUICK_TEMPLATES: QuickTemplate[] = [
   },
   {
     id: 'og-banner',
-    label: 'Bannière Partage OG (1200×630)',
     patch: {
       width: 1200,
       height: 630,
@@ -164,7 +158,6 @@ const QUICK_TEMPLATES: QuickTemplate[] = [
   },
   {
     id: 'minimal-light',
-    label: 'Minimal Clair',
     patch: {
       width: 400,
       height: 200,
@@ -460,7 +453,7 @@ export default function ImageLogoStudio({
                 className="w-3 h-3 rounded-full shrink-0 border"
                 style={{ background: tpl.patch.bg, borderColor: 'var(--ad-line)' }}
               />
-              {tpl.label}
+              {t(`template_${tpl.id}`)}
             </button>
           ))}
         </div>
@@ -645,7 +638,7 @@ export default function ImageLogoStudio({
                 onClick={() => copyText(imgTag, 'imgTag')}
               >
                 {copiedKey === 'imgTag' ? <Check className="w-3.5 h-3.5" /> : <Code2 className="w-3.5 h-3.5" />}
-                {t('copyImgTag')}
+                {t('copyImgTag', { tag: '<img>' })}
               </button>
               <a
                 href={relativeUrl}
@@ -770,7 +763,7 @@ export default function ImageLogoStudio({
                     className="ad-input"
                     value={spec.sub}
                     onChange={(e) => patchSpec({ sub: e.target.value })}
-                    placeholder="Solutions Médicales"
+                    placeholder={t('medicalSubtitle')}
                   />
                 </label>
                 <label className="space-y-1 block">
@@ -797,11 +790,11 @@ export default function ImageLogoStudio({
                     value={spec.font}
                     onChange={(e) => patchSpec({ font: e.target.value as FontKind })}
                   >
-                    <option value="sans">Sans-serif moderne</option>
-                    <option value="geometric">Géométrique</option>
-                    <option value="serif">Serif éditorial</option>
-                    <option value="mono">Monospace technique</option>
-                    <option value="display">Display / Impact</option>
+                    <option value="sans">{t('fontSans')}</option>
+                    <option value="geometric">{t('fontGeometric')}</option>
+                    <option value="serif">{t('fontSerif')}</option>
+                    <option value="mono">{t('fontMono')}</option>
+                    <option value="display">{t('fontDisplay')}</option>
                   </select>
                 </label>
                 <label className="space-y-1 block">
@@ -813,10 +806,10 @@ export default function ImageLogoStudio({
                     value={spec.weight}
                     onChange={(e) => patchSpec({ weight: Number(e.target.value) })}
                   >
-                    <option value={400}>Regular (400)</option>
-                    <option value={600}>Semi-Bold (600)</option>
-                    <option value={700}>Bold (700)</option>
-                    <option value={800}>Extra-Bold (800)</option>
+                    <option value={400}>{t('regular')}</option>
+                    <option value={600}>{t('semibold')}</option>
+                    <option value={700}>{t('bold')}</option>
+                    <option value={800}>{t('extraBold')}</option>
                   </select>
                 </label>
               </div>
@@ -824,7 +817,7 @@ export default function ImageLogoStudio({
               <div className="grid grid-cols-2 gap-3">
                 <label className="space-y-1 block">
                   <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>
-                    {t('fontSize')} ({spec.fontSize === 0 ? 'Auto' : `${spec.fontSize}px`})
+                    {t('fontSize')} ({spec.fontSize === 0 ? t('automatic') : `${spec.fontSize}px`})
                   </span>
                   <input
                     type="range"
@@ -1033,7 +1026,7 @@ export default function ImageLogoStudio({
                     <button
                       key={ic.id}
                       type="button"
-                      title={ic.label}
+                      title={t(`icon_${ic.id}`)}
                       onClick={() => patchSpec({ icon: ic.id })}
                       className={`p-2 rounded-lg border flex flex-col items-center justify-center gap-1 ${
                         selected ? 'ad-btn-primary' : 'ad-btn-ghost'
@@ -1044,7 +1037,7 @@ export default function ImageLogoStudio({
                           <path key={i} d={d} />
                         ))}
                       </svg>
-                      <span className="text-[10px] truncate max-w-full">{ic.label}</span>
+                      <span className="text-[10px] truncate max-w-full">{t(`icon_${ic.id}`)}</span>
                     </button>
                   );
                 })}
@@ -1071,7 +1064,7 @@ export default function ImageLogoStudio({
                     </label>
                     <label className="space-y-1 block">
                       <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>
-                        {t('iconSize')} ({spec.iconSize === 0 ? 'Auto' : `${spec.iconSize}px`})
+                        {t('iconSize')} ({spec.iconSize === 0 ? t('automatic') : `${spec.iconSize}px`})
                       </span>
                       <input
                         type="range"

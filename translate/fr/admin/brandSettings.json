@@ -1,0 +1,21 @@
+{
+  "source_db": "Enregistrée en base",
+  "source_env": "Variables d’environnement",
+  "source_default": "Défauts du dépôt",
+  "loadError": "Marque illisible : le backend ne répond pas",
+  "needTitle": "Le nom est obligatoire : sans lui la barre latérale reste sans en-tête.",
+  "saved": "Marque enregistrée",
+  "restored": "Revenu aux valeurs du serveur",
+  "resetError": "Réinitialisation impossible",
+  "loading": "Chargement de la marque…",
+  "source": "Provenance des valeurs affichées",
+  "name": "Nom de l’administration",
+  "nameHint": "Barre latérale, page de connexion et titre de l’onglet. 40 caractères maximum.",
+  "tagline": "Accroche",
+  "taglinePlaceholder": "Administration",
+  "taglineHint": "Seconde ligne sous le nom. Laissez vide pour ne rien afficher.",
+  "logo": "Logo",
+  "logoHint": "Sert aussi de favicon d’onglet. Vide = icône par défaut. Chemin relatif, URL http(s) ou image embarquée uniquement — les autres schémas sont refusés à l’enregistrement.",
+  "reset": "Revenir aux valeurs du serveur",
+  "previewHint": "Le nom tronqué ici le sera aussi en réalité : la barre fait 272 px dépliée, 76 repliée — seuls le logo et l’onglet restent visibles dans ce cas."
+}

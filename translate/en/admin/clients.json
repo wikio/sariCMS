@@ -21,5 +21,6 @@
   "saveSuccess": "Clients saved!",
   "noClients": "No clients found",
   "breadcrumb": "CRM / Clients",
-  "searchPlaceholder": "Search a client (name, e-mail, company…)…"
+  "searchPlaceholder": "Search a client (name, e-mail, company…)…",
+  "singular": "customer"
 }

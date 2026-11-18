@@ -26,7 +26,7 @@
   "download": "تحميل",
   "preview": "معاينة",
   "reset": "إعادة تعيين",
-  "recordCount": "{count} سجل(سجلات)",
+  "recordCount": "عدد السجلات: {count, number}",
   "itemsCount": "{count} عنصر(عناصر)",
   "status": "الحالة",
   "active": "نشط",
@@ -113,5 +113,8 @@
   "shop": "المتجر",
   "eShop": "المتجر",
   "filter": "تصفية",
-  "validated": "مُصادق"
+  "validated": "مُصادق",
+  "saveError": "تعذّر حفظ التغييرات",
+  "saving": "جارٍ الحفظ…",
+  "noResults": "لا توجد نتائج"
 }

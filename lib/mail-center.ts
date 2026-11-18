@@ -590,6 +590,7 @@ export function unresolvedVars(text: string): string[] {
   return [...String(text ?? '').matchAll(/\{\{\s*([a-z0-9_]+)\s*\}\}/gi)].map((m) => m[1]);
 }
 
+export { esc as escapeMailText };
 const esc = (value: unknown): string =>
   String(value ?? '')
     .replace(/&/g, '&amp;')

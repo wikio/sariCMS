@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useAdminBrand } from '@/components/admin/BrandContext';
 import PixelGridLoader from '@/components/admin/PixelGridLoader';
+import { useAnalyticsLabels } from '@/components/admin/useAnalyticsLabels';
 import AnalyticsExportMenu from '@/components/admin/AnalyticsExportMenu';
 import {
   AnimatedCounter,
@@ -53,19 +54,13 @@ async function countWhere(resource: string, filter: Record<string, unknown>): Pr
 
 type SourceRow = { label: string; detail: string; base: boolean; href: string; count?: number | null };
 
-const WIDGET_BLOCKS = [
-  { id: 'overviewKpis', label: 'Tuiles clés (Candidatures, Contenu, GED, Équipe)' },
-  { id: 'multiStatus', label: 'Suivi multi-statuts (Candidatures, Événements, Emplois, GED)' },
-  { id: 'liveCharts', label: 'Graphiques configurables & charge équipe' },
-  { id: 'catalogTiles', label: 'Catalogue & commerce' },
-  { id: 'todoAndSources', label: 'À traiter & sources de données' },
-  { id: 'actionsAndLogs', label: 'Actions rapides & activité récente' },
-];
+const WIDGET_BLOCKS = ['overviewKpis', 'multiStatus', 'liveCharts', 'catalogTiles', 'todoAndSources', 'actionsAndLogs'] as const;
 
 export default function AdminDashboardPage() {
   const { brand } = useAdminBrand();
   const locale = useLocale();
   const t = useTranslations('admin.dashboard');
+  const tc = useTranslations('admin.common');
   const ta = useTranslations('admin.analytics');
 
   const [counts, setCounts] = useState<Record<string, number>>({});
@@ -82,7 +77,8 @@ export default function AdminDashboardPage() {
   const [unavailable, setUnavailable] = useState<string[]>([]);
 
   const [range, setRange] = useState<AnalyticsRange>('all');
-  const [snapshot, setSnapshot] = useState<AnalyticsSnapshot | null>(null);
+  const [rawSnapshot, setSnapshot] = useState<AnalyticsSnapshot | null>(null);
+  const snapshot = useAnalyticsLabels(rawSnapshot);
   const [prefs, setPrefs] = useState<DashboardPrefs>(DEFAULT_DASHBOARD_PREFS);
   const [configOpen, setConfigOpen] = useState(false);
   const [chartMetric, setChartMetric] = useState<'applications' | 'eventRegistrations' | 'workload' | 'ged' | 'content'>('eventRegistrations');
@@ -176,14 +172,14 @@ export default function AdminDashboardPage() {
     if (chartMetric === 'applications') {
       return {
         title: ta('jobApplicationsTitle'),
-        subtitle: `${snapshot.applications.total} total · ${snapshot.applications.acceptanceRate}% ${ta('acceptedShort')}`,
+        subtitle: `${snapshot.applications.total} ${tc('total')} · ${snapshot.applications.acceptanceRate}% ${ta('acceptedShort')}`,
         items: snapshot.applications.byStatus,
       };
     }
     if (chartMetric === 'eventRegistrations') {
       return {
         title: ta('eventRegsTitle'),
-        subtitle: `${snapshot.eventRegistrations.total} total · ${snapshot.eventRegistrations.approvalRate}% ${ta('approvedShort')}`,
+        subtitle: `${snapshot.eventRegistrations.total} ${tc('total')} · ${snapshot.eventRegistrations.approvalRate}% ${ta('approvedShort')}`,
         items: snapshot.eventRegistrations.byStatus,
       };
     }
@@ -197,7 +193,7 @@ export default function AdminDashboardPage() {
     if (chartMetric === 'ged') {
       return {
         title: ta('gedByKindTitle'),
-        subtitle: `${snapshot.ged.totalFiles} ${ta('filesShort')} · ${formatBytes(snapshot.ged.totalBytes)}`,
+        subtitle: `${snapshot.ged.totalFiles} ${ta('filesShort')} · ${formatBytes(snapshot.ged.totalBytes, locale)}`,
         items: snapshot.ged.byKind.map((k) => ({ key: k.key, label: k.label, value: k.count, color: k.color })),
       };
     }
@@ -213,12 +209,12 @@ export default function AdminDashboardPage() {
         { key: 'jobsDone', label: ta('jobsCompleted'), value: snapshot.jobs.completed, color: '#64748B' },
       ],
     };
-  }, [snapshot, chartMetric, ta]);
+  }, [snapshot, chartMetric, ta, locale]);
 
   if (loading) {
     return (
       <div className="ad-card">
-        <PixelGridLoader label="Boot CMS" />
+        <PixelGridLoader label={tc('loading')} />
       </div>
     );
   }
@@ -280,7 +276,7 @@ export default function AdminDashboardPage() {
         {
           label: ta('newsletterSubscribers'),
           value: snapshot.newsletter.subscribed,
-          sub: `${snapshot.newsletter.total} total · ${snapshot.newsletter.activeRate}% ${ta('activeShort')}`,
+          sub: `${snapshot.newsletter.total} ${tc('total')} · ${snapshot.newsletter.activeRate}% ${ta('activeShort')}`,
           icon: MailCheck,
           color: '#EAB616',
           href: `/${locale}/admin/newsletter`,
@@ -288,7 +284,7 @@ export default function AdminDashboardPage() {
         {
           label: ta('gedFiles'),
           value: snapshot.ged.totalFiles,
-          sub: `${formatBytes(snapshot.ged.totalBytes)} · ${snapshot.ged.utilizationRate}% ${ta('usedShort')}`,
+          sub: `${formatBytes(snapshot.ged.totalBytes, locale)} · ${snapshot.ged.utilizationRate}% ${ta('usedShort')}`,
           icon: FolderKanban,
           color: '#0EA5E9',
           href: `/${locale}/admin/media`,
@@ -337,7 +333,7 @@ export default function AdminDashboardPage() {
     { label: ta('gedFiles'), detail: 'public/uploads · GED', base: true, href: `/${locale}/admin/media`, count: snapshot?.ged.totalFiles },
     { label: ta('newsletterSubscribers'), detail: snapshot?.newsletter.source === 'api' ? 'newsletter_subscribers' : 'data/newsletter.json', base: true, href: `/${locale}/admin/newsletter`, count: snapshot?.newsletter.total },
     { label: t('srcPayments', { defaultMessage: 'Relevé d’encaissements' }), detail: 'payment_records', base: true, href: `/${locale}/admin/payment-records`, count: counts.paymentRecords },
-    { label: t('srcPaymentMethods', { defaultMessage: 'Modes de paiement' }), detail: methods ? (methods.fromBase ? `doc_payments · ${methods.count}` : 'doc_payments · jamais enregistré') : 'settings', base: Boolean(methods?.fromBase), href: `/${locale}/admin/payments`, count: methods?.count },
+    { label: t('srcPaymentMethods', { defaultMessage: 'Modes de paiement' }), detail: methods ? (methods.fromBase ? `doc_payments · ${methods.count}` : t('notRecorded', { document: 'doc_payments' })) : 'settings', base: Boolean(methods?.fromBase), href: `/${locale}/admin/payments`, count: methods?.count },
     { label: t('srcCoupons', { defaultMessage: 'Coupons' }), detail: 'coupons', base: true, href: `/${locale}/admin/coupons`, count: counts.coupons },
     { label: t('srcTaxes', { defaultMessage: 'Règles de taxes' }), detail: 'tax_rules', base: true, href: `/${locale}/admin/taxes`, count: counts.taxRules },
   ];
@@ -398,14 +394,14 @@ export default function AdminDashboardPage() {
               >
                 <div className="text-xs font-black uppercase tracking-wider">{ta('dashboardWidgets')}</div>
                 <div className="space-y-1.5">
-                  {WIDGET_BLOCKS.map((b) => (
-                    <label key={b.id} className="flex items-center gap-2 text-xs cursor-pointer">
+                  {WIDGET_BLOCKS.map((id) => (
+                    <label key={id} className="flex items-center gap-2 text-xs cursor-pointer">
                       <input
                         type="checkbox"
-                        checked={isVisible(b.id)}
-                        onChange={() => toggleWidget(b.id)}
+                        checked={isVisible(id)}
+                        onChange={() => toggleWidget(id)}
                       />
-                      <span>{b.label}</span>
+                      <span>{t(`widget_${id}`)}</span>
                     </label>
                   ))}
                 </div>
@@ -574,7 +570,7 @@ export default function AdminDashboardPage() {
               </Link>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              <MiniMetric icon={FolderKanban} label={ta('gedFiles')} value={snapshot.ged.totalFiles} sub={formatBytes(snapshot.ged.totalBytes)} color="#0EA5E9" />
+              <MiniMetric icon={FolderKanban} label={ta('gedFiles')} value={snapshot.ged.totalFiles} sub={formatBytes(snapshot.ged.totalBytes, locale)} color="#0EA5E9" />
               <MiniMetric icon={CheckCircle2} label={ta('gedUtilization')} value={snapshot.ged.utilizationRate} suffix="%" sub={`${snapshot.ged.usedFiles}/${snapshot.ged.totalFiles}`} color="#0F9F6E" />
               <MiniMetric icon={UserCheck} label={ta('inProgressShort')} value={snapshot.team.workload.inProgress} sub={`${snapshot.team.staffTotal} ${ta('staffShort')}`} color="#169EC9" />
               <MiniMetric icon={Clock} label={ta('remainingShort')} value={snapshot.team.workload.remaining} sub={`${snapshot.team.workload.completionRate}% ${ta('doneShort')}`} color="#D97706" />

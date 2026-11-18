@@ -2,5 +2,6 @@
   "title": "Partners",
   "breadcrumb": "Partners",
   "managePartners": "Manage your partners and their accounts",
-  "searchPlaceholder": "Search a partner…"
+  "searchPlaceholder": "Search a partner…",
+  "singular": "partner"
 }

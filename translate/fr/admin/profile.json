@@ -11,5 +11,17 @@
   "twoFactorDesc": "Activez la 2FA pour sécuriser votre compte avec une appli d'authentification.",
   "showProfile": "Afficher le profil",
   "updateProfile": "Mettre à jour le profil",
-  "informations": "Informations"
+  "informations": "Informations",
+  "updated": "Profil mis à jour",
+  "savedLocal": "Profil enregistré localement",
+  "setupError": "Génération du secret impossible",
+  "needCode": "Saisissez le code à 6 chiffres",
+  "enableSuccess": "Double authentification activée ✅",
+  "invalidCode": "Code invalide",
+  "needTotp": "Saisissez votre code TOTP",
+  "disableSuccess": "Double authentification désactivée",
+  "scan": "1. Scannez ce QR code avec Google Authenticator, Authy ou FreeOTP — ou saisissez la clé manuellement.",
+  "qrAlt": "QR code 2FA",
+  "enterCode": "2. Code à 6 chiffres",
+  "enable2FA": "Activer la 2FA"
 }

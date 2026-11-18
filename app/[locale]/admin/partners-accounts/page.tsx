@@ -1,5 +1,8 @@
 'use client';
+
+import { useTranslations } from 'next-intl';
 import PeopleDesk from '@/components/admin/PeopleDesk';
 export default function Page() {
-  return <PeopleDesk type="partner" title="Partenaires" singular="partenaire" />;
+  const t = useTranslations('admin.partners');
+  return <PeopleDesk type="partner" title={t('title')} singular={t('singular')} />;
 }

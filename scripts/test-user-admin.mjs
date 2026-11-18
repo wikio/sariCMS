@@ -121,7 +121,7 @@ check('le type renvoie vers la vue métier', /userRecordHref/.test(srcSheet));
 section('Liste des comptes : sélection multiple et actions');
 
 const srcCrud = lire('components/admin/AdminCrud.tsx');
-check('un bouton de consultation existe', /Consulter la fiche/.test(srcCrud));
+check('un bouton de consultation existe', /onClick=\{\(\) => ouvrirFiche\(row, 'view'\)\} title=\{tl\('consult'\)\}/.test(srcCrud));
 check('la sélection multiple est disponible', /const \[selected, setSelected\]/.test(srcCrud));
 check('une case à cocher par ligne', /toggleSelect\(String\(row\.id\)\)/.test(srcCrud));
 check('une case « tout sélectionner »', /toggleSelectAll/.test(srcCrud));
@@ -135,7 +135,7 @@ check('envoi d’e-mail groupé', /bulkMail/.test(srcCrud));
 check('les destinataires groupés passent en copie cachée', /bcc=/.test(srcCrud));
 check('un échec partiel ne masque pas les réussites', /Promise\.allSettled/.test(srcCrud));
 check('les lignes en échec restent sélectionnées', /prev\.filter\(\(id\) => !done\.includes\(id\)\)/.test(srcCrud));
-check('les actions groupées demandent confirmation', /confirm\(`\$\{libelle\}/.test(srcCrud));
+check('les actions groupées demandent confirmation', /if \(!confirm\(t\('bulkConfirm', \{ action: libelle, count: selected.length \}\)\)\) return;/.test(srcCrud));
 check('la fiche complète est relue avant édition', /cmsAdminGet\(cfg\.resource/.test(srcCrud));
 // On vérifie le comportement, pas la liste exacte des champs : « Nouveau »
 // doit ouvrir un formulaire vierge et ne rien écrire en base avant la saisie.

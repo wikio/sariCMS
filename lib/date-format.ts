@@ -37,10 +37,8 @@ export interface DateFormatOptions {
 /** Préréglages proposés dans les paramètres. */
 export interface DateFormatPreset {
   value: string;
-  /** Libellé court affiché dans le sélecteur. */
-  label: string;
-  /** Explication affichée sous l'option. */
-  note: string;
+  /** Identifiant stable des libellés admin.datePicker. */
+  labelKey: string;
 }
 
 const LOCALE_TAGS: Record<SupportedLocale, string> = {
@@ -64,17 +62,17 @@ const PRESET_OPTIONS: Record<string, Intl.DateTimeFormatOptions> = {
  * pour que l'administrateur voie le rendu réel dans sa langue.
  */
 export const DATE_FORMAT_PRESETS: DateFormatPreset[] = [
-  { value: 'short', label: 'Court', note: 'Chiffres uniquement, compact.' },
-  { value: 'medium', label: 'Moyen', note: 'Mois en toutes lettres. Recommandé.' },
-  { value: 'long', label: 'Long', note: 'Avec le jour de la semaine.' },
-  { value: 'iso', label: 'ISO 8601', note: 'Norme technique, tri alphabétique fiable.' },
-  { value: 'relative', label: 'Relatif', note: '« il y a 3 jours », « dans 2 mois ».' },
-  { value: 'DD/MM/YYYY', label: 'JJ/MM/AAAA', note: 'Usage courant en France et en Algérie.' },
-  { value: 'MM/DD/YYYY', label: 'MM/JJ/AAAA', note: 'Usage nord-américain.' },
-  { value: 'YYYY-MM-DD', label: 'AAAA-MM-JJ', note: 'Format trié, sans ambiguïté.' },
-  { value: 'D MMMM YYYY', label: '5 janvier 2026', note: 'Mois en toutes lettres, sans zéro initial.' },
-  { value: 'DD MMM YYYY', label: '05 janv. 2026', note: 'Mois abrégé.' },
-  { value: 'dddd D MMMM YYYY', label: 'lundi 5 janvier 2026', note: 'Complet, avec le jour.' },
+  { value: 'short', labelKey: 'short' },
+  { value: 'medium', labelKey: 'medium' },
+  { value: 'long', labelKey: 'long' },
+  { value: 'iso', labelKey: 'iso' },
+  { value: 'relative', labelKey: 'relative' },
+  { value: 'DD/MM/YYYY', labelKey: 'dmy' },
+  { value: 'MM/DD/YYYY', labelKey: 'mdy' },
+  { value: 'YYYY-MM-DD', labelKey: 'ymd' },
+  { value: 'D MMMM YYYY', labelKey: 'fullMonth' },
+  { value: 'DD MMM YYYY', labelKey: 'shortMonth' },
+  { value: 'dddd D MMMM YYYY', labelKey: 'weekday' },
 ];
 
 /**

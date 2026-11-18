@@ -5,12 +5,15 @@
   "reset": "Reset",
   "resetSuccess": "Visibility reset",
   "searchPlaceholder": "Search an item…",
-  "itemsCount": "{count} item(s)",
+  "itemsCount": "{count, plural, one {# item} other {# items}}",
   "hideAll": "Hide all",
   "showAll": "Show all",
   "visible": "Visible",
   "hidden": "Hidden",
   "noResults": "No items match « {query} ».",
   "groupShown": "{group} shown",
-  "groupHidden": "{group} hidden"
+  "groupHidden": "{group} hidden",
+  "copyToOthers": "Copy to other languages",
+  "copied": "Settings for {language} copied to the other languages",
+  "shared": "Saved in the database — applies to all visitors using this language."
 }

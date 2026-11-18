@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
 import { FolderOpen, Image as ImageIcon, Save, Search, Sparkles, Upload } from 'lucide-react';
 import { DEFAULT_SETTINGS, loadAdminSettings, saveAdminSettings, type AdminSettings } from '@/lib/admin-settings';
@@ -25,61 +25,43 @@ import { notifyDateSettingsChanged } from '@/lib/use-date-format';
 type SectionId = 'general' | 'commerce' | 'security' | 'integrations' | 'emails' | 'seo';
 type TabId = 'general' | 'dates' | 'products' | 'codes' | 'quotes' | 'invoicing' | 'security' | 'smtp' | 'database' | 'maintenance' | 'verification' | 'mail' | 'seo' | 'brand' | 'demo' | 'placeholder';
 
-interface TabDef { id: TabId; label: string }
-interface SectionDef { id: SectionId; label: string; tabs: TabDef[] }
+interface TabDef { id: TabId; labelKey: string }
+interface SectionDef { id: SectionId; labelKey: string; tabs: TabDef[] }
 
 const SECTIONS: SectionDef[] = [
-  { id: 'general', label: 'Général', tabs: [
-    { id: 'brand', label: 'Identité du back-office' },
-    { id: 'general', label: 'Identité & langue' },
-    { id: 'placeholder', label: 'Images & logos' },
-    { id: 'dates', label: 'Dates & heures' },
+  { id: 'general', labelKey: 'general', tabs: [
+    { id: 'brand', labelKey: 'brand' },
+    { id: 'general', labelKey: 'identityLanguage' },
+    { id: 'placeholder', labelKey: 'placeholder' },
+    { id: 'dates', labelKey: 'dates' },
   ] },
-  { id: 'commerce', label: 'Commerce', tabs: [
-    { id: 'products', label: 'Produits & stock' },
-    { id: 'codes', label: 'Format des codes' },
-    { id: 'quotes', label: 'Devis & commandes' },
-    { id: 'invoicing', label: 'Facturation & ERP' },
+  { id: 'commerce', labelKey: 'commerce', tabs: [
+    { id: 'products', labelKey: 'products' },
+    { id: 'codes', labelKey: 'codes' },
+    { id: 'quotes', labelKey: 'quotes' },
+    { id: 'invoicing', labelKey: 'invoicing' },
   ] },
-  { id: 'security', label: 'Sécurité', tabs: [
-    { id: 'security', label: 'Accès & CAPTCHA' },
+  { id: 'security', labelKey: 'security', tabs: [
+    { id: 'security', labelKey: 'accessCaptcha' },
   ] },
-  { id: 'integrations', label: 'Intégrations', tabs: [
-    { id: 'smtp', label: 'SMTP / Email' },
-    { id: 'verification', label: 'Vérification des documents' },
-    { id: 'database', label: 'Base de données' },
-    { id: 'maintenance', label: 'Journaux & maintenance' },
-    { id: 'demo', label: 'Import & jeu de démonstration' },
+  { id: 'integrations', labelKey: 'integrations', tabs: [
+    { id: 'smtp', labelKey: 'smtp' },
+    { id: 'verification', labelKey: 'verification' },
+    { id: 'database', labelKey: 'database' },
+    { id: 'maintenance', labelKey: 'maintenance' },
+    { id: 'demo', labelKey: 'demo' },
   ] },
-  { id: 'emails', label: 'Emails', tabs: [
-    { id: 'mail', label: 'Emails & notifications' },
+  { id: 'emails', labelKey: 'emails', tabs: [
+    { id: 'mail', labelKey: 'mail' },
   ] },
-  { id: 'seo', label: 'SEO', tabs: [
-    { id: 'seo', label: 'Référencement' },
+  { id: 'seo', labelKey: 'seoSection', tabs: [
+    { id: 'seo', labelKey: 'seo' },
   ] },
 ];
 
-// Index de recherche : onglet → mots-clés.
-const SEARCH_INDEX: Record<TabId, string> = {
-  brand: 'marque nom titre accroche logo icone icône favicon identité back-office administration en-tête barre latérale épinglette brand',
-  general: 'langue langue origine logo site vitrine identité société entreprise',
-  placeholder: 'image images logo logos placeholder via.placeholder canvas atelier studio générateur generateur icône icone svg png webp couleur palette dimensions dégradé motif vitrine url',
-  dates: 'date heure format affichage jour mois année calendrier iso horodatage relatif',
-  products: 'produit stock réapprovisionnement crop largeur hauteur catalogue rupture',
-  codes: 'code format devis commande facture produit numéro année sku',
-  quotes: 'devis ligne validité commande pièce jointe transformer expiration',
-  invoicing: 'facture facturation erp api clé url upload paiement',
-  security: '2fa captcha connexion postuler double authentification sécurité accès',
-  smtp: 'smtp hôte port utilisateur mot de passe expéditeur tls ssl email',
-  verification: 'vérification vérif document code clé hash api externe qr anti-robot catalogue expire révoqué falsifié captcha',
-  database: 'base de données driver mysql postgresql mongodb json url schéma',
-  maintenance: 'journaux log audit logs rétention conservation purge corbeille cron planification tâche jetons expirés audit_logs refresh_tokens',
-  mail: 'email emails notification message objet modèle gabarit template constructeur variable fusion commande devis candidature newsletter politique envoi plafond désinscription journal',
-  seo: 'seo titre description mots-clés open graph twitter favicon canonical robots',
-  demo: 'démo demo démonstration jeu données fictives catalogue import réimporter seed amorçage commande fictive devis fictif recette maquette bac à sable sandbox data fr en ar',
-};
-
 export default function AdminSettingsPage() {
+  const t = useTranslations('admin.settings');
+  const tc = useTranslations('admin.common');
   const { showToast } = useToast();
   const locale = useLocale();
   const params = useSearchParams();
@@ -138,24 +120,24 @@ export default function AdminSettingsPage() {
     const tabs = new Set<TabId>();
     const sections = new Set<SectionId>();
     for (const s of SECTIONS) {
-      if (s.label.toLowerCase().includes(needle)) sections.add(s.id);
-      for (const t of s.tabs) {
-        if (t.label.toLowerCase().includes(needle) || SEARCH_INDEX[t.id].includes(needle)) {
-          tabs.add(t.id);
+      if (t(s.labelKey).toLowerCase().includes(needle)) sections.add(s.id);
+      for (const tab of s.tabs) {
+        if (t(tab.labelKey).toLowerCase().includes(needle) || t(`search_${tab.id}`).toLowerCase().includes(needle)) {
+          tabs.add(tab.id);
           sections.add(s.id);
         }
       }
     }
     return { tabs, sections };
-  }, [q]);
+  }, [q, t]);
 
   const activeSection = SECTIONS.find((s) => s.id === section)!;
 
   return (
     <div className="space-y-4">
       <header className="ad-rise">
-        <div className="text-[11px] uppercase tracking-[0.22em] font-black" style={{ color: 'var(--ad-muted)' }}>Système</div>
-        <h1 className="text-3xl font-black">Paramètres</h1>
+        <div className="text-[11px] uppercase tracking-[0.22em] font-black" style={{ color: 'var(--ad-muted)' }}>{t('system')}</div>
+        <h1 className="text-3xl font-black">{t('title')}</h1>
       </header>
 
       <div className="grid lg:grid-cols-12 gap-4">
@@ -166,7 +148,7 @@ export default function AdminSettingsPage() {
               <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2" style={{ color: 'var(--ad-muted)' }} />
               <input
                 className="ad-input ad-input-icon pl-8"
-                placeholder="Rechercher…"
+                placeholder={t('search')}
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
               />
@@ -182,7 +164,7 @@ export default function AdminSettingsPage() {
                   className={`w-full text-left px-3 py-2.5 text-sm flex items-center justify-between ${on ? 'font-bold' : ''}`}
                   style={{ background: on ? 'color-mix(in srgb, var(--ad-accent) 14%, transparent)' : undefined, borderRadius: 8 }}
                 >
-                  <span>{s.label}</span>
+                  <span>{t(s.labelKey)}</span>
                   {hl && !on && <span className="w-2 h-2 rounded-full" style={{ background: 'var(--ad-accent)' }} />}
                 </button>
               );
@@ -194,31 +176,31 @@ export default function AdminSettingsPage() {
         <div className="lg:col-span-9 space-y-4">
           <div className="ad-card p-3">
             <div className="flex flex-wrap gap-1">
-              {activeSection.tabs.map((t) => {
-                const on = tab === t.id;
-                const hl = q.trim() && matching.tabs.has(t.id);
+              {activeSection.tabs.map((item) => {
+                const on = tab === item.id;
+                const hl = q.trim() && matching.tabs.has(item.id);
                 return (
                   <button
-                    key={t.id}
+                    key={item.id}
                     type="button"
-                    onClick={() => setTab(t.id)}
+                    onClick={() => setTab(item.id)}
                     className={`ad-btn ${on ? 'ad-btn-primary' : 'ad-btn-ghost'} ${hl && !on ? '!border-[var(--ad-accent)]' : ''}`}
                   >
-                    {t.label}
+                    {t(item.labelKey)}
                   </button>
                 );
               })}
             </div>
             {q.trim() && matching.tabs.size === 0 && (
-              <p className="text-xs mt-2" style={{ color: 'var(--ad-muted)' }}>Aucun paramètre ne correspond à « {q} ».</p>
+              <p className="text-xs mt-2" style={{ color: 'var(--ad-muted)' }}>{t('noMatches', { query: q })}</p>
             )}
           </div>
 
           {tab === 'general' && (
             <section className="ad-card p-5 space-y-4">
-              <h2 className="ad-section-title">Identité &amp; langue</h2>
+              <h2 className="ad-section-title">{t('identityLanguage')}</h2>
               <div className="space-y-1.5">
-                <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Logo du site vitrine</span>
+                <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>{t('siteLogo')}</span>
                 <SiteLogoField
                   value={settings.siteLogo || ''}
                   onChange={(v) => {
@@ -226,16 +208,16 @@ export default function AdminSettingsPage() {
                     // Le cache local donne le retour visuel immédiat à l'opérateur ;
                     // la base, elle, est ce que le visiteur recevra au prochain rendu.
                     saveSiteLogo(locale, v)
-                      .then(() => showToast('Logo de vitrine enregistré en base', 'success'))
-                      .catch(() => showToast('Logo non enregistré en base', 'error'));
+                      .then(() => showToast(t('logoSaved'), 'success'))
+                      .catch(() => showToast(t('logoError'), 'error'));
                   }}
                 />
                 <p className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>
-                  Utilisé dans l’en-tête et le pied de page de la vitrine. Laissez vide pour conserver le logo configuré dans les données du site.
+                  {t('logoHint')}
                 </p>
               </div>
               <label className="space-y-1.5 block">
-                <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Langue d’origine</span>
+                <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>{t('defaultLanguage')}</span>
                 <select className="ad-select" value={settings.defaultLocale} onChange={(e) => setSettings({ ...settings, defaultLocale: e.target.value as AdminSettings['defaultLocale'] })}>
                   <option value="fr">Français</option>
                   <option value="en">English</option>
@@ -247,27 +229,24 @@ export default function AdminSettingsPage() {
 
           {tab === 'dates' && (
             <section className="ad-card p-5 space-y-4">
-              <h2 className="ad-section-title">Dates &amp; heures</h2>
+              <h2 className="ad-section-title">{t('dates')}</h2>
               <p className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>
-                Ce format s’applique partout : fiches en consultation et en édition, tableaux de
-                l’administration et pages de la vitrine. Les noms de mois et de jours suivent
-                automatiquement la langue affichée.
+                {t('datesHint')}
               </p>
 
               <div className="space-y-1.5">
                 <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>
-                  Format d’affichage
+                  {t('displayFormat')}
                 </span>
                 <DateFormatPicker
                   value={settings.dates.format}
-                  locale={settings.defaultLocale}
                   onChange={(v) => setSettings({ ...settings, dates: { ...settings.dates, format: v } })}
                 />
               </div>
 
               <ToggleRow
-                label="Afficher l’heure"
-                hint="Lorsque la valeur enregistrée comporte une heure (début d’un événement, publication d’un article). Une date sans heure n’affiche jamais « 00:00 »."
+                label={t('showTime')}
+                hint={t('showTimeHint')}
                 on={settings.dates.showTime}
                 onToggle={() => setSettings({ ...settings, dates: { ...settings.dates, showTime: !settings.dates.showTime } })}
               />
@@ -276,19 +255,19 @@ export default function AdminSettingsPage() {
 
           {tab === 'products' && (
             <section className="ad-card p-5 space-y-4">
-              <h2 className="ad-section-title">Produits &amp; stock</h2>
+              <h2 className="ad-section-title">{t('products')}</h2>
               <label className="space-y-1.5 block">
-                <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Message de réapprovisionnement</span>
+                <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>{t('restock')}</span>
                 <textarea className="ad-textarea" value={settings.restockMessage || ''} onChange={(e) => setSettings({ ...settings, restockMessage: e.target.value })} />
-                <p className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>Affiché au client si le stock est dépassé et que le produit n’est pas en « stock final ». Variables : {'{{date_reapprovisionnement}}'}, {'{{produit}}'}.</p>
+                <p className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>{t('restockHint', { date: '{{date_reapprovisionnement}}', product: '{{produit}}' })}</p>
               </label>
               <div className="grid grid-cols-2 gap-3">
                 <label className="space-y-1.5 block">
-                  <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Crop front largeur</span>
+                  <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>{t('cropWidth')}</span>
                   <input className="ad-input" type="number" value={settings.cropWidth} onChange={(e) => setSettings({ ...settings, cropWidth: Number(e.target.value) })} />
                 </label>
                 <label className="space-y-1.5 block">
-                  <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Crop front hauteur</span>
+                  <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>{t('cropHeight')}</span>
                   <input className="ad-input" type="number" value={settings.cropHeight} onChange={(e) => setSettings({ ...settings, cropHeight: Number(e.target.value) })} />
                 </label>
               </div>
@@ -297,47 +276,47 @@ export default function AdminSettingsPage() {
 
           {tab === 'codes' && (
             <section className="ad-card p-5 space-y-4">
-              <h2 className="ad-section-title">Format des codes</h2>
+              <h2 className="ad-section-title">{t('codes')}</h2>
               <p className="text-xs" style={{ color: 'var(--ad-muted)' }}>
-                Jetons disponibles : <code>{'{ID}'}</code> = identifiant sur 5 chiffres · <code>{'{XX}'}</code> = année sur 2 chiffres.
+                {t('codeTokens', { id: '{ID}', year: '{XX}' })}
               </p>
               {(['quote', 'order', 'invoice', 'product'] as CodeKind[]).map((kind) => (
                 <label key={kind} className="space-y-1.5 block">
                   <span className="text-[11px] font-black uppercase tracking-widest flex items-center gap-2" style={{ color: 'var(--ad-muted)' }}>
-                    {({ quote: 'Devis', order: 'Commande', invoice: 'Facture', product: 'Produit' })[kind]}
+                    {t(`code_${kind}`)}
                     <span className="ad-chip ad-chip-acc">{previewCode(kind, settings.codes[kind])}</span>
                   </span>
                   <input className="ad-input font-mono" value={settings.codes[kind]} onChange={(e) => setCodes({ [kind]: e.target.value } as Partial<AdminSettings['codes']>)} />
                 </label>
               ))}
               <button type="button" className="ad-btn ad-btn-ghost" onClick={() => setCodes({ ...DEFAULT_TEMPLATES })}>
-                Rétablir les formats par défaut
+                {t('resetFormats')}
               </button>
             </section>
           )}
 
           {tab === 'quotes' && (
             <section className="ad-card p-5 space-y-4">
-              <h2 className="ad-section-title">Devis &amp; commandes</h2>
+              <h2 className="ad-section-title">{t('quotes')}</h2>
               <div className="grid grid-cols-2 gap-3">
                 <label className="space-y-1.5 block">
-                  <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Limite de lignes (0 = illimitée)</span>
+                  <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>{t('lineLimit')}</span>
                   <input className="ad-input" type="number" min={0} value={settings.quote.maxLines} onChange={(e) => setQuote({ maxLines: Number(e.target.value) || 0 })} />
                 </label>
                 <label className="space-y-1.5 block">
-                  <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Validité d'un devis (jours)</span>
+                  <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>{t('validDays')}</span>
                   <input className="ad-input" type="number" min={1} value={settings.quote.validityDays} onChange={(e) => setQuote({ validityDays: Number(e.target.value) || 30 })} />
                 </label>
               </div>
               <ToggleRow
-                label="Transformer automatiquement en commande"
-                hint="Quand un devis passe au statut « Accepté », crée automatiquement la commande liée."
+                label={t('convert')}
+                hint={t('convertHint')}
                 on={settings.quote.autoTransformToOrder}
                 onToggle={() => setQuote({ autoTransformToOrder: !settings.quote.autoTransformToOrder })}
               />
               <ToggleRow
-                label="Pièce jointe obligatoire (hors-catalogue)"
-                hint="Exige une pièce jointe sur les lignes hors-catalogue lors de la demande de devis côté client."
+                label={t('attachment')}
+                hint={t('attachmentHint')}
                 on={settings.quote.requireAttachment}
                 onToggle={() => setQuote({ requireAttachment: !settings.quote.requireAttachment })}
               />
@@ -348,29 +327,29 @@ export default function AdminSettingsPage() {
 
           {tab === 'security' && (
             <section className="ad-card p-5 space-y-4">
-              <h2 className="ad-section-title">Sécurité &amp; accès</h2>
-              <p className="text-xs" style={{ color: 'var(--ad-muted)' }}>Activez la double authentification pour l’admin, et les CAPTCHA image pour l’admin et la vitrine.</p>
+              <h2 className="ad-section-title">{t('securityTitle')}</h2>
+              <p className="text-xs" style={{ color: 'var(--ad-muted)' }}>{t('securityHint')}</p>
               <ToggleRow
-                label="Exiger la 2FA pour l’Admin"
-                hint="Activez d’abord la 2FA de votre compte dans Profil (scan du QR code), puis ce réglage exige la double authentification à la connexion."
+                label={t('admin2fa')}
+                hint={t('admin2faHint')}
                 on={settings.security.admin2fa}
                 onToggle={() => setSettings({ ...settings, security: { ...settings.security, admin2fa: !settings.security.admin2fa } })}
               />
               <ToggleRow
-                label="CAPTCHA image — Admin"
-                hint="Affiche un CAPTCHA image sur la page de connexion admin."
+                label={t('adminCaptcha')}
+                hint={t('adminCaptchaHint')}
                 on={settings.security.adminCaptcha}
                 onToggle={() => setSettings({ ...settings, security: { ...settings.security, adminCaptcha: !settings.security.adminCaptcha } })}
               />
               <ToggleRow
-                label="CAPTCHA image — Vitrine"
-                hint="Affiche un CAPTCHA image sur les formulaires du site (contact, inscription…)."
+                label={t('siteCaptcha')}
+                hint={t('siteCaptchaHint')}
                 on={settings.security.siteCaptcha}
                 onToggle={() => setSettings({ ...settings, security: { ...settings.security, siteCaptcha: !settings.security.siteCaptcha } })}
               />
               <ToggleRow
-                label="Connexion requise pour postuler"
-                hint="Règle par défaut : si une offre est en mode « selon la configuration globale », ce réglage détermine si le candidat doit être connecté pour postuler."
+                label={t('loginToApply')}
+                hint={t('loginToApplyHint')}
                 on={settings.requireAuthToApply}
                 onToggle={() => setSettings({ ...settings, requireAuthToApply: !settings.requireAuthToApply })}
               />
@@ -401,25 +380,25 @@ export default function AdminSettingsPage() {
 
           {tab === 'database' && (
             <section className="ad-card p-5 space-y-4">
-              <h2 className="ad-section-title">Base de données</h2>
+              <h2 className="ad-section-title">{t('database')}</h2>
               <label className="space-y-1.5 block">
-                <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Driver</span>
+                <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>{t('driver')}</span>
                 <select className="ad-select" value={settings.db.driver} onChange={(e) => setDb({ driver: e.target.value as AdminSettings['db']['driver'] })}>
                   <option value="mysql">MySQL</option>
                   <option value="postgresql">PostgreSQL</option>
                   <option value="mongodb">MongoDB</option>
-                  <option value="json">JSON local</option>
+                  <option value="json">{t('jsonLocal')}</option>
                 </select>
               </label>
-              <Field label="URL de connexion" value={settings.db.url} onChange={(v) => setDb({ url: v })} />
-              <Field label="Schéma" value={settings.db.schema} onChange={(v) => setDb({ schema: v })} />
-              <p className="text-xs" style={{ color: 'var(--ad-muted)' }}>Le backend Nest utilise DATABASE_URL / DB_DRIVER. Ces champs documentent la cible et préparent le switch multi-driver.</p>
+              <Field label={t('dbUrl')} value={settings.db.url} onChange={(v) => setDb({ url: v })} />
+              <Field label={t('schema')} value={settings.db.schema} onChange={(v) => setDb({ schema: v })} />
+              <p className="text-xs" style={{ color: 'var(--ad-muted)' }}>{t('dbHint')}</p>
             </section>
           )}
 
           {tab !== 'placeholder' && (
-            <button className="ad-btn ad-btn-primary" onClick={() => { saveAdminSettings(settings); notifyDateSettingsChanged(); showToast('Paramètres enregistrés', 'success'); }}>
-              <Save className="w-4 h-4" /> Enregistrer
+            <button className="ad-btn ad-btn-primary" onClick={() => { saveAdminSettings(settings); notifyDateSettingsChanged(); showToast(t('saved'), 'success'); }}>
+              <Save className="w-4 h-4" /> {tc('save')}
             </button>
           )}
         </div>
@@ -435,26 +414,27 @@ function InvoicingSection({ settings, setErp, setInvoicing }: {
   setErp: (p: Partial<AdminSettings['erp']>) => void;
   setInvoicing: (p: Partial<AdminSettings['invoicing']>) => void;
 }) {
+  const t = useTranslations('admin.settings');
   const { showToast } = useToast();
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<string | null>(null);
 
   return (
     <section className="ad-card p-5 space-y-4">
-      <h2 className="ad-section-title">Facturation &amp; ERP externe</h2>
+      <h2 className="ad-section-title">{t('erpTitle')}</h2>
       <p className="text-xs" style={{ color: 'var(--ad-muted)' }}>
-        Les factures de vente sont générées dans un ERP externe. Elles peuvent être récupérées automatiquement par API ou uploadées manuellement sur une commande confirmée et payée.
+        {t('erpHint')}
       </p>
 
       <ToggleRow
-        label="ERP externe activé"
-        hint="Autorise la liaison automatique des factures via l'API de l'ERP."
+        label={t('erpEnabled')}
+        hint={t('erpEnabledHint')}
         on={settings.erp.enabled}
         onToggle={() => setErp({ enabled: !settings.erp.enabled })}
       />
-      <Field label="URL de base de l'API ERP" value={settings.erp.apiUrl} onChange={(v) => setErp({ apiUrl: v })} />
+      <Field label={t('erpUrl')} value={settings.erp.apiUrl} onChange={(v) => setErp({ apiUrl: v })} />
       <label className="space-y-1.5 block">
-        <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Clé d'API</span>
+        <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>{t('apiKey')}</span>
         <input className="ad-input font-mono" type="password" value={settings.erp.apiKey} onChange={(e) => setErp({ apiKey: e.target.value })} />
       </label>
       <button
@@ -466,25 +446,26 @@ function InvoicingSection({ settings, setErp, setInvoicing }: {
           // Applique temporairement la config avant le test.
           saveAdminSettings(settings);
           const res = await testErpConnection();
-          setTestResult(res.message);
+          const message = t(res.messageKey, { status: res.status ?? '' });
+          setTestResult(message);
           setTesting(false);
-          showToast(res.message, res.ok ? 'success' : 'error');
+          showToast(message, res.ok ? 'success' : 'error');
         }}
       >
-        {testing ? 'Test…' : 'Tester la connexion ERP'}
+        {testing ? t('testing') : t('testErp')}
       </button>
       {testResult && <p className="text-xs" style={{ color: 'var(--ad-muted)' }}>{testResult}</p>}
 
       <div className="pt-2" style={{ borderTop: '1px solid var(--ad-line)' }}>
         <ToggleRow
-          label="Exiger une commande payée pour lier une facture"
-          hint="Bloque la liaison de facture tant que la commande n'est pas confirmée et payée."
+          label={t('requirePaid')}
+          hint={t('requirePaidHint')}
           on={settings.invoicing.requirePaidToInvoice}
           onToggle={() => setInvoicing({ requirePaidToInvoice: !settings.invoicing.requirePaidToInvoice })}
         />
         <ToggleRow
-          label="Récupération auto de la facture"
-          hint="Tente automatiquement de récupérer la facture via l'ERP dès qu'une commande est payée."
+          label={t('autoInvoice')}
+          hint={t('autoInvoiceHint')}
           on={settings.invoicing.autoFetchInvoice}
           onToggle={() => setInvoicing({ autoFetchInvoice: !settings.invoicing.autoFetchInvoice })}
         />
@@ -494,6 +475,8 @@ function InvoicingSection({ settings, setErp, setInvoicing }: {
 }
 
 function SeoSection() {
+  const t = useTranslations('admin.settings');
+  const tc = useTranslations('admin.common');
   const { showToast } = useToast();
   const [locale, setLocale] = useState('fr');
   const [seo, setSeo] = useState({
@@ -512,38 +495,39 @@ function SeoSection() {
 
   return (
     <section className="ad-card p-5 space-y-4">
-      <h2 className="ad-section-title">SEO vitrine</h2>
+      <h2 className="ad-section-title">{t('seoTitle')}</h2>
       <div className="flex gap-2">
         {['fr', 'en', 'ar'].map((loc) => (
           <button key={loc} type="button" className={`ad-btn ${locale === loc ? 'ad-btn-primary' : 'ad-btn-ghost'}`} onClick={() => setLocale(loc)}>{loc.toUpperCase()}</button>
         ))}
       </div>
       <div className="grid md:grid-cols-2 gap-3">
-        <Field label="Titre" value={seo.title} onChange={(v) => setSeo({ ...seo, title: v })} />
-        <Field label="Modèle de titre" value={seo.titleTemplate} onChange={(v) => setSeo({ ...seo, titleTemplate: v })} />
+        <Field label={tc('title')} value={seo.title} onChange={(v) => setSeo({ ...seo, title: v })} />
+        <Field label={t('seoTemplate')} value={seo.titleTemplate} onChange={(v) => setSeo({ ...seo, titleTemplate: v })} />
         <label className="md:col-span-2 space-y-1.5">
-          <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Description</span>
+          <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>{tc('description')}</span>
           <textarea className="ad-textarea" value={seo.description} onChange={(e) => setSeo({ ...seo, description: e.target.value })} />
         </label>
-        <Field label="Mots-clés" value={seo.keywords} onChange={(v) => setSeo({ ...seo, keywords: v })} />
-        <Field label="Robots" value={seo.robots} onChange={(v) => setSeo({ ...seo, robots: v })} />
-        <Field label="Titre Open Graph" value={seo.ogTitle} onChange={(v) => setSeo({ ...seo, ogTitle: v })} />
-        <Field label="Description Open Graph" value={seo.ogDescription} onChange={(v) => setSeo({ ...seo, ogDescription: v })} />
-        <Field label="Image OG / partage" value={seo.ogImage} onChange={(v) => setSeo({ ...seo, ogImage: v })} />
+        <Field label={t('keywords')} value={seo.keywords} onChange={(v) => setSeo({ ...seo, keywords: v })} />
+        <Field label={t('robots')} value={seo.robots} onChange={(v) => setSeo({ ...seo, robots: v })} />
+        <Field label={t('ogTitle')} value={seo.ogTitle} onChange={(v) => setSeo({ ...seo, ogTitle: v })} />
+        <Field label={t('ogDescription')} value={seo.ogDescription} onChange={(v) => setSeo({ ...seo, ogDescription: v })} />
+        <Field label={t('ogImage')} value={seo.ogImage} onChange={(v) => setSeo({ ...seo, ogImage: v })} />
         <Field label="Twitter / X" value={seo.twitter} onChange={(v) => setSeo({ ...seo, twitter: v })} />
-        <Field label="URL canonique" value={seo.canonical} onChange={(v) => setSeo({ ...seo, canonical: v })} />
-        <Field label="Favicon" value={seo.favicon} onChange={(v) => setSeo({ ...seo, favicon: v })} />
+        <Field label={t('canonical')} value={seo.canonical} onChange={(v) => setSeo({ ...seo, canonical: v })} />
+        <Field label={t('favicon')} value={seo.favicon} onChange={(v) => setSeo({ ...seo, favicon: v })} />
         <Field label="Google Search Console" value={seo.googleSiteVerification} onChange={(v) => setSeo({ ...seo, googleSiteVerification: v })} />
       </div>
       <button type="button" className="ad-btn ad-btn-primary" onClick={async () => {
         await fetch('/api/admin/seo', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ locale, seo }) });
-        showToast('Métadonnées SEO enregistrées', 'success');
-      }}>Enregistrer le SEO {locale.toUpperCase()}</button>
+        showToast(t('seoSaved'), 'success');
+      }}>{t('saveSeo', { language: locale.toUpperCase() })}</button>
     </section>
   );
 }
 
 function ToggleRow({ label, hint, on, onToggle }: { label: string; hint?: string; on: boolean; onToggle: () => void }) {
+  const t = useTranslations('admin.settings');
   return (
     <div className="flex items-start justify-between gap-4 py-2" style={{ borderBottom: '1px solid var(--ad-line)' }}>
       <div className="space-y-0.5">
@@ -553,13 +537,13 @@ function ToggleRow({ label, hint, on, onToggle }: { label: string; hint?: string
       <button type="button" onClick={onToggle} className={`ad-toggle ${on ? 'is-on' : ''}`} aria-pressed={on} role="switch">
         {on ? (
           <>
-            <span className="ad-toggle-label">Activé</span>
+            <span className="ad-toggle-label">{t('enabled')}</span>
             <span className="ad-toggle-knob" />
           </>
         ) : (
           <>
             <span className="ad-toggle-knob" />
-            <span className="ad-toggle-label">Désactivé</span>
+            <span className="ad-toggle-label">{t('disabled')}</span>
           </>
         )}
       </button>
@@ -577,6 +561,8 @@ function Field({ label, value, onChange }: { label: string; value: string; onCha
 }
 
 function SiteLogoField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const t = useTranslations('admin.settings');
+  const tc = useTranslations('admin.common');
   const { showToast } = useToast();
   const locale = useLocale();
   const [ged, setGed] = useState(false);
@@ -594,9 +580,9 @@ function SiteLogoField({ value, onChange }: { value: string; onChange: (v: strin
       const res = await fetch('/api/admin/upload', { method: 'POST', body });
       const json = await res.json();
       if (json.url) onChange(json.url);
-      else showToast(json.error || 'Upload impossible', 'error');
+      else showToast(json.error || t('uploadError'), 'error');
     } catch {
-      showToast('Upload impossible', 'error');
+      showToast(t('uploadError'), 'error');
     } finally {
       setUploading(false);
     }
@@ -611,27 +597,27 @@ function SiteLogoField({ value, onChange }: { value: string; onChange: (v: strin
         >
           {value ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={value} alt="Logo du site" className="max-w-full max-h-full object-contain p-2" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+            <img src={value} alt={t('siteLogo')} className="max-w-full max-h-full object-contain p-2" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
           ) : (
             <ImageIcon className="w-8 h-8" style={{ color: 'var(--ad-muted)' }} />
           )}
         </div>
         <div className="flex-1 space-y-2">
-          <input className="ad-input" value={value} onChange={(e) => onChange(e.target.value)} placeholder="https://… ou importez une image" />
+          <input className="ad-input" value={value} onChange={(e) => onChange(e.target.value)} placeholder={t('logoPlaceholder')} />
           <div className="flex flex-wrap gap-2">
             <label className="ad-btn ad-btn-ghost cursor-pointer">
-              <Upload className="w-4 h-4" /> {uploading ? 'Envoi…' : 'Uploader'}
+              <Upload className="w-4 h-4" /> {uploading ? t('uploading') : tc('upload')}
               <input type="file" accept="image/*" className="hidden" disabled={uploading} onChange={handleUpload} />
             </label>
             <button type="button" className="ad-btn ad-btn-ghost" onClick={() => setGed(true)}>
-              <FolderOpen className="w-4 h-4" /> Médiathèque
+              <FolderOpen className="w-4 h-4" /> {t('media')}
             </button>
             <Link href={`/${locale}/admin/media/studio`} className="ad-btn ad-btn-ghost">
-              <Sparkles className="w-4 h-4" /> Créer un logo
+              <Sparkles className="w-4 h-4" /> {t('createLogo')}
             </Link>
             {value && (
               <button type="button" className="ad-btn ad-btn-ghost" onClick={() => onChange('')}>
-                Retirer
+                {t('remove')}
               </button>
             )}
           </div>

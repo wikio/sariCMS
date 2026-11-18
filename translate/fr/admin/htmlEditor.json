@@ -1,6 +1,6 @@
 {
   "header": "En-tête",
-  "undo": "Rétablir",
+  "undo": "Annuler",
   "underline": "Souligné (Ctrl+U)",
   "bulletList": "Liste à puces",
   "numberedList": "Liste numérotée",
@@ -8,5 +8,18 @@
   "alignRight": "Aligner à droite",
   "insertLink": "Insérer un lien",
   "insertImage": "Insérer une image",
-  "insertTable": "Insérer un tableau"
+  "insertTable": "Insérer un tableau",
+  "placeholder": "Rédigez le contenu…",
+  "linkUrl": "URL du lien",
+  "color": "Couleur",
+  "visual": "Visuel",
+  "code": "Code",
+  "insertVar": "Insérer une variable…",
+  "column": "Colonne {number}",
+  "bold": "Gras",
+  "italic": "Italique",
+  "heading": "Titre de niveau {level}",
+  "quote": "Citation",
+  "alignCenter": "Centrer",
+  "redo": "Rétablir"
 }

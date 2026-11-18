@@ -6,6 +6,7 @@ import {
   Search, SlidersHorizontal, Table2, LayoutGrid, Trash2, X, Save, Eye,
   CheckSquare, Square, Mail, ShieldOff, ShieldCheck, KeyRound, MessageSquare,
 } from 'lucide-react';
+import { useLibelleCompte } from '@/components/admin/UserDetails';
 import UserForm from '@/components/admin/UserForm';
 import UserSheet from '@/components/admin/UserSheet';
 import UserRow from '@/components/admin/UserRow';
@@ -193,6 +194,9 @@ export default function AdminCrud({
   dataType: string;
   locale: string;
 }) {
+  const t = useTranslations('admin.users');
+  const tc = useTranslations('admin.common');
+  const tl = useTranslations('admin.userList');
   const cfg = MODULE_CRUD[dataType] || MODULE_CRUD.genericContent;
   const { showToast } = useToast();
   const [rows, setRows] = useState<Record<string, unknown>[]>([]);
@@ -214,6 +218,7 @@ export default function AdminCrud({
   const [consulting, setConsulting] = useState<Record<string, unknown> | null>(null);
   const [messaging, setMessaging] = useState<Record<string, unknown> | null>(null);
   const [busy, setBusy] = useState(false);
+  const accountLabel = useLibelleCompte();
   const estUsers = cfg.dataType === 'users';
 
   const load = async () => {
@@ -222,7 +227,7 @@ export default function AdminCrud({
       const list = await cmsAdminList(cfg.resource, extraFiltersForType(cfg.dataType, locale));
       setRows(list as Record<string, unknown>[]);
     } catch (err) {
-      showToast(err instanceof CmsError ? err.message : 'Chargement impossible', 'error');
+      showToast(err instanceof CmsError ? err.message : tc('loadError'), 'error');
     } finally {
       setLoading(false);
     }
@@ -272,9 +277,9 @@ export default function AdminCrud({
       const updated = await cmsAdminUpdate(cfg.resource, inline.id, { [inline.field]: coerce(inline.value) });
       setRows((prev) => prev.map((r) => (r.id === inline.id ? { ...r, ...updated } : r)));
       setInline(null);
-      showToast('Cellule enregistrée', 'success');
+      showToast(t('cellSaved'), 'success');
     } catch (err) {
-      showToast(err instanceof CmsError ? err.message : 'Erreur', 'error');
+      showToast(err instanceof CmsError ? err.message : tc('error'), 'error');
     }
   };
 
@@ -295,9 +300,9 @@ export default function AdminCrud({
       await load();
       setEditing(saved as Record<string, unknown>);
       setDirty(false);
-      showToast('Enregistré dans le CMS', 'success');
+      showToast(t('cmsSaved'), 'success');
     } catch (err) {
-      showToast(err instanceof CmsError ? err.message : 'Erreur', 'error');
+      showToast(err instanceof CmsError ? err.message : tc('error'), 'error');
     } finally {
       setSaving(false);
     }
@@ -319,19 +324,19 @@ export default function AdminCrud({
       setRows((prev) => [created as Record<string, unknown>, ...prev]);
       setEditing(created as Record<string, unknown>);
     } catch (err) {
-      showToast(err instanceof CmsError ? err.message : 'Création impossible', 'error');
+      showToast(err instanceof CmsError ? err.message : t('createError'), 'error');
     }
   };
 
   const remove = async (id: string) => {
-    if (!confirm('Envoyer en corbeille ?')) return;
+    if (!confirm(tc('confirmTrash'))) return;
     try {
       await cmsAdminDelete(cfg.resource, id);
       setRows((prev) => prev.filter((r) => r.id !== id));
       if (editing?.id === id) setEditing(null);
-      showToast('En corbeille', 'success');
+      showToast(tc('trashed'), 'success');
     } catch (err) {
-      showToast(err instanceof CmsError ? err.message : 'Erreur', 'error');
+      showToast(err instanceof CmsError ? err.message : tc('error'), 'error');
     }
   };
 
@@ -380,9 +385,9 @@ export default function AdminCrud({
     try {
       await cmsAdminUpdate(cfg.resource, String(row.id), { status });
       setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, status } : r)));
-      showToast('Statut mis à jour', 'success');
+      showToast(t('statusUpdated'), 'success');
     } catch (err) {
-      showToast(err instanceof CmsError ? err.message : 'Erreur', 'error');
+      showToast(err instanceof CmsError ? err.message : tc('error'), 'error');
     } finally {
       setBusy(false);
     }
@@ -400,7 +405,7 @@ export default function AdminCrud({
   /** Applique un champ (statut, type…) à toute la sélection. */
   const bulkPatch = async (patch: Record<string, unknown>, libelle: string) => {
     if (!selected.length) return;
-    if (!confirm(`${libelle} — ${selected.length} compte(s) ?`)) return;
+    if (!confirm(t('bulkConfirm', { action: libelle, count: selected.length }))) return;
     setBusy(true);
     try {
       const { done, failed, firstError } = await runBulk(selected, (id) => cmsAdminUpdate(cfg.resource, id, patch));
@@ -409,9 +414,9 @@ export default function AdminCrud({
       if (done.length) setRows((prev) => prev.map((r) => (done.includes(String(r.id)) ? { ...r, ...patch } : r)));
       setSelected((prev) => prev.filter((id) => !done.includes(id)));
       if (failed) {
-        showToast(`${done.length} traité(s), ${failed} en échec — ${firstError instanceof CmsError ? firstError.message : ''}`.trim(), 'error');
+        showToast([tc('bulkPartial', { done: done.length, failed }), firstError instanceof CmsError && firstError.message].filter(Boolean).join(' — '), 'error');
       } else {
-        showToast(`${libelle} : ${done.length} compte(s)`, 'success');
+        showToast(t('bulkDone', { action: libelle, count: done.length }), 'success');
       }
     } finally {
       setBusy(false);
@@ -419,16 +424,16 @@ export default function AdminCrud({
   };
 
   const bulkDelete = async () => {
-    if (!selected.length || !confirm(`Envoyer ${selected.length} compte(s) en corbeille ?`)) return;
+    if (!selected.length || !confirm(tc('bulkTrashConfirm', { count: selected.length }))) return;
     setBusy(true);
     try {
       const { done, failed, firstError } = await runBulk(selected, (id) => cmsAdminDelete(cfg.resource, id));
       if (done.length) setRows((prev) => prev.filter((r) => !done.includes(String(r.id))));
       setSelected((prev) => prev.filter((id) => !done.includes(id)));
       if (failed) {
-        showToast(`${done.length} supprimé(s), ${failed} en échec — ${firstError instanceof CmsError ? firstError.message : ''}`.trim(), 'error');
+        showToast([tc('bulkPartial', { done: done.length, failed }), firstError instanceof CmsError && firstError.message].filter(Boolean).join(' — '), 'error');
       } else {
-        showToast(`${done.length} compte(s) en corbeille`, 'success');
+        showToast(tc('bulkTrashed'), 'success');
       }
     } finally {
       setBusy(false);
@@ -442,7 +447,7 @@ export default function AdminCrud({
       .map((r) => String(r.email || '').trim())
       .filter(Boolean);
     if (!mails.length) {
-      showToast('Aucune adresse e-mail dans la sélection', 'error');
+      showToast(t('noEmail'), 'error');
       return;
     }
     // Cci plutôt que « À » : les destinataires ne doivent pas voir les
@@ -461,7 +466,7 @@ export default function AdminCrud({
     setRows(next);
     setDragId(null);
     await Promise.all(next.map((r, i) => cmsAdminUpdate(cfg.resource, String(r.id), { [cfg.orderField!]: i })));
-    showToast('Ordre mis à jour', 'success');
+    showToast(tc('orderSaved'), 'success');
   };
 
   const toggleSort = (key: string) => {
@@ -477,18 +482,18 @@ export default function AdminCrud({
       <header className="ad-card p-4 ad-rise flex flex-col xl:flex-row xl:items-center gap-3 justify-between">
         <div>
           <div className="text-[11px] uppercase tracking-[0.2em] font-bold" style={{ color: 'var(--ad-muted)' }}>
-            Module · {cfg.variant}
+            {estUsers ? t('accountManagement') : `Module · ${cfg.variant}`}
           </div>
-          <h1 className="text-2xl font-black tracking-tight">{cfg.label}</h1>
-          <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>{filtered.length} / {rows.length} fiches</p>
+          <h1 className="text-2xl font-black tracking-tight">{estUsers ? t('title') : cfg.label}</h1>
+          <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>{t('recordCount', { shown: filtered.length, total: rows.length })}</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <button className="ad-btn ad-btn-ghost" onClick={load}><RefreshCw className="w-4 h-4" /> Recharger</button>
+          <button className="ad-btn ad-btn-ghost" onClick={load}><RefreshCw className="w-4 h-4" /> {tc('refresh')}</button>
           <button className="ad-btn ad-btn-ghost" onClick={() => setView(view === 'smart' ? 'table' : 'smart')}>
             {view === 'smart' ? <Table2 className="w-4 h-4" /> : <LayoutGrid className="w-4 h-4" />}
-            {view === 'smart' ? 'Table' : 'Vue module'}
+            {view === 'smart' ? t('listView') : t('moduleView')}
           </button>
-          <button className="ad-btn ad-btn-primary" onClick={add}><Plus className="w-4 h-4" /> Nouveau</button>
+          <button className="ad-btn ad-btn-primary" onClick={add}><Plus className="w-4 h-4" /> {tc('new')}</button>
         </div>
       </header>
 
@@ -502,7 +507,7 @@ export default function AdminCrud({
         <div className="flex flex-col lg:flex-row gap-2">
           <div className="ad-affix has-start flex-1 lg:min-w-[22rem]">
             <span className="ad-affix-start"><Search className="w-4 h-4" /></span>
-            <input className="ad-input" value={q} onChange={(e) => setQ(e.target.value)} placeholder={cfg.searchHint || 'Recherche avancée…'} />
+            <input className="ad-input" value={q} onChange={(e) => setQ(e.target.value)} placeholder={estUsers ? t('searchAccounts') : cfg.searchHint || tc('search')} />
             {autoHits.length > 0 && (
               <div className="absolute z-20 left-0 right-0 mt-1 ad-card overflow-hidden">
                 {autoHits.map((h) => (
@@ -515,53 +520,53 @@ export default function AdminCrud({
           </div>
           {cfg.filters.map((f) => (
             <select key={f.key} className="ad-select lg:basis-40 lg:shrink-0 lg:grow-0" value={filters[f.key] || ''} onChange={(e) => setFilters((p) => ({ ...p, [f.key]: e.target.value }))}>
-              <option value="">{f.label}</option>
-              {(f.options || dynamicOptions(f.key)).map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+              <option value="">{estUsers ? tc(f.key) : f.label}</option>
+              {(f.options || dynamicOptions(f.key)).map((opt) => <option key={opt} value={opt}>{estUsers ? accountLabel(`${f.key}.${opt}`, opt) : opt}</option>)}
             </select>
           ))}
           <button className="ad-btn ad-btn-ghost lg:shrink-0" onClick={() => { setQ(''); setFilters({}); }}>
-            <SlidersHorizontal className="w-4 h-4" /> Reset
+            <SlidersHorizontal className="w-4 h-4" /> {tc('reset')}
           </button>
         </div>
       </div>
 
       {estUsers && selected.length > 0 && (
         <div className="ad-card p-3 ad-rise flex flex-wrap items-center gap-2" style={{ borderColor: 'var(--ad-accent)' }}>
-          <span className="text-sm font-bold">{selected.length} compte(s) sélectionné(s)</span>
+          <span className="text-sm font-bold">{tc('selected', { count: selected.length })}</span>
           <div className="flex flex-wrap gap-2 ml-auto">
-            <button className="ad-btn ad-btn-ghost" disabled={busy} onClick={() => bulkPatch({ status: 'active' }, 'Activer')}>
-              <ShieldCheck className="w-4 h-4" /> Activer
+            <button className="ad-btn ad-btn-ghost" disabled={busy} onClick={() => bulkPatch({ status: 'active' }, tc('activate'))}>
+              <ShieldCheck className="w-4 h-4" /> {tc('activate')}
             </button>
-            <button className="ad-btn ad-btn-ghost" disabled={busy} onClick={() => bulkPatch({ status: 'blocked' }, 'Bloquer')}>
-              <ShieldOff className="w-4 h-4" /> Bloquer
+            <button className="ad-btn ad-btn-ghost" disabled={busy} onClick={() => bulkPatch({ status: 'blocked' }, tl('block'))}>
+              <ShieldOff className="w-4 h-4" /> {tl('block')}
             </button>
-            <button className="ad-btn ad-btn-ghost" disabled={busy} onClick={() => bulkPatch({ status: 'pending' }, 'Mettre en attente')}>
-              <KeyRound className="w-4 h-4" /> En attente
+            <button className="ad-btn ad-btn-ghost" disabled={busy} onClick={() => bulkPatch({ status: 'pending' }, tl('setPending'))}>
+              <KeyRound className="w-4 h-4" /> {tl('setPending')}
             </button>
             <select
               className="ad-select w-auto"
               disabled={busy}
               value=""
-              onChange={(e) => { if (e.target.value) bulkPatch({ type: e.target.value }, `Changer le type en « ${e.target.value} »`); e.target.value = ''; }}
+              onChange={(e) => { if (e.target.value) bulkPatch({ type: e.target.value }, t('changeTypeTo', { type: accountLabel(`type.${e.target.value}`, e.target.value) })); e.target.value = ''; }}
             >
-              <option value="">Changer le type…</option>
-              {['admin', 'client', 'partner', 'candidate'].map((v) => <option key={v} value={v}>{v}</option>)}
+              <option value="">{t('changeType')}</option>
+              {['admin', 'client', 'partner', 'candidate'].map((v) => <option key={v} value={v}>{accountLabel(`type.${v}`, v)}</option>)}
             </select>
             <button className="ad-btn ad-btn-ghost" disabled={busy} onClick={bulkMail}>
-              <Mail className="w-4 h-4" /> E-mail
+              <Mail className="w-4 h-4" /> {tc('email')}
             </button>
             <button className="ad-btn ad-btn-danger" disabled={busy} onClick={bulkDelete}>
-              <Trash2 className="w-4 h-4" /> Corbeille
+              <Trash2 className="w-4 h-4" /> {tc('trash')}
             </button>
             <button className="ad-btn ad-btn-ghost" onClick={() => setSelected([])}>
-              <X className="w-4 h-4" /> Désélectionner
+              <X className="w-4 h-4" /> {tc('clearSelection')}
             </button>
           </div>
         </div>
       )}
 
       {loading ? (
-        <div className="ad-card"><PixelGridLoader label="Sync CMS" /></div>
+        <div className="ad-card"><PixelGridLoader label={t('sync')} /></div>
       ) : view === 'table' && estUsers ? (
         <UsersTable
           rows={filtered}
@@ -586,7 +591,7 @@ export default function AdminCrud({
               <tr>
                 {estUsers && (
                   <th className="w-8">
-                    <button className="ad-btn ad-btn-icon ad-btn-ghost !p-1" onClick={toggleSelectAll} title="Tout sélectionner">
+                    <button className="ad-btn ad-btn-icon ad-btn-ghost !p-1" onClick={toggleSelectAll} title={tl('selectAll')}>
                       {filtered.length > 0 && filtered.every((r) => selected.includes(String(r.id)))
                         ? <CheckSquare className="w-4 h-4" />
                         : <Square className="w-4 h-4" />}
@@ -598,7 +603,7 @@ export default function AdminCrud({
                 {cfg.inlineFields.filter((f) => f !== cfg.titleField).map((f) => (
                   <th key={f} onClick={() => toggleSort(f)}>{f} {sortIcon(sortKey, f, sortDir)}</th>
                 ))}
-                <th className="text-right">Actions</th>
+                <th className="text-right">{tc('actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -639,10 +644,10 @@ export default function AdminCrud({
                   ))}
                   <td className="text-right whitespace-nowrap">
                     {estUsers && (
-                      <button className="ad-btn ad-btn-icon ad-btn-ghost" onClick={() => setMessaging(row)} title="Envoyer un message interne"><MessageSquare className="w-4 h-4" /></button>
+                      <button className="ad-btn ad-btn-icon ad-btn-ghost" onClick={() => setMessaging(row)} title={tl('sendMessage')}><MessageSquare className="w-4 h-4" /></button>
                     )}
-                    <button className="ad-btn ad-btn-icon ad-btn-ghost ml-1" onClick={() => ouvrirFiche(row, 'view')} title="Consulter la fiche"><Eye className="w-4 h-4" /></button>
-                    <button className="ad-btn ad-btn-icon ad-btn-ghost ml-1" onClick={() => ouvrirFiche(row, 'edit')} title="Éditer"><Pencil className="w-4 h-4" /></button>
+                    <button className="ad-btn ad-btn-icon ad-btn-ghost ml-1" onClick={() => ouvrirFiche(row, 'view')} title={tl('consult')}><Eye className="w-4 h-4" /></button>
+                    <button className="ad-btn ad-btn-icon ad-btn-ghost ml-1" onClick={() => ouvrirFiche(row, 'edit')} title={tc('edit')}><Pencil className="w-4 h-4" /></button>
                     <button className="ad-btn ad-btn-icon ad-btn-danger ml-1" onClick={() => remove(String(row.id))}><Trash2 className="w-4 h-4" /></button>
                   </td>
                 </tr>
@@ -688,7 +693,7 @@ export default function AdminCrud({
           <div className="ad-card ad-sheet w-full max-w-4xl max-h-[92dvh] ad-rise">
             <div className="flex items-center justify-between gap-2 p-4 sm:p-6 pb-3 border-b shrink-0" style={{ borderColor: 'var(--ad-line)' }}>
               <h2 className="text-lg sm:text-xl font-black truncate">
-                {editing.id ? `Édition · ${titleOf(editing, cfg)}` : 'Nouveau compte'}
+                {editing.id ? t('editing', { name: titleOf(editing, cfg) }) : t('newAccount')}
               </h2>
               <button className="ad-btn ad-btn-icon ad-btn-ghost shrink-0" onClick={() => setEditing(null)}><X className="w-4 h-4" /></button>
             </div>
@@ -704,15 +709,15 @@ export default function AdminCrud({
                   if (payload.id) {
                     const saved = await cmsAdminUpdate(cfg.resource, String(payload.id), payload);
                     setRows((prev) => prev.map((r) => (r.id === payload.id ? { ...r, ...(saved as Record<string, unknown>) } : r)));
-                    showToast('Compte enregistré', 'success');
+                    showToast(t('accountSaved'), 'success');
                   } else {
                     const cree = await cmsAdminCreate(cfg.resource, payload) as Record<string, unknown>;
                     setRows((prev) => [cree, ...prev]);
-                    showToast('Compte créé', 'success');
+                    showToast(t('accountCreated'), 'success');
                   }
                   setEditing(null);
                 } catch (err) {
-                  showToast(err instanceof CmsError ? err.message : 'Erreur', 'error');
+                  showToast(err instanceof CmsError ? err.message : tc('error'), 'error');
                 } finally {
                   setSaving(false);
                 }
@@ -798,6 +803,7 @@ function SmartGrid({
   setInline: (v: { id: string; field: string; value: string } | null) => void;
   persistInline: () => void;
 }) {
+  const tu = useTranslations('admin.users');
   const tCommon = useTranslations('admin.common');
   const statusLabel = (s: string) => {
     if (s === 'published') return tCommon('statusPublished');
@@ -908,7 +914,7 @@ function SmartGrid({
         ))}
         {rows.length === 0 && (
           <div className="ad-card p-10 text-center 2xl:col-span-2" style={{ color: 'var(--ad-muted)' }}>
-            Aucun compte ne correspond à la recherche.
+            {tu('emptySearch')}
           </div>
         )}
       </div>

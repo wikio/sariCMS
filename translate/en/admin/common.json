@@ -26,7 +26,7 @@
   "download": "Download",
   "preview": "Preview",
   "reset": "Reset",
-  "recordCount": "{count} record(s)",
+  "recordCount": "{count, plural, one {# record} other {# records}}",
   "itemsCount": "{count} item(s)",
   "status": "Status",
   "active": "Active",
@@ -113,5 +113,8 @@
   "shop": "Shop",
   "eShop": "E-shop",
   "filter": "Filter",
-  "validated": "Validated"
+  "validated": "Validated",
+  "saveError": "Could not save changes",
+  "saving": "Saving…",
+  "noResults": "No results"
 }

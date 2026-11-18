@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 /**
  * Onglet « Emails & notifications » des paramètres — le centre de courrier.
  *
@@ -59,33 +61,18 @@ interface Snapshot {
 
 type PanelId = 'modules' | 'layouts' | 'policy' | 'log';
 
-const PANELS: { id: PanelId; label: string }[] = [
-  { id: 'modules', label: 'Modules & messages' },
-  { id: 'layouts', label: 'Gabarits' },
-  { id: 'policy', label: 'Politique d’envoi' },
-  { id: 'log', label: 'Journal' },
-];
+const PANELS: PanelId[] = ['modules', 'layouts', 'policy', 'log'];
 
-const STATUS_CHIP: Record<MailSentEntry['status'], { className: string; label: string }> = {
-  sent: { className: 'ad-chip ad-chip-ok', label: 'Envoyé' },
-  failed: { className: 'ad-chip ad-chip-warn', label: 'Échec' },
-  skipped: { className: 'ad-chip ad-chip-mute', label: 'Refusé' },
+const STATUS_CHIP: Record<MailSentEntry['status'], string> = {
+  sent: 'ad-chip ad-chip-ok', failed: 'ad-chip ad-chip-warn', skipped: 'ad-chip ad-chip-mute',
 };
 
-const REASON_LABELS: Record<string, string> = {
-  master_off: 'Interrupteur général coupé',
-  disabled: 'Événement désactivé',
-  no_recipient: 'Destinataire invalide',
-  unknown_event: 'Événement inconnu',
-  duplicate: 'Doublon évité',
-  daily_cap: 'Plafond quotidien atteint',
-  recipient_cap: 'Plafond par destinataire atteint',
-  quiet_hours: 'Heures silencieuses',
-  transport_error: 'Échec du transport SMTP',
-  test: 'Envoi de test',
-};
 
 export default function MailCenterSection() {
+  const t = useTranslations('admin.mailCenter');
+  const tc = useTranslations('admin.common');
+  const ts = useTranslations('admin.settings');
+  const tv = useTranslations('admin.mailVariables');
   const { showToast } = useToast();
   const [snap, setSnap] = useState<Snapshot | null>(null);
   const [loading, setLoading] = useState(true);
@@ -119,7 +106,7 @@ export default function MailCenterSection() {
    * pour les modules, `{ok, layouts}` pour les gabarits. Passer cette réponse
    * telle quelle à `apply()` écrasait l'instantané complet et faisait
    * disparaître `catalog`, `vars`, `directory`, `files` et `sent`. Le rendu
-   * suivant plantait alors sur `snap.catalog.flatMap(...)` : l'écran tombait en
+   * suivant plantait alors sur `catalog.flatMap(...)` : l'écran tombait en
    * erreur juste après un enregistrement qui avait pourtant réussi côté serveur.
    */
   const applyPartial = (patch: Partial<Snapshot>) => {
@@ -131,15 +118,15 @@ export default function MailCenterSection() {
     try {
       const res = await fetch('/api/admin/mail-center', { cache: 'no-store' });
       const json = await res.json();
-      if (!res.ok) throw new Error((json as { error?: string }).error || 'Lecture impossible.');
+      if (!res.ok) throw new Error((json as { error?: string }).error || t('readFailed'));
       // Rechargement complet : le GET renvoie tout l'instantané, on remplace.
       apply(json as Snapshot);
     } catch (error) {
-      showToast(error instanceof Error ? error.message : 'Centre de courrier illisible.', 'error');
+      showToast(error instanceof Error ? error.message : t('loadError'), 'error');
     } finally {
       setLoading(false);
     }
-  }, [apply, showToast]);
+  }, [apply, showToast, t]);
 
   useEffect(() => { reload(); }, [reload]);
 
@@ -153,11 +140,11 @@ export default function MailCenterSection() {
         body: JSON.stringify(payload),
       });
       const json = await res.json().catch(() => null);
-      if (!res.ok) throw new Error((json as { error?: string } | null)?.error || 'Enregistrement refusé.');
+      if (!res.ok) throw new Error((json as { error?: string } | null)?.error || t('saveDenied'));
       applyPartial(json as Partial<Snapshot>);
-      showToast(`Enregistré dans ${snap?.directory || 'data/mail'}/`, 'success');
+      showToast(t('savedAt', { path: `${snap?.directory || 'data/mail'}/` }), 'success');
     } catch (error) {
-      showToast(error instanceof Error ? error.message : 'Enregistrement impossible.', 'error');
+      showToast(error instanceof Error ? error.message : tc('saveError'), 'error');
     } finally {
       setSaving(false);
     }
@@ -168,8 +155,14 @@ export default function MailCenterSection() {
     setDirty('modules');
   };
 
+  const catalog = useMemo(() => (snap?.catalog || []).map((mod) => ({
+    ...mod, label: t(`label_${mod.id}`), description: t(`hint_${mod.id}`),
+    events: mod.events.map((event) => ({ ...event, label: t(`label_${event.id}`), description: t(`hint_${event.id}`) })),
+  })), [snap?.catalog, t]);
+  const reasonLabel = (reason: string) => t.has(`reason_${reason}`) ? t(`reason_${reason}`) : reason;
+
   const varsFor = (eventId: string): MailVarDef[] => {
-    const event = (snap?.catalog || []).flatMap((m) => m.events).find((e) => e.id === eventId);
+    const event = catalog.flatMap((m) => m.events).find((e) => e.id === eventId);
     const keys = event?.vars || [];
     const list = (snap?.vars || []).filter((v) => keys.includes(v.key));
     return list.length ? list : snap?.vars || [];
@@ -184,12 +177,12 @@ export default function MailCenterSection() {
       layout: layouts.find((l) => l.id === config.layoutId) || null,
       vars,
     });
-    const event = (snap?.catalog || []).flatMap((m) => m.events).find((e) => e.id === eventId);
-    setPreview({ title: `Aperçu — ${event?.label || eventId}`, html });
+    const event = catalog.flatMap((m) => m.events).find((e) => e.id === eventId);
+    setPreview({ title: `${tc('preview')} — ${event?.label || eventId}`, html });
   };
 
   const sendTest = async (eventId: string) => {
-    const to = window.prompt('Adresse de destination du test :');
+    const to = window.prompt(t('testAddress'));
     if (!to) return;
     const config = modules[eventId];
     const result = await sendModuleMail({
@@ -200,13 +193,13 @@ export default function MailCenterSection() {
       override: { subject: config.subject, body: config.body, layoutId: config.layoutId },
     });
     if (result.sent) {
-      showToast(`Test envoyé à ${to.trim()}.`, 'success');
+      showToast(t('testSent', { email: to.trim() }), 'success');
       await reload();
     } else {
-      showToast(`Test non envoyé : ${result.detail || REASON_LABELS[result.reason || ''] || 'raison inconnue'}`, 'error');
+      showToast(t('testSkipped', { reason: (result.reason && reasonLabel(result.reason)) || result.detail || t('unknownReason') }), 'error');
     }
     if (result.missingVars?.length) {
-      showToast(`Variables non fournies dans ce test : ${result.missingVars.join(', ')}`, 'error');
+      showToast(t('missingVars', { list: result.missingVars.join(', ') }), 'error');
     }
   };
 
@@ -226,11 +219,11 @@ export default function MailCenterSection() {
         body: JSON.stringify({ layouts: next }),
       });
       const json = await res.json().catch(() => null);
-      if (!res.ok) throw new Error((json as { error?: string } | null)?.error || 'Enregistrement refusé.');
+      if (!res.ok) throw new Error((json as { error?: string } | null)?.error || t('saveDenied'));
       applyPartial(json as Partial<Snapshot>);
-      showToast(`Gabarit « ${layout.name} » enregistré dans ${snap?.directory || 'data/mail'}/layouts.json`, 'success');
+      showToast(t('layoutSaved', { name: layout.name, path: `${snap?.directory || 'data/mail'}/layouts.json` }), 'success');
     } catch (error) {
-      showToast(error instanceof Error ? error.message : 'Enregistrement impossible.', 'error');
+      showToast(error instanceof Error ? error.message : tc('saveError'), 'error');
     } finally {
       setSaving(false);
     }
@@ -238,12 +231,12 @@ export default function MailCenterSection() {
 
   const removeLayout = (id: string) => {
     if (id === DEFAULT_LAYOUT.id) {
-      showToast('Le gabarit par défaut ne peut pas être supprimé.', 'error');
+      showToast(t('protectedLayout'), 'error');
       return;
     }
     const usedBy = Object.entries(modules).filter(([, c]) => c.layoutId === id).map(([k]) => k);
     if (usedBy.length) {
-      showToast(`Gabarit utilisé par ${usedBy.length} événement(s) : réaffectez-les d’abord.`, 'error');
+      showToast(t('inUse', { count: usedBy.length }), 'error');
       return;
     }
     setLayouts((prev) => prev.filter((l) => l.id !== id));
@@ -254,10 +247,10 @@ export default function MailCenterSection() {
   const totalEvents = useMemo(() => (snap?.catalog || []).reduce((n, m) => n + m.events.length, 0) || 0, [snap]);
 
   if (loading && !snap) {
-    return <div className="ad-card p-8 text-center text-sm">Chargement du centre de courrier…</div>;
+    return <div className="ad-card p-8 text-center text-sm">{t('loading')}</div>;
   }
   if (!snap || !policy) {
-    return <div className="ad-card p-8 text-center text-sm">Centre de courrier indisponible.</div>;
+    return <div className="ad-card p-8 text-center text-sm">{t('unavailable')}</div>;
   }
 
   return (
@@ -266,35 +259,34 @@ export default function MailCenterSection() {
       <div className="ad-card space-y-2 p-3 text-sm">
         <div className="flex flex-wrap items-center gap-2">
           {policy.masterEnabled
-            ? <span className="ad-chip ad-chip-ok"><ShieldCheck className="mr-1 inline h-3 w-3" />Envois autorisés</span>
-            : <span className="ad-chip ad-chip-warn"><MailX className="mr-1 inline h-3 w-3" />Interrupteur général coupé — aucun email ne part</span>}
-          <span className="ad-chip ad-chip-acc">{enabledCount}/{totalEvents} événements activés</span>
-          <span className="ad-chip ad-chip-mute">{layouts.length} gabarit(s)</span>
-          <span className="ad-chip ad-chip-mute">{snap.sent.today} envoi(s) aujourd’hui · {snap.sent.last7Days} sur 7 jours</span>
+            ? <span className="ad-chip ad-chip-ok"><ShieldCheck className="mr-1 inline h-3 w-3" />{t('allowed')}</span>
+            : <span className="ad-chip ad-chip-warn"><MailX className="mr-1 inline h-3 w-3" />{t('masterOff')}</span>}
+          <span className="ad-chip ad-chip-acc">{t('enabledCount', { enabled: enabledCount, total: totalEvents })}</span>
+          <span className="ad-chip ad-chip-mute">{t('layoutCount', { count: layouts.length })}</span>
+          <span className="ad-chip ad-chip-mute">{t('sentToday', { count: snap.sent.today })} · {t('sentWeek', { count: snap.sent.last7Days })}</span>
           <span className="font-mono text-[11px]" style={{ color: 'var(--ad-muted)' }}>
-            réglages : {snap.directory}/*.json (hors base de données)
+            {t('files', { path: `${snap.directory}/*.json` })}
           </span>
         </div>
         <p className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>
-          Un événement désactivé ne part jamais, même si le code du module appelle l'envoi. Les plafonds de la
-          politique d'envoi sont appliqués côté serveur : ils ne peuvent pas être contournés depuis le navigateur.
+          {t('policyHint')}
         </p>
       </div>
 
       {/* ————— Navigation ————— */}
       <div className="flex flex-wrap gap-1.5">
-        {PANELS.map((p) => (
+        {PANELS.map((panelId) => (
           <button
-            key={p.id}
+            key={panelId}
             type="button"
-            className={`ad-btn ${panel === p.id ? 'ad-btn-primary' : 'ad-btn-ghost'}`}
-            onClick={() => setPanel(p.id)}
+            className={`ad-btn ${panel === panelId ? 'ad-btn-primary' : 'ad-btn-ghost'}`}
+            onClick={() => setPanel(panelId)}
           >
-            {p.id === 'modules' && <Mail className="h-4 w-4" />}
-            {p.id === 'layouts' && <LayoutTemplate className="h-4 w-4" />}
-            {p.id === 'policy' && <ShieldCheck className="h-4 w-4" />}
-            {p.id === 'log' && <History className="h-4 w-4" />}
-            {p.label}
+            {panelId === 'modules' && <Mail className="h-4 w-4" />}
+            {panelId === 'layouts' && <LayoutTemplate className="h-4 w-4" />}
+            {panelId === 'policy' && <ShieldCheck className="h-4 w-4" />}
+            {panelId === 'log' && <History className="h-4 w-4" />}
+            {t(panelId)}
           </button>
         ))}
       </div>
@@ -302,7 +294,7 @@ export default function MailCenterSection() {
       {/* ————— Modules & messages ————— */}
       {panel === 'modules' && (
         <div className="space-y-3">
-          {snap.catalog.map((mod) => {
+          {catalog.map((mod) => {
             const modEnabled = mod.events.filter((e) => modules[e.id]?.enabled).length;
             const open = openModule === mod.id;
             return (
@@ -349,19 +341,19 @@ export default function MailCenterSection() {
                                 <span className="block text-sm font-bold">{event.label}</span>
                                 <span className="block text-[11px]" style={{ color: 'var(--ad-muted)' }}>
                                   {event.description}
-                                  {event.internal && ' · destinataire : l’entreprise'}
+                                  {event.internal && t('internal')}
                                 </span>
                               </span>
                             </button>
                             <span className={`ad-chip ${config.enabled ? 'ad-chip-ok' : 'ad-chip-mute'}`}>
-                              {config.enabled ? 'Activé' : 'Désactivé'}
+                              {config.enabled ? ts('enabled') : ts('disabled')}
                             </span>
                             <button
                               type="button"
                               className="ad-btn ad-btn-ghost"
                               onClick={() => setEvent(event.id, { enabled: !config.enabled })}
                             >
-                              {config.enabled ? 'Désactiver' : 'Activer'}
+                              {config.enabled ? tc('deactivate') : tc('activate')}
                             </button>
                           </div>
 
@@ -369,7 +361,7 @@ export default function MailCenterSection() {
                             <div className="space-y-3 border-t p-3" style={{ borderColor: 'var(--ad-line)' }}>
                               <div className="grid gap-3 md:grid-cols-2">
                                 <label className="block space-y-1">
-                                  <span className="field-label">Objet du message</span>
+                                  <span className="field-label">{t('subject')}</span>
                                   <input
                                     className="ad-input"
                                     value={config.subject}
@@ -377,20 +369,20 @@ export default function MailCenterSection() {
                                   />
                                 </label>
                                 <label className="block space-y-1">
-                                  <span className="field-label">Gabarit appliqué</span>
+                                  <span className="field-label">{t('layout')}</span>
                                   <select
                                     className="ad-select"
                                     value={config.layoutId}
                                     onChange={(e) => setEvent(event.id, { layoutId: e.target.value })}
                                   >
-                                    <option value="">Aucun — envoyer le corps seul</option>
+                                    <option value="">{t('noLayout')}</option>
                                     {layouts.map((l) => (
                                       <option key={l.id} value={l.id}>{l.name}</option>
                                     ))}
                                   </select>
                                 </label>
                                 <label className="block space-y-1">
-                                  <span className="field-label">Copie cachée (optionnelle)</span>
+                                  <span className="field-label">{t('bcc')}</span>
                                   <input
                                     className="ad-input"
                                     placeholder="compta@sarisysteme.com"
@@ -399,7 +391,7 @@ export default function MailCenterSection() {
                                   />
                                 </label>
                                 <label className="block space-y-1">
-                                  <span className="field-label">Intervalle anti-doublon (heures)</span>
+                                  <span className="field-label">{t('interval')}</span>
                                   <input
                                     type="number"
                                     min={0}
@@ -409,33 +401,32 @@ export default function MailCenterSection() {
                                     onChange={(e) => setEvent(event.id, { minIntervalHours: Number(e.target.value) || 0 })}
                                   />
                                   <span className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>
-                                    Deux envois de cet événement vers la même adresse seront espacés d’au moins ce
-                                    délai. 0 = désactivé.
+                                    {t('intervalHint')}
                                   </span>
                                 </label>
                               </div>
 
                               <div className="space-y-1">
-                                <span className="field-label">Corps du message</span>
+                                <span className="field-label">{t('body')}</span>
                                 <HtmlEditor
                                   value={config.body}
                                   onChange={(html) => setEvent(event.id, { body: html })}
                                   mergeVars
-                                  mergeVarsList={vars.map((v) => ({ key: `{{${v.key}}}`, label: `${v.label} · {{${v.key}}}` }))}
-                                  placeholder="Rédigez le message…"
+                                  mergeVarsList={vars.map((v) => ({ key: `{{${v.key}}}`, label: tv(v.key) }))}
+                                  placeholder={t('compose')}
                                 />
                               </div>
 
                               <div className="space-y-1">
                                 <span className="field-label">
-                                  Arguments disponibles pour cet événement ({vars.length})
+                                  {t('vars', { count: vars.length })}
                                 </span>
                                 <div className="flex flex-wrap gap-1">
                                   {vars.map((v) => (
                                     <span
                                       key={v.key}
                                       className="ad-chip ad-chip-mute font-mono text-[10px]"
-                                      title={`${v.label} — exemple : ${v.sample}`}
+                                      title={t('example', { label: tv(v.key), sample: v.sample })}
                                     >
                                       {`{{${v.key}}}`}
                                     </span>
@@ -446,24 +437,23 @@ export default function MailCenterSection() {
                               {unknown.length > 0 && (
                                 <p className="ad-chip ad-chip-warn">
                                   <AlertTriangle className="mr-1 inline h-3 w-3" />
-                                  Variables inconnues pour cet événement : {unknown.map((k) => `{{${k}}}`).join(', ')}.
-                                  Elles partiront vides.
+                                  {t('unknownVars', { list: unknown.map((k) => `{{${k}}}`).join(', ') })}
                                 </p>
                               )}
 
                               <div className="flex flex-wrap gap-2">
                                 <button type="button" className="ad-btn ad-btn-ghost" onClick={() => previewOf(event.id)}>
-                                  <Eye className="h-4 w-4" /> Aperçu
+                                  <Eye className="h-4 w-4" /> {tc('preview')}
                                 </button>
                                 <button type="button" className="ad-btn ad-btn-ghost" onClick={() => sendTest(event.id)}>
-                                  <Send className="h-4 w-4" /> Envoyer un test
+                                  <Send className="h-4 w-4" /> {t('test')}
                                 </button>
                                 <button
                                   type="button"
                                   className="ad-btn ad-btn-ghost"
                                   onClick={() => setEvent(event.id, defaultEventConfig(event.id, config.enabled))}
                                 >
-                                  <RotateCcw className="h-4 w-4" /> Modèle d’origine
+                                  <RotateCcw className="h-4 w-4" /> {t('original')}
                                 </button>
                               </div>
                             </div>
@@ -484,8 +474,7 @@ export default function MailCenterSection() {
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <p className="flex-1 text-[11px]" style={{ color: 'var(--ad-muted)' }}>
-              Un gabarit est l’habillage commun (logo, couleurs, pied de page légal, désinscription). Le texte de
-              chaque événement vient se loger dans son bloc « Corps du message ». Enregistré dans{' '}
+              {t('layoutHint')}{' '}
               <span className="font-mono">{snap.directory}/layouts.json</span>.
             </p>
             <button
@@ -494,11 +483,11 @@ export default function MailCenterSection() {
               onClick={() => setStudio({
                 ...DEFAULT_LAYOUT,
                 id: `layout-${Date.now().toString(36)}`,
-                name: 'Nouveau gabarit',
+                name: t('newLayout'),
                 updatedAt: new Date().toISOString(),
               })}
             >
-              <Plus className="h-4 w-4" /> Nouveau gabarit
+              <Plus className="h-4 w-4" /> {t('newLayout')}
             </button>
           </div>
 
@@ -512,15 +501,15 @@ export default function MailCenterSection() {
                     <div className="flex-1">
                       <div className="font-black">{layout.name}</div>
                       <div className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>
-                        {layout.blocks.length} bloc(s) · utilisé par {usedBy} événement(s)
-                        {layout.theme.showUnsubscribe ? ' · désinscription affichée' : ''}
+                        {t('usage', { blocks: layout.blocks.length, events: usedBy })}
+                        {layout.theme.showUnsubscribe ? t('unsubscribeOn') : ''}
                       </div>
                     </div>
-                    {layout.id === DEFAULT_LAYOUT.id && <span className="ad-chip ad-chip-acc">par défaut</span>}
+                    {layout.id === DEFAULT_LAYOUT.id && <span className="ad-chip ad-chip-acc">{t('default')}</span>}
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     <button type="button" className="ad-btn ad-btn-ghost" onClick={() => setStudio(layout)}>
-                      <Pencil className="h-4 w-4" /> Ouvrir le constructeur
+                      <Pencil className="h-4 w-4" /> {t('openStudio')}
                     </button>
                     <button
                       type="button"
@@ -528,17 +517,17 @@ export default function MailCenterSection() {
                       onClick={() => setStudio({
                         ...layout,
                         id: `layout-${Date.now().toString(36)}`,
-                        name: `${layout.name} (copie)`,
+                        name: t('copy', { name: layout.name }),
                         blocks: layout.blocks.map((b, i) => ({ ...b, id: `${b.id}-c${i}` })),
                       })}
                     >
-                      <Copy className="h-4 w-4" /> Dupliquer
+                      <Copy className="h-4 w-4" /> {tc('duplicate')}
                     </button>
                     <button
                       type="button"
                       className="ad-btn ad-btn-icon ad-btn-danger"
                       onClick={() => removeLayout(layout.id)}
-                      aria-label="Supprimer"
+                      aria-label={tc('delete')}
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -554,20 +543,20 @@ export default function MailCenterSection() {
       {panel === 'policy' && (
         <div className="space-y-3">
           <section className="ad-card space-y-3 p-4">
-            <h2 className="ad-section-title">Interrupteur général</h2>
+            <h2 className="ad-section-title">{t('masterSwitch')}</h2>
             <Toggle
               on={policy.masterEnabled}
               label=""
-              hint="Coupé, plus aucun module n'envoie d'email — y compris les accusés de réception. À utiliser pour une maintenance ou un incident de délivrabilité."
+              hint={t('masterHint')}
               onChange={(v) => { setPolicy({ ...policy, masterEnabled: v }); setDirty('policy'); }}
             />
           </section>
 
           <section className="ad-card space-y-3 p-4">
-            <h2 className="ad-section-title">Plafonds — ne pas trop envoyer</h2>
+            <h2 className="ad-section-title">{t('caps')}</h2>
             <div className="grid gap-3 md:grid-cols-2">
               <label className="block space-y-1">
-                <span className="field-label">Envois par jour (tous modules)</span>
+                <span className="field-label">{t('daily')}</span>
                 <input
                   type="number"
                   min={1}
@@ -578,7 +567,7 @@ export default function MailCenterSection() {
                 />
               </label>
               <label className="block space-y-1">
-                <span className="field-label">Envois par destinataire et par jour</span>
+                <span className="field-label">{t('perRecipient')}</span>
                 <input
                   type="number"
                   min={1}
@@ -589,7 +578,7 @@ export default function MailCenterSection() {
                 />
               </label>
               <label className="block space-y-1">
-                <span className="field-label">Fenêtre de dédoublonnage (minutes)</span>
+                <span className="field-label">{t('window')}</span>
                 <input
                   type="number"
                   min={0}
@@ -599,11 +588,11 @@ export default function MailCenterSection() {
                   onChange={(e) => { setPolicy({ ...policy, dedupeWindowMinutes: Number(e.target.value) || 0 }); setDirty('policy'); }}
                 />
                 <span className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>
-                  Une même clé d'envoi (fiche + événement) ne repart pas deux fois dans cette fenêtre.
+                  {t('windowHint')}
                 </span>
               </label>
               <label className="block space-y-1">
-                <span className="field-label">Historique conservé (jours)</span>
+                <span className="field-label">{t('retention')}</span>
                 <input
                   type="number"
                   min={1}
@@ -617,16 +606,16 @@ export default function MailCenterSection() {
           </section>
 
           <section className="ad-card space-y-3 p-4">
-            <h2 className="ad-section-title">Heures silencieuses</h2>
+            <h2 className="ad-section-title">{t('reason_quiet_hours')}</h2>
             <Toggle
               on={policy.quietHours.enabled}
               label=""
-              hint="Entre ces heures, aucun envoi ne part. Les messages refusés sont journalisés, pas perdus : ils restent visibles dans l'onglet Journal."
+              hint={t('quietHint')}
               onChange={(v) => { setPolicy({ ...policy, quietHours: { ...policy.quietHours, enabled: v } }); setDirty('policy'); }}
             />
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="block space-y-1">
-                <span className="field-label">À partir de</span>
+                <span className="field-label">{t('from')}</span>
                 <input
                   type="time"
                   className="ad-input"
@@ -635,7 +624,7 @@ export default function MailCenterSection() {
                 />
               </label>
               <label className="block space-y-1">
-                <span className="field-label">Jusqu’à</span>
+                <span className="field-label">{t('until')}</span>
                 <input
                   type="time"
                   className="ad-input"
@@ -647,12 +636,12 @@ export default function MailCenterSection() {
           </section>
 
           <section className="ad-card space-y-2 p-4 text-[12px]" style={{ color: 'var(--ad-muted)' }}>
-            <h2 className="ad-section-title">Ce que ces réglages ne remplacent pas</h2>
+            <h2 className="ad-section-title">{t('advice')}</h2>
             <ul className="list-disc space-y-1 pl-5">
-              <li>Un email transactionnel attendu (commande, devis, candidature) se limite à un message par étape.</li>
-              <li>Les alertes internes gagnent à être regroupées dans un résumé quotidien plutôt qu’un email par événement.</li>
-              <li>Toute diffusion (newsletter, campagne) exige un consentement explicite et un lien de désinscription.</li>
-              <li>Relances de panier, « vous nous manquez », demandes d’avis : à éviter — c’est ce qui fait classer le domaine en indésirable.</li>
+              <li>{t('transactional')}</li>
+              <li>{t('digest')}</li>
+              <li>{t('consent')}</li>
+              <li>{t('avoidSpam')}</li>
             </ul>
           </section>
         </div>
@@ -662,13 +651,13 @@ export default function MailCenterSection() {
       {panel === 'log' && (
         <div className="space-y-3">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="ad-chip ad-chip-acc">{snap.sent.today} envoi(s) aujourd’hui</span>
-            <span className="ad-chip ad-chip-mute">{snap.sent.last7Days} sur 7 jours</span>
+            <span className="ad-chip ad-chip-acc">{t('sentToday', { count: snap.sent.today })}</span>
+            <span className="ad-chip ad-chip-mute">{t('sentWeek', { count: snap.sent.last7Days })}</span>
             <span className="font-mono text-[11px]" style={{ color: 'var(--ad-muted)' }}>
-              {snap.files.log ? `${snap.directory}/sent-log.json` : 'aucun envoi enregistré pour l’instant'}
+              {snap.files.log ? `${snap.directory}/sent-log.json` : t('noHistory')}
             </span>
             <button type="button" className="ad-btn ad-btn-ghost ml-auto" onClick={reload}>
-              <History className="h-4 w-4" /> Actualiser
+              <History className="h-4 w-4" /> {tc('refresh')}
             </button>
           </div>
 
@@ -676,29 +665,29 @@ export default function MailCenterSection() {
             <table className="ad-table">
               <thead>
                 <tr>
-                  <th>Date</th><th>Module</th><th>Événement</th><th>Destinataire</th><th>Objet</th><th>État</th>
+                  <th>{tc('date')}</th><th>{t('module')}</th><th>{t('event')}</th><th>{t('recipient')}</th><th>{t('subject')}</th><th>{t('status')}</th>
                 </tr>
               </thead>
               <tbody>
                 {snap.sent.last.length === 0 && (
-                  <tr><td colSpan={6} className="py-8 text-center" style={{ color: 'var(--ad-muted)' }}>Aucun envoi.</td></tr>
+                  <tr><td colSpan={6} className="py-8 text-center" style={{ color: 'var(--ad-muted)' }}>{t('emptyLog')}</td></tr>
                 )}
                 {snap.sent.last.map((row) => {
                   const chip = STATUS_CHIP[row.status] || STATUS_CHIP.failed;
-                  const event = snap.catalog.flatMap((m) => m.events).find((e) => e.id === row.event);
-                  const detail = row.error || (row.reason ? REASON_LABELS[row.reason] || row.reason : '');
+                  const event = catalog.flatMap((m) => m.events).find((e) => e.id === row.event);
+                  const detail = row.error || (row.reason ? reasonLabel(row.reason) : '');
                   return (
                     <tr key={row.id}>
                       <td className="whitespace-nowrap text-sm"><DateText value={row.at} /></td>
-                      <td className="text-sm">{snap.catalog.find((m) => m.id === row.module)?.label || row.module}</td>
+                      <td className="text-sm">{catalog.find((m) => m.id === row.module)?.label || row.module}</td>
                       <td className="text-sm">{event?.label || row.event}</td>
                       <td className="font-mono text-xs">{row.to}</td>
                       <td className="max-w-[240px] truncate text-sm" title={row.subject}>{row.subject}</td>
                       <td>
-                        <span className={chip.className} title={detail}>
+                        <span className={chip} title={detail}>
                           {row.status === 'sent' && <CheckCircle2 className="mr-1 inline h-3 w-3" />}
                           {row.status === 'failed' && <XCircle className="mr-1 inline h-3 w-3" />}
-                          {chip.label}
+                          {t(row.status)}
                         </span>
                         {detail && <span className="ml-1 text-[10px]" style={{ color: 'var(--ad-muted)' }}>{detail}</span>}
                       </td>
@@ -718,26 +707,26 @@ export default function MailCenterSection() {
           style={{ background: 'var(--ad-surface)', border: '1px solid var(--ad-line)', boxShadow: '0 8px 24px rgba(0,0,0,0.12)' }}
         >
           <span className="flex-1 text-sm">
-            Modifications non enregistrées ({dirty === 'modules' ? 'modules & messages' : dirty === 'layouts' ? 'gabarits' : 'politique d’envoi'}).
+            {t('unsaved', { section: t(dirty) })}
           </span>
-          <button type="button" className="ad-btn ad-btn-ghost" onClick={reload}>Annuler</button>
+          <button type="button" className="ad-btn ad-btn-ghost" onClick={reload}>{tc('cancel')}</button>
           <button type="button" className="ad-btn ad-btn-primary" disabled={saving} onClick={() => save(dirty)}>
-            <Save className="h-4 w-4" /> {saving ? 'Enregistrement…' : 'Enregistrer'}
+            <Save className="h-4 w-4" /> {saving ? tc('saving') : tc('save')}
           </button>
         </div>
       )}
 
       {/* ————— Aperçu ————— */}
-      <Drawer open={!!preview} title={preview?.title || 'Aperçu'} onClose={() => setPreview(null)} width={720}
-        footer={<button type="button" className="ad-btn ad-btn-ghost" onClick={() => setPreview(null)}>Fermer</button>}>
-        {preview && <iframe title="Aperçu du message" className="w-full bg-white" style={{ height: 560, border: 0 }} srcDoc={preview.html} />}
+      <Drawer open={!!preview} title={preview?.title || tc('preview')} onClose={() => setPreview(null)} width={720}
+        footer={<button type="button" className="ad-btn ad-btn-ghost" onClick={() => setPreview(null)}>{tc('close')}</button>}>
+        {preview && <iframe title={t('previewTitle')} className="w-full bg-white" style={{ height: 560, border: 0 }} srcDoc={preview.html} />}
       </Drawer>
 
       {/* ————— Constructeur de gabarit ————— */}
       <Drawer
         open={!!studio}
-        title={studio ? `Constructeur — ${studio.name}` : 'Constructeur'}
-        subtitle="Blocs, charte et aperçu. Enregistré dans data/mail/layouts.json."
+        title={studio ? `${t('studio')} — ${studio.name}` : t('studio')}
+        subtitle={t('studioHint')}
         onClose={() => setStudio(null)}
         width={1100}
       >

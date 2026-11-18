@@ -2,5 +2,6 @@
   "admin": "Administrateur",
   "client": "Client",
   "partner": "Partenaire",
-  "candidate": "Candidat"
+  "candidate": "Candidat",
+  "employee": "Employé"
 }

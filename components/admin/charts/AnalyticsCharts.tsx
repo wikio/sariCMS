@@ -1,5 +1,7 @@
 'use client';
 
+import { useLocale, useTranslations } from 'next-intl';
+
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowDownWideNarrow, BarChart2, BarChart3, Download, Image as ImageIcon,
@@ -36,6 +38,7 @@ export function AnimatedCounter({
   suffix?: string;
   decimals?: number;
 }) {
+  const locale = useLocale();
   const [display, setDisplay] = useState<number>(value ?? 0);
   const prevRef = useRef<number>(value ?? 0);
 
@@ -77,8 +80,8 @@ export function AnimatedCounter({
 
   const formatted =
     decimals > 0
-      ? display.toLocaleString('fr-FR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })
-      : Math.round(display).toLocaleString('fr-FR');
+      ? display.toLocaleString(locale, { minimumFractionDigits: decimals, maximumFractionDigits: decimals })
+      : Math.round(display).toLocaleString(locale);
 
   return (
     <span className="tabular-nums">
@@ -94,7 +97,7 @@ export function StackedProgressBar({
   animated = true,
   height = 10,
   showLegend = true,
-  emptyLabel = 'Aucune donnée',
+  emptyLabel,
 }: {
   segments: Array<{ key?: string; label: string; value: number; color: string }>;
   animated?: boolean;
@@ -103,6 +106,7 @@ export function StackedProgressBar({
   emptyLabel?: string;
 }) {
   const [mounted, setMounted] = useState(!animated);
+  const tc = useTranslations('admin.common');
   const [hovered, setHovered] = useState<string | null>(null);
 
   useEffect(() => {
@@ -151,7 +155,7 @@ export function StackedProgressBar({
 
       {showLegend && (
         total === 0 ? (
-          <div className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>{emptyLabel}</div>
+          <div className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>{emptyLabel ?? tc('noData')}</div>
         ) : (
           <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px]">
             {segments.map((seg) => {
@@ -191,7 +195,7 @@ export function ConfigurableChartCard({
   animated = true,
   allowedTypes = ['column', 'bar', 'area', 'donut', 'table'],
   valueFormatter,
-  emptyLabel = 'Aucune donnée pour ce filtre.',
+  emptyLabel,
   extraHeader,
 }: {
   title: string;
@@ -205,6 +209,8 @@ export function ConfigurableChartCard({
   emptyLabel?: string;
   extraHeader?: React.ReactNode;
 }) {
+  const t = useTranslations('admin.analytics');
+  const locale = useLocale();
   const [chartType, setChartType] = useState<ChartVisualType>(defaultType);
   const [sortMode, setSortMode] = useState<ChartSortMode>('default');
   const [hideZeros, setHideZeros] = useState(false);
@@ -234,20 +240,20 @@ export function ConfigurableChartCard({
     if (hideZeros) list = list.filter((it) => it.value > 0);
     if (sortMode === 'desc') list = [...list].sort((a, b) => b.value - a.value);
     else if (sortMode === 'asc') list = [...list].sort((a, b) => a.value - b.value);
-    else if (sortMode === 'alpha') list = [...list].sort((a, b) => a.label.localeCompare(b.label));
+    else if (sortMode === 'alpha') list = [...list].sort((a, b) => a.label.localeCompare(b.label, locale));
     return list;
-  }, [items, hideZeros, sortMode]);
+  }, [items, hideZeros, sortMode, locale]);
 
   const total = useMemo(() => prepared.reduce((s, i) => s + Math.max(0, i.value), 0), [prepared]);
   const maxVal = useMemo(() => Math.max(1, ...prepared.map((i) => i.value)), [prepared]);
-  const fmt = (v: number) => (valueFormatter ? valueFormatter(v) : Number.isInteger(v) ? v.toLocaleString('fr-FR') : v.toFixed(1));
+  const fmt = (v: number) => (valueFormatter ? valueFormatter(v) : Number.isInteger(v) ? v.toLocaleString(locale) : v.toLocaleString(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }));
 
   const allTypeButtons: Array<{ id: ChartVisualType; icon: typeof BarChart3; label: string }> = [
-    { id: 'column', icon: BarChart3, label: 'Colonnes' },
-    { id: 'bar', icon: BarChart2, label: 'Barres' },
-    { id: 'area', icon: TrendingUp, label: 'Courbe' },
-    { id: 'donut', icon: PieChart, label: 'Anneau' },
-    { id: 'table', icon: TableIcon, label: 'Tableau' },
+    { id: 'column', icon: BarChart3, label: t('chartColumn') },
+    { id: 'bar', icon: BarChart2, label: t('chartBar') },
+    { id: 'area', icon: TrendingUp, label: t('chartArea') },
+    { id: 'donut', icon: PieChart, label: t('chartDonut') },
+    { id: 'table', icon: TableIcon, label: t('chartTable') },
   ];
   const typeButtons = allTypeButtons.filter((b) => allowedTypes.includes(b.id));
 
@@ -295,7 +301,7 @@ export function ConfigurableChartCard({
           <button
             type="button"
             onClick={cycleSort}
-            title={`Tri : ${sortMode}`}
+            title={t(`sort_${sortMode}`)}
             className={`ad-btn !p-1.5 text-xs ${sortMode !== 'default' ? 'ad-btn-primary' : 'ad-btn-ghost'}`}
           >
             <ArrowDownWideNarrow className="w-3.5 h-3.5" />
@@ -304,7 +310,7 @@ export function ConfigurableChartCard({
           <button
             type="button"
             onClick={() => setHideZeros((v) => !v)}
-            title="Masquer les valeurs nulles"
+            title={t('hideZero')}
             className={`ad-btn !py-1 !px-2 text-[11px] ${hideZeros ? 'ad-btn-primary' : 'ad-btn-ghost'}`}
           >
             ≠0
@@ -312,7 +318,7 @@ export function ConfigurableChartCard({
 
           <button
             type="button"
-            title="Exporter CSV"
+            title={t('csv')}
             onClick={() => exportChartDataCsv(title, prepared)}
             className="ad-btn ad-btn-ghost !p-1.5"
           >
@@ -322,7 +328,7 @@ export function ConfigurableChartCard({
           {chartType !== 'bar' && chartType !== 'table' && (
             <button
               type="button"
-              title="Exporter PNG"
+              title={t('png')}
               onClick={() => exportSvgNodeAsPng(svgRef.current, title)}
               className="ad-btn ad-btn-ghost !p-1.5"
             >
@@ -335,7 +341,7 @@ export function ConfigurableChartCard({
       {/* Corps du graphique */}
       {prepared.length === 0 || (total === 0 && chartType === 'donut') ? (
         <div className="py-10 text-center text-xs rounded-lg border border-dashed" style={{ borderColor: 'var(--ad-line)', color: 'var(--ad-muted)' }}>
-          {emptyLabel}
+          {emptyLabel ?? t('emptyFilter')}
         </div>
       ) : chartType === 'bar' ? (
         <div className="space-y-2.5">
@@ -565,7 +571,7 @@ export function ConfigurableChartCard({
                   <text x="90" y="104" textAnchor="middle" fontSize="10" fill="var(--ad-muted)">
                     {activeItem
                       ? `${Math.round((activeItem.value / Math.max(1, total)) * 100)}%`
-                      : 'TOTAL'}
+                      : t('totalLabel')}
                   </text>
                 </svg>
 
@@ -599,9 +605,9 @@ export function ConfigurableChartCard({
           <table className="w-full text-xs">
             <thead>
               <tr className="text-left border-b border-[var(--ad-line)]" style={{ color: 'var(--ad-muted)' }}>
-                <th className="py-1.5">Élément</th>
-                <th className="py-1.5 text-right">Valeur</th>
-                <th className="py-1.5 text-right">Part</th>
+                <th className="py-1.5">{t('item')}</th>
+                <th className="py-1.5 text-right">{t('value')}</th>
+                <th className="py-1.5 text-right">{t('share')}</th>
               </tr>
             </thead>
             <tbody>
@@ -633,7 +639,7 @@ export function MultiSeriesTimelineChart({
   data,
   series,
   animated = true,
-  emptyLabel = 'Aucune activité chronologique sur la période sélectionnée.',
+  emptyLabel,
 }: {
   title: string;
   subtitle?: string;
@@ -643,6 +649,7 @@ export function MultiSeriesTimelineChart({
   emptyLabel?: string;
 }) {
   const [enabledKeys, setEnabledKeys] = useState<string[]>(() => series.map((s) => s.key));
+  const t = useTranslations('admin.analytics');
   const [mode, setMode] = useState<'area' | 'stacked'>('area');
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
@@ -705,24 +712,24 @@ export function MultiSeriesTimelineChart({
               onClick={() => setMode('area')}
               className={`px-2 py-1 rounded text-xs font-bold ${mode === 'area' ? 'ad-btn-primary' : 'opacity-70'}`}
             >
-              Courbes
+              {t('lines')}
             </button>
             <button
               type="button"
               onClick={() => setMode('stacked')}
               className={`px-2 py-1 rounded text-xs font-bold ${mode === 'stacked' ? 'ad-btn-primary' : 'opacity-70'}`}
             >
-              Colonnes empilées
+              {t('stacked')}
             </button>
           </div>
-          <button type="button" onClick={exportCsv} className="ad-btn ad-btn-ghost !p-1.5" title="Exporter CSV">
+          <button type="button" onClick={exportCsv} className="ad-btn ad-btn-ghost !p-1.5" title={t('csv')}>
             <Download className="w-3.5 h-3.5" />
           </button>
           <button
             type="button"
             onClick={() => exportSvgNodeAsPng(svgRef.current, title)}
             className="ad-btn ad-btn-ghost !p-1.5"
-            title="Exporter PNG"
+            title={t('png')}
           >
             <ImageIcon className="w-3.5 h-3.5" />
           </button>
@@ -755,7 +762,7 @@ export function MultiSeriesTimelineChart({
 
       {data.length === 0 ? (
         <div className="py-10 text-center text-xs rounded-lg border border-dashed" style={{ borderColor: 'var(--ad-line)', color: 'var(--ad-muted)' }}>
-          {emptyLabel}
+          {emptyLabel ?? t('emptyTimeline')}
         </div>
       ) : (
         <div className="space-y-2">

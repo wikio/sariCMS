@@ -226,7 +226,7 @@ export default function PlaceholderSettingsSection() {
 
               <label className="space-y-1.5 block">
                 <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>
-                  {t('cacheMaxAge')} (s)
+                  {t('cacheMaxAge')} ({t('seconds')})
                 </span>
                 <input
                   type="number"
@@ -354,11 +354,11 @@ export default function PlaceholderSettingsSection() {
                   value={config.defaultFont}
                   onChange={(e) => setConfig({ ...config, defaultFont: e.target.value as FontKind })}
                 >
-                  <option value="sans">Sans-serif</option>
-                  <option value="geometric">Géométrique</option>
-                  <option value="serif">Serif</option>
-                  <option value="mono">Monospace</option>
-                  <option value="display">Display</option>
+                  <option value="sans">{t('fontSans')}</option>
+                  <option value="geometric">{t('fontGeometric')}</option>
+                  <option value="serif">{t('fontSerif')}</option>
+                  <option value="mono">{t('fontMono')}</option>
+                  <option value="display">{t('fontDisplay')}</option>
                 </select>
               </label>
 
@@ -373,7 +373,7 @@ export default function PlaceholderSettingsSection() {
                 >
                   <option value="none">{t('noIcon')}</option>
                   {PLACEHOLDER_ICONS.map((ic) => (
-                    <option key={ic.id} value={ic.id}>{ic.label}</option>
+                    <option key={ic.id} value={ic.id}>{t(`icon_${ic.id}`)}</option>
                   ))}
                 </select>
               </label>
@@ -423,7 +423,7 @@ export default function PlaceholderSettingsSection() {
                 onClick={() =>
                   setConfig({
                     ...config,
-                    palette: [...config.palette, { name: 'Nouvelle couleur', bg: '#169EC9', bg2: '#0B5F86', fg: '#FFFFFF' }],
+                    palette: [...config.palette, { name: t('newColor'), bg: '#169EC9', bg2: '#0B5F86', fg: '#FFFFFF' }],
                   })
                 }
               >
@@ -502,7 +502,7 @@ export default function PlaceholderSettingsSection() {
                 onClick={() =>
                   setConfig({
                     ...config,
-                    sizePresets: [...config.sizePresets, { name: 'Format personnalisé', width: 600, height: 300, category: 'web' }],
+                    sizePresets: [...config.sizePresets, { name: t('customSize'), width: 600, height: 300, category: 'web' }],
                   })
                 }
               >

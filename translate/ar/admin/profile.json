@@ -11,5 +11,17 @@
   "twoFactorDesc": "فعّل المصادقة الثنائية لتأمين حسابك.",
   "showProfile": "عرض الملف الشخصي",
   "updateProfile": "تحديث الملف الشخصي",
-  "informations": "المعلومات"
+  "informations": "المعلومات",
+  "updated": "تم تحديث الملف الشخصي",
+  "savedLocal": "حُفظ الملف الشخصي محليًا",
+  "setupError": "تعذّر إنشاء المفتاح السري",
+  "needCode": "أدخل الرمز المكوّن من ستة أرقام",
+  "enableSuccess": "تم تفعيل المصادقة الثنائية",
+  "invalidCode": "رمز غير صالح",
+  "needTotp": "أدخل رمز TOTP الخاص بك",
+  "disableSuccess": "تم تعطيل المصادقة الثنائية",
+  "scan": "١. امسح رمز QR باستخدام Google Authenticator أو Authy أو FreeOTP، أو أدخل المفتاح يدويًا.",
+  "qrAlt": "رمز QR لإعداد المصادقة الثنائية",
+  "enterCode": "٢. الرمز المكوّن من ستة أرقام",
+  "enable2FA": "تفعيل المصادقة الثنائية"
 }

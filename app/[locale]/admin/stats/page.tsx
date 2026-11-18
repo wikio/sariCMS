@@ -11,6 +11,7 @@ import {
   ShoppingBag, Sparkles, UserCheck, Users,
 } from 'lucide-react';
 import PixelGridLoader from '@/components/admin/PixelGridLoader';
+import { useAnalyticsLabels } from '@/components/admin/useAnalyticsLabels';
 import AnalyticsExportMenu from '@/components/admin/AnalyticsExportMenu';
 import {
   AnimatedCounter,
@@ -62,7 +63,8 @@ export default function StatsPage() {
   const [animations, setAnimations] = useState(true);
   const [searchFilter, setSearchFilter] = useState('');
 
-  const [snapshot, setSnapshot] = useState<AnalyticsSnapshot | null>(null);
+  const [rawSnapshot, setSnapshot] = useState<AnalyticsSnapshot | null>(null);
+  const snapshot = useAnalyticsLabels(rawSnapshot);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
@@ -326,7 +328,7 @@ export default function StatsPage() {
                 <KpiCard icon={Newspaper} color="#F97316" label={ta('articlesAndAuthors')} value={snapshot.articles.total} sub={`${snapshot.authors.total} ${ta('authors')} (${snapshot.authors.active} ${ta('activeShort')})`} animated={animations} />
                 <KpiCard icon={CalendarDays} color="#06B6D4" label={ta('events')} value={snapshot.events.total} sub={`${snapshot.events.upcoming} ${ta('upcomingShort')} · ${snapshot.events.past} ${ta('pastShort')}`} animated={animations} />
                 <KpiCard icon={MailCheck} color="#EAB616" label={ta('newsletterSubscribers')} value={snapshot.newsletter.subscribed} sub={`${snapshot.newsletter.total} total · ${snapshot.newsletter.activeRate}% ${ta('activeShort')}`} animated={animations} />
-                <KpiCard icon={FolderKanban} color="#0EA5E9" label={ta('gedFiles')} value={snapshot.ged.totalFiles} sub={`${formatBytes(snapshot.ged.totalBytes)} · ${snapshot.ged.utilizationRate}% ${ta('usedShort')}`} animated={animations} />
+                <KpiCard icon={FolderKanban} color="#0EA5E9" label={ta('gedFiles')} value={snapshot.ged.totalFiles} sub={`${formatBytes(snapshot.ged.totalBytes, locale)} · ${snapshot.ged.utilizationRate}% ${ta('usedShort')}`} animated={animations} />
                 <KpiCard icon={ShieldCheck} color="#6366F1" label={ta('teamWorkload')} value={snapshot.team.workload.remaining} sub={`${snapshot.team.workload.inProgress} ${ta('inProgressShort')} · ${snapshot.team.staffTotal} ${ta('staffShort')}`} animated={animations} />
               </div>
 
@@ -365,7 +367,7 @@ export default function StatsPage() {
                 />
                 <ConfigurableChartCard
                   title={ta('gedByKindTitle')}
-                  subtitle={`${snapshot.ged.totalFiles} ${ta('filesShort')} · ${formatBytes(snapshot.ged.totalBytes)} · ${snapshot.ged.utilizationRate}% ${ta('usedShort')}`}
+                  subtitle={`${snapshot.ged.totalFiles} ${ta('filesShort')} · ${formatBytes(snapshot.ged.totalBytes, locale)} · ${snapshot.ged.utilizationRate}% ${ta('usedShort')}`}
                   icon={<FolderKanban className="w-4 h-4 text-[#0EA5E9]" />}
                   items={snapshot.ged.byKind.map((k) => ({ key: k.key, label: k.label, value: k.count, color: k.color }))}
                   defaultType={globalChartType}
@@ -606,7 +608,7 @@ export default function StatsPage() {
             <div className="space-y-5">
               <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-3">
                 <KpiCard icon={FolderKanban} color="#0EA5E9" label={ta('gedFiles')} value={snapshot.ged.totalFiles} sub={`${snapshot.ged.totalVersions} ${ta('versionsShort')}`} animated={animations} />
-                <KpiCard icon={HardDrive} color="#169EC9" label={ta('gedStorage')} textValue={formatBytes(snapshot.ged.totalBytes)} sub={`${snapshot.ged.byModule.length} ${ta('modulesShort')}`} animated={animations} />
+                <KpiCard icon={HardDrive} color="#169EC9" label={ta('gedStorage')} textValue={formatBytes(snapshot.ged.totalBytes, locale)} sub={`${snapshot.ged.byModule.length} ${ta('modulesShort')}`} animated={animations} />
                 <KpiCard icon={CheckCircle2} color="#0F9F6E" label={ta('gedUsedFiles')} value={snapshot.ged.usedFiles} sub={`${snapshot.ged.utilizationRate}% ${ta('utilizationShort')}`} animated={animations} />
                 <KpiCard icon={Clock} color="#EAB616" label={ta('gedUnusedFiles')} value={snapshot.ged.unusedFiles} sub={ta('orphansHint')} animated={animations} />
                 <KpiCard icon={Sparkles} color="#8B5CF6" label={ta('gedEditable')} value={snapshot.ged.editableCount} sub={ta('canvasSvgEditable')} animated={animations} />
@@ -634,7 +636,7 @@ export default function StatsPage() {
               <div className="grid lg:grid-cols-2 gap-4">
                 <ConfigurableChartCard
                   title={ta('gedByKindTitle')}
-                  subtitle={`${snapshot.ged.totalFiles} ${ta('filesShort')} · ${formatBytes(snapshot.ged.totalBytes)}`}
+                  subtitle={`${snapshot.ged.totalFiles} ${ta('filesShort')} · ${formatBytes(snapshot.ged.totalBytes, locale)}`}
                   icon={<FolderKanban className="w-4 h-4 text-[#0EA5E9]" />}
                   items={snapshot.ged.byKind.map((k) => ({ key: k.key, label: k.label, value: k.count, color: k.color }))}
                   defaultType={globalChartType}
@@ -718,7 +720,7 @@ export default function StatsPage() {
                                 {f.used ? ta('usedShort') : ta('unusedShort')}
                               </span>
                             </td>
-                            <td className="py-1.5 text-right font-bold tabular-nums">{formatBytes(f.bytes)}</td>
+                            <td className="py-1.5 text-right font-bold tabular-nums">{formatBytes(f.bytes, locale)}</td>
                           </tr>
                         ))}
                         {snapshot.ged.largestFiles.length === 0 && (

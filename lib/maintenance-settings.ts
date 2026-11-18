@@ -74,17 +74,17 @@ export async function runTrashPurge(): Promise<PurgeResult> {
 export function validateMaintenance(form: MaintenanceSettings): string | null {
   const days = Number(form.auditRetentionDays);
   if (!Number.isFinite(days) || Math.floor(days) < 1 || Math.floor(days) > 3650) {
-    return 'La conservation de l’audit doit être un entier entre 1 et 3650 jours.';
+    return 'invalidDays';
   }
   const hours = Number(form.trashRetentionHours);
   if (!Number.isFinite(hours) || Math.floor(hours) < 1 || Math.floor(hours) > 8760) {
-    return 'La conservation de la corbeille doit être un entier entre 1 et 8760 heures.';
+    return 'invalidHours';
   }
   if (!isCronShape(form.logRetentionCron)) {
-    return 'La planification des journaux doit comporter cinq champs (minute heure jour mois jour-de-semaine).';
+    return 'invalidLogCron';
   }
   if (!isCronShape(form.trashPurgeCron)) {
-    return 'La planification de la corbeille doit comporter cinq champs (minute heure jour mois jour-de-semaine).';
+    return 'invalidTrashCron';
   }
   return null;
 }

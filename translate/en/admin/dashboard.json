@@ -48,5 +48,12 @@
   "eventsCount": "events",
   "noActivity": "No activity yet.",
   "unavailable": "Counters this database did not provide",
-  "unavailableHelp": "Most often, the table has not been created on this database yet. The catch-up only adds: in backend/, run “npm run db:schema-check” then “npm run db:schema-fix” (or play backend/sql/schema-sync.mysql.sql in your SQL client)."
+  "unavailableHelp": "Most often, the table has not been created on this database yet. The catch-up only adds: in backend/, run “npm run db:schema-check” then “npm run db:schema-fix” (or play backend/sql/schema-sync.mysql.sql in your SQL client).",
+  "widget_overviewKpis": "Key metrics (applications, content, files, team)",
+  "widget_multiStatus": "Status breakdowns (applications, events, jobs, files)",
+  "widget_liveCharts": "Charts and team workload",
+  "widget_catalogTiles": "Catalog and commerce",
+  "widget_todoAndSources": "Pending work and data sources",
+  "widget_actionsAndLogs": "Quick actions and recent activity",
+  "notRecorded": "{document} · never saved"
 }

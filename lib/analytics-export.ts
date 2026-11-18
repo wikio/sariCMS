@@ -15,14 +15,20 @@ export type ExportScope =
   | 'team'
   | 'commerce';
 
-export function formatBytes(bytes: number): string {
-  if (!Number.isFinite(bytes) || bytes <= 0) return '0 o';
+export function formatBytes(bytes: number, locale?: string): string {
+  const size = Number.isFinite(bytes) && bytes > 0 ? bytes : 0;
   const units = ['o', 'Ko', 'Mo', 'Go', 'To'];
   let idx = 0;
-  let val = bytes;
+  let val = size;
   while (val >= 1024 && idx < units.length - 1) {
     val /= 1024;
     idx += 1;
+  }
+  if (locale) {
+    return new Intl.NumberFormat(locale, {
+      style: 'unit', unit: ['byte', 'kilobyte', 'megabyte', 'gigabyte', 'terabyte'][idx],
+      minimumFractionDigits: idx ? 1 : 0, maximumFractionDigits: idx ? 1 : 0,
+    }).format(val);
   }
   return `${idx === 0 ? Math.round(val) : val.toFixed(1)} ${units[idx]}`;
 }
@@ -358,12 +364,14 @@ export function buildAnalyticsHtmlReport(snapshot: AnalyticsSnapshot, title = 'R
 </html>`;
 }
 
-function triggerDownload(blob: Blob, filename: string) {
+export function triggerDownload(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
   a.download = filename;
+  document.body.appendChild(a);
   a.click();
+  a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1500);
 }
 

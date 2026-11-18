@@ -25,6 +25,7 @@ export default function AdminCareersPage() {
   const router = useRouter();
   const { showToast } = useToast();
   const t = useTranslations('admin.careers');
+  const tApps = useTranslations('admin.applications');
   const tCommon = useTranslations('admin.common');
   const statusLabel = (s: unknown) => {
     const v = String(s || 'draft');
@@ -69,7 +70,7 @@ export default function AdminCareersPage() {
   const exportFor = (o: Offer) => {
     const rows = appsFor(o);
     if (!rows.length) { showToast(t('toastNoApplications'), 'warning'); return; }
-    exportApplicationsCsv(rows, String(o.title));
+    exportApplicationsCsv(rows, tApps, String(o.title));
     showToast(t('toastExportGenerated'), 'success');
   };
 

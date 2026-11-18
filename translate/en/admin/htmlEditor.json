@@ -8,5 +8,18 @@
   "alignRight": "Align right",
   "insertLink": "Insert link",
   "insertImage": "Insert image",
-  "insertTable": "Insert table"
+  "insertTable": "Insert table",
+  "placeholder": "Write the content…",
+  "linkUrl": "Link URL",
+  "color": "Color",
+  "visual": "Visual",
+  "code": "Code",
+  "insertVar": "Insert a variable…",
+  "column": "Column {number}",
+  "bold": "Bold",
+  "italic": "Italic",
+  "heading": "Heading {level}",
+  "quote": "Block quote",
+  "alignCenter": "Align center",
+  "redo": "Redo"
 }

@@ -1,8 +1,10 @@
 'use client';
 
+import { escapeCsvCell, triggerDownload } from '@/lib/analytics-export';
 import { cmsAdminList } from '@/lib/cms-admin';
 
-export type ApplicationStatus = 'new' | 'reviewed' | 'interview' | 'accepted' | 'rejected';
+export const APP_STEPS = ['new', 'reviewed', 'interview', 'accepted', 'rejected'] as const;
+export type ApplicationStatus = (typeof APP_STEPS)[number];
 
 export interface Application {
   id: number;
@@ -47,14 +49,6 @@ export interface Offer {
 
 export const APPS_KEY = 'sari_applications';
 
-export const APP_STEPS: Array<{ value: ApplicationStatus; label: string }> = [
-  { value: 'new', label: 'Nouvelle' },
-  { value: 'reviewed', label: 'Examinée' },
-  { value: 'interview', label: 'Entretien' },
-  { value: 'accepted', label: 'Acceptée' },
-  { value: 'rejected', label: 'Refusée' },
-];
-
 export function loadApplications(): Application[] {
   if (typeof window === 'undefined') return [];
   try {
@@ -72,7 +66,7 @@ export function saveApplications(rows: Application[]) {
 }
 
 export function statusRank(status: ApplicationStatus): number {
-  return APP_STEPS.findIndex((s) => s.value === status);
+  return APP_STEPS.indexOf(status);
 }
 
 /** Charge les offres (carrières) depuis le CMS, mappées par legacyId + titre. */
@@ -110,7 +104,7 @@ export function groupByOffer(rows: Application[]): Array<{ key: string; title: s
 
 export function candidateStats(rows: Application[]) {
   const total = rows.length;
-  const byStatus = APP_STEPS.map((s) => ({ ...s, count: rows.filter((r) => r.status === s.value).length }));
+  const byStatus = APP_STEPS.map((value) => ({ value, count: rows.filter((r) => r.status === value).length }));
   const offers = groupByOffer(rows).length;
   const accepted = rows.filter((r) => r.status === 'accepted').length;
   const conversion = total ? Math.round((accepted / total) * 100) : 0;
@@ -121,32 +115,28 @@ export function candidateStats(rows: Application[]) {
   return { total, byStatus, offers, accepted, conversion, avgExp };
 }
 
-export function exportApplicationsCsv(rows: Application[], title?: string) {
-  const cols = ['Candidat', 'Email', 'Téléphone', 'Offre', 'Expérience', 'Statut', 'Note', 'Score', 'Date', 'Motivation', 'Commentaire'];
-  const lines = [cols.join(';')];
+type ApplicationLabel = (key: string, values?: Record<string, string | number>) => string;
+
+/** Translate a numeric duration, never an applicant's free-text description. */
+export function formatExperience(value: string, label: ApplicationLabel): string {
+  const match = /^(\d+(?:[.,]\d+)?)\s*(?:ans?|years?)$/i.exec(String(value ?? '').trim());
+  return match ? label('years', { count: Number(match[1].replace(',', '.')) }) : value;
+}
+
+export function exportApplicationsCsv(rows: Application[], label: ApplicationLabel, title?: string) {
+  const columns = ['candidate', 'email', 'phone', 'offer', 'experience', 'status', 'rating', 'score', 'date', 'motivation', 'comment'];
+  const lines = [columns.map((column) => escapeCsvCell(label(column))).join(';')];
   for (const r of rows) {
-    lines.push(
-      [
-        r.candidate, r.email, r.phone, r.jobTitle, r.experience, r.status,
-        r.rating || '', r.score != null ? r.score : '', r.date,
-        `"${String(r.motivation || '').replace(/"/g, '""')}"`,
-        `"${String(r.note || '').replace(/"/g, '""')}"`,
-      ].join(';'),
-    );
+    lines.push([
+      r.candidate, r.email, r.phone, r.jobTitle, formatExperience(r.experience, label),
+      APP_STEPS.includes(r.status) ? label(`step_${r.status}`) : r.status, r.rating || '', r.score ?? '', r.date,
+      r.motivation || '', r.note || '',
+    ].map(escapeCsvCell).join(';'));
   }
   const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `candidatures${title ? '-' + title.toLowerCase().replace(/[^a-z0-9]+/g, '-') : ''}.csv`;
-  a.click();
-  URL.revokeObjectURL(a.href);
+  triggerDownload(blob, `${label('csvName')}${title ? '-' + title.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '-') : ''}.csv`);
 }
 
 export function downloadText(filename: string, content: string) {
-  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(a.href);
+  triggerDownload(new Blob([content], { type: 'text/plain;charset=utf-8' }), filename);
 }

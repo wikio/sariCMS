@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 import { useState } from 'react';
 import { Send, X } from 'lucide-react';
 import { ensureThread, sendMessage, type PersonType, type ThreadContext } from '@/lib/messages';
@@ -25,7 +27,10 @@ export default function MessageComposer({
   subject?: string;
   onClose: () => void;
 }) {
+  const t = useTranslations('admin.messageComposer');
   const { showToast } = useToast();
+  const tm = useTranslations('admin.messages');
+  const tc = useTranslations('admin.common');
   const [subjectValue, setSubjectValue] = useState(subject || '');
   const [body, setBody] = useState('');
 
@@ -35,11 +40,11 @@ export default function MessageComposer({
       email,
       name,
       type,
-      subject: subjectValue.trim() || subject || 'Conversation',
+      subject: subjectValue.trim() || subject || tm('conversation'),
       context,
     });
     sendMessage(thread.id, 'admin', body.trim());
-    showToast('Message envoyé au client', 'success');
+    showToast(tm('sent'), 'success');
     onClose();
   };
 
@@ -48,12 +53,12 @@ export default function MessageComposer({
       <div className="ad-modal-card space-y-3" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-xl font-black flex items-center gap-2"><Send className="w-4 h-4" /> Message au client</h2>
+            <h2 className="text-xl font-black flex items-center gap-2"><Send className="w-4 h-4" /> {t('clientMessage')}</h2>
             <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>
               {name || email} · {email}
               {context && context.kind !== 'general' && (
                 <span className="ad-chip ad-chip-acc ml-2">
-                  {context.kind === 'quote' ? `Devis ${context.ref || `#${context.id ?? ''}`}` : `Commande #${context.id ?? ''}`}
+                  {context.kind === 'quote' ? context.ref || tm('quoteRef', { id: context.id ?? '' }) : tm('orderRef', { id: context.id ?? '' })}
                 </span>
               )}
             </p>
@@ -62,25 +67,25 @@ export default function MessageComposer({
         </div>
 
         <label className="space-y-1.5">
-          <span className="text-[11px] font-black uppercase tracking-[0.14em]" style={{ color: 'var(--ad-muted)' }}>Sujet</span>
-          <input className="ad-input" value={subjectValue} placeholder="Objet du message…" onChange={(e) => setSubjectValue(e.target.value)} />
+          <span className="text-[11px] font-black uppercase tracking-[0.14em]" style={{ color: 'var(--ad-muted)' }}>{t('subject')}</span>
+          <input className="ad-input" value={subjectValue} placeholder={t('subject')} onChange={(e) => setSubjectValue(e.target.value)} />
         </label>
 
         <label className="space-y-1.5">
-          <span className="text-[11px] font-black uppercase tracking-[0.14em]" style={{ color: 'var(--ad-muted)' }}>Message</span>
+          <span className="text-[11px] font-black uppercase tracking-[0.14em]" style={{ color: 'var(--ad-muted)' }}>{t('message')}</span>
           <textarea
             className="ad-textarea min-h-[160px]"
             value={body}
-            placeholder="Écrivez votre message au client…"
+            placeholder={t('writePlaceholder')}
             onChange={(e) => setBody(e.target.value)}
             autoFocus
           />
         </label>
 
         <div className="flex justify-end gap-2 pt-1">
-          <button className="ad-btn ad-btn-ghost" onClick={onClose}>Annuler</button>
+          <button className="ad-btn ad-btn-ghost" onClick={onClose}>{tc('cancel')}</button>
           <button className="ad-btn ad-btn-primary" disabled={!body.trim()} onClick={submit}>
-            <Send className="w-4 h-4" /> Envoyer
+            <Send className="w-4 h-4" /> {tc('send')}
           </button>
         </div>
       </div>
