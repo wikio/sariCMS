@@ -47,6 +47,7 @@ export default function UserForm({
   onSave: (payload: UserRecord) => void;
 }) {
   const t = useTranslations('admin.userForm');
+  const tp = useTranslations('admin.permissions');
   const creation = !record.id;
 
   const [form, setForm] = useState<UserRecord>(() => ({ ...record }));
@@ -67,14 +68,14 @@ export default function UserForm({
         setRoles(
           (list as Record<string, unknown>[]).map((r) => ({
             value: String(r.id),
-            label: String(r.name || r.slug || r.id),
-            hint: String(r.description || r.slug || ''),
+            label: r.isSystem && tp.has(`role_${r.slug}`) ? tp(`role_${r.slug}`) : String(r.name || r.slug || r.id),
+            hint: r.isSystem && tp.has(`hint_${r.slug}`) ? tp(`hint_${r.slug}`) : String(r.description || r.slug || ''),
           })),
         );
       })
       .catch(() => { /* Droits insuffisants : le champ reste vide, sans bloquer. */ });
     return () => { vivant = false; };
-  }, []);
+  }, [tp]);
 
   const champ = (k: string) => String(form[k] ?? '');
   const set = (k: string, v: unknown) => {

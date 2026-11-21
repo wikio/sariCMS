@@ -1,4 +1,4 @@
-// app/[locale]/evenements/[id]-[slug]/page.tsx
+// app/[locale]/events/[id]/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -7,7 +7,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { 
   Calendar, MapPin, Tag, Users, Clock, Check, UserPlus, 
-  CheckCircle, ChevronLeft, ChevronRight, Bell
+  CheckCircle, ChevronLeft, ChevronRight, Bell, Shield, AlertCircle, Loader2
 } from 'lucide-react';
 import { getEvents } from '@/lib/data';
 import { matchesEntity } from '@/lib/ids';
@@ -18,6 +18,8 @@ import Breadcrumb from '@/components/ui/Breadcrumb';
 import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
 import ImageWithFallback from '@/components/ui/ImageWithFallback';
 import LanguageIndicator from '@/components/ui/LanguageIndicator';
+import ServerCaptcha from '@/components/ServerCaptcha';
+import { useAuth, frontToken } from '@/contexts/AuthContext';
 
 export default function EventDetailPage() {
   const params = useParams();
@@ -26,14 +28,47 @@ export default function EventDetailPage() {
   const { formatDate, formatDateRange, hasTime } = useDateUtils();
   const t = useTranslations('pages.eventDetail');
   const isRtl = locale === 'ar';
+  const { user, isAuthenticated } = useAuth();
 
   const [event, setEvent] = useState<Event | null>(null);
   const [allEvents, setAllEvents] = useState<Event[]>([]);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [showRegistrationForm, setShowRegistrationForm] = useState(false);
-  const [registrationSubmitted, setRegistrationSubmitted] = useState(false);
-  const [regFormData, setRegFormData] = useState({ name: '', email: '', phone: '', company: '', notes: '' });
+  const [registrationSubmitted, setRegistrationSubmitted] = useState<{
+    id: string;
+    fullName: string;
+    email: string;
+    phone: string;
+  } | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [regError, setRegError] = useState('');
+  const [regErrorKind, setRegErrorKind] = useState<'error' | 'duplicate'>('error');
+  const [captchaOk, setCaptchaOk] = useState(false);
+  const [captchaData, setCaptchaData] = useState<{ id: string; value: string } | null>(null);
+  const [captchaKey, setCaptchaKey] = useState(0);
+  const [honeypot, setHoneypot] = useState('');
+  const [regFormData, setRegFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    company: '',
+    position: '',
+    notes: '',
+  });
+
+  // Pré-remplir avec le profil de l'utilisateur connecté s'il est disponible
+  useEffect(() => {
+    if (!user) return;
+    setRegFormData((prev) => ({
+      ...prev,
+      name: prev.name || user.name || [user.firstName, user.lastName].filter(Boolean).join(' '),
+      email: prev.email || user.email || '',
+      phone: prev.phone || user.phone || '',
+      company: prev.company || user.company || '',
+      position: prev.position || user.position || '',
+    }));
+  }, [user]);
 
   useEffect(() => {
     const loadEvent = async () => {
@@ -90,14 +125,97 @@ export default function EventDetailPage() {
     return () => clearInterval(timer);
   }, [event?.startDate]);
 
-  const handleRegistration = (e: React.FormEvent) => {
+  const handleRegistration = async (e: React.FormEvent) => {
     e.preventDefault();
-    setRegistrationSubmitted(true);
-    setTimeout(() => {
-      setShowRegistrationForm(false);
-      setRegistrationSubmitted(false);
-      setRegFormData({ name: '', email: '', phone: '', company: '', notes: '' });
-    }, 3000);
+    if (!event) return;
+    setRegError('');
+    setRegErrorKind('error');
+
+    const digits = regFormData.phone.replace(/\D/g, '');
+    if (digits.length < 7) {
+      setRegError(t('phoneRequired'));
+      return;
+    }
+    if (!captchaOk || !captchaData?.id || captchaData.value.length !== 5) {
+      setRegError(t('captchaRequired'));
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const token = frontToken();
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers.Authorization = `Bearer ${token}`;
+
+      const res = await fetch('/api/events/register', {
+        method: 'POST',
+        headers,
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          eventId: String(event.id),
+          eventLegacyId: event.legacyId ? String(event.legacyId) : undefined,
+          eventSlug: event.slug,
+          eventTitle: event.title,
+          eventDate: event.startDate || event.date,
+          eventLocation: event.location,
+          eventType: event.type,
+          name: regFormData.name.trim(),
+          email: regFormData.email.trim(),
+          phone: regFormData.phone.trim(),
+          company: regFormData.company.trim(),
+          position: regFormData.position.trim(),
+          notes: regFormData.notes.trim(),
+          locale,
+          website: honeypot,
+          captchaId: captchaData.id,
+          captchaAnswer: captchaData.value,
+        }),
+      });
+      const data = (await res.json().catch(() => null)) as {
+        ok?: boolean;
+        code?: string;
+        error?: string;
+        registration?: { id: string; fullName: string; email: string; phone: string };
+      } | null;
+
+      if (!res.ok || !data?.ok) {
+        const code = data?.code || '';
+        if (res.status === 409) {
+          setRegErrorKind('duplicate');
+          if (code === 'DUPLICATE_EMAIL_AND_PHONE') setRegError(t('duplicateBoth'));
+          else if (code === 'DUPLICATE_PHONE') setRegError(t('duplicatePhone'));
+          else setRegError(t('duplicateEmail'));
+        } else {
+          setRegErrorKind('error');
+          setRegError(data?.error || t('errorGeneric'));
+        }
+        // Régénérer le captcha après un échec (le code a pu être consommé ou expiré)
+        setCaptchaOk(false);
+        setCaptchaData(null);
+        setCaptchaKey((k) => k + 1);
+        return;
+      }
+
+      setRegistrationSubmitted(
+        data.registration || {
+          id: '',
+          fullName: regFormData.name.trim(),
+          email: regFormData.email.trim(),
+          phone: regFormData.phone.trim(),
+        },
+      );
+      setCaptchaOk(false);
+      setCaptchaData(null);
+      setCaptchaKey((k) => k + 1);
+    } catch {
+      setRegErrorKind('error');
+      setRegError(t('errorGeneric'));
+      setCaptchaOk(false);
+      setCaptchaData(null);
+      setCaptchaKey((k) => k + 1);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (!event) {
@@ -112,7 +230,7 @@ export default function EventDetailPage() {
         <p className="text-gray-600 dark:text-gray-400 mb-6">
           {t('notFoundDesc')}
         </p>
-        <Link href={`/${locale}/evenements`} className="btn-primary text-white px-6 py-3 inline-block">
+        <Link href={`/${locale}/events`} className="btn-primary text-white px-6 py-3 inline-block">
           {t('backToEvents')}
         </Link>
       </div>
@@ -312,7 +430,7 @@ export default function EventDetailPage() {
             {(prevEvent || nextEvent) && (
               <div className="grid md:grid-cols-2 gap-6 mb-8">
                 {prevEvent ? (
-                  <Link href={buildMultilingualUrl(`/${locale}/evenements`, prevEvent.legacyId || String(prevEvent.id), prevEvent.slug)} className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 p-6 hover:border-sari-blue transition-all group rounded-lg">
+                  <Link href={buildMultilingualUrl(`/${locale}/events`, prevEvent.legacyId || String(prevEvent.id), prevEvent.slug)} className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 p-6 hover:border-sari-blue transition-all group rounded-lg">
                     <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
                       <PrevIcon className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
                       {t('prevEvent')}
@@ -323,7 +441,7 @@ export default function EventDetailPage() {
                   </Link>
                 ) : <div></div>}
                 {nextEvent ? (
-                  <Link href={buildMultilingualUrl(`/${locale}/evenements`, nextEvent.legacyId || String(nextEvent.id), nextEvent.slug)} className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 p-6 hover:border-sari-blue transition-all group text-right rounded-lg">
+                  <Link href={buildMultilingualUrl(`/${locale}/events`, nextEvent.legacyId || String(nextEvent.id), nextEvent.slug)} className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 p-6 hover:border-sari-blue transition-all group text-right rounded-lg">
                     <div className="flex items-center justify-end gap-2 text-sm text-gray-500 mb-2">
                       {t('nextEvent')}
                       <NextIcon className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -344,7 +462,7 @@ export default function EventDetailPage() {
                 </h2>
                 <div className="grid md:grid-cols-3 gap-6">
                   {relatedEvents.map((ev) => (
-                    <Link key={ev.id} href={buildMultilingualUrl(`/${locale}/evenements`, ev.legacyId || String(ev.id), ev.slug)} className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 card-hover overflow-hidden group rounded-lg">
+                    <Link key={ev.id} href={buildMultilingualUrl(`/${locale}/events`, ev.legacyId || String(ev.id), ev.slug)} className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 card-hover overflow-hidden group rounded-lg">
                       <div className="aspect-video overflow-hidden relative">
                         <img src={ev.image} alt={ev.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                         <div className={`absolute top-4 left-4 ${typeColors[ev.type] || 'bg-sari-blue'} text-white px-3 py-1 text-xs font-bold uppercase rounded`}>
@@ -377,38 +495,177 @@ export default function EventDetailPage() {
               <p className="text-gray-600 dark:text-gray-400 text-sm text-center mb-6">
                 {event.type === 'Webinar' ? t('webinarNote') : t('limitedNote')}
               </p>
-              {!showRegistrationForm ? (
-                <button onClick={() => setShowRegistrationForm(true)} className="w-full btn-primary text-white py-4 font-semibold shadow-lg flex items-center justify-center gap-2 rounded-lg">
+              {!showRegistrationForm && !registrationSubmitted ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRegError('');
+                    setShowRegistrationForm(true);
+                  }}
+                  className="w-full btn-primary text-white py-4 font-semibold shadow-lg flex items-center justify-center gap-2 rounded-lg"
+                >
                   <UserPlus className="w-5 h-5" />
                   {t('registerBtn')}
                 </button>
+              ) : registrationSubmitted ? (
+                <div className="bg-green-50 dark:bg-green-900/20 border-2 border-green-300 dark:border-green-700 p-6 text-center rounded-lg space-y-3">
+                  <CheckCircle className="w-12 h-12 text-green-500 mx-auto" />
+                  <h4 className="font-bold text-green-700 dark:text-green-400 text-lg">
+                    {t('successTitle')}
+                  </h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                    {t('successDesc')}
+                  </p>
+                  <div className="text-xs font-semibold inline-block px-3 py-1 rounded-full bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300">
+                    {t('statusPendingBadge')}
+                  </div>
+                  <div className="text-xs text-left bg-white/80 dark:bg-black/20 p-3 rounded-lg space-y-1 text-gray-700 dark:text-gray-300">
+                    <div><strong>{registrationSubmitted.fullName}</strong></div>
+                    <div>{registrationSubmitted.email}</div>
+                    <div>{registrationSubmitted.phone}</div>
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {t('clientAssociationHint')}
+                  </p>
+                  <div className="flex flex-col gap-2 pt-1">
+                    {isAuthenticated && (
+                      <Link
+                        href={`/${locale}/dashboard`}
+                        className="w-full btn-primary text-white py-2.5 text-sm font-semibold rounded-lg inline-flex items-center justify-center gap-2"
+                      >
+                        {t('viewMyEvents')}
+                      </Link>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setRegistrationSubmitted(null);
+                        setShowRegistrationForm(false);
+                      }}
+                      className="w-full text-gray-500 hover:text-sari-dark dark:hover:text-white text-sm py-1"
+                    >
+                      {t('newRegistration')}
+                    </button>
+                  </div>
+                </div>
               ) : (
-                <form onSubmit={handleRegistration} className="space-y-4">
-                  {registrationSubmitted ? (
-                    <div className="bg-green-50 dark:bg-green-900/20 border-2 border-green-300 dark:border-green-700 p-6 text-center rounded-lg">
-                      <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-2" />
-                      <h4 className="font-bold text-green-700 dark:text-green-400">
-                        {t('successTitle')}
-                      </h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                        {t('successDesc')}
-                      </p>
+                <form onSubmit={handleRegistration} className="space-y-3.5">
+                  {/* Champ piège à pourriels caché */}
+                  <input
+                    type="text"
+                    name="website"
+                    value={honeypot}
+                    onChange={(e) => setHoneypot(e.target.value)}
+                    tabIndex={-1}
+                    autoComplete="off"
+                    aria-hidden="true"
+                    className="hidden"
+                  />
+
+                  {regError && (
+                    <div
+                      role="alert"
+                      className={`p-3 rounded-lg border text-sm flex items-start gap-2 ${
+                        regErrorKind === 'duplicate'
+                          ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-300'
+                          : 'bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-700 text-red-700 dark:text-red-300'
+                      }`}
+                    >
+                      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                      <span>{regError}</span>
                     </div>
-                  ) : (
-                    <>
-                      <input type="text" required placeholder={t('name')} value={regFormData.name} onChange={(e) => setRegFormData({ ...regFormData, name: e.target.value })} className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none rounded-lg" />
-                      <input type="email" required placeholder={t('email')} value={regFormData.email} onChange={(e) => setRegFormData({ ...regFormData, email: e.target.value })} className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none rounded-lg" />
-                      <input type="tel" placeholder={t('phone')} value={regFormData.phone} onChange={(e) => setRegFormData({ ...regFormData, phone: e.target.value })} className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none rounded-lg" />
-                      <input type="text" placeholder={t('company')} value={regFormData.company} onChange={(e) => setRegFormData({ ...regFormData, company: e.target.value })} className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none rounded-lg" />
-                      <textarea rows={3} placeholder={t('notes')} value={regFormData.notes} onChange={(e) => setRegFormData({ ...regFormData, notes: e.target.value })} className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none resize-none rounded-lg"></textarea>
-                      <button type="submit" className="w-full btn-primary text-white py-4 font-semibold shadow-lg rounded-lg">
-                        {t('confirmBtn')}
-                      </button>
-                      <button type="button" onClick={() => setShowRegistrationForm(false)} className="w-full text-gray-500 hover:text-sari-dark dark:hover:text-white text-sm">
-                        {t('cancel')}
-                      </button>
-                    </>
                   )}
+
+                  <input
+                    type="text"
+                    required
+                    placeholder={`${t('name')} *`}
+                    value={regFormData.name}
+                    onChange={(e) => setRegFormData({ ...regFormData, name: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none rounded-lg"
+                  />
+                  <input
+                    type="email"
+                    required
+                    placeholder={`${t('email')} *`}
+                    value={regFormData.email}
+                    onChange={(e) => setRegFormData({ ...regFormData, email: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none rounded-lg"
+                  />
+                  <input
+                    type="tel"
+                    required
+                    placeholder={`${t('phone')} *`}
+                    value={regFormData.phone}
+                    onChange={(e) => setRegFormData({ ...regFormData, phone: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none rounded-lg"
+                  />
+                  <input
+                    type="text"
+                    placeholder={t('company')}
+                    value={regFormData.company}
+                    onChange={(e) => setRegFormData({ ...regFormData, company: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none rounded-lg"
+                  />
+                  <input
+                    type="text"
+                    placeholder={t('position')}
+                    value={regFormData.position}
+                    onChange={(e) => setRegFormData({ ...regFormData, position: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none rounded-lg"
+                  />
+                  <textarea
+                    rows={3}
+                    placeholder={t('notes')}
+                    value={regFormData.notes}
+                    onChange={(e) => setRegFormData({ ...regFormData, notes: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none resize-none rounded-lg"
+                  />
+
+                  {/* Vérification anti-robot serveur */}
+                  <div className="bg-gray-50 dark:bg-[#111111] border border-sari-blue/40 p-3.5 rounded-lg">
+                    <label className="block text-xs font-bold text-sari-dark dark:text-white mb-2 uppercase tracking-wider flex items-center gap-1.5">
+                      <Shield className="w-3.5 h-3.5 text-sari-blue" />
+                      {t('captchaLabel')} <span className="text-red-500">*</span>
+                    </label>
+                    <ServerCaptcha
+                      key={captchaKey}
+                      endpoint="/api/events/captcha"
+                      autoVerify={false}
+                      locale={locale}
+                      onChange={setCaptchaOk}
+                      onCaptchaData={setCaptchaData}
+                    />
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1.5">
+                      {t('captchaHelp')}
+                    </p>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={submitting || !captchaOk}
+                    className="w-full btn-primary text-white py-3.5 font-semibold shadow-lg rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {submitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        {t('submitting')}
+                      </>
+                    ) : (
+                      t('confirmBtn')
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={submitting}
+                    onClick={() => {
+                      setRegError('');
+                      setShowRegistrationForm(false);
+                    }}
+                    className="w-full text-gray-500 hover:text-sari-dark dark:hover:text-white text-sm"
+                  >
+                    {t('cancel')}
+                  </button>
                 </form>
               )}
               <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-800 text-center">

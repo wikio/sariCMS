@@ -107,5 +107,7 @@
   "chipPending": "En attente",
   "chipUnsubscribed": "Désinscrit",
   "chipDeleted": "À la corbeille",
-  "confirmDelete": "Placer cette fiche à la corbeille ?"
+  "confirmDelete": "Placer cette fiche à la corbeille ?",
+  "status_bounced": "En rebond",
+  "status_blocked": "Bloqué"
 }

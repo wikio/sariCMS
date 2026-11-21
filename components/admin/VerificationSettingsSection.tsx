@@ -17,7 +17,7 @@
  */
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { Save, ShieldCheck, FlaskConical } from 'lucide-react';
 import { useToast } from '@/components/admin/Toast';
 
@@ -50,7 +50,11 @@ const EMPTY: ApiSettings = {
 };
 
 export default function VerificationSettingsSection() {
+  const t = useTranslations('admin.verificationSettings');
   const { showToast } = useToast();
+  const ts = useTranslations('admin.settings');
+  const tv = useTranslations('admin.verificationCodes');
+  const tc = useTranslations('admin.common');
   const locale = useLocale();
   const [api, setApi] = useState<ApiSettings>(EMPTY);
   const [loaded, setLoaded] = useState(false);
@@ -69,12 +73,12 @@ export default function VerificationSettingsSection() {
           setApi({ ...EMPTY, ...srv, apiKey, response: { ...EMPTY.response, ...((srv as unknown as { response?: ApiSettings['response'] }).response || {}) } });
         }
       } catch {
-        showToast('Réglages de vérification illisibles — les valeurs par défaut sont affichées.', 'error');
+        showToast(t('loadError'), 'error');
       } finally {
         setLoaded(true);
       }
     })();
-  }, [showToast]);
+  }, [showToast, t]);
 
   const set = useCallback((patch: Partial<ApiSettings>) => setApi((prev) => ({ ...prev, ...patch })), []);
   const setResp = (patch: Partial<ApiSettings['response']>) => setApi((prev) => ({ ...prev, response: { ...prev.response, ...patch } }));
@@ -88,52 +92,54 @@ export default function VerificationSettingsSection() {
         body: JSON.stringify({ api }),
       });
       const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error((json as { error?: string }).error || 'Enregistrement refusé.');
-      showToast('Réglages de vérification enregistrés.', 'success');
+      if (!res.ok) throw new Error((json as { error?: string }).error || t('saveDenied'));
+      showToast(t('saved'), 'success');
     } catch (error) {
-      showToast(error instanceof Error ? error.message : 'Enregistrement impossible.', 'error');
+      showToast(error instanceof Error ? error.message : tc('saveError'), 'error');
     } finally {
       setSaving(false);
     }
   };
 
   const runTest = async () => {
-    setTest((t) => ({ ...t, result: null, error: '' }));
+    setTest((prev) => ({ ...prev, result: null, error: '' }));
     try {
       const res = await fetch('/api/admin/verification/test', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ api, code: test.code, key: test.key }),
+        body: JSON.stringify({ api, locale, code: test.code, key: test.key }),
       });
       const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error((json as { error?: string }).error || `Test refusé (${res.status}).`);
-      setTest((t) => ({ ...t, result: json as Record<string, unknown> }));
+      if (!res.ok) {
+        const key = `test_${json.code}`;
+        throw new Error(t.has(key) ? t(key) : t('testRefused', { status: res.status }));
+      }
+      setTest((prev) => ({ ...prev, result: json as Record<string, unknown> }));
     } catch (error) {
-      setTest((t) => ({ ...t, error: error instanceof Error ? error.message : 'Test impossible.' }));
+      setTest((prev) => ({ ...prev, error: error instanceof Error ? error.message : t('testError') }));
     }
   };
 
   if (!loaded) {
-    return <section className="ad-card p-5 text-sm" style={{ color: 'var(--ad-muted)' }}>Chargement des réglages de vérification…</section>;
+    return <section className="ad-card p-5 text-sm" style={{ color: 'var(--ad-muted)' }}>{t('loading')}</section>;
   }
 
   return (
     <section className="ad-card p-5 space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="ad-section-title">Vérification des documents</h2>
+        <h2 className="ad-section-title">{ts('verification')}</h2>
         <span
           className={`text-[11px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full ${api.enabled && api.url ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'}`}
         >
-          {api.enabled && api.url ? 'API externe active' : 'Régime local (démonstration)'}
+          {api.enabled && api.url ? t('apiActive') : t('localMode')}
         </span>
       </div>
 
       <p className="text-xs leading-relaxed" style={{ color: 'var(--ad-muted)' }}>
-        La page <code>/{locale}/verification</code> accepte un couple <strong>code + clé</strong>, lu depuis un lien
-        <code> /{locale}/verification/{'{code}'}/{'{hash}'}</code> ou saisi à la main. Après le contrôle anti-robot, ce couple est
-        soumis à l’API définie ci-dessous, qui renvoie un <strong>code de vérification</strong> — 1 valide, 0 falsifié, 2 expiré,
-        3 révoqué, et tout autre code que vous ajoutez au{' '}
-        <Link href={`/${locale}/admin/verification-codes`} className="font-bold underline decoration-dotted">catalogue des codes</Link>.
+        {t.rich('intro', {
+          path: `/${locale}/verification`, link: `/${locale}/verification/{code}/{hash}`,
+          catalog: (text) => <Link href={`/${locale}/admin/verification-codes`} className="font-bold underline decoration-dotted">{text}</Link>,
+        })}
       </p>
 
       <div
@@ -141,21 +147,21 @@ export default function VerificationSettingsSection() {
         style={{ border: '1px solid var(--ad-line)' }}
       >
         <div className="space-y-0.5">
-          <div className="text-sm font-bold">Vérification par l’API externe</div>
+          <div className="text-sm font-bold">{t('external')}</div>
           <div className="text-xs" style={{ color: 'var(--ad-muted)' }}>
-            Désactivé, la page consulte le registre local <code>data/&lt;locale&gt;/verification-codes.json</code> — le mode historique, avec ses codes de démonstration.
+            {t('localHint', { path: 'data/<locale>/verification-codes.json' })}
           </div>
         </div>
         <button type="button" onClick={() => set({ enabled: !api.enabled })} className={`ad-toggle ${api.enabled ? 'is-on' : ''}`} aria-pressed={api.enabled} role="switch">
           {api.enabled ? (
             <>
-              <span className="ad-toggle-label">Activé</span>
+              <span className="ad-toggle-label">{ts('enabled')}</span>
               <span className="ad-toggle-knob" />
             </>
           ) : (
             <>
               <span className="ad-toggle-knob" />
-              <span className="ad-toggle-label">Désactivé</span>
+              <span className="ad-toggle-label">{ts('disabled')}</span>
             </>
           )}
         </button>
@@ -163,7 +169,7 @@ export default function VerificationSettingsSection() {
 
       <div className="grid md:grid-cols-2 gap-3">
         <label className="md:col-span-2 space-y-1.5 block">
-          <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>URL de l’API de vérification</span>
+          <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>{t('url')}</span>
           <input
             className="ad-input font-mono"
             placeholder="https://api.exemple.com/v1/verify"
@@ -171,39 +177,39 @@ export default function VerificationSettingsSection() {
             onChange={(e) => set({ url: e.target.value })}
           />
           <span className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>
-            En GET, le code et la clé voyagent en query string ; en POST, en corps JSON — mêmes noms de champs.
+            {t('requestHint')}
           </span>
         </label>
 
         <label className="space-y-1.5 block">
-          <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Clé d’API</span>
+          <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>{ts('apiKey')}</span>
           <input
             className="ad-input font-mono"
             type="password"
             autoComplete="off"
-            placeholder={api.apiKey ? '•••• enregistrée — laisser vide pour la conserver' : ''}
+            placeholder={api.apiKey ? t('keepKey') : ''}
             value={api.apiKey}
             onChange={(e) => set({ apiKey: e.target.value })}
           />
         </label>
         <label className="space-y-1.5 block">
-          <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>En-tête d’authentification</span>
+          <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>{t('authHeader')}</span>
           <select className="ad-select" value={api.authHeader} onChange={(e) => set({ authHeader: e.target.value as ApiSettings['authHeader'] })}>
             <option value="X-API-Key">X-API-Key</option>
             <option value="Authorization">Authorization: Bearer</option>
-            <option value="none">Aucun (API ouverte)</option>
+            <option value="none">{t('noAuth')}</option>
           </select>
         </label>
 
         <label className="space-y-1.5 block">
-          <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Méthode</span>
+          <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>{t('method')}</span>
           <select className="ad-select" value={api.method} onChange={(e) => set({ method: e.target.value as ApiSettings['method'] })}>
-            <option value="GET">GET — paramètres en query string</option>
-            <option value="POST">POST — paramètres en corps JSON</option>
+            <option value="GET">{t('get')}</option>
+            <option value="POST">{t('post')}</option>
           </select>
         </label>
         <label className="space-y-1.5 block">
-          <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Délai (ms)</span>
+          <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>{t('timeout')}</span>
           <input
             className="ad-input"
             type="number"
@@ -216,11 +222,11 @@ export default function VerificationSettingsSection() {
         </label>
 
         <label className="space-y-1.5 block">
-          <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Nom du paramètre « code »</span>
+          <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>{t('codeParam')}</span>
           <input className="ad-input font-mono" value={api.codeParam} onChange={(e) => set({ codeParam: e.target.value })} />
         </label>
         <label className="space-y-1.5 block">
-          <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Nom du paramètre « hash »</span>
+          <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>{t('hashParam')}</span>
           <input className="ad-input font-mono" value={api.hashParam} onChange={(e) => set({ hashParam: e.target.value })} />
         </label>
 
@@ -228,7 +234,7 @@ export default function VerificationSettingsSection() {
           {(['code', 'type', 'issuer', 'message'] as const).map((field) => (
             <label key={field} className="space-y-1.5 block">
               <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>
-                Réponse · {field === 'code' ? 'code de vérification' : field === 'type' ? 'Type' : field === 'issuer' ? 'Émetteur' : 'Message'}
+                {t(`response_${field}`)}
               </span>
               <input
                 className="ad-input font-mono"
@@ -240,28 +246,26 @@ export default function VerificationSettingsSection() {
           ))}
         </div>
         <p className="md:col-span-2 text-[11px]" style={{ color: 'var(--ad-muted)' }}>
-          Chemins pointés dans le JSON renvoyé par l’API : <code>code</code> lit la racine, <code>data.result.code</code> lit trois
-          niveaux plus bas. Le champ « code de vérification » est <strong>obligatoire</strong> — sans lui, aucune réponse n’est traduisible.
+          {t('responseHint')}
         </p>
 
         <div className="md:col-span-2 flex items-start justify-between gap-4 py-2 rounded-lg px-3" style={{ border: '1px solid var(--ad-line)' }}>
           <div className="space-y-0.5">
-            <div className="text-sm font-bold">Repli sur le registre local si l’API tombe</div>
+            <div className="text-sm font-bold">{t('fallback')}</div>
             <div className="text-xs" style={{ color: 'var(--ad-muted)' }}>
-              Si l’API est injoignable, la page répond avec le registre local et l’annonce. Désactivé, une panne d’API affiche une
-              erreur — plus honnête quand un tiers se fie à la vérification pour accepter un document.
+              {t('fallbackHint')}
             </div>
           </div>
           <button type="button" onClick={() => set({ fallbackToLocal: !api.fallbackToLocal })} className={`ad-toggle ${api.fallbackToLocal ? 'is-on' : ''}`} aria-pressed={api.fallbackToLocal} role="switch">
             {api.fallbackToLocal ? (
               <>
-                <span className="ad-toggle-label">Activé</span>
+                <span className="ad-toggle-label">{ts('enabled')}</span>
                 <span className="ad-toggle-knob" />
               </>
             ) : (
               <>
                 <span className="ad-toggle-knob" />
-                <span className="ad-toggle-label">Désactivé</span>
+                <span className="ad-toggle-label">{ts('disabled')}</span>
               </>
             )}
           </button>
@@ -269,22 +273,21 @@ export default function VerificationSettingsSection() {
 
         <div className="md:col-span-2 flex items-start justify-between gap-4 py-2 rounded-lg px-3" style={{ border: '1px solid var(--ad-line)' }}>
           <div className="space-y-0.5">
-            <div className="text-sm font-bold">Afficher les Codes de démonstration sur la page publique</div>
+            <div className="text-sm font-bold">{t('demo')}</div>
             <div className="text-xs" style={{ color: 'var(--ad-muted)' }}>
-              Affiche la section « Codes de démonstration » sous le formulaire <code>/{locale}/verification</code>. Désactivé, aucun
-              code d’exemple n’est proposé — utile en production pour ne pas exposer les exemples du registre local.
+              {t('demoHint', { path: `/${locale}/verification` })}
             </div>
           </div>
           <button type="button" onClick={() => set({ showDemoCodes: !api.showDemoCodes })} className={`ad-toggle ${api.showDemoCodes ? 'is-on' : ''}`} aria-pressed={api.showDemoCodes} role="switch">
             {api.showDemoCodes ? (
               <>
-                <span className="ad-toggle-label">Affichés</span>
+                <span className="ad-toggle-label">{tv('shown')}</span>
                 <span className="ad-toggle-knob" />
               </>
             ) : (
               <>
                 <span className="ad-toggle-knob" />
-                <span className="ad-toggle-label">Masqués</span>
+                <span className="ad-toggle-label">{tv('hidden')}</span>
               </>
             )}
           </button>
@@ -295,18 +298,18 @@ export default function VerificationSettingsSection() {
       <div className="pt-2 space-y-3" style={{ borderTop: '1px solid var(--ad-line)' }}>
         <h3 className="ad-section-title flex items-center gap-2">
           <FlaskConical className="w-4 h-4" style={{ color: 'var(--ad-muted)' }} />
-          Tester la configuration
+          {t('testConfig')}
         </h3>
         <div className="grid md:grid-cols-[1fr_1fr_auto] gap-3 items-end">
           <label className="space-y-1.5 block">
-            <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Code du document</span>
-            <input className="ad-input font-mono uppercase" value={test.code} onChange={(e) => setTest((t) => ({ ...t, code: e.target.value }))} />
+            <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>{t('documentCode')}</span>
+            <input className="ad-input font-mono uppercase" value={test.code} onChange={(e) => setTest((prev) => ({ ...prev, code: e.target.value }))} />
           </label>
           <label className="space-y-1.5 block">
-            <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Clé de vérification</span>
-            <input className="ad-input font-mono" value={test.key} onChange={(e) => setTest((t) => ({ ...t, key: e.target.value }))} placeholder="CTdxXe6ZdFVzWQ==" />
+            <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>{t('key')}</span>
+            <input className="ad-input font-mono" value={test.key} onChange={(e) => setTest((prev) => ({ ...prev, key: e.target.value }))} placeholder="CTdxXe6ZdFVzWQ==" />
           </label>
-          <button type="button" className="ad-btn ad-btn-ghost" onClick={runTest}>Tester</button>
+          <button type="button" className="ad-btn ad-btn-ghost" onClick={runTest}>{t('test')}</button>
         </div>
         {test.error && (
           <p className="text-xs font-semibold text-red-600 dark:text-red-400">{test.error}</p>
@@ -314,11 +317,11 @@ export default function VerificationSettingsSection() {
         {test.result && (
           <div className="space-y-1 text-xs">
             <p className="font-semibold text-green-700 dark:text-green-400">
-              Réponse reçue — code « {String((test.result as { codeValue?: unknown }).codeValue ?? '')} »
+              {t('received', { code: String(test.result.codeValue ?? '') })}
               {test.result.mapped ? ` → ${String((test.result.mapped as { label?: string }).label || '')}` : ''}
             </p>
             {test.result.warning ? (
-              <p className="font-semibold text-orange-600 dark:text-orange-400">⚠ {String(test.result.warning)}</p>
+              <p className="font-semibold text-orange-600 dark:text-orange-400">⚠ {t('unmapped', { code: String(test.result.codeValue ?? '') })}</p>
             ) : null}
             <pre className="ad-card p-3 overflow-auto max-h-48 text-[11px] font-mono">
               {JSON.stringify(test.result.raw, null, 2)}
@@ -330,11 +333,11 @@ export default function VerificationSettingsSection() {
       <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
         <Link href={`/${locale}/admin/verification-codes`} className="ad-btn ad-btn-ghost inline-flex items-center gap-2">
           <ShieldCheck className="w-4 h-4" />
-          Catalogue des codes de vérification
+          {t('catalog')}
         </Link>
         <button type="button" className="ad-btn ad-btn-primary inline-flex items-center gap-2" onClick={save} disabled={saving}>
           <Save className="w-4 h-4" />
-          {saving ? 'Enregistrement…' : 'Enregistrer la vérification'}
+          {saving ? tc('saving') : t('save')}
         </button>
       </div>
     </section>

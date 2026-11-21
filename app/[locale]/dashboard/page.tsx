@@ -9,7 +9,8 @@ import {
   LayoutDashboard, User, Briefcase, Mail, Package, FileText, LogOut, CheckCircle,
   Clock, ShoppingBag, CreditCard, Inbox, Activity, Handshake, Plus, Minus, Trash2,
   Search, MapPin, Banknote, Target, Award, Gift, ChevronDown, ChevronUp, Eye,
-  MessageCircle, AlertTriangle, X, Send, Printer, Download, FileDown,
+  MessageCircle, AlertTriangle, X, Send, Printer, Download, FileDown, CalendarCheck,
+  Calendar, ExternalLink,
 } from 'lucide-react';
 import { useAuth, frontToken } from '@/contexts/AuthContext';
 import { useApplications } from '@/contexts/ApplicationsContext';
@@ -45,6 +46,23 @@ export default function DashboardPage() {
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [cancelModal, setCancelModal] = useState<{ order: any; reason: string } | null>(null);
   const [cancelLoading, setCancelLoading] = useState(false);
+  const [myEvents, setMyEvents] = useState<Array<{
+    id: string;
+    eventId: string;
+    eventLegacyId?: string;
+    eventSlug?: string;
+    eventTitle: string;
+    eventDate?: string;
+    eventLocation?: string;
+    eventType?: string;
+    fullName: string;
+    email: string;
+    phone: string;
+    company?: string;
+    status: 'pending' | 'confirmed' | 'attended' | 'waitlist' | 'rejected' | 'cancelled';
+    createdAt: string;
+  }>>([]);
+  const [eventsLoading, setEventsLoading] = useState(false);
 
   useEffect(() => {
     const refreshUnread = () => setUnreadMessages(user?.email ? unreadForUser(user.email) : 0);
@@ -54,9 +72,35 @@ export default function DashboardPage() {
   }, [user?.email]);
 
   useEffect(() => {
+    if (!user?.email || isBackOfficeUser(user.type)) return;
+    const token = frontToken();
+    if (!token) return;
+    let cancelled = false;
+    setEventsLoading(true);
+    fetch('/api/events/my', {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: 'no-store',
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        const list = data?.rows || data?.registrations;
+        if (!cancelled && data?.ok && Array.isArray(list)) {
+          setMyEvents(list);
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setEventsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.email, user?.type]);
+
+  useEffect(() => {
     if (isLoading) return;
     if (!isAuthenticated) {
-      router.push(`/${locale}/connexion`);
+      router.replace(`/${locale}/connexion`);
       return;
     }
     // L'espace personnel est réservé aux clients, partenaires et candidats :
@@ -84,7 +128,7 @@ export default function DashboardPage() {
   }, [products, productQ]);
 
   // Évite le flash de déconnexion lors du changement de langue :
-  // AuthProvider se réhydrate depuis localStorage de façon asynchrone.
+  // AuthProvider vérifie le jeton auprès du serveur avant de rendre le compte.
   // Tant que isLoading est vrai, on ne sait pas encore si l'utilisateur est connecté.
   if (isLoading) return <div className="pt-40 pb-24 min-h-screen bg-gray-50 dark:bg-[#111111] flex items-center justify-center"><div className="animate-pulse text-gray-500">Chargement…</div></div>;
   // Pas de rendu pendant la redirection : évite que l'espace client
@@ -104,6 +148,7 @@ export default function DashboardPage() {
     { id: 'products', label: t('productsTab'), icon: ShoppingBag, show: isClient || isPartner },
     { id: 'orders', label: t('orders'), icon: Package, show: isClient },
     { id: 'quotes', label: t('quotes'), icon: FileText, show: isClient },
+    { id: 'events', label: t('eventsTab'), icon: CalendarCheck },
     { id: 'applications', label: t('applications'), icon: Briefcase, show: isCandidate },
     { id: 'messages', label: t('messages'), icon: Mail },
     { id: 'profile', label: t('profile'), icon: User },
@@ -318,7 +363,7 @@ export default function DashboardPage() {
               <nav className="p-4 space-y-1">
                 {menuItems.map((item) => {
                   const Icon = item.icon;
-                  const badge = item.id === 'applications' ? applications.length : item.id === 'orders' ? realOrders.length : item.id === 'quotes' ? myQuotes.length : item.id === 'messages' ? unreadMessages : null;
+                  const badge = item.id === 'applications' ? applications.length : item.id === 'orders' ? realOrders.length : item.id === 'quotes' ? myQuotes.length : item.id === 'events' ? myEvents.filter((e) => e.status !== 'cancelled').length : item.id === 'messages' ? unreadMessages : null;
                   return (
                     <button
                       key={item.id}
@@ -553,7 +598,7 @@ export default function DashboardPage() {
                     {realOrders.map((order) => {
                       const isExpanded = !!expandedOrders[String(order.id)];
                       const toggle = () => setExpandedOrders((prev) => ({ ...prev, [String(order.id)]: !prev[String(order.id)] }));
-                      const paymentLabel = paymentTypeLabel(normalizeOrderPaymentType((order as any).payment || 'pending'));
+                      const paymentLabel = paymentTypeLabel(normalizeOrderPaymentType((order as any).payment || 'pending'), locale);
                       const showPay = canShowPayButton(order);
                       const isCancelled = order.status === 'cancelled' || order.status === 'cancel_requested';
                       return (
@@ -699,6 +744,130 @@ export default function DashboardPage() {
             {/* === QUOTES / DEMANDE DE DEVIS (client) === */}
             {activeTab === 'quotes' && isClient && (
               <QuoteRequestModule user={user} locale={locale} />
+            )}
+
+            {/* === ÉVÉNEMENTS (participations associées au compte par e-mail) === */}
+            {activeTab === 'events' && (
+              <div className="bg-white dark:bg-[#1a1a1a] p-6 sm:p-8 border border-gray-200 dark:border-gray-800 shadow-xl rounded-xl space-y-6">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <h2 className="text-2xl font-bold text-sari-dark dark:text-white flex items-center gap-2">
+                      <CalendarCheck className="w-6 h-6 text-sari-blue" />
+                      {t('myEventsTitle')}
+                    </h2>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('myEventsDesc')}</p>
+                  </div>
+                  <Link
+                    href={`/${locale}/events`}
+                    className="btn-primary text-white px-4 py-2 text-sm font-semibold rounded-lg inline-flex items-center gap-2"
+                  >
+                    <Calendar className="w-4 h-4" />
+                    {t('browseEvents')}
+                  </Link>
+                </div>
+
+                {eventsLoading ? (
+                  <div className="py-12 text-center text-gray-500 animate-pulse">…</div>
+                ) : myEvents.length === 0 ? (
+                  <div className="text-center py-12 border border-dashed border-gray-300 dark:border-gray-700 rounded-xl space-y-4">
+                    <CalendarCheck className="w-12 h-12 text-gray-400 mx-auto" />
+                    <p className="text-gray-600 dark:text-gray-400">{t('noEventsYet')}</p>
+                    <Link
+                      href={`/${locale}/events`}
+                      className="btn-primary text-white px-5 py-2.5 text-sm font-semibold rounded-lg inline-flex items-center gap-2"
+                    >
+                      {t('browseEvents')}
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {myEvents.map((ev) => {
+                      const statusMap: Record<string, { label: string; cls: string }> = {
+                        pending: { label: t('eventStatusPending'), cls: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' },
+                        confirmed: { label: t('eventStatusConfirmed'), cls: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
+                        attended: { label: t('eventStatusAttended'), cls: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' },
+                        waitlist: { label: t('eventStatusWaitlist'), cls: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' },
+                        rejected: { label: t('eventStatusRejected'), cls: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' },
+                        cancelled: { label: t('eventStatusCancelled'), cls: 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300' },
+                      };
+                      const st = statusMap[ev.status] || statusMap.pending;
+                      const eventHref = `/${locale}/events/${encodeURIComponent(
+                        ev.eventLegacyId
+                          ? ev.eventSlug
+                            ? `${ev.eventLegacyId}-${ev.eventSlug}`
+                            : ev.eventLegacyId
+                          : ev.eventSlug || ev.eventId,
+                      )}`;
+                      const canCancel = ev.status === 'pending' || ev.status === 'confirmed' || ev.status === 'waitlist';
+
+                      return (
+                        <div
+                          key={ev.id}
+                          className="p-4 sm:p-5 border border-gray-200 dark:border-gray-800 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gray-50/50 dark:bg-[#141414]"
+                        >
+                          <div className="space-y-1 min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <h3 className="font-bold text-sari-dark dark:text-white truncate">{ev.eventTitle}</h3>
+                              <span className={`px-2.5 py-0.5 text-xs font-bold rounded-full ${st.cls}`}>{st.label}</span>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+                              {ev.eventDate && (
+                                <span className="inline-flex items-center gap-1">
+                                  <Calendar className="w-3.5 h-3.5" />
+                                  <DateText value={ev.eventDate} dateOnly />
+                                </span>
+                              )}
+                              {ev.eventLocation && (
+                                <span className="inline-flex items-center gap-1">
+                                  <MapPin className="w-3.5 h-3.5" />
+                                  {ev.eventLocation}
+                                </span>
+                              )}
+                              <span>
+                                <DateText value={ev.createdAt} dateOnly />
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2 shrink-0">
+                            <Link
+                              href={eventHref}
+                              className="px-3 py-1.5 text-xs font-semibold border border-sari-blue/40 text-sari-blue hover:bg-sari-blue/10 rounded-lg inline-flex items-center gap-1.5"
+                            >
+                              {t('viewEvent')} <ExternalLink className="w-3.5 h-3.5" />
+                            </Link>
+                            {canCancel && (
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  if (!confirm(t('confirmCancelEvent'))) return;
+                                  const token = frontToken();
+                                  if (!token) return;
+                                  const res = await fetch('/api/events/my', {
+                                    method: 'PATCH',
+                                    headers: {
+                                      'Content-Type': 'application/json',
+                                      Authorization: `Bearer ${token}`,
+                                    },
+                                    body: JSON.stringify({ id: ev.id, action: 'cancel' }),
+                                  });
+                                  if (res.ok) {
+                                    setMyEvents((prev) =>
+                                      prev.map((row) => (row.id === ev.id ? { ...row, status: 'cancelled' } : row)),
+                                    );
+                                  }
+                                }}
+                                className="px-3 py-1.5 text-xs font-semibold border border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
+                              >
+                                {t('cancelEventParticipation')}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             )}
 
             {/* === MESSAGES === */}

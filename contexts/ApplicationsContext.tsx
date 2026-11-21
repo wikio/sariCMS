@@ -34,6 +34,8 @@ const ApplicationsContext = createContext<ApplicationsContextType | undefined>(u
 export function ApplicationsProvider({ children }: { children: ReactNode }) {
   const [applications, setApplications] = useState<Application[]>([]);
 
+  // Ne pas écrire la liste vide du premier rendu avant d’avoir relu le cache partagé.
+  const [hydrated, setHydrated] = useState(false);
   useEffect(() => {
     const stored = localStorage.getItem('sari_applications');
     if (stored) {
@@ -43,11 +45,12 @@ export function ApplicationsProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem('sari_applications');
       }
     }
+    setHydrated(true);
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('sari_applications', JSON.stringify(applications));
-  }, [applications]);
+    if (hydrated) localStorage.setItem('sari_applications', JSON.stringify(applications));
+  }, [applications, hydrated]);
 
   const addApplication = (appData: Omit<Application, 'id' | 'appliedAt' | 'status'>): Application => {
     const newApp: Application = {

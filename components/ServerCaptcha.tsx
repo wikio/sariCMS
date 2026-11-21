@@ -8,6 +8,39 @@ const DEBUG = false;
 const log = (...args: unknown[]) => DEBUG && console.log('[ServerCaptcha]', ...args);
 const logError = (...args: unknown[]) => DEBUG && console.error('[ServerCaptcha ERROR]', ...args);
 
+/** Déduplique le double-montage React StrictMode sur le même endpoint captcha. */
+const initialCaptchaInFlight = new Map<string, Promise<{ id?: string; imageUrl?: string } | null>>();
+
+function requestCaptcha(endpoint: string, force = false): Promise<{ id?: string; imageUrl?: string } | null> {
+  if (!force) {
+    const existing = initialCaptchaInFlight.get(endpoint);
+    if (existing) return existing;
+  }
+  const promise = (async () => {
+    try {
+      const res = await fetch(endpoint, { cache: 'no-store', credentials: 'same-origin' });
+      log('Fetch response status:', res.status);
+      if (res.ok) {
+        return (await res.json()) as { id?: string; imageUrl?: string };
+      }
+      const text = await res.text();
+      logError('Erreur HTTP:', res.status, text);
+      return null;
+    } catch (err) {
+      logError('Erreur réseau:', err);
+      return null;
+    } finally {
+      setTimeout(() => {
+        if (initialCaptchaInFlight.get(endpoint) === promise) {
+          initialCaptchaInFlight.delete(endpoint);
+        }
+      }, 500);
+    }
+  })();
+  if (!force) initialCaptchaInFlight.set(endpoint, promise);
+  return promise;
+}
+
 interface ServerCaptchaProps {
   onChange?: (ok: boolean) => void;
   /** Appelé à chaque changement d'id/valeur — permet au parent d'envoyer le captcha au serveur lors du submit (audit C1). */
@@ -37,48 +70,56 @@ export default function ServerCaptcha({
   const [verified, setVerified] = useState(false);
   const [loading, setLoading] = useState(false);
   const mounted = useRef(false);
+  const imageRetryCount = useRef(0);
 
   const verifyEndpoint = endpoint.replace('/captcha', '/verify-captcha');
   log('Init:', { endpoint, verifyEndpoint });
 
-  const fetchCaptcha = async () => {
+  const fetchCaptcha = async (force = true) => {
     log('Fetching captcha from:', endpoint);
     setLoading(true);
     try {
-      const res = await fetch(endpoint, { cache: 'no-store', credentials: 'same-origin' });
-      log('Fetch response status:', res.status);
-      if (res.ok) {
-        const data = await res.json();
-        log('Fetch response data:', data);
-        if (data.id && data.imageUrl) {
-          setCaptchaId(data.id);
-          setCaptchaImageUrl(data.imageUrl);
-          setInput('');
-          setVerified(false);
-          onChange?.(false);
-          onCaptchaData?.({ id: data.id, value: '' });
-          log('Captcha loaded successfully');
-        } else {
-          logError('Réponse invalide - missing id or imageUrl:', data);
-          setCaptchaImageUrl('');
-        }
+      const data = await requestCaptcha(endpoint, force);
+      if (!mounted.current) return;
+      log('Fetch response data:', data);
+      if (data?.id && data?.imageUrl) {
+        setCaptchaId(data.id);
+        setCaptchaImageUrl(data.imageUrl);
+        setInput('');
+        setVerified(false);
+        onChange?.(false);
+        onCaptchaData?.({ id: data.id, value: '' });
+        log('Captcha loaded successfully');
       } else {
-        const text = await res.text();
-        logError('Erreur HTTP:', res.status, text);
+        logError('Réponse invalide - missing id or imageUrl:', data);
         setCaptchaImageUrl('');
       }
-    } catch (err) {
-      logError('Erreur réseau:', err);
-      setCaptchaImageUrl('');
     } finally {
-      setLoading(false);
+      if (mounted.current) setLoading(false);
     }
+  };
+
+  const handleManualRefresh = () => {
+    imageRetryCount.current = 0;
+    void fetchCaptcha(true);
+  };
+
+  const handleImageError = () => {
+    if (imageRetryCount.current < 1) {
+      imageRetryCount.current += 1;
+      void fetchCaptcha(true);
+      return;
+    }
+    setCaptchaImageUrl('');
   };
 
   useEffect(() => {
     mounted.current = true;
     log('Mounted, fetching initial captcha');
-    fetchCaptcha();
+    void fetchCaptcha(false);
+    return () => {
+      mounted.current = false;
+    };
   }, [endpoint]);
 
   const handleVerify = async () => {
@@ -141,7 +182,7 @@ export default function ServerCaptcha({
       <div className="flex items-stretch gap-2">
         <button
           type="button"
-          onClick={fetchCaptcha}
+          onClick={handleManualRefresh}
           disabled={loading}
           title={t('refresh')}
           className="shrink-0 overflow-hidden"
@@ -161,6 +202,8 @@ export default function ServerCaptcha({
               width="120"
               height="44"
               style={{ display: 'block' }}
+              onLoad={() => { imageRetryCount.current = 0; }}
+              onError={handleImageError}
             />
           ) : (
             <svg width="120" height="44" viewBox="0 0 120 44" role="img" aria-label="CAPTCHA indisponible">
@@ -193,7 +236,7 @@ export default function ServerCaptcha({
         <button
           type="button"
           className="ad-btn ad-btn-icon ad-btn-ghost shrink-0 w-11 h-11 flex items-center justify-center self-stretch"
-          onClick={fetchCaptcha}
+          onClick={handleManualRefresh}
           disabled={loading}
           title={t('refresh')}
           aria-label={t('refresh')}

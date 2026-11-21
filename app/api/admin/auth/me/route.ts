@@ -22,13 +22,26 @@ const logError = (...args: unknown[]) => DEBUG && console.error('[API admin/auth
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+const NO_STORE = { 'Cache-Control': 'no-store' };
+
+function unauthenticatedResponse(optional: boolean, error: string, code: string) {
+  if (optional) {
+    return NextResponse.json(
+      { ok: false, authenticated: false, user: null, code },
+      { status: 200, headers: NO_STORE },
+    );
+  }
+  return NextResponse.json({ error, code }, { status: 401, headers: NO_STORE });
+}
+
 export async function GET(req: NextRequest) {
   log('Request received');
+  const optional = req.nextUrl.searchParams.get('optional') === '1';
   const accessToken = getAccessToken(req);
   log('Access token present:', !!accessToken);
   if (!accessToken) {
     logError('No access token');
-    return NextResponse.json({ error: 'Non authentifié', code: 'NOT_AUTHENTICATED' }, { status: 401 });
+    return unauthenticatedResponse(optional, 'Non authentifié', 'NOT_AUTHENTICATED');
   }
 
   // 1) Essai backend (source de vérité)
@@ -43,28 +56,40 @@ export async function GET(req: NextRequest) {
       const userCookie = getUserFromCookie(req);
       log('Backend me success', u);
       // Le backend renvoie déjà role/permissions/totpEnabled
-      return NextResponse.json({
-        ok: true,
-        user: {
-          // Valeurs backend prioritaires, cookie en complément affichage
-          ...userCookie,
-          ...(u as object),
+      return NextResponse.json(
+        {
+          ok: true,
+          authenticated: true,
+          user: {
+            // Valeurs backend prioritaires, cookie en complément affichage
+            ...userCookie,
+            ...(u as object),
+          },
         },
-      });
+        { headers: NO_STORE },
+      );
     }
     // Certains backends renvoient directement l'user sans wrapper supplémentaire
     if (backendUser && typeof backendUser === 'object' && 'email' in backendUser) {
       const userCookie = getUserFromCookie(req);
-      return NextResponse.json({
-        ok: true,
-        user: { ...userCookie, ...(backendUser as object) },
-      });
+      return NextResponse.json(
+        {
+          ok: true,
+          authenticated: true,
+          user: { ...userCookie, ...(backendUser as object) },
+        },
+        { headers: NO_STORE },
+      );
     }
   } catch (e) {
     const err = e as { status?: number; message?: string };
-    log('Backend /auth/me failed, fallback to local JWT', err?.status, err?.message);
-    // Si 401 backend → token invalide, on tente quand même le fallback local
-    // avant de renvoyer 401 définitif
+    log('Backend /auth/me failed', err?.status, err?.message);
+    // Si le backend est joignable et rejette explicitement le jeton (401),
+    // ne pas masquer le refus par le fallback local : le client rafraîchira
+    // la session (/api/admin/auth/refresh) ou reviendra proprement au login.
+    if (err?.status === 401) {
+      return unauthenticatedResponse(optional, 'Token invalide ou expiré', 'INVALID_TOKEN');
+    }
   }
 
   // 2) Fallback vérification locale
@@ -72,20 +97,24 @@ export async function GET(req: NextRequest) {
   log('Local token payload:', payload);
   if (!payload) {
     logError('Invalid or expired token (backend + local)');
-    return NextResponse.json({ error: 'Token invalide ou expiré', code: 'INVALID_TOKEN' }, { status: 401 });
+    return unauthenticatedResponse(optional, 'Token invalide ou expiré', 'INVALID_TOKEN');
   }
 
   const userCookie = getUserFromCookie(req);
   log('User cookie:', userCookie);
 
-  return NextResponse.json({
-    ok: true,
-    user: {
-      ...userCookie,
-      id: payload.sub || userCookie?.id,
-      email: payload.email || userCookie?.email,
-      type: (payload as unknown as { type?: string }).type || (userCookie?.type as string) || 'admin',
-      permissions: (payload as unknown as { permissions?: string[] }).permissions || userCookie?.permissions || [],
+  return NextResponse.json(
+    {
+      ok: true,
+      authenticated: true,
+      user: {
+        ...userCookie,
+        id: payload.sub || userCookie?.id,
+        email: payload.email || userCookie?.email,
+        type: (payload as unknown as { type?: string }).type || (userCookie?.type as string) || 'admin',
+        permissions: (payload as unknown as { permissions?: string[] }).permissions || userCookie?.permissions || [],
+      },
     },
-  });
+    { headers: NO_STORE },
+  );
 }

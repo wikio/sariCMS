@@ -11,6 +11,26 @@ import { cmsFetch, CmsError } from '@/lib/cms';
 import { clearAuthCache, setAuthCache, type AdminUser } from '@/components/admin/useAdminAuth';
 import { loadAdminSettings } from '@/lib/admin-settings';
 
+let loginMeCheckInFlight: Promise<{ authenticated?: boolean; user?: (AdminUser & { type?: string }) | null } | null> | null = null;
+
+function checkExistingAdminSession(): Promise<{ authenticated?: boolean; user?: (AdminUser & { type?: string }) | null } | null> {
+  if (!loginMeCheckInFlight) {
+    // `?optional=1` interroge la session silencieusement (200 `{ authenticated: false }`
+    // hors connexion) afin d'éviter une erreur 401 superflue dans la console navigateur
+    // à chaque ouverture de la page de connexion admin.
+    loginMeCheckInFlight = fetch('/api/admin/auth/me?optional=1', { credentials: 'same-origin', cache: 'no-store' })
+      .then((res) => (res.ok ? res.json() : null))
+      .catch(() => null)
+      .finally(() => {
+        // Laisse un court répit pour dédupliquer le double-montage React StrictMode
+        setTimeout(() => {
+          loginMeCheckInFlight = null;
+        }, 500);
+      });
+  }
+  return loginMeCheckInFlight;
+}
+
 export default function AdminLoginPage() {
   const { brand } = useAdminBrand();
   const router = useRouter();
@@ -26,19 +46,20 @@ export default function AdminLoginPage() {
   const [security, setSecurity] = useState({ admin2fa: false, adminCaptcha: true, siteCaptcha: true });
   const [captchaOk, setCaptchaOk] = useState(false);
   const [captchaData, setCaptchaData] = useState<{ id: string; value: string } | null>(null);
+  const [captchaKey, setCaptchaKey] = useState(0);
 
   useEffect(() => {
-    fetch('/api/admin/auth/me', { credentials: 'same-origin', cache: 'no-store' })
-      .then(res => {
-        if (res.ok) return res.json();
-        return null;
-      })
-      .then(data => {
-        if (data?.user?.type === 'admin') {
-          router.replace(`/${locale}/admin/dashboard`);
-        }
-      })
-      .catch(() => {});
+    let cancelled = false;
+    checkExistingAdminSession().then((data) => {
+      if (cancelled) return;
+      if (data?.authenticated !== false && data?.user?.type === 'admin') {
+        setAuthCache(data.user);
+        router.replace(`/${locale}/admin/dashboard`);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [router, locale]);
 
   useEffect(() => {
@@ -112,10 +133,11 @@ export default function AdminLoginPage() {
       if (!res.ok) {
         const errCode = (result as { code?: string } | null)?.code;
         const errMsg = (result as { error?: string } | null)?.error || t('wrongPassword');
-        if (errCode === 'CAPTCHA_INVALID' || errCode === 'CAPTCHA_REQUIRED') {
-          // Le captcha a été consommé (même si incorrect), il faut le régénérer
+        if (errCode === 'CAPTCHA_INVALID' || errCode === 'CAPTCHA_REQUIRED' || (security.adminCaptcha && captchaData?.id)) {
+          // Le captcha a pu être consommé (ou expiré) : on en émet un nouveau
           setCaptchaOk(false);
           setCaptchaData(null);
+          setCaptchaKey((k) => k + 1);
         }
         setError(errMsg);
         setLoading(false);
@@ -172,6 +194,7 @@ export default function AdminLoginPage() {
             )}
             {security.adminCaptcha && (
               <ServerCaptcha
+                key={captchaKey}
                 onChange={setCaptchaOk}
                 onCaptchaData={setCaptchaData}
                 autoVerify={false}

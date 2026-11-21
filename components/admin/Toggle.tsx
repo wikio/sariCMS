@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 export default function Toggle({
   on,
   onChange,
@@ -13,6 +15,7 @@ export default function Toggle({
   hint?: string;
   disabled?: boolean;
 }) {
+  const t = useTranslations('admin.common');
   return (
     <div className="space-y-1.5">
       {label ? <div className="text-[11px] font-black uppercase tracking-[0.14em]" style={{ color: 'var(--ad-muted)' }}>{label}</div> : null}
@@ -26,13 +29,13 @@ export default function Toggle({
       >
         {on ? (
           <>
-            <span className="ad-toggle-label">Oui</span>
+            <span className="ad-toggle-label">{t('yes')}</span>
             <span className="ad-toggle-knob" />
           </>
         ) : (
           <>
             <span className="ad-toggle-knob" />
-            <span className="ad-toggle-label">Non</span>
+            <span className="ad-toggle-label">{t('no')}</span>
           </>
         )}
       </button>

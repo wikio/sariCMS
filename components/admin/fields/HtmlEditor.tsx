@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 import { useEffect, useState } from 'react';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -10,12 +12,13 @@ import {
   ImagePlus, Italic, Link2, List, ListOrdered, Quote, Redo2, Table, Undo2,
 } from 'lucide-react';
 import GedPicker from '@/components/admin/GedPicker';
+import { escapeMailText } from '@/lib/mail-center';
 import { MERGE_VARS } from '@/lib/notify-store';
 
 export default function HtmlEditor({
   value,
   onChange,
-  placeholder = 'Rédigez le contenu…',
+  placeholder,
   readOnly = false,
   mergeVars = false,
   mergeVarsList,
@@ -32,6 +35,8 @@ export default function HtmlEditor({
    */
   mergeVarsList?: { key: string; label: string }[];
 }) {
+  const t = useTranslations('admin.htmlEditor');
+  const tv = useTranslations('admin.mailVariables');
   const [code, setCode] = useState(false);
   const [ged, setGed] = useState(false);
   const editor = useEditor({
@@ -40,7 +45,7 @@ export default function HtmlEditor({
         link: false, // Désactiver Link dans StarterKit pour éviter les doublons
       }),
       Link.configure({ openOnClick: false }),
-      Placeholder.configure({ placeholder }),
+      Placeholder.configure({ placeholder: placeholder ?? t('placeholder') }),
     ],
     content: value || '',
     editable: !readOnly,
@@ -69,28 +74,28 @@ export default function HtmlEditor({
     <div className="overflow-hidden" style={{ border: '1px solid var(--ad-line)', background: 'var(--ad-surface-2)', borderRadius: 2 }}>
       {!readOnly && (
         <div className="flex flex-wrap gap-1 p-2 border-b" style={{ borderColor: 'var(--ad-line)' }}>
-          <button type="button" className={btn(editor.isActive('bold'))} onClick={() => editor.chain().focus().toggleBold().run()}><Bold className="w-4 h-4" /></button>
-          <button type="button" className={btn(editor.isActive('italic'))} onClick={() => editor.chain().focus().toggleItalic().run()}><Italic className="w-4 h-4" /></button>
-          <button type="button" className={btn(editor.isActive('heading', { level: 1 }))} onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}><Heading1 className="w-4 h-4" /></button>
-          <button type="button" className={btn(editor.isActive('heading', { level: 2 }))} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}><Heading2 className="w-4 h-4" /></button>
-          <button type="button" className={btn(editor.isActive('heading', { level: 3 }))} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}><Heading3 className="w-4 h-4" /></button>
-          <button type="button" className={btn(editor.isActive('bulletList'))} onClick={() => editor.chain().focus().toggleBulletList().run()}><List className="w-4 h-4" /></button>
-          <button type="button" className={btn(editor.isActive('orderedList'))} onClick={() => editor.chain().focus().toggleOrderedList().run()}><ListOrdered className="w-4 h-4" /></button>
-          <button type="button" className={btn(editor.isActive('blockquote'))} onClick={() => editor.chain().focus().toggleBlockquote().run()}><Quote className="w-4 h-4" /></button>
-          <button type="button" className="ad-btn ad-btn-icon ad-btn-ghost" title="Tableau" onClick={() => editor.chain().focus().insertContent('<table><tr><th>Col 1</th><th>Col 2</th></tr><tr><td>—</td><td>—</td></tr></table>').run()}><Table className="w-4 h-4" /></button>
-          <button type="button" className="ad-btn ad-btn-icon ad-btn-ghost" onClick={() => {
-            const url = window.prompt('URL du lien');
+          <button type="button" title={t('bold')} className={btn(editor.isActive('bold'))} onClick={() => editor.chain().focus().toggleBold().run()}><Bold className="w-4 h-4" /></button>
+          <button type="button" title={t('italic')} className={btn(editor.isActive('italic'))} onClick={() => editor.chain().focus().toggleItalic().run()}><Italic className="w-4 h-4" /></button>
+          <button type="button" title={t('heading', { level: 1 })} className={btn(editor.isActive('heading', { level: 1 }))} onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}><Heading1 className="w-4 h-4" /></button>
+          <button type="button" title={t('heading', { level: 2 })} className={btn(editor.isActive('heading', { level: 2 }))} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}><Heading2 className="w-4 h-4" /></button>
+          <button type="button" title={t('heading', { level: 3 })} className={btn(editor.isActive('heading', { level: 3 }))} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}><Heading3 className="w-4 h-4" /></button>
+          <button type="button" title={t('bulletList')} className={btn(editor.isActive('bulletList'))} onClick={() => editor.chain().focus().toggleBulletList().run()}><List className="w-4 h-4" /></button>
+          <button type="button" title={t('numberedList')} className={btn(editor.isActive('orderedList'))} onClick={() => editor.chain().focus().toggleOrderedList().run()}><ListOrdered className="w-4 h-4" /></button>
+          <button type="button" title={t('quote')} className={btn(editor.isActive('blockquote'))} onClick={() => editor.chain().focus().toggleBlockquote().run()}><Quote className="w-4 h-4" /></button>
+          <button type="button" className="ad-btn ad-btn-icon ad-btn-ghost" title={t('insertTable')} onClick={() => editor.chain().focus().insertContent(`<table><tr><th>${escapeMailText(t('column', { number: 1 }))}</th><th>${escapeMailText(t('column', { number: 2 }))}</th></tr><tr><td>—</td><td>—</td></tr></table>`).run()}><Table className="w-4 h-4" /></button>
+          <button type="button" title={t('insertLink')} className="ad-btn ad-btn-icon ad-btn-ghost" onClick={() => {
+            const url = window.prompt(t('linkUrl'));
             if (url) editor.chain().focus().setLink({ href: url }).run();
           }}><Link2 className="w-4 h-4" /></button>
-          <button type="button" className="ad-btn ad-btn-icon ad-btn-ghost" onClick={() => setGed(true)}><ImagePlus className="w-4 h-4" /></button>
-          <button type="button" className="ad-btn ad-btn-icon ad-btn-ghost" onClick={() => editor.chain().focus().insertContent('<p style="text-align:left"></p>').run()}><AlignLeft className="w-4 h-4" /></button>
-          <button type="button" className="ad-btn ad-btn-icon ad-btn-ghost" onClick={() => editor.chain().focus().insertContent('<p style="text-align:center"></p>').run()}><AlignCenter className="w-4 h-4" /></button>
-          <button type="button" className="ad-btn ad-btn-icon ad-btn-ghost" onClick={() => editor.chain().focus().insertContent('<p style="text-align:right"></p>').run()}><AlignRight className="w-4 h-4" /></button>
-          <input type="color" className="w-11 h-11 p-1" title="Couleur" onChange={(e) => editor.chain().focus().insertContent(`<span style="color:${e.target.value}">■</span>`).run()} />
-          <button type="button" className="ad-btn ad-btn-icon ad-btn-ghost" onClick={() => editor.chain().focus().undo().run()}><Undo2 className="w-4 h-4" /></button>
-          <button type="button" className="ad-btn ad-btn-icon ad-btn-ghost" onClick={() => editor.chain().focus().redo().run()}><Redo2 className="w-4 h-4" /></button>
+          <button type="button" title={t('insertImage')} className="ad-btn ad-btn-icon ad-btn-ghost" onClick={() => setGed(true)}><ImagePlus className="w-4 h-4" /></button>
+          <button type="button" title={t('alignLeft')} className="ad-btn ad-btn-icon ad-btn-ghost" onClick={() => editor.chain().focus().insertContent('<p style="text-align:left"></p>').run()}><AlignLeft className="w-4 h-4" /></button>
+          <button type="button" title={t('alignCenter')} className="ad-btn ad-btn-icon ad-btn-ghost" onClick={() => editor.chain().focus().insertContent('<p style="text-align:center"></p>').run()}><AlignCenter className="w-4 h-4" /></button>
+          <button type="button" title={t('alignRight')} className="ad-btn ad-btn-icon ad-btn-ghost" onClick={() => editor.chain().focus().insertContent('<p style="text-align:right"></p>').run()}><AlignRight className="w-4 h-4" /></button>
+          <input type="color" className="w-11 h-11 p-1" title={t('color')} onChange={(e) => editor.chain().focus().insertContent(`<span style="color:${e.target.value}">■</span>`).run()} />
+          <button type="button" title={t('undo')} className="ad-btn ad-btn-icon ad-btn-ghost" onClick={() => editor.chain().focus().undo().run()}><Undo2 className="w-4 h-4" /></button>
+          <button type="button" title={t('redo')} className="ad-btn ad-btn-icon ad-btn-ghost" onClick={() => editor.chain().focus().redo().run()}><Redo2 className="w-4 h-4" /></button>
           <button type="button" className={`ad-btn ${code ? 'ad-btn-primary' : 'ad-btn-ghost'}`} onClick={() => setCode((v) => !v)}>
-            <Code2 className="w-4 h-4" /> {code ? 'Visuel' : 'Code'}
+            <Code2 className="w-4 h-4" /> {code ? t('visual') : t('code')}
           </button>
           {mergeVars && (
             <select
@@ -102,8 +107,8 @@ export default function HtmlEditor({
                 e.target.value = '';
               }}
             >
-              <option value="">Insérer une variable…</option>
-              {(mergeVarsList && mergeVarsList.length ? mergeVarsList : MERGE_VARS).map((v) => (
+              <option value="">{t('insertVar')}</option>
+              {(mergeVarsList && mergeVarsList.length ? mergeVarsList : MERGE_VARS.map(({ key }) => ({ key, label: tv(key.slice(2, -2)) }))).map((v) => (
                 <option key={v.key} value={v.key}>{v.label} · {v.key}</option>
               ))}
             </select>

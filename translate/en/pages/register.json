@@ -46,5 +46,6 @@
   "captchaError": "Incorrect CAPTCHA answer",
   "acceptTermsRequired": "You must accept the terms",
   "home": "Home",
-  "register": "Register"
+  "register": "Register",
+  "registrationFailed": "Could not create your account. Check your details and verification code, then try again."
 }

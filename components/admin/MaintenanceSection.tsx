@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { DatabaseZap, History, Play, RotateCcw, Save, Trash2 } from 'lucide-react';
 import { useToast } from '@/components/admin/Toast';
@@ -13,23 +15,17 @@ import {
   saveMaintenance,
   validateMaintenance,
   type MaintenanceSettings,
-  type MaintenanceSource,
+
   type MaintenanceStatus,
 } from '@/lib/maintenance-settings';
 
 /** Raccourcis de planification — évitent de saisir une crontab à la main. */
 const CRON_PRESETS: Array<{ label: string; value: string }> = [
-  { label: 'Chaque nuit à 03:15', value: '15 3 * * *' },
-  { label: 'Chaque nuit à minuit', value: '0 0 * * *' },
-  { label: 'Toutes les 6 heures', value: '0 */6 * * *' },
-  { label: 'Chaque dimanche à 04:00', value: '0 4 * * 0' },
+  { label: 'nightly', value: '15 3 * * *' },
+  { label: 'midnight', value: '0 0 * * *' },
+  { label: 'sixHours', value: '0 */6 * * *' },
+  { label: 'sunday', value: '0 4 * * 0' },
 ];
-
-const SOURCE_LABEL: Record<MaintenanceSource, string> = {
-  db: 'Enregistré en base',
-  env: 'Variables d’environnement',
-  default: 'Valeurs par défaut',
-};
 
 function formFromStatus(status: MaintenanceStatus): MaintenanceSettings {
   return {
@@ -40,15 +36,10 @@ function formFromStatus(status: MaintenanceStatus): MaintenanceSettings {
   };
 }
 
-/** Total des lignes supprimées, pour le retour affiché après un lancement. */
-function summarize(result: Record<string, number>): string {
-  const entries = Object.entries(result).filter(([, n]) => n > 0);
-  const total = Object.values(result).reduce((a, b) => a + b, 0);
-  if (!total) return 'Aucune ligne à supprimer.';
-  return `${total} ligne(s) supprimée(s) — ${entries.map(([k, n]) => `${k}: ${n}`).join(', ')}`;
-}
-
 export default function MaintenanceSection() {
+  const t = useTranslations('admin.maintenance');
+  const ts = useTranslations('admin.settings');
+  const tc = useTranslations('admin.common');
   const { showToast } = useToast();
   const [status, setStatus] = useState<MaintenanceStatus | null>(null);
   const [form, setForm] = useState<MaintenanceSettings | null>(null);
@@ -68,11 +59,11 @@ export default function MaintenanceSection() {
       setForm(next);
       setLoadError('');
     } catch (err) {
-      setLoadError(err instanceof Error ? err.message : 'Réglages illisibles');
+      setLoadError(err instanceof Error ? err.message : t('loadError'));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     void refresh();
@@ -89,7 +80,7 @@ export default function MaintenanceSection() {
     if (!form) return;
     const problem = validateMaintenance(form);
     if (problem) {
-      showToast(problem, 'error');
+      showToast(t(problem), 'error');
       return;
     }
     setBusy('save');
@@ -99,9 +90,9 @@ export default function MaintenanceSection() {
       const next = formFromStatus(s);
       setBaseline(next);
       setForm(next);
-      showToast('Réglages enregistrés, tâches replanifiées.', 'success');
+      showToast(t('saved'), 'success');
     } catch (err) {
-      showToast(err instanceof Error ? err.message : 'Enregistrement impossible', 'error');
+      showToast(err instanceof Error ? err.message : tc('saveError'), 'error');
     } finally {
       setBusy('');
     }
@@ -115,9 +106,9 @@ export default function MaintenanceSection() {
       const next = formFromStatus(s);
       setBaseline(next);
       setForm(next);
-      showToast('Réglages d’usine : les variables d’environnement s’appliquent.', 'success');
+      showToast(t('reset'), 'success');
     } catch (err) {
-      showToast(err instanceof Error ? err.message : 'Réinitialisation impossible', 'error');
+      showToast(err instanceof Error ? err.message : t('resetError'), 'error');
     } finally {
       setBusy('');
     }
@@ -127,11 +118,13 @@ export default function MaintenanceSection() {
     setBusy(kind);
     try {
       const result = kind === 'logs' ? await runLogRetention() : await runTrashPurge();
-      const text = summarize(result);
+      const total = Object.values(result).reduce((sum, count) => sum + count, 0);
+      const details = Object.entries(result).filter(([, n]) => n > 0).map(([key, n]) => `${key}: ${n}`).join(', ');
+      const text = total ? t('purgeResult', { total, details }) : t('nothingToDelete');
       setLastResult(text);
       showToast(text, 'success');
     } catch (err) {
-      showToast(err instanceof Error ? err.message : 'Purge impossible', 'error');
+      showToast(err instanceof Error ? err.message : t('purgeError'), 'error');
     } finally {
       setBusy('');
     }
@@ -140,7 +133,7 @@ export default function MaintenanceSection() {
   if (loading) {
     return (
       <section className="ad-card p-5">
-        <PixelGridLoader compact label="Maintenance" />
+        <PixelGridLoader compact label={ts('maintenance')} />
       </section>
     );
   }
@@ -148,12 +141,12 @@ export default function MaintenanceSection() {
   if (loadError || !form || !status) {
     return (
       <section className="ad-card p-5 space-y-3">
-        <h2 className="ad-section-title">Journaux &amp; maintenance</h2>
+        <h2 className="ad-section-title">{ts('maintenance')}</h2>
         <p className="text-sm" style={{ color: 'var(--ad-danger, #e5484d)' }}>
-          {loadError || 'Réglages indisponibles.'}
+          {loadError || t('unavailable')}
         </p>
         <button className="ad-btn ad-btn-ghost" onClick={() => void refresh()}>
-          <RotateCcw className="w-4 h-4" /> Réessayer
+          <RotateCcw className="w-4 h-4" /> {t('retry')}
         </button>
       </section>
     );
@@ -165,27 +158,26 @@ export default function MaintenanceSection() {
     <section className="ad-card p-5 space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="ad-section-title">Journaux &amp; maintenance</h2>
+          <h2 className="ad-section-title">{ts('maintenance')}</h2>
           <p className="text-xs" style={{ color: 'var(--ad-muted)' }}>
-            La piste d'audit ne passe jamais par la corbeille : sans rétention, elle grossit à
-            chaque écriture. Les jetons expirés sont nettoyés au même passage.
+            {t('intro')}
           </p>
         </div>
         <span
           className="ad-chip"
-          title="Provenance des valeurs affichées"
+          title={t('source')}
         >
-          <DatabaseZap className="w-3 h-3" /> {SOURCE_LABEL[status.source]}
+          <DatabaseZap className="w-3 h-3" /> {t(`source_${status.source}`)}
         </span>
       </div>
 
       {/* ---------------------------------------------------------------- Audit */}
       <div className="space-y-2">
         <h3 className="text-sm font-black flex items-center gap-2">
-          <History className="w-4 h-4" /> Piste d'audit
+          <History className="w-4 h-4" /> {t('audit')}
         </h3>
         <label className="block space-y-1.5">
-          <span className="field-label">Conservation (jours)</span>
+          <span className="field-label">{t('days')}</span>
           <input
             className="ad-input"
             style={{ maxWidth: '12rem' }}
@@ -196,24 +188,22 @@ export default function MaintenanceSection() {
             onChange={(e) => patch({ auditRetentionDays: Number(e.target.value) })}
           />
           <span className="text-xs block" style={{ color: 'var(--ad-muted)' }}>
-            Les lignes de `audit_logs` plus anciennes sont supprimées. Variables :{' '}
-            {status.env.auditRetentionDays} j.
+            {t('auditHint', { days: status.env.auditRetentionDays })}
           </span>
         </label>
       </div>
 
       {/* ------------------------------------------------------- Planifications */}
       <div className="space-y-2">
-        <h3 className="text-sm font-black">Planification</h3>
+        <h3 className="text-sm font-black">{t('schedule')}</h3>
         <p className="text-xs" style={{ color: 'var(--ad-muted)' }}>
-          Expression crontab à cinq champs : minute heure jour mois jour-de-semaine. Le changement
-          prend effet immédiatement, sans redémarrer le backend.
+          {t('cronHelp')}
         </p>
 
         {(['logRetentionCron', 'trashPurgeCron'] as const).map((key) => (
           <label key={key} className="block space-y-1.5">
             <span className="field-label">
-              {key === 'logRetentionCron' ? 'Purge des journaux et jetons' : 'Purge de la corbeille'}
+              {key === 'logRetentionCron' ? t('logsJob') : t('trashJob')}
             </span>
             <input
               className="ad-input font-mono"
@@ -223,7 +213,7 @@ export default function MaintenanceSection() {
             />
             {cronInvalid(form[key]) && (
               <span className="text-xs block" style={{ color: 'var(--ad-danger, #e5484d)' }}>
-                Cinq champs séparés par des espaces sont attendus.
+                {t('cronInvalid')}
               </span>
             )}
             <span className="flex flex-wrap gap-1.5">
@@ -234,7 +224,7 @@ export default function MaintenanceSection() {
                   className={`ad-chip ${form[key] === preset.value ? 'ad-chip-acc' : ''}`}
                   onClick={() => patch({ [key]: preset.value } as Partial<MaintenanceSettings>)}
                 >
-                  {preset.label}
+                  {t(preset.label)}
                 </button>
               ))}
             </span>
@@ -245,10 +235,10 @@ export default function MaintenanceSection() {
       {/* ------------------------------------------------------------ Corbeille */}
       <div className="space-y-2">
         <h3 className="text-sm font-black flex items-center gap-2">
-          <Trash2 className="w-4 h-4" /> Corbeille
+          <Trash2 className="w-4 h-4" /> {tc('trash')}
         </h3>
         <label className="block space-y-1.5">
-          <span className="field-label">Conservation (heures)</span>
+          <span className="field-label">{t('hours')}</span>
           <input
             className="ad-input"
             style={{ maxWidth: '12rem' }}
@@ -259,7 +249,7 @@ export default function MaintenanceSection() {
             onChange={(e) => patch({ trashRetentionHours: Number(e.target.value) })}
           />
           <span className="text-xs block" style={{ color: 'var(--ad-muted)' }}>
-            Éléments supprimés définitivement au-delà. Variable : {status.env.trashRetentionHours} h.
+            {t('trashHint', { hours: status.env.trashRetentionHours })}
           </span>
         </label>
       </div>
@@ -270,21 +260,21 @@ export default function MaintenanceSection() {
 
       <div className="flex flex-wrap gap-2">
         <button className="ad-btn ad-btn-primary" onClick={() => void save()} disabled={busy !== '' || !dirty}>
-          <Save className="w-4 h-4" /> Enregistrer
+          <Save className="w-4 h-4" /> {tc('save')}
         </button>
         <button className="ad-btn ad-btn-ghost" onClick={() => void run('logs')} disabled={busy !== ''}>
-          <Play className="w-4 h-4" /> Lancer la purge des journaux
+          <Play className="w-4 h-4" /> {t('purgeLogs')}
         </button>
         <button className="ad-btn ad-btn-ghost" onClick={() => void run('trash')} disabled={busy !== ''}>
-          <Trash2 className="w-4 h-4" /> Vider la corbeille expirée
+          <Trash2 className="w-4 h-4" /> {t('purgeTrash')}
         </button>
         <button
           className="ad-btn ad-btn-ghost"
           onClick={() => void reset()}
           disabled={busy !== '' || status.source !== 'db'}
-          title={status.source === 'db' ? '' : 'Aucun réglage enregistré en base'}
+          title={status.source === 'db' ? '' : t('noSettings')}
         >
-          <RotateCcw className="w-4 h-4" /> Revenir aux variables
+          <RotateCcw className="w-4 h-4" /> {t('restoreEnv')}
         </button>
       </div>
     </section>

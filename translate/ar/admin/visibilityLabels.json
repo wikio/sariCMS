@@ -61,5 +61,7 @@
   "action_order": "طلب (أضف إلى السلة)",
   "action_apply": "تقديم لوظيفة",
   "action_contact": "إرسال رسالة",
-  "action_register": "إنشاء حساب"
+  "action_register": "إنشاء حساب",
+  "action_order_hint": "يخفي حقل الكمية وزر الإضافة إلى السلة.",
+  "action_apply_hint": "يخفي استمارة الترشّح."
 }

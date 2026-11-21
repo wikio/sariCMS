@@ -249,7 +249,7 @@ export default function JobDetailPage() {
       )}
 
       <div className="relative h-[500px] md:h-[600px] overflow-hidden">
-        <img src={job.image || 'https://placehold.co/1920x600?text=Job+Image'} alt={job.title} className="w-full h-full object-cover parallax-slow" />
+        <img src={job.image || '/api/placeholder/1920x600/1B2A4A/FFFFFF?text=Carri%C3%A8res&icon=briefcase&grad=diagonal&bg2=169EC9&pattern=dots'} alt={job.title} className="w-full h-full object-cover parallax-slow" />
         <div className="absolute inset-0 bg-gradient-to-t from-sari-dark via-sari-dark/70 to-transparent"></div>
         <div className="absolute inset-0 grid-pattern-bg opacity-10"></div>
         <div className="absolute bottom-0 left-0 right-0 container mx-auto px-6 pb-12">

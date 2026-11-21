@@ -107,5 +107,7 @@
   "chipPending": "قيد الانتظار",
   "chipUnsubscribed": "ملغى الاشتراك",
   "chipDeleted": "في سلة المهملات",
-  "confirmDelete": "نقل هذا السجل إلى سلة المهملات؟"
+  "confirmDelete": "نقل هذا السجل إلى سلة المهملات؟",
+  "status_bounced": "لم تُسلّم",
+  "status_blocked": "محظور"
 }

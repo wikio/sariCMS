@@ -18,7 +18,8 @@ export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const t = useTranslations('pages.login');
-  const { login, user } = useAuth();
+  const ta = useTranslations('common.auth');
+  const { login } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -43,10 +44,10 @@ export default function LoginPage() {
     }
 
     setIsLoading(true);
-    const success = await login(email, password, source === 'carriere' ? 'candidate' : 'client');
+    const account = await login(email, password);
     setIsLoading(false);
 
-    if (success) {
+    if (account) {
       const pendingAction = localStorage.getItem('sari_pending_action');
       if (pendingAction) {
         let action: { type: string; jobId?: string } | null = null;
@@ -63,19 +64,8 @@ export default function LoginPage() {
       }
       // Un administrateur qui se connecte par le formulaire public est
       // envoyé directement au back-office : le dashboard le rejetterait.
-      // On relit localStorage (écrit par login()) plutôt que l'état `user`
-      // du contexte, qui n'est pas encore rafraîchi dans cette closure.
-      let signedInType: string | undefined = user?.type;
-      let langueCompte: string | undefined;
-      try {
-        const raw = localStorage.getItem('sari_user');
-        if (raw) {
-          const compte = JSON.parse(raw) as { type?: string; locale?: string };
-          signedInType = compte.type;
-          langueCompte = compte.locale;
-        }
-      } catch { /* valeur du contexte conservée */ }
-      const target = signedInType === 'admin' ? 'admin/dashboard' : 'dashboard';
+      const target = account.type === 'admin' ? 'admin/dashboard' : 'dashboard';
+      const langueCompte = account.locale;
       // La langue du profil prime sur celle de la page de connexion : un
       // compte réglé en arabe atterrissait jusqu'ici sur un espace en
       // français. La valeur est vérifiée avant usage, une langue inconnue
@@ -108,6 +98,9 @@ export default function LoginPage() {
               </p>
             </div>
 
+            {searchParams.get('registered') === '1' && (
+              <p role="status" className="mb-4 text-sm text-sari-blue">{ta('accountCreated')}</p>
+            )}
             {error && (
               <div className="bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-700 p-4 mb-6 flex items-start gap-3 rounded-lg">
                 <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
@@ -190,10 +183,6 @@ export default function LoginPage() {
                   ? t('createClientAccount', { defaultMessage: 'Créer un compte client' })
                   : t('createAccount', { defaultMessage: 'Créer un compte' })}
               </Link>
-            </div>
-
-            <div className="mt-4 text-center text-xs text-gray-400">
-              {t('demoHint', { defaultMessage: 'Démo : client@sari.dz / partner@sari.dz / candidate@sari.dz · mot de passe demo123' })}
             </div>
           </div>
         </div>

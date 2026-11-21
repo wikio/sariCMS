@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 /**
  * Constructeur de gabarit d'email.
  *
@@ -25,23 +27,12 @@ import {
 } from 'lucide-react';
 import {
   DEFAULT_THEME,
-  renderMailHtml,
+  renderMailHtml, escapeMailText,
   sampleVars,
   type MailBlock,
   type MailBlockType,
   type MailLayout,
 } from '@/lib/mail-center';
-
-const BLOCK_LABELS: Record<MailBlockType, { label: string; hint: string }> = {
-  logo: { label: 'Logo', hint: 'Image d’en-tête depuis la charte' },
-  title: { label: 'Titre', hint: 'Une ligne d’accroche' },
-  text: { label: 'Texte', hint: 'Un paragraphe court' },
-  button: { label: 'Bouton', hint: 'Un lien mis en avant' },
-  divider: { label: 'Séparateur', hint: 'Une ligne horizontale' },
-  image: { label: 'Image', hint: 'Une illustration' },
-  content: { label: 'Corps du message', hint: 'L’emplacement du texte de l’événement' },
-  footer: { label: 'Pied de page', hint: 'Coordonnées, mention légale, désinscription' },
-};
 
 const BLOCK_ICONS: Record<MailBlockType, typeof Type> = {
   logo: ImageIcon,
@@ -53,12 +44,6 @@ const BLOCK_ICONS: Record<MailBlockType, typeof Type> = {
   content: Type,
   footer: Palette,
 };
-
-/** Corps fictif, pour voir le gabarit rempli pendant la construction. */
-const PREVIEW_BODY =
-  '<p>Bonjour {{nom_client}},</p>'
-  + '<p>Votre commande <strong>{{numero_commande}}</strong> d’un montant de {{montant_ttc}} est confirmée.</p>'
-  + '<p>Cordialement,<br><strong>{{nom_societe}}</strong></p>';
 
 const newId = () => `b${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`;
 
@@ -73,6 +58,8 @@ export default function MailLayoutStudio({
   onCancel: () => void;
   saving?: boolean;
 }) {
+  const t = useTranslations('admin.mailStudio');
+  const tc = useTranslations('admin.common');
   const [draft, setDraft] = useState<MailLayout>(layout);
   const [selected, setSelected] = useState<string | null>(layout.blocks[0]?.id || null);
   const [tab, setTab] = useState<'blocs' | 'charte'>('blocs');
@@ -89,9 +76,9 @@ export default function MailLayoutStudio({
 
   const addBlock = (type: MailBlockType) => {
     const block: MailBlock = { id: newId(), type, align: 'left', text: '', href: '' };
-    if (type === 'title') block.text = 'Votre commande est confirmée';
-    if (type === 'text') block.text = 'Un message court, une idée par paragraphe.';
-    if (type === 'button') { block.text = 'Voir le détail'; block.href = '{{lien_document}}'; }
+    if (type === 'title') block.text = t('newTitle');
+    if (type === 'text') block.text = t('newText');
+    if (type === 'button') { block.text = t('newButton'); block.href = '{{lien_document}}'; }
     if (type === 'image') block.href = '/logo.png';
     const blocks = [...draft.blocks];
     // Le corps du message reste au centre : un bloc ajouté se place avant le pied de page.
@@ -118,8 +105,15 @@ export default function MailLayoutStudio({
   };
 
   const previewHtml = useMemo(
-    () => renderMailHtml({ bodyHtml: PREVIEW_BODY, layout: draft, vars: sampleVars() }),
-    [draft],
+    () => renderMailHtml({
+      bodyHtml: [
+        t('sampleHello', { name: '{{nom_client}}' }),
+        t('sampleOrder', { order: '{{numero_commande}}', amount: '{{montant_ttc}}' }),
+        t('sampleRegards'), '{{nom_societe}}',
+      ].map((line) => `<p>${escapeMailText(line)}</p>`).join(''),
+      layout: draft, vars: sampleVars(),
+    }),
+    [draft, t],
   );
 
   const colorField = (label: string, key: keyof MailLayout['theme']) => (
@@ -149,7 +143,7 @@ export default function MailLayoutStudio({
           className="ad-input font-bold"
           style={{ maxWidth: 320 }}
           value={draft.name}
-          placeholder="Nom du gabarit"
+          placeholder={t('name')}
           onChange={(e) => patch({ name: e.target.value })}
         />
         <div className="flex gap-1 rounded-lg p-0.5" style={{ background: 'color-mix(in srgb, var(--ad-accent) 10%, transparent)' }}>
@@ -160,31 +154,31 @@ export default function MailLayoutStudio({
               className={`ad-btn ${tab === id ? 'ad-btn-primary' : 'ad-btn-ghost'}`}
               onClick={() => setTab(id)}
             >
-              {id === 'blocs' ? 'Blocs' : 'Charte'}
+              {id === 'blocs' ? t('blocks') : t('theme')}
             </button>
           ))}
         </div>
         <div className="ml-auto flex gap-2">
-          <button type="button" className="ad-btn ad-btn-ghost" onClick={onCancel}>Annuler</button>
+          <button type="button" className="ad-btn ad-btn-ghost" onClick={onCancel}>{tc('cancel')}</button>
           <button
             type="button"
             className="ad-btn ad-btn-primary"
             disabled={saving || !draft.name.trim()}
             onClick={() => onSave({ ...draft, updatedAt: new Date().toISOString() })}
           >
-            <Save className="h-4 w-4" /> {saving ? 'Enregistrement…' : 'Enregistrer'}
+            <Save className="h-4 w-4" /> {saving ? tc('saving') : tc('save')}
           </button>
         </div>
       </div>
 
       {contentCount === 0 && (
         <p className="ad-chip ad-chip-warn">
-          Ce gabarit n’a pas de bloc « Corps du message » : le texte de l’événement ne s’affichera pas.
+          {t('missingBody')}
         </p>
       )}
       {contentCount > 1 && (
         <p className="ad-chip ad-chip-warn">
-          Plusieurs blocs « Corps du message » : le texte sera répété. Gardez-en un seul.
+          {t('repeatedBody')}
         </p>
       )}
 
@@ -193,20 +187,20 @@ export default function MailLayoutStudio({
         <div className="space-y-3 lg:col-span-5">
           <div className="ad-card p-3 space-y-2">
             <div className="text-[11px] font-black uppercase tracking-[0.14em]" style={{ color: 'var(--ad-muted)' }}>
-              Ajouter un bloc
+              {t('addBlock')}
             </div>
             <div className="flex flex-wrap gap-1.5">
-              {(Object.keys(BLOCK_LABELS) as MailBlockType[]).map((type) => {
+              {(Object.keys(BLOCK_ICONS) as MailBlockType[]).map((type) => {
                 const Icon = BLOCK_ICONS[type];
                 return (
                   <button
                     key={type}
                     type="button"
                     className="ad-btn ad-btn-ghost text-xs"
-                    title={BLOCK_LABELS[type].hint}
+                    title={t(`hint_${type}`)}
                     onClick={() => addBlock(type)}
                   >
-                    <Plus className="h-3.5 w-3.5" /> <Icon className="h-3.5 w-3.5" /> {BLOCK_LABELS[type].label}
+                    <Plus className="h-3.5 w-3.5" /> <Icon className="h-3.5 w-3.5" /> {t(`block_${type}`)}
                   </button>
                 );
               })}
@@ -232,16 +226,16 @@ export default function MailLayoutStudio({
                       onClick={() => setSelected(block.id)}
                     >
                       <Icon className="mr-2 inline h-3.5 w-3.5" />
-                      {index + 1}. {BLOCK_LABELS[block.type].label}
-                      {block.type === 'content' && <span className="ad-chip ad-chip-acc ml-2">texte du message</span>}
+                      {index + 1}. {t(`block_${block.type}`)}
+                      {block.type === 'content' && <span className="ad-chip ad-chip-acc ml-2">{t('body')}</span>}
                     </button>
-                    <button type="button" className="ad-btn ad-btn-ghost" onClick={() => move(block.id, -1)} aria-label="Monter">
+                    <button type="button" className="ad-btn ad-btn-ghost" onClick={() => move(block.id, -1)} aria-label={t('moveUp')}>
                       <ArrowUp className="h-3.5 w-3.5" />
                     </button>
-                    <button type="button" className="ad-btn ad-btn-ghost" onClick={() => move(block.id, 1)} aria-label="Descendre">
+                    <button type="button" className="ad-btn ad-btn-ghost" onClick={() => move(block.id, 1)} aria-label={t('moveDown')}>
                       <ArrowDown className="h-3.5 w-3.5" />
                     </button>
-                    <button type="button" className="ad-btn ad-btn-icon ad-btn-danger" onClick={() => remove(block.id)} aria-label="Supprimer">
+                    <button type="button" className="ad-btn ad-btn-icon ad-btn-danger" onClick={() => remove(block.id)} aria-label={tc('delete')}>
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </div>
@@ -251,12 +245,12 @@ export default function MailLayoutStudio({
               {active && (
                 <div className="space-y-3 p-3" style={{ background: 'color-mix(in srgb, var(--ad-accent) 5%, transparent)' }}>
                   <div className="text-[11px] font-black uppercase tracking-[0.14em]" style={{ color: 'var(--ad-muted)' }}>
-                    {BLOCK_LABELS[active.type].label} — {BLOCK_LABELS[active.type].hint}
+                    {t(`block_${active.type}`)} — {t(`hint_${active.type}`)}
                   </div>
 
                   {['title', 'text', 'button'].includes(active.type) && (
                     <label className="block space-y-1">
-                      <span className="field-label">{active.type === 'button' ? 'Libellé du bouton' : 'Texte'}</span>
+                      <span className="field-label">{active.type === 'button' ? t('buttonText') : t('block_text')}</span>
                       {active.type === 'text' ? (
                         <textarea
                           className="ad-input"
@@ -276,7 +270,7 @@ export default function MailLayoutStudio({
 
                   {['button', 'image'].includes(active.type) && (
                     <label className="block space-y-1">
-                      <span className="field-label">{active.type === 'button' ? 'Lien du bouton' : 'Source de l’image'}</span>
+                      <span className="field-label">{active.type === 'button' ? t('buttonUrl') : t('imageUrl')}</span>
                       <input
                         className="ad-input font-mono text-xs"
                         value={active.href || ''}
@@ -288,23 +282,22 @@ export default function MailLayoutStudio({
 
                   {active.type !== 'divider' && (
                     <label className="block space-y-1">
-                      <span className="field-label">Alignement</span>
+                      <span className="field-label">{t('align')}</span>
                       <select
                         className="ad-select"
                         value={active.align || 'left'}
                         onChange={(e) => patchBlock(active.id, { align: e.target.value as MailBlock['align'] })}
                       >
-                        <option value="left">À gauche</option>
-                        <option value="center">Centré</option>
-                        <option value="right">À droite</option>
+                        <option value="left">{t('left')}</option>
+                        <option value="center">{t('center')}</option>
+                        <option value="right">{t('right')}</option>
                       </select>
                     </label>
                   )}
 
                   {active.type === 'content' && (
                     <p className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>
-                      Ce bloc reçoit le texte rédigé pour chaque événement (onglet « Modules »). Il n’a pas de
-                      contenu propre.
+                      {t('bodyHelp')}
                     </p>
                   )}
                 </div>
@@ -315,15 +308,15 @@ export default function MailLayoutStudio({
           {tab === 'charte' && (
             <div className="ad-card space-y-3 p-3">
               <div className="grid gap-3 sm:grid-cols-2">
-                {colorField('Fond de page', 'background')}
-                {colorField('Fond de la carte', 'card')}
-                {colorField('Couleur d’accent', 'accent')}
-                {colorField('Texte', 'text')}
-                {colorField('Texte secondaire', 'muted')}
+                {colorField(t('background'), 'background')}
+                {colorField(t('card'), 'card')}
+                {colorField(t('accent'), 'accent')}
+                {colorField(t('block_text'), 'text')}
+                {colorField(t('muted'), 'muted')}
               </div>
 
               <label className="block space-y-1">
-                <span className="field-label">Arrondi des angles : {theme.radius} px</span>
+                <span className="field-label">{t('radius', { radius: theme.radius })}</span>
                 <input
                   type="range"
                   min={0}
@@ -335,31 +328,31 @@ export default function MailLayoutStudio({
               </label>
 
               <label className="block space-y-1">
-                <span className="field-label">Logo (chemin GED ou URL)</span>
+                <span className="field-label">{t('logoUrl')}</span>
                 <input className="ad-input font-mono text-xs" value={theme.logoUrl} onChange={(e) => patchTheme({ logoUrl: e.target.value })} />
               </label>
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <label className="block space-y-1">
-                  <span className="field-label">Société</span>
+                  <span className="field-label">{t('company')}</span>
                   <input className="ad-input" value={theme.company} onChange={(e) => patchTheme({ company: e.target.value })} />
                 </label>
                 <label className="block space-y-1">
-                  <span className="field-label">Téléphone</span>
+                  <span className="field-label">{t('phone')}</span>
                   <input className="ad-input" value={theme.phone} onChange={(e) => patchTheme({ phone: e.target.value })} />
                 </label>
               </div>
               <label className="block space-y-1">
-                <span className="field-label">Adresse postale</span>
+                <span className="field-label">{t('address')}</span>
                 <input className="ad-input" value={theme.address} onChange={(e) => patchTheme({ address: e.target.value })} />
               </label>
               <label className="block space-y-1">
-                <span className="field-label">E-mail de contact</span>
+                <span className="field-label">{t('email')}</span>
                 <input className="ad-input" value={theme.email} onChange={(e) => patchTheme({ email: e.target.value })} />
               </label>
 
               <label className="block space-y-1">
-                <span className="field-label">Mention légale du pied de page</span>
+                <span className="field-label">{t('notice')}</span>
                 <textarea
                   className="ad-input"
                   rows={3}
@@ -371,7 +364,7 @@ export default function MailLayoutStudio({
               <div className="flex flex-wrap gap-3">
                 <label className="flex items-center gap-2 text-sm">
                   <input type="checkbox" checked={theme.showLegal} onChange={(e) => patchTheme({ showLegal: e.target.checked })} />
-                  Afficher la mention légale
+                  {t('showLegal')}
                 </label>
                 <label className="flex items-center gap-2 text-sm">
                   <input
@@ -379,12 +372,12 @@ export default function MailLayoutStudio({
                     checked={theme.showUnsubscribe}
                     onChange={(e) => patchTheme({ showUnsubscribe: e.target.checked })}
                   />
-                  Afficher un lien de désinscription
+                  {t('showUnsub')}
                 </label>
               </div>
               {theme.showUnsubscribe && (
                 <label className="block space-y-1">
-                  <span className="field-label">Lien de désinscription</span>
+                  <span className="field-label">{t('unsubscribe')}</span>
                   <input
                     className="ad-input font-mono text-xs"
                     value={theme.unsubscribeUrl}
@@ -393,8 +386,7 @@ export default function MailLayoutStudio({
                 </label>
               )}
               <p className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>
-                La désinscription est obligatoire pour toute diffusion (newsletter, campagne) ; elle reste
-                facultative pour un email transactionnel attendu (commande, devis, candidature).
+                {t('consent')}
               </p>
             </div>
           )}
@@ -405,13 +397,13 @@ export default function MailLayoutStudio({
           <div className="ad-card overflow-hidden">
             <div className="flex items-center gap-2 border-b px-3 py-2" style={{ borderColor: 'var(--ad-line)' }}>
               <Eye className="h-4 w-4" />
-              <span className="text-sm font-bold">Aperçu</span>
+              <span className="text-sm font-bold">{tc('preview')}</span>
               <span className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>
-                rendu réel, tables et styles en ligne — 600 px
+                {t('previewHint')}
               </span>
             </div>
             <iframe
-              title="Aperçu du gabarit d’email"
+              title={t('previewTitle')}
               className="block w-full bg-white"
               style={{ height: 620, border: 0 }}
               srcDoc={previewHtml}

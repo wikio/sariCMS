@@ -136,18 +136,47 @@ function rememberId(resource: SyncResource, localId: unknown, serverId: unknown)
   writeIdMap(resource, map);
 }
 
+/** Empreintes de la dernière charge utile synchronisée (évite de repousser les lignes inchangées). */
+const syncedSnapshots: Record<SyncResource, Map<string, string>> = {
+  orders: new Map(),
+  quotes: new Map(),
+  applications: new Map(),
+};
+
+function stableStringify(value: unknown): string {
+  if (value === null || typeof value !== 'object') return JSON.stringify(value);
+  if (Array.isArray(value)) return `[${value.map(stableStringify).join(',')}]`;
+  const entries = Object.entries(value as Record<string, unknown>)
+    .filter(([, v]) => v !== undefined)
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+  return `{${entries.map(([k, v]) => `${JSON.stringify(k)}:${stableStringify(v)}`).join(',')}}`;
+}
+
+function payloadFingerprint(row: Row): string {
+  return stableStringify(toPayload(row));
+}
+
+function isOnAdminRoute(): boolean {
+  if (typeof window === 'undefined') return false;
+  return /^\/(fr|en|ar)\/admin(\/|$)/.test(window.location.pathname);
+}
+
 /** Charge une ressource depuis l'API et remplit le cache local. */
 export async function pull(resource: SyncResource): Promise<Row[]> {
   const rows = await fetchAll(resource);
   if (typeof window === 'undefined') return rows;
 
   const map: Record<string, string> = {};
+  const snapshots = syncedSnapshots[resource];
+  snapshots.clear();
   const local = rows.map((row, index) => {
     // Les écrans attendent un id numérique : on en fabrique un stable et on
     // mémorise l'id serveur correspondant.
     const localId = Number(row.id) || index + 1;
     map[String(localId)] = String(row.id);
-    return { ...fromServer(row), id: localId };
+    const normalized = { ...fromServer(row), id: localId };
+    snapshots.set(String(localId), payloadFingerprint(normalized));
+    return normalized;
   });
   writeIdMap(resource, map);
   localStorage.setItem(RESOURCES[resource], JSON.stringify(local));
@@ -171,29 +200,25 @@ export async function pullAll(): Promise<Partial<Record<SyncResource, number>>> 
 }
 
 /**
- * Réplique une ligne vers l'API (création ou mise à jour).
- * Ne lève jamais : l'échec ne doit pas bloquer l'écran.
- * Pour `orders`/`quotes` la route POST/PATCH est désormais @Public() (vitrine) :
- * on tente d'abord `cmsFetch` (sans token, pas de redirect /admin), puis fallback `cmsAdminFetch`
- * au cas où le serveur n'aurait pas encore redémarré avec le fix public.
+ * Exécute la réplication d'une ligne. Renvoie `'rate_limited'` si l'API répond 429
+ * afin que `pushCollection` interrompe immédiatement le reste du lot.
  */
-export async function push(resource: SyncResource, row: Row): Promise<void> {
+async function pushOne(resource: SyncResource, row: Row): Promise<'ok' | 'rate_limited' | 'error'> {
   const serverId = serverIdFor(resource, row.id);
   const payload = toPayload(row);
+  const fingerprint = stableStringify(payload);
+  const useAdmin = resource === 'applications' || isOnAdminRoute();
+
   const doFetch = async <T>(path: string, opts: Parameters<typeof cmsFetch>[1]): Promise<T> => {
-    try {
-      return await cmsFetch<T>(path, { timeoutMs: 8000, ...opts });
-    } catch (e) {
-      if (e instanceof CmsError) {
-        // 404 = ressource inconnue, inutile de retenter en admin
-        if (e.status === 404) throw e;
-        // 400/409/422 = validation / conflit → remonte tel quel (pas de fallback)
-        if ([400, 409, 422].includes(e.status)) throw e;
-      }
-      // Sinon (401, réseau, timeout, serveur non redémarré) → retente en admin (avec refresh/redirect)
-      return cmsAdminFetch<T>(path, { timeoutMs: 12000, ...opts } as never);
+    if (useAdmin) {
+      return cmsAdminFetch<T>(path, { timeoutMs: 12000, ...opts });
     }
+    // Vitrine : `orders` et `quotes` sont @Public() sur POST/PATCH. On ne retente
+    // jamais via `cmsAdminFetch` (qui doublerait la charge en cas de 429/timeout
+    // et redirigerait un client vers /admin en cas de 401).
+    return cmsFetch<T>(path, { timeoutMs: 8000, ...opts });
   };
+
   try {
     if (serverId) {
       await doFetch(`/${resource}/${serverId}`, { method: 'PATCH', json: payload });
@@ -202,7 +227,12 @@ export async function push(resource: SyncResource, row: Row): Promise<void> {
       const newId = (created as { id?: unknown })?.id ?? (created as { data?: { id?: unknown } })?.data?.id;
       if (newId !== undefined) rememberId(resource, row.id, newId);
     }
+    syncedSnapshots[resource].set(String(row.id), fingerprint);
+    return 'ok';
   } catch (err) {
+    if (err instanceof CmsError && err.status === 429) {
+      return 'rate_limited';
+    }
     // Log 400/409/422 toujours (validation), sinon seulement si debug
     const isValidation = err instanceof CmsError && [400, 409, 422, 500].includes(err.status);
     if (typeof window !== 'undefined') {
@@ -217,7 +247,16 @@ export async function push(resource: SyncResource, row: Row): Promise<void> {
         }
       } catch {}
     }
+    return 'error';
   }
+}
+
+/**
+ * Réplique une ligne vers l'API (création ou mise à jour).
+ * Ne lève jamais : l'échec ne doit pas bloquer l'écran.
+ */
+export async function push(resource: SyncResource, row: Row): Promise<void> {
+  await pushOne(resource, row);
 }
 
 /** Réplique une suppression. */
@@ -225,17 +264,72 @@ export async function remove(resource: SyncResource, localId: unknown): Promise<
   try {
     const serverId = serverIdFor(resource, localId);
     if (serverId) await cmsAdminFetch(`/${resource}/${serverId}`, { method: 'DELETE' });
+    syncedSnapshots[resource].delete(String(localId));
   } catch {
     /* idem */
   }
 }
 
 /**
- * Compare l'état local à celui du serveur et pousse les différences.
+ * Compare l'état local à la dernière empreinte synchronisée et pousse uniquement
+ * les lignes créées ou modifiées, avec concurrence bornée et arrêt immédiat sur 429.
  * Appelée par les helpers `save*` de crm-store / recruitment.
  */
-export function pushCollection(resource: SyncResource, rows: Array<Order | Quote | Application | Row>): void {
+export function pushCollection(
+  resource: SyncResource,
+  rows: Array<Order | Quote | Application | Row>,
+  previousJson?: string | null,
+): void {
   if (typeof window === 'undefined') return;
-  // Exécution différée : l'appelant n'attend pas le réseau.
-  void Promise.all(rows.map((row) => push(resource, row as Row)));
+  const snapshots = syncedSnapshots[resource];
+
+  // Si aucune empreinte en mémoire n'existe encore pour cette ressource (ex. avant `pull()`),
+  // on initialise les empreintes des lignes déjà connues du serveur depuis l'état local précédent
+  // pour ne pousser que les lignes réellement créées ou modifiées.
+  if (previousJson) {
+    try {
+      const prevRows = JSON.parse(previousJson);
+      if (Array.isArray(prevRows)) {
+        for (const prev of prevRows as Row[]) {
+          const key = String(prev?.id ?? '');
+          if (key && !snapshots.has(key) && serverIdFor(resource, prev.id)) {
+            snapshots.set(key, payloadFingerprint(prev));
+          }
+        }
+      }
+    } catch {
+      // ignore invalid JSON
+    }
+  }
+
+  const dirty = (rows as Row[]).filter((row) => {
+    const key = String(row.id);
+    const serverId = serverIdFor(resource, row.id);
+    if (!serverId) return true;
+    const prev = snapshots.get(key);
+    if (prev === undefined) return true;
+    return payloadFingerprint(row) !== prev;
+  });
+  if (!dirty.length) return;
+
+  // Exécution différée à concurrence bornée : l'appelant n'attend pas le réseau
+  // et on évite d'envoyer une rafale simultanée sur l'API.
+  void (async () => {
+    const CONCURRENCY = 2;
+    let index = 0;
+    let stop = false;
+    async function worker() {
+      while (!stop) {
+        const i = index;
+        index += 1;
+        if (i >= dirty.length) return;
+        const outcome = await pushOne(resource, dirty[i]);
+        if (outcome === 'rate_limited') {
+          stop = true;
+          return;
+        }
+      }
+    }
+    await Promise.all(Array.from({ length: Math.min(CONCURRENCY, dirty.length) }, () => worker()));
+  })();
 }

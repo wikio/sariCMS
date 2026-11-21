@@ -5,12 +5,15 @@
   "reset": "إعادة تعيين",
   "resetSuccess": "تم إعادة تعيين الظهور",
   "searchPlaceholder": "البحث عن عنصر…",
-  "itemsCount": "{count} عنصر(عناصر)",
+  "itemsCount": "عدد العناصر: {count, number}",
   "hideAll": "إخفاء الكل",
   "showAll": "إظهار الكل",
   "visible": "مرئي",
   "hidden": "مخفي",
   "noResults": "لا توجد عناصر تطابق « {query} ».",
   "groupShown": "{group} ظاهر",
-  "groupHidden": "{group} مخفي"
+  "groupHidden": "{group} مخفي",
+  "copyToOthers": "نسخ إلى اللغات الأخرى",
+  "copied": "نُسخت إعدادات {language} إلى اللغات الأخرى",
+  "shared": "تُحفظ الإعدادات في قاعدة البيانات وتُطبّق على جميع زوار الموقع بهذه اللغة."
 }

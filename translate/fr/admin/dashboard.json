@@ -48,5 +48,12 @@
   "eventsCount": "événements",
   "noActivity": "Aucune activité pour l’instant.",
   "unavailable": "Compteurs que la base n’a pas fournis",
-  "unavailableHelp": "Le plus souvent, la table n’a pas encore été créée sur cette base. Le rattrapage est additif : dans backend/, « npm run db:schema-check » puis « npm run db:schema-fix » (ou le fichier backend/sql/schema-sync.mysql.sql dans votre client SQL)."
+  "unavailableHelp": "Le plus souvent, la table n’a pas encore été créée sur cette base. Le rattrapage est additif : dans backend/, « npm run db:schema-check » puis « npm run db:schema-fix » (ou le fichier backend/sql/schema-sync.mysql.sql dans votre client SQL).",
+  "widget_overviewKpis": "Tuiles clés (Candidatures, Contenu, GED, Équipe)",
+  "widget_multiStatus": "Suivi multi-statuts (Candidatures, Événements, Emplois, GED)",
+  "widget_liveCharts": "Graphiques configurables & charge équipe",
+  "widget_catalogTiles": "Catalogue & commerce",
+  "widget_todoAndSources": "À traiter & sources de données",
+  "widget_actionsAndLogs": "Actions rapides & activité récente",
+  "notRecorded": "{document} · jamais enregistré"
 }

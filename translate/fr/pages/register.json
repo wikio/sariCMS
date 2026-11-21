@@ -46,5 +46,6 @@
   "captchaError": "Réponse CAPTCHA incorrecte",
   "acceptTermsRequired": "Vous devez accepter les conditions",
   "home": "Accueil",
-  "register": "Inscription"
+  "register": "Inscription",
+  "registrationFailed": "Inscription impossible. Vérifiez les informations et le code de vérification, puis réessayez."
 }

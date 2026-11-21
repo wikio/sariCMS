@@ -9,9 +9,17 @@
  * Ce module, sans directive, est utilisable des deux côtés.
  */
 
-const API_BASE = (
-  process.env.NEXT_PUBLIC_API_URL || process.env.API_URL || 'http://localhost:3001/api/v1'
-).replace(/\/$/, '');
+function visibilityApiBase(): string {
+  if (typeof window !== 'undefined') {
+    return (process.env.NEXT_PUBLIC_CMS_API_URL || '/api/v1').replace(/\/$/, '');
+  }
+  return (
+    process.env.CMS_API_INTERNAL_URL ||
+    process.env.NEXT_PUBLIC_API_URL ||
+    process.env.API_URL ||
+    'http://127.0.0.1:3001/api/v1'
+  ).replace(/\/$/, '');
+}
 
 /**
  * Exceptions enregistrées pour une langue.
@@ -23,7 +31,7 @@ const API_BASE = (
 export async function fetchVisibility(locale: string): Promise<Record<string, boolean>> {
   try {
     const res = await fetch(
-      `${API_BASE}/public/visibility?locale=${encodeURIComponent(locale)}`,
+      `${visibilityApiBase()}/public/visibility?locale=${encodeURIComponent(locale)}`,
       { cache: 'no-store', headers: { accept: 'application/json' } },
     );
     if (!res.ok) return {};

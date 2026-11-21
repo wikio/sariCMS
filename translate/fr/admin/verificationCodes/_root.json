@@ -20,5 +20,13 @@
   "deactivate": "Désactiver",
   "footnote": "Un code renvoyé par l'API mais absent d'ici n'est jamais traduit en « valide » par défaut : la page publique signale l'anomalie et l'administrateur ajoute la ligne. Enregistrer remplace le catalogue entier.",
   "activated": "Code réactivé.",
-  "deactivated": "Code désactivé — l’API ne doit plus le renvoyer, sinon la page signalera une anomalie."
+  "deactivated": "Code désactivé — l’API ne doit plus le renvoyer, sinon la page signalera une anomalie.",
+  "system": "Système",
+  "demoTitle": "Codes de démonstration sur la page publique",
+  "shown": "Affichés",
+  "hidden": "Masqués",
+  "demoInfo": "Contrôle les exemples sous le formulaire {path}. Ce réglage est également disponible dans <settings>Paramètres → Vérification des documents</settings>.",
+  "demoHiddenHint": "Les six exemples sont actuellement masqués sur le site public.",
+  "demoShownToast": "Codes de démonstration affichés sur la vitrine.",
+  "demoHiddenToast": "Codes de démonstration masqués sur la vitrine."
 }

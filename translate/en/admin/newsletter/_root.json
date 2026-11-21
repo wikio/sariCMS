@@ -107,5 +107,7 @@
   "chipPending": "Pending",
   "chipUnsubscribed": "Unsubscribed",
   "chipDeleted": "In trash",
-  "confirmDelete": "Move this record to the trash?"
+  "confirmDelete": "Move this record to the trash?",
+  "status_bounced": "Bounced",
+  "status_blocked": "Blocked"
 }

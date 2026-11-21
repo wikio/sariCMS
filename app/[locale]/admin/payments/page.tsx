@@ -32,6 +32,19 @@ export default function PaymentsPage() {
   const { symbol } = useCurrency();
   const { showToast } = useToast();
   const t = useTranslations('admin.payments');
+  const tCommerce = useTranslations('admin.commerce');
+  const translateOrderStatus = (s: string) => {
+    const map: Record<string, string> = {
+      pending: tCommerce('statusPending'),
+      pending_payment: tCommerce('statusPendingPayment'),
+      paid: tCommerce('statusPaid'),
+      processing: tCommerce('statusProcessing'),
+      shipped: tCommerce('statusShipped'),
+      delivered: tCommerce('statusDelivered'),
+      cancelled: tCommerce('statusCancelled'),
+    };
+    return map[s] || s;
+  };
   const [rows, setRows] = useState<PaymentMethod[]>([]);
   const [draft, setDraft] = useState<PaymentMethod | null>(null);
   const [mode, setMode] = useState<'edit' | 'consult'>('edit');
@@ -71,8 +84,8 @@ export default function PaymentsPage() {
 
   const validate = (row: PaymentMethod) => {
     if (!row.name.trim()) return t("name")+" "+t("required", {defaultMessage: "obligatoire"});
-    if (row.type === 'transfer' && row.iban && !isValidIban(row.iban)) return t("iban")+" invalide (2 lettres pays + 2 chiffres + BBAN)";
-    if (row.type === 'paypal' && row.paypalEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(row.paypalEmail)) return "E-mail PayPal invalide";
+    if (row.type === 'transfer' && row.iban && !isValidIban(row.iban)) return t("ibanInvalid");
+    if (row.type === 'paypal' && row.paypalEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(row.paypalEmail)) return t("paypalEmailInvalid");
     return '';
   };
 
@@ -239,13 +252,13 @@ export default function PaymentsPage() {
             )}
             {draft.type === 'paypal' && (
               <label className="block space-y-1.5">
-                <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>E-mail PayPal</span>
+                <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>{t("paypalEmail")}</span>
                 <input className="ad-input" type="email" disabled={mode === 'consult'} value={draft.paypalEmail || ''} onChange={(e) => setDraft({ ...draft, paypalEmail: e.target.value })} />
               </label>
             )}
             {(draft.type === 'card-intl' || draft.type === 'cib') && (
               <label className="block space-y-1.5">
-                <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>Clé API</span>
+                <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>{t("apiKey")}</span>
                 <input className="ad-input font-mono" type="password" disabled={mode === 'consult'} value={draft.apiKey || ''} onChange={(e) => setDraft({ ...draft, apiKey: e.target.value })} />
                 <p className="ad-field-hint">
                   {t('apiKeyHint', { defaultMessage: 'Masquée à l’affichage. Ne jamais coller une clé de production dans un ticket.' })}
@@ -267,7 +280,7 @@ export default function PaymentsPage() {
       <Drawer
         open={!!ordersByType}
         title={t("ordersForPayment", {name: ordersByType?.name || ''})}
-        subtitle={`${ordersFor.length} commande(s) réglée(s) par ce mode`}
+        subtitle={t("ordersCountSubtitle", { count: ordersFor.length })}
         onClose={() => setOrdersByType(null)}
         width={680}
         footer={<button className="ad-btn ad-btn-ghost" onClick={() => setOrdersByType(null)}>{t("close")}</button>}
@@ -276,7 +289,7 @@ export default function PaymentsPage() {
           <div className="text-center py-12" style={{ color: 'var(--ad-muted)' }}>{t("noOrdersForPayment")}</div>
         ) : (
           <table className="ad-table">
-            <thead><tr><th>N°</th><th>Client</th><th>Date</th><th>Total</th><th>{t("status")}</th></tr></thead>
+            <thead><tr><th>{t("colNumber")}</th><th>{t("colClient")}</th><th>{t("colDate")}</th><th>{t("colTotal")}</th><th>{t("status")}</th></tr></thead>
             <tbody>
               {ordersFor.map((o) => (
                 <tr key={o.id}>
@@ -284,7 +297,7 @@ export default function PaymentsPage() {
                   <td><div className="font-bold">{o.client}</div><div className="text-xs" style={{ color: 'var(--ad-muted)' }}>{o.email}</div></td>
                   <td><DateText value={o.date} dateOnly /></td>
                   <td className="font-black whitespace-nowrap">{money(Number(o.total))}</td>
-                  <td><span className="ad-chip ad-chip-acc">{o.status}</span></td>
+                  <td><span className="ad-chip ad-chip-acc">{translateOrderStatus(o.status)}</span></td>
                 </tr>
               ))}
             </tbody>

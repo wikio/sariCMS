@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 /**
  * Le damier de l'administration (64 cases, `ad-pixel-grid` dans `app/admin.css`).
  * Son homologue de la vitrine est `components/ui/PixelGridLoader` : 15 cases, et des
@@ -7,12 +9,13 @@
  */
 
 export default function PixelGridLoader({
-  label = 'Chargement',
+  label,
   compact = false,
 }: {
   label?: string;
   compact?: boolean;
 }) {
+  const t = useTranslations('admin.common');
   const cells = Array.from({ length: 64 });
   return (
     <div className={`flex flex-col items-center justify-center ${compact ? 'py-8' : 'py-20'} gap-5`}>
@@ -40,7 +43,7 @@ export default function PixelGridLoader({
         />
       </div>
       <div className="text-[10px] uppercase tracking-[0.28em] font-bold" style={{ color: 'var(--ad-muted)' }}>
-        {label}
+        {label ?? t('loading')}
       </div>
     </div>
   );

@@ -73,8 +73,8 @@ décide du sort de la donnée.
 | `sari_doc_backup_*` | `lib/settings-doc.ts` | copie de secours locale | local, et c'est son rôle — le seul endroit où vit encore une liste écrasée | conforme ; l'écran « Modes de paiement » la rend par un bouton |
 | `sari_site_visibility` | `lib/site-visibility.ts` | partagée (visibilité du site) | **base** — table `settings`, document `visibility` | conforme |
 | `sari_site_logo_synced` | `lib/site-contact.ts` | marqueur | local | conforme ; le logo lui-même vit dans `ContactInfo.logo` (base) |
-| `sari_users_registry` | `contexts/AuthContext.tsx` | **partagée** (annuaire de comptes : e-mails, noms) | local — **dette P1** : un registre d'utilisateurs dans un navigateur n'est ni sauvegardé, ni mutualisé, et contient des données personnelles |
-| `sari_user` | `contexts/AuthContext.tsx`, `components/dashboard/ProfileModule.tsx` | profil du visiteur connecté | cache de session, **base** en source (`users`) | conforme |
+| `sari_users_registry` | `contexts/AuthContext.tsx` | vestige de l’ancien annuaire local | supprimé au chargement, jamais lu ni exporté |
+| `sari_user` | `contexts/AuthContext.tsx` | vestige de l’ancien profil local | supprimé au chargement ; seul `/auth/me` restitue le compte |
 | `sari_front_access` | `contexts/AuthContext.tsx` | jeton du visiteur | local — voir §5 F2 (XSS) |
 | `sari_admin_access` | `lib/admin-session.ts` | jeton d'accès admin | local — voir §5 F2 |
 | `sari_admin_refresh` | `lib/admin-session.ts`, `lib/cms-admin.ts` | jeton de renouvellement | local — **le point le plus sensible de cet audit**, §5 F2 |
@@ -424,7 +424,7 @@ nettoyage, ils sont toujours sur le disque — la commande en §7.
 
 ## 6. Les dettes, classées
 
-Neuf lignes à la date de ce document — ce nombre n'est pas une promesse, `npm run
+Huit lignes de stockage en dette — ce nombre n'est pas une promesse, `npm run
 storage:audit` compte les lignes marquées « dette » dans la table de §1 et le redit à
 chaque exécution.
 
@@ -436,7 +436,6 @@ voulue.
 
 | # | Dette | Pourquoi ça compte | Remède proposé |
 | --- | --- | --- | --- |
-| **P1** | `sari_users_registry` (annuaire de comptes dans le navigateur) | des données personnelles, sans sauvegarde, par poste | lire/écrire `users` via l'API ; garder la clé en cache seulement |
 | **P1** | `sari_threads` + `sari_pending_open_thread` (messages) | une conversation à moitié invisible : le visiteur et l'opérateur n'ont pas le même fil | table `support_threads` + `support_messages`, deux routes, l'écran branché dessus ; le file ouvert redevient un état local |
 | **P1** | notes sur une personne (`sari_notes_<id>`) | la note d'un commercial ne doit pas être privée à son collègue | colonne `notes` (Text) sur `users`/`contact_info`, ou table `person_notes` si l'historique compte |
 | **P1** | `sari_admin_genericContent`, `sari_config_<locale>`, `sari_component_<locale>_<type>` | un contenu édité dans l'administration, publié… nulle part ; l'export JSON à replacer à la main n'est pas une sauvegarde | passer ces trois écrans sur les collections qui existent déjà (`pages` avec `kind: 'generic'`, `settings` en document, ou table dédiée) |

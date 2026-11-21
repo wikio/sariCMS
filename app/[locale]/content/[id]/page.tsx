@@ -234,7 +234,7 @@ export default function GenericContentDetailPage() {
         <div className="container mx-auto px-6 py-16">
           <div className="max-w-6xl mx-auto">
             <div className="relative bg-gray-100 dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 shadow-2xl overflow-hidden rounded-xl">
-              <img src={currentSrc} alt={content.title} className="w-full h-[500px] object-contain" onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/1200x500?text=Image'; }} />
+              <img src={currentSrc} alt={content.title} className="w-full h-[500px] object-contain" onError={(e) => { (e.target as HTMLImageElement).src = '/api/placeholder/1200x500/1B2A4A/FFFFFF?text=Image&icon=layers&pattern=grid'; }} />
               {mediaArray.length > 1 && (
                 <>
                   <button onClick={prevImage} className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 dark:bg-sari-dark/90 p-3 shadow-lg hover:scale-110 transition-all rounded-full">

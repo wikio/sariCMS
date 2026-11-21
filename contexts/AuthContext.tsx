@@ -1,7 +1,7 @@
 // contexts/AuthContext.tsx
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import { cmsFetch, CmsError } from '@/lib/cms';
 
 export interface User {
@@ -30,202 +30,133 @@ export interface User {
   locale?: string;
 }
 
+type Registration = Pick<User, 'name' | 'email' | 'type' | 'phone' | 'company' | 'locale'> & {
+  password: string;
+  captchaId?: string;
+  captchaAnswer?: string;
+};
+
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string, type?: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<User | null>;
   logout: () => void;
-  register: (userData: Partial<User> & { password: string; captchaId?: string; captchaAnswer?: string; locale?: string }) => Promise<boolean>;
-  refreshUser: () => void;
+  register: (data: Registration) => Promise<boolean>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const USER_KEY = 'sari_user';
-/**
- * Jeton d'accès de la vitrine.
- *
- * Distinct de `sari_admin_access` : un visiteur connecté au dashboard public
- * n'est pas forcément administrateur, et mélanger les deux ferait fuiter une
- * session admin vers des écrans qui ne la contrôlent pas.
- */
+/** Jeton de la vitrine, distinct de la session du back-office. */
 export const FRONT_TOKEN_KEY = 'sari_front_access';
 
-/** Jeton courant de la vitrine, ou null hors navigateur / hors session. */
 export function frontToken(): string | null {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem(FRONT_TOKEN_KEY);
+  try { return typeof window !== 'undefined' ? localStorage.getItem(FRONT_TOKEN_KEY) : null; }
+  catch { return null; }
 }
-const USERS_REGISTRY_KEY = 'sari_users_registry';
 
-/** Registre local des comptes créés via l'inscription (fallback hors-ligne). */
-function readRegistry(): Array<User & { password: string }> {
-  if (typeof window === 'undefined') return [];
+/** L'identité, le type et la langue viennent du compte associé au jeton, jamais du navigateur. */
+async function fetchProfile(token: string): Promise<User | null> {
+  const u = await cmsFetch<Record<string, unknown>>('/auth/me', { token, timeoutMs: 8000 });
+  if (!u || (typeof u.id !== 'string' && typeof u.id !== 'number') || !String(u.id).trim() ||
+      typeof u.email !== 'string' || !u.email.trim() ||
+      (u.type !== 'client' && u.type !== 'partner' && u.type !== 'candidate' && u.type !== 'admin')) return null;
+  return {
+    id: String(u.id), email: u.email, type: u.type,
+    name: [u.firstName, u.lastName].filter(Boolean).join(' ') || u.email,
+    firstName: String(u.firstName ?? ''), lastName: String(u.lastName ?? ''),
+    phone: u.phone ? String(u.phone) : undefined,
+    company: u.company ? String(u.company) : undefined,
+    locale: u.locale ? String(u.locale) : undefined,
+    address: u.address ? String(u.address) : undefined,
+    country: u.country ? String(u.country) : undefined,
+    wilaya: u.wilaya ? String(u.wilaya) : undefined,
+    position: u.position ? String(u.position) : undefined,
+    avatar: u.avatar ? String(u.avatar) : undefined,
+  };
+}
+
+/** Créer le compte n'ouvre pas une session : seul le serveur d'authentification le peut. */
+async function register(data: Registration): Promise<boolean> {
   try {
-    return JSON.parse(localStorage.getItem(USERS_REGISTRY_KEY) || '[]');
-  } catch {
-    return [];
-  }
-}
-
-function writeRegistry(users: Array<User & { password: string }>) {
-  localStorage.setItem(USERS_REGISTRY_KEY, JSON.stringify(users));
+    const response = await fetch('/api/register', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data),
+    });
+    if (!response.ok) return false;
+    const body = await response.json();
+    return body?.ok === true && !!body.result;
+  } catch { return false; }
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  // Une réponse tardive ne doit pas rouvrir une session fermée ou remplacée dans un autre onglet.
+  const revision = useRef(0);
 
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(USER_KEY);
-      if (stored) {
-        setUser(JSON.parse(stored));
+  const refreshUser = useCallback(async () => {
+    const request = ++revision.current;
+    const token = frontToken();
+    let profile: User | null = null;
+    let rejected = false;
+    if (token) {
+      try {
+        profile = await fetchProfile(token);
+        rejected = !profile;
+      } catch (err) {
+        // Une panne réseau n'authentifie personne, mais permet un nouvel essai au rechargement.
+        rejected = err instanceof CmsError && (err.status === 401 || err.status === 403);
       }
-    } catch {
-      try { localStorage.removeItem(USER_KEY); } catch {}
-    } finally {
-      setIsLoading(false);
     }
-    // Synchronise les onglets : si l'utilisateur se connecte/déconnecte ailleurs, on suit.
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === USER_KEY) {
-        try {
-          setUser(e.newValue ? JSON.parse(e.newValue) : null);
-        } catch {
-          setUser(null);
-        }
-      }
-    };
-    window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
+    if (request !== revision.current || token !== frontToken()) return;
+    if (rejected) localStorage.removeItem(FRONT_TOKEN_KEY);
+    setUser(profile);
+    setIsLoading(false);
   }, []);
 
-  const persist = (u: User) => {
-    setUser(u);
-    localStorage.setItem(USER_KEY, JSON.stringify(u));
-  };
-
-  const refreshUser = () => {
-    const stored = localStorage.getItem(USER_KEY);
-    if (stored) { try { setUser(JSON.parse(stored)); } catch { /* */ } }
-  };
-
-  /** Authentification : backend JWT d'abord, sinon fallback démo/local. */
-  const login = async (email: string, password: string, type?: string): Promise<boolean> => {
-    const normalized = email.trim().toLowerCase();
-
-    // 1. Backend (Nest) — /auth/login
+  useEffect(() => {
+    // Migration des anciens postes. Ni le profil en cache ni l'ancien annuaire
+    // (qui contenait des mots de passe) ne doivent servir à ouvrir une session.
     try {
-      const res = await cmsFetch<{ accessToken?: string; user?: Record<string, unknown>; requires2fa?: boolean }>(
-        '/auth/login',
-        { method: 'POST', json: { email: normalized, password }, timeoutMs: 8000 },
-      );
-      if (res?.accessToken && res.user) {
-        const u = res.user as Record<string, unknown>;
-        localStorage.setItem(FRONT_TOKEN_KEY, res.accessToken);
-        persist({
-          id: String(u.id ?? ''),
-          name: [u.firstName, u.lastName].filter(Boolean).join(' ') || String(u.email),
-          firstName: String(u.firstName ?? ''),
-          lastName: String(u.lastName ?? ''),
-          email: String(u.email),
-          type: (u.type as User['type']) || (type as User['type']) || 'client',
-          phone: u.phone ? String(u.phone) : undefined,
-          company: u.company ? String(u.company) : undefined,
-          locale: u.locale ? String(u.locale) : undefined,
-          address: u.address ? String(u.address) : undefined,
-          country: u.country ? String(u.country) : undefined,
-          wilaya: u.wilaya ? String(u.wilaya) : undefined,
-          position: u.position ? String(u.position) : undefined,
-          avatar: u.avatar ? String(u.avatar) : undefined,
-        });
-        return true;
-      }
-    } catch {
-      // API hors-ligne → fallback local
-    }
-
-    // 2. Comptes de démo (dev)
-    const demoUsers: Record<string, User & { password: string }> = {
-      'client@sari.dz': { id: '1', name: 'Client Demo', email: 'client@sari.dz', type: 'client', password: 'demo123' },
-      'partner@sari.dz': { id: '2', name: 'Partner Demo', email: 'partner@sari.dz', type: 'partner', password: 'demo123' },
-      'candidate@sari.dz': { id: '3', name: 'Candidate Demo', email: 'candidate@sari.dz', type: 'candidate', password: 'demo123' },
+      localStorage.removeItem('sari_user');
+      localStorage.removeItem('sari_users_registry');
+    } catch { /* Le stockage peut être désactivé. */ }
+    const restore = () => {
+      setUser(null);
+      setIsLoading(true);
+      void refreshUser();
     };
-    const demo = demoUsers[normalized];
-    if (demo && demo.password === password) {
-      const { password: _pw, ...safe } = demo;
-      persist(safe);
-      return true;
-    }
+    restore();
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === FRONT_TOKEN_KEY || event.key === null) restore();
+    };
+    window.addEventListener('storage', onStorage);
+    return () => { ++revision.current; window.removeEventListener('storage', onStorage); };
+  }, [refreshUser]);
 
-    // 3. Comptes inscrits localement
-    const registry = readRegistry();
-    const found = registry.find((u) => u.email.toLowerCase() === normalized);
-    if (found && found.password === password) {
-      const { password: _pw, ...safe } = found;
-      persist(safe);
-      return true;
-    }
-
-    return false;
+  const login = async (email: string, password: string): Promise<User | null> => {
+    const request = ++revision.current;
+    const previousToken = frontToken();
+    try {
+      const res = await cmsFetch<{ accessToken?: string; requires2fa?: boolean }>('/auth/login', {
+        method: 'POST', json: { email: email.trim().toLowerCase(), password }, timeoutMs: 8000,
+      });
+      if (res?.requires2fa || !res?.accessToken) return null;
+      const profile = await fetchProfile(res.accessToken);
+      if (!profile || request !== revision.current || previousToken !== frontToken()) return null;
+      localStorage.setItem(FRONT_TOKEN_KEY, res.accessToken);
+      setUser(profile);
+      return profile;
+    } catch { return null; }
+    finally { if (request === revision.current) setIsLoading(false); }
   };
 
   const logout = () => {
-    setUser(null);
-    localStorage.removeItem(USER_KEY);
+    ++revision.current;
     localStorage.removeItem(FRONT_TOKEN_KEY);
-  };
-
-  /** Inscription : backend /users d'abord, sinon registre local. */
-  const register = async (userData: Partial<User> & { password: string; captchaId?: string; captchaAnswer?: string; locale?: string }): Promise<boolean> => {
-    const email = String(userData.email ?? '');
-    const fullName = userData.name || [userData.firstName, userData.lastName].filter(Boolean).join(' ');
-    const [firstName = '', lastName = ''] = (userData.name || '').split(' ');
-    const newUser: User = {
-      id: userData.id || Date.now().toString(),
-      name: fullName || email,
-      firstName: userData.firstName || firstName,
-      lastName: userData.lastName || lastName || fullName,
-      email,
-      type: userData.type || 'client',
-      phone: userData.phone,
-      company: userData.company,
-    };
-
-    // Backend via /api/register : cette route serveur applique la limite de
-    // débit, vérifie le captcha, crée le compte puis envoie `user_welcome` —
-    // autant de choses qu'un appel direct du navigateur ne pouvait pas faire.
-    try {
-      await fetch('/api/register', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          name: newUser.name,
-          email: userData.email,
-          password: userData.password,
-          type: newUser.type,
-          phone: newUser.phone,
-          company: newUser.company,
-          locale: userData.locale || 'fr',
-          captchaId: userData.captchaId,
-          captchaAnswer: userData.captchaAnswer,
-        }),
-      });
-    } catch {
-      // API hors-ligne ou validations Nest → on continue en local.
-    }
-
-    // Registre local (fallback + persistance multi-comptes).
-    const registry = readRegistry();
-    const existingIdx = registry.findIndex((u) => u.email.toLowerCase() === email.toLowerCase());
-    if (existingIdx >= 0) registry[existingIdx] = { ...newUser, password: userData.password };
-    else registry.push({ ...newUser, password: userData.password });
-    writeRegistry(registry);
-
-    persist(newUser);
-    return true;
+    setUser(null);
+    setIsLoading(false);
   };
 
   return (

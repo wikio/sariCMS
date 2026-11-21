@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useTranslations } from 'next-intl';
-import { LayoutGrid, List as ListIcon, MessageSquareText, Plus, Trash2, User } from 'lucide-react';
+import Link from 'next/link';
+import { useLocale, useTranslations } from 'next-intl';
+import { CalendarCheck, ExternalLink, LayoutGrid, List as ListIcon, MessageSquareText, Plus, Trash2, User } from 'lucide-react';
+import { listEventRegistrations, type EventRegistration } from '@/lib/event-registrations-admin';
 import PixelGridLoader from '@/components/admin/PixelGridLoader';
 import SearchField from '@/components/admin/SearchField';
 import { useToast } from '@/components/admin/Toast';
@@ -38,6 +40,7 @@ export default function PeopleDesk({
 }) {
   const t = useTranslations('admin.people');
   const tc = useTranslations('admin.common');
+  const tu = useTranslations('admin.users');
   const { showToast } = useToast();
   const [rows, setRows] = useState<Person[]>([]);
   const [loading, setLoading] = useState(true);
@@ -90,7 +93,7 @@ export default function PeopleDesk({
       await load();
       if (saved?.id) setRows((prev) => prev.some((p) => p.id === saved.id) ? prev : [saved, ...prev]);
     } catch (err) {
-      showToast(err instanceof CmsError ? err.message : 'Enregistrement impossible', 'error');
+      showToast(err instanceof CmsError ? err.message : tc('saveError'), 'error');
     } finally {
       setSaving(false);
     }
@@ -103,7 +106,7 @@ export default function PeopleDesk({
       setRows((prev) => prev.filter((r) => r.id !== id));
       showToast(t("deleted"), 'success');
     } catch (err) {
-      showToast(err instanceof CmsError ? err.message : 'Erreur', 'error');
+      showToast(err instanceof CmsError ? err.message : tc('error'), 'error');
     }
   };
 
@@ -113,14 +116,14 @@ export default function PeopleDesk({
     <div className="space-y-4">
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-3 ad-rise">
         <div>
-          <div className="text-[11px] uppercase tracking-[0.22em] font-black" style={{ color: 'var(--ad-muted)' }}>CRM</div>
+          <div className="text-[11px] uppercase tracking-[0.22em] font-black" style={{ color: 'var(--ad-muted)' }}>{t('crmBreadcrumb')}</div>
           <h1 className="text-3xl font-black tracking-tight">{title}</h1>
-          <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>{shown.length} {singular}(s)</p>
+          <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>{tc('recordCount', { count: shown.length })}</p>
         </div>
         <div className="flex gap-2">
           <div className="flex" style={{ border: '1px solid var(--ad-line)' }}>
-            <button type="button" className={`ad-btn ad-btn-icon ${view === 'list' ? 'ad-btn-primary' : 'ad-btn-ghost'}`} onClick={() => setView('list')}><ListIcon className="w-4 h-4" /></button>
-            <button type="button" className={`ad-btn ad-btn-icon ${view === 'cards' ? 'ad-btn-primary' : 'ad-btn-ghost'}`} onClick={() => setView('cards')}><LayoutGrid className="w-4 h-4" /></button>
+            <button type="button" className={`ad-btn ad-btn-icon ${view === 'list' ? 'ad-btn-primary' : 'ad-btn-ghost'}`} aria-label={tu('listView')} onClick={() => setView('list')}><ListIcon className="w-4 h-4" /></button>
+            <button type="button" className={`ad-btn ad-btn-icon ${view === 'cards' ? 'ad-btn-primary' : 'ad-btn-ghost'}`} aria-label={tu('cardsView')} onClick={() => setView('cards')}><LayoutGrid className="w-4 h-4" /></button>
           </div>
           <button className="ad-btn ad-btn-primary" onClick={() => setEditing({ type, status: 'active', firstName: '', lastName: '', email: '' })}>
             <Plus className="w-4 h-4" /> {t("newRecord", {singular})}
@@ -158,9 +161,9 @@ export default function PeopleDesk({
                   <td className="text-sm" style={{ color: 'var(--ad-muted)' }}>{p.email}</td>
                   <td>{type === 'candidate' ? String(p.position || '—') : String(p.company || '—')}</td>
                   <td><GeoBadge ip={p.ip} country={p.country} /></td>
-                  <td><span className="ad-chip ad-chip-acc">{String(p.status || '')}</span></td>
+                  <td><span className="ad-chip ad-chip-acc">{p.status && t.has(String(p.status)) ? t(String(p.status)) : String(p.status || '—')}</span></td>
                   <td className="text-right whitespace-nowrap">
-                    <button className="ad-btn ad-btn-icon ad-btn-ghost" title="Message" onClick={() => setMessageTo(p)}><MessageSquareText className="w-4 h-4" /></button>
+                    <button className="ad-btn ad-btn-icon ad-btn-ghost" title={t('message')} onClick={() => setMessageTo(p)}><MessageSquareText className="w-4 h-4" /></button>
                     <button className="ad-btn ad-btn-ghost" onClick={() => setEditing({ ...p, notes: p.id ? localStorage.getItem(`sari_notes_${p.id}`) || '' : '' })}>{t("open")}</button>
                     {p.id && <button className="ad-btn ad-btn-icon ad-btn-danger ml-1" onClick={() => remove(String(p.id))}><Trash2 className="w-4 h-4" /></button>}
                   </td>
@@ -186,7 +189,7 @@ export default function PeopleDesk({
               <p className="text-sm">{type === 'candidate' ? p.position : p.company}</p>
               <div className="flex gap-1">
                 <button className="ad-btn ad-btn-ghost" onClick={() => setEditing({ ...p })}>{t("open")}</button>
-                <button className="ad-btn ad-btn-icon ad-btn-ghost" title="Message" onClick={() => setMessageTo(p)}><MessageSquareText className="w-4 h-4" /></button>
+                <button className="ad-btn ad-btn-icon ad-btn-ghost" title={t('message')} onClick={() => setMessageTo(p)}><MessageSquareText className="w-4 h-4" /></button>
                 {p.id && <button className="ad-btn ad-btn-icon ad-btn-danger ml-auto" onClick={() => remove(String(p.id))}><Trash2 className="w-4 h-4" /></button>}
               </div>
             </article>
@@ -209,7 +212,7 @@ export default function PeopleDesk({
               <Field label={t("addressIp")} value={String(editing.ip || '')} onChange={(v) => setEditing({ ...editing, ip: v })} />
               {editing.ip && (
                 <label className="space-y-1.5">
-                  <span className="text-[11px] font-black uppercase tracking-[0.14em]" style={{ color: 'var(--ad-muted)' }}>Pays</span>
+                  <span className="text-[11px] font-black uppercase tracking-[0.14em]" style={{ color: 'var(--ad-muted)' }}>{t('country')}</span>
                   <GeoBadge ip={String(editing.ip)} />
                 </label>
               )}
@@ -246,43 +249,103 @@ export default function PeopleDesk({
 }
 
 function ClientStats({ email }: { email: string }) {
+  const locale = useLocale();
   const t = useTranslations('admin.people');
+  const te = useTranslations('admin.eventRegistrations');
+  const commerce = useTranslations('admin.commerce');
+  const orderStatus = (status: string) => {
+    const key = 'status' + status.split('_').map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join('');
+    return commerce.has(key) ? commerce(key) : status;
+  };
+  const [eventRegs, setEventRegs] = useState<EventRegistration[]>([]);
+
+  useEffect(() => {
+    if (!email) return;
+    let cancelled = false;
+    listEventRegistrations({ email })
+      .then((res) => {
+        if (!cancelled) setEventRegs(res.rows || []);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [email]);
+
   const orders = loadOrders().filter((o) => o.email === email);
   const quotes = loadQuotes().filter((q) => q.email === email);
   const delivered = orders.filter((o) => o.status === 'delivered').length;
   const inProgress = orders.filter((o) => o.status === 'processing' || o.status === 'shipped').length;
   const totalSpent = orders.filter((o) => o.status !== 'cancelled').reduce((s, o) => s + Number(o.total || 0), 0);
   return (
-    <div className="ad-card p-3 space-y-2 text-sm ad-rise">
-      <div className="font-black flex items-center justify-between">
-        <span>{t("commercialActivity")}</span>
-        <span className="ad-chip ad-chip-ok">{delivered} {t("delivered")}</span>
-      </div>
-      <div className="grid grid-cols-3 gap-2 text-center">
-        <div className="ad-card p-2" style={{ background: 'var(--ad-surface-2)' }}>
-          <div className="text-xl font-black">{orders.length}</div>
-          <div className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--ad-muted)' }}>{t("orders")}</div>
+    <div className="space-y-3">
+      <div className="ad-card p-3 space-y-2 text-sm ad-rise">
+        <div className="font-black flex items-center justify-between">
+          <span>{t("commercialActivity")}</span>
+          <span className="ad-chip ad-chip-ok">{delivered} {t("delivered")}</span>
         </div>
-        <div className="ad-card p-2" style={{ background: 'var(--ad-surface-2)' }}>
-          <div className="text-xl font-black">{quotes.length}</div>
-          <div className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--ad-muted)' }}>{t("quotes")}</div>
-        </div>
-        <div className="ad-card p-2" style={{ background: 'var(--ad-surface-2)' }}>
-          <div className="text-xl font-black">{totalSpent.toLocaleString()}</div>
-          <div className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--ad-muted)' }}>{t("cumulativeDa")}</div>
-        </div>
-      </div>
-      <div className="text-xs" style={{ color: 'var(--ad-muted)' }}>
-        {t("inProgressValue", {count: String(inProgress), value: money(orderRevenue(orders))})}
-      </div>
-      <div className="space-y-1">
-        {orders.slice(0, 4).map((o) => (
-          <div key={o.id} className="flex items-center justify-between border-b border-[var(--ad-line)] pb-1">
-            <span>#{o.id} <span style={{ color: 'var(--ad-muted)' }}><DateText value={o.date} dateOnly /></span></span>
-            <span className={`ad-chip ${o.status === 'delivered' ? 'ad-chip-ok' : o.status === 'cancelled' ? 'ad-chip-warn' : 'ad-chip-acc'}`}>{o.status}</span>
-            <span className="font-bold tabular-nums">{money(Number(o.total || 0))}</span>
+        <div className="grid grid-cols-3 gap-2 text-center">
+          <div className="ad-card p-2" style={{ background: 'var(--ad-surface-2)' }}>
+            <div className="text-xl font-black">{orders.length}</div>
+            <div className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--ad-muted)' }}>{t("orders")}</div>
           </div>
-        ))}
+          <div className="ad-card p-2" style={{ background: 'var(--ad-surface-2)' }}>
+            <div className="text-xl font-black">{quotes.length}</div>
+            <div className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--ad-muted)' }}>{t("quotes")}</div>
+          </div>
+          <div className="ad-card p-2" style={{ background: 'var(--ad-surface-2)' }}>
+            <div className="text-xl font-black">{totalSpent.toLocaleString(locale)}</div>
+            <div className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--ad-muted)' }}>{t("cumulativeDa")}</div>
+          </div>
+        </div>
+        <div className="text-xs" style={{ color: 'var(--ad-muted)' }}>
+          {t("inProgressValue", {count: String(inProgress), value: money(orderRevenue(orders))})}
+        </div>
+        <div className="space-y-1">
+          {orders.slice(0, 4).map((o) => (
+            <div key={o.id} className="flex items-center justify-between border-b border-[var(--ad-line)] pb-1">
+              <span>#{o.id} <span style={{ color: 'var(--ad-muted)' }}><DateText value={o.date} dateOnly /></span></span>
+              <span className={`ad-chip ${o.status === 'delivered' ? 'ad-chip-ok' : o.status === 'cancelled' ? 'ad-chip-warn' : 'ad-chip-acc'}`}>{orderStatus(o.status)}</span>
+              <span className="font-bold tabular-nums">{money(Number(o.total || 0))}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Candidatures / participations aux événements associées par e-mail */}
+      <div className="ad-card p-3 space-y-2 text-sm ad-rise">
+        <div className="font-black flex items-center justify-between gap-2">
+          <span className="inline-flex items-center gap-1.5">
+            <CalendarCheck className="w-4 h-4" style={{ color: 'var(--ad-accent)' }} />
+            {te('title')}
+          </span>
+          <Link
+            href={`/${locale}/admin/events/registrations?search=${encodeURIComponent(email)}`}
+            className="ad-chip ad-chip-acc inline-flex items-center gap-1 hover:underline"
+          >
+            {eventRegs.length} <ExternalLink className="w-3 h-3" />
+          </Link>
+        </div>
+        {eventRegs.length === 0 ? (
+          <div className="text-xs" style={{ color: 'var(--ad-muted)' }}>{te('empty')}</div>
+        ) : (
+          <div className="space-y-1.5">
+            {eventRegs.slice(0, 6).map((reg) => (
+              <div key={reg.id} className="flex items-center justify-between gap-2 border-b border-[var(--ad-line)] pb-1">
+                <div className="min-w-0">
+                  <div className="font-semibold truncate">{reg.eventTitle}</div>
+                  <div className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>
+                    <DateText value={reg.eventDate || reg.createdAt} dateOnly />
+                    {reg.eventLocation ? ` · ${reg.eventLocation}` : ''}
+                  </div>
+                </div>
+                <span className={`ad-chip shrink-0 ${reg.status === 'attended' ? 'ad-chip-ok' : reg.status === 'confirmed' ? 'ad-chip-acc' : reg.status === 'rejected' || reg.status === 'cancelled' ? 'ad-chip-warn' : 'ad-chip-mute'}`}>
+                  {te(`status_${reg.status}`)}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

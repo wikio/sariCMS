@@ -20,5 +20,13 @@
   "deactivate": "Disable",
   "footnote": "A code returned by the API but missing here is never defaulted to “valid”: the public page reports the anomaly and the administrator adds the row. Saving replaces the whole catalogue.",
   "activated": "Code re-enabled.",
-  "deactivated": "Code disabled — the API must no longer return it, or the page will report an anomaly."
+  "deactivated": "Code disabled — the API must no longer return it, or the page will report an anomaly.",
+  "system": "System",
+  "demoTitle": "Demo codes on the public page",
+  "shown": "Shown",
+  "hidden": "Hidden",
+  "demoInfo": "Controls the examples below the form at {path}. You can also change this in <settings>Settings → Document verification</settings>.",
+  "demoHiddenHint": "The six examples are currently hidden on the public site.",
+  "demoShownToast": "Demo codes are now visible on the public site.",
+  "demoHiddenToast": "Demo codes are now hidden on the public site."
 }

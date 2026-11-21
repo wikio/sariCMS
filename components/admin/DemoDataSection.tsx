@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 import { useCallback, useEffect, useState } from 'react';
 import { AlertTriangle, DatabaseZap, DownloadCloud, FlaskConical, Play, RefreshCw } from 'lucide-react';
 import { useToast } from '@/components/admin/Toast';
@@ -28,6 +30,7 @@ import { seedDemoWorkspace } from '@/lib/demo-seed';
  * existe, parce qu'un environnement de recette doit pouvoir forcer.
  */
 export default function DemoDataSection() {
+  const t = useTranslations('admin.demoSettings');
   const { showToast } = useToast();
   const [driver, setDriver] = useState('');
   const [connected, setConnected] = useState(false);
@@ -55,10 +58,10 @@ export default function DemoDataSection() {
     try {
       const result = await cmsImportCatalog(replace);
       const total = Object.values(result.imported || {}).reduce((a, b) => a + Number(b), 0);
-      showToast(total ? `${total} fiches importées` : 'Catalogue déjà présent', 'success');
+      showToast(total ? t('imported', { count: total }) : t('alreadyPresent'), 'success');
       await refresh();
     } catch (err) {
-      showToast(err instanceof CmsError ? err.message : 'Import impossible', 'error');
+      showToast(err instanceof CmsError ? err.message : t('importFailed'), 'error');
     } finally {
       setBusy(false);
     }
@@ -76,14 +79,13 @@ export default function DemoDataSection() {
         setRefused({ reason: result.reason, orders: result.orders, quotes: result.quotes });
         showToast(
           result.reason === 'base-occupée'
-            ? 'Base déjà peuplée : amorçage refusé'
-            : 'Compteurs indisponibles : amorçage refusé',
+            ? t('occupied')
+            : t('unknownCounts'),
           'warning',
         );
       } else {
         showToast(
-          `Jeu de démonstration posé : ${result.orders} commandes, ${result.quotes} devis, ` +
-            `${result.applications} candidatures, ${result.people} fiches CRM, ${result.imported} fiches de catalogue`,
+          t('seeded', { orders: result.orders, quotes: result.quotes, applications: result.applications, people: result.people, imported: result.imported }),
           'success',
         );
         setArmed(false);
@@ -91,7 +93,7 @@ export default function DemoDataSection() {
         await refresh();
       }
     } catch {
-      showToast('Amorçage partiel (API injoignable pour le catalogue ou le CRM)', 'warning');
+      showToast(t('partial'), 'warning');
     } finally {
       setBusy(false);
     }
@@ -103,50 +105,44 @@ export default function DemoDataSection() {
     <div className="space-y-4">
       <section className="ad-card p-5">
         <h3 className="ad-section-title">
-          <DownloadCloud className="w-4 h-4" /> Import du catalogue
+          <DownloadCloud className="w-4 h-4" /> {t('importTitle')}
         </h3>
         <p className="text-sm mb-1" style={{ color: 'var(--ad-muted)' }}>
-          Repart des jeux <code>data/fr|en|ar</code> pour alimenter produits, services, actualités et pages.
-          « Réimporter » remplace les fiches existantes par le contenu des fichiers : à ne pas lancer après
-          une semaine de saisie à la main, le fichier ne connaît pas vos modifications.
+          {t('importHint', { path: 'data/fr|en|ar' })}
         </p>
         <p className="text-xs mb-4" style={{ color: 'var(--ad-muted)' }}>
-          API {connected ? `connectée (${driver || 'sans pilote annoncé'})` : 'hors ligne — import indisponible'}.
+          {connected ? t('apiOnline', { driver: driver || t('unknown') }) : t('apiOffline')}
         </p>
         <div className="flex flex-wrap gap-2">
           <button className="ad-btn ad-btn-primary" disabled={busy || !connected} onClick={() => importCatalog(false)}>
-            <Play className="w-4 h-4" /> {busy ? 'Import…' : 'Importer ce qui manque'}
+            <Play className="w-4 h-4" /> {busy ? t('importing') : t('importMissing')}
           </button>
           <button className="ad-btn ad-btn-ghost" disabled={busy || !connected} onClick={() => importCatalog(true)}>
-            <RefreshCw className="w-4 h-4" /> Réimporter en remplaçant
+            <RefreshCw className="w-4 h-4" /> {t('replace')}
           </button>
         </div>
       </section>
 
       <section className="ad-card p-5">
         <h3 className="ad-section-title">
-          <FlaskConical className="w-4 h-4" /> Jeu de démonstration
+          <FlaskConical className="w-4 h-4" /> {t('demoTitle')}
         </h3>
         <p className="text-sm mb-4" style={{ color: 'var(--ad-muted)' }}>
-          Commandes, devis, candidatures et fiches CRM de vitrine, pour une maquette ou une recette.
-          Cette écriture n'est pas anodine : les lignes partent en base comme une saisie réelle, avec les
-          mêmes écrans et les mêmes totaux.
+          {t('intro')}
         </p>
 
         <div className="ad-chip mb-4" style={{ marginRight: 8 }}>
-          <DatabaseZap className="w-3 h-3" /> pilote&nbsp;: {driver || 'inconnu'}
+          <DatabaseZap className="w-3 h-3" /> {t('driver', { driver: driver || t('unknown') })}
         </div>
         <div className={`ad-chip mb-4 ${seeded ? 'ad-chip-warn' : 'ad-chip-ok'}`}>
-          base&nbsp;: {Number(counts.orders) || 0} commande(s), {Number(counts.quotes) || 0} devis
+          {t('dbCount', { orders: Number(counts.orders) || 0, quotes: Number(counts.quotes) || 0 })}
         </div>
 
         {seeded > 0 && (
           <p className="text-sm mb-4 flex items-start gap-2" style={{ color: 'var(--ad-warn, #b45309)' }}>
             <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
             <span>
-              Des lignes existent déjà. Les compteurs ci-dessus viennent de la base, pas du cache du
-              navigateur : c'est donc bien l'environnement partagé qui est peuplé, et le jeu de démo se
-              mélangerait au chiffre d'affaires réel.
+              {t('warning')}
             </span>
           </p>
         )}
@@ -154,39 +150,33 @@ export default function DemoDataSection() {
         <label className="flex items-start gap-2 text-sm mb-3 cursor-pointer">
           <input type="checkbox" checked={armed} onChange={(e) => setArmed(e.target.checked)} />
           <span>
-            J'écris dans un environnement de test, pas dans la base du client. À cocher à chaque séance —
-            l'état n'est pas conservé.
+            {t('confirm')}
           </span>
         </label>
         {armed && seeded > 0 && (
           <label className="flex items-start gap-2 text-sm mb-3 cursor-pointer">
             <input type="checkbox" checked={force} onChange={(e) => setForce(e.target.checked)} />
-            <span>Forcer malgré les {Number(counts.orders) || 0} commandes et {Number(counts.quotes) || 0} devis déjà présents.</span>
+            <span>{t('force', { orders: Number(counts.orders) || 0, quotes: Number(counts.quotes) || 0 })}</span>
           </label>
         )}
 
         <button className="ad-btn ad-btn-lime" disabled={busy || !armed || !connected} onClick={seedDemo}>
-          {busy ? 'Chargement…' : 'Charger le jeu de démonstration'}
+          {busy ? t('loading') : t('loadDemo')}
         </button>
         {!connected && (
           <p className="text-xs mt-2" style={{ color: 'var(--ad-muted)' }}>
-            L'API ne répond pas : le bouton reste inactif, pour ne pas écrire un demi-jeu dans le seul cache local.
+            {t('offlineHint')}
           </p>
         )}
         {refused && (
           <p className="text-sm mt-3" style={{ color: 'var(--ad-warn, #b45309)' }}>
             {refused.reason === 'base-occupée' ? (
               <>
-                Amorçage refusé : la base contient {refused.orders} commande(s) et {refused.quotes} devis.
-                Cochez « Forcer » ci-dessus si cet environnement est bien un bac à sable.
+                {t('refused', { orders: refused.orders, quotes: refused.quotes })}
               </>
             ) : (
               <>
-                Amorçage refusé : les compteurs de commandes et de devis n'ont pas pu être lus
-                (table absente de la base, ou droits insuffisants sur « settings »). Une base dont
-                on ne sait rien est traitée comme une base à risque — vérifiez l'état, ou créez la
-                table (« npm run db:schema-check » puis « db:schema-fix » dans backend/), puis
-                cochez « Forcer » en connaissance de cause.
+                {t('unavailableHint')}
               </>
             )}
           </p>
