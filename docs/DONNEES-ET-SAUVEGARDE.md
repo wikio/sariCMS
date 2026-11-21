@@ -6,12 +6,7 @@ qui n'est que dans le navigateur, et quoi emporter dans une sauvegarde.
 Tout ce qui suit a été relevé dans le code, pas déduit. Les chemins et les noms
 de tables sont ceux du dépôt au moment de la rédaction.
 
-> **Mise à jour.** Les coupons et les règles de taxes sont passés en base
-> (`coupons`, `tax_rules`) avec les modules `CouponsModule` et `TaxesModule`. Ils
-> étaient les deux seuls occupants *importants* du troisième étage décrit
-> ci-dessous. Le reste — devises, taxonomies, modes de paiement, enregistrements
-> de paiement, réglages de l'écran Paramètres — y est toujours, et le §4 reste
-> valable pour eux.
+> **Procédure actuelle :** voir [sauvegarder et tester une restauration](INSTALLATION-DEPLOIEMENT-PRODUCTION.md#10-sauvegarder-et-prouver-quon-sait-restaurer). Coupons, taxes, relevés et documents `doc_*` ont désormais des emplacements en base (voir tableau). Cela ne transforme pas les caches du navigateur en sauvegardes : contrôler la synchronisation depuis un autre poste.
 
 ---
 

@@ -35,24 +35,19 @@ Le seed ne contient **aucune fiche catalogue réelle** : rôles, permissions, un
 
 ## Prérequis
 
-- Node.js 20+
+- Node.js 22.13+ (série 22 LTS)
 - Pour MySQL / PostgreSQL : serveur SQL + Prisma CLI
 - Pour la démo : rien d’autre (`DB_DRIVER=json`)
 
 ```bash
 cd backend
-cp .env.example .env          # déjà fourni en dev
-npm install
-npm run seed                  # structure vide + admin
+cp -n .env.example .env       # renseigner SEED_ADMIN_EMAIL et un mot de passe unique (16+ caractères)
+npm ci
+npm run seed                  # première installation, magasin neuf uniquement
 npm run start:dev             # http://localhost:3001/api/v1/docs
 ```
 
-Compte seed (à changer en production) :
-
-```
-SEED_ADMIN_EMAIL=admin@sarisysteme.com
-SEED_ADMIN_PASSWORD=ChangeMe_Sari2026!
-```
+Pour la production, suivre le [guide du site complet](../docs/INSTALLATION-DEPLOIEMENT-PRODUCTION.md) : création MySQL et du compte, génération Prisma, services, sauvegardes et procédure de mise à jour. Le seed recommandé ne fournit pas de mot de passe. Ne pas importer les comptes de démonstration des anciens jeux SQL.
 
 ```bash
 npm test                      # BaseCrudService + News + Events + Products + groupe 3

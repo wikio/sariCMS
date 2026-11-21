@@ -1,0 +1,23 @@
+[Unit]
+Description=sariCMS — vitrine et administration Next.js
+After=network-online.target saricms-api.service
+Wants=saricms-api.service
+
+[Service]
+User=saricms
+Group=saricms
+WorkingDirectory=/srv/saricms/current
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+EnvironmentFile=/etc/saricms/web.env
+ExecStart=/usr/bin/env node node_modules/next/dist/bin/next start --hostname 127.0.0.1 --port 3000
+Restart=on-failure
+RestartSec=5
+UMask=0027
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/srv/saricms/shared/data /srv/saricms/shared/messages /srv/saricms/shared/translate /srv/saricms/shared/logs /srv/saricms/shared/public/uploads /srv/saricms/shared/public/canvas /srv/saricms/current/.next/cache
+
+[Install]
+WantedBy=multi-user.target
