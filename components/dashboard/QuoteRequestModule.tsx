@@ -264,7 +264,7 @@ function QuoteWizard({ user, locale, onCancel, onDone }: { user: User; locale: s
   const inputCls = (key: string) =>
     `w-full px-4 py-3 border rounded-lg outline-none transition-colors dark:bg-[#111111] dark:text-white ${errors[key] ? 'border-red-500' : 'border-gray-300 dark:border-gray-700 focus:border-sari-blue'}`;
 
-  const FieldError = ({ k }: { k: string }) => errors[k] ? (
+  const fieldError = (k: string) => errors[k] ? (
     <p className="flex items-center gap-1 text-xs text-red-500 mt-1"><AlertCircle className="w-3.5 h-3.5" /> {errors[k]}</p>
   ) : null;
 
@@ -380,13 +380,13 @@ function QuoteWizard({ user, locale, onCancel, onDone }: { user: User; locale: s
                     <div>
                       <input value={l.name} onChange={(e) => patchLine(l.id, { name: e.target.value })} placeholder={t('productName')}
                         className={inputCls(`line-${i}-name`)} />
-                      <FieldError k={`line-${i}-name`} />
+                      {fieldError(`line-${i}-name`)}
                     </div>
                     <div className="flex gap-2">
                       <div className="flex-1">
                         <input type="number" min={1} value={l.quantity} onChange={(e) => patchLine(l.id, { quantity: Number(e.target.value) })}
                           placeholder={t('quantity')} className={inputCls(`line-${i}-qty`)} />
-                        <FieldError k={`line-${i}-qty`} />
+                        {fieldError(`line-${i}-qty`)}
                       </div>
                       <select value={l.unit || 'pièce'} onChange={(e) => patchLine(l.id, { unit: e.target.value })} className="ad-select w-28">
                         {QUOTE_UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
@@ -401,7 +401,7 @@ function QuoteWizard({ user, locale, onCancel, onDone }: { user: User; locale: s
                         <input type="file" className="hidden" onChange={(e) => { patchLine(l.id, { attachment: e.target.files?.[0]?.name || '' }); setErrors((p) => { const { [`line-${i}-att`]: _x, ...rest } = p; return rest; }); }} />
                         {l.attachment || t('attachFile')}
                       </label>
-                      <FieldError k={`line-${i}-att`} />
+                      {fieldError(`line-${i}-att`)}
                     </div>
                   )}
                 </div>
@@ -411,7 +411,7 @@ function QuoteWizard({ user, locale, onCancel, onDone }: { user: User; locale: s
             <button onClick={addSpecial} className="w-full border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg py-3 text-gray-500 hover:border-sari-blue hover:text-sari-blue transition-colors inline-flex items-center justify-center gap-2">
               <Plus className="w-4 h-4" /> {t('addSpecial')}
             </button>
-            <FieldError k="step1" />
+            {fieldError('step1')}
           </div>
         )}
 
@@ -428,11 +428,11 @@ function QuoteWizard({ user, locale, onCancel, onDone }: { user: User; locale: s
                   </button>
                 ))}
               </div>
-              <FieldError k="nature" />
+              {fieldError('nature')}
               {nature === 'autre' && (
                 <div className="mt-2">
                   <input value={natureOther} onChange={(e) => setNatureOther(e.target.value)} placeholder={t('natureOther')} className={inputCls('natureOther')} />
-                  <FieldError k="natureOther" />
+                  {fieldError('natureOther')}
                 </div>
               )}
             </div>
@@ -469,13 +469,13 @@ function QuoteWizard({ user, locale, onCancel, onDone }: { user: User; locale: s
                 <label className="block text-sm font-bold text-sari-dark dark:text-white mb-2 flex items-center gap-2"><Phone className="w-4 h-4 text-sari-blue" /> {t('phone')} <span className="text-red-500">*</span></label>
                 <input value={contact.phone} onChange={(e) => { setContact({ ...contact, phone: e.target.value }); setErrors((p) => { const { phone: _n, ...r } = p; return r; }); }} className={inputCls('phone')} />
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('phoneHint')}</p>
-                <FieldError k="phone" />
+                {fieldError('phone')}
               </div>
               <div>
                 <label className="block text-sm font-bold text-sari-dark dark:text-white mb-2 flex items-center gap-2"><Mail className="w-4 h-4 text-sari-blue" /> {t('email')} <span className="text-red-500">*</span></label>
                 <input type="email" value={contact.email} onChange={(e) => { setContact({ ...contact, email: e.target.value }); setErrors((p) => { const { email: _n, ...r } = p; return r; }); }} className={inputCls('email')} />
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('emailHint')}</p>
-                <FieldError k="email" />
+                {fieldError('email')}
               </div>
             </div>
             {/*
@@ -492,7 +492,7 @@ function QuoteWizard({ user, locale, onCancel, onDone }: { user: User; locale: s
                 className={`${inputCls('address')} resize-y`}
               />
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('addressHint')}</p>
-              <FieldError k="address" />
+              {fieldError('address')}
             </div>
             <div className="md:max-w-sm">
               <label className="block text-sm font-bold text-sari-dark dark:text-white mb-2 flex items-center gap-2"><Globe className="w-4 h-4 text-sari-blue" /> {t('country')} <span className="text-red-500">*</span></label>
@@ -503,7 +503,7 @@ function QuoteWizard({ user, locale, onCancel, onDone }: { user: User; locale: s
                 error={Boolean(errors.country)}
               />
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('countryHint')}</p>
-              <FieldError k="country" />
+              {fieldError('country')}
             </div>
           </div>
         )}
@@ -566,7 +566,7 @@ function QuoteWizard({ user, locale, onCancel, onDone }: { user: User; locale: s
                   {t('antispam')} <span className="text-red-500">*</span>
                 </label>
                 <ImageCaptcha onChange={(ok) => { setCaptchaOk(ok); if (ok) setErrors((p) => { const { captcha: _c, ...r } = p; return r; }); }} />
-                <FieldError k="captcha" />
+                {fieldError('captcha')}
               </div>
             )}
           </div>

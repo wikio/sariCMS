@@ -1,10 +1,10 @@
-// middleware.ts
+// Proxy HTTP Next.js : routage i18n et gardes communes.
 import createMiddleware from 'next-intl/middleware';
 import { NextRequest, NextResponse } from 'next/server';
-import { locales, defaultLocale, type Locale } from './lib/i18n';
+import { locales, defaultLocale } from './lib/i18n';
 import { csrfProtectionMiddleware, generateCsrfToken, setCsrfCookie } from './lib/csrf';
 import { auditLog } from './lib/audit-log-edge';
-import { jwtVerify } from 'jose';
+import { adminIdentity, authStatus, getAccessToken, getCmsAccessToken } from './lib/admin-auth';
 
 // Créer le middleware next-intl
 const intlMiddleware = createMiddleware({
@@ -55,39 +55,13 @@ function isAdminLoginPage(pathname: string): boolean {
   return locales.some(locale => pathname === `/${locale}/admin` || pathname === `/${locale}/admin/`);
 }
 
+const PUBLIC_ADMIN_API = new Set([
+  '/api/admin/auth/captcha', '/api/admin/auth/captcha/image', '/api/admin/auth/verify-captcha',
+  '/api/admin/auth/login', '/api/admin/auth/logout', '/api/admin/auth/refresh', '/api/admin/auth/me',
+]);
+
 function isPublicAdminApi(pathname: string): boolean {
-  return (
-    pathname.startsWith('/api/admin/auth/captcha') ||
-    pathname.startsWith('/api/admin/auth/verify-captcha') ||
-    pathname.startsWith('/api/admin/auth/login') ||
-    pathname.startsWith('/api/admin/auth/logout') ||
-    pathname.startsWith('/api/admin/auth/refresh') ||
-    pathname.startsWith('/api/admin/auth/me') ||
-    pathname.startsWith('/api/csrf-token')
-  );
-}
-
-function getJwtSecrets(): Uint8Array[] {
-  const candidates = [
-    process.env.ADMIN_JWT_SECRET,
-    process.env.JWT_ACCESS_SECRET,
-    'dev-secret-change-in-production-min-32-chars!!',
-    'change-me-access-secret-min-32-chars-please',
-  ].filter(Boolean) as string[];
-  const uniq = [...new Set(candidates)];
-  return uniq.map(s => new TextEncoder().encode(s));
-}
-
-async function verifyAdminToken(token: string): Promise<boolean> {
-  for (const secret of getJwtSecrets()) {
-    try {
-      await jwtVerify(token, secret);
-      return true;
-    } catch {
-      // try next secret
-    }
-  }
-  return false;
+  return PUBLIC_ADMIN_API.has(pathname);
 }
 
 function getClientIp(request: NextRequest): string {
@@ -117,7 +91,7 @@ function checkRateLimit(key: string, maxRequests: number): boolean {
   return entry.count > maxRequests;
 }
 
-export default async function middleware(request: NextRequest) {
+export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const ip = getClientIp(request);
   const ua = getUserAgent(request);
@@ -132,42 +106,23 @@ export default async function middleware(request: NextRequest) {
     }
   }
 
-  // Protection serveur des routes admin (OWASP A01 — Broken Access Control)
-  // Le front faisait uniquement une vérification côté client (localStorage / useAdminAuth)
-  // contournable en désactivant JS. On ajoute une garde serveur :
-  // - Pages /{locale}/admin/* (hors login) : redirige vers login si pas de cookie sari_admin_access
-  // - API /api/admin/* (hors endpoints publics auth/captcha) : 401 JSON si pas de token
-  // La validation forte du token est faite dans /api/admin/auth/me (proxy backend + fallback JWT),
-  // le middleware vérifie au moins la présence et tente une vérification JWT rapide sans bloquer
-  // les tokens backend opaques qui seraient validés par le backend.
+  // Nest revalide la session et le rôle, y compris pour les routes qui ne lisent
+  // que des fichiers locaux. Le cookie d'affichage ne constitue pas une preuve.
   if ((isAdminRoute(pathname) && !isAdminLoginPage(pathname)) || (isAdminApiRoute(pathname) && !isPublicAdminApi(pathname))) {
-    const token = request.cookies.get('sari_admin_access')?.value;
-    if (!token) {
-      auditLog.authFailure({ ip, path: pathname, ua, reason: 'missing_token' }).catch(() => {});
-      if (isAdminApiRoute(pathname)) {
-        return finalize(
-          request,
-          new NextResponse(JSON.stringify({ error: 'Non authentifié', code: 'NOT_AUTHENTICATED' }), {
-            status: 401,
-            headers: { 'Content-Type': 'application/json' },
-          })
-        );
+    const token = pathname.startsWith('/api/admin/cms/') ? getCmsAccessToken(request) : getAccessToken(request);
+    try {
+      await adminIdentity(token);
+    } catch (error) {
+      const status = authStatus(error);
+      if (status === 401 || status === 403) {
+        auditLog.authFailure({ ip, path: pathname, ua, reason: token ? 'session_denied' : 'missing_token' }).catch(() => {});
+        if (!isAdminApiRoute(pathname)) {
+          const locale = pathname.split('/')[1];
+          return finalize(request, NextResponse.redirect(new URL(`/${locale}/admin`, process.env.PUBLIC_SITE_ORIGIN || request.url)));
+        }
       }
-      // Page admin : rediriger vers login localisé
-      const localeMatch = pathname.match(/^\/(fr|en|ar)(\/|$)/);
-      const locale = (localeMatch ? localeMatch[1] : defaultLocale) as string;
-      return finalize(request, NextResponse.redirect(new URL(`/${locale}/admin`, request.url)));
-    }
-    // Si token présent, tenter une vérification JWT rapide (multi-secrets).
-    // Si échec, on ne bloque pas immédiatement : le token peut être un JWT backend signé avec un secret
-    // légèrement différent, ou avoir été révoqué côté backend — la route /me fera la vérification
-    // définitive via proxy backend. On log seulement pour l'audit.
-    const valid = await verifyAdminToken(token);
-    if (!valid) {
-      // Ne pas bloquer : laisser la requête poursuivre, la vérification backend dans /me ou
-      // dans les handlers d'API fera foi. On aurait pu aussi tenter un fetch backend ici,
-      // mais cela ajouterait une latence à chaque requête admin.
-      // Pour les API sensibles (upload, verification), les handlers eux-mêmes appellent /auth/me.
+      return finalize(request, NextResponse.json({ error: status === 401 ? 'Non authentifié' : status === 403 ? 'Accès refusé' : 'Service indisponible' },
+        { status, headers: { 'Cache-Control': 'no-store' } }));
     }
   }
 
@@ -209,7 +164,7 @@ export default async function middleware(request: NextRequest) {
 
   // ✅ Rediriger "/" vers "/fr" (locale par défaut)
   if (pathname === '/') {
-    const response = NextResponse.redirect(new URL(`/${defaultLocale}`, request.url));
+    const response = NextResponse.redirect(new URL(`/${defaultLocale}${request.nextUrl.search}`, process.env.PUBLIC_SITE_ORIGIN || request.url));
     return finalize(request, response);
   }
 
@@ -220,7 +175,7 @@ export default async function middleware(request: NextRequest) {
 
   // ✅ Si pas de locale, ajouter la locale par défaut
   if (!pathnameHasLocale) {
-    const newUrl = new URL(`/${defaultLocale}${pathname}`, request.url);
+    const newUrl = new URL(`/${defaultLocale}${pathname}${request.nextUrl.search}`, process.env.PUBLIC_SITE_ORIGIN || request.url);
     const response = NextResponse.redirect(newUrl);
     return finalize(request, response);
   }
@@ -237,5 +192,6 @@ export const config = {
     '/((?!_next|_vercel|.*\\..*).*)',
     '/',
     '/(fr|en|ar)/:path*',
+    '/api/admin/:path*',
   ],
 };

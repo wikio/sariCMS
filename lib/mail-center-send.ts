@@ -232,6 +232,7 @@ export async function companyVars(locale: string, origin: string): Promise<Recor
 
 /** Origine absolue d'une requête — derrière un proxy, l'en-tête prime. */
 export function requestOrigin(req: { url: string; headers: { get(name: string): string | null } }): string {
+  if (process.env.PUBLIC_SITE_ORIGIN) return new URL(process.env.PUBLIC_SITE_ORIGIN).origin;
   const forwarded = String(req.headers.get('x-forwarded-host') || req.headers.get('host') || '');
   if (forwarded) {
     const proto = String(req.headers.get('x-forwarded-proto') || 'https').split(',')[0].trim();

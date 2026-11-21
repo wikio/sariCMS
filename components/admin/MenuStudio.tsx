@@ -336,7 +336,7 @@ function MenuStudioInner() {
             title={t("copyHint")}
           >
             <Languages className="w-4 h-4" />
-            {copying ? '…' : '{t("copyToOther")}'}
+            {copying ? '…' : t("copyToOther")}
           </button>
         </div>
       </div>

@@ -9,7 +9,7 @@
  */
 import { promises as fs } from 'fs';
 import path from 'path';
-import { CmsError, cmsFetch } from '@/lib/cms';
+import { CmsError, cmsFetch, cmsPagedList } from '@/lib/cms';
 import { legacyHomeConfig } from './legacy';
 import {
   EMPTY_SELECTION,
@@ -424,18 +424,13 @@ export async function homeOptions(resource: HomeOptionResource, locale: string, 
   const safe = safeLocale(locale);
   if (token) {
     try {
-      const payload = await cmsFetch<unknown>(
-        `/${resource}?view=block&limit=200&filter=${encodeURIComponent(JSON.stringify({ locale: safe }))}`,
+      const rows = await cmsPagedList<unknown>(
+        `/${resource}?view=block&filter=${encodeURIComponent(JSON.stringify({ locale: safe }))}`, 200,
         { token, timeoutMs: 8000 },
       );
-      const rows = Array.isArray(payload)
-        ? payload
-        : Array.isArray((payload as { data?: unknown })?.data)
-          ? ((payload as { data: unknown[] }).data as unknown[])
-          : [];
       if (rows.length) return rows.map(shapeOption);
     } catch {
-      /* on tente la liste sans filtre de langue, puis les fichiers */
+      /* API indisponible : on utilise les fichiers de cette langue. */
     }
   }
   return localOptions(safe, resource);

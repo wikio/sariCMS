@@ -2,14 +2,12 @@
  * /api/events/my — candidatures et participations aux événements de l'utilisateur connecté.
  *
  * Authentifié par jeton Bearer de la vitrine (`sari_front_access`), vérifié auprès
- * du backend `/auth/me` (avec repli vérification JWT locale si le backend est
- * momentanément indisponible). Les inscriptions sont rattachées par adresse e-mail :
+ * du backend `/auth/me`. Les inscriptions sont rattachées par adresse e-mail :
  * un visiteur inscrit en tant qu'invité qui crée ensuite son compte client avec le
  * même e-mail retrouve immédiatement ses participations dans son espace personnel.
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { cmsFetch } from '@/lib/cms';
-import { verifyAccessToken } from '@/lib/admin-auth';
 import {
   findRegistrationsByEmail,
   getRegistration,
@@ -38,14 +36,8 @@ async function requireFrontUser(req: NextRequest): Promise<{ id: string; email: 
     if (u && u.email) {
       return { id: String(u.id || ''), email: normalizeEmail(String(u.email)) };
     }
-  } catch (e) {
-    const status = (e as { status?: number })?.status;
-    if (status === 401) return null;
-  }
-
-  const local = await verifyAccessToken(token);
-  if (local?.email) {
-    return { id: String(local.sub || ''), email: normalizeEmail(local.email) };
+  } catch {
+    // Ne jamais rattacher un dossier privé sans identité confirmée par le CMS.
   }
   return null;
 }

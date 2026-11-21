@@ -1,9 +1,9 @@
 /**
  * lib/csrf.ts — Protection CSRF via Double Submit Cookie Pattern.
  *
- * Le token CSRF est stocké dans un cookie httpOnly (pour lecture JS impossible
- * par un attaquant tiers) ET envoyé dans un header personnalisé `X-CSRF-Token`
- * par le client. Le serveur vérifie que les deux correspondent.
+ * Le token CSRF est stocké dans un cookie distinct des cookies de session
+ * httpOnly. Le client le recopie dans l’en-tête `X-CSRF-Token` ; le serveur
+ * vérifie que les deux correspondent.
  *
  * Pourquoi pas SameSite=Strict seul : compatibilité navigateurs anciens,
  * sous-domaines, et défense en profondeur.
@@ -100,7 +100,7 @@ export function csrfProtectionMiddleware(
   // Exempter les routes de lecture (GET, HEAD, OPTIONS) et les chemins listés
   if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return null;
   const pathname = req.nextUrl.pathname;
-  if (exemptPaths.some(p => pathname.startsWith(p))) return null;
+  if (exemptPaths.includes(pathname)) return null;
 
   if (!validateCsrfToken(req)) {
     return new NextResponse(

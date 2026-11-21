@@ -8,7 +8,7 @@
  * bénéficie en prime de la protection CSRF du middleware (`/api/admin/*`).
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { getAccessToken } from '@/lib/admin-auth';
+import { getCmsAccessToken } from '@/lib/admin-auth';
 import { cmsServerBase } from '@/lib/cms';
 
 export const runtime = 'nodejs';
@@ -31,12 +31,6 @@ const FORWARDED_RES_HEADERS = [
   'content-type',
   'content-disposition',
 ] as const;
-
-function extractBearerHeader(req: NextRequest): string | null {
-  const header = req.headers.get('authorization') || req.headers.get('Authorization');
-  if (!header) return null;
-  return header.replace(/^Bearer\s+/i, '').trim() || null;
-}
 
 function validateSegments(segments: unknown): string | null {
   if (!Array.isArray(segments) || segments.length === 0) return null;
@@ -70,7 +64,7 @@ async function proxy(
     return NextResponse.json({ error: 'Chemin API invalide', code: 'INVALID_PATH' }, { status: 400 });
   }
 
-  const accessToken = getAccessToken(req) || extractBearerHeader(req);
+  const accessToken = getCmsAccessToken(req);
   if (!accessToken) {
     return NextResponse.json({ error: 'Non authentifié', code: 'NOT_AUTHENTICATED' }, { status: 401 });
   }

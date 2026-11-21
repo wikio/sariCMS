@@ -1,7 +1,9 @@
 // contexts/CartContext.tsx
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useSyncExternalStore, ReactNode } from 'react';
+
+import { catalogPrice } from '@/lib/catalog-price';
 
 export interface CartItem {
   id: number | string;
@@ -15,6 +17,7 @@ export interface CartItem {
   discountValue?: number;
   discountType?: 'fixed' | 'percent';
   discount?: number; // legacy %
+  taxRate?: number;
   vatRate?: number;
   vatIncluded?: boolean;
   shippingFee?: number;
@@ -39,28 +42,53 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-export function CartProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>([]);
+const EMPTY: CartItem[] = [];
+const serverCart = () => EMPTY;
 
-  useEffect(() => {
-    const stored = localStorage.getItem('sari_cart');
-    const pending = localStorage.getItem('sari_pending_cart');
-    const toLoad = stored || pending;
-    if (toLoad) {
+function readCart(): CartItem[] {
+  for (const key of ['sari_cart', 'sari_pending_cart']) {
+    try {
+      const rows = JSON.parse(localStorage.getItem(key) || 'null');
+      if (Array.isArray(rows)) return rows.filter(row => row && typeof row.name === 'string' && row.id != null && row.quantity > 0);
+    } catch { /* essayer la copie de secours, ou fonctionner en mémoire */ }
+  }
+  return EMPTY;
+}
+
+// Un magasin par Provider. Le SSR ne lit pas le navigateur et le montage (même
+// en Strict Mode) n'écrit rien : seules les actions de l'utilisateur persistent.
+function createCartStore() {
+  let items: CartItem[] | undefined;
+  const listeners = new Set<() => void>();
+  const get = () => items ??= readCart();
+  return {
+    get,
+    subscribe(listener: () => void) {
+      listeners.add(listener);
+      const reload = (event: StorageEvent) => {
+        if (event.key === null || event.key === 'sari_cart' || event.key === 'sari_pending_cart') {
+          items = undefined;
+          listener();
+        }
+      };
+      window.addEventListener('storage', reload);
+      return () => { listeners.delete(listener); window.removeEventListener('storage', reload); };
+    },
+    update(change: (previous: CartItem[]) => CartItem[]) {
+      items = change(get());
       try {
-        const parsed = JSON.parse(toLoad);
-        if (Array.isArray(parsed) && parsed.length) setItems(parsed);
-        // Si on a restauré depuis pending, on resync sari_cart
-        if (!stored && pending) localStorage.setItem('sari_cart', pending);
-      } catch (e) {
-        localStorage.removeItem('sari_cart');
-      }
-    }
-  }, []);
+        localStorage.setItem('sari_cart', JSON.stringify(items));
+        localStorage.removeItem('sari_pending_cart');
+      } catch { /* stockage privé ou quota atteint : conserver la session en mémoire */ }
+      listeners.forEach(listener => listener());
+    },
+  };
+}
 
-  useEffect(() => {
-    localStorage.setItem('sari_cart', JSON.stringify(items));
-  }, [items]);
+export function CartProvider({ children }: { children: ReactNode }) {
+  const [store] = useState(createCartStore);
+  const items = useSyncExternalStore(store.subscribe, store.get, serverCart);
+  const setItems = store.update;
 
   const cartKey = (it: CartItem) => `${String(it.id)}::${it.variantKey||''}::${it.optionSummary||''}`;
   const addToCart = (item: CartItem) => {
@@ -96,18 +124,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }));
   };
 
-  const clearCart = () => setItems([]);
-
-  // Le prix peut arriver sous forme de chaîne selon la source : on le
-  // normalise avant de calculer, sinon le total vaut NaN.
-  const toNumber = (value: number | string): number => {
-    if (typeof value === 'number') return value;
-    const cleaned = String(value).replace(/[^0-9.,-]/g, '').replace(/\s/g, '').replace(',', '.');
-    const parsed = Number.parseFloat(cleaned);
-    return Number.isFinite(parsed) ? parsed : 0;
-  };
-
-  const total = items.reduce((sum, item) => sum + toNumber(item.price) * item.quantity, 0);
+  const clearCart = () => setItems(() => []);
+  const total = items.reduce((sum, item) => sum + catalogPrice(item.price) * item.quantity, 0);
 
   return (
     <CartContext.Provider value={{ items, addToCart, removeFromCart, updateQuantity, clearCart, total }}>

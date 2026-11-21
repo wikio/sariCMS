@@ -24,6 +24,39 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i;
 // parenthèses et préfixe +. La longueur utile est vérifiée à part.
 const TEL_RE = /^[+()\d][\d\s.\-()]{7,}$/;
 
+const Champ = ({
+  k, label, note, icon: Icon, requis, errors, children,
+}: {
+  errors: Record<string, string>; k: string; label: string; note?: string; icon?: React.ElementType; requis?: boolean; children: React.ReactNode;
+}) => (
+  <div>
+    <label htmlFor={`uf-${k}`} className="block text-sm font-bold mb-1.5 flex items-center gap-1.5">
+      {Icon && <Icon className="w-3.5 h-3.5" style={{ color: 'var(--ad-accent)' }} />}
+      {label}
+      {requis && <span style={{ color: 'var(--ad-danger)' }}>*</span>}
+    </label>
+    {children}
+    {note && !errors[k] && (
+      <p className="text-xs mt-1" style={{ color: 'var(--ad-muted)' }}>{note}</p>
+    )}
+    {errors[k] && (
+      <p className="text-xs mt-1 flex items-center gap-1" style={{ color: 'var(--ad-danger)' }}>
+        <AlertCircle className="w-3 h-3 shrink-0" /> {errors[k]}
+      </p>
+    )}
+  </div>
+);
+
+const Section = ({ titre, sousTitre, children }: { titre: string; sousTitre?: string; children: React.ReactNode }) => (
+  <section className="space-y-3">
+    <div className="border-b pb-2" style={{ borderColor: 'var(--ad-line)' }}>
+      <h3 className="text-sm font-black uppercase tracking-wider">{titre}</h3>
+      {sousTitre && <p className="text-xs mt-0.5" style={{ color: 'var(--ad-muted)' }}>{sousTitre}</p>}
+    </div>
+    {children}
+  </section>
+);
+
 /**
  * Formulaire d'édition d'un compte.
  *
@@ -154,43 +187,6 @@ export default function UserForm({
     onSave(payload);
   };
 
-  const Erreur = ({ k }: { k: string }) =>
-    errors[k] ? (
-      <p className="text-xs mt-1 flex items-center gap-1" style={{ color: 'var(--ad-danger)' }}>
-        <AlertCircle className="w-3 h-3 shrink-0" /> {errors[k]}
-      </p>
-    ) : null;
-
-  const Champ = ({
-    k, label, note, icon: Icon, requis, children,
-  }: {
-    k: string; label: string; note?: string; icon?: React.ElementType; requis?: boolean; children: React.ReactNode;
-  }) => (
-    <div>
-      <label htmlFor={`uf-${k}`} className="block text-sm font-bold mb-1.5 flex items-center gap-1.5">
-        {Icon && <Icon className="w-3.5 h-3.5" style={{ color: 'var(--ad-accent)' }} />}
-        {label}
-        {requis && <span style={{ color: 'var(--ad-danger)' }}>*</span>}
-      </label>
-      {children}
-      {note && !errors[k] && (
-        <p className="text-xs mt-1" style={{ color: 'var(--ad-muted)' }}>{note}</p>
-      )}
-      <Erreur k={k} />
-    </div>
-  );
-
-  const Section = ({ titre, sousTitre, children }: { titre: string; sousTitre?: string; children: React.ReactNode }) => (
-    <section className="space-y-3">
-      <div className="border-b pb-2" style={{ borderColor: 'var(--ad-line)' }}>
-        <h3 className="text-sm font-black uppercase tracking-wider">{titre}</h3>
-        {sousTitre && <p className="text-xs mt-0.5" style={{ color: 'var(--ad-muted)' }}>{sousTitre}</p>}
-      </div>
-      {children}
-    </section>
-  );
-
-  const clsInput = (k: string) => 'ad-input';
   const styleInput = (k: string) => (errors[k] ? { borderColor: 'var(--ad-danger)' } : undefined);
 
   return (
@@ -207,38 +203,38 @@ export default function UserForm({
 
       <Section titre={t('sectionIdentity')} sousTitre={t('sectionIdentityHint')}>
         <div className="grid md:grid-cols-2 gap-3">
-          <Champ k="firstName" label={t('firstName')} icon={User} requis note={t('firstNameHint')}>
+          <Champ errors={errors} k="firstName" label={t('firstName')} icon={User} requis note={t('firstNameHint')}>
             <input
               id="uf-firstName"
-              className={clsInput('firstName')}
+              className="ad-input"
               style={styleInput('firstName')}
               value={champ('firstName')}
               onChange={(e) => set('firstName', e.target.value)}
             />
           </Champ>
-          <Champ k="lastName" label={t('lastName')} icon={User} requis note={t('lastNameHint')}>
+          <Champ errors={errors} k="lastName" label={t('lastName')} icon={User} requis note={t('lastNameHint')}>
             <input
               id="uf-lastName"
-              className={clsInput('lastName')}
+              className="ad-input"
               style={styleInput('lastName')}
               value={champ('lastName')}
               onChange={(e) => set('lastName', e.target.value)}
             />
           </Champ>
-          <Champ k="email" label={t('email')} icon={Mail} requis note={t('emailHint')}>
+          <Champ errors={errors} k="email" label={t('email')} icon={Mail} requis note={t('emailHint')}>
             <input
               id="uf-email"
               type="email"
-              className={clsInput('email')}
+              className="ad-input"
               style={styleInput('email')}
               value={champ('email')}
               onChange={(e) => set('email', e.target.value)}
             />
           </Champ>
-          <Champ k="phone" label={t('phone')} icon={Phone} note={t('phoneHint')}>
+          <Champ errors={errors} k="phone" label={t('phone')} icon={Phone} note={t('phoneHint')}>
             <input
               id="uf-phone"
-              className={clsInput('phone')}
+              className="ad-input"
               style={styleInput('phone')}
               value={champ('phone')}
               placeholder="(+213) 550 12 34 56"
@@ -250,7 +246,7 @@ export default function UserForm({
 
       <Section titre={t('sectionAccess')} sousTitre={t('sectionAccessHint')}>
         <div className="grid md:grid-cols-2 gap-3">
-          <Champ k="type" label={t('typeLabel')} icon={Shield} requis note={t('typeNote')}>
+          <Champ errors={errors} k="type" label={t('typeLabel')} icon={Shield} requis note={t('typeNote')}>
             <SearchSelect
               id="uf-type"
               value={champ('type')}
@@ -261,7 +257,7 @@ export default function UserForm({
               placeholder={t('typePlaceholder')}
             />
           </Champ>
-          <Champ k="status" label={t('statusLabel')} icon={Shield} requis note={t('statusNote')}>
+          <Champ errors={errors} k="status" label={t('statusLabel')} icon={Shield} requis note={t('statusNote')}>
             <SearchSelect
               id="uf-status"
               value={champ('status')}
@@ -272,7 +268,7 @@ export default function UserForm({
               placeholder={t('statusPlaceholder')}
             />
           </Champ>
-          <Champ k="roleId" label={t('role')} icon={Shield} note={estAdmin ? t('roleNoteAdmin') : t('roleNote')}>
+          <Champ errors={errors} k="roleId" label={t('role')} icon={Shield} note={estAdmin ? t('roleNoteAdmin') : t('roleNote')}>
             <SearchSelect
               id="uf-roleId"
               value={champ('roleId')}
@@ -282,7 +278,7 @@ export default function UserForm({
               placeholder={t('rolePlaceholder')}
             />
           </Champ>
-          <Champ k="locale" label={t('localeLabel')} icon={Globe} note={t('localeNote')}>
+          <Champ errors={errors} k="locale" label={t('localeLabel')} icon={Globe} note={t('localeNote')}>
             <SearchSelect
               id="uf-locale"
               value={champ('locale')}
@@ -295,6 +291,7 @@ export default function UserForm({
         </div>
 
         <Champ
+          errors={errors}
           k="password"
           label={creation ? t('password') : t('passwordChange')}
           icon={Shield}
@@ -312,18 +309,18 @@ export default function UserForm({
 
       <Section titre={t('sectionCompany')} sousTitre={t('sectionCompanyHint')}>
         <div className="grid md:grid-cols-2 gap-3">
-          <Champ k="company" label={t('company')} icon={Building2} note={t('companyHint')}>
+          <Champ errors={errors} k="company" label={t('company')} icon={Building2} note={t('companyHint')}>
             <input
               id="uf-company"
-              className={clsInput('company')}
+              className="ad-input"
               value={champ('company')}
               onChange={(e) => set('company', e.target.value)}
             />
           </Champ>
-          <Champ k="position" label={t('position')} icon={Briefcase} note={t('positionHint')}>
+          <Champ errors={errors} k="position" label={t('position')} icon={Briefcase} note={t('positionHint')}>
             <input
               id="uf-position"
-              className={clsInput('position')}
+              className="ad-input"
               value={champ('position')}
               onChange={(e) => set('position', e.target.value)}
             />
@@ -333,7 +330,7 @@ export default function UserForm({
 
       <Section titre={t('sectionLocation')} sousTitre={t('sectionLocationHint')}>
         <div className="space-y-3">
-          <Champ k="address" label={t('address')} icon={MapPin} note={t('addressHint')}>
+          <Champ errors={errors} k="address" label={t('address')} icon={MapPin} note={t('addressHint')}>
             <textarea
               id="uf-address"
               rows={2}
@@ -344,7 +341,7 @@ export default function UserForm({
             />
           </Champ>
           <div className="grid md:grid-cols-2 gap-3">
-            <Champ k="wilaya" label={t('wilaya')} icon={MapPin} note={t('wilayaHint')}>
+            <Champ errors={errors} k="wilaya" label={t('wilaya')} icon={MapPin} note={t('wilayaHint')}>
               <SearchSelect
                 id="uf-wilaya"
                 value={champ('wilaya')}
@@ -354,7 +351,7 @@ export default function UserForm({
                 placeholder={t('wilayaPlaceholder')}
               />
             </Champ>
-            <Champ k="country" label={t('country')} icon={Globe} note={t('countryHint')}>
+            <Champ errors={errors} k="country" label={t('country')} icon={Globe} note={t('countryHint')}>
               <SearchSelect
                 id="uf-country"
                 value={champ('country')}
@@ -373,25 +370,25 @@ export default function UserForm({
         <Section titre={t('sectionCandidate')} sousTitre={t('sectionCandidateHint')}>
           <div className="space-y-3">
             <div className="grid md:grid-cols-2 gap-3">
-              <Champ k="experience" label={t('experience')} icon={Briefcase} note={t('experienceHint')}>
+              <Champ errors={errors} k="experience" label={t('experience')} icon={Briefcase} note={t('experienceHint')}>
                 <input
                   id="uf-experience"
-                  className={clsInput('experience')}
+                  className="ad-input"
                   value={champ('experience')}
                   onChange={(e) => set('experience', e.target.value)}
                 />
               </Champ>
-              <Champ k="cvUrl" label={t('cvUrl')} icon={Briefcase} note={t('cvUrlHint')}>
+              <Champ errors={errors} k="cvUrl" label={t('cvUrl')} icon={Briefcase} note={t('cvUrlHint')}>
                 <input
                   id="uf-cvUrl"
-                  className={clsInput('cvUrl')}
+                  className="ad-input"
                   value={champ('cvUrl')}
                   placeholder="https://…"
                   onChange={(e) => set('cvUrl', e.target.value)}
                 />
               </Champ>
             </div>
-            <Champ k="motivation" label={t('motivation')} note={t('motivationHint')}>
+            <Champ errors={errors} k="motivation" label={t('motivation')} note={t('motivationHint')}>
               <textarea
                 id="uf-motivation"
                 rows={4}

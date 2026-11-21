@@ -11,6 +11,7 @@
  */
 
 import { readFileSync } from 'node:fs';
+import { load } from './test-support/load-tsx.mjs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -23,10 +24,7 @@ function check(label, actual, expected) {
   console.log(`  ${ok ? '✅' : '❌'} ${label}${ok ? '' : ` (attendu ${expected}, obtenu ${actual})`}`);
 }
 
-// Réimplémentation des prédicats de lib/admin-session.ts : ce fichier est du
-// TypeScript destiné au navigateur, non importable tel quel par Node.
-const isAdminUser = (user) => user?.type === 'admin';
-const isBackOfficeUser = (type) => type === 'admin';
+const { isAdminUser, isBackOfficeUser } = load('lib/admin-session.ts');
 
 console.log('\n1. Accès au back-office (/admin) — seul « admin » est admis');
 check('admin autorisé', isAdminUser({ type: 'admin' }), true);
@@ -44,12 +42,23 @@ check('candidat autorisé', isBackOfficeUser('candidate'), false);
 
 console.log('\n3. Les gardes sont bien câblées dans le code');
 const adminLayout = readFileSync(join(root, 'components/admin/AdminLayout.tsx'), 'utf8');
-check('AdminLayout importe isAdminUser', adminLayout.includes('isAdminUser'), true);
-check('AdminLayout ferme la session non-admin', adminLayout.includes('clearAdminSession()'), true);
+check('le layout écarte un compte non-admin', adminLayout.includes("user.type !== 'admin'") && adminLayout.includes('clearAuthCache()'), true);
+const proxy = readFileSync(join(root, 'proxy.ts'), 'utf8');
+check('le proxy vérifie l’identité auprès de Nest', proxy.includes('await adminIdentity(token)'), true);
 
-const loginPage = readFileSync(join(root, 'app/[locale]/admin/page.tsx'), 'utf8');
-check("page de connexion : contrôle du type", loginPage.includes("type !== 'admin'"), true);
-check('page de connexion : hasAdminAccess', loginPage.includes('hasAdminAccess'), true);
+// Le contrôle qui compte est côté serveur, avant la pose du moindre cookie.
+const cms = load('lib/cms.ts');
+const auth = load('lib/admin-auth.ts', { './cms': cms });
+for (const type of ['client', 'partner', 'candidate', undefined]) {
+  let status = 200;
+  try { auth.sessionResponse({ user: { id: '1', email: 'test@example.test', type }, accessToken: 'test', refreshToken: 'test' }); }
+  catch (e) { status = auth.authStatus(e); }
+  check(`la route de session refuse le type ${type}`, status, 403);
+}
+const admin = { id: '1', email: 'test@example.test', type: 'admin' };
+const success = auth.sessionResponse({ user: admin, accessToken: 'test', refreshToken: 'test' });
+check('session administrateur dans un cookie httpOnly', success.cookies.get('sari_admin_access')?.httpOnly, true);
+check('aucun jeton dans la réponse JSON', 'accessToken' in await success.json(), false);
 
 const dashboard = readFileSync(join(root, 'app/[locale]/dashboard/page.tsx'), 'utf8');
 check('dashboard importe isBackOfficeUser', dashboard.includes('isBackOfficeUser'), true);

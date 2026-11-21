@@ -105,7 +105,7 @@ export default function CompareCandidatesPage() {
     else { setSortKey(key); setSortDir('desc'); }
   };
 
-  const SortHeader = ({ label, k }: { label: string; k: SortKey }) => (
+  const sortHeader = (k: SortKey, label: string) => (
     <th onClick={() => toggleSort(k)}>
       <span className="inline-flex items-center gap-1">{label}{sortKey === k ? (sortDir === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />) : null}</span>
     </th>
@@ -147,15 +147,15 @@ export default function CompareCandidatesPage() {
           <table className="ad-table min-w-[900px]">
             <thead>
               <tr>
-                <SortHeader label={t('rank')} k="rank" />
-                <SortHeader label={t('candidate')} k="candidate" />
+                {sortHeader('rank', t('rank'))}
+                {sortHeader('candidate', t('candidate'))}
                 <th>{t("contact")}</th>
-                <SortHeader label={t('experience')} k="experience" />
+                {sortHeader('experience', t('experience'))}
                 <th>{t("motivation")}</th>
                 <th>{t('rating')}</th>
                 <th>{t("comment")}</th>
-                <SortHeader label={t('status')} k="status" />
-                <SortHeader label={t('score')} k="score" />
+                {sortHeader('status', t('status'))}
+                {sortHeader('score', t('score'))}
                 <th className="text-right">{t("documents")}</th>
               </tr>
             </thead>

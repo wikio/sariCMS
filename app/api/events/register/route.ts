@@ -13,7 +13,6 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { cmsFetch } from '@/lib/cms';
-import { verifyAccessToken } from '@/lib/admin-auth';
 import { forwardedIp } from '@/lib/server/cms-or';
 import { rateLimited, verifyCaptcha } from '@/lib/event-captcha';
 import {
@@ -43,14 +42,8 @@ async function resolveAuthenticatedUser(req: NextRequest): Promise<{ id: string;
     if (u && u.id && u.email) {
       return { id: String(u.id), email: normalizeEmail(String(u.email)) };
     }
-  } catch (e) {
-    const status = (e as { status?: number })?.status;
-    if (status === 401) return null;
-  }
-
-  const local = await verifyAccessToken(token);
-  if (local?.sub && local?.email) {
-    return { id: String(local.sub), email: normalizeEmail(local.email) };
+  } catch {
+    // Ne jamais rattacher un dossier privé sans identité confirmée par le CMS.
   }
   return null;
 }

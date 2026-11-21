@@ -4,7 +4,7 @@
  * GET  /api/admin/analytics?range=30d&locale=all&granularity=day
  * PUT  /api/admin/analytics  { prefs: DashboardPrefs } ou { reset: true }
  *
- * Protégé par `middleware.ts` (session admin + CSRF pour PUT).
+ * Protégé par `proxy.ts` (session admin + CSRF pour PUT).
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { bearer } from '@/lib/server/cms-or';

@@ -2,7 +2,7 @@
  * Minimal structural seed — no real catalogue content.
  * Creates roles, the permission catalog, one admin account and empty collections.
  *
- *   DB_DRIVER=json npm run seed
+ * À exécuter sur une installation neuve uniquement, avec SEED_ADMIN_EMAIL et SEED_ADMIN_PASSWORD.
  */
 import * as bcrypt from 'bcryptjs';
 import { randomUUID } from 'crypto';
@@ -27,8 +27,11 @@ function base(extra: Record<string, unknown> = {}): Record<string, unknown> {
   };
 }
 
-async function seedJson() {
+async function seedJson(email: string, password: string) {
   const dir = process.env.JSON_STORE_PATH || './storage/json';
+  if (fs.existsSync(dir) && fs.readdirSync(dir).some(name => name.endsWith('.json'))) {
+    throw new Error(`Amorçage refusé : ${dir} contient déjà des collections JSON. Aucun fichier modifié.`);
+  }
   const store = new JsonStore(dir);
 
   const permissions = ALL_PERMISSIONS.map((key) => {
@@ -64,8 +67,6 @@ async function seedJson() {
     permissionIds: viewerPermIds,
   });
 
-  const email = (process.env.SEED_ADMIN_EMAIL || 'admin@sarisysteme.com').toLowerCase();
-  const password = process.env.SEED_ADMIN_PASSWORD || 'ChangeMe_Sari2026!';
   const admin = base({
     email,
     passwordHash: await bcrypt.hash(password, 12),
@@ -124,53 +125,47 @@ async function seedJson() {
   fs.writeFileSync(marker, now());
   // eslint-disable-next-line no-console
   console.log(`JSON seed written to ${path.resolve(dir)}`);
-  // eslint-disable-next-line no-console
-  console.log(`Admin: ${email} / ${password}`);
 }
 
 async function main() {
+  if (process.env.NODE_ENV === 'production' && !process.env.DB_DRIVER) {
+    throw new Error('Spécifiez DB_DRIVER avant l’amorçage en production.');
+  }
   const driver = (process.env.DB_DRIVER || 'json').toLowerCase();
+  const email = process.env.SEED_ADMIN_EMAIL?.trim().toLowerCase();
+  const password = process.env.SEED_ADMIN_PASSWORD;
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !password || password.length < 16 || password === 'ChangeMe_Sari2026!') {
+    throw new Error('Définissez SEED_ADMIN_EMAIL et un SEED_ADMIN_PASSWORD personnel (16 caractères minimum).');
+  }
   if (driver === 'json') {
-    await seedJson();
+    await seedJson(email, password);
     return;
   }
+  if (!['mysql', 'postgres', 'postgresql'].includes(driver)) throw new Error(`Seed non pris en charge pour DB_DRIVER=${driver}.`);
   // Prisma path — same structure, uses generated client when available.
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { PrismaClient } = require('@prisma/client');
   const prisma = new PrismaClient();
   try {
-    for (const key of ALL_PERMISSIONS) {
-      const [resource, action] = key.split(':');
-      await prisma.permission.upsert({
-        where: { resource_action: { resource, action } },
-        update: {},
-        create: { resource, action, description: key },
-      });
-    }
-    const all = await prisma.permission.findMany();
-    const role = await prisma.role.upsert({
-      where: { slug: SUPER_ADMIN_SLUG },
-      update: {},
-      create: { name: 'Super Admin', slug: SUPER_ADMIN_SLUG, isSystem: true, description: 'Accès intégral' },
-    });
-    await prisma.rolePermission.deleteMany({ where: { roleId: role.id } });
-    await prisma.rolePermission.createMany({
-      data: all.map((p: { id: string }) => ({ roleId: role.id, permissionId: p.id })),
-    });
-    const email = (process.env.SEED_ADMIN_EMAIL || 'admin@sarisysteme.com').toLowerCase();
-    const password = process.env.SEED_ADMIN_PASSWORD || 'ChangeMe_Sari2026!';
-    await prisma.user.upsert({
-      where: { email },
-      update: { roleId: role.id, status: 'active' },
-      create: {
-        email,
-        passwordHash: await bcrypt.hash(password, 12),
-        firstName: 'Admin',
-        lastName: 'SARI',
-        type: 'admin',
-        status: 'active',
-        roleId: role.id,
-      },
+    const passwordHash = await bcrypt.hash(password, 12);
+    // Pas de création partielle de droits ou d’écrasement d’un administrateur
+    // si une étape échoue. Le client reste une dépendance facultative en JSON.
+    type BootstrapTx = Pick<typeof prisma, 'user' | 'permission' | 'role' | 'rolePermission'>;
+    await prisma.$transaction(async (tx: BootstrapTx) => {
+      if (await tx.user.count() || await tx.role.count() || await tx.permission.count()) {
+        throw new Error('Amorçage refusé : les tables de comptes ou de droits ne sont pas vides.');
+      }
+      await tx.permission.createMany({ data: ALL_PERMISSIONS.map(key => {
+        const [resource, action] = key.split(':');
+        return { resource, action, description: key };
+      }) });
+      const permissions: { id: number }[] = await tx.permission.findMany({ select: { id: true } });
+      const role = await tx.role.create({ data: {
+        name: 'Super Admin', slug: SUPER_ADMIN_SLUG, isSystem: true, description: 'Accès intégral',
+        permissionIds: permissions.map(p => p.id),
+      } });
+      await tx.rolePermission.createMany({ data: permissions.map(p => ({ roleId: role.id, permissionId: p.id })) });
+      await tx.user.create({ data: { email, passwordHash, firstName: 'Admin', lastName: 'SARI', type: 'admin', status: 'active', roleId: role.id } });
     });
     // eslint-disable-next-line no-console
     console.log(`Prisma seed done. Admin: ${email}`);

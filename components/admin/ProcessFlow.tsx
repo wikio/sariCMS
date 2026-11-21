@@ -39,8 +39,8 @@ export default function ProcessFlow({
   steps: ProcessStep[];
   current?: string;
 }) {
+  const t = useTranslations('admin.editor');
   if (!steps.length) {
-    const t = useTranslations('admin.editor');
     return <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>{t('noProcess')}</p>;
   }
   const currentIndex = current

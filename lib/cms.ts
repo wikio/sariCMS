@@ -25,6 +25,7 @@ export interface CmsListMeta {
   limit?: number;
   total?: number;
   pageCount?: number;
+  totalPages?: number;
 }
 
 export class CmsError extends Error {
@@ -110,6 +111,20 @@ export async function cmsFetch<T = unknown>(path: string, options: CmsRequestOpt
   } finally {
     clearTimeout(timer);
   }
+}
+
+/** Lecture bornée des listes Nest. QueryDto refuse toute page de plus de 100 lignes. */
+export async function cmsPagedList<T>(path: string, maxRows: number, options: CmsRequestOptions): Promise<T[]> {
+  const size = Math.min(maxRows, 100);
+  const rows: T[] = [];
+  for (let page = 1; page <= Math.ceil(maxRows / size); page++) {
+    const url = `${path}${path.includes('?') ? '&' : '?'}page=${page}&limit=${size}`;
+    const result = await cmsFetch<{ data: T[]; meta?: CmsListMeta }>(url, options);
+    const chunk = unwrapList<T>(result);
+    rows.push(...chunk);
+    if (chunk.length < size || page >= (result.meta?.totalPages ?? 1)) break;
+  }
+  return rows.slice(0, maxRows);
 }
 
 export async function cmsPublicList<T>(

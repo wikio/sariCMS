@@ -122,15 +122,14 @@ export default function ServerCaptcha({
     };
   }, [endpoint]);
 
-  const handleVerify = async () => {
-    log('Verifying captcha:', { captchaId, input: input.trim() });
-    if (!captchaId || !input.trim()) return;
+  const handleVerify = async (answer: string) => {
+    if (!captchaId || !answer) return;
     try {
       const res = await fetch(verifyEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'same-origin',
-        body: JSON.stringify({ captchaId, captchaAnswer: input }),
+        body: JSON.stringify({ captchaId, captchaAnswer: answer }),
       });
       log('Verify response status:', res.status);
       if (res.ok) {
@@ -162,7 +161,7 @@ export default function ServerCaptcha({
     // afin d'éviter une double consommation (verify endpoint supprime l'entrée) et garantir
     // une vérification atomique avec les identifiants (audit C1).
     if (autoVerify && v.length === 5) {
-      handleVerify();
+      void handleVerify(v);
     } else if (!autoVerify) {
       // Mode admin : on considère "ok" dès que 5 caractères sont saisis,
       // la vraie vérification sera faite côté serveur lors du login.

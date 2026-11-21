@@ -35,7 +35,7 @@ function loadTsModule(relPath, cache = new Map()) {
         if (base.endsWith(path.join('ged', 'store.mjs'))) {
           return {
             gedStore: {
-              listAssets: async () => ({
+              assetInventory: async () => ({
                 items: [
                   {
                     file: 'logo/IMG_test-logo.png',
@@ -94,6 +94,24 @@ async function check(name, fn) {
 }
 
 console.log('— Tests du moteur analytique & export de rapports —');
+
+await check('listes CMS : 100 lignes maximum par requête, filtre conservé et lecture bornée', async () => {
+  const originalFetch = globalThis.fetch;
+  const pages = [];
+  globalThis.fetch = async url => {
+    const query = new URL(url).searchParams;
+    assert.equal(query.get('limit'), '100'); assert.equal(query.get('locale'), 'fr');
+    const page = Number(query.get('page'));
+    pages.push(page);
+    const data = Array.from({ length: 100 }, (_, i) => (page - 1) * 100 + i);
+    return Response.json({ success: true, data: { data, meta: { totalPages: 8 } } });
+  };
+  try {
+    const { cmsPagedList } = loadTsModule('lib/cms.ts', cache);
+    const rows = await cmsPagedList('/news?locale=fr', 135, {});
+    assert.deepEqual(pages, [1, 2]); assert.equal(rows.length, 135); assert.equal(rows[134], 134);
+  } finally { globalThis.fetch = originalFetch; }
+});
 
 await check('parseFlexibleDate supporte ISO, DD/MM/YYYY et dates FR textuelles', () => {
   const iso = engine.parseFlexibleDate('2026-11-16T10:00:00Z');

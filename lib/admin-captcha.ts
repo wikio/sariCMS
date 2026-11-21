@@ -7,7 +7,6 @@ import { createHash, randomBytes, randomUUID } from 'crypto';
 
 const DEBUG = false;
 const log = (...args: unknown[]) => DEBUG && console.log('[lib/admin-captcha]', ...args);
-const logError = (...args: unknown[]) => DEBUG && console.error('[lib/admin-captcha ERROR]', ...args);
 
 export interface CaptchaIssue {
   id: string;
@@ -117,7 +116,6 @@ export function issueCaptcha(): CaptchaIssue {
   prune(entries);
   const code = makeCode();
   const id = randomUUID();
-  log('Issuing captcha:', { id, code });
   entries.set(id, {
     hash: fingerprint(code),
     svg: renderCaptchaSvg(code),

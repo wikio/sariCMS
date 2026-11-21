@@ -5,6 +5,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { usePathname } from 'next/navigation';
 import { useAuth, frontToken } from './AuthContext';
 import { cmsFetch } from '@/lib/cms';
+import { catalogPrice } from '@/lib/catalog-price';
 import { nextCodeFor } from '@/lib/codes';
 import { loadOrders as loadCrmOrders, saveOrders as saveCrmOrders, loadQuotes as loadCrmQuotes, saveQuotes as saveCrmQuotes, numOrUndef } from '@/lib/crm-store';
 
@@ -48,6 +49,9 @@ export interface Order {
   zone?: string;
   deliveryZone?: string;
   saleZone?: string;
+  country?: string;
+  deliveryAddress?: string;
+  saleConditionsAccepted?: boolean;
   coupon?: string;
   notes?: string;
   adminNotes?: string;
@@ -67,6 +71,7 @@ const OrdersContext = createContext<OrdersContextType | undefined>(undefined);
 
 export function OrdersProvider({ children }: { children: ReactNode }) {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [restored, setRestored] = useState(false);
   const { user } = useAuth();
   const pathname = usePathname();
   const isAdminRoute = Boolean(pathname && /^\/(fr|en|ar)\/admin(\/|$)/.test(pathname));
@@ -75,33 +80,27 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
   const CTX_KEY = 'sari_orders_ctx';
   useEffect(() => {
     // Migration : si ancienne donnée en sari_orders sans sari_orders_ctx, on reprend
-    const storedCtx = localStorage.getItem(CTX_KEY);
-    const storedLegacy = localStorage.getItem('sari_orders');
-    const raw = storedCtx || storedLegacy;
-    if (raw) {
-      try {
-        const parsed = JSON.parse(raw);
-        // Si on a utilisé le legacy et qu'on n'a pas encore de ctx, on migre
-        if (!storedCtx && storedLegacy) {
-          localStorage.setItem(CTX_KEY, storedLegacy);
+    try {
+      const storedCtx = localStorage.getItem(CTX_KEY);
+      const raw = storedCtx ?? localStorage.getItem('sari_orders');
+      if (raw) {
+        const parsed: unknown = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          const rows = parsed.filter(o => o && typeof o === 'object');
+          const customer = rows.filter(o => 'customerName' in o || 'customerEmail' in o || 'isGuest' in o);
+          const totals = rows.filter(o => 'totalAmount' in o || 'grandTotal' in o);
+          setOrders(customer.length ? customer : totals.length ? totals : rows);
         }
-        // Filtre : ne garde que les commandes au format OrdersContext (présence de customerName ou isGuest)
-        // Si le tableau contient des commandes CRM pures (client field), on les ignore pour l'affichage client
-        const filtered = Array.isArray(parsed) ? parsed.filter((o:any)=> 'customerName' in o || 'customerEmail' in o || 'isGuest' in o) : [];
-        // Si filtered vide mais parsed non vide, c'est peut-être un ancien mix -> on garde tout ce qui a totalAmount ou grandTotal
-        const toUse = filtered.length ? filtered : (Array.isArray(parsed) ? parsed.filter((o:any)=> 'totalAmount' in o || 'grandTotal' in o) : []);
-        // Si toujours vide, on garde parsed tel quel (fallback)
-        setOrders((toUse.length ? toUse : (Array.isArray(parsed)? parsed : [])) as any);
-      } catch (e) {
-        localStorage.removeItem(CTX_KEY);
       }
-    }
+    } catch { /* stockage indisponible ou illisible */ }
+    setRestored(true);
   }, []);
 
   useEffect(() => {
+    if (!restored) return;
     try { localStorage.setItem(CTX_KEY, JSON.stringify(orders)); } catch {}
     // Ne pas écraser sari_orders (CRM) ici — la synchro CRM est gérée dans addOrder via saveOrders/saveQuotes
-  }, [orders]);
+  }, [orders, restored]);
 
   // Écoute les mises à jour de paiement venant de l'admin (CommerceDesk) pour lier vitrine/admin
   useEffect(() => {
@@ -264,7 +263,7 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
 
   const addOrder = (orderData: Omit<Order, 'id' | 'createdAt' | 'code'> & { code?: string }): Order => {
     // Génère un code formaté SARI-WCMD{XX}-{ID} via lib/codes si non fourni, basé sur les commandes existantes
-    let code = (orderData as any).code as string | undefined;
+    let code = orderData.code as string | undefined;
     if (!code) {
       try {
         const existingCodes: string[] = [];
@@ -275,7 +274,7 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
     }
     // Devis (quote_requested) doit aussi avoir une référence devis
     let quoteRef: string | undefined;
-    if ((orderData as any).isQuote || (orderData as any).status === 'quote_requested') {
+    if (orderData.isQuote || orderData.status === 'quote_requested') {
       try {
         const existingQ: string[] = [];
         try { const a = JSON.parse(localStorage.getItem('sari_quotes') || '[]'); if (Array.isArray(a)) existingQ.push(...a.map((q: any)=> q.reference).filter(Boolean)); } catch {}
@@ -306,72 +305,72 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
       code: code!,
       createdAt: new Date().toISOString(),
       // paiement initial en attente, lié à l'admin via crm-store
-      payment: (orderData as any).payment || 'pending',
-    } as any;
+      payment: orderData.payment || 'pending',
+    };
     // Persistance locale OrdersContext (compatibilité historique)
     setOrders((prev) => [newOrder, ...prev]);
     // Persistance CRM (admin) : convertit vers le format Order CRM (lib/crm-store) pour visibilité admin + numéro formaté
     try {
 
       // Si devis demandé, créer un devis CRM plutôt qu'une commande
-      if ((newOrder as any).isQuote || (newOrder as any).status === 'quote_requested') {
+      if (newOrder.isQuote || newOrder.status === 'quote_requested') {
         const quotes = loadCrmQuotes();
         // évite doublon si déjà présent
-        const qItems = (newOrder.items || []).map((it: any)=> ({ id: Number(it.id)||Date.now(), name: it.name, quantity: it.quantity||1, price: Number(String(it.price).replace(/[^0-9.]/g,''))||0, category: it.category }));
-        const qTotal = Number((newOrder as any).grandTotal || (newOrder as any).totalAmount || 0);
+        const qItems = (newOrder.items || []).map(it => ({ id: Number(it.id)||Date.now(), name: it.name, quantity: it.quantity||1, price: catalogPrice(it.price), category: it.category }));
+        const qTotal = Number(newOrder.grandTotal || newOrder.totalAmount || 0);
         const newQuote: any = {
           id: Number(newOrder.id),
-          client: (newOrder as any).customerName || 'Client',
-          email: (newOrder as any).customerEmail || '',
-          phone: (newOrder as any).customerPhone || '',
-          company: (newOrder as any).customerCompany || '',
+          client: newOrder.customerName || 'Client',
+          email: newOrder.customerEmail || '',
+          phone: newOrder.customerPhone || '',
+          company: newOrder.customerCompany || '',
           date: new Date().toISOString().slice(0,10),
           status: 'pending',
           total: qTotal,
           validity: '30 jours',
           reference: quoteRef || code,
           items: qItems,
-          zone: (newOrder as any).deliveryZone || (newOrder as any).saleZone || '',
-          address: (newOrder as any).deliveryAddress || '',
-          country: (newOrder as any).country || '',
+          zone: newOrder.deliveryZone || newOrder.saleZone || '',
+          address: newOrder.deliveryAddress || '',
+          country: newOrder.country || '',
         };
         saveCrmQuotes([newQuote, ...quotes]);
       } else {
         const orders = loadCrmOrders();
-        const cItems = (newOrder.items || []).map((it: any)=> ({ id: Number(it.id)||Date.now(), name: it.name, quantity: it.quantity||1, price: Number(String(it.price).replace(/[^0-9.]/g,''))||0, category: it.category }));
-        const cTotal = Number((newOrder as any).grandTotal || (newOrder as any).totalAmount || 0);
+        const cItems = (newOrder.items || []).map(it => ({ id: Number(it.id)||Date.now(), name: it.name, quantity: it.quantity||1, price: catalogPrice(it.price), category: it.category }));
+        const cTotal = Number(newOrder.grandTotal || newOrder.totalAmount || 0);
         const crmOrder: any = {
           id: Number(newOrder.id),
           code: code,
-          client: (newOrder as any).customerName || 'Client',
-          email: (newOrder as any).customerEmail || '',
-          phone: (newOrder as any).customerPhone || '',
-          company: (newOrder as any).customerCompany || '',
+          client: newOrder.customerName || 'Client',
+          email: newOrder.customerEmail || '',
+          phone: newOrder.customerPhone || '',
+          company: newOrder.customerCompany || '',
           date: new Date().toISOString().slice(0,10),
           status: 'pending',
           total: cTotal,
-          payment: (newOrder as any).payment || 'pending',
-          subtotal: Number((newOrder as any).subtotal || cTotal),
-          shippingFee: Number((newOrder as any).shippingFee || 0),
-          taxTotal: Number((newOrder as any).taxTotal || (newOrder as any).taxAmount || 0),
-          discountTotal: Number((newOrder as any).discountTotal || 0),
+          payment: newOrder.payment || 'pending',
+          subtotal: Number(newOrder.subtotal || cTotal),
+          shippingFee: Number(newOrder.shippingFee || 0),
+          taxTotal: Number(newOrder.taxTotal || newOrder.taxAmount || 0),
+          discountTotal: Number(newOrder.discountTotal || 0),
           // Même détail que dans `mergeWithCtxOrders` : sans lui, le PDF de la
           // commande ne peut afficher ni la remise globale ni la TVA par taux.
-          productDiscount: numOrUndef((newOrder as any).productDiscount),
-          globalDiscount: numOrUndef((newOrder as any).globalDiscount),
-          couponDiscount: numOrUndef((newOrder as any).couponDiscount),
-          productShipping: numOrUndef((newOrder as any).productShipping),
-          globalShipping: numOrUndef((newOrder as any).globalShipping),
-          taxLines: Array.isArray((newOrder as any).taxLines) ? (newOrder as any).taxLines : undefined,
+          productDiscount: numOrUndef(newOrder.productDiscount),
+          globalDiscount: numOrUndef(newOrder.globalDiscount),
+          couponDiscount: numOrUndef(newOrder.couponDiscount),
+          productShipping: numOrUndef(newOrder.productShipping),
+          globalShipping: numOrUndef(newOrder.globalShipping),
+          taxLines: Array.isArray(newOrder.taxLines) ? newOrder.taxLines : undefined,
           items: cItems,
-          zone: (newOrder as any).deliveryZone || (newOrder as any).saleZone || '',
-          deliveryZone: (newOrder as any).deliveryZone || '',
-          saleZone: (newOrder as any).saleZone || '',
-          address: (newOrder as any).deliveryAddress || '',
-          deliveryAddress: (newOrder as any).deliveryAddress || '',
-          country: (newOrder as any).country || '',
-          coupon: (newOrder as any).coupon || '',
-          notes: (newOrder as any).notes || '',
+          zone: newOrder.deliveryZone || newOrder.saleZone || '',
+          deliveryZone: newOrder.deliveryZone || '',
+          saleZone: newOrder.saleZone || '',
+          address: newOrder.deliveryAddress || '',
+          deliveryAddress: newOrder.deliveryAddress || '',
+          country: newOrder.country || '',
+          coupon: newOrder.coupon || '',
+          notes: newOrder.notes || '',
         };
         saveCrmOrders([crmOrder, ...orders]);
       }
@@ -427,9 +426,9 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
     } catch {}
     try {
       const raw = localStorage.getItem(CTX_KEY);
-      if (raw && patch.payment) {
+      if (raw) {
         const ctx = JSON.parse(raw);
-        const updCtx = ctx.map((o:any)=> String(o.id)===String(id) ? {...o, payment: patch.payment} : o);
+        const updCtx = ctx.map((o: Order) => String(o.id) === String(id) ? { ...o, ...patch } : o);
         localStorage.setItem(CTX_KEY, JSON.stringify(updCtx));
         window.dispatchEvent(new Event('sari_orders_ctx_changed'));
       }

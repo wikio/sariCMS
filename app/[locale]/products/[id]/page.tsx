@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { getProducts } from '@/lib/data';
 import { matchesEntity } from '@/lib/ids';
+import { catalogPrice } from '@/lib/catalog-price';
 import { useCart } from '@/contexts/CartContext';
 import { useVisibility } from '@/lib/site-visibility';
 import type { Product } from '@/types';
@@ -108,7 +109,7 @@ export default function ProductDetailPage() {
 
   // Calcule le prix selon la variante sélectionnée (plusieurs prix par type)
   const getVariantPrice = (): number => {
-    const base = parseFloat(String(product.price).replace(/[^0-9.]/g,''))||0;
+    const base = catalogPrice(product.price);
     if (!product.options?.length || !Object.keys(selectedOptions).length) return base;
     let price: number | null = null;
     for (const opt of product.options as any[]) {
@@ -323,7 +324,7 @@ export default function ProductDetailPage() {
           </h1>
           <div className="flex items-center gap-4 mb-6">
             <span className="text-3xl font-bold text-sari-lime">{withSymbol(variantPrice || product.price)}</span>
-            {variantPrice !== parseFloat(String(product.price).replace(/[^0-9.]/g,'')) && <span className="text-sm line-through opacity-60">{withSymbol(product.price)}</span>}
+            {variantPrice !== catalogPrice(product.price) && <span className="text-sm line-through opacity-60">{withSymbol(product.price)}</span>}
             {product.inStock ? (
               <span className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-sm font-semibold flex items-center gap-1 rounded-full">
                 <Check className="w-4 h-4" />

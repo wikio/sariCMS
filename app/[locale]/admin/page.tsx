@@ -7,9 +7,8 @@ import { useLocale, useTranslations } from 'next-intl';
 import { ArrowLeft, Lock, LogIn, Shield } from 'lucide-react';
 import PixelGridLoader from '@/components/admin/PixelGridLoader';
 import ServerCaptcha from '@/components/ServerCaptcha';
-import { cmsFetch, CmsError } from '@/lib/cms';
+import { adminCaptchaRequired } from '@/lib/admin-login-policy';
 import { clearAuthCache, setAuthCache, type AdminUser } from '@/components/admin/useAdminAuth';
-import { loadAdminSettings } from '@/lib/admin-settings';
 
 let loginMeCheckInFlight: Promise<{ authenticated?: boolean; user?: (AdminUser & { type?: string }) | null } | null> | null = null;
 
@@ -20,6 +19,13 @@ function checkExistingAdminSession(): Promise<{ authenticated?: boolean; user?: 
     // à chaque ouverture de la page de connexion admin.
     loginMeCheckInFlight = fetch('/api/admin/auth/me?optional=1', { credentials: 'same-origin', cache: 'no-store' })
       .then((res) => (res.ok ? res.json() : null))
+      .then(async (session) => {
+        if (!session?.canRefresh) return session;
+        // Une arrivée directe après expiration de l'access cookie peut encore
+        // reprendre la session : seul Nest peut échanger le refresh httpOnly.
+        const res = await fetch('/api/admin/auth/refresh', { method: 'POST', credentials: 'same-origin', cache: 'no-store' });
+        return res.ok ? res.json() : null;
+      })
       .catch(() => null)
       .finally(() => {
         // Laisse un court répit pour dédupliquer le double-montage React StrictMode
@@ -36,14 +42,13 @@ export default function AdminLoginPage() {
   const router = useRouter();
   const locale = useLocale();
   const t = useTranslations('admin.login');
-  const [email, setEmail] = useState('admin@sarisysteme.com');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [totpCode, setTotpCode] = useState('');
   const [challengeToken, setChallengeToken] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [blocked, setBlocked] = useState(false);
-  const [security, setSecurity] = useState({ admin2fa: false, adminCaptcha: true, siteCaptcha: true });
+  const [requiresCaptcha, setRequiresCaptcha] = useState(true);
   const [captchaOk, setCaptchaOk] = useState(false);
   const [captchaData, setCaptchaData] = useState<{ id: string; value: string } | null>(null);
   const [captchaKey, setCaptchaKey] = useState(0);
@@ -63,8 +68,9 @@ export default function AdminLoginPage() {
   }, [router, locale]);
 
   useEffect(() => {
-    const s = loadAdminSettings();
-    setSecurity(s.security);
+    let active = true;
+    void adminCaptchaRequired().then(required => { if (active) setRequiresCaptcha(required); });
+    return () => { active = false; };
   }, []);
 
   /**
@@ -99,24 +105,14 @@ export default function AdminLoginPage() {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    // Audit C1 : captcha serveur obligatoire quand adminCaptcha activé.
-    // On bloque côté client pour UX, la vraie vérification est côté serveur
-    // dans /api/admin/auth/login (verifyAdminCaptcha). Sans captcha, un appel
-    // direct à l'API resterait possible, mais le serveur refusera si captchaId présent et invalide.
-    // Pour ne pas bloquer l'accès si le captcha ne charge pas (réseau), on autorise
-    // le submit sans captcha en mode dégradé, mais on l'envoie quand il est disponible.
-    if (security.adminCaptcha && !captchaOk && !challengeToken) {
-      // Si le captcha est affiché mais pas rempli, on l'exige (5 caractères)
-      const currentValue = captchaData?.value || '';
-      if (currentValue.length !== 5) {
-        setError(t('captchaError') || 'Veuillez saisir le code captcha (5 caractères)');
-        return;
-      }
+    if (requiresCaptcha && !challengeToken && !captchaOk) {
+      setError(t('captchaError'));
+      return;
     }
     setLoading(true);
     try {
       // Inclure le captcha dans le payload pour vérification atomique côté serveur
-      const captchaPayload = security.adminCaptcha && captchaData?.id && captchaData?.value
+      const captchaPayload = requiresCaptcha && captchaData?.id && captchaData?.value
         ? { captchaId: captchaData.id, captchaAnswer: captchaData.value }
         : {};
       // Passer par la route Next : c'est elle qui pose les cookies httpOnly
@@ -126,14 +122,15 @@ export default function AdminLoginPage() {
         headers: { 'Content-Type': 'application/json' },
         credentials: 'same-origin',
         body: JSON.stringify(challengeToken
-          ? { challengeToken, code: totpCode, ...captchaPayload }
+          ? { challengeToken, code: totpCode }
           : { email, password, ...(totpCode ? { totpCode } : {}), ...captchaPayload }),
       });
       const result = await res.json().catch(() => null);
       if (!res.ok) {
         const errCode = (result as { code?: string } | null)?.code;
         const errMsg = (result as { error?: string } | null)?.error || t('wrongPassword');
-        if (errCode === 'CAPTCHA_INVALID' || errCode === 'CAPTCHA_REQUIRED' || (security.adminCaptcha && captchaData?.id)) {
+        if (errCode === 'CAPTCHA_REQUIRED') setRequiresCaptcha(true);
+        if (errCode === 'CAPTCHA_INVALID' || errCode === 'CAPTCHA_REQUIRED' || (requiresCaptcha && captchaData?.id)) {
           // Le captcha a pu être consommé (ou expiré) : on en émet un nouveau
           setCaptchaOk(false);
           setCaptchaData(null);
@@ -151,8 +148,8 @@ export default function AdminLoginPage() {
        * jusqu'à ce que la route d'accueil soit prête à s'afficher.
        */
       if (!accept(result)) setLoading(false);
-    } catch (err) {
-      setError(err instanceof CmsError ? (err.status === 401 ? t('wrongPassword') : err.message) : t('apiUnreachable'));
+    } catch {
+      setError(t('apiUnreachable'));
       setLoading(false);
     }
   };
@@ -176,23 +173,21 @@ export default function AdminLoginPage() {
           </div>
           <h1 className="text-2xl font-black">{t('title')}</h1>
           <p className="text-sm mt-1" style={{ color: 'var(--ad-muted)' }}>{t('subtitle')}</p>
-          {security.admin2fa && (
-            <div className="mt-3 inline-flex items-center gap-2 text-xs ad-chip ad-chip-ok"><Lock className="w-3 h-3" /> Double authentification (2FA) requise</div>
+          {challengeToken && (
+            <div className="mt-3 inline-flex items-center gap-2 text-xs ad-chip ad-chip-ok"><Lock className="w-3 h-3" /> {t('verifyTotp')}</div>
           )}
         </div>
         {error && <div className="mb-4 text-sm ad-chip ad-chip-warn w-full justify-start py-2 px-3">{error}</div>}
-        {blocked ? (
-          <div className="text-center py-8"><Lock className="w-10 h-10 mx-auto mb-2" /><p>{t('accessBlocked')}</p></div>
-        ) : loading ? (
+        {loading ? (
           <PixelGridLoader compact label="Auth" />
         ) : (
           <form onSubmit={onSubmit} className="space-y-3">
-            <input className="ad-input" type="email" value={email || 'admin@sarisysteme.com'} onChange={(e) => setEmail(e.target.value)} placeholder={t('emailPlaceholder')} />
-            <input className="ad-input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t('passwordPlaceholder')} disabled={!!challengeToken} />
-            {(challengeToken || totpCode) && (
-              <input className="ad-input text-center tracking-[0.4em]" value={totpCode} onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="000000" />
+            <input className="ad-input" type="email" autoComplete="username" required disabled={!!challengeToken} value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t('emailPlaceholder')} />
+            <input className="ad-input" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t('passwordPlaceholder')} disabled={!!challengeToken} />
+            {challengeToken && (
+              <input className="ad-input text-center tracking-[0.4em]" inputMode="numeric" autoComplete="one-time-code" required pattern="[0-9]{6}" value={totpCode} onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="000000" />
             )}
-            {security.adminCaptcha && (
+            {requiresCaptcha && !challengeToken && (
               <ServerCaptcha
                 key={captchaKey}
                 onChange={setCaptchaOk}
@@ -204,12 +199,12 @@ export default function AdminLoginPage() {
             )}
             <button
               className="ad-btn ad-btn-primary w-full py-3"
-              disabled={loading || (security.adminCaptcha && !captchaOk && !challengeToken)}
+              disabled={loading || (requiresCaptcha && !captchaOk && !challengeToken)}
             >
               <LogIn className="w-4 h-4" /> {challengeToken ? t('verifyTotp') : t('submit')}
             </button>
-            {security.adminCaptcha && !captchaOk && !challengeToken && (
-              <p className="text-xs text-amber-600 dark:text-amber-400 text-center">Saisissez le code à 5 caractères ci-dessus</p>
+            {requiresCaptcha && !captchaOk && !challengeToken && (
+              <p className="text-xs text-amber-600 dark:text-amber-400 text-center">{t('captchaError')}</p>
             )}
           </form>
         )}

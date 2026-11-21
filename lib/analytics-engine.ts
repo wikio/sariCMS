@@ -14,7 +14,7 @@
  */
 import { promises as fs } from 'fs';
 import path from 'path';
-import { cmsFetch, unwrapList } from './cms';
+import { cmsFetch, cmsPagedList, unwrapList } from './cms';
 import { listRegistrations, type EventRegistration } from './event-registrations';
 import { readStore as readLocalNewsletter } from './newsletter-store';
 import { gedStore } from './ged/store.mjs';
@@ -182,11 +182,14 @@ async function readLocalLocalized(fileName: string, localeFilter: AnalyticsLocal
 async function tryCmsList<T = Record<string, unknown>>(
   endpoint: string,
   token: string | null,
+  maxRows?: number,
 ): Promise<{ rows: T[]; ok: boolean }> {
   if (!token) return { rows: [], ok: false };
   try {
-    const payload = await cmsFetch<unknown>(endpoint, { token, timeoutMs: 4500 });
-    return { rows: unwrapList<T>(payload), ok: true };
+    const options = { token, timeoutMs: 4500 };
+    const rows = maxRows ? await cmsPagedList<T>(endpoint, maxRows, options)
+      : unwrapList<T>(await cmsFetch<unknown>(endpoint, options));
+    return { rows, ok: true };
   } catch {
     return { rows: [], ok: false };
   }
@@ -324,7 +327,7 @@ export async function buildAnalyticsSnapshot(
   const nowMs = now.getTime();
 
   // 1. Chargement parallèle de toutes les sources (API CMS si dispo + magasins locaux serveur)
-  const localeQs = filters.locale !== 'all' ? `&filter=${encodeURIComponent(JSON.stringify({ locale: filters.locale }))}` : '';
+  const localeQs = filters.locale !== 'all' ? `?filter=${encodeURIComponent(JSON.stringify({ locale: filters.locale }))}` : '';
 
   const [
     statusRes,
@@ -348,24 +351,24 @@ export async function buildAnalyticsSnapshot(
     token
       ? cmsFetch<{ connected?: boolean; driver?: string; counts?: Record<string, number>; unavailable?: string[] }>('/settings/status', { token, timeoutMs: 4000 }).catch(() => null)
       : Promise.resolve(null),
-    tryCmsList(`/applications?limit=500`, token),
-    tryCmsList(`/careers?limit=500${localeQs}`, token),
-    tryCmsList(`/news?limit=500${localeQs}`, token),
-    tryCmsList(`/events?limit=500${localeQs}`, token),
-    tryCmsList(`/authors?limit=200${localeQs}`, token),
-    tryCmsList(`/users?limit=500`, token),
-    tryCmsList(`/orders?limit=500`, token),
-    tryCmsList(`/quotes?limit=500`, token),
+    tryCmsList(`/applications`, token, 500),
+    tryCmsList(`/careers${localeQs}`, token, 500),
+    tryCmsList(`/news${localeQs}`, token, 500),
+    tryCmsList(`/events${localeQs}`, token, 500),
+    tryCmsList(`/authors${localeQs}`, token, 200),
+    tryCmsList(`/users`, token, 500),
+    tryCmsList(`/orders`, token, 500),
+    tryCmsList(`/quotes`, token, 500),
     tryCmsList(`/payment-records/all`, token),
-    tryCmsList(`/contact/messages?limit=500`, token),
-    tryCmsList(`/newsletter?limit=1000`, token),
-    tryCmsList(`/audit-logs?limit=300&sortBy=createdAt&sortOrder=desc`, token),
+    tryCmsList(`/contact/messages`, token, 500),
+    tryCmsList(`/newsletter`, token, 1000),
+    tryCmsList(`/audit-logs?sortBy=createdAt&sortOrder=desc`, token, 300),
     Promise.all([
       listRegistrations({ includeDeleted: false }).catch(() => [] as EventRegistration[]),
       listRegistrations({ includeDeleted: true }).catch(() => [] as EventRegistration[]),
     ]).then(([active, trashed]) => [...active, ...trashed]),
     readLocalNewsletter().catch(() => ({ version: 1, rows: [] })),
-    gedStore.listAssets({ page: 1, limit: 5000 }).catch(() => ({ items: [], total: 0 })),
+    gedStore.assetInventory().catch(() => ({ items: [], total: 0 })),
     readLocalAuditLogs(200),
   ]);
 

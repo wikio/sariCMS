@@ -688,7 +688,8 @@ console.log('\n— Harmonisation des menus entre langues —');
   );
   check(
     'l’absence de menu pour une langue est signalée',
-    /Aucun menu enregistré pour cette langue/.test(studio),
+    /!current && !loading[\s\S]{0,160}t\(["']noMenuHint["']\)/.test(studio) &&
+      ['fr', 'en', 'ar'].every(loc => JSON.parse(readFileSync(resolve(ROOT, `messages/${loc}.json`), 'utf8')).admin.menuStudio.noMenuHint),
   );
 
   // Les fichiers statiques de repli doivent rester alignés entre langues.

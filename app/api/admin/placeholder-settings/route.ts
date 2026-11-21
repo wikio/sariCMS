@@ -2,7 +2,7 @@
  * /api/admin/placeholder-settings — configuration back-office du générateur
  * d'images et de logos (`/api/placeholder` + atelier Canvas).
  *
- * Protégé par `middleware.ts` (session admin + CSRF).
+ * Protégé par `proxy.ts` (session admin + CSRF).
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { DEFAULT_PLACEHOLDER_CONFIG } from '@/lib/placeholder-engine';

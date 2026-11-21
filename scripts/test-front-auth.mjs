@@ -2,21 +2,11 @@
 import assert from 'node:assert/strict';
 import { beforeEach, afterEach, test } from 'node:test';
 import { createRequire } from 'node:module';
-import { readFileSync } from 'node:fs';
 import { act, createElement } from 'react';
 import { JSDOM } from 'jsdom';
-import ts from 'typescript';
+import { load } from './test-support/load-tsx.mjs';
 
 const require = createRequire(import.meta.url);
-function load(file, imports = {}) {
-  const source = readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
-  const { outputText } = ts.transpileModule(source, { fileName: file, compilerOptions: {
-    module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022,
-  } });
-  const exports = {};
-  new Function('require', 'exports', outputText)((id) => imports[id] ?? require(id), exports);
-  return exports;
-}
 const { AuthProvider, useAuth, FRONT_TOKEN_KEY } = load('contexts/AuthContext.tsx', { '@/lib/cms': load('lib/cms.ts') });
 const dom = new JSDOM('<div id="root"></div>', { url: 'https://storefront.test/' });
 Object.assign(globalThis, {

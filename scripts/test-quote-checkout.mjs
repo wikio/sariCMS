@@ -172,8 +172,11 @@ check(
   posRedirect > 0 && posVide > 0 && posRedirect < posVide,
   `chargement@${posRedirect}, panier vide@${posVide}`,
 );
-check('le panier est vidé après la navigation', /router\.push[\s\S]{0,200}setTimeout\(\(\) => clearCart\(\)/.test(cart));
-check('clearCart n’est plus appelé dans la création', !/const order = addOrder\(orderData\);\s*\n\s*clearCart\(\);/.test(cart));
+const navigation = cart.slice(cart.indexOf('const goToPayment'), cart.indexOf('const antispamPasse'));
+const payment = lire('app/[locale]/payment/[id]/page.tsx');
+check('le passage au paiement garde le panier', navigation.includes('sari_pending_cart') && navigation.includes('router.push') && !navigation.includes('clearCart('));
+check('le paiement vide le panier après enregistrement', /addPaymentRecord\(\{[\s\S]*?updateOrder\(order.id,[\s\S]*?clearCart\(\);/.test(payment));
+check('le devis soumis vide le panier sans passer par le paiement', /setOrderSubmitted\(true\);\s*clearCart\(\)/.test(cart));
 check('les totaux viennent du moteur commun', /computeTotals\(/.test(cart));
 check('le taux 0,19 codé en dur a disparu', !/\* 0\.19/.test(cart));
 check('chaque taxe est détaillée dans le tableau', /totals\.taxLines\.map/.test(cart));

@@ -13,6 +13,25 @@ import { findWilaya, wilayaCode } from '@/lib/wilayas';
 import DateText from '@/components/shared/DateText';
 import { listEventRegistrations, type EventRegistration } from '@/lib/event-registrations-admin';
 
+const Ligne = ({ icon: Icon, label, children }: { icon: React.ElementType; label: string; children: React.ReactNode }) => (
+  <div className="flex items-start gap-3 py-2">
+    <Icon className="w-4 h-4 mt-0.5 shrink-0" style={{ color: 'var(--ad-muted)' }} />
+    <div className="min-w-0 flex-1">
+      <div className="text-xs uppercase tracking-wide" style={{ color: 'var(--ad-muted)' }}>{label}</div>
+      <div className="text-sm font-semibold break-words">{children}</div>
+    </div>
+  </div>
+);
+
+const Bloc = ({ titre, children }: { titre: string; children: React.ReactNode }) => (
+  <section>
+    <h3 className="text-xs font-black uppercase tracking-wider mb-1 pb-1 border-b" style={{ borderColor: 'var(--ad-line)' }}>
+      {titre}
+    </h3>
+    <div className="divide-y" style={{ borderColor: 'var(--ad-line)' }}>{children}</div>
+  </section>
+);
+
 type UserRecord = Record<string, unknown>;
 
 /**
@@ -71,25 +90,6 @@ export default function UserSheet({
   const wil = findWilaya(v('wilaya'));
 
   const copier = (texte: string) => { navigator.clipboard?.writeText(texte).catch(() => undefined); };
-
-  const Ligne = ({ icon: Icon, label, children }: { icon: React.ElementType; label: string; children: React.ReactNode }) => (
-    <div className="flex items-start gap-3 py-2">
-      <Icon className="w-4 h-4 mt-0.5 shrink-0" style={{ color: 'var(--ad-muted)' }} />
-      <div className="min-w-0 flex-1">
-        <div className="text-xs uppercase tracking-wide" style={{ color: 'var(--ad-muted)' }}>{label}</div>
-        <div className="text-sm font-semibold break-words">{children}</div>
-      </div>
-    </div>
-  );
-
-  const Bloc = ({ titre, children }: { titre: string; children: React.ReactNode }) => (
-    <section>
-      <h3 className="text-xs font-black uppercase tracking-wider mb-1 pb-1 border-b" style={{ borderColor: 'var(--ad-line)' }}>
-        {titre}
-      </h3>
-      <div className="divide-y" style={{ borderColor: 'var(--ad-line)' }}>{children}</div>
-    </section>
-  );
 
   const vide = <span style={{ color: 'var(--ad-muted)' }}>—</span>;
 
