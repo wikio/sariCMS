@@ -4419,10 +4419,6 @@
       "accountCreated": "Account created successfully",
       "noAccount": "No account yet?",
       "hasAccount": "Already have an account?",
-      "demoAccounts": "Demo Accounts",
-      "clientDemo": "Client Demo",
-      "partnerDemo": "Partner Demo",
-      "candidateDemo": "Candidate Demo",
       "loginError": "Incorrect email, password or account type",
       "connectionError": "Error loading data",
       "captchaIncorrect": "Incorrect CAPTCHA answer",
@@ -5321,7 +5317,6 @@
       "open": "Open",
       "close": "Close",
       "profileSaved": "Profile updated.",
-      "profileSaveOffline": "Changes saved on this device, but the server did not respond.",
       "profileNameRequired": "First and last name are required.",
       "profileEmailInvalid": "Invalid e-mail address.",
       "changePassword": "Change my password",
@@ -5384,7 +5379,8 @@
       "eventStatusAttended": "Attended",
       "eventStatusWaitlist": "Waitlist",
       "eventStatusRejected": "Rejected",
-      "eventStatusCancelled": "Cancelled"
+      "eventStatusCancelled": "Cancelled",
+      "profileSaveError": "Your profile changes could not be saved."
     },
     "eventDetail": {
       "notFound": "Event Not Found",
@@ -5581,11 +5577,6 @@
       "error": "Error",
       "captchaIncorrect": "Incorrect CAPTCHA",
       "accessBlocked": "Access blocked",
-      "demoAccounts": "Demo accounts (quick click)",
-      "clientDemo": "Client Demo",
-      "partnerDemo": "Partner Demo",
-      "candidateDemo": "Candidate Demo",
-      "clickToLogin": "Click a button then \"Log in\" to access the dashboard",
       "noAccount": "No account yet?",
       "createClientAccount": "Create a client account",
       "becomePartner": "Become a partner",
@@ -5625,8 +5616,7 @@
       "loggingIn": "Signing in…",
       "loginError": "Incorrect credentials",
       "captchaError": "Please complete the captcha",
-      "createAccount": "Create an account",
-      "demoHint": "Demo account"
+      "createAccount": "Create an account"
     },
     "forgotPassword": {
       "title": "Forgot password",
@@ -5853,7 +5843,8 @@
       "captchaError": "Incorrect CAPTCHA answer",
       "acceptTermsRequired": "You must accept the terms",
       "home": "Home",
-      "register": "Register"
+      "register": "Register",
+      "registrationFailed": "Could not create your account. Check your details and verification code, then try again."
     },
     "search": {
       "title": "Search",

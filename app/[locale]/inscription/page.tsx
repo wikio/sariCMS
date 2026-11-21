@@ -20,7 +20,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const t = useTranslations('pages.register');
-  const { register } = useAuth();
+  const { register, login } = useAuth();
 
   const source = searchParams.get('source');
 
@@ -75,7 +75,7 @@ export default function RegisterPage() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -96,7 +96,7 @@ export default function RegisterPage() {
     }
 
     setIsLoading(true);
-    register({
+    const created = await register({
       name: formData.name,
       email: formData.email,
       password: formData.password,
@@ -106,10 +106,15 @@ export default function RegisterPage() {
       locale,
       captchaId: siteCaptcha ? captcha.id : undefined,
       captchaAnswer: siteCaptcha ? captcha.value : undefined,
-    }).then(() => {
-      setIsLoading(false);
-      router.push(`/${locale}/dashboard`);
     });
+    if (!created) {
+      setIsLoading(false);
+      setError(t('registrationFailed'));
+      return;
+    }
+    const account = await login(formData.email, formData.password);
+    setIsLoading(false);
+    router.push(account ? `/${locale}/dashboard` : `/${locale}/connexion?registered=1`);
   };
 
   return (
@@ -322,7 +327,7 @@ export default function RegisterPage() {
                           <label className="block text-sm font-bold text-sari-dark dark:text-white mb-2">
                             {t('password')} <span className="text-red-500">*</span>
                           </label>
-                          <input type="password" required value={formData.password}
+                          <input type="password" required minLength={10} value={formData.password}
                             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                             className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none rounded-lg"
                             placeholder="••••••••" />

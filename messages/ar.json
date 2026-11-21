@@ -4419,10 +4419,6 @@
       "accountCreated": "تم إنشاء الحساب بنجاح",
       "noAccount": "ليس لديك حساب؟",
       "hasAccount": "لديك حساب؟",
-      "demoAccounts": "حسابات تجريبية",
-      "clientDemo": "عميل تجريبي",
-      "partnerDemo": "شريك تجريبي",
-      "candidateDemo": "مرشح تجريبي",
       "loginError": "البريد الإلكتروني أو كلمة المرور أو نوع الحساب غير صحيح",
       "connectionError": "خطأ في تحميل البيانات",
       "captchaIncorrect": "إجابة CAPTCHA غير صحيحة",
@@ -5321,7 +5317,6 @@
       "open": "فتح",
       "close": "إغلاق",
       "profileSaved": "تم تحديث الملف الشخصي.",
-      "profileSaveOffline": "تم حفظ التعديلات على هذا الجهاز، لكن الخادم لم يستجب.",
       "profileNameRequired": "الاسم واللقب إلزاميان.",
       "profileEmailInvalid": "عنوان بريد إلكتروني غير صالح.",
       "changePassword": "تغيير كلمة المرور",
@@ -5384,7 +5379,8 @@
       "eventStatusAttended": "حاضر",
       "eventStatusWaitlist": "قائمة الانتظار",
       "eventStatusRejected": "مرفوضة",
-      "eventStatusCancelled": "ملغاة"
+      "eventStatusCancelled": "ملغاة",
+      "profileSaveError": "تعذّر حفظ التغييرات على ملفك الشخصي."
     },
     "eventDetail": {
       "notFound": "الفعالية غير موجودة",
@@ -5581,11 +5577,6 @@
       "error": "خطأ",
       "captchaIncorrect": "CAPTCHA غير صحيح",
       "accessBlocked": "تم حظر الوصول",
-      "demoAccounts": "حسابات تجريبية (نقرة سريعة)",
-      "clientDemo": "عميل تجريبي",
-      "partnerDemo": "شريك تجريبي",
-      "candidateDemo": "مرشح تجريبي",
-      "clickToLogin": "انقر على زر ثم \"تسجيل الدخول\" للوصول إلى لوحة التحكم",
       "noAccount": "ليس لديك حساب؟",
       "createClientAccount": "إنشاء حساب عميل",
       "becomePartner": "أن تصبح شريكًا",
@@ -5625,8 +5616,7 @@
       "loggingIn": "جارٍ تسجيل الدخول…",
       "loginError": "بيانات الاعتماد غير صحيحة",
       "captchaError": "يرجى إكمال رمز التحقق",
-      "createAccount": "إنشاء حساب",
-      "demoHint": "حساب تجريبي"
+      "createAccount": "إنشاء حساب"
     },
     "forgotPassword": {
       "title": "نسيت كلمة المرور",
@@ -5853,7 +5843,8 @@
       "captchaError": "إجابة CAPTCHA غير صحيحة",
       "acceptTermsRequired": "يجب عليك قبول الشروط",
       "home": "الرئيسية",
-      "register": "التسجيل"
+      "register": "التسجيل",
+      "registrationFailed": "تعذّر إنشاء حسابك. تحقّق من بياناتك ورمز التحقق ثم أعد المحاولة."
     },
     "search": {
       "title": "بحث",

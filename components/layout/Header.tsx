@@ -200,7 +200,7 @@ export default function Header({ config, menu }: { config: Config; menu: MenuTyp
                           </div>
                           <div>
                             <div className="font-bold truncate">
-                              {isAuthenticated ? (user?.name || user?.email || t('user')) : t('user')}
+                              {isAuthenticated ? (user?.name || user?.email || t('user')) : t('guest')}
                             </div>
                             <div className="text-xs text-blue-100 capitalize truncate">
                               {isAuthenticated ? getUserTypeLabel() : t('notSignedIn')}
@@ -356,9 +356,9 @@ export default function Header({ config, menu }: { config: Config; menu: MenuTyp
               </div>
             ))}
             <div className="border-t border-gray-200 dark:border-gray-800 my-3 pt-3 space-y-2">
-              <Link href={getLinkHref('#dashboard')} onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 py-3 px-3 text-sari-dark dark:text-white font-medium border-b border-gray-100 dark:border-gray-800">
-                <LayoutDashboard className="w-5 h-5 text-sari-lime" />
-                {t('dashboard')}
+              <Link href={isAuthenticated ? getLinkHref('#dashboard') : `/${locale}/connexion`} onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 py-3 px-3 text-sari-dark dark:text-white font-medium border-b border-gray-100 dark:border-gray-800">
+                {isAuthenticated ? <LayoutDashboard className="w-5 h-5 text-sari-lime" /> : <User className="w-5 h-5 text-sari-lime" />}
+                {isAuthenticated ? t('dashboard') : t('login')}
               </Link>
               <Link href={getLinkHref('#contact')} onClick={() => setMobileMenuOpen(false)} className="btn-primary text-white px-6 py-3 font-semibold block text-center mt-4">
                 {t('freeQuote')}

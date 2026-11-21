@@ -18,6 +18,7 @@
     "routes:check": "node scripts/check-routes.mjs",
     "quote:test": "node scripts/test-quote-checkout.mjs",
     "users:test": "node scripts/test-user-admin.mjs",
+    "front-auth:test": "node --test scripts/test-front-auth.mjs",
     "users:seed": "node scripts/seed-test-users.mjs",
     "builder:check": "node scripts/check-builder-kit.mjs",
     "links:test": "node scripts/test-link-kind.mjs",
@@ -53,6 +54,7 @@
     "autoprefixer": "^10.5.4",
     "eslint": "^9",
     "eslint-config-next": "16.2.12",
+    "jsdom": "^20.0.3",
     "postcss": "^8.5.25",
     "tailwindcss": "^3.4.19",
     "typescript": "^5"

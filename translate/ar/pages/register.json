@@ -46,5 +46,6 @@
   "captchaError": "إجابة CAPTCHA غير صحيحة",
   "acceptTermsRequired": "يجب عليك قبول الشروط",
   "home": "الرئيسية",
-  "register": "التسجيل"
+  "register": "التسجيل",
+  "registrationFailed": "تعذّر إنشاء حسابك. تحقّق من بياناتك ورمز التحقق ثم أعد المحاولة."
 }

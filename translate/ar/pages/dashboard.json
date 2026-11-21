@@ -89,7 +89,6 @@
   "open": "فتح",
   "close": "إغلاق",
   "profileSaved": "تم تحديث الملف الشخصي.",
-  "profileSaveOffline": "تم حفظ التعديلات على هذا الجهاز، لكن الخادم لم يستجب.",
   "profileNameRequired": "الاسم واللقب إلزاميان.",
   "profileEmailInvalid": "عنوان بريد إلكتروني غير صالح.",
   "changePassword": "تغيير كلمة المرور",
@@ -152,5 +151,6 @@
   "eventStatusAttended": "حاضر",
   "eventStatusWaitlist": "قائمة الانتظار",
   "eventStatusRejected": "مرفوضة",
-  "eventStatusCancelled": "ملغاة"
+  "eventStatusCancelled": "ملغاة",
+  "profileSaveError": "تعذّر حفظ التغييرات على ملفك الشخصي."
 }

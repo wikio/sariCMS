@@ -89,7 +89,6 @@
   "open": "Open",
   "close": "Close",
   "profileSaved": "Profile updated.",
-  "profileSaveOffline": "Changes saved on this device, but the server did not respond.",
   "profileNameRequired": "First and last name are required.",
   "profileEmailInvalid": "Invalid e-mail address.",
   "changePassword": "Change my password",
@@ -152,5 +151,6 @@
   "eventStatusAttended": "Attended",
   "eventStatusWaitlist": "Waitlist",
   "eventStatusRejected": "Rejected",
-  "eventStatusCancelled": "Cancelled"
+  "eventStatusCancelled": "Cancelled",
+  "profileSaveError": "Your profile changes could not be saved."
 }

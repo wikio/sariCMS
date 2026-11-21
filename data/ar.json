@@ -130,11 +130,7 @@
     "loginSuccess": "تم تسجيل الدخول بنجاح",
     "accountCreated": "تم إنشاء الحساب بنجاح",
     "noAccount": "ليس لديك حساب؟",
-    "hasAccount": "لديك حساب بالفعل؟",
-    "demoAccounts": "حسابات تجريبية",
-    "clientDemo": "عميل تجريبي",
-    "partnerDemo": "شريك تجريبي",
-    "candidateDemo": "مرشح تجريبي"
+    "hasAccount": "لديك حساب بالفعل؟"
   },
   "dashboard": {
     "title": "لوحة التحكم",

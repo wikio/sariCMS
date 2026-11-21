@@ -21,11 +21,6 @@
   "error": "Erreur",
   "captchaIncorrect": "CAPTCHA incorrect",
   "accessBlocked": "Accès bloqué",
-  "demoAccounts": "Comptes de démonstration (clic rapide)",
-  "clientDemo": "Client Demo",
-  "partnerDemo": "Partenaire Demo",
-  "candidateDemo": "Candidat Demo",
-  "clickToLogin": "Cliquez sur un bouton puis \"Se connecter\" pour accéder au dashboard",
   "noAccount": "Pas encore de compte ?",
   "createClientAccount": "Créer un compte client",
   "becomePartner": "Devenir partenaire",
@@ -65,6 +60,5 @@
   "loggingIn": "Connexion en cours…",
   "loginError": "Identifiants incorrects",
   "captchaError": "Veuillez valider le captcha",
-  "createAccount": "Créer un compte",
-  "demoHint": "Compte de démonstration"
+  "createAccount": "Créer un compte"
 }

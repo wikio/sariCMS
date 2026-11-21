@@ -82,7 +82,6 @@ const T = {
     loginError: ['Identifiants incorrects', 'Incorrect credentials', 'بيانات الاعتماد غير صحيحة'],
     captchaError: ['Veuillez valider le captcha', 'Please complete the captcha', 'يرجى إكمال رمز التحقق'],
     createAccount: ['Créer un compte', 'Create an account', 'إنشاء حساب'],
-    demoHint: ['Compte de démonstration', 'Demo account', 'حساب تجريبي'],
   },
 
   'pages.search': {

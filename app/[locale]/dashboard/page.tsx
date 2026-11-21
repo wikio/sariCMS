@@ -100,7 +100,7 @@ export default function DashboardPage() {
   useEffect(() => {
     if (isLoading) return;
     if (!isAuthenticated) {
-      router.push(`/${locale}/connexion`);
+      router.replace(`/${locale}/connexion`);
       return;
     }
     // L'espace personnel est réservé aux clients, partenaires et candidats :
@@ -128,7 +128,7 @@ export default function DashboardPage() {
   }, [products, productQ]);
 
   // Évite le flash de déconnexion lors du changement de langue :
-  // AuthProvider se réhydrate depuis localStorage de façon asynchrone.
+  // AuthProvider vérifie le jeton auprès du serveur avant de rendre le compte.
   // Tant que isLoading est vrai, on ne sait pas encore si l'utilisateur est connecté.
   if (isLoading) return <div className="pt-40 pb-24 min-h-screen bg-gray-50 dark:bg-[#111111] flex items-center justify-center"><div className="animate-pulse text-gray-500">Chargement…</div></div>;
   // Pas de rendu pendant la redirection : évite que l'espace client

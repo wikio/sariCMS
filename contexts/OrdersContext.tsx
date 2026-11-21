@@ -122,24 +122,17 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
 
   // Association vitrine ↔ BD : charge les commandes/devis du client depuis MySQL (si connecté
   // sur la vitrine — jamais sur /admin où le back-office synchronise via AdminLayout.pullAll()).
-  // - Si un JWT vitrine existe (frontToken), on l'envoie -> le backend résout actor via JwtAuthGuard optionnel
-  // - Sinon fallback public par email (démo client@sari.dz sans token) -> query ?email=
   useEffect(() => {
     if (isAdminRoute || (!user?.id && !user?.email)) return;
     let cancelled = false;
     const fetchMy = async () => {
       try {
         const token = frontToken();
-        const emailParam = user.email ? `&email=${encodeURIComponent(user.email)}` : '';
-        const userIdParam = user.id ? `&userId=${encodeURIComponent(user.id)}` : '';
+        if (!token) return;
         // Orders
         let oRows: any[] = [];
         try {
-          const path = token
-            ? `/orders/my/list?limit=100&view=block`
-            : `/orders/my/list?limit=100&view=block${emailParam}${userIdParam}`;
-          const opts: any = token ? { token, timeoutMs: 6000 } : { timeoutMs: 6000 };
-          const oRes: any = await cmsFetch(path, opts).catch(() => null);
+          const oRes: any = await cmsFetch('/orders/my/list?limit=100&view=block', { token, timeoutMs: 6000 }).catch(() => null);
           oRows = Array.isArray(oRes?.data) ? oRes.data : Array.isArray(oRes) ? oRes : [];
         } catch {}
         if (!cancelled && oRows.length) {
@@ -223,11 +216,7 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
         // Quotes
         let qRows: any[] = [];
         try {
-          const path = token
-            ? `/quotes/my/list?limit=100&view=block`
-            : `/quotes/my/list?limit=100&view=block${emailParam}${userIdParam}`;
-          const opts: any = token ? { token, timeoutMs: 6000 } : { timeoutMs: 6000 };
-          const qRes: any = await cmsFetch(path, opts).catch(() => null);
+          const qRes: any = await cmsFetch('/quotes/my/list?limit=100&view=block', { token, timeoutMs: 6000 }).catch(() => null);
           qRows = Array.isArray(qRes?.data) ? qRes.data : Array.isArray(qRes) ? qRes : [];
         } catch {}
         if (!cancelled && qRows.length) {

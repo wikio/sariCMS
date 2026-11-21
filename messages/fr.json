@@ -4419,10 +4419,6 @@
       "accountCreated": "Compte créé avec succès",
       "noAccount": "Pas encore de compte ?",
       "hasAccount": "Déjà un compte ?",
-      "demoAccounts": "Comptes de démonstration",
-      "clientDemo": "Client Demo",
-      "partnerDemo": "Partenaire Demo",
-      "candidateDemo": "Candidat Demo",
       "loginError": "Email, mot de passe ou type de compte incorrect",
       "connectionError": "Erreur de chargement des données",
       "captchaIncorrect": "Réponse CAPTCHA incorrecte",
@@ -5321,7 +5317,6 @@
       "open": "Ouvrir",
       "close": "Fermer",
       "profileSaved": "Profil mis à jour.",
-      "profileSaveOffline": "Modifications enregistrées sur cet appareil, mais le serveur n’a pas répondu.",
       "profileNameRequired": "Le nom et le prénom sont obligatoires.",
       "profileEmailInvalid": "Adresse e-mail invalide.",
       "changePassword": "Changer mon mot de passe",
@@ -5384,7 +5379,8 @@
       "eventStatusAttended": "Présent(e)",
       "eventStatusWaitlist": "Liste d’attente",
       "eventStatusRejected": "Refusée",
-      "eventStatusCancelled": "Annulée"
+      "eventStatusCancelled": "Annulée",
+      "profileSaveError": "Les modifications du profil n’ont pas été enregistrées."
     },
     "eventDetail": {
       "notFound": "Événement non trouvé",
@@ -5581,11 +5577,6 @@
       "error": "Erreur",
       "captchaIncorrect": "CAPTCHA incorrect",
       "accessBlocked": "Accès bloqué",
-      "demoAccounts": "Comptes de démonstration (clic rapide)",
-      "clientDemo": "Client Demo",
-      "partnerDemo": "Partenaire Demo",
-      "candidateDemo": "Candidat Demo",
-      "clickToLogin": "Cliquez sur un bouton puis \"Se connecter\" pour accéder au dashboard",
       "noAccount": "Pas encore de compte ?",
       "createClientAccount": "Créer un compte client",
       "becomePartner": "Devenir partenaire",
@@ -5625,8 +5616,7 @@
       "loggingIn": "Connexion en cours…",
       "loginError": "Identifiants incorrects",
       "captchaError": "Veuillez valider le captcha",
-      "createAccount": "Créer un compte",
-      "demoHint": "Compte de démonstration"
+      "createAccount": "Créer un compte"
     },
     "forgotPassword": {
       "title": "Mot de passe oublié",
@@ -5853,7 +5843,8 @@
       "captchaError": "Réponse CAPTCHA incorrecte",
       "acceptTermsRequired": "Vous devez accepter les conditions",
       "home": "Accueil",
-      "register": "Inscription"
+      "register": "Inscription",
+      "registrationFailed": "Inscription impossible. Vérifiez les informations et le code de vérification, puis réessayez."
     },
     "search": {
       "title": "Recherche",

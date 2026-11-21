@@ -89,7 +89,6 @@
   "open": "Ouvrir",
   "close": "Fermer",
   "profileSaved": "Profil mis à jour.",
-  "profileSaveOffline": "Modifications enregistrées sur cet appareil, mais le serveur n’a pas répondu.",
   "profileNameRequired": "Le nom et le prénom sont obligatoires.",
   "profileEmailInvalid": "Adresse e-mail invalide.",
   "changePassword": "Changer mon mot de passe",
@@ -152,5 +151,6 @@
   "eventStatusAttended": "Présent(e)",
   "eventStatusWaitlist": "Liste d’attente",
   "eventStatusRejected": "Refusée",
-  "eventStatusCancelled": "Annulée"
+  "eventStatusCancelled": "Annulée",
+  "profileSaveError": "Les modifications du profil n’ont pas été enregistrées."
 }

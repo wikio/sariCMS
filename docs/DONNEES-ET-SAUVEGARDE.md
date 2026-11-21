@@ -501,7 +501,7 @@ messagerie reste sur son fichier.
 
 ### E. Non migré, et pour une raison de forme
 
-Trois magasins n'ont pas été basculés, et ce n'est pas un oubli : **un document JSON
+Deux magasins n'ont pas été basculés, et ce n'est pas un oubli : **un document JSON
 s'écrase au dernier appel**. Or ce sont des journaux en append — chaque entrée doit
 rester lisible après la suivante. Ils demandent des **lignes**, donc une migration
 Prisma, donc un arbitrage de schéma ; un document les aurait détruits à la longue.
@@ -510,9 +510,11 @@ Prisma, donc un arbitrage de schéma ; un document les aurait détruits à la lo
 | --- | --- | --- |
 | `sari_coupon_uses` | usages par coupon | table de journal |
 | `sari_import_log` | imports de catalogue | table de journal |
-| `sari_users_registry` | annuaire local de comptes | à arbitrer avec la table `users` |
 
-**Deux cas de cette liste ont été traités depuis, et chacun autrement.**
+Les comptes vitrine sont conservés dans `users`. L’ancien annuaire du navigateur
+contenait des mots de passe : la vitrine l’efface, il ne faut ni l’exporter ni le restaurer.
+
+**Deux autres cas ont été traités depuis, et chacun autrement.**
 `sari_sku_seq` n'était pas un journal à transférer mais un défaut à supprimer :
 voir §4 B bis. `sari_payment_records` est bien devenu une table de journal,
 `payment_records` : voir §4 B ter.
@@ -527,7 +529,7 @@ Rien à migrer ici — elles décrivent un poste ou une session, pas l'entrepris
 `sari_theme`, `sari_admin_theme` (préférence d'affichage), `sari_admin_time`
 (fuseau de l'opérateur), `sari_cart`, `sari_pending_cart`, `sari_pending_action`,
 `sari_pending_open_thread` (reprises après connexion), `sari_ged_surface` (vue de
-bibliothèque), `sari_user`, `sari_admin_auth`, les cookies
+bibliothèque), `sari_front_access`, `sari_admin_auth`, les cookies
 `sari_admin_access` / `sari_admin_refresh` / `sari_admin_user` / `sari_csrf`
 (double submission), `__SARI_DEBUG`, `sari_demo_v3` (marqueur d'amorçage).
 
@@ -649,7 +651,6 @@ la table `payment_records`.
 copy(JSON.stringify({
   uses:    JSON.parse(localStorage.getItem('sari_coupon_uses')     || '[]'),
   imports: JSON.parse(localStorage.getItem('sari_import_log')       || '[]'),
-  users:   JSON.parse(localStorage.getItem('sari_users_registry')  || '[]'),
 }, null, 2));
 ```
 
@@ -689,7 +690,7 @@ de pendant en base.
   **Passé en base depuis, donc dans le `mysqldump`** : le relevé
   d'encaissements (table `payment_records`, §4 B ter).
   **Restent sans sauvegarde automatique** : utilisations de coupons, journal
-  d'imports, annuaire local. Ce sont des journaux, pas des réglages : ils
+  d'imports. Ce sont des journaux, pas des réglages : ils
   demandent des lignes et une migration, non un document — voir §4 E. Le compteur de références produits, lui, est passé en
   base et entre dans le `mysqldump` — voir §4 B bis.
 - **La reprise du catalogue existant est automatique** (§5), mais elle ne se

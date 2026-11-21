@@ -259,7 +259,7 @@ const dashSrc = lire('app/[locale]/dashboard/page.tsx');
 const profilSrc = lire('components/dashboard/ProfileModule.tsx');
 check('le tableau de bord délègue le profil au module', /<ProfileModule \/>/.test(dashSrc));
 check('le profil propose de changer de langue', /profil-langue/.test(profilSrc));
-check('le choix est enregistré', /localStorage\.setItem\('sari_user'/.test(profilSrc));
+check('le choix est envoyé au serveur avec le jeton du compte', /token: jeton,[\s\S]*?locale: brouillon\.locale/.test(profilSrc));
 check('le changement est appliqué aussitôt', /router\.push\(`\/\$\{brouillon\.locale\}\/dashboard`\)/.test(profilSrc));
 
 // Un hook après un retour conditionnel casse le rendu (React lève

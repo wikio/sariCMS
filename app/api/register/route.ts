@@ -19,10 +19,8 @@
  * 4. `user_welcome`, piloté par le centre de courrier et donc désactivable dans
  *    Paramètres → Emails.
  *
- * Le relais ne touche pas à l'authentification : `POST /users` ne renvoie pas de
- * jeton, la connexion reste un geste distinct. Et si le backend ne répond pas,
- * l'erreur remonte telle quelle — `AuthContext` conserve son repli local, aucun
- * email de bienvenue ne part pour un compte qui n'existe pas.
+ * L'inscription ne délivre pas de jeton : la vitrine doit ensuite se connecter.
+ * Si la création échoue, aucun compte local ni email de bienvenue n'est produit.
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { cmsFetch } from '@/lib/cms';
