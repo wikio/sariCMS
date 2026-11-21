@@ -258,7 +258,7 @@ export default function Header({ config, menu }: { config: Config; menu: MenuTyp
       <div className={`relative z-40 w-full transition-all duration-300 border-b ${isScrolled ? 'bg-white dark:bg-[#1a1a1a] shadow-md border-gray-200 dark:border-gray-800' : 'bg-white dark:bg-[#1a1a1a] border-gray-200 dark:border-gray-800'}`}>
         <div className="container mx-auto px-6">
           <div className="flex items-center justify-between h-16 lg:h-20">
-            <Link href={getLinkHref('#home')} className="flex items-center gap-3 group flex-shrink-0">
+            <Link href={getLinkHref('/')} className="flex items-center gap-3 group flex-shrink-0">
               <img src={logo} alt={config.meta?.companyName} className="h-12 w-auto transition-transform duration-500 group-hover:scale-110" />
               <div className="hidden md:block">
                 <h1 className="font-bold text-xl lg:text-2xl text-sari-dark dark:text-white leading-tight">{config.meta?.companyName || 'SARI Système'}</h1>
