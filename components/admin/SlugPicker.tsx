@@ -13,6 +13,7 @@ import {
 } from '@/lib/link-kind.mjs';
 import { cmsAdminList } from '@/lib/cms-admin';
 import { slugify } from '@/lib/slugify';
+import { entityRouteKey } from '@/lib/entity-url';
 import IconMark from '@/components/admin/IconMark';
 
 /* ============================================================
@@ -105,7 +106,7 @@ const MODULE_DEFS: Record<Exclude<SlugKind, 'free' | 'static'>, {
     resource: 'news',
     titleKey: 'title',
     icon: 'newspaper',
-    build: (i) => `/news/${pubId(i)}-${slugify(String(i.title || i.name || ''))}`,
+    build: (i) => `/news/${entityRouteKey({ ...i, id: pubId(i) })}`,
   },
   events: {
     resource: 'events',

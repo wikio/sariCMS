@@ -7,7 +7,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { Newspaper, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getNews } from '@/lib/data';
-import { buildSlugUrl } from '@/lib/slugify';
+import { entityUrl } from '@/lib/entity-url';
 import type { News } from '@/types';
 import Pagination from '@/components/ui/Pagination';
 import NewsFilters from '@/components/news/NewsFilters';
@@ -131,9 +131,8 @@ function NewsList({ locale }: { locale: string }) {
               <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-3 mb-4">
                 {item.shortDesc}
               </p>
-              {/* ✅ LIEN AVEC SLUG SEO */}
-              <Link 
-                href={buildSlugUrl(`/${locale}/news`, item.id, item.title)} 
+              <Link
+                href={entityUrl(locale, 'news', item)}
                 className="text-sari-blue font-semibold hover:underline mt-auto inline-flex items-center gap-2"
               >
                 {t('readArticle')}

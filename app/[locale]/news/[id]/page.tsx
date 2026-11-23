@@ -8,8 +8,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { Calendar, Clock, ChevronLeft, ChevronRight, Mail } from 'lucide-react';
 import { getNews, getArticleAuthor, getDefaultAuthor } from '@/lib/data';
 import { newsListHref, popularNewsTags } from '@/lib/news-groups';
-import { matchesEntity } from '@/lib/ids';
-import { extractLegacyId, buildMultilingualUrl } from '@/lib/translation-utils';
+import { entityUrl, findByRouteKey } from '@/lib/entity-url';
 import { useDateUtils } from '@/lib/use-date-format';
 import type { News, Author } from '@/types';
 import Breadcrumb from '@/components/ui/Breadcrumb';
@@ -20,18 +19,21 @@ import ImageWithFallback from '@/components/ui/ImageWithFallback';
 import LanguageIndicator from '@/components/ui/LanguageIndicator';
 
 export default function NewsDetailPage() {
-  const params = useParams();
+  const { id } = useParams<{ id: string }>();
   const locale = useLocale();
+  return (
+    <PageVisibilityGuard visibilityKey="module.news">
+      <NewsDetail key={`${locale}/${id}`} routeKey={id} locale={locale} />
+    </PageVisibilityGuard>
+  );
+}
+
+function NewsDetail({ routeKey, locale }: { routeKey: string; locale: string }) {
   const { formatDate, hasTime } = useDateUtils();
   const t = useTranslations('pages.newsDetail');
-
-  // ✅ CORRECTION : On cible explicitement la clé 'id' de l'objet params
-  const rawIdParam = params.id as string;
-
-  // On découpe par '-' pour isoler l'ID numérique (ex: "1" depuis "1-nouvelle-gamme...")
-  const idString = rawIdParam ? rawIdParam.split('-')[0] : '';
-
-  const [item, setItem] = useState<News | null>(null);
+  const tNews = useTranslations('pages.news');
+  // undefined pendant la lecture, null seulement si aucune fiche ne correspond.
+  const [item, setItem] = useState<News | null>();
   const [author, setAuthor] = useState<Author | null>(null);
   const [popularTags, setPopularTags] = useState<string[]>([]);
   const [relatedNews, setRelatedNews] = useState<News[]>([]);
@@ -45,48 +47,25 @@ export default function NewsDetailPage() {
     const loadArticle = async () => {
       const news = await getNews(locale);
       if (!current) return;
-      
-      // Essayer d'extraire le legacyId de l'URL
-      const legacyId = extractLegacyId(rawIdParam);
-      
-      let found: News | undefined;
-      if (legacyId) {
-        // Rechercher par legacyId d'abord
-        found = news.find((n) => n.legacyId === legacyId);
-      }
-      
-      // Fallback sur la recherche par id/slug si legacyId non trouvé
-      if (!found) {
-        found = news.find((n) => matchesEntity(n, idString) || matchesEntity(n, rawIdParam));
-      }
-      
-      if (found) {
-        setItem(found);
-        setPopularTags(popularNewsTags(news));
-        const related = news.filter(n => n.id !== found!.id && n.category === found!.category).slice(0, 3);
-        const latest = news.filter(n => n.id !== found!.id).slice(0, 5);
-        const currentIndex = news.findIndex(n => n.id === found!.id);
-        
-        setRelatedNews(related);
-        setLatestNews(latest);
-        setPrevArticle(currentIndex > 0 ? news[currentIndex - 1] : null);
-        setNextArticle(currentIndex < news.length - 1 ? news[currentIndex + 1] : null);
 
-        // Auteur de l'article ; à défaut, celui marqué par défaut dans la
-        // liste des auteurs. Si aucun des deux n'existe, le bloc reste masqué.
-        const resolved = (await getArticleAuthor(locale, found)) ?? (await getDefaultAuthor(locale));
-        if (current) setAuthor(resolved);
-      } else {
-        setItem(null);
-        setAuthor(null);
-      }
+      const found = findByRouteKey(news, routeKey);
+      setItem(found);
+      if (!found) return;
+      setPopularTags(popularNewsTags(news));
+      const others = news.filter(n => n.id !== found.id);
+      setRelatedNews(others.filter(n => n.category === found.category).slice(0, 3));
+      setLatestNews(others.slice(0, 5));
+      const index = news.indexOf(found);
+      setPrevArticle(news[index - 1] ?? null);
+      setNextArticle(news[index + 1] ?? null);
+
+      // Sans auteur lié, essayer celui par défaut ; sinon la carte reste masquée.
+      const resolved = (await getArticleAuthor(locale, found)) ?? (await getDefaultAuthor(locale));
+      if (current) setAuthor(resolved);
     };
-    
-    if (idString || rawIdParam) {
-      loadArticle();
-    }
+    void loadArticle();
     return () => { current = false; };
-  }, [idString, rawIdParam, locale]);
+  }, [routeKey, locale]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -98,6 +77,9 @@ export default function NewsDetailPage() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  if (item === undefined) {
+    return <p role="status" className="pt-44 text-center min-h-screen">{tNews('loading')}</p>;
+  }
   if (!item) {
     return (
       <div className="pt-32 pb-24 container mx-auto px-6 text-center min-h-screen flex flex-col items-center justify-center">
@@ -123,30 +105,28 @@ export default function NewsDetailPage() {
 
   const articleType = item.classification?.trim();
   const badge = articleType || item.category?.trim();
+  const lead = item.shortDesc?.trim();
 
   return (
-    <PageVisibilityGuard visibilityKey="module.news">
-    {/* Indicateur de langue si contenu non traduit */}
-    {item?.locale && <LanguageIndicator contentLocale={item.locale} requestedLocale={locale} />}
-    
-    <div className="pt-32 pb-24 min-h-screen">
+    <div className="pt-[var(--site-header-h)] pb-24 min-h-screen">
+      {item.locale && <LanguageIndicator contentLocale={item.locale} requestedLocale={locale} />}
       {/* Barre de progression */}
       <div className="fixed top-0 left-0 w-full h-1 bg-gray-200 dark:bg-gray-800 z-50">
         <div className="h-full bg-sari-blue transition-all duration-150" style={{ width: `${scrollProgress}%` }}></div>
       </div>
 
-      {/* Header avec image */}
-      <div className="relative h-[500px] md:h-[600px] overflow-hidden">
+      {/* Le texte reste dans le flux : même un chapô long tient sur mobile. */}
+      <div className="relative flex min-h-[500px] items-end overflow-hidden bg-sari-dark md:min-h-[600px]">
         <ImageWithFallback
           src={item.image}
           alt={item.title}
-          className="w-full h-full object-cover parallax-slow"
+          className="absolute inset-0 h-full w-full object-cover parallax-slow"
           fallbackIcon="calendar"
           placeholderSize="xl"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-sari-dark via-sari-dark/60 to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-sari-dark via-sari-dark/75 to-sari-dark/45"></div>
         <div className="absolute inset-0 grid-pattern-bg opacity-10"></div>
-        <div className="absolute bottom-0 left-0 right-0 container mx-auto px-6 pb-12">
+        <div className="container relative mx-auto px-6 py-10 md:py-12">
           <div className="max-w-4xl">
             {badge && (
               <Link href={newsListHref(locale, { by: articleType ? 'type' : 'category', value: badge })}
@@ -154,11 +134,11 @@ export default function NewsDetailPage() {
                 {badge}
               </Link>
             )}
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 leading-tight break-words">
               {item.title}
             </h1>
-            {item.sujet && (
-              <p className="text-xl text-gray-300 mb-6 italic">{item.sujet}</p>
+            {lead && (
+              <p className="mb-6 max-w-prose whitespace-pre-line break-words text-lg leading-relaxed text-white md:text-xl">{lead}</p>
             )}
             <div className="flex flex-wrap items-center gap-6 text-gray-300">
               {/* Sans auteur ni auteur par défaut, le bloc n'est pas affiché. */}
@@ -234,7 +214,7 @@ export default function NewsDetailPage() {
             {(prevArticle || nextArticle) && (
               <div className="grid md:grid-cols-2 gap-6 mb-8">
                 {prevArticle ? (
-                  <Link href={buildMultilingualUrl(`/${locale}/news`, prevArticle.legacyId || String(prevArticle.id), prevArticle.slug)} className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 p-6 hover:border-sari-blue transition-all group rounded-xl">
+                  <Link href={entityUrl(locale, 'news', prevArticle)} className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 p-6 hover:border-sari-blue transition-all group rounded-xl">
                     <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
                       {locale === 'ar' ? <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" /> : <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />}
                       {t('previousArticle')}
@@ -245,7 +225,7 @@ export default function NewsDetailPage() {
                   </Link>
                 ) : <div></div>}
                 {nextArticle ? (
-                  <Link href={buildMultilingualUrl(`/${locale}/news`, nextArticle.legacyId || String(nextArticle.id), nextArticle.slug)} className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 p-6 hover:border-sari-blue transition-all group text-right rounded-xl">
+                  <Link href={entityUrl(locale, 'news', nextArticle)} className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 p-6 hover:border-sari-blue transition-all group text-right rounded-xl">
                     <div className="flex items-center justify-end gap-2 text-sm text-gray-500 mb-2">
                       {t('nextArticle')}
                       {locale === 'ar' ? <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> : <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />}
@@ -263,7 +243,7 @@ export default function NewsDetailPage() {
                 <h2 className="text-3xl font-bold text-sari-dark dark:text-white mb-8">{t('relatedArticles')}</h2>
                 <div className="grid md:grid-cols-3 gap-6">
                   {relatedNews.map(article => (
-                    <Link key={article.id} href={buildMultilingualUrl(`/${locale}/news`, article.legacyId || String(article.id), article.slug)} className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 card-hover overflow-hidden group rounded-xl">
+                    <Link key={article.id} href={entityUrl(locale, 'news', article)} className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 card-hover overflow-hidden group rounded-xl">
                       <div className="aspect-video overflow-hidden">
                         <ImageWithFallback
                           src={article.image}
@@ -323,7 +303,7 @@ export default function NewsDetailPage() {
               </h3>
               <div className="space-y-6">
                 {latestNews.map(post => (
-                  <Link key={post.id} href={buildMultilingualUrl(`/${locale}/news`, post.legacyId || String(post.id), post.slug)} className="flex gap-4 group">
+                  <Link key={post.id} href={entityUrl(locale, 'news', post)} className="flex gap-4 group">
                     {post.image ? (
                     <ImageWithFallback
                       src={post.image}
@@ -369,6 +349,5 @@ export default function NewsDetailPage() {
         </div>
       </div>
     </div>
-    </PageVisibilityGuard>
   );
 }

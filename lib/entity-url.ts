@@ -7,8 +7,8 @@
  *   ar → /ar/solutions/3-غرفة-العمليات-المتصلة
  *
  * L'ID en tête rend l'URL résoluble même si le slug change ou n'est pas
- * traduit ; le slug reste présent pour le SEO. Le changement de langue
- * conserve l'ID et remplace uniquement le slug par sa version traduite.
+ * traduit ; le slug reste lisible. Au changement de langue, on utilise
+ * l’id et le slug de la fiche sœur, retrouvée via son `legacyId`.
  */
 
 import { slugify } from '@/lib/slugify';
@@ -22,6 +22,21 @@ export interface RoutableEntity {
   locale?: unknown;
 }
 
+/** Un seul décodage, que le segment provienne du navigateur ou de Next. */
+function routeParts(segment: string) {
+  let raw: string;
+  try {
+    raw = decodeURIComponent(String(segment || '')).trim();
+  } catch {
+    // Un favori mal encodé ne doit pas interrompre le rendu de la page.
+    return { raw: '', id: '', slug: '' };
+  }
+  const head = raw.split('-', 1)[0];
+  return /^\d+$/.test(head)
+    ? { raw, id: head, slug: raw.slice(head.length + 1) }
+    : { raw, id: raw, slug: raw };
+}
+
 /**
  * Extrait la partie identifiante d'un segment d'URL.
  *
@@ -30,17 +45,12 @@ export interface RoutableEntity {
  *                                           segment entier EST l'identifiant)
  */
 export function routeId(segment: string): string {
-  const raw = decodeURIComponent(String(segment || '')).trim();
-  const head = raw.split('-')[0];
-  return /^\d+$/.test(head) ? head : raw;
+  return routeParts(segment).id;
 }
 
 /** Extrait la partie slug d'un segment `12-mon-slug` → `mon-slug`. */
 export function routeSlug(segment: string): string {
-  const raw = decodeURIComponent(String(segment || '')).trim();
-  const head = raw.split('-')[0];
-  if (/^\d+$/.test(head)) return raw.slice(head.length + 1);
-  return raw;
+  return routeParts(segment).slug;
 }
 
 /** Identifiant public d'une entité, sous forme de chaîne. */
@@ -113,8 +123,8 @@ export function entityUrl(
 
 /**
  * Retrouve l'entité correspondant à un segment d'URL.
- * Ordre de résolution : ID exact → slug exact → slug de la partie texte →
- * legacyId. Permet donc `3-slug-fr`, `3-slug-ar`, `3` ou `slug` seul.
+ * D'abord l'adresse exacte, puis l'identifiant stable (même si le slug a
+ * changé). Les anciennes adresses composées ne servent qu'en dernier recours.
  */
 export function findByRouteKey<T extends RoutableEntity>(
   items: T[],
@@ -122,20 +132,20 @@ export function findByRouteKey<T extends RoutableEntity>(
 ): T | null {
   if (!Array.isArray(items) || !items.length || !segment) return null;
 
-  const raw = decodeURIComponent(String(segment)).trim();
-  const id = routeId(raw);
-  const slugPart = routeSlug(raw);
+  const { raw, id, slug: slugPart } = routeParts(segment);
+  if (!raw) return null;
 
   // 1) ID exact (cas nominal : l'ID préfixe l'URL)
   const byId = items.find((item) => entityId(item) && entityId(item) === id);
-  if (byId) return byId;
+  if (byId && (id === raw || entityRouteKey(byId) === raw)) return byId;
 
   // 2) Segment complet == slug stocké (URLs historiques sans ID)
   const byFullSlug = items.find((item) => entitySlug(item) === raw);
   if (byFullSlug) return byFullSlug;
+  if (byId) return byId; // slug modifié, mais même identifiant
 
   // 3) Partie texte == slug stocké
-  if (slugPart) {
+  if (slugPart && slugPart !== raw) {
     const bySlug = items.find((item) => entitySlug(item) === slugPart);
     if (bySlug) return bySlug;
   }
@@ -146,7 +156,26 @@ export function findByRouteKey<T extends RoutableEntity>(
   );
   if (byLegacy) return byLegacy;
 
-  return null;
+  // Les anciens liens de fiche concaténaient le legacyId et le slug, par
+  // exemple `news-2-dossier-ete` ou `news-m1-abc123-dossier-ete`. Le numéro
+  // du legacyId n'est PAS l'id public de la traduction. Chercher la clé
+  // réellement stockée, avec son tiret de séparation, la plus précise d'abord.
+  let legacyMatch: T | null = null;
+  let longest = 0;
+  for (const item of items) {
+    const legacy = String(item.legacyId ?? '');
+    if (legacy.length > longest && raw.startsWith(`${legacy}-`)) {
+      legacyMatch = item;
+      longest = legacy.length;
+    }
+    // Certaines anciennes cartes utilisaient l'id textuel + le slug du titre.
+    const oldId = entityId(item);
+    if (oldId && raw.startsWith(`${oldId}-`)) {
+      const tail = raw.slice(oldId.length + 1);
+      if (tail && (tail === entitySlug(item) || tail === slugify(String(item.title ?? item.name ?? '')))) return item;
+    }
+  }
+  return legacyMatch;
 }
 
 /**
@@ -160,13 +189,11 @@ export function translateRouteKey<T extends RoutableEntity>(
   targetItems: T[],
   translatedSlug?: string,
 ): string {
-  const raw = decodeURIComponent(String(segment || '')).trim();
+  const { raw, id } = routeParts(segment);
   if (!raw) return raw;
 
-  const id = routeId(raw);
-
   // a) On dispose de la liste des fiches dans la langue cible
-  const match = findByRouteKey(targetItems, raw);
+  const match = findByRouteKey(targetItems, segment);
   if (match) return entityRouteKey(match);
 
   // b) Slug traduit fourni par la fiche i18n (localStorage)

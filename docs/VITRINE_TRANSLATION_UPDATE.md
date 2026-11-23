@@ -1,53 +1,20 @@
 # Guide de Mise à Jour - Système de Traduction Vitrine
 
-## État Actuel du Frontend
+## Articles : adresses et champs affichés
 
-### ✅ Ce qui est déjà implémenté
+La liste, les cartes et la navigation sur la fiche (dont **Derniers articles**) utilisent `entityUrl(locale, 'news', article)`. Avec un id public numérique, le lien prend la forme `/fr/news/42-dossier-ete` ; avec un id textuel, c’est le slug seul. Le slug enregistré dans le CMS est prioritaire sur celui dérivé du titre.
 
-#### 1. Routage par legacyId
-Les pages de détail utilisent déjà `legacyId` pour le routage :
+`legacyId` relie les traductions ; il ne doit pas être ajouté devant le slug. La fiche utilise `findByRouteKey` sur les actualités publiées de la langue demandée. Elle accepte encore les favoris de la forme `news-2-dossier-ete` en recherchant le **legacyId stocké**, sans supposer que l’id de la traduction est `2`.
 
-```typescript
-// app/[locale]/news/[id]/page.tsx
-const legacyId = extractLegacyId(rawIdParam);
+Sous le titre, la fiche affiche **Texte → Chapô** (`shortDesc`). **Article → Sujet** (`sujet`) est un champ distinct et ne le remplace pas si le chapô est vide.
 
-let found: News | undefined;
-if (legacyId) {
-  // Rechercher par legacyId d'abord
-  found = news.find((n) => n.legacyId === legacyId);
-}
+## Proposition de repli sur le français
 
-// Fallback sur la recherche par id/slug si legacyId non trouvé
-if (!found) {
-  found = news.find((n) => matchesEntity(n, idString) || matchesEntity(n, rawIdParam));
-}
-```
+Les sections suivantes décrivent la stratégie envisagée pour les traductions manquantes, et non un autre format d’URL à générer.
 
-#### 2. Génération d'URLs avec legacyId
-Les liens utilisent `buildMultilingualUrl()` :
+### Repli par article
 
-```typescript
-// Navigation précédent/suivant
-<Link href={buildMultilingualUrl(
-  `/${locale}/news`, 
-  prevArticle.legacyId || String(prevArticle.id), 
-  prevArticle.slug
-)}>
-
-// Articles liés
-<Link href={buildMultilingualUrl(
-  `/${locale}/news`, 
-  article.legacyId || String(article.id), 
-  article.slug
-)}>
-```
-
-### ❌ Ce qui doit être amélioré
-
-#### 1. Fallback sur le français si traduction manquante
-Actuellement, si un utilisateur visite `/en/news/mon-article` et qu'il n'y a pas de traduction anglaise, la page retourne une erreur 404.
-
-**Solution** : Ajouter un fallback automatique sur la version française.
+Quand la liste des actualités de la langue demandée est vide, `getNews` essaie déjà le français. Si cette liste existe mais qu’elle ne contient pas la fiche, la page affiche « Article non trouvé ». Le repli *par article* présenté ci-dessous est une proposition distincte.
 
 ## Mise à Jour Requise du Backend
 
@@ -162,7 +129,7 @@ export async function getNewsById(locale: string, id: number | string): Promise<
   
   // Fallback sur la recherche locale
   const news = await getNews(locale);
-  return news.find((n) => matchesEntity(n, id)) || null;
+  return findByRouteKey(news, String(id));
 }
 ```
 
@@ -176,34 +143,12 @@ useEffect(() => {
     // Charger les articles dans la langue courante
     let news = await getNews(locale);
     
-    // Essayer d'extraire le legacyId de l'URL
-    const legacyId = extractLegacyId(rawIdParam);
-    
-    let found: News | undefined;
-    
-    // Recherche par legacyId
-    if (legacyId) {
-      found = news.find((n) => n.legacyId === legacyId);
-    }
-    
-    // Fallback sur id/slug
-    if (!found) {
-      found = news.find((n) => matchesEntity(n, idString) || matchesEntity(n, rawIdParam));
-    }
-    
-    // Si toujours pas trouvé et locale != 'fr', charger les articles français
+    let found = findByRouteKey(news, routeKey);
     if (!found && locale !== 'fr') {
-      console.warn(`Article non trouvé en ${locale}, tentative en français`);
       news = await getNews('fr');
-      
-      if (legacyId) {
-        found = news.find((n) => n.legacyId === legacyId);
-      }
-      if (!found) {
-        found = news.find((n) => matchesEntity(n, idString) || matchesEntity(n, rawIdParam));
-      }
+      found = findByRouteKey(news, routeKey);
     }
-    
+
     if (found) {
       setItem(found);
       // ... reste du code
@@ -212,10 +157,8 @@ useEffect(() => {
     }
   };
   
-  if (idString || rawIdParam) {
-    loadArticle();
-  }
-}, [idString, rawIdParam, locale]);
+  void loadArticle();
+}, [routeKey, locale]);
 ```
 
 ### 4. Ajouter un indicateur de langue dans l'UI
@@ -343,8 +286,8 @@ useEffect(() => {
 - [ ] Détail `/en/news/article-en` affiche la version EN
 - [ ] Détail `/en/news/article-fr` affiche la version FR avec badge
 - [ ] Détail `/ar/news/article-fr` affiche la version FR avec badge
-- [ ] Navigation précédent/suivant fonctionne avec legacyId
-- [ ] Articles liés utilisent legacyId
+- [ ] Précédent/suivant, Derniers articles et Articles connexes ouvrent le titre et le chapô attendus, sans préfixe de traduction
+- [ ] Un ancien favori `news-2-…` fonctionne même si l’id public local n’est pas `2`
 - [ ] Indicateur de langue s'affiche pour le contenu non traduit
 
 ## Support

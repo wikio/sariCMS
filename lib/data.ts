@@ -954,7 +954,7 @@ export async function getNewsById(locale: string, id: number | string): Promise<
   
   // Fallback sur la recherche locale
   const news = await getNews(locale);
-  return news.find((n) => matchesEntity(n, id)) || null;
+  return findByRouteKey(news, String(id));
 }
 
 export async function getCareerById(locale: string, id: number | string): Promise<Career | null> {

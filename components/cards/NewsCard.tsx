@@ -4,7 +4,7 @@
 import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { Calendar, ChevronRight, ChevronLeft } from 'lucide-react';
-import { slugify } from '@/lib/slugify';
+import { entityUrl } from '@/lib/entity-url';
 import type { News } from '@/types';
 import { useDateUtils } from '@/lib/use-date-format';
 
@@ -19,8 +19,7 @@ export default function NewsCard({ news, variant = 'standard' }: NewsCardProps) 
   const t = useTranslations('components.cards.NewsCard');
   const isRtl = locale === 'ar';
 
-  // ✅ URL avec slug SEO
-  const newsUrl = `/${locale}/news/${news.id}-${slugify(news.title)}`;
+  const newsUrl = entityUrl(locale, 'news', news);
 
   // === Variante HORIZONTAL ===
   if (variant === 'horizontal') {

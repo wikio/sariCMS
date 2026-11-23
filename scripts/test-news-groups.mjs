@@ -96,7 +96,9 @@ const push = (href) => { window.history.pushState({}, '', href); window.dispatch
 const subscribe = cb => { window.addEventListener('popstate', cb); return () => window.removeEventListener('popstate', cb); };
 const nav = {
   useSearchParams: () => new URLSearchParams(useSyncExternalStore(subscribe, () => window.location.search)),
-  useRouter: () => ({ push }), useParams: () => ({ id: window.location.pathname.split('/').at(-1) }),
+  useRouter: () => ({ push }), useParams: () => ({
+    id: useSyncExternalStore(subscribe, () => window.location.pathname).split('/').at(-1),
+  }),
 };
 const tr = (key, params = {}) => params.value !== undefined ? `${key}: ${params.value}` : key === 'resultCount' ? `${params.count}` : key;
 const intl = { useTranslations: () => tr, useLocale: () => window.location.pathname.split('/')[1] };
@@ -105,8 +107,7 @@ const front = {
   'next/navigation': nav, 'next-intl': intl,
   'next/link': { default: ({ href, children }) => h('a', { href, onClick(e) { e.preventDefault(); push(href); } }, children) },
   '@/lib/data': { getNews: async () => articles, getArticleAuthor: async () => null, getDefaultAuthor: async () => null },
-  '@/lib/news-groups': groups, '@/lib/slugify': slug, '@/lib/ids': ids,
-  '@/lib/translation-utils': load('lib/translation-utils.ts'),
+  '@/lib/news-groups': groups, '@/lib/entity-url': entity,
   '@/lib/use-date-format': { useDateUtils: () => ({ formatDate: () => '', hasTime: () => false }) },
   '@/components/shared/PageVisibilityGuard': { default: ({ children }) => children },
   '@/components/ui/Pagination': { default: load('components/ui/Pagination.tsx', { 'next-intl': intl }).default },
@@ -117,6 +118,7 @@ front['@/components/news/NewsFilters'] = load('components/news/NewsFilters.tsx',
 front['@/components/news/NewsTags'] = load('components/news/NewsTags.tsx', front);
 const Page = load('app/[locale]/news/page.tsx', front).default;
 const Detail = load('app/[locale]/news/[id]/page.tsx', front).default;
+const NewsCard = load('components/cards/NewsCard.tsx', front).default;
 async function mount(t, Component) {
   const el = document.body.appendChild(document.createElement('div'));
   const root = createRoot(el);
@@ -211,6 +213,91 @@ for (const [category, classification, expected] of [
     assert.equal(el.querySelectorAll('a[href*="?tag="]').length, 0, 'aucun tag inventé');
   });
 }
+
+// L'ID public d'une traduction n'est pas le numéro à la fin de son legacyId.
+// Le slug éditorial peut également être tout autre que le titre de la carte.
+const stories = [
+  { id: 42, legacyId: 'news-1', slug: 'premier-dossier', title: 'Sur le terrain', shortDesc: 'Le chapô du reportage.' },
+  { id: 107, legacyId: 'news-10', slug: 'dossier-ete', title: 'Notre entretien', shortDesc: 'Les propos recueillis cet été.' },
+  { id: 'ref-centre', legacyId: 'news-m1-abc123', slug: 'news-du-centre', title: 'Le point au centre', shortDesc: '  ' },
+].map(article => ({ ...article, category: 'Reportages', sujet: 'Sujet interne, pas un chapô' }));
+
+test('adresses de fiche : slug exact avant alias, clé historique entière, Unicode et replis sans slug', () => {
+  const specific = { id: 10, legacyId: 'news-10-bis', slug: 'édition-spéciale' };
+  const realSlug = { id: 'cms-42', legacyId: 'lg_123_abc', slug: 'news-10-communique', title: 'Autre titre' };
+  const ar = { id: 203, legacyId: 'news-3', title: 'تقرير طبي' };
+  const rows = [...stories, specific, realSlug, ar];
+  for (const [segment, row] of [
+    ['news-10-dossier-ete', stories[1]], // pas la fiche dont l'id public vaut 10
+    ['news-10-bis-ancien-slug', specific], // deux legacyId commencent par « news-10 »
+    ['news-10-communique', realSlug], // ce « news- » fait réellement partie du slug
+    ['lg_123_abc-ancien-titre', realSlug], ['cms-42-autre-titre', realSlug],
+    ['107-ancien-titre', stories[1]], [encodeURIComponent('édition-spéciale'), specific],
+    [encodeURIComponent('تقرير-طبي'), ar], ['%', null], ['news-100-inconnu', null],
+  ]) assert.equal(entity.findByRouteKey(rows, segment), row, segment);
+  assert.equal(entity.entityUrl('ar', 'news', ar), '/ar/news/203-تقرير-طبي');
+  assert.equal(entity.entityRouteKey({ id: 4 }), '4');
+  // Un slug nu commençant par un nombre reste accessible, même en présence de cet id.
+  const bulletin = { id: 'ref-labo', slug: '107-bulletin' };
+  assert.equal(entity.findByRouteKey([...rows, bulletin], '107-bulletin'), bulletin);
+});
+
+test('changement de fiche pendant le chargement : ni fausse erreur ni chapô de la requête précédente', async t => {
+  const reads = [];
+  t.mock.method(front['@/lib/data'], 'getNews', () => new Promise(resolve => reads.push(resolve)));
+  push('/fr/news/42-premier-dossier');
+  const el = await mount(t, Detail);
+  assert.equal(el.querySelector('[role="status"]').textContent, 'loading');
+  await act(async () => push('/fr/news/107-dossier-ete'));
+  await act(async () => reads[0](stories)); // la requête abandonnée arrive après le clic
+  assert.equal(el.querySelector('h1'), null);
+  assert.ok(!el.textContent.includes('articleNotFound'));
+  await act(async () => reads[1](stories));
+  assert.equal(el.querySelector('h1 + p').textContent, stories[1].shortDesc);
+});
+
+test('derniers articles, navigation, liste et cartes mènent à la même fiche et à son propre chapô', async t => {
+  t.mock.method(front['@/lib/data'], 'getNews', async () => stories);
+  const urls = ['/fr/news/42-premier-dossier', '/fr/news/107-dossier-ete', '/fr/news/news-du-centre'];
+  push('/fr/news');
+  const list = await mount(t, Page);
+  assert.deepEqual([...list.querySelectorAll('article a[href^="/fr/news/"]')].map(a => a.getAttribute('href')), urls);
+  const card = await mount(t, () => h(NewsCard, { news: stories[1] }));
+  assert.equal(card.querySelector('a').getAttribute('href'), urls[1]);
+  await click(card.querySelector('a'));
+  const el = await mount(t, Detail);
+  const title = () => el.querySelector('h1');
+  const lead = () => title().nextElementSibling;
+  assert.equal(title().textContent, stories[1].title);
+  assert.equal(lead().tagName, 'P');
+  assert.equal(lead().textContent, stories[1].shortDesc);
+  const latest = [...el.querySelectorAll('h3')].find(n => n.textContent === 'latestArticles').parentElement;
+  assert.deepEqual([...latest.querySelectorAll('a')].map(a => a.getAttribute('href')), [urls[0], urls[2]]);
+  // Précédent/suivant et articles connexes ne doivent pas réintroduire l'URL fautive.
+  const otherLinks = [...el.querySelectorAll('a[href^="/fr/news/"]')].filter(a => !latest.contains(a));
+  assert.deepEqual(otherLinks.map(a => a.getAttribute('href')), [urls[0], urls[2], urls[0], urls[2]]);
+  await click(latest.querySelector('a'));
+  assert.equal(title().textContent, stories[0].title);
+  assert.equal(lead().textContent, stories[0].shortDesc);
+  await click(el.querySelector(`a[href="${urls[2]}"]`));
+  assert.equal(title().textContent, stories[2].title);
+  assert.notEqual(lead().tagName, 'P', 'pas de paragraphe vide ni de sujet de substitution');
+  assert.ok(!el.textContent.includes(stories[2].sujet));
+});
+
+test('anciens favoris préfixés, slug nu et URL inconnue : résolution dans la langue demandée', async t => {
+  t.mock.method(front['@/lib/data'], 'getNews', async () => stories);
+  push('/en/news/news-10-dossier-ete');
+  const el = await mount(t, Detail);
+  assert.equal(el.querySelector('h1')?.textContent, stories[1].title);
+  for (const [segment, index] of [['news-1', 0], ['news-m1-abc123-ancien-slug', 2], ['dossier-ete', 1], ['42', 0]]) {
+    await act(async () => push(`/en/news/${segment}`));
+    assert.equal(el.querySelector('h1')?.textContent, stories[index].title, segment);
+  }
+  await act(async () => push('/en/news/news-999-inconnu'));
+  assert.equal(el.querySelector('h1'), null);
+  assert.match(el.textContent, /articleNotFound/);
+});
 
 test('studio monté : locale éditée, passage catégorie → tag → type, sélection et aperçu', async t => {
   push('/fr/admin/menus');
