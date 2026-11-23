@@ -5658,7 +5658,10 @@
       "allTypes": "جميع الأنواع",
       "clearFilter": "عرض جميع الأخبار",
       "noMatches": "لا توجد مقالات تطابق «{value}».",
-      "loading": "جارٍ تحميل الأخبار…"
+      "loading": "جارٍ تحميل الأخبار…",
+      "filterTitle": "تصفية المقالات",
+      "filterHint": "اختر معيارًا واحدًا في كل مرة لتصفية المقالات.",
+      "resultCount": "{count, plural, zero {لا توجد مقالات} one {مقال واحد} two {مقالان} few {# مقالات} many {# مقالًا} other {# مقال}}"
     },
     "newsDetail": {
       "articleNotFound": "المقال غير موجود",
@@ -5679,7 +5682,12 @@
       "yourEmail": "بريدك الإلكتروني",
       "subscribe": "اشترك",
       "subscriptionSuccess": "تم التسجيل بنجاح!",
-      "popularTags": "الوسوم الشائعة"
+      "popularTags": "الوسوم الشائعة",
+      "noArticleTags": "لم تُضف أي وسوم إلى هذا المقال بعد.",
+      "suggestedTags": "هذا المقال بلا وسوم. استكشف وسومًا من مقالات أخرى:",
+      "noPopularTags": "لا توجد وسوم على المقالات المنشورة حتى الآن.",
+      "browseCategory": "تصفّح فئة «{value}»",
+      "browseType": "تصفّح المقالات من نوع «{value}»"
     },
     "payment": {
       "selectMethod": "يرجى اختيار طريقة الدفع",

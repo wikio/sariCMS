@@ -1,7 +1,7 @@
 // app/[locale]/news/page.tsx
 'use client';
 
-import { Suspense, useState, useEffect, useMemo } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
@@ -10,17 +10,13 @@ import { getNews } from '@/lib/data';
 import { buildSlugUrl } from '@/lib/slugify';
 import type { News } from '@/types';
 import Pagination from '@/components/ui/Pagination';
+import NewsFilters from '@/components/news/NewsFilters';
 import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
 import ImageWithFallback from '@/components/ui/ImageWithFallback';
 import { useDateUtils } from '@/lib/use-date-format';
-import { NEWS_GROUPS, collectNewsGroups, groupKey, newsGroupValues, newsListHref, readNewsFilter } from '@/lib/news-groups';
+import { groupKey, newsGroupValues, newsListHref, readNewsFilter } from '@/lib/news-groups';
 
 const ITEMS_PER_PAGE = 6;
-const LABELS = {
-  category: ['filterCategory', 'allCategories'],
-  tag: ['filterTag', 'allTags'],
-  type: ['filterType', 'allTypes'],
-} as const;
 
 function NewsLoading() {
   const t = useTranslations('pages.news');
@@ -51,11 +47,6 @@ function NewsList({ locale }: { locale: string }) {
     getNews(locale).then((data) => { if (current) setNews(data); });
     return () => { current = false; };
   }, [locale]);
-
-  // Les options viennent de tous les articles, jamais de la seule page filtrée.
-  const groups = useMemo(() => NEWS_GROUPS.map((by) => ({
-    by, values: collectNewsGroups(news ?? [], by),
-  })), [news]);
 
   if (!news) return <NewsLoading />;
   if (news.length === 0) {
@@ -91,7 +82,7 @@ function NewsList({ locale }: { locale: string }) {
 
   return (
     <div className="pt-44 pb-24 container mx-auto px-6 min-h-screen">
-      <div className="text-center mb-16">
+      <div className="text-center mb-8 sm:mb-10">
         <span className="text-sari-blue font-bold uppercase tracking-wider text-sm">
           {t('blogNews')}
         </span>
@@ -100,36 +91,7 @@ function NewsList({ locale }: { locale: string }) {
         </h1>
       </div>
 
-      <div className="flex flex-wrap items-end justify-center gap-4 mb-10">
-        {groups.map(({ by, values }) => {
-          const active = filter?.by === by;
-          if (!values.length && !active) return null;
-          const selected = active ? values.find((value) => groupKey(value) === key) : undefined;
-          return (
-            <label key={by} className="flex flex-col gap-1 text-sm font-semibold max-w-full">
-              {t(LABELS[by][0])}
-              <select
-                name={by}
-                value={selected ?? (active ? filter.value : '')}
-                onChange={(event) => {
-                  const value = event.target.value;
-                  router.push(newsListHref(locale, value ? { by, value } : null), { scroll: false });
-                }}
-                className="rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2"
-              >
-                <option value="">{t(LABELS[by][1])}</option>
-                {active && !selected && <option value={filter.value}>{filter.value}</option>}
-                {values.map((value) => <option key={value} value={value}>{value}</option>)}
-              </select>
-            </label>
-          );
-        })}
-        {filter && (
-          <Link href={newsListHref(locale)} scroll={false} className="py-2 text-sm font-semibold text-sari-blue hover:underline">
-            {t('clearFilter')}
-          </Link>
-        )}
-      </div>
+      <NewsFilters articles={news} locale={locale} filter={filter} count={filtered.length} />
 
       {filter && !filtered.length && (
         <p role="status" className="text-center text-gray-600 dark:text-gray-400">{t('noMatches', { value: filter.value })}</p>

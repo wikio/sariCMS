@@ -5658,7 +5658,10 @@
       "allTypes": "All types",
       "clearFilter": "View all news",
       "noMatches": "No articles match “{value}”.",
-      "loading": "Loading news…"
+      "loading": "Loading news…",
+      "filterTitle": "Filter articles",
+      "filterHint": "Narrow the list with one filter at a time.",
+      "resultCount": "{count, plural, =0 {No articles} one {# article} other {# articles}}"
     },
     "newsDetail": {
       "articleNotFound": "Article Not Found",
@@ -5679,7 +5682,12 @@
       "yourEmail": "Your email",
       "subscribe": "Subscribe",
       "subscriptionSuccess": "Subscription successful!",
-      "popularTags": "Popular tags"
+      "popularTags": "Popular tags",
+      "noArticleTags": "This article has no tags yet.",
+      "suggestedTags": "This article has no tags. Explore tags from other articles:",
+      "noPopularTags": "No published articles have tags yet.",
+      "browseCategory": "Browse the “{value}” category",
+      "browseType": "Browse articles of type “{value}”"
     },
     "payment": {
       "selectMethod": "Please select a payment method",

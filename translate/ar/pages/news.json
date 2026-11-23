@@ -13,5 +13,8 @@
   "allTypes": "جميع الأنواع",
   "clearFilter": "عرض جميع الأخبار",
   "noMatches": "لا توجد مقالات تطابق «{value}».",
-  "loading": "جارٍ تحميل الأخبار…"
+  "loading": "جارٍ تحميل الأخبار…",
+  "filterTitle": "تصفية المقالات",
+  "filterHint": "اختر معيارًا واحدًا في كل مرة لتصفية المقالات.",
+  "resultCount": "{count, plural, zero {لا توجد مقالات} one {مقال واحد} two {مقالان} few {# مقالات} many {# مقالًا} other {# مقال}}"
 }

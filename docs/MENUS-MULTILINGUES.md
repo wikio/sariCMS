@@ -36,6 +36,8 @@ attendez ce délai ou rechargez pour voir le changement.
 
 Sur la vitrine, chaque lien ouvre la liste avec **un seul filtre actif**. Par exemple : `/fr/news?category=Produits`, `/fr/news?tag=Imagerie%20m%C3%A9dicale` ou `/fr/news?type=Innovation`. Les tags sur la fiche article, y compris les tags populaires, ouvrent la même liste. **Voir toutes les actualités** efface le filtre.
 
+Les tags d’une fiche se renseignent dans **Administration → Actualités → [article] → Média → Tags**. Sans tags sur l’article, le bloc reste visible et propose, comme suggestions, des tags d’autres articles publiés. S’il n’y en a aucun, il renvoie vers la catégorie, le type ou la liste des actualités : ces liens ne sont pas présentés comme des tags.
+
 Une règle automatique utilise un seul regroupement. Pour mélanger, par exemple, un tag **et** un type précis dans le même sous-menu, utiliser des sous-liens manuels avec ces URL **sans** le préfixe de langue. Après une copie de menu vers une autre langue, adapter les valeurs sélectionnées si leurs libellés sont traduits. Les filtres sans valeur publiée sont masqués. Le studio examine au plus 2 000 fiches de la langue éditée ; la liste publique charge les articles publiés par pages de 100, avec le même plafond.
 
 ## Les trois scripts, et ce qu'ils font vraiment

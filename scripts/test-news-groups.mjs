@@ -1,6 +1,11 @@
 /** Parcours réels liste/fiche/studio, sans dépendre du contenu d'une base ni d'un serveur Next. */
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { execFileSync } from 'node:child_process';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { act, createElement as h, useState, useSyncExternalStore } from 'react';
 import { JSDOM } from 'jsdom';
 import { load } from './test-support/load-tsx.mjs';
@@ -43,6 +48,25 @@ test('tags populaires : une voix par article, aucun lien sans tag réel', () => 
   assert.deepEqual(groups.popularNewsTags([{ tags: [' ', ''] }, {}]), []);
 });
 
+test('reprise MySQL : les tags des JSON sont conservés dans le SQL livré, sans écraser ceux du CMS', t => {
+  const dir = mkdtempSync(join(tmpdir(), 'sari-news-sql-'));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const out = join(dir, 'import.sql');
+  const sqlDir = new URL('../backend/sql/', import.meta.url);
+  execFileSync(process.execPath, [fileURLToPath(new URL('migrate-data.mjs', sqlDir)), '--out', out]);
+  const newsBlock = file => readFileSync(file, 'utf8').match(/INSERT INTO `news_articles`[\s\S]+?ON DUPLICATE KEY UPDATE[\s\S]+?;/)?.[0];
+  const generated = newsBlock(out);
+  assert.match(generated, /`tags` = COALESCE\(`tags`, VALUES\(`tags`\)\)/);
+  assert.equal(newsBlock(new URL('migrate-data.mysql.sql', sqlDir)), generated);
+  for (const locale of ['fr', 'en', 'ar']) {
+    const src = JSON.parse(readFileSync(new URL(`../data/${locale}/news.json`, import.meta.url), 'utf8'));
+    for (const article of src.filter(a => a.tags?.length)) {
+      const row = generated.split('\n').find(line => line.includes(`'${locale}', '${article.slug}'`));
+      assert.ok(row?.includes(`'${JSON.stringify(article.tags).replaceAll("'", "''")}'`), `${locale}/${article.slug}`);
+    }
+  }
+});
+
 test('le menu public résout aussi un tag et une classification après le 100e article', async (t) => {
   const cms = load('lib/cms.ts');
   const data = load('lib/data.ts', {
@@ -72,9 +96,9 @@ const push = (href) => { window.history.pushState({}, '', href); window.dispatch
 const subscribe = cb => { window.addEventListener('popstate', cb); return () => window.removeEventListener('popstate', cb); };
 const nav = {
   useSearchParams: () => new URLSearchParams(useSyncExternalStore(subscribe, () => window.location.search)),
-  useRouter: () => ({ push }), useParams: () => ({ id: '1-article' }),
+  useRouter: () => ({ push }), useParams: () => ({ id: window.location.pathname.split('/').at(-1) }),
 };
-const tr = (key, params = {}) => key === 'noMatches' ? `${key}: ${params.value}` : key;
+const tr = (key, params = {}) => params.value !== undefined ? `${key}: ${params.value}` : key === 'resultCount' ? `${params.count}` : key;
 const intl = { useTranslations: () => tr, useLocale: () => window.location.pathname.split('/')[1] };
 const ignored = { default: () => null };
 const front = {
@@ -89,6 +113,8 @@ const front = {
   '@/components/ui/ImageWithFallback': ignored, '@/components/ui/LanguageIndicator': ignored,
   '@/components/shared/NewsletterSignup': ignored, '@/components/ui/Breadcrumb': ignored,
 };
+front['@/components/news/NewsFilters'] = load('components/news/NewsFilters.tsx', front);
+front['@/components/news/NewsTags'] = load('components/news/NewsTags.tsx', front);
 const Page = load('app/[locale]/news/page.tsx', front).default;
 const Detail = load('app/[locale]/news/[id]/page.tsx', front).default;
 async function mount(t, Component) {
@@ -107,11 +133,16 @@ test('liste montée : changer de filtre, paginer, effacer et revenir en arrière
   const titles = () => [...el.querySelectorAll('article h3')].map(node => node.textContent);
   const select = name => el.querySelector(`select[name="${name}"]`);
   assert.deepEqual(titles(), ['Article 7']);
+  const count = () => el.querySelector('[aria-labelledby="news-filters-title"] [role="status"]').textContent;
+  assert.equal(count(), '7'); // nombre d’articles filtrés, pas la taille de la page courante
+  assert.equal(select('type').labels[0].textContent, 'filterType');
+  assert.equal(select('category').labels[0].textContent, 'filterCategory');
   assert.equal(select('category').value, 'Recherche');
   await act(async () => { select('tag').value = tag; select('tag').dispatchEvent(new window.Event('change', { bubbles: true })); });
   assert.equal(window.location.search, `?tag=${encodeURIComponent(tag)}`);
   assert.equal(select('category').value, '');
   assert.deepEqual(titles(), ['Article 1', 'Article 8']);
+  assert.equal(count(), '2');
   // Lien venant du sous-menu sur la même route.
   const [byType] = auto.resolveAutoSubmenu({ ...rule, groupBy: 'type', ids: ['Entretien'] }, records, 'fr');
   await act(async () => push(byType.href));
@@ -131,7 +162,8 @@ test('liste montée : changer de filtre, paginer, effacer et revenir en arrière
   assert.deepEqual(titles(), ['Article 7', 'Article 8', 'Article 9']);
   await act(async () => push('/fr/news?tag=ancien'));
   assert.deepEqual(titles(), []);
-  assert.match(el.querySelector('[role="status"]').textContent, /ancien/);
+  assert.equal(count(), '0');
+  assert.match(el.querySelector('p[role="status"]').textContent, /ancien/);
   await click(el.querySelector('a[href="/fr/news"]'));
   assert.equal(titles().length, 6);
 });
@@ -142,7 +174,7 @@ test('fiche montée : les tags de l’article et les tags populaires ouvrent une
   const hrefs = nodes => [...nodes].map(a => a.getAttribute('href'));
   const targets = [tag, 'تقنية'].map(value => `/ar/news?tag=${encodeURIComponent(value)}`);
   assert.deepEqual(hrefs(el.querySelectorAll('article a')), targets);
-  const popular = [...el.querySelectorAll('h3')].find(h => h.textContent === 'popularTags').parentElement;
+  const popular = el.querySelector('[aria-labelledby="popular-tags-title"]');
   assert.deepEqual(hrefs(popular.querySelectorAll('a')), targets);
   assert.ok(el.querySelector('a[href="/ar/news?type=Br%C3%A8ve"]'));
   await click(popular.querySelectorAll('a')[1]);
@@ -150,6 +182,35 @@ test('fiche montée : les tags de l’article et les tags populaires ouvrent une
   assert.equal(list.querySelector('select[name="tag"]').value, 'تقنية');
   assert.deepEqual([...list.querySelectorAll('article h3')].map(el => el.textContent), ['Article 1']);
 });
+
+test('article sans tags : le module propose de vrais tags d’autres articles sans les attribuer à la fiche', async t => {
+  push('/fr/news/2-article');
+  const el = await mount(t, Detail);
+  const section = el.querySelector('[aria-labelledby="article-tags-title"]');
+  assert.match(section.textContent, /suggestedTags/);
+  const suggestion = section.querySelector('a');
+  assert.equal(suggestion.getAttribute('href'), `/fr/news?tag=${encodeURIComponent(tag)}`);
+  await click(suggestion);
+  const list = await mount(t, Page);
+  assert.deepEqual([...list.querySelectorAll('article h3')].map(node => node.textContent), ['Article 1', 'Article 8']);
+});
+
+for (const [category, classification, expected] of [
+  ['R&D', 'Dossier', '?category=R%26D'], ['', 'Dossier', '?type=Dossier'], ['', '', ''],
+]) {
+  test(`catalogue sans tags : modules visibles et repli vers ${expected || 'la liste'}`, async t => {
+    t.mock.method(front['@/lib/data'], 'getNews', async () => [{ ...articles[0], tags: [' ', ''], category, classification }]);
+    push('/en/news/1-article');
+    const el = await mount(t, Detail);
+    const own = el.querySelector('[aria-labelledby="article-tags-title"]');
+    const popular = el.querySelector('[aria-labelledby="popular-tags-title"]');
+    assert.match(own.textContent, /noArticleTags/);
+    assert.match(popular.textContent, /noPopularTags/);
+    assert.equal(own.querySelector('a').getAttribute('href'), `/en/news${expected}`);
+    assert.equal(popular.querySelector('a').getAttribute('href'), '/en/news');
+    assert.equal(el.querySelectorAll('a[href*="?tag="]').length, 0, 'aucun tag inventé');
+  });
+}
 
 test('studio monté : locale éditée, passage catégorie → tag → type, sélection et aperçu', async t => {
   push('/fr/admin/menus');

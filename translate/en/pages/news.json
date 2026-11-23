@@ -13,5 +13,8 @@
   "allTypes": "All types",
   "clearFilter": "View all news",
   "noMatches": "No articles match “{value}”.",
-  "loading": "Loading news…"
+  "loading": "Loading news…",
+  "filterTitle": "Filter articles",
+  "filterHint": "Narrow the list with one filter at a time.",
+  "resultCount": "{count, plural, =0 {No articles} one {# article} other {# articles}}"
 }

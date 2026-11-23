@@ -344,7 +344,10 @@ Options : `--truncate` (vide les tables avant l'import), `--out CHEMIN`
 | **Ids en collision** | Les JSON réutilisent l'id 1 en fr, en et ar. Le français conserve ses ids, l'anglais est décalé de +1000, l'arabe de +2000. Les URLs françaises déjà indexées restent valides. |
 | **Lien entre langues** | Les trois versions d'une fiche partagent un `legacyId` (`svc-1`, `news-3`…). C'est lui qui permet au sélecteur de langue de retrouver l'id de la fiche dans la langue cible ; sans lui le site garde l'id courant, qui désigne une autre fiche. |
 | **Dates littérales** | « 15 Janvier 2024 », « 15 يناير 2024 » ou la plage « 15-18 Mars 2024 » deviennent des `DATETIME`. Une plage alimente `startDate` **et** `endDate`. Le libellé d'origine reste affiché par la vitrine. |
+| **Tags des actualités** | Le tableau `tags` du JSON est importé. Sur un doublon, seule une colonne `tags` à `NULL` est complétée : une liste déjà enregistrée dans le CMS, même vide, est conservée. |
 | **Rejouable** | `ON DUPLICATE KEY UPDATE` : réimporter met à jour au lieu d'échouer. |
+
+Pour ajouter des tags sur un site en service, éditez les articles dans le CMS (rubrique **Média → Tags**). Ne rejouez pas la reprise complète pour cela : elle peut écraser d’autres champs.
 
 Volume repris : **350 lignes** sur 11 tables — services (12), solutions (27),
 produits (45), auteurs (42), actualités (45), événements (45), carrières (45),

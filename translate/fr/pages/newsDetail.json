@@ -17,5 +17,10 @@
   "yourEmail": "Votre email",
   "subscribe": "S'inscrire",
   "subscriptionSuccess": "Inscription réussie !",
-  "popularTags": "Tags populaires"
+  "popularTags": "Tags populaires",
+  "noArticleTags": "Aucun tag n’a été associé à cet article.",
+  "suggestedTags": "Cet article n’a pas de tags. Découvrez ceux d’autres articles :",
+  "noPopularTags": "Aucun article publié ne porte encore de tag.",
+  "browseCategory": "Parcourir la catégorie « {value} »",
+  "browseType": "Voir les articles de type « {value} »"
 }

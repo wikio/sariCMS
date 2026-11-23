@@ -13,5 +13,8 @@
   "allTypes": "Tous les types",
   "clearFilter": "Voir toutes les actualités",
   "noMatches": "Aucun article ne correspond à « {value} ».",
-  "loading": "Chargement des actualités…"
+  "loading": "Chargement des actualités…",
+  "filterTitle": "Filtrer les articles",
+  "filterHint": "Affinez la liste avec un filtre à la fois.",
+  "resultCount": "{count, plural, =0 {Aucun article} one {# article} other {# articles}}"
 }

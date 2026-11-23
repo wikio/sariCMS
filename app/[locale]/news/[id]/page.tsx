@@ -7,13 +7,14 @@ import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { Calendar, Clock, ChevronLeft, ChevronRight, Mail } from 'lucide-react';
 import { getNews, getArticleAuthor, getDefaultAuthor } from '@/lib/data';
-import { newsGroupValues, newsListHref, popularNewsTags } from '@/lib/news-groups';
+import { newsListHref, popularNewsTags } from '@/lib/news-groups';
 import { matchesEntity } from '@/lib/ids';
 import { extractLegacyId, buildMultilingualUrl } from '@/lib/translation-utils';
 import { useDateUtils } from '@/lib/use-date-format';
 import type { News, Author } from '@/types';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
+import { ArticleTags, PopularTags } from '@/components/news/NewsTags';
 import NewsletterSignup from '@/components/shared/NewsletterSignup';
 import ImageWithFallback from '@/components/ui/ImageWithFallback';
 import LanguageIndicator from '@/components/ui/LanguageIndicator';
@@ -120,7 +121,6 @@ export default function NewsDetailPage() {
     );
   }
 
-  const tags = newsGroupValues(item, 'tag');
   const articleType = item.classification?.trim();
   const badge = articleType || item.category?.trim();
 
@@ -213,18 +213,7 @@ export default function NewsDetailPage() {
             <article className="bg-white dark:bg-[#1a1a1a] p-8 md:p-12 border border-gray-200 dark:border-gray-800 shadow-xl mb-8 rounded-xl">
               <div className="prose dark:prose-invert max-w-none text-gray-600 dark:text-gray-400 text-lg leading-relaxed mb-12" dangerouslySetInnerHTML={{ __html: item.fullContent || '' }}></div>
               
-              {tags.length > 0 && (
-                <div className="border-t border-gray-200 dark:border-gray-800 pt-8 mb-8">
-                  <h3 className="text-sm font-bold text-sari-dark dark:text-white uppercase tracking-wider mb-4">{t('tags')}</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {tags.map((tag) => (
-                      <Link key={tag} href={newsListHref(locale, { by: 'tag', value: tag })} className="px-4 py-2 bg-sari-blue/10 text-sari-blue font-semibold text-sm hover:bg-sari-blue hover:text-white transition-colors cursor-pointer rounded-lg">
-                        #{tag}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              )}
+              <ArticleTags article={item} popular={popularTags} locale={locale} />
 
               <div className="border-t border-gray-200 dark:border-gray-800 pt-8">
                 <h3 className="text-sm font-bold text-sari-dark dark:text-white uppercase tracking-wider mb-4">{t('shareArticle')}</h3>
@@ -326,6 +315,8 @@ export default function NewsDetailPage() {
               </div>
             )}
 
+            <PopularTags tags={popularTags} locale={locale} />
+
             <div className="bg-white dark:bg-[#1a1a1a] p-8 border border-gray-200 dark:border-gray-800 shadow-xl rounded-xl">
               <h3 className="text-xl font-bold text-sari-dark dark:text-white mb-6 border-b border-gray-200 dark:border-gray-800 pb-4">
                 {t('latestArticles')}
@@ -374,20 +365,6 @@ export default function NewsDetailPage() {
                 }}
               />
             </div>
-
-            {popularTags.length > 0 && (
-              <div className="bg-white dark:bg-[#1a1a1a] p-8 border border-gray-200 dark:border-gray-800 shadow-xl rounded-xl">
-                <h3 className="text-xl font-bold text-sari-dark dark:text-white mb-6">{t('popularTags')}</h3>
-                <div className="flex flex-wrap gap-2">
-                  {popularTags.map((tag) => (
-                    <Link key={tag} href={newsListHref(locale, { by: 'tag', value: tag })}
-                      className="px-3 py-2 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-sm hover:bg-sari-blue hover:text-white transition-colors rounded-lg">
-                      #{tag}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </div>
