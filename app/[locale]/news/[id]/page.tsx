@@ -5,14 +5,16 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
-import { Calendar, Clock, ChevronLeft, ChevronRight, Mail, CheckCircle } from 'lucide-react';
+import { Calendar, Clock, ChevronLeft, ChevronRight, Mail } from 'lucide-react';
 import { getNews, getArticleAuthor, getDefaultAuthor } from '@/lib/data';
+import { newsListHref, popularNewsTags } from '@/lib/news-groups';
 import { matchesEntity } from '@/lib/ids';
-import { extractLegacyId, findNewsTranslation, buildMultilingualUrl } from '@/lib/translation-utils';
+import { extractLegacyId, buildMultilingualUrl } from '@/lib/translation-utils';
 import { useDateUtils } from '@/lib/use-date-format';
 import type { News, Author } from '@/types';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
+import { ArticleTags, PopularTags } from '@/components/news/NewsTags';
 import NewsletterSignup from '@/components/shared/NewsletterSignup';
 import ImageWithFallback from '@/components/ui/ImageWithFallback';
 import LanguageIndicator from '@/components/ui/LanguageIndicator';
@@ -28,10 +30,10 @@ export default function NewsDetailPage() {
 
   // On découpe par '-' pour isoler l'ID numérique (ex: "1" depuis "1-nouvelle-gamme...")
   const idString = rawIdParam ? rawIdParam.split('-')[0] : '';
-  const numericId = parseInt(idString, 10);
 
   const [item, setItem] = useState<News | null>(null);
   const [author, setAuthor] = useState<Author | null>(null);
+  const [popularTags, setPopularTags] = useState<string[]>([]);
   const [relatedNews, setRelatedNews] = useState<News[]>([]);
   const [latestNews, setLatestNews] = useState<News[]>([]);
   const [prevArticle, setPrevArticle] = useState<News | null>(null);
@@ -39,8 +41,10 @@ export default function NewsDetailPage() {
   const [scrollProgress, setScrollProgress] = useState(0);
 
   useEffect(() => {
+    let current = true;
     const loadArticle = async () => {
       const news = await getNews(locale);
+      if (!current) return;
       
       // Essayer d'extraire le legacyId de l'URL
       const legacyId = extractLegacyId(rawIdParam);
@@ -58,6 +62,7 @@ export default function NewsDetailPage() {
       
       if (found) {
         setItem(found);
+        setPopularTags(popularNewsTags(news));
         const related = news.filter(n => n.id !== found!.id && n.category === found!.category).slice(0, 3);
         const latest = news.filter(n => n.id !== found!.id).slice(0, 5);
         const currentIndex = news.findIndex(n => n.id === found!.id);
@@ -69,8 +74,8 @@ export default function NewsDetailPage() {
 
         // Auteur de l'article ; à défaut, celui marqué par défaut dans la
         // liste des auteurs. Si aucun des deux n'existe, le bloc reste masqué.
-        const resolved = await getArticleAuthor(locale, found);
-        setAuthor(resolved ?? (await getDefaultAuthor(locale)));
+        const resolved = (await getArticleAuthor(locale, found)) ?? (await getDefaultAuthor(locale));
+        if (current) setAuthor(resolved);
       } else {
         setItem(null);
         setAuthor(null);
@@ -80,6 +85,7 @@ export default function NewsDetailPage() {
     if (idString || rawIdParam) {
       loadArticle();
     }
+    return () => { current = false; };
   }, [idString, rawIdParam, locale]);
 
   useEffect(() => {
@@ -115,6 +121,9 @@ export default function NewsDetailPage() {
     );
   }
 
+  const articleType = item.classification?.trim();
+  const badge = articleType || item.category?.trim();
+
   return (
     <PageVisibilityGuard visibilityKey="module.news">
     {/* Indicateur de langue si contenu non traduit */}
@@ -139,9 +148,12 @@ export default function NewsDetailPage() {
         <div className="absolute inset-0 grid-pattern-bg opacity-10"></div>
         <div className="absolute bottom-0 left-0 right-0 container mx-auto px-6 pb-12">
           <div className="max-w-4xl">
-            <span className="inline-block px-4 py-2 bg-sari-blue text-white font-semibold text-sm uppercase tracking-wider mb-4 rounded">
-              {item.classification || item.category}
-            </span>
+            {badge && (
+              <Link href={newsListHref(locale, { by: articleType ? 'type' : 'category', value: badge })}
+                className="inline-block px-4 py-2 bg-sari-blue text-white font-semibold text-sm uppercase tracking-wider mb-4 rounded hover:underline">
+                {badge}
+              </Link>
+            )}
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
               {item.title}
             </h1>
@@ -173,7 +185,7 @@ export default function NewsDetailPage() {
               <div className="flex items-center gap-2">
                 <Calendar className="w-5 h-5 text-sari-blue" />
                 <span>
-                  {formatDate(item.publicationDate || item.date, locale as any, { 
+                  {formatDate(item.publicationDate || item.date, locale, {
                     includeTime: hasTime(item.publicationDate || item.date) 
                   })}
                 </span>
@@ -201,18 +213,7 @@ export default function NewsDetailPage() {
             <article className="bg-white dark:bg-[#1a1a1a] p-8 md:p-12 border border-gray-200 dark:border-gray-800 shadow-xl mb-8 rounded-xl">
               <div className="prose dark:prose-invert max-w-none text-gray-600 dark:text-gray-400 text-lg leading-relaxed mb-12" dangerouslySetInnerHTML={{ __html: item.fullContent || '' }}></div>
               
-              {item.tags && item.tags.length > 0 && (
-                <div className="border-t border-gray-200 dark:border-gray-800 pt-8 mb-8">
-                  <h3 className="text-sm font-bold text-sari-dark dark:text-white uppercase tracking-wider mb-4">{t('tags')}</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {item.tags.map((tag, i) => (
-                      <span key={i} className="px-4 py-2 bg-sari-blue/10 text-sari-blue font-semibold text-sm hover:bg-sari-blue hover:text-white transition-colors cursor-pointer rounded-lg">
-                        #{tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
+              <ArticleTags article={item} popular={popularTags} locale={locale} />
 
               <div className="border-t border-gray-200 dark:border-gray-800 pt-8">
                 <h3 className="text-sm font-bold text-sari-dark dark:text-white uppercase tracking-wider mb-4">{t('shareArticle')}</h3>
@@ -314,6 +315,8 @@ export default function NewsDetailPage() {
               </div>
             )}
 
+            <PopularTags tags={popularTags} locale={locale} />
+
             <div className="bg-white dark:bg-[#1a1a1a] p-8 border border-gray-200 dark:border-gray-800 shadow-xl rounded-xl">
               <h3 className="text-xl font-bold text-sari-dark dark:text-white mb-6 border-b border-gray-200 dark:border-gray-800 pb-4">
                 {t('latestArticles')}
@@ -335,7 +338,7 @@ export default function NewsDetailPage() {
                       <div className="flex items-center gap-2 text-xs text-gray-500 mt-2">
                         <Calendar className="w-3 h-3" />
                         <span>
-                          {formatDate(post.publicationDate || post.date, locale as any, { format: 'short' })}
+                          {formatDate(post.publicationDate || post.date, locale, { format: 'short' })}
                         </span>
                       </div>
                     </div>
@@ -361,17 +364,6 @@ export default function NewsDetailPage() {
                   successDesc: t('subscriptionSuccess'),
                 }}
               />
-            </div>
-
-            <div className="bg-white dark:bg-[#1a1a1a] p-8 border border-gray-200 dark:border-gray-800 shadow-xl rounded-xl">
-              <h3 className="text-xl font-bold text-sari-dark dark:text-white mb-6">{t('popularTags')}</h3>
-              <div className="flex flex-wrap gap-2">
-                {['Innovation', 'Technologie', 'Santé', 'Équipement', 'Formation', 'IA', 'Diagnostic', 'Chirurgie'].map((tag, i) => (
-                  <span key={i} className="px-3 py-2 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-sm hover:bg-sari-blue hover:text-white transition-colors cursor-pointer rounded-lg">
-                    #{tag}
-                  </span>
-                ))} 
-              </div>
             </div>
           </div>
         </div>

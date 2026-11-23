@@ -61,5 +61,7 @@
   "action_order": "Order (add to cart)",
   "action_apply": "Apply for a job",
   "action_contact": "Send a message",
-  "action_register": "Create account"
+  "action_register": "Create account",
+  "action_order_hint": "Hides the quantity and add-to-cart controls.",
+  "action_apply_hint": "Hides the application form."
 }

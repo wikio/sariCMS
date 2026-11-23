@@ -7,6 +7,8 @@
  */
 
 export const CMS_PREFIX = '/api/v1';
+/** Même plafond côté catalogue public et sélecteur de contenu : vingt pages de cent fiches. */
+export const CMS_BROWSE_LIMIT = 2_000;
 
 export function cmsBrowserBase(): string {
   return process.env.NEXT_PUBLIC_CMS_API_URL || CMS_PREFIX;
@@ -25,6 +27,7 @@ export interface CmsListMeta {
   limit?: number;
   total?: number;
   pageCount?: number;
+  totalPages?: number;
 }
 
 export class CmsError extends Error {
@@ -110,6 +113,20 @@ export async function cmsFetch<T = unknown>(path: string, options: CmsRequestOpt
   } finally {
     clearTimeout(timer);
   }
+}
+
+/** Lecture bornée des listes Nest. QueryDto refuse toute page de plus de 100 lignes. */
+export async function cmsPagedList<T>(path: string, maxRows: number, options: CmsRequestOptions): Promise<T[]> {
+  const size = Math.min(maxRows, 100);
+  const rows: T[] = [];
+  for (let page = 1; page <= Math.ceil(maxRows / size); page++) {
+    const url = `${path}${path.includes('?') ? '&' : '?'}page=${page}&limit=${size}`;
+    const result = await cmsFetch<{ data: T[]; meta?: CmsListMeta }>(url, options);
+    const chunk = unwrapList<T>(result);
+    rows.push(...chunk);
+    if (chunk.length < size || page >= (result.meta?.totalPages ?? 1)) break;
+  }
+  return rows.slice(0, maxRows);
 }
 
 export async function cmsPublicList<T>(

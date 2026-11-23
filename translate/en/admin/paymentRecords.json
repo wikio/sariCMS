@@ -48,5 +48,17 @@
   "deactivateReasonPlaceholder": "e.g. payment entered twice, wrong amount…",
   "deactivateConfirm": "Deactivate this payment",
   "deactivateCancel": "Cancel",
-  "deactivateReasonRequired": "Please give a deactivation reason."
+  "deactivateReasonRequired": "Please give a deactivation reason.",
+  "exportCsvBtn": "Export CSV",
+  "typeIntlCard": "International card",
+  "typeCib": "CIB / local card",
+  "typeTransfer": "Bank transfer",
+  "typePaypal": "PayPal",
+  "typeCheck": "Check",
+  "typeCod": "Cash on delivery",
+  "typeOther": "Other",
+  "typePending": "Pending",
+  "statusValidated": "Validated",
+  "statusPending": "Pending",
+  "statusRejected": "Rejected"
 }

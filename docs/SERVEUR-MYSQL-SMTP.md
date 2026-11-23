@@ -1,5 +1,7 @@
 # SARI CMS — Configurer MySQL, SMTP et créer les tables (procédure complète)
 
+> **Production :** suivre le [guide d’installation et d’exploitation actuel](INSTALLATION-DEPLOIEMENT-PRODUCTION.md). Les imports et jeux de données historiques ci-dessous ne sont pas une mise à jour : `schema.mysql.sql` supprime des tables et cible `sari_cms` en dur.
+
 > 🔢 **Identifiants entiers** : toutes les tables ont une clé primaire
 > `INT AUTO_INCREMENT` (pas d'UUID). Les codes (devis, commande, facture)
 > peuvent intégrer directement l'ID numérique — ex. `SARI-WCMD-00042`.
@@ -19,7 +21,7 @@ base de données : configuration de **MySQL**, création des **tables** et des
 
 | Élément                | Version requise                |
 | ---------------------- | ------------------------------ |
-| Node.js                | 18+ (recommandé : 20 LTS)      |
+| Node.js                | 22.13+ (série 22 LTS)      |
 | MySQL                  | 8.0+ (ou MariaDB 10.4+)        |
 | Accès serveur          | SSH (VPS/dédié) **ou** cPanel  |
 | `npm`                  | livré avec Node.js             |
@@ -89,7 +91,7 @@ EXIT;
 Depuis la racine du projet :
 
 ```bash
-# 1) Schéma : crée les 22 tables
+# 1) Schéma : installation vierge uniquement
 mysql -u sari -p sari_cms < backend/sql/schema.mysql.sql
 
 # 2) Données : contenu algérien (FR/EN/AR)
@@ -109,7 +111,7 @@ mysql -u sari -p sari_cms < backend/sql/seed.mysql.sql
 
 ```sql
 USE u830983108_sari_cms;           -- ← votre nom de base réel
-SHOW TABLES;                       -- 22 tables attendues
+SHOW TABLES;                       -- comparer avec le schéma de la release
 SELECT COUNT(*) FROM products;     -- 18 (6 produits × 3 langues)
 SELECT COUNT(*) FROM users;        -- 5 comptes de démo
 SELECT COUNT(*) FROM permissions;  -- 100

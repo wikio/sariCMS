@@ -7,7 +7,6 @@ import { createHash, randomBytes, randomUUID } from 'crypto';
 
 const DEBUG = false;
 const log = (...args: unknown[]) => DEBUG && console.log('[lib/admin-captcha]', ...args);
-const logError = (...args: unknown[]) => DEBUG && console.error('[lib/admin-captcha ERROR]', ...args);
 
 export interface CaptchaIssue {
   id: string;
@@ -117,13 +116,12 @@ export function issueCaptcha(): CaptchaIssue {
   prune(entries);
   const code = makeCode();
   const id = randomUUID();
-  log('Issuing captcha:', { id, code });
   entries.set(id, {
     hash: fingerprint(code),
     svg: renderCaptchaSvg(code),
     expiresAt: Date.now() + TTL_MS,
   });
-  return { id, imageUrl: `/api/admin/auth/captcha/image?id=${encodeURIComponent(id)}`, expiresIn: Math.floor(TTL_MS / 1000) };
+  return { id, imageUrl: `/api/admin/auth/captcha?id=${encodeURIComponent(id)}`, expiresIn: Math.floor(TTL_MS / 1000) };
 }
 
 export function captchaImage(id: string): string | null {

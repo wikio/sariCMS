@@ -61,5 +61,7 @@
   "action_order": "Commander (ajouter au panier)",
   "action_apply": "Postuler à une offre",
   "action_contact": "Envoyer un message",
-  "action_register": "Créer un compte"
+  "action_register": "Créer un compte",
+  "action_order_hint": "Masque le bloc quantité + ajout au panier.",
+  "action_apply_hint": "Masque le formulaire de candidature."
 }

@@ -3,14 +3,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
 import {
   Check, ChevronDown, Download, Eye, FileText, GitCompare, Layers, Link as LinkIcon, Mail, Phone, Star, Trash2, Users, X,
 } from 'lucide-react';
 import { useToast } from '@/components/admin/Toast';
 import SearchField from '@/components/admin/SearchField';
 import Drawer from '@/components/admin/Drawer';
-import { DEMO_APPLICATIONS, DEMO_FLAG } from '@/lib/demo-seed';
+import { DEMO_APPLICATIONS } from '@/lib/demo-seed';
 import {
   APP_STEPS, Application, candidateStats, downloadText, exportApplicationsCsv,
   groupByOffer, loadApplications, loadOffers, offerById, saveApplications, type Offer,
@@ -23,6 +22,7 @@ const SEED: Application[] = DEMO_APPLICATIONS as Application[];
 export default function AdminApplicationsPage() {
   const locale = useLocale();
   const { showToast } = useToast();
+  const tc = useTranslations('admin.common');
   const t = useTranslations('admin.applications');
   const [rows, setRows] = useState<Application[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
@@ -44,13 +44,8 @@ export default function AdminApplicationsPage() {
 
   useEffect(() => {
     const stored = loadApplications();
-    // Les candidatures viennent désormais de la base (AdminLayout les a
-    // rapatriées au montage). On ne retombe sur le jeu de démonstration que si
-    // le stock est réellement vide : comparer à la taille du jeu de démo
-    // écrasait des candidatures réelles dès qu'il y en avait moins de dix,
-    // et les répliquait en base.
-    if (stored && stored.length > 0) setRows(stored);
-    else { setRows(SEED); saveApplications(SEED); }
+    // Le jeu de démonstration est un aperçu : ouvrir la page ne doit pas écrire en base.
+    setRows(stored.length ? stored : SEED);
     loadOffers(locale).then(setOffers);
   }, [locale]);
 
@@ -108,13 +103,13 @@ export default function AdminApplicationsPage() {
 
   const openDoc = (kind: 'cv' | 'lm', app: Application) => {
     const content = kind === 'cv' ? app.cv : app.lm;
-    if (!content) { showToast('Document non fourni', 'warning'); return; }
+    if (!content) { showToast(t('missingDocument'), 'warning'); return; }
     const filename = `${kind === 'cv' ? 'CV' : 'LM'}-${app.candidate.replace(/\s+/g, '-')}.txt`;
-    setViewer({ title: `${kind === 'cv' ? 'CV' : 'Lettre de motivation'} — ${app.candidate}`, content, filename });
+    setViewer({ title: `${kind === 'cv' ? t('cv') : t('coverLetter')} — ${app.candidate}`, content, filename });
   };
 
   const exportCurrent = () => {
-    exportApplicationsCsv(shown, offerFilter || undefined);
+    exportApplicationsCsv(shown, t, offerFilter);
     showToast(t("exportCsv"), 'success');
   };
 
@@ -124,23 +119,23 @@ export default function AdminApplicationsPage() {
     <div className="space-y-4">
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-3 ad-rise">
         <div>
-          <div className="text-[11px] uppercase tracking-[0.22em] font-black" style={{ color: 'var(--ad-muted)' }}>RH</div>
+          <div className="text-[11px] uppercase tracking-[0.22em] font-black" style={{ color: 'var(--ad-muted)' }}>{t('hr')}</div>
           <h1 className="text-3xl font-black tracking-tight">{t("title")}</h1>
-          <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>{stats.total} candidature(s) · {stats.offers} offre(s)</p>
+          <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>{t('summary', { applications: stats.total, offers: stats.offers })}</p>
         </div>
         <div className="flex gap-2">
-          <button className="ad-btn ad-btn-ghost" onClick={exportCurrent}><Download className="w-4 h-4" /> Exporter</button>
-          <Link href={`/${locale}/admin/applications/compare`} className="ad-btn ad-btn-primary"><GitCompare className="w-4 h-4" /> Comparer</Link>
+          <button className="ad-btn ad-btn-ghost" onClick={exportCurrent}><Download className="w-4 h-4" /> {tc('export')}</button>
+          <Link href={`/${locale}/admin/applications/compare`} className="ad-btn ad-btn-primary"><GitCompare className="w-4 h-4" /> {t('compare')}</Link>
         </div>
       </header>
 
       <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-3">
-        <StatTile label="Total" value={stats.total} icon={Users} accent />
+        <StatTile label={tc('total')} value={stats.total} icon={Users} accent />
         {stats.byStatus.map((s) => (
-          <StatTile key={s.value} label={s.label} value={s.count} icon={null} />
+          <StatTile key={s.value} label={t(`step_${s.value}`)} value={s.count} icon={null} />
         ))}
-        <StatTile label="Acceptation" value={`${stats.conversion}%`} icon={null} />
-        <StatTile label="Exp. moyenne" value={`${stats.avgExp} ans`} icon={null} />
+        <StatTile label={t('acceptance')} value={new Intl.NumberFormat(locale, { style: 'percent' }).format(stats.conversion / 100)} icon={null} />
+        <StatTile label={t('avgExperience')} value={stats.avgExp === '—' ? '—' : t('years', { count: Number(stats.avgExp) })} icon={null} />
       </div>
 
       <div className="ad-card p-3 space-y-3 ad-rise ad-rise-2">
@@ -148,7 +143,7 @@ export default function AdminApplicationsPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <select className="ad-select" value={status} onChange={(e) => setStatus(e.target.value)}>
             <option value="">{t("allStatuses")}</option>
-            {APP_STEPS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+            {APP_STEPS.map((step) => <option key={step} value={step}>{t(`step_${step}`)}</option>)}
           </select>
           <select className="ad-select" value={offerFilter} onChange={(e) => setOfferFilter(e.target.value)}>
             <option value="">{t("allOffers")}</option>
@@ -162,15 +157,15 @@ export default function AdminApplicationsPage() {
           <span className="text-sm font-bold flex items-center gap-2"><Users className="w-4 h-4" /> {t("selected", {count: String(selected.length)})}</span>
           <div className="flex items-center gap-1">
             {[1, 2, 3, 4, 5].map((n) => (
-              <button key={n} type="button" className="ad-btn ad-btn-icon ad-btn-ghost" title={`Noter ${n}/5`}
+              <button key={n} type="button" className="ad-btn ad-btn-icon ad-btn-ghost" title={t('rate', { rating: n })}
                 onClick={() => setRatingOf(selected, n)}><Star className="w-4 h-4" style={{ color: n <= (bulkRating || 0) ? '#eab616' : 'var(--ad-muted)' }} /></button>
             ))}
           </div>
           <select className="ad-select !w-auto !h-9" value={bulkStatus} onChange={(e) => { setBulkStatus(e.target.value); if (e.target.value) setStatusOf(selected, e.target.value); }}>
             <option value="">{t("changeStep")}</option>
-            {APP_STEPS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+            {APP_STEPS.map((step) => <option key={step} value={step}>{t(`step_${step}`)}</option>)}
           </select>
-          <input className="ad-input flex-1 min-w-[180px]" placeholder="Note commune du recruteur…" value={bulkNote} onChange={(e) => setBulkNote(e.target.value)} />
+          <input className="ad-input flex-1 min-w-[180px]" placeholder={t('bulkNote')} value={bulkNote} onChange={(e) => setBulkNote(e.target.value)} />
           <button className="ad-btn ad-btn-ghost" onClick={() => setNoteOf(selected, bulkNote)}>{t("applyNote")}</button>
           <button className="ad-btn ad-btn-ghost" onClick={() => { setStatusOf(selected, 'interview'); }}>{t("activateInterview")}</button>
           <button className="ad-btn ad-btn-danger" onClick={bulkRemove}><Trash2 className="w-4 h-4" /> {t("delete", {defaultMessage: "Supprimer"})}</button>
@@ -183,7 +178,7 @@ export default function AdminApplicationsPage() {
           <thead>
             <tr>
               <th className="w-8"><input type="checkbox" checked={selected.length === shown.length && shown.length > 0} onChange={(e) => setSelected(e.target.checked ? shown.map((r) => r.id) : [])} /></th>
-              <th>{t("candidate")}</th><th>{t("offer")}</th><th>{t("note")}</th><th>{t("date", {defaultMessage: "Date"})}</th><th>{t("status", {defaultMessage: "Statut"})}</th><th className="text-right">Actions</th>
+              <th>{t("candidate")}</th><th>{t("offer")}</th><th>{t('rating')}</th><th>{t("date", {defaultMessage: "Date"})}</th><th>{t("status", {defaultMessage: "Statut"})}</th><th className="text-right">{tc('actions')}</th>
             </tr>
           </thead>
           <tbody>
@@ -205,7 +200,7 @@ export default function AdminApplicationsPage() {
                     <td onClick={() => setExpanded(isOpen ? null : row.id)}><DateText value={row.date} dateOnly /></td>
                     <td onClick={(e) => e.stopPropagation()}>
                       <select className="ad-select !w-auto !h-8 text-xs" value={row.status} onChange={(e) => setStatusOf([row.id], e.target.value)}>
-                        {APP_STEPS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+                        {APP_STEPS.map((step) => <option key={step} value={step}>{t(`step_${step}`)}</option>)}
                       </select>
                     </td>
                     <td className="text-right" onClick={(e) => e.stopPropagation()}>

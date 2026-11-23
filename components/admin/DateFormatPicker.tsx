@@ -1,5 +1,7 @@
 'use client';
 
+import { useLocale, useTranslations } from 'next-intl';
+
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Calendar, Check, ChevronDown, Pencil } from 'lucide-react';
 import { DATE_FORMAT_PRESETS, previewFormat, type SupportedLocale } from '@/lib/date-format';
@@ -7,8 +9,6 @@ import { DATE_FORMAT_PRESETS, previewFormat, type SupportedLocale } from '@/lib/
 interface DateFormatPickerProps {
   value: string;
   onChange: (value: string) => void;
-  /** Langue de l'aperçu (celle de l'admin). */
-  locale?: SupportedLocale;
 }
 
 /**
@@ -16,7 +16,9 @@ interface DateFormatPickerProps {
  * libre saisi à la main. Chaque option affiche son libellé, une note
  * explicative et un aperçu calculé en direct dans la langue courante.
  */
-export default function DateFormatPicker({ value, onChange, locale = 'fr' }: DateFormatPickerProps) {
+export default function DateFormatPicker({ value, onChange }: DateFormatPickerProps) {
+  const locale = useLocale() as SupportedLocale;
+  const t = useTranslations('admin.datePicker');
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const boxRef = useRef<HTMLDivElement>(null);
@@ -34,12 +36,12 @@ export default function DateFormatPicker({ value, onChange, locale = 'fr' }: Dat
     if (!q) return DATE_FORMAT_PRESETS;
     return DATE_FORMAT_PRESETS.filter(
       (o) =>
-        o.label.toLowerCase().includes(q) ||
+        t(o.labelKey).toLowerCase().includes(q) ||
         o.value.toLowerCase().includes(q) ||
-        o.note.toLowerCase().includes(q) ||
+        t(`${o.labelKey}Hint`).toLowerCase().includes(q) ||
         previewFormat(o.value, locale).toLowerCase().includes(q),
     );
-  }, [query, locale]);
+  }, [query, locale, t]);
 
   const activePreset = DATE_FORMAT_PRESETS.find((o) => o.value === value);
   // Un format absent du catalogue est forcément un motif saisi à la main.
@@ -56,7 +58,7 @@ export default function DateFormatPicker({ value, onChange, locale = 'fr' }: Dat
           <span className="flex items-center gap-2 min-w-0">
             <Calendar className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--ad-accent)' }} />
             <span className="truncate">
-              {activePreset ? activePreset.label : isCustom ? `Personnalisé · ${value}` : 'Choisir un format…'}
+              {activePreset ? t(activePreset.labelKey) : isCustom ? t('customValue', { value }) : t('choose')}
             </span>
           </span>
           <span className="flex items-center gap-2 flex-shrink-0">
@@ -76,7 +78,7 @@ export default function DateFormatPicker({ value, onChange, locale = 'fr' }: Dat
               <input
                 autoFocus
                 className="ad-input"
-                placeholder="Filtrer les formats…"
+                placeholder={t('filter')}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
               />
@@ -85,7 +87,7 @@ export default function DateFormatPicker({ value, onChange, locale = 'fr' }: Dat
             <div className="max-h-72 overflow-y-auto ad-scroll py-1">
               {options.length === 0 ? (
                 <div className="p-4 text-center text-sm" style={{ color: 'var(--ad-muted)' }}>
-                  Aucun format ne correspond. Saisissez un motif personnalisé ci-dessous.
+                  {t('empty')}
                 </div>
               ) : (
                 options.map((o) => {
@@ -104,11 +106,11 @@ export default function DateFormatPicker({ value, onChange, locale = 'fr' }: Dat
                     >
                       <span className="flex-1 min-w-0">
                         <span className="flex items-center gap-2">
-                          <span className="font-semibold">{o.label}</span>
+                          <span className="font-semibold">{t(o.labelKey)}</span>
                           <code className="text-[11px] opacity-60">{o.value}</code>
                         </span>
                         <span className="block text-xs mt-0.5" style={{ color: 'var(--ad-muted)' }}>
-                          {o.note}
+                          {t(`${o.labelKey}Hint`)}
                         </span>
                         <span className="block text-xs mt-1 font-mono" style={{ color: 'var(--ad-accent)' }}>
                           {previewFormat(o.value, locale)}
@@ -127,7 +129,7 @@ export default function DateFormatPicker({ value, onChange, locale = 'fr' }: Dat
       {/* Motif libre */}
       <label className="space-y-1.5 block">
         <span className="text-[11px] font-black uppercase tracking-widest flex items-center gap-1.5" style={{ color: 'var(--ad-muted)' }}>
-          <Pencil className="w-3 h-3" /> Format personnalisé
+          <Pencil className="w-3 h-3" /> {t('custom')}
         </span>
         <input
           className="ad-input font-mono"
@@ -136,14 +138,12 @@ export default function DateFormatPicker({ value, onChange, locale = 'fr' }: Dat
           placeholder="DD/MM/YYYY HH:mm"
         />
         <p className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>
-          Jetons : <code>YYYY</code> année · <code>MM</code> mois · <code>MMMM</code> mois en lettres ·{' '}
-          <code>DD</code> jour · <code>dddd</code> jour de la semaine · <code>HH:mm</code> heure.
-          Le texte entre crochets est conservé tel quel : <code>[le] D MMMM</code>.
+          {t('tokens')}
         </p>
       </label>
 
       <div className="rounded-lg px-3 py-2 text-sm" style={{ background: 'var(--ad-surface-2)' }}>
-        <span style={{ color: 'var(--ad-muted)' }}>Aperçu : </span>
+        <span style={{ color: 'var(--ad-muted)' }}>{t('preview')} </span>
         <span className="font-semibold">{value ? previewFormat(value, locale) : '—'}</span>
       </div>
     </div>

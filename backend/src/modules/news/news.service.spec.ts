@@ -51,6 +51,15 @@ describe('NewsService', () => {
     expect(created.date).toBe(created.publishedAt);
   });
 
+  it('includes news groups in the menu picker card without the article body', async () => {
+    const fields = { category: 'Imagerie', tags: ['IRM', 'IA'], classification: 'Dossier' };
+    const findMany = jest.fn().mockResolvedValue({ data: [{ id: 1, fullContent: 'Corps', ...fields }], meta: {} });
+    const service = new NewsService(repoMock({ findMany }), cache, audit);
+    const { data: [card] } = await service.findAll({ view: 'card' });
+    expect(card).toMatchObject(fields);
+    expect(card).not.toHaveProperty('fullContent');
+  });
+
   it('aggregates author stats', async () => {
     const count = jest
       .fn()

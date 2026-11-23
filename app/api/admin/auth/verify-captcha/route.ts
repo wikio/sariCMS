@@ -27,12 +27,10 @@ export async function POST(req: NextRequest) {
   }
 
   const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
-  log('Body:', body);
   if (!body) return NextResponse.json({ ok: false, error: 'JSON attendu' }, { status: 400 });
 
   const captchaId = String(body.captchaId || '');
   const captchaAnswer = String(body.captchaAnswer || '');
-  log('Verifying:', { captchaId, captchaAnswer });
 
   if (!captchaId || !captchaAnswer) {
     return NextResponse.json({ ok: false, error: 'Champs manquants' }, { status: 400 });

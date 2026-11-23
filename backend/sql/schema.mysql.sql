@@ -5,7 +5,8 @@
 -- Source : backend/prisma/schema.prisma
 -- Régénérer : node backend/sql/generate-schema.mjs
 --
--- Import :  mysql -u root -p < backend/sql/schema.mysql.sql
+-- ATTENTION : DROP TABLE sur la base sari_cms. Installation neuve uniquement.
+-- Pour une base existante : sauvegarde puis npm run db:schema-check dans backend/.
 --
 -- Encodage utf8mb4 sur toute la base : indispensable pour l'arabe et pour
 -- les emojis éventuels des contenus éditoriaux.

@@ -1,15 +1,36 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import {
-  Briefcase, Building2, Calendar, CheckCircle, Copy, ExternalLink, FileText, Globe, Mail,
+  Briefcase, Building2, Calendar, CalendarCheck, CheckCircle, Copy, ExternalLink, FileText, Globe, Mail,
   MapPin, Pencil, Phone, Shield, User, X,
 } from 'lucide-react';
 import { userRecordHref } from '@/lib/user-links';
 import { findCountry } from '@/lib/countries';
 import { findWilaya, wilayaCode } from '@/lib/wilayas';
 import DateText from '@/components/shared/DateText';
+import { listEventRegistrations, type EventRegistration } from '@/lib/event-registrations-admin';
+
+const Ligne = ({ icon: Icon, label, children }: { icon: React.ElementType; label: string; children: React.ReactNode }) => (
+  <div className="flex items-start gap-3 py-2">
+    <Icon className="w-4 h-4 mt-0.5 shrink-0" style={{ color: 'var(--ad-muted)' }} />
+    <div className="min-w-0 flex-1">
+      <div className="text-xs uppercase tracking-wide" style={{ color: 'var(--ad-muted)' }}>{label}</div>
+      <div className="text-sm font-semibold break-words">{children}</div>
+    </div>
+  </div>
+);
+
+const Bloc = ({ titre, children }: { titre: string; children: React.ReactNode }) => (
+  <section>
+    <h3 className="text-xs font-black uppercase tracking-wider mb-1 pb-1 border-b" style={{ borderColor: 'var(--ad-line)' }}>
+      {titre}
+    </h3>
+    <div className="divide-y" style={{ borderColor: 'var(--ad-line)' }}>{children}</div>
+  </section>
+);
 
 type UserRecord = Record<string, unknown>;
 
@@ -33,7 +54,23 @@ export default function UserSheet({
   onEdit?: () => void;
 }) {
   const t = useTranslations('admin.userForm');
+  const te = useTranslations('admin.eventRegistrations');
   const v = (k: string) => String(record[k] ?? '').trim();
+  const email = v('email');
+  const [eventRegs, setEventRegs] = useState<EventRegistration[]>([]);
+
+  useEffect(() => {
+    if (!email) return;
+    let cancelled = false;
+    listEventRegistrations({ email })
+      .then((res) => {
+        if (!cancelled) setEventRegs(res.rows || []);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [email]);
 
   /**
    * Libellé traduit, avec repli sur la valeur brute.
@@ -53,25 +90,6 @@ export default function UserSheet({
   const wil = findWilaya(v('wilaya'));
 
   const copier = (texte: string) => { navigator.clipboard?.writeText(texte).catch(() => undefined); };
-
-  const Ligne = ({ icon: Icon, label, children }: { icon: React.ElementType; label: string; children: React.ReactNode }) => (
-    <div className="flex items-start gap-3 py-2">
-      <Icon className="w-4 h-4 mt-0.5 shrink-0" style={{ color: 'var(--ad-muted)' }} />
-      <div className="min-w-0 flex-1">
-        <div className="text-xs uppercase tracking-wide" style={{ color: 'var(--ad-muted)' }}>{label}</div>
-        <div className="text-sm font-semibold break-words">{children}</div>
-      </div>
-    </div>
-  );
-
-  const Bloc = ({ titre, children }: { titre: string; children: React.ReactNode }) => (
-    <section>
-      <h3 className="text-xs font-black uppercase tracking-wider mb-1 pb-1 border-b" style={{ borderColor: 'var(--ad-line)' }}>
-        {titre}
-      </h3>
-      <div className="divide-y" style={{ borderColor: 'var(--ad-line)' }}>{children}</div>
-    </section>
-  );
 
   const vide = <span style={{ color: 'var(--ad-muted)' }}>—</span>;
 
@@ -181,6 +199,36 @@ export default function UserSheet({
           </Ligne>
           <Ligne icon={Globe} label={t('lastIp')}>{v('ip') || vide}</Ligne>
         </Bloc>
+
+        {email && (
+          <Bloc titre={te('title')}>
+            {eventRegs.length === 0 ? (
+              <div className="py-2 text-xs" style={{ color: 'var(--ad-muted)' }}>{te('empty')}</div>
+            ) : (
+              eventRegs.slice(0, 5).map((reg) => (
+                <Ligne key={reg.id} icon={CalendarCheck} label={te(`status_${reg.status}`)}>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="truncate">{reg.eventTitle}</span>
+                    {reg.eventDate && (
+                      <span className="text-xs shrink-0" style={{ color: 'var(--ad-muted)' }}>
+                        <DateText value={reg.eventDate} dateOnly />
+                      </span>
+                    )}
+                  </div>
+                </Ligne>
+              ))
+            )}
+            <div className="pt-2">
+              <Link
+                href={`/${locale}/admin/events/registrations?search=${encodeURIComponent(email)}`}
+                className="text-xs hover:underline inline-flex items-center gap-1"
+                style={{ color: 'var(--ad-accent)' }}
+              >
+                {te('title')} ({eventRegs.length}) <ExternalLink className="w-3 h-3" />
+              </Link>
+            </div>
+          </Bloc>
+        )}
       </div>
 
       <div className="flex justify-end gap-2 pt-3 border-t" style={{ borderColor: 'var(--ad-line)' }}>

@@ -1,0 +1,21 @@
+{
+  "source_db": "Saved in the database",
+  "source_env": "Environment variables",
+  "source_default": "Repository defaults",
+  "loadError": "Could not load branding: the server is not responding",
+  "needTitle": "Enter a name to use as the sidebar heading.",
+  "saved": "Branding saved",
+  "restored": "Restored server values",
+  "resetError": "Could not restore defaults",
+  "loading": "Loading branding…",
+  "source": "Source of the displayed values",
+  "name": "Admin display name",
+  "nameHint": "Shown in the sidebar, sign-in page and tab title. Up to 40 characters.",
+  "tagline": "Tagline",
+  "taglinePlaceholder": "Administration",
+  "taglineHint": "Second line below the name. Leave blank to hide it.",
+  "logo": "Logo",
+  "logoHint": "Also used as the favicon. Leave blank for the default icon. Only relative paths, HTTP(S) URLs and embedded images are accepted.",
+  "reset": "Restore server values",
+  "previewHint": "The preview uses the actual sidebar widths: 272 px expanded and 76 px collapsed. When collapsed, only the logo and tab title remain visible."
+}

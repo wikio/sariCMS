@@ -80,7 +80,7 @@ export default function ProfileModule() {
 
   // La consultation lit le compte directement plutôt qu'une copie tenue à
   // jour par un effet : le compte peut arriver après le premier rendu
-  // (lecture du stockage local) ou changer en cours de route, et une copie
+  // (vérification de session) ou changer en cours de route, et une copie
   // resynchronisée déclencherait un rendu en cascade à chaque fois.
   const fiche = useMemo(() => versBrouillon(user, locale), [user, locale]);
   // En édition, c'est le brouillon qui fait foi : lui seul retient la saisie
@@ -110,13 +110,7 @@ export default function ProfileModule() {
     setMessage(null);
   };
 
-  /**
-   * Enregistre le profil : serveur d'abord, stockage local ensuite.
-   *
-   * L'écriture locale a lieu même si l'API est injoignable, sinon la personne
-   * perdrait sa saisie ; le message distingue les deux cas pour qu'elle sache
-   * si la modification a bien atteint le serveur.
-   */
+  // Un échec de sauvegarde laisse le brouillon ouvert ; il ne change pas l'identité de la session.
   const enregistrer = async () => {
     if (!user) return;
     if (!brouillon.firstName.trim() || !brouillon.lastName.trim()) {
@@ -128,69 +122,37 @@ export default function ProfileModule() {
       return;
     }
 
-    setEnregistrement(true);
-    setMessage(null);
     const jeton = frontToken();
-    let synchronise = false;
-
-    if (jeton && user.id) {
-      try {
-        await cmsFetch(`/users/${user.id}`, {
-          method: 'PATCH',
-          token: jeton,
-          json: {
-            firstName: brouillon.firstName.trim(),
-            lastName: brouillon.lastName.trim(),
-            email: brouillon.email.trim().toLowerCase(),
-            phone: brouillon.phone.trim() || undefined,
-            company: brouillon.company.trim() || undefined,
-            position: brouillon.position.trim() || undefined,
-            address: brouillon.address.trim() || undefined,
-            wilaya: brouillon.wilaya.trim() || undefined,
-            country: brouillon.country.trim() || undefined,
-            locale: brouillon.locale,
-          },
-          timeoutMs: 10000,
-        });
-        synchronise = true;
-      } catch (err) {
-        const detail = err instanceof CmsError ? err.message : '';
-        setMessage({
-          ton: 'erreur',
-          texte: `${libelle('profileSaveOffline', 'Modifications enregistrées sur cet appareil, mais le serveur n’a pas répondu.')}${detail ? ` (${detail})` : ''}`,
-        });
-      }
-    }
-
+    if (!jeton) { await refreshUser(); return; }
+    setEnregistrement(true);
     try {
-      const brut = localStorage.getItem('sari_user');
-      const compte = brut ? (JSON.parse(brut) as Record<string, unknown>) : {};
-      Object.assign(compte, {
-        firstName: brouillon.firstName.trim(),
-        lastName: brouillon.lastName.trim(),
-        name: `${brouillon.firstName.trim()} ${brouillon.lastName.trim()}`.trim(),
-        email: brouillon.email.trim().toLowerCase(),
-        phone: brouillon.phone.trim(),
-        company: brouillon.company.trim(),
-        position: brouillon.position.trim(),
-        address: brouillon.address.trim(),
-        wilaya: brouillon.wilaya.trim(),
-        country: brouillon.country.trim(),
-        locale: brouillon.locale,
+      await cmsFetch(`/users/${user.id}`, {
+        method: 'PATCH',
+        token: jeton,
+        json: {
+          firstName: brouillon.firstName.trim(),
+          lastName: brouillon.lastName.trim(),
+          email: brouillon.email.trim().toLowerCase(),
+          phone: brouillon.phone.trim() || undefined,
+          company: brouillon.company.trim() || undefined,
+          position: brouillon.position.trim() || undefined,
+          address: brouillon.address.trim() || undefined,
+          wilaya: brouillon.wilaya.trim() || undefined,
+          country: brouillon.country.trim() || undefined,
+          locale: brouillon.locale,
+        },
+        timeoutMs: 10000,
       });
-      localStorage.setItem('sari_user', JSON.stringify(compte));
-    } catch {
-      /* Stockage indisponible : le rafraîchissement ci-dessous reste sans effet. */
+      await refreshUser();
+      setMode('lecture');
+      setMessage({ ton: 'ok', texte: libelle('profileSaved', 'Profil mis à jour.') });
+      if (brouillon.locale !== locale) router.push(`/${brouillon.locale}/dashboard`);
+    } catch (err) {
+      const detail = err instanceof CmsError ? err.message : '';
+      setMessage({ ton: 'erreur', texte: `${t('profileSaveError')}${detail ? ` (${detail})` : ''}` });
+    } finally {
+      setEnregistrement(false);
     }
-
-    refreshUser();
-    setEnregistrement(false);
-    setMode('lecture');
-    if (synchronise) setMessage({ ton: 'ok', texte: libelle('profileSaved', 'Profil mis à jour.') });
-
-    // La langue commande la version du site : on l'applique tout de suite,
-    // sinon il faudrait se reconnecter pour en constater l'effet.
-    if (brouillon.locale !== locale) router.push(`/${brouillon.locale}/dashboard`);
   };
 
   if (!user) return null;

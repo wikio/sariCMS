@@ -5,5 +5,16 @@
   "blogNews": "المدونة والأخبار",
   "latestNews": "آخر الأخبار",
   "readArticle": "اقرأ المقال",
-  "allCategories": "جميع الفئات"
+  "allCategories": "جميع الفئات",
+  "filterCategory": "الفئة",
+  "filterTag": "الوسم",
+  "filterType": "نوع المقال",
+  "allTags": "جميع الوسوم",
+  "allTypes": "جميع الأنواع",
+  "clearFilter": "عرض جميع الأخبار",
+  "noMatches": "لا توجد مقالات تطابق «{value}».",
+  "loading": "جارٍ تحميل الأخبار…",
+  "filterTitle": "تصفية المقالات",
+  "filterHint": "اختر معيارًا واحدًا في كل مرة لتصفية المقالات.",
+  "resultCount": "{count, plural, zero {لا توجد مقالات} one {مقال واحد} two {مقالان} few {# مقالات} many {# مقالًا} other {# مقال}}"
 }

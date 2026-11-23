@@ -56,5 +56,6 @@
   "canvas": "Atelier graphique",
   "verificationCodes": "Codes de vérification",
   "shopConfig": "Configuration boutique",
-  "commerceSettings": "Commerce"
+  "commerceSettings": "Commerce",
+  "eventRegistrations": "Participations événements"
 }

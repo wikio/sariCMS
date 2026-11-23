@@ -38,5 +38,19 @@
   "contactUs": "Contact us",
   "shareTitle": "Share this event",
   "reminderTitle": "Don't miss this event!",
-  "reminderDesc": "Register now to receive an email reminder before it starts."
+  "reminderDesc": "Register now to receive an email reminder before it starts.",
+  "position": "Job Title / Role (optional)",
+  "captchaLabel": "Anti-robot verification",
+  "captchaHelp": "Enter the 5 characters shown in the image above.",
+  "captchaRequired": "Please enter the 5-character anti-robot code.",
+  "phoneRequired": "Please enter a valid phone number.",
+  "submitting": "Submitting…",
+  "duplicateEmail": "An application already exists for this event with this email address.",
+  "duplicatePhone": "An application already exists for this event with this phone number.",
+  "duplicateBoth": "An application already exists for this event with this email and phone number.",
+  "errorGeneric": "Unable to save your application. Please try again.",
+  "clientAssociationHint": "Your application is linked to your email address. Sign in or create a client account with the same email to track your participation in your dashboard.",
+  "viewMyEvents": "View my registrations",
+  "newRegistration": "Close",
+  "statusPendingBadge": "Application recorded · Pending confirmation"
 }

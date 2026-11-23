@@ -1,5 +1,7 @@
 # Récupérer le code et basculer sur MySQL
 
+> **Production :** suivre le [guide d’installation et d’exploitation actuel](INSTALLATION-DEPLOIEMENT-PRODUCTION.md). Les imports et jeux de données historiques ci-dessous ne sont pas une mise à jour : `schema.mysql.sql` supprime des tables et cible `sari_cms` en dur.
+
 Guide de bout en bout : récupérer le travail, importer la base, brancher le
 backend, vérifier. Comptez une trentaine de minutes.
 

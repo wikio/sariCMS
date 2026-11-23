@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import {
-  Copy, Download, FolderOpen, Image as ImageIcon, Palette, Pencil, Trash2, Upload,
+  Copy, Download, FolderOpen, Image as ImageIcon, Palette, Pencil, Sparkles, Trash2, Upload,
 } from 'lucide-react';
 import PixelGridLoader from '@/components/admin/PixelGridLoader';
 import SearchField from '@/components/admin/SearchField';
@@ -177,10 +177,15 @@ export default function MediaPage() {
           <h1 className="text-3xl font-black">{t("title")}</h1>
           <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>{t("subtitle")}</p>
         </div>
-        <label className="ad-btn ad-btn-primary cursor-pointer">
-          <Upload className="w-4 h-4" /> {busy ? t("importing") : t("importBtn")}
-          <input type="file" className="hidden" multiple accept="image/*,.pdf,.svg" onChange={(e) => { Array.from(e.target.files || []).forEach(upload); e.target.value = ''; }} />
-        </label>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link href={`/${locale}/admin/media/studio`} className="ad-btn ad-btn-ghost">
+            <Sparkles className="w-4 h-4" /> {t("logoStudioBtn")}
+          </Link>
+          <label className="ad-btn ad-btn-primary cursor-pointer">
+            <Upload className="w-4 h-4" /> {busy ? t("importing") : t("importBtn")}
+            <input type="file" className="hidden" multiple accept="image/*,.pdf,.svg" onChange={(e) => { Array.from(e.target.files || []).forEach(upload); e.target.value = ''; }} />
+          </label>
+        </div>
       </header>
 
       <div className="ad-card p-3 grid md:grid-cols-4 gap-2">

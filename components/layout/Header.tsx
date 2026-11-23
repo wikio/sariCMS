@@ -200,7 +200,7 @@ export default function Header({ config, menu }: { config: Config; menu: MenuTyp
                           </div>
                           <div>
                             <div className="font-bold truncate">
-                              {isAuthenticated ? (user?.name || user?.email || t('user')) : t('user')}
+                              {isAuthenticated ? (user?.name || user?.email || t('user')) : t('guest')}
                             </div>
                             <div className="text-xs text-blue-100 capitalize truncate">
                               {isAuthenticated ? getUserTypeLabel() : t('notSignedIn')}
@@ -258,7 +258,7 @@ export default function Header({ config, menu }: { config: Config; menu: MenuTyp
       <div className={`relative z-40 w-full transition-all duration-300 border-b ${isScrolled ? 'bg-white dark:bg-[#1a1a1a] shadow-md border-gray-200 dark:border-gray-800' : 'bg-white dark:bg-[#1a1a1a] border-gray-200 dark:border-gray-800'}`}>
         <div className="container mx-auto px-6">
           <div className="flex items-center justify-between h-16 lg:h-20">
-            <Link href={getLinkHref('#home')} className="flex items-center gap-3 group flex-shrink-0">
+            <Link href={getLinkHref('/')} className="flex items-center gap-3 group flex-shrink-0">
               <img src={logo} alt={config.meta?.companyName} className="h-12 w-auto transition-transform duration-500 group-hover:scale-110" />
               <div className="hidden md:block">
                 <h1 className="font-bold text-xl lg:text-2xl text-sari-dark dark:text-white leading-tight">{config.meta?.companyName || 'SARI Système'}</h1>
@@ -356,9 +356,9 @@ export default function Header({ config, menu }: { config: Config; menu: MenuTyp
               </div>
             ))}
             <div className="border-t border-gray-200 dark:border-gray-800 my-3 pt-3 space-y-2">
-              <Link href={getLinkHref('#dashboard')} onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 py-3 px-3 text-sari-dark dark:text-white font-medium border-b border-gray-100 dark:border-gray-800">
-                <LayoutDashboard className="w-5 h-5 text-sari-lime" />
-                {t('dashboard')}
+              <Link href={isAuthenticated ? getLinkHref('#dashboard') : `/${locale}/connexion`} onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 py-3 px-3 text-sari-dark dark:text-white font-medium border-b border-gray-100 dark:border-gray-800">
+                {isAuthenticated ? <LayoutDashboard className="w-5 h-5 text-sari-lime" /> : <User className="w-5 h-5 text-sari-lime" />}
+                {isAuthenticated ? t('dashboard') : t('login')}
               </Link>
               <Link href={getLinkHref('#contact')} onClick={() => setMobileMenuOpen(false)} className="btn-primary text-white px-6 py-3 font-semibold block text-center mt-4">
                 {t('freeQuote')}

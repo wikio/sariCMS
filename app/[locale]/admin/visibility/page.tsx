@@ -20,6 +20,7 @@ export default function VisibilityPage() {
   const { showToast } = useToast();
   const [q, setQ] = useState('');
   const t = useTranslations('admin.visibility');
+  const tc = useTranslations('admin.common');
   const tLabels = useTranslations('admin.visibilityLabels');
 
   /** Langue en cours d'édition — indépendante de la langue de l'admin. */
@@ -47,9 +48,9 @@ export default function VisibilityPage() {
   const groups = useMemo(() => VISIBILITY_GROUPS.map((g) => ({
     ...g,
     items: needle
-      ? g.items.filter((i) => `${i.label} ${i.key}`.toLowerCase().includes(needle))
+      ? g.items.filter((i) => `${i.labelKey ? tLabels(i.labelKey) : i.label} ${i.key}`.toLowerCase().includes(needle))
       : g.items,
-  })).filter((g) => g.items.length > 0), [needle]);
+  })).filter((g) => g.items.length > 0), [needle, tLabels]);
 
   const visibleCount = Object.values(vis).filter(Boolean).length;
   const totalCount = Object.values(vis).length;
@@ -64,7 +65,7 @@ export default function VisibilityPage() {
       await reload();
       showToast(success, 'success');
     } catch (err) {
-      showToast(err instanceof Error ? err.message : 'Échec de l’enregistrement', 'error');
+      showToast(err instanceof Error ? err.message : tc('saveError'), 'error');
     } finally {
       setBusy(false);
     }
@@ -87,10 +88,10 @@ export default function VisibilityPage() {
             disabled={busy || loading}
             onClick={() => guard(
               () => copyVisibility(locale),
-              `Réglages de ${LOCALE_LABELS[locale]} copiés vers les autres langues`,
+              t('copied', { language: LOCALE_LABELS[locale] }),
             )}
           >
-            <Copy className="w-4 h-4" /> Copier vers les autres langues
+            <Copy className="w-4 h-4" /> {t('copyToOthers')}
           </button>
           <button
             type="button"
@@ -106,7 +107,7 @@ export default function VisibilityPage() {
       {/* Sélecteur de langue : les réglages sont propres à chacune. */}
       <div className="ad-card p-3 flex flex-wrap items-center gap-2">
         <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--ad-muted)' }}>
-          Langue
+          {tc('language')}
         </span>
         {LOCALES.map((l) => (
           <button
@@ -122,7 +123,7 @@ export default function VisibilityPage() {
           </button>
         ))}
         <span className="text-xs ml-auto" style={{ color: 'var(--ad-muted)' }}>
-          Enregistré en base — s’applique à tous les visiteurs de cette langue.
+          {t('shared')}
         </span>
       </div>
 
@@ -135,7 +136,7 @@ export default function VisibilityPage() {
 
       {loading ? (
         <div className="ad-card p-10 text-center flex items-center justify-center gap-2" style={{ color: 'var(--ad-muted)' }}>
-          <Loader2 className="w-4 h-4 animate-spin" /> Chargement…
+          <Loader2 className="w-4 h-4 animate-spin" /> {tc('loading')}
         </div>
       ) : (
         <div className="grid lg:grid-cols-2 gap-4">
@@ -170,7 +171,7 @@ export default function VisibilityPage() {
                           {vis[i.key] ? <Eye className="w-4 h-4" style={{ color: 'var(--ad-accent)' }} /> : <EyeOff className="w-4 h-4" style={{ color: 'var(--ad-muted)' }} />}
                           {i.labelKey ? tLabels(i.labelKey) : i.label}
                         </div>
-                        {i.hint && <div className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>{i.hint}</div>}
+                        {i.hint && <div className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>{i.labelKey && tLabels.has(`${i.labelKey}_hint`) ? tLabels(`${i.labelKey}_hint`) : i.hint}</div>}
                         <div className="text-[10px] font-mono opacity-50">{i.key}</div>
                       </div>
                       <button

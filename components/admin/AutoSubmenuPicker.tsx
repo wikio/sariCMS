@@ -14,13 +14,13 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { Check, Eye, EyeOff, Image as ImageIcon, Layers, Loader2, X } from 'lucide-react';
 import { cmsAdminList } from '@/lib/cms-admin';
 import IconMark from '@/components/admin/IconMark';
-import { CmsError } from '@/lib/cms';
+import { CMS_BROWSE_LIMIT, CmsError } from '@/lib/cms';
+import { NEWS_GROUPS, groupKey } from '@/lib/news-groups';
 import {
-  AUTO_SOURCES,
   entityLabel,
   isPublished,
   resolveAutoSubmenu,
@@ -33,51 +33,55 @@ import {
 } from '@/lib/menu-auto';
 
 const SOURCES: AutoSource[] = ['solutions', 'services', 'products', 'news', 'events'];
+const EMPTY: AutoEntity[] = [];
+type Loaded = { source: AutoSource; locale: string; entities: AutoEntity[]; error?: string };
 
 export default function AutoSubmenuPicker({
+  locale,
   value,
   onChange,
 }: {
+  /** Langue du menu édité, pas nécessairement celle de l’interface. */
+  locale: string;
   value?: AutoRule | null;
   onChange: (rule: AutoRule | null) => void;
 }) {
-  const locale = useLocale();
   const t = useTranslations('admin.menus');
-  const [entities, setEntities] = useState<AutoEntity[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [loaded, setLoaded] = useState<Loaded | null>(null);
 
   const rule = value || null;
   const source = rule?.source;
+  // Ne jamais proposer les valeurs de la langue (ou du module) précédent pendant la lecture.
+  const result = loaded && loaded.source === source && loaded.locale === locale ? loaded : null;
+  const loading = Boolean(source && !result);
+  const entities = result?.entities ?? EMPTY;
+  const error = result?.error;
 
   useEffect(() => {
-    if (!source) { setEntities([]); return; }
+    if (!source) return;
     let cancelled = false;
     const run = async () => {
-      setLoading(true);
-      setError('');
       try {
         // L'administration liste tous les statuts : on filtre ensuite avec la
         // même règle que la vitrine, ce qui permet d'indiquer à l'éditeur
         // combien de fiches sont masquées parce qu'archivées.
         const rows: AutoEntity[] = [];
-        for (let page = 1; page <= 20; page += 1) {
+        for (let page = 1; page <= CMS_BROWSE_LIMIT / 100 && !cancelled; page += 1) {
           const chunk = await cmsAdminList<AutoEntity>(source, {
             limit: '100',
             page: String(page),
+            // Le corps HTML des articles est inutile pour l’aperçu.
+            view: source === 'news' ? 'card' : 'block',
             filter: JSON.stringify({ locale }),
           });
           rows.push(...chunk);
           if (chunk.length < 100) break;
         }
-        if (!cancelled) setEntities(rows);
+        if (!cancelled) setLoaded({ source, locale, entities: rows });
       } catch (err) {
         if (!cancelled) {
-          setEntities([]);
-          setError(err instanceof CmsError ? err.message : t('autoLoadError'));
+          setLoaded({ source, locale, entities: EMPTY, error: err instanceof CmsError ? err.message : t('autoLoadError') });
         }
-      } finally {
-        if (!cancelled) setLoading(false);
       }
     };
     run();
@@ -95,10 +99,14 @@ export default function AutoSubmenuPicker({
   const sourceHasGroups = rule ? SOURCES_WITH_GROUPS.includes(rule.source) : false;
   const isGroups = rule?.mode === 'groups';
 
-  // Catégories réellement présentes dans le contenu publié.
+  const groupBy = rule?.groupBy ?? 'category';
+  const pickedGroups = new Set((rule?.ids ?? []).map((id) => groupKey(String(id))));
+  const groupChoices = source === 'news' ? NEWS_GROUPS : ['category'] as const;
+
+  // Valeurs réellement présentes dans le contenu publié de cette langue.
   const groups = useMemo(
-    () => (rule && sourceHasGroups ? collectGroups(entities, rule.source) : []),
-    [rule, entities, sourceHasGroups],
+    () => (source && isGroups ? collectGroups(entities, source, groupBy) : []),
+    [source, entities, isGroups, groupBy],
   );
 
   // Combien de fiches retenues n'ont pas d'icône : l'éditeur saurait sinon
@@ -129,10 +137,8 @@ export default function AutoSubmenuPicker({
   const toggleId = (id: string) => {
     if (!rule) return;
     const ids = (rule.ids || []).map(String);
-    onChange({
-      ...rule,
-      ids: ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id],
-    });
+    const matches = (stored: string) => isGroups ? groupKey(stored) === groupKey(id) : stored === id;
+    onChange({ ...rule, ids: ids.some(matches) ? ids.filter((x) => !matches(x)) : [...ids, id] });
   };
 
   if (!rule) {
@@ -188,30 +194,32 @@ export default function AutoSubmenuPicker({
         <button
           type="button"
           className={`ad-btn ${rule.mode === 'all' ? 'ad-btn-primary' : 'ad-btn-ghost'}`}
-          onClick={() => setRule({ mode: 'all', ids: [] })}
+          onClick={() => setRule({ mode: 'all', groupBy: undefined, ids: [] })}
         >
           {t('modeAll')}
         </button>
         <button
           type="button"
           className={`ad-btn ${rule.mode === 'pick' ? 'ad-btn-primary' : 'ad-btn-ghost'}`}
-          onClick={() => setRule({ mode: 'pick', ids: rule.mode === 'groups' ? [] : rule.ids })}
+          onClick={() => setRule({ mode: 'pick', groupBy: undefined, ids: rule.mode === 'groups' ? [] : rule.ids })}
         >
           {t('modePick')}
         </button>
-        {/* Les catégories n'existent que pour les modules qui en ont un champ :
-            Solutions et Services sont déjà eux-mêmes des rubriques. */}
-        {sourceHasGroups && (
-          <button
-            type="button"
-            className={`ad-btn ${isGroups ? 'ad-btn-primary' : 'ad-btn-ghost'}`}
-            // Les `ids` d'un mode portent des fiches, ceux de l'autre des noms
-            // de catégories : les conserver produirait une sélection vide.
-            onClick={() => setRule({ mode: 'groups', ids: [] })}
-          >
-            {t('modeGroups')}
-          </button>
-        )}
+        {sourceHasGroups && groupChoices.map((by) => {
+          const active = isGroups && (source !== 'news' || groupBy === by);
+          return (
+            <button
+              key={by}
+              type="button"
+              className={`ad-btn ${active ? 'ad-btn-primary' : 'ad-btn-ghost'}`}
+              aria-pressed={active}
+              // Les identifiants d’articles, catégories, tags et types ne sont pas interchangeables.
+              onClick={() => !active && setRule({ mode: 'groups', groupBy: source === 'news' ? by : undefined, ids: [] })}
+            >
+              {t(by === 'tag' ? 'modeTags' : by === 'type' ? 'modeNewsTypes' : 'modeGroups')}
+            </button>
+          );
+        })}
 
         <label className="flex items-center gap-2 text-xs ms-auto" style={{ color: 'var(--ad-muted)' }}>
           {t('limitLabel')}
@@ -296,9 +304,14 @@ export default function AutoSubmenuPicker({
       {/* Sélection des catégories */}
       {isGroups && !loading && (
         <div className="space-y-1">
-          <p className="text-xs" style={{ color: 'var(--ad-muted)' }}>
-            {t('groupsHint')}
-          </p>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs" style={{ color: 'var(--ad-muted)' }}>{t('groupsHint')}</p>
+            {pickedGroups.size > 0 && (
+              <button type="button" className="ad-btn ad-btn-ghost" onClick={() => setRule({ ids: [] })}>
+                {t('allGroupValues')}
+              </button>
+            )}
+          </div>
           {groups.length === 0 ? (
             <p className="text-xs" style={{ color: 'var(--ad-muted)' }}>{t('groupsEmpty')}</p>
           ) : (
@@ -306,14 +319,14 @@ export default function AutoSubmenuPicker({
               {groups.map((group) => {
                 // Aucune coche = toutes les catégories : c'est le réglage le
                 // plus courant, et il suit le contenu sans intervention.
-                const picked = (rule.ids || []).map(String);
-                const checked = picked.length === 0 || picked.includes(group);
+                const checked = pickedGroups.has(groupKey(group));
                 return (
                   <button
                     key={group}
                     type="button"
                     className="w-full text-start px-2 py-1.5 rounded flex items-center gap-2 hover:opacity-80"
-                    style={{ background: picked.includes(group) ? 'var(--ad-bg)' : 'transparent' }}
+                    aria-pressed={checked}
+                    style={{ background: checked ? 'var(--ad-bg)' : 'transparent' }}
                     onClick={() => toggleId(group)}
                   >
                     <span
@@ -321,7 +334,6 @@ export default function AutoSubmenuPicker({
                       style={{
                         border: '1px solid var(--ad-line)',
                         background: checked ? 'var(--ad-accent)' : 'transparent',
-                        opacity: picked.length === 0 ? 0.5 : 1,
                       }}
                     >
                       {checked && <Check className="w-3 h-3" style={{ color: '#fff' }} />}

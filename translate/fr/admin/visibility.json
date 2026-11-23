@@ -5,12 +5,15 @@
   "reset": "Réinitialiser",
   "resetSuccess": "Visibilité réinitialisée",
   "searchPlaceholder": "Rechercher un élément…",
-  "itemsCount": "{count} élément(s)",
+  "itemsCount": "{count, plural, one {# élément} other {# éléments}}",
   "hideAll": "Tout masquer",
   "showAll": "Tout afficher",
   "visible": "Visible",
   "hidden": "Masqué",
   "noResults": "Aucun élément ne correspond à « {query} ».",
   "groupShown": "{group} affiché(s)",
-  "groupHidden": "{group} masqué(s)"
+  "groupHidden": "{group} masqué(s)",
+  "copyToOthers": "Copier vers les autres langues",
+  "copied": "Réglages de {language} copiés vers les autres langues",
+  "shared": "Enregistré en base — s’applique à tous les visiteurs de cette langue."
 }

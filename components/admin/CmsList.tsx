@@ -410,9 +410,21 @@ function ListTable({
   setSelected: (ids: string[]) => void;
 }) {
   const t = useTranslations('admin.common');
+  const messages = useMessages() as Record<string, any>;
   const labels = useAdminLabels(mod.key);
   const STATUS_LABELS: Record<string, string> = {
     draft: t('statusDraft'), published: t('statusPublished'), archived: t('statusArchived'),
+  };
+  const translateOption = (raw: unknown): string => {
+    const val = String(raw || '');
+    if (!val) return '';
+    if (STATUS_LABELS[val]) return STATUS_LABELS[val];
+    const editor = messages?.admin?.editor;
+    const key = `option_${val}`;
+    if (editor && typeof editor === 'object' && typeof editor[key] === 'string' && editor[key].length > 0) {
+      return editor[key];
+    }
+    return val;
   };
   // La colonne « sous-titre » peut pointer un champ date (ex. les événements) :
   // elle suit alors le format configuré au lieu d'afficher la valeur brute.
@@ -465,12 +477,12 @@ function ListTable({
             <td className="text-sm" style={{ color: 'var(--ad-muted)' }}>
               {subtitleIsDate
                 ? <DateText value={row[subtitleKey]} fallback="—" />
-                : String(row[subtitleKey] || '—')}
+                : (translateOption(row[subtitleKey]) || '—')}
             </td>
             {badgeKey && (
               <td className="text-sm">
                 {String(row[badgeKey] || '') ? (
-                  <span className="ad-chip">{String(row[badgeKey])}</span>
+                  <span className="ad-chip">{translateOption(row[badgeKey])}</span>
                 ) : <span style={{ color: 'var(--ad-muted)' }}>—</span>}
               </td>
             )}
@@ -514,6 +526,21 @@ function CardCanvas({
   onDragEnd: (e: DragEndEvent) => void;
 }) {
   const t = useTranslations('admin.common');
+  const messages = useMessages() as Record<string, any>;
+  const STATUS_LABELS: Record<string, string> = {
+    draft: t('statusDraft'), published: t('statusPublished'), archived: t('statusArchived'),
+  };
+  const translateOption = (raw: unknown): string => {
+    const val = String(raw || '');
+    if (!val) return '';
+    if (STATUS_LABELS[val]) return STATUS_LABELS[val];
+    const editor = messages?.admin?.editor;
+    const key = `option_${val}`;
+    if (editor && typeof editor === 'object' && typeof editor[key] === 'string' && editor[key].length > 0) {
+      return editor[key];
+    }
+    return val;
+  };
   const subtitleIsDate = isDateSubtitle(mod);
   if (rows.length === 0) return <Empty mod={mod} />;
   const cards = rows.map((row) => (
@@ -531,7 +558,7 @@ function CardCanvas({
                 {String(row[mod.titleKey] || '—')}
               </h3>
             {mod.badgeKey && String(row[mod.badgeKey] || '') && (
-              <span className={`ad-chip ${['published', 'active'].includes(String(row[mod.badgeKey])) ? 'ad-chip-ok' : 'ad-chip-warn'}`}>{String(row[mod.badgeKey])}</span>
+              <span className={`ad-chip ${['published', 'active'].includes(String(row[mod.badgeKey])) ? 'ad-chip-ok' : 'ad-chip-warn'}`}>{translateOption(row[mod.badgeKey])}</span>
             )}
           </div>
           {mod.subtitleKey && (
@@ -539,12 +566,12 @@ function CardCanvas({
               {/* Même règle qu'en vue Liste : un champ date suit le format configuré. */}
               {subtitleIsDate
                 ? <DateText value={row[mod.subtitleKey]} fallback="" />
-                : String(row[mod.subtitleKey] || '')}
+                : translateOption(row[mod.subtitleKey])}
             </p>
           )}
           {mod.key === 'products' && (
             <div className="flex justify-between text-sm">
-              <span style={{ color: 'var(--ad-muted)' }}>{String(row.sku || row.category || '')}</span>
+              <span style={{ color: 'var(--ad-muted)' }}>{String(row.sku || '') || translateOption(row.category)}</span>
               <span className="font-black" style={{ color: 'var(--ad-accent)' }}>{String(row.price || '')}</span>
             </div>
           )}

@@ -8,5 +8,18 @@
   "alignRight": "محاذاة لليمين",
   "insertLink": "إدراج رابط",
   "insertImage": "إدراج صورة",
-  "insertTable": "إدراج جدول"
+  "insertTable": "إدراج جدول",
+  "placeholder": "اكتب المحتوى…",
+  "linkUrl": "عنوان الرابط",
+  "color": "اللون",
+  "visual": "مرئي",
+  "code": "الشيفرة",
+  "insertVar": "إدراج متغير…",
+  "column": "العمود {number}",
+  "bold": "غامق",
+  "italic": "مائل",
+  "heading": "عنوان المستوى {level}",
+  "quote": "اقتباس",
+  "alignCenter": "محاذاة للوسط",
+  "redo": "إعادة"
 }

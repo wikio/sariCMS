@@ -399,7 +399,7 @@ export default function VerificationExperience({
           src="https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=1920"
           alt="Vérification"
           className="w-full h-full object-cover parallax-slow"
-          onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/1920x600?text=Verification'; }}
+          onError={(e) => { (e.target as HTMLImageElement).src = '/api/placeholder/1920x600/1B2A4A/FFFFFF?text=V%C3%A9rification&icon=shield-check&grad=diagonal&bg2=169EC9&pattern=rings'; }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-sari-dark via-sari-dark/70 to-transparent"></div>
         <div className="absolute inset-0 grid-pattern-bg opacity-10"></div>

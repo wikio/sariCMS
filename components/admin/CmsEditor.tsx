@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useLocale, useTranslations } from 'next-intl';
+import { useLocale, useMessages, useTranslations } from 'next-intl';
 import { ArrowLeft, ChevronDown, Copy, Eye, Save, Trash2 } from 'lucide-react';
 import PixelGridLoader from '@/components/admin/PixelGridLoader';
 import { renderField } from '@/components/admin/fields/FieldKit';
@@ -25,41 +25,62 @@ const LANGS = [
 
 export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
   const locale = useLocale();
+  const messages = useMessages() as Record<string, any>;
   const tEditor = useTranslations('admin.editor');
   const tTitles = useTranslations('admin.titles');
   const tFields = useTranslations('admin.careersFields');
 
+  // Libellés traduits (sections + champs + placeholders) — namespace `admin.fields`,
+  // avec repli sur les anciens namespaces puis sur le libellé du module.
+  const labels = useAdminLabels(mod.key);
+  const groupName = (g: string) => labels.group(g);
+  const fieldLabel = (field: { key: string; label: string }) => labels.field(field.key, field.label);
+  const translatedSingular = (() => {
+    const SINGULARS: Record<string, string> = {
+      services: 'singular_service', products: 'singular_product', events: 'singular_event',
+      news: 'singular_news', careers: 'singular_career', solutions: 'singular_solution',
+      pages: 'singular_page', partners: 'singular_partner', testimonials: 'singular_testimonial',
+      galleries: 'singular_gallery', legal: 'singular_legal', hero: 'singular_hero', contents: 'singular_content',
+    };
+    const k = SINGULARS[mod.key];
+    if (!k) return mod.singular;
+    try { const r = tTitles(k); return typeof r === 'string' ? r : mod.singular; } catch { return mod.singular; }
+  })();
 
-  // Translate option labels (e.g. Brouillon→Draft, Publié→Published)
+  // Translate option labels (e.g. Brouillon→Draft, Publié→Published, % Pourcentage→% Percentage, etc.)
   const OPTION_LABEL_KEYS: Record<string, string> = {
     'Brouillon': 'statusDraft', 'Publié': 'statusPublished', 'Archivé': 'statusArchived',
     'Selon la configuration globale': 'applyInherit', 'Postuler sans connexion': 'applyOptional',
     'Connexion obligatoire': 'applyRequired',
   };
-  const translateOptionLabel = (label: string) => {
+  const translateOptionLabel = (fieldKey: string, value: string, label: string) => {
+    const editorDict = messages?.admin?.editor;
+    if (editorDict && typeof editorDict === 'object') {
+      const specificKey = `option_${fieldKey}_${value}`;
+      if (typeof editorDict[specificKey] === 'string' && editorDict[specificKey]) return editorDict[specificKey];
+      const genericKey = `option_${value}`;
+      if (typeof editorDict[genericKey] === 'string' && editorDict[genericKey]) return editorDict[genericKey];
+    }
     const key = OPTION_LABEL_KEYS[label];
     if (!key) return label;
     try { const r = tFields(key); return typeof r === 'string' ? r : label; } catch { return label; }
   };
 
-
-  // Translate field options (e.g. status: Brouillon→Draft, Publié→Published)
-  const translatedFields = useMemo(() => mod.fields.map(f => {
-    if (!f.options || !Array.isArray(f.options)) return f;
+  // Translate field options + placeholders
+  const translatedFields = useMemo(() => mod.fields.map((f) => {
+    const ph = labels.placeholder(f.key, f.placeholder);
+    const nextOptions = f.options && Array.isArray(f.options)
+      ? f.options.map((opt: { value: string; label: string }) => ({
+          ...opt,
+          label: typeof opt.label === 'string' ? translateOptionLabel(f.key, opt.value, opt.label) : opt.label,
+        }))
+      : f.options;
     return {
       ...f,
-      options: f.options.map((opt: { value: string; label: string }) => ({
-        ...opt,
-        label: typeof opt.label === 'string' ? translateOptionLabel(opt.label) : opt.label,
-      })),
+      ...(ph !== undefined ? { placeholder: ph } : {}),
+      ...(nextOptions ? { options: nextOptions } : {}),
     };
-  }), [mod.fields]);
-
-  // Libellés traduits (sections + champs) — namespace `admin.fields`,
-  // avec repli sur les anciens namespaces puis sur le libellé du module.
-  const labels = useAdminLabels(mod.key);
-  const groupName = (g: string) => labels.group(g);
-  const fieldLabel = (field: { key: string; label: string }) => labels.field(field.key, field.label);
+  }), [mod.fields, messages, labels]);
 
   const router = useRouter();
   const params = useSearchParams();
@@ -127,7 +148,7 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
         }
         setOverlays(next);
       } catch (err) {
-        showToast(err instanceof CmsError ? err.message : 'Fiche introuvable', 'error');
+        showToast(err instanceof CmsError ? err.message : tEditor('recordNotFound'), 'error');
       } finally {
         setLoading(false);
       }
@@ -222,7 +243,7 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
     if (!record) return;
     const missing = mod.fields.filter((f) => f.required && !String(record[f.key] ?? '').trim());
     if (missing.length) {
-      showToast(`Champs obligatoires : ${missing.map((f) => f.label).join(', ')}`, 'error');
+      showToast(tEditor('requiredFields', { fields: missing.map((f) => fieldLabel(f)).join(', ') }), 'error');
       return;
     }
     setSaving(true);
@@ -283,11 +304,11 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
           saveFicheLocale(mod.resource, newId, lang, fields);
         }
       }
-      showToast('Fiche enregistrée', 'success');
+      showToast(tEditor('recordSaved'), 'success');
       if (id === 'new') router.replace(`/${locale}/admin/${mod.path}/${newId}`);
       else setRecord(saved as Record<string, unknown>);
     } catch (err) {
-      showToast(err instanceof CmsError ? err.message : 'Enregistrement impossible', 'error');
+      showToast(err instanceof CmsError ? err.message : tEditor('saveImpossible'), 'error');
     } finally {
       setSaving(false);
     }
@@ -300,25 +321,25 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
         ...record,
         id: undefined,
         slug: slugify(`${record[mod.titleKey] || 'copie'}-copie`),
-        [mod.titleKey]: `${record[mod.titleKey] || ''} (copie)`,
+        [mod.titleKey]: `${record[mod.titleKey] || ''} ${tEditor('copySuffix')}`,
         status: 'draft',
         // Pas de `sku` : la copie reçoit sa propre référence à l'enregistrement.
       };
       const saved = await cmsAdminCreate(mod.resource, copy);
-      showToast('Fiche dupliquée', 'success');
+      showToast(tEditor('recordDuplicated'), 'success');
       router.push(`/${locale}/admin/${mod.path}/${(saved as { id: string }).id}`);
     } catch (err) {
-      showToast(err instanceof CmsError ? err.message : 'Duplication impossible', 'error');
+      showToast(err instanceof CmsError ? err.message : tEditor('duplicateImpossible'), 'error');
     }
   };
 
   const remove = async () => {
-    if (!record?.id || !confirm('Corbeille ?')) return;
+    if (!record?.id || !confirm(tEditor('confirmTrash'))) return;
     await cmsAdminDelete(mod.resource, String(record.id));
     router.push(`/${locale}/admin/${mod.path}`);
   };
 
-  if (loading || !record) return <div className="ad-card"><PixelGridLoader label="Fiche" /></div>;
+  if (loading || !record) return <div className="ad-card"><PixelGridLoader label={tEditor('record')} /></div>;
 
   const Icon = mod.icon;
   const previewImg = mod.imageKey ? String(record[mod.imageKey] || '') : '';
@@ -337,7 +358,7 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
           </button>
           <h1 className="text-2xl font-black flex items-center gap-2">
             {iconName ? <IconMark name={iconName} className="w-6 h-6" /> : <Icon className="w-6 h-6" style={{ color: 'var(--ad-accent)' }} />}
-            {consult ? tEditor('consultation') : ''}{id === 'new' ? tEditor('newItem', { singular: mod.singular }) : String(record[mod.titleKey] || tEditor('record'))}
+            {consult ? tEditor('consultation') : ''}{id === 'new' ? tEditor('newItem', { singular: translatedSingular }) : String(record[mod.titleKey] || tEditor('record'))}
           </h1>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -371,8 +392,7 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
         </div>
         {!isDefault && (
           <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>
-            Formulaire {tab.toUpperCase()} rechargé : {translatedCount} champ(s) déjà traduit(s), les autres sont vides.
-            Une note d’origine ({settings.defaultLocale.toUpperCase()}) apparaît sous chaque champ.
+            {tEditor('translationBanner', { lang: tab.toUpperCase(), count: translatedCount, origin: settings.defaultLocale.toUpperCase() })}
           </p>
         )}
       </div>
@@ -431,12 +451,12 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
                                 <button className="ad-btn ad-btn-ghost" onClick={() => {
                                   set(field.key + 'Keep', 'replace');
                                   set(field.key, ''); // Initialiser à vide pour permettre l'upload d'une nouvelle image
-                                }}>Remplacer dans cette traduction</button>
+                                }}>{tEditor('replaceInTranslation')}</button>
                               )}
-                              {locked && <p className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>Champ partagé, verrouillé.</p>}
+                              {locked && <p className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>{tEditor('sharedFieldLocked')}</p>}
                             </div>
                           ) : (
-                            renderField(field, valueOf(field.key), (v) => set(field.key, v), record, { t: tEditor, moduleKey: mod.singular || mod.key, valueOf, setField: set })
+                            renderField(field, valueOf(field.key), (v) => set(field.key, v), record, { t: tEditor, moduleKey: mod.key, valueOf, setField: set })
                           )}
                         </div>
                       </div>
@@ -457,7 +477,7 @@ export default function CmsEditor({ mod, id }: { mod: CmsModule; id: string }) {
                           <ConsultValue spec={field} value={tab} />
                           <p className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>{tEditor('lockedOnActiveLang')}</p>
                         </div>
-                      ) : renderField(field, valueOf(field.key), (v) => set(field.key, v), record, { origin: originOf(field.key), originLocale: settings.defaultLocale, t: tEditor, moduleKey: mod.singular || mod.key, valueOf, setField: set })}
+                      ) : renderField(field, valueOf(field.key), (v) => set(field.key, v), record, { origin: originOf(field.key), originLocale: settings.defaultLocale, t: tEditor, moduleKey: mod.key, valueOf, setField: set })}
                     </div>
                   ))}
                 </div>

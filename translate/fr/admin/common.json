@@ -26,7 +26,7 @@
   "download": "Télécharger",
   "preview": "Aperçu",
   "reset": "Réinitialiser",
-  "recordCount": "{count} fiche(s)",
+  "recordCount": "{count, plural, one {# fiche} other {# fiches}}",
   "itemsCount": "{count} élément(s)",
   "status": "Statut",
   "active": "Actif",
@@ -113,5 +113,8 @@
   "shop": "Boutique",
   "eShop": "E-shop",
   "filter": "Filtrer",
-  "validated": "Validé"
+  "validated": "Validé",
+  "saveError": "Enregistrement impossible",
+  "saving": "Enregistrement…",
+  "noResults": "Aucun résultat"
 }

@@ -26,7 +26,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
-  const body = (await req.json().catch(() => null)) as { api?: Record<string, unknown>; code?: string; key?: string } | null;
+  const body = (await req.json().catch(() => null)) as { api?: Record<string, unknown>; code?: string; key?: string; locale?: string } | null;
   const store = await readVerificationStore();
   // On teste la configuration soumise, complétée champ à champ par ce qui est
   // déjà enregistré : l'écran envoie son formulaire entier, et un champ laissé
@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
       ok: true,
       raw: answer.raw,
       codeValue: answer.codeValue,
-      mapped: def ? outcomeFromDef(def, 'fr') : null,
+      mapped: def ? outcomeFromDef(def, body?.locale === 'ar' || body?.locale === 'en' ? body.locale : 'fr') : null,
       warning: def ? undefined : `Code « ${answer.codeValue} » absent du catalogue : la page publique refuserait de l'afficher.`,
     });
   } catch (error) {

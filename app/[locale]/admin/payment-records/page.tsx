@@ -3,13 +3,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { CheckCircle2, Download, Eye, Pencil, Trash2, XCircle } from 'lucide-react';
 import {
-  deletePayment, exportPaymentsCsv, loadPaymentRecords, paymentStatusLabel, paymentTypeLabel,
+  deletePayment, exportPaymentsCsv, loadPaymentRecords, paymentTypeLabel,
   rejectPayment, validatePayment, type PaymentRecord, type PaymentStatus,
 } from '@/lib/payments';
 import { useToast } from '@/components/admin/Toast';
 import Drawer from '@/components/admin/Drawer';
 import SearchField from '@/components/admin/SearchField';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import DateText from '@/components/shared/DateText';
 import { money } from '@/lib/commerce-math';
 
@@ -21,8 +21,29 @@ const STATUS_KEYS: Array<{ value: '' | PaymentStatus; labelKey: string }> = [
 ];
 
 export default function PaymentRecordsPage() {
+  const locale = useLocale();
   const { showToast } = useToast();
   const t = useTranslations('admin.paymentRecords');
+
+  const translateMethod = (method: PaymentRecord['method']) => {
+    const map: Record<string, string> = {
+      'card-intl': t('typeIntlCard'),
+      cib: t('typeCib'),
+      transfer: t('typeTransfer'),
+      paypal: t('typePaypal'),
+      check: t('typeCheck'),
+      cod: t('typeCod'),
+      other: t('typeOther'),
+      pending: t('typePending'),
+    };
+    return map[method] || paymentTypeLabel(method, locale);
+  };
+
+  const translatePaymentStatus = (st: PaymentStatus) => {
+    if (st === 'validated') return t('statusValidated');
+    if (st === 'rejected') return t('statusRejected');
+    return t('statusPending');
+  };
   const [rows, setRows] = useState<PaymentRecord[]>([]);
   const [q, setQ] = useState('');
   const [status, setStatus] = useState<'' | PaymentStatus>('');
@@ -115,9 +136,9 @@ export default function PaymentRecordsPage() {
         <button
           type="button"
           className="ad-btn ad-btn-ghost"
-          onClick={() => { exportPaymentsCsv(shown); showToast(t("exportCsv"), 'success'); }}
+          onClick={() => { exportPaymentsCsv(shown, undefined, locale); showToast(t("exportCsv"), 'success'); }}
         >
-          <Download className="w-4 h-4" /> Export CSV
+          <Download className="w-4 h-4" /> {t("exportCsvBtn")}
         </button>
       </header>
 
@@ -146,12 +167,12 @@ export default function PaymentRecordsPage() {
               <tr key={p.id}>
                 <td className="font-mono text-sm">{p.orderCode || (p.orderId ? `#${p.orderId}` : '—')}</td>
                 <td><div className="font-bold">{p.client}</div><div className="text-xs" style={{ color: 'var(--ad-muted)' }}>{p.email}</div></td>
-                <td>{paymentTypeLabel(p.method)}</td>
+                <td>{translateMethod(p.method)}</td>
                 <td className="font-mono">{p.cardMasked || '—'}</td>
                 <td className="font-black whitespace-nowrap">{money(Number(p.amount))}</td>
                 <td>
                   <span className={`ad-chip ${p.status === 'validated' ? 'ad-chip-ok' : p.status === 'rejected' ? 'ad-chip-mute' : 'ad-chip-warn'}`}>
-                    {paymentStatusLabel(p.status)}
+                    {translatePaymentStatus(p.status)}
                   </span>
                 </td>
                 <td className="text-sm"><DateText value={p.date} /></td>
@@ -184,7 +205,7 @@ export default function PaymentRecordsPage() {
       <Drawer
         open={!!open}
         title={consult ? t("consultTitle", {client: open?.client || ''}) : t("validateTitle")}
-        subtitle={open ? `${open.methodName} · ${paymentStatusLabel(open.status)}` : undefined}
+        subtitle={open ? `${translateMethod(open.method)} · ${translatePaymentStatus(open.status)}` : undefined}
         onClose={() => setOpen(null)}
         width={560}
         footer={consult ? (
@@ -203,9 +224,9 @@ export default function PaymentRecordsPage() {
               <div><span style={{ color: 'var(--ad-muted)' }}>{t("amount")}</span><div className="font-black">{money(Number(open.amount))}</div></div>
               <div><span style={{ color: 'var(--ad-muted)' }}>{t("client")}</span><div className="font-bold">{open.client}</div></div>
               <div><span style={{ color: 'var(--ad-muted)' }}>{t("email")}</span><div>{open.email}</div></div>
-              <div><span style={{ color: 'var(--ad-muted)' }}>{t("method")}</span><div>{paymentTypeLabel(open.method)}</div></div>
+              <div><span style={{ color: 'var(--ad-muted)' }}>{t("method")}</span><div>{translateMethod(open.method)}</div></div>
               <div><span style={{ color: 'var(--ad-muted)' }}>{t("card")}</span><div className="font-mono">{open.cardMasked || '—'}</div></div>
-              <div className="col-span-2"><span style={{ color: 'var(--ad-muted)' }}>Date</span><div><DateText value={open.date} /></div></div>
+              <div className="col-span-2"><span style={{ color: 'var(--ad-muted)' }}>{t("date")}</span><div><DateText value={open.date} /></div></div>
             </div>
 
             {open.note && (

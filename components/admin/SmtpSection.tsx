@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 /**
  * Onglet « SMTP / Email » des paramètres.
  *
@@ -68,7 +70,19 @@ function differs(a: SmtpForm, b: SmtpForm): boolean {
   );
 }
 
+type DisplayResult = SmtpTestResult & { diagnostic?: string };
+
+const SMTP_ERRORS: Record<string, string> = {
+  EAUTH: 'authError', ECONNECTION: 'hostError', ENOTFOUND: 'hostError', EAI_AGAIN: 'hostError',
+  ETIMEDOUT: 'timeoutError', ESOCKET: 'socketError', ESOCKETTLS: 'tlsError',
+  ERR_TLS_CERT_ALTNAME_INVALID: 'tlsError', CERT_HAS_EXPIRED: 'tlsError',
+  EMESSAGE: 'messageError', EENVELOPE: 'messageError',
+};
+
 export default function SmtpSection() {
+  const t = useTranslations('admin.smtpSettings');
+  const ts = useTranslations('admin.settings');
+  const tc = useTranslations('admin.common');
   const { showToast } = useToast();
   const [status, setStatus] = useState<SmtpStatus | null>(null);
   const [baseline, setBaseline] = useState<SmtpForm>(EMPTY);
@@ -78,7 +92,7 @@ export default function SmtpSection() {
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
   const [sendingTest, setSendingTest] = useState(false);
-  const [result, setResult] = useState<SmtpTestResult | null>(null);
+  const [result, setResult] = useState<DisplayResult | null>(null);
   const [testTo, setTestTo] = useState('');
 
   const patch = (p: Partial<SmtpForm>) => setForm((f) => ({ ...f, ...p }));
@@ -92,11 +106,11 @@ export default function SmtpSection() {
       setForm(next);
       setLoadError('');
     } catch (err) {
-      setLoadError(err instanceof Error ? err.message : 'État SMTP illisible');
+      setLoadError(err instanceof Error ? err.message : t('loadError'));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     void refresh();
@@ -104,7 +118,7 @@ export default function SmtpSection() {
 
   const doSave = useCallback(async (): Promise<SmtpStatus | null> => {
     if (!form.host.trim()) {
-      showToast('L’hôte SMTP est obligatoire.', 'error');
+      showToast(t('needHost'), 'error');
       return null;
     }
     setSaving(true);
@@ -115,15 +129,15 @@ export default function SmtpSection() {
       setBaseline(next);
       setForm(next);
       setResult(null);
-      showToast('Réglages SMTP enregistrés et appliqués.', 'success');
+      showToast(t('saved'), 'success');
       return s;
     } catch (err) {
-      showToast(err instanceof Error ? err.message : 'Enregistrement impossible', 'error');
+      showToast(err instanceof Error ? err.message : tc('saveError'), 'error');
       return null;
     } finally {
       setSaving(false);
     }
-  }, [form, showToast]);
+  }, [form, showToast, t, tc]);
 
   /** Enregistre si besoin, puis teste — évite de tester une configuration périmée. */
   const runTest = useCallback(
@@ -138,15 +152,19 @@ export default function SmtpSection() {
       setResult(null);
       try {
         const r = await testSmtp(to);
-        setResult(r);
-        showToast(r.message, r.ok ? 'success' : 'error');
+        const message = r.ok
+          ? r.stage === 'send' ? t('deliveredTo', { to: to || '' }) : t('connectionOk', { host: r.host, port: r.port })
+          : t(!r.host ? 'needHost' : SMTP_ERRORS[r.code || ''] || 'testError');
+        setResult({ ...r, message, diagnostic: r.ok ? undefined : r.message });
+        showToast(message, r.ok ? 'success' : 'error');
         await refresh();
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Test impossible';
+        const message = t('testError');
         setResult({
           ok: false,
           stage: to ? 'send' : 'connect',
           message,
+          diagnostic: err instanceof Error ? err.message : undefined,
           tookMs: 0,
           host: form.host,
           port: form.port,
@@ -156,7 +174,7 @@ export default function SmtpSection() {
         busy(false);
       }
     },
-    [baseline, doSave, form, refresh, showToast],
+    [baseline, doSave, form, refresh, showToast, t],
   );
 
   const doClear = useCallback(async () => {
@@ -169,14 +187,14 @@ export default function SmtpSection() {
       setResult(null);
       showToast(
         s.configured
-          ? 'Réglages oubliés — les variables d’environnement sont de nouveau appliquées.'
-          : 'Réglages oubliés — SMTP non configuré.',
+          ? t('resetEnv')
+          : t('resetOff'),
         'success',
       );
     } catch (err) {
-      showToast(err instanceof Error ? err.message : 'Opération impossible', 'error');
+      showToast(err instanceof Error ? err.message : t('resetError'), 'error');
     }
-  }, [showToast]);
+  }, [showToast, t]);
 
   const dirty = differs(form, baseline);
 
@@ -184,10 +202,9 @@ export default function SmtpSection() {
     <section className="ad-card p-5 space-y-4">
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
-          <h2 className="ad-section-title">SMTP / Email</h2>
+          <h2 className="ad-section-title">{ts('smtp')}</h2>
           <p className="text-xs" style={{ color: 'var(--ad-muted)' }}>
-            Enregistré sur le serveur (<code>storage/mail/smtp.json</code>) et appliqué aussitôt,
-            sans redémarrage. Laissez « Hôte » vide pour le mode fichier (outbox).
+            {t('storageHint', { path: 'storage/mail/smtp.json' })}
           </p>
         </div>
         <StatusChip status={status} loading={loading} />
@@ -195,19 +212,18 @@ export default function SmtpSection() {
 
       {loadError && (
         <p className="text-xs ad-chip ad-chip-warn">
-          État du serveur illisible : {loadError} — le serveur d’API est-il lancé ?
+          {t('serverError', { error: loadError })}
         </p>
       )}
 
       {dirty && (
         <p className="text-xs ad-chip ad-chip-warn">
-          Modifications non enregistrées. Le test porte sur les réglages enregistrés — utilisez
-          « Enregistrer puis tester » pour valider ce que vous venez de saisir.
+          {t('dirty')}
         </p>
       )}
 
       <div className="grid md:grid-cols-2 gap-3">
-        <Label text="Hôte">
+        <Label text={t('host')}>
           <input
             className="ad-input"
             value={form.host}
@@ -215,7 +231,7 @@ export default function SmtpSection() {
             onChange={(e) => patch({ host: e.target.value })}
           />
         </Label>
-        <Label text="Port">
+        <Label text={t('port')}>
           <input
             className="ad-input"
             inputMode="numeric"
@@ -223,7 +239,7 @@ export default function SmtpSection() {
             onChange={(e) => patch({ port: Number(e.target.value.replace(/\D/g, '')) || 0 })}
           />
         </Label>
-        <Label text="Utilisateur">
+        <Label text={t('user')}>
           <input
             className="ad-input"
             value={form.user}
@@ -231,17 +247,17 @@ export default function SmtpSection() {
             onChange={(e) => patch({ user: e.target.value })}
           />
         </Label>
-        <Label text="Mot de passe">
+        <Label text={t('password')}>
           <input
             className="ad-input"
             type="password"
             value={form.pass}
             autoComplete="new-password"
-            placeholder={status?.hasPassword ? '••••••••  (enregistré — laissez vide pour conserver)' : ''}
+            placeholder={status?.hasPassword ? t('keepPassword') : ''}
             onChange={(e) => patch({ pass: e.target.value })}
           />
         </Label>
-        <Label text="Expéditeur">
+        <Label text={t('from')}>
           <input
             className="ad-input"
             value={form.from}
@@ -249,7 +265,7 @@ export default function SmtpSection() {
             onChange={(e) => patch({ from: e.target.value })}
           />
         </Label>
-        <Label text="Reply-To">
+        <Label text={t('replyTo')}>
           <input
             className="ad-input"
             value={form.replyTo}
@@ -265,30 +281,30 @@ export default function SmtpSection() {
           className={`ad-btn ${form.secure ? 'ad-btn-lime' : 'ad-btn-ghost'}`}
           onClick={() => patch({ secure: !form.secure })}
         >
-          TLS/SSL : {form.secure ? 'activé (port 465)' : 'désactivé — STARTTLS (port 587)'}
+          TLS/SSL : {form.secure ? t('secure') : t('starttls')}
         </button>
         {status?.stored && (
           <button type="button" className="ad-btn ad-btn-ghost" onClick={() => void doClear()}>
-            <Trash2 className="w-4 h-4" /> Oublier ces réglages
+            <Trash2 className="w-4 h-4" /> {t('clear')}
           </button>
         )}
       </div>
 
       <div className="flex items-center gap-3 flex-wrap pt-1" style={{ borderTop: '1px solid var(--ad-line)' }}>
         <button type="button" className="ad-btn ad-btn-primary" disabled={saving} onClick={() => void doSave()}>
-          <Save className="w-4 h-4" /> {saving ? 'Enregistrement…' : 'Enregistrer'}
+          <Save className="w-4 h-4" /> {saving ? tc('saving') : tc('save')}
         </button>
         <button type="button" className="ad-btn" disabled={testing || sendingTest} onClick={() => void runTest()}>
-          <PlugZap className="w-4 h-4" /> {testing ? 'Test en cours…' : 'Tester la connexion'}
+          <PlugZap className="w-4 h-4" /> {testing ? t('testing') : t('test')}
         </button>
         <span className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>
-          Ouvre une session et s’authentifie, sans rien envoyer.
+          {t('testHint')}
         </span>
       </div>
 
       <div className="flex items-end gap-3 flex-wrap">
         <div className="min-w-[240px] flex-1">
-          <Label text="Destinataire du message de test">
+          <Label text={t('testRecipient')}>
             <input
               className="ad-input"
               type="email"
@@ -305,7 +321,7 @@ export default function SmtpSection() {
           onClick={() => void runTest(testTo.trim())}
         >
           {sendingTest ? <Send className="w-4 h-4" /> : <Mail className="w-4 h-4" />}{' '}
-          {sendingTest ? 'Envoi…' : 'Envoyer un email de test'}
+          {sendingTest ? t('sending') : t('sendTest')}
         </button>
       </div>
 
@@ -326,20 +342,22 @@ function Label({ text, children }: { text: string; children: React.ReactNode }) 
 }
 
 function StatusChip({ status, loading }: { status: SmtpStatus | null; loading: boolean }) {
-  if (loading) return <span className="ad-chip ad-chip-mute">Lecture…</span>;
-  if (!status) return <span className="ad-chip ad-chip-warn">État inconnu</span>;
+  const t = useTranslations('admin.smtpSettings');
+  if (loading) return <span className="ad-chip ad-chip-mute">{t('reading')}</span>;
+  if (!status) return <span className="ad-chip ad-chip-warn">{t('unknown')}</span>;
   if (!status.configured) {
-    return <span className="ad-chip ad-chip-warn">Non configuré — mode « fichier », aucun email réel</span>;
+    return <span className="ad-chip ad-chip-warn">{t('notConfigured')}</span>;
   }
   return (
     <span className="ad-chip ad-chip-ok">
-      SMTP actif — {status.host}:{status.port}
-      {status.source === 'env' ? ' (variables d’environnement)' : ''}
+      {t('on')} {status.host}:{status.port}
+      {status.source === 'env' ? t('env') : ''}
     </span>
   );
 }
 
-function TestResult({ result }: { result: SmtpTestResult }) {
+function TestResult({ result }: { result: DisplayResult }) {
+  const t = useTranslations('admin.smtpSettings');
   return (
     <div
       className="p-3 rounded-xl border text-sm space-y-1.5"
@@ -355,16 +373,19 @@ function TestResult({ result }: { result: SmtpTestResult }) {
         )}
         {result.ok
           ? result.stage === 'send'
-            ? 'Message de test remis'
-            : 'Connexion établie'
+            ? t('testDelivered')
+            : t('connected')
           : result.stage === 'send'
-            ? 'Envoi refusé'
-            : 'Connexion impossible'}
+            ? t('sendFailed')
+            : t('connectFailed')}
         {result.code && (
           <span className="ad-chip ad-chip-mute font-mono">{result.code}</span>
         )}
       </div>
       <p style={{ color: 'var(--ad-muted)' }}>{result.message}</p>
+      {result.diagnostic && (
+        <details className="text-xs"><summary>{t('diagnostic')}</summary><p dir="auto">{result.diagnostic}</p></details>
+      )}
       <p className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>
         {result.host}:{result.port} · {result.tookMs} ms
         {result.messageId ? ` · Message-ID ${result.messageId}` : ''}

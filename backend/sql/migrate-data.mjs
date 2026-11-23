@@ -394,10 +394,13 @@ for (const locale of LOCALES) {
 /** news — la date littérale est conservée, une date SQL est dérivée */
 tables.push({
   name: 'news_articles',
+  // Les anciennes reprises omettaient les tags. Compléter les NULL sans
+  // écraser des mots-clés édités dans le CMS (même une liste vide explicite).
+  fillIfNull: ['tags'],
   columns: [
     'id', 'locale', 'slug', 'title', 'category', 'classification', 'sujet',
     'authorName', 'authorId', 'date', 'publicationDate', 'readTime', 'shortDesc',
-    'fullContent', 'image', 'legacyId', 'isDefault', 'status', 'publishedAt',
+    'fullContent', 'image', 'tags', 'legacyId', 'isDefault', 'status', 'publishedAt',
   ],
   rows: collect('news.json', 'news', (item, locale, id, legacyId) => {
     const parsed = parseDate(item.date);
@@ -417,6 +420,7 @@ tables.push({
       shortDesc: item.shortDesc ?? null,
       fullContent: item.fullContent ?? null,
       image: item.image ?? null,
+      tags: Array.isArray(item.tags) ? item.tags : null,
       legacyId,
       isDefault: locale === 'fr',
       status: 'published',
@@ -644,7 +648,9 @@ function renderTable(table) {
   // Réécriture des colonnes en cas de reprise : l'import reste rejouable.
   const updates = table.columns
     .filter((c) => c !== 'id')
-    .map((c) => `\`${c}\` = VALUES(\`${c}\`)`)
+    .map((c) => table.fillIfNull?.includes(c)
+      ? `\`${c}\` = COALESCE(\`${c}\`, VALUES(\`${c}\`))`
+      : `\`${c}\` = VALUES(\`${c}\`)`)
     .join(',\n    ');
 
   return (

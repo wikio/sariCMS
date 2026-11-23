@@ -336,7 +336,7 @@ function MenuStudioInner() {
             title={t("copyHint")}
           >
             <Languages className="w-4 h-4" />
-            {copying ? '…' : '{t("copyToOther")}'}
+            {copying ? '…' : t("copyToOther")}
           </button>
         </div>
       </div>
@@ -374,6 +374,7 @@ function MenuStudioInner() {
 
                   {/* Sous-menu généré depuis le contenu */}
                   <AutoSubmenuPicker
+                    locale={locale}
                     value={item.auto}
                     onChange={(auto) => setItem(i, { auto })}
                   />

@@ -13,12 +13,9 @@ import { PRISMA_MODEL_FIELDS } from './model-fields';
  * à la casse, délégations ignorées (`$connect`, `_internal`) — et non dans le
  * branchement de `onModuleInit`.
  *
- * Le cas est banal et il est moche à diagnostiquer : `postinstall` lance
- * `prisma generate || true`, donc un échec de génération (verrou de fichier sous
- * Windows, binaire non téléchargé hors ligne) ne se voit pas ; l'API démarre ;
- * et c'est l'écran d'administration qui répond 500, des heures plus tard, avec un
- * message qu'il faut lire jusqu'au bout pour comprendre. Mieux vaut le dire au
- * démarrage, une fois, en nommant les modèles.
+ * Un ancien `postinstall` masquait les échecs de génération. Une release peut
+ * encore embarquer un client périmé (verrou de fichier, moteur absent). Signaler
+ * les modèles manquants au démarrage, plutôt qu'au premier accès à un écran.
  *
  * Hypothèse assumée : tout modèle du schéma devient une délégation du client —
  * c'est faux si `@@ignore` apparaît un jour, et il n'y en a aucun (contrôlé par

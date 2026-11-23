@@ -96,8 +96,6 @@ export default function AlternatingSections({ config }: AlternatingSectionsProps
         checks: [],
       }));
 
-  if (!items.length) return null;
-
   // Les éléments image/texte entrent en scène au défilement, comme avant : la
   // feuille de style masque `.reveal`, `.reveal-left` et `.reveal-right` tant
   // que `.visible` n'est pas ajouté. Sans cet observateur, la page resterait

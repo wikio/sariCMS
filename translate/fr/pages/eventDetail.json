@@ -38,5 +38,19 @@
   "contactUs": "Contactez-nous",
   "shareTitle": "Partager cet événement",
   "reminderTitle": "Ne manquez pas cet événement !",
-  "reminderDesc": "Inscrivez-vous maintenant pour recevoir un rappel par email avant le début."
+  "reminderDesc": "Inscrivez-vous maintenant pour recevoir un rappel par email avant le début.",
+  "position": "Fonction / Poste (optionnel)",
+  "captchaLabel": "Vérification anti-robot",
+  "captchaHelp": "Saisissez les 5 caractères affichés sur l’image ci-dessus.",
+  "captchaRequired": "Veuillez saisir le code anti-robot (5 caractères).",
+  "phoneRequired": "Veuillez saisir un numéro de téléphone valide.",
+  "submitting": "Enregistrement en cours…",
+  "duplicateEmail": "Une candidature existe déjà pour cet événement avec cette adresse e-mail.",
+  "duplicatePhone": "Une candidature existe déjà pour cet événement avec ce numéro de téléphone.",
+  "duplicateBoth": "Une candidature existe déjà pour cet événement avec cet e-mail et ce numéro de téléphone.",
+  "errorGeneric": "Impossible d’enregistrer votre candidature. Veuillez réessayer.",
+  "clientAssociationHint": "Votre candidature est associée à votre adresse e-mail. Connectez-vous ou créez un compte client avec cette même adresse pour suivre votre participation dans votre espace personnel.",
+  "viewMyEvents": "Voir mes participations",
+  "newRegistration": "Fermer",
+  "statusPendingBadge": "Candidature enregistrée · En attente de confirmation"
 }

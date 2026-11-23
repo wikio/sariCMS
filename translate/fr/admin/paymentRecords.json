@@ -48,5 +48,17 @@
   "deactivateReasonPlaceholder": "Ex. : encaissement saisi en double, montant erroné…",
   "deactivateConfirm": "Désactiver ce paiement",
   "deactivateCancel": "Annuler",
-  "deactivateReasonRequired": "Indiquez un motif de désactivation."
+  "deactivateReasonRequired": "Indiquez un motif de désactivation.",
+  "exportCsvBtn": "Export CSV",
+  "typeIntlCard": "Carte internationale",
+  "typeCib": "Carte CIB / locale",
+  "typeTransfer": "Virement bancaire",
+  "typePaypal": "PayPal",
+  "typeCheck": "Chèque",
+  "typeCod": "Paiement à la livraison",
+  "typeOther": "Autre",
+  "typePending": "En attente",
+  "statusValidated": "Validé",
+  "statusPending": "En attente",
+  "statusRejected": "Rejeté"
 }

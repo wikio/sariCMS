@@ -1,25 +1,27 @@
 // app/[locale]/payment/[id]/page.tsx
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useLocale, useTranslations } from 'next-intl';
 import {
   CreditCard, User, Building, FileText, Globe, Lock, Copy, Upload, ArrowLeft,
-  CheckCircle, AlertCircle, Clock, Info, ExternalLink, Send, Loader, Banknote, X, AlertTriangle, ShieldAlert, Sparkles,
+  CheckCircle, AlertCircle, Clock, Info, ExternalLink, Loader, Banknote, X, AlertTriangle, ShieldAlert,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrders } from '@/contexts/OrdersContext';
 import { useCart } from '@/contexts/CartContext';
 import Breadcrumb from '@/components/ui/Breadcrumb';
+import { cmsFetch } from '@/lib/cms';
 import { useCurrency } from '@/lib/use-currency';
 import { loadPayments, type PaymentMethod, type PaymentType } from '@/lib/shop-store';
 import { addPaymentRecord, isAutoValidated } from '@/lib/payments';
 import { cardLast4, maskCardNumber, maskCvv, maskExpiry, maskPhone } from '@/lib/masks';
 
 const CARD_TYPES: PaymentType[] = ['card-intl', 'cib'];
-const MANUAL_TYPES: PaymentType[] = ['transfer', 'check'];
+
 
 export default function PaymentPage() {
   const params = useParams();
@@ -28,7 +30,7 @@ export default function PaymentPage() {
   const router = useRouter();
   const t = useTranslations('pages.payment');
   const { isAuthenticated, user } = useAuth();
-  const { orders, updateOrderStatus, updateOrder } = useOrders();
+  const { orders, updateOrder } = useOrders();
   const { clearCart } = useCart();
   const { format: formatMoney, withSymbol } = useCurrency();
 
@@ -39,36 +41,37 @@ export default function PaymentPage() {
   const [cardData, setCardData] = useState({ cardNumber: '', cardName: '', expiry: '', cvv: '' });
   const [paypalEmail, setPaypalEmail] = useState('');
   const [customerInfo, setCustomerInfo] = useState({ name: '', email: '', phone: '', company: '', address: '' });
-  const [isProcessing, setIsProcessing] = useState(false);
   const [completed, setCompleted] = useState(false);
   const [alertInfo, setAlertInfo] = useState<{ title: string; message: string; type?: 'error' | 'info' | 'success' } | null>(null);
 
-  // Modes de paiement actifs (configurés dans l'admin).
-  const methods = useMemo(() => loadPayments().filter((p) => p.active), []);
-
-  // Pré-remplir les infos si connecté
+  // En production, le poste du visiteur ne décide ni des coordonnées bancaires
+  // ni des méthodes disponibles. Une API indisponible ne doit pas afficher les exemples.
+  const [methods, setMethods] = useState<PaymentMethod[]>([]);
   useEffect(() => {
-    if (!order) return;
-    if (isAuthenticated && user) {
-      setCustomerInfo({
-        name: user.name || '',
-        email: user.email || '',
-        phone: (user as any)?.phone || '',
-        company: (user as any)?.company || '',
-        address: '',
-      });
-    }
-  }, [order, isAuthenticated, user]);
+    let active = true;
+    cmsFetch<PaymentMethod[]>('/public/payment-methods').then(rows => {
+      if (active) setMethods(rows);
+    }).catch(() => {
+      if (active && process.env.NODE_ENV === 'development') setMethods(loadPayments().filter(row => row.active));
+    });
+    return () => { active = false; };
+  }, []);
 
-  // Reset des inputs quand la méthode change
+  // Quitter l'écran annule aussi la redirection de confirmation.
   useEffect(() => {
+    if (!completed) return;
+    const timer = setTimeout(() => router.push(isAuthenticated ? `/${locale}/dashboard` : `/${locale}`), 1600);
+    return () => clearTimeout(timer);
+  }, [completed, isAuthenticated, locale, router]);
+
+  const selectMethod = (id: string) => {
+    if (id === selectedMethod) return;
+    setSelectedMethod(id);
     setCardData({ cardNumber: '', cardName: '', expiry: '', cvv: '' });
     setPaymentProof(null);
-  }, [selectedMethod]);
-
+  };
   const method = methods.find((m) => m.id === selectedMethod) || null;
   const isCard = method ? CARD_TYPES.includes(method.type) : false;
-  const isManual = method ? MANUAL_TYPES.includes(method.type) || method.type === 'cod' : false;
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) setPaymentProof(e.target.files[0]);
@@ -76,6 +79,7 @@ export default function PaymentPage() {
 
   const handleSubmitPayment = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!order || completed) return;
 
     if (!method) {
       setAlertInfo({ title: 'Méthode requise', message: t('selectMethod', { defaultMessage: 'Veuillez sélectionner une méthode de paiement' }), type: 'error' });
@@ -100,56 +104,18 @@ export default function PaymentPage() {
       return;
     }
 
-    setIsProcessing(true);
-
-    setTimeout(() => {
-      if (order) {
-        // Enregistre le paiement (masquage carte + statut déduit de la méthode).
-        addPaymentRecord({
-          orderId: order.id,
-          client: isAuthenticated && user ? user.name : customerInfo.name,
-          email: isAuthenticated && user ? user.email : customerInfo.email,
-          method: method.type,
-          methodName: method.name,
-          amount: order.grandTotal || 0,
-          cardLast4: isCard ? cardLast4(cardData.cardNumber) : undefined,
-        });
-        const auto = isAutoValidated(method.type);
-        // Met à jour le type de paiement et le statut de façon atomique (lie vitrine ↔ admin via crm-store + ctx)
-        try {
-          if (updateOrder) {
-            updateOrder(order.id, { payment: method.type, status: auto ? 'paid' : 'pending_payment' } as any);
-          } else {
-            updateOrderStatus(order.id, auto ? 'paid' : 'pending_payment');
-            // fallback si updateOrder indisponible
-            const paymentVal = method.type;
-            const ctxRaw = localStorage.getItem('sari_orders_ctx');
-            if (ctxRaw) {
-              const ctxOrders = JSON.parse(ctxRaw);
-              const updCtx = ctxOrders.map((o:any)=> String(o.id)===String(order.id) ? {...o, payment: paymentVal} : o);
-              localStorage.setItem('sari_orders_ctx', JSON.stringify(updCtx));
-            }
-            const crmRaw = localStorage.getItem('sari_orders');
-            if (crmRaw) {
-              const crmOrders = JSON.parse(crmRaw);
-              const updCrm = crmOrders.map((o:any)=> String(o.id)===String(order.id) ? {...o, payment: paymentVal} : o);
-              localStorage.setItem('sari_orders', JSON.stringify(updCrm));
-            }
-          }
-        } catch {
-          updateOrderStatus(order.id, auto ? 'paid' : 'pending_payment');
-        }
-        try {
-          window.dispatchEvent(new Event('sari_orders_ctx_changed'));
-        } catch {}
-      }
-      setIsProcessing(false);
-      setCompleted(true);
-      // Garde le panier jusqu'à confirmation : on ne vide qu'après paiement enregistré, mais on garde une copie pending pour restauration si besoin
-      try { localStorage.removeItem('sari_pending_cart'); } catch {}
-      clearCart();
-      setTimeout(() => router.push(`/${locale}/dashboard`), 1600);
-    }, 1500);
+    addPaymentRecord({
+      orderId: order.id,
+      client: isAuthenticated && user ? user.name : customerInfo.name,
+      email: isAuthenticated && user ? user.email : customerInfo.email,
+      method: method.type,
+      methodName: method.name,
+      amount: order.grandTotal || 0,
+      cardLast4: isCard ? cardLast4(cardData.cardNumber) : undefined,
+    });
+    updateOrder(order.id, { payment: method.type, status: isAutoValidated(method.type) ? 'paid' : 'pending_payment' });
+    clearCart();
+    setCompleted(true);
   };
 
   // État : Aucune commande
@@ -168,7 +134,7 @@ export default function PaymentPage() {
               {t('noOrderDesc', { defaultMessage: "Vous n'avez pas de commande à payer." })}
             </p>
             <div className="flex gap-4 justify-center">
-              <Link href={`/${locale}/panier`} className="btn-primary text-white px-6 py-3 font-semibold inline-block rounded-lg">
+              <Link href={`/${locale}/cart`} className="btn-primary text-white px-6 py-3 font-semibold inline-block rounded-lg">
                 {t('goToCart', { defaultMessage: 'Voir le panier' })}
               </Link>
               <Link href={`/${locale}/dashboard`} className="px-6 py-3 border-2 border-gray-300 dark:border-gray-700 font-semibold hover:border-sari-blue inline-block rounded-lg">
@@ -210,15 +176,15 @@ export default function PaymentPage() {
       <div className="container mx-auto px-6">
         <Breadcrumb items={[
           { label: t('home', { defaultMessage: 'Accueil' }), href: '/' },
-          { label: t('cart', { defaultMessage: 'Panier' }), href: '/panier' },
+          { label: t('cart', { defaultMessage: 'Panier' }), href: '/cart' },
           { label: t('payment', { defaultMessage: 'Paiement' }) },
         ]} />
-        <button onClick={()=>router.push(`/${locale}/cart`)} className="mb-6 inline-flex items-center gap-2 px-5 py-3 bg-white dark:bg-[#1a1a1a] border-2 border-gray-200 dark:border-gray-700 rounded-full font-bold hover:border-sari-blue hover:text-sari-blue transition shadow-sm"><ArrowLeft className="w-4 h-4"/> Retour au panier — garder les articles jusqu'à confirmation</button>
+        <button onClick={()=>router.push(`/${locale}/cart`)} className="mb-6 inline-flex items-center gap-2 px-5 py-3 bg-white dark:bg-[#1a1a1a] border-2 border-gray-200 dark:border-gray-700 rounded-full font-bold hover:border-sari-blue hover:text-sari-blue transition shadow-sm"><ArrowLeft className="w-4 h-4"/> Retour au panier — garder les articles jusqu’à confirmation</button>
 
         <h1 className="text-4xl font-bold text-sari-dark dark:text-white mb-2">
           {t('title', { defaultMessage: 'Finaliser votre commande' })}
         </h1>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-8 flex items-center gap-2"><Info className="w-4 h-4 text-sari-blue"/> Vos articles restent dans le panier jusqu'à validation du paiement. Vous pouvez revenir en arrière à tout moment sans perdre votre sélection.</p>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-8 flex items-center gap-2"><Info className="w-4 h-4 text-sari-blue"/> Vos articles restent dans le panier jusqu’à validation du paiement. Vous pouvez revenir en arrière à tout moment sans perdre votre sélection.</p>
 
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Colonne principale */}
@@ -272,7 +238,7 @@ export default function PaymentPage() {
                     <button
                       key={m.id}
                       type="button"
-                      onClick={() => setSelectedMethod(m.id)}
+                      onClick={() => selectMethod(m.id)}
                       className={`w-full p-6 border-2 transition-all text-left rounded-xl ${
                         selectedMethod === m.id ? 'border-sari-blue bg-sari-blue/5' : 'border-gray-200 dark:border-gray-700 hover:border-sari-blue/50'
                       }`}
@@ -444,7 +410,7 @@ export default function PaymentPage() {
               <div className="space-y-4 mb-6">
                 {order.items && order.items.map((item, idx) => (
                   <div key={idx} className="flex items-start gap-3 pb-4 border-b border-gray-200 dark:border-gray-800 last:border-0">
-                    <img src={item.image} alt={item.name} className="w-16 h-16 object-cover rounded" />
+                    <Image unoptimized width={48} height={48} src={item.image} alt={item.name} className="w-16 h-16 object-cover rounded" />
                     <div className="flex-1">
                       <div className="font-semibold text-sari-dark dark:text-white text-sm mb-1">{item.name}</div>
                       <div className="text-xs text-gray-500 dark:text-gray-400">{item.quantity} x {withSymbol(item.price)}</div>
@@ -468,14 +434,10 @@ export default function PaymentPage() {
               </div>
               <button
                 onClick={handleSubmitPayment}
-                disabled={!selectedMethod || isProcessing}
+                disabled={!method}
                 className="w-full btn-primary text-white py-3 font-semibold shadow-lg disabled:opacity-50 flex items-center justify-center gap-2 rounded-lg"
               >
-                {isProcessing ? (
-                  <><Loader className="w-5 h-5 animate-spin" />{t('processing', { defaultMessage: 'Traitement en cours...' })}</>
-                ) : (
-                  <><Lock className="w-5 h-5" />{t('confirmPayment', { defaultMessage: 'Confirmer le paiement' })}</>
-                )}
+                <Lock className="w-5 h-5" />{t('confirmPayment', { defaultMessage: 'Confirmer le paiement' })}
               </button>
               <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-800 text-center">
                 <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center justify-center gap-1">

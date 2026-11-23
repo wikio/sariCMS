@@ -17,5 +17,10 @@
   "yourEmail": "Your email",
   "subscribe": "Subscribe",
   "subscriptionSuccess": "Subscription successful!",
-  "popularTags": "Popular tags"
+  "popularTags": "Popular tags",
+  "noArticleTags": "This article has no tags yet.",
+  "suggestedTags": "This article has no tags. Explore tags from other articles:",
+  "noPopularTags": "No published articles have tags yet.",
+  "browseCategory": "Browse the “{value}” category",
+  "browseType": "Browse articles of type “{value}”"
 }

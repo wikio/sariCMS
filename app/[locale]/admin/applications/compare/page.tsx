@@ -6,9 +6,9 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { ArrowDown, ArrowLeft, ArrowUp, Download, FileText, GitCompare, Mail, Phone, Star } from 'lucide-react';
 import { useToast } from '@/components/admin/Toast';
-import { DEMO_APPLICATIONS, DEMO_FLAG } from '@/lib/demo-seed';
+import { DEMO_APPLICATIONS } from '@/lib/demo-seed';
 import {
-  APP_STEPS, Application, candidateStats, downloadText, exportApplicationsCsv,
+  APP_STEPS, Application, candidateStats, downloadText, exportApplicationsCsv, formatExperience,
   groupByOffer, loadApplications, loadOffers, offerById, saveApplications, statusRank, type Offer,
 } from '@/lib/recruitment';
 
@@ -21,6 +21,7 @@ export default function CompareCandidatesPage() {
   const params = useSearchParams();
   const offerParam = params.get('offer') || '';
   const { showToast } = useToast();
+  const tc = useTranslations('admin.common');
   const t = useTranslations('admin.applications');
   const [rows, setRows] = useState<Application[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
@@ -31,8 +32,7 @@ export default function CompareCandidatesPage() {
 
   useEffect(() => {
     const stored = loadApplications();
-    setRows(stored.length >= SEED.length ? stored : SEED);
-    if (stored.length < SEED.length) saveApplications(SEED);
+    setRows(stored.length ? stored : SEED);
     loadOffers(locale).then(setOffers);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locale]);
@@ -96,8 +96,8 @@ export default function CompareCandidatesPage() {
 
   const openDoc = (kind: 'cv' | 'lm', app: Application) => {
     const content = kind === 'cv' ? app.cv : app.lm;
-    if (!content) { showToast('Document non fourni', 'warning'); return; }
-    setViewer({ title: `${kind === 'cv' ? 'CV' : 'Lettre de motivation'} — ${app.candidate}`, content, filename: `${kind === 'cv' ? 'CV' : 'LM'}-${app.candidate.replace(/\s+/g, '-')}.txt` });
+    if (!content) { showToast(t('missingDocument'), 'warning'); return; }
+    setViewer({ title: `${kind === 'cv' ? t('cv') : t('coverLetter')} — ${app.candidate}`, content, filename: `${kind === 'cv' ? 'CV' : 'LM'}-${app.candidate.replace(/\s+/g, '-')}.txt` });
   };
 
   const toggleSort = (key: SortKey) => {
@@ -105,7 +105,7 @@ export default function CompareCandidatesPage() {
     else { setSortKey(key); setSortDir('desc'); }
   };
 
-  const SortHeader = ({ label, k }: { label: string; k: SortKey }) => (
+  const sortHeader = (k: SortKey, label: string) => (
     <th onClick={() => toggleSort(k)}>
       <span className="inline-flex items-center gap-1">{label}{sortKey === k ? (sortDir === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />) : null}</span>
     </th>
@@ -116,28 +116,28 @@ export default function CompareCandidatesPage() {
       <div className="flex flex-wrap items-center justify-between gap-3 ad-rise">
         <div>
           <Link href={`/${locale}/admin/applications`} className="text-xs font-bold uppercase tracking-widest flex items-center gap-1 mb-1" style={{ color: 'var(--ad-muted)' }}>
-            <ArrowLeft className="w-3 h-3" /> Candidatures
+            <ArrowLeft className="w-3 h-3" /> {t('title')}
           </Link>
-          <h1 className="text-2xl font-black flex items-center gap-2"><GitCompare className="w-5 h-5" style={{ color: 'var(--ad-accent)' }} /> Comparaison des candidats</h1>
-          <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>{candidates.length} candidat(s) pour « {offer || 'toutes les offres'} »</p>
+          <h1 className="text-2xl font-black flex items-center gap-2"><GitCompare className="w-5 h-5" style={{ color: 'var(--ad-accent)' }} /> {t('comparisonTitle')}</h1>
+          <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>{t('comparisonCount', { count: candidates.length, offer: offer || t('allOffers') })}</p>
         </div>
         <div className="flex gap-2">
           <select className="ad-select w-64" value={offer} onChange={(e) => setOffer(e.target.value)}>
             <option value="">{t("allOffers")}</option>
             {offersList.map((o) => <option key={o.key} value={o.title}>{o.title} ({o.count})</option>)}
           </select>
-          <button className="ad-btn ad-btn-primary" onClick={() => { exportApplicationsCsv(baseCandidates, offer || undefined); showToast('Export CSV généré', 'success'); }}>
-            <Download className="w-4 h-4" /> Exporter
+          <button className="ad-btn ad-btn-primary" onClick={() => { exportApplicationsCsv(baseCandidates, t, offer); showToast(t('exportCsv'), 'success'); }}>
+            <Download className="w-4 h-4" /> {tc('export')}
           </button>
         </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <MiniStat label="Candidats" value={stats.total} />
-        <MiniStat label="En entretien" value={stats.byStatus.find((s) => s.value === 'interview')?.count || 0} />
-        <MiniStat label="Acceptés" value={stats.accepted} />
-        <MiniStat label="Exp. moyenne" value={`${stats.avgExp} ans`} />
-        <MiniStat label="Note moyenne" value={(baseCandidates.length ? (baseCandidates.reduce((s, r) => s + (r.rating || 0), 0) / baseCandidates.length).toFixed(1) : '—')} />
+        <MiniStat label={t('candidates')} value={stats.total} />
+        <MiniStat label={t('step_interview')} value={stats.byStatus.find((s) => s.value === 'interview')?.count || 0} />
+        <MiniStat label={t('accepted')} value={stats.accepted} />
+        <MiniStat label={t('avgExperience')} value={stats.avgExp === '—' ? '—' : t('years', { count: Number(stats.avgExp) })} />
+        <MiniStat label={t('avgRating')} value={(baseCandidates.length ? (baseCandidates.reduce((s, r) => s + (r.rating || 0), 0) / baseCandidates.length).toFixed(1) : '—')} />
       </div>
 
       {candidates.length === 0 ? (
@@ -147,15 +147,15 @@ export default function CompareCandidatesPage() {
           <table className="ad-table min-w-[900px]">
             <thead>
               <tr>
-                <SortHeader label="Classement" k="rank" />
-                <SortHeader label="Candidat" k="candidate" />
+                {sortHeader('rank', t('rank'))}
+                {sortHeader('candidate', t('candidate'))}
                 <th>{t("contact")}</th>
-                <SortHeader label="Expérience" k="experience" />
+                {sortHeader('experience', t('experience'))}
                 <th>{t("motivation")}</th>
-                <th>{t("note")}</th>
+                <th>{t('rating')}</th>
                 <th>{t("comment")}</th>
-                <SortHeader label="Statut" k="status" />
-                <SortHeader label="Score" k="score" />
+                {sortHeader('status', t('status'))}
+                {sortHeader('score', t('score'))}
                 <th className="text-right">{t("documents")}</th>
               </tr>
             </thead>
@@ -179,7 +179,7 @@ export default function CompareCandidatesPage() {
                       <div className="flex items-center gap-1"><Phone className="w-3 h-3" />{app.phone}</div>
                       {offerInfo?.location && <div className="mt-0.5">📍 {offerInfo.location}</div>}
                     </td>
-                    <td>{app.experience}</td>
+                    <td>{formatExperience(app.experience, t)}</td>
                     <td className="max-w-xs text-sm" style={{ color: 'var(--ad-muted)' }}>{app.motivation}</td>
                     <td>
                       <span className="inline-flex items-center gap-0.5">
@@ -191,14 +191,14 @@ export default function CompareCandidatesPage() {
                       </span>
                     </td>
                     <td className="min-w-[160px]">
-                      <input className="ad-input !h-8 text-xs" placeholder="Note recruteur…" defaultValue={app.note || ''} onBlur={(e) => setNote(app.id, e.target.value)} />
+                      <input className="ad-input !h-8 text-xs" placeholder={t('recruiterNotePlaceholder')} defaultValue={app.note || ''} onBlur={(e) => setNote(app.id, e.target.value)} />
                     </td>
-                    <td><span className={`ad-chip ${app.status === 'accepted' ? 'ad-chip-ok' : app.status === 'rejected' ? 'ad-chip-warn' : 'ad-chip-acc'}`}>{app.status}</span></td>
+                    <td><span className={`ad-chip ${app.status === 'accepted' ? 'ad-chip-ok' : app.status === 'rejected' ? 'ad-chip-warn' : 'ad-chip-acc'}`}>{t.has(`step_${app.status}`) ? t(`step_${app.status}`) : app.status}</span></td>
                     <td className="min-w-[90px]">
                       <input
                         className="ad-input !h-8 text-xs tabular-nums"
                         type="number"
-                        title="Score (modifiable, prime sur le calcul automatique)"
+                        title={t('scoreHint')}
                         defaultValue={score}
                         onBlur={(e) => {
                           const v = parseInt(e.target.value, 10);
@@ -208,8 +208,8 @@ export default function CompareCandidatesPage() {
                     </td>
                     <td className="text-right">
                       <div className="flex justify-end gap-1">
-                        <button className="ad-btn ad-btn-icon ad-btn-ghost" title="CV" onClick={() => openDoc('cv', app)}><FileText className="w-4 h-4" /></button>
-                        <button className="ad-btn ad-btn-icon ad-btn-ghost" title="Lettre" onClick={() => openDoc('lm', app)}><Download className="w-4 h-4" /></button>
+                        <button className="ad-btn ad-btn-icon ad-btn-ghost" title={t('cv')} onClick={() => openDoc('cv', app)}><FileText className="w-4 h-4" /></button>
+                        <button className="ad-btn ad-btn-icon ad-btn-ghost" title={t('coverLetter')} onClick={() => openDoc('lm', app)}><Download className="w-4 h-4" /></button>
                       </div>
                     </td>
                   </tr>
@@ -229,7 +229,7 @@ export default function CompareCandidatesPage() {
             </div>
             <pre className="whitespace-pre-wrap text-sm leading-relaxed max-h-[60vh] overflow-auto ad-scroll">{viewer.content}</pre>
             <div className="flex justify-end pt-3">
-              <button className="ad-btn ad-btn-primary" onClick={() => downloadText(viewer.filename, viewer.content)}><Download className="w-4 h-4" /> Télécharger</button>
+              <button className="ad-btn ad-btn-primary" onClick={() => downloadText(viewer.filename, viewer.content)}><Download className="w-4 h-4" /> {t('download')}</button>
             </div>
           </div>
         </div>

@@ -130,11 +130,7 @@
     "loginSuccess": "Login successful",
     "accountCreated": "Account created successfully",
     "noAccount": "Don't have an account?",
-    "hasAccount": "Already have an account?",
-    "demoAccounts": "Demo accounts",
-    "clientDemo": "Client Demo",
-    "partnerDemo": "Partner Demo",
-    "candidateDemo": "Candidate Demo"
+    "hasAccount": "Already have an account?"
   },
   "dashboard": {
     "title": "Dashboard",

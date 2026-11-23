@@ -82,9 +82,15 @@ export function isManualMethod(method: PaymentType): boolean {
   return !isAutoValidated(method);
 }
 
-/** Label lisible d'un type de paiement. */
-export function paymentTypeLabel(type: PaymentType): string {
-  const map: Record<PaymentType, string> = {
+type SupportedLocale = 'fr' | 'en' | 'ar';
+
+function normLocale(locale?: string): SupportedLocale {
+  const l = String(locale || 'fr').toLowerCase().slice(0, 2);
+  return l === 'en' || l === 'ar' ? l : 'fr';
+}
+
+const PAYMENT_TYPE_LABELS: Record<SupportedLocale, Record<PaymentType, string>> = {
+  fr: {
     'card-intl': 'Carte internationale',
     cib: 'Carte CIB / locale',
     transfer: 'Virement bancaire',
@@ -93,13 +99,45 @@ export function paymentTypeLabel(type: PaymentType): string {
     cod: 'Paiement à la livraison',
     other: 'Autre',
     pending: 'En attente',
-  };
-  return map[type] || type;
+  },
+  en: {
+    'card-intl': 'International card',
+    cib: 'CIB / local card',
+    transfer: 'Bank transfer',
+    paypal: 'PayPal',
+    check: 'Check',
+    cod: 'Cash on delivery',
+    other: 'Other',
+    pending: 'Pending',
+  },
+  ar: {
+    'card-intl': 'بطاقة دولية',
+    cib: 'بطاقة CIB / محلية',
+    transfer: 'تحويل بنكي',
+    paypal: 'PayPal',
+    check: 'شيك',
+    cod: 'الدفع عند التسليم',
+    other: 'أخرى',
+    pending: 'قيد الانتظار',
+  },
+};
+
+const PAYMENT_STATUS_LABELS: Record<SupportedLocale, Record<PaymentStatus, string>> = {
+  fr: { validated: 'Validé', rejected: 'Rejeté', pending: 'En attente' },
+  en: { validated: 'Validated', rejected: 'Rejected', pending: 'Pending' },
+  ar: { validated: 'مصادق عليه', rejected: 'مرفوض', pending: 'قيد الانتظار' },
+};
+
+/** Label lisible d'un type de paiement (FR/EN/AR). */
+export function paymentTypeLabel(type: PaymentType, locale: string = 'fr'): string {
+  const loc = normLocale(locale);
+  return PAYMENT_TYPE_LABELS[loc][type] || PAYMENT_TYPE_LABELS.fr[type] || type;
 }
 
-/** Statut lisible. */
-export function paymentStatusLabel(status: PaymentStatus): string {
-  return status === 'validated' ? 'Validé' : status === 'rejected' ? 'Rejeté' : 'En attente';
+/** Statut lisible (FR/EN/AR). */
+export function paymentStatusLabel(status: PaymentStatus, locale: string = 'fr'): string {
+  const loc = normLocale(locale);
+  return PAYMENT_STATUS_LABELS[loc][status] || PAYMENT_STATUS_LABELS.fr[status] || status;
 }
 
 /**
@@ -353,23 +391,29 @@ export function syncPaymentsFromOrder(order: {
  * Export CSV du journal des paiements (séparateur « ; » + BOM UTF-8,
  * compatible Excel). Masque les numéros de carte (derniers 4 chiffres).
  */
-export function exportPaymentsCsv(rows: PaymentRecord[], filename = 'paiements') {
+export function exportPaymentsCsv(rows: PaymentRecord[], filename = 'paiements', locale: string = 'fr') {
+  const loc = normLocale(locale);
   const esc = (v: string) => `"${String(v ?? '').replace(/"/g, '""')}"`;
-  const cols = ['Commande', 'Client', 'Email', 'Méthode', 'Carte', 'Montant (DA)', 'Statut', 'Note', 'Date', 'Validé le'];
-  const lines = [cols.join(';')];
+  const colsByLocale: Record<SupportedLocale, string[]> = {
+    fr: ['Commande', 'Client', 'Email', 'Méthode', 'Carte', 'Montant (DA)', 'Statut', 'Note', 'Date', 'Validé le'],
+    en: ['Order', 'Client', 'Email', 'Method', 'Card', 'Amount (DA)', 'Status', 'Note', 'Date', 'Validated on'],
+    ar: ['الطلب', 'العميل', 'البريد الإلكتروني', 'الطريقة', 'البطاقة', 'المبلغ (دج)', 'الحالة', 'ملاحظة', 'التاريخ', 'تاريخ المصادقة'],
+  };
+  const dateLocale = loc === 'en' ? 'en-US' : loc === 'ar' ? 'ar-DZ' : 'fr-FR';
+  const lines = [colsByLocale[loc].join(';')];
   for (const p of rows) {
     lines.push(
       [
         esc(p.orderCode || (p.orderId ? `#${p.orderId}` : '')),
         esc(p.client),
         esc(p.email),
-        esc(p.methodName || paymentTypeLabel(p.method)),
+        esc(paymentTypeLabel(p.method, loc)),
         esc(p.cardMasked || ''),
         String(p.amount),
-        esc(paymentStatusLabel(p.status)),
+        esc(paymentStatusLabel(p.status, loc)),
         esc(p.note || ''),
-        esc(new Date(p.date).toLocaleString()),
-        esc(p.validatedAt ? new Date(p.validatedAt).toLocaleString() : ''),
+        esc(new Date(p.date).toLocaleString(dateLocale)),
+        esc(p.validatedAt ? new Date(p.validatedAt).toLocaleString(dateLocale) : ''),
       ].join(';'),
     );
   }

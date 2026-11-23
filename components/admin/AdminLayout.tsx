@@ -8,7 +8,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import {
   ShieldCheck,
   LayoutDashboard, FileText, Package, Wrench, Briefcase, Newspaper,
-  Calendar, Layers, MessageCircle, Handshake, Image as ImageIcon,
+  Calendar, CalendarCheck, Layers, MessageCircle, Handshake, Image as ImageIcon,
   FileStack, Menu as MenuIcon, Compass, Scale, Settings, ShoppingCart,
   Users, UserCog, FileCheck, Globe, Sliders, ExternalLink, LogOut,
   Shield, Search, ChevronDown, ChevronLeft, Palette, BarChart3, ScrollText,
@@ -183,6 +183,7 @@ function Shell({ children, page }: { children: ReactNode; page?: string }) {
     { id: 'clients', icon: Users, label: t('menu.clients'), href: `/${locale}/admin/clients` },
     { id: 'partners-accounts', icon: UserPlus, label: t('menu.partnersAccounts'), href: `/${locale}/admin/partners-accounts` },
     { id: 'applications', icon: FileCheck, label: t('menu.applications'), href: `/${locale}/admin/applications` },
+    { id: 'event-registrations', icon: CalendarCheck, label: t('menu.eventRegistrations'), href: `/${locale}/admin/events/registrations` },
     { id: 'newsletter', icon: MailPlus, label: t('menu.newsletter'), href: `/${locale}/admin/newsletter` },
     { type: 'divider', label: t('menu.advancedSection') },
     { id: 'taxonomies', icon: Tags, label: t('menu.taxonomies'), href: `/${locale}/admin/taxonomies` },
@@ -213,6 +214,7 @@ function Shell({ children, page }: { children: ReactNode; page?: string }) {
     : pathname.includes('/admin/search') ? 'search'
     : pathname.includes('/admin/products') ? 'products'
     : pathname.includes('/admin/shop-stats') ? 'shop-stats'
+    : pathname.includes('/admin/events/registrations') ? 'event-registrations'
     : menu.find((m) => m.href && pathname.includes(m.href.replace(`/${locale}`, '')))?.id
       || menu.find((m) => m.children?.some((c) => pathname.includes(c.href.replace(`/${locale}`, ''))))?.id
       || null;
@@ -250,7 +252,10 @@ function Shell({ children, page }: { children: ReactNode; page?: string }) {
             }
             const Icon = item.icon;
             const childOn = item.children?.some((c) => pathname.includes(c.href.replace(`/${locale}`, '')));
-            const on = active === item.id || childOn || (item.href ? pathname.includes(item.href.replace(`/${locale}`, '')) : false);
+            const on =
+              active === item.id ||
+              childOn ||
+              (item.id !== 'events' && item.href ? pathname.includes(item.href.replace(`/${locale}`, '')) : false);
             if (item.type === 'group' && item.children) {
               const shown = (expanded === item.id || childOn) && open;
               return (

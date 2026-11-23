@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 /**
  * components/admin/BrandSection.tsx — Réglages → Identité du back-office.
  *
@@ -24,13 +26,10 @@ import { useAdminBrand } from '@/components/admin/BrandContext';
 import { useToast } from '@/components/admin/Toast';
 import { loadBrandStatus, resetBrand, saveBrand, safeLogo, type BrandSource } from '@/lib/brand';
 
-const SOURCE_LABEL: Record<BrandSource, string> = {
-  db: 'Enregistrée en base',
-  env: 'Variables d’environnement',
-  default: 'Défauts du dépôt',
-};
-
 export default function BrandSection() {
+  const t = useTranslations('admin.brandSettings');
+  const ts = useTranslations('admin.settings');
+  const tc = useTranslations('admin.common');
   const { showToast } = useToast();
   const { refresh } = useAdminBrand();
   const [form, setForm] = useState({ title: '', subtitle: '', logo: '' });
@@ -50,7 +49,7 @@ export default function BrandSection() {
         setSource(st.source);
       })
       .catch(() => {
-        if (alive) showToast('Marque illisible : le backend ne répond pas', 'error');
+        if (alive) showToast(t('loadError'), 'error');
       })
       .finally(() => {
         if (alive) setLoading(false);
@@ -58,7 +57,7 @@ export default function BrandSection() {
     return () => {
       alive = false;
     };
-  }, [showToast]);
+  }, [showToast, t, tc]);
 
   const patch = (p: Partial<typeof form>) => setForm((f) => ({ ...f, ...p }));
 
@@ -74,9 +73,9 @@ export default function BrandSection() {
       const res = await fetch('/api/admin/upload', { method: 'POST', body });
       const json = await res.json();
       if (json.url) patch({ logo: safeLogo(String(json.url)) });
-      else showToast(json.error || 'Envoi impossible', 'error');
+      else showToast(json.error || ts('uploadError'), 'error');
     } catch {
-      showToast('Envoi impossible', 'error');
+      showToast(ts('uploadError'), 'error');
     } finally {
       setUploading(false);
       e.target.value = '';
@@ -85,7 +84,7 @@ export default function BrandSection() {
 
   const submit = useCallback(async () => {
     if (!form.title.trim()) {
-      setError('Le nom est obligatoire : sans lui la barre latérale reste sans en-tête.');
+      setError(t('needTitle'));
       return;
     }
     setError('');
@@ -95,15 +94,15 @@ export default function BrandSection() {
       setSource(st.source);
       setForm({ title: st.title, subtitle: st.subtitle, logo: st.logo });
       await refresh();
-      showToast('Marque enregistrée', 'success');
+      showToast(t('saved'), 'success');
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Enregistrement impossible';
+      const message = err instanceof Error ? err.message : tc('saveError');
       setError(message);
       showToast(message, 'error');
     } finally {
       setSaving(false);
     }
-  }, [form, refresh, showToast]);
+  }, [form, refresh, showToast, t, tc]);
 
   const reset = useCallback(async () => {
     setSaving(true);
@@ -112,50 +111,50 @@ export default function BrandSection() {
       setSource(st.source);
       setForm({ title: st.title, subtitle: st.subtitle, logo: st.logo });
       await refresh();
-      showToast('Revenu aux valeurs du serveur', 'success');
+      showToast(t('restored'), 'success');
     } catch (err) {
-      showToast(err instanceof Error ? err.message : 'Réinitialisation impossible', 'error');
+      showToast(err instanceof Error ? err.message : t('resetError'), 'error');
     } finally {
       setSaving(false);
     }
-  }, [refresh, showToast]);
+  }, [refresh, showToast, t, tc]);
 
-  if (loading) return <section className="ad-card p-5 text-sm opacity-60">Chargement de la marque…</section>;
+  if (loading) return <section className="ad-card p-5 text-sm opacity-60">{t('loading')}</section>;
 
   return (
     <div className="space-y-4">
       <section className="ad-card p-5 space-y-4">
         <div className="flex items-start justify-between gap-3">
-          <h2 className="ad-section-title">Identité du back-office</h2>
-          <span className="ad-chip text-[10px] uppercase tracking-widest" title="Provenance des valeurs affichées">
-            {SOURCE_LABEL[source]}
+          <h2 className="ad-section-title">{ts('brand')}</h2>
+          <span className="ad-chip text-[10px] uppercase tracking-widest" title={t('source')}>
+            {t(`source_${source}`)}
           </span>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
           <label className="space-y-1.5 block">
             <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>
-              Nom de l’administration
+              {t('name')}
             </span>
             <input className="ad-input" value={form.title} maxLength={40} onChange={(e) => patch({ title: e.target.value })} placeholder="SARI CMS" />
             <span className="text-[11px] block" style={{ color: 'var(--ad-muted)' }}>
-              Barre latérale, page de connexion et titre de l’onglet. 40 caractères maximum.
+              {t('nameHint')}
             </span>
           </label>
           <label className="space-y-1.5 block">
             <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>
-              Accroche
+              {t('tagline')}
             </span>
-            <input className="ad-input" value={form.subtitle} maxLength={60} onChange={(e) => patch({ subtitle: e.target.value })} placeholder="Administration" />
+            <input className="ad-input" value={form.subtitle} maxLength={60} onChange={(e) => patch({ subtitle: e.target.value })} placeholder={t('taglinePlaceholder')} />
             <span className="text-[11px] block" style={{ color: 'var(--ad-muted)' }}>
-              Seconde ligne sous le nom. Laissez vide pour ne rien afficher.
+              {t('taglineHint')}
             </span>
           </label>
         </div>
 
         <div className="space-y-1.5">
           <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--ad-muted)' }}>
-            Logo
+            {t('logo')}
           </span>
           <div className="flex flex-col sm:flex-row items-start gap-4">
             <div
@@ -164,7 +163,7 @@ export default function BrandSection() {
             >
               {form.logo ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={form.logo} alt="Logo" className="max-w-full max-h-full object-contain p-2" />
+                <img src={form.logo} alt={t('logo')} className="max-w-full max-h-full object-contain p-2" />
               ) : (
                 <Shield className="w-8 h-8" style={{ color: 'var(--ad-muted)' }} />
               )}
@@ -175,25 +174,24 @@ export default function BrandSection() {
                 value={form.logo}
                 maxLength={400}
                 onChange={(e) => patch({ logo: e.target.value })}
-                placeholder="https://… ou importez une image"
+                placeholder={ts('logoPlaceholder')}
               />
               <div className="flex flex-wrap gap-2">
                 <label className="ad-btn ad-btn-ghost cursor-pointer">
-                  <Upload className="w-4 h-4" /> {uploading ? 'Envoi…' : 'Importer'}
+                  <Upload className="w-4 h-4" /> {uploading ? ts('uploading') : tc('upload')}
                   <input type="file" accept="image/*" className="hidden" disabled={uploading} onChange={handleUpload} />
                 </label>
                 <button type="button" className="ad-btn ad-btn-ghost" onClick={() => setGed(true)}>
-                  <FolderOpen className="w-4 h-4" /> Médiathèque
+                  <FolderOpen className="w-4 h-4" /> {ts('media')}
                 </button>
                 {form.logo && (
                   <button type="button" className="ad-btn ad-btn-ghost" onClick={() => patch({ logo: '' })}>
-                    Retirer
+                    {ts('remove')}
                   </button>
                 )}
               </div>
               <p className="text-[11px]" style={{ color: 'var(--ad-muted)' }}>
-                Sert aussi de favicon d’onglet. Vide = icône par défaut. Chemin relatif, URL http(s) ou image embarquée
-                uniquement — les autres schémas sont refusés à l’enregistrement.
+                {t('logoHint')}
               </p>
             </div>
           </div>
@@ -203,17 +201,17 @@ export default function BrandSection() {
 
         <div className="flex flex-wrap gap-2 pt-1">
           <button type="button" className="ad-btn ad-btn-primary" onClick={submit} disabled={saving}>
-            <Save className="w-4 h-4" /> {saving ? 'Enregistrement…' : 'Enregistrer'}
+            <Save className="w-4 h-4" /> {saving ? tc('saving') : tc('save')}
           </button>
           <button type="button" className="ad-btn ad-btn-ghost" onClick={reset} disabled={saving || source === 'default'}>
-            <RotateCcw className="w-4 h-4" /> Revenir aux valeurs du serveur
+            <RotateCcw className="w-4 h-4" /> {t('reset')}
           </button>
         </div>
       </section>
 
       {/* Aperçu : ce que verront les postes, barre repliée et dépliée. */}
       <section className="ad-card p-5 space-y-3">
-        <h2 className="ad-section-title">Aperçu</h2>
+        <h2 className="ad-section-title">{tc('preview')}</h2>
         <div className="flex gap-4 flex-wrap">
           <div className="w-[272px] rounded-xl p-4" style={{ background: 'var(--ad-sidebar)', color: 'var(--ad-sidebar-ink)' }}>
             <div className="flex items-center gap-3">
@@ -234,8 +232,7 @@ export default function BrandSection() {
             </div>
           </div>
           <p className="text-[11px] max-w-[280px]" style={{ color: 'var(--ad-muted)' }}>
-            Le nom tronqué ici le sera aussi en réalité : la barre fait 272 px dépliée, 76 repliée — seuls le logo et
-            l’onglet restent visibles dans ce cas.
+            {t('previewHint')}
           </p>
         </div>
       </section>

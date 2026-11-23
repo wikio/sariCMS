@@ -21,9 +21,8 @@ async function bootstrap() {
     origin: (origin, cb) => {
       if (!origin) return cb(null, true);
       if (origins.includes(origin)) return cb(null, true);
-      if (/\.e2b\.app$/.test(origin) || /\.vercel\.app$/.test(origin)) return cb(null, true);
       if ((config.get('NODE_ENV') || 'development') !== 'production') return cb(null, true);
-      return cb(new Error(`CORS blocked for origin ${origin}`), false);
+      return cb(null, false);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
@@ -85,11 +84,12 @@ async function bootstrap() {
   });
 
   const port = Number(config.get('PORT') || process.env.PORT || 3001);
-  await app.listen(port, '0.0.0.0');
+  const host = config.get<string>('HOST') || '0.0.0.0';
+  await app.listen(port, host);
   // eslint-disable-next-line no-console
-  console.log(`SARI CMS API listening on http://0.0.0.0:${port}/${prefix}`);
+  console.log(`SARI CMS API listening on http://${host}:${port}/${prefix}`);
   // eslint-disable-next-line no-console
-  console.log(`Swagger UI → http://0.0.0.0:${port}/${prefix}/docs`);
+  console.log(`Swagger UI → http://${host}:${port}/${prefix}/docs`);
 }
 
 bootstrap();

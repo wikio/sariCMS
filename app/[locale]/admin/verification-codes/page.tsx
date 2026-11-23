@@ -45,10 +45,10 @@ const SEMANTICS: { id: Semantic; tone: string }[] = [
 ];
 
 const DEFAULT_CATALOG: CodeDef[] = [
-  { id: 'valid', code: '1', semantic: 'valid', labels: { fr: 'Document valide', en: 'Valid document', ar: 'مستند صالح' }, descriptions: { fr: 'Le document est authentique et son intégrité est confirmée par l\'émetteur.', en: 'The document is authentic and its integrity is confirmed by the issuer.' }, showDetails: true, active: true, sortOrder: 1 },
-  { id: 'forged', code: '0', semantic: 'forged', labels: { fr: 'Document falsifié', en: 'Forged document', ar: 'مستند مزوّر' }, descriptions: { fr: 'Le couple code / clé ne correspond à aucun document émis, ou correspond à un document altéré.', en: 'The code / key pair matches no issued document, or matches an altered one.' }, showDetails: true, active: true, sortOrder: 2 },
-  { id: 'expired', code: '2', semantic: 'expired', labels: { fr: 'Document expiré', en: 'Expired document', ar: 'مستند منتهي الصلاحية' }, descriptions: { fr: 'Le document était valide ; sa durée de vérification est dépassée.', en: 'The document was valid; its verification window has elapsed.' }, showDetails: true, active: true, sortOrder: 3 },
-  { id: 'revoked', code: '3', semantic: 'revoked', labels: { fr: 'Document révoqué', en: 'Revoked document', ar: 'مستند مسحوب' }, descriptions: { fr: 'L\'émetteur a retiré ce document ; il ne doit plus être accepté.', en: 'The issuer withdrew this document; it must no longer be accepted.' }, showDetails: true, active: true, sortOrder: 4 },
+  { id: 'valid', code: '1', semantic: 'valid', labels: { fr: 'Document valide', en: 'Valid document', ar: 'مستند صالح' }, descriptions: { fr: 'Le document est authentique et son intégrité est confirmée par l\'émetteur.', en: 'The document is authentic and its integrity is confirmed by the issuer.', ar: 'المستند أصلي وتؤكد الجهة المصدرة سلامته.' }, showDetails: true, active: true, sortOrder: 1 },
+  { id: 'forged', code: '0', semantic: 'forged', labels: { fr: 'Document falsifié', en: 'Forged document', ar: 'مستند مزوّر' }, descriptions: { fr: 'Le couple code / clé ne correspond à aucun document émis, ou correspond à un document altéré.', en: 'The code / key pair matches no issued document, or matches an altered one.', ar: 'لا يتطابق الرمز والمفتاح مع أي مستند صادر، أو أنهما يعودان إلى مستند معدّل.' }, showDetails: true, active: true, sortOrder: 2 },
+  { id: 'expired', code: '2', semantic: 'expired', labels: { fr: 'Document expiré', en: 'Expired document', ar: 'مستند منتهي الصلاحية' }, descriptions: { fr: 'Le document était valide ; sa durée de vérification est dépassée.', en: 'The document was valid; its verification window has elapsed.', ar: 'كان المستند صالحًا، لكن مهلة التحقق منه انتهت.' }, showDetails: true, active: true, sortOrder: 3 },
+  { id: 'revoked', code: '3', semantic: 'revoked', labels: { fr: 'Document révoqué', en: 'Revoked document', ar: 'مستند مسحوب' }, descriptions: { fr: 'L\'émetteur a retiré ce document ; il ne doit plus être accepté.', en: 'The issuer withdrew this document; it must no longer be accepted.', ar: 'سحبت الجهة المصدرة هذا المستند، ولم يعد من الممكن قبوله.' }, showDetails: true, active: true, sortOrder: 4 },
 ];
 
 function nextId(codes: CodeDef[]): string {
@@ -134,7 +134,7 @@ export default function VerificationCodesAdminPage() {
       if (json && (json as { api?: { showDemoCodes?: boolean } }).api) {
         setShowDemoCodes((json as { api: { showDemoCodes: boolean } }).api.showDemoCodes);
       }
-      showToast(next ? 'Codes de démonstration affichés sur la vitrine.' : 'Codes de démonstration masqués sur la vitrine.', 'success');
+      showToast(next ? t('demoShownToast') : t('demoHiddenToast'), 'success');
     } catch {
       showToast(t('saveError'), 'error');
     } finally {
@@ -146,7 +146,7 @@ export default function VerificationCodesAdminPage() {
     <div className="space-y-4">
       <header className="ad-rise flex flex-wrap items-end justify-between gap-3">
         <div>
-          <div className="text-[11px] uppercase tracking-[0.22em] font-black" style={{ color: 'var(--ad-muted)' }}>Système</div>
+          <div className="text-[11px] uppercase tracking-[0.22em] font-black" style={{ color: 'var(--ad-muted)' }}>{t('system')}</div>
           <h1 className="text-3xl font-black flex items-center gap-2">
             <ShieldCheck className="w-7 h-7" style={{ color: '#199aca' }} />
             {t('title')}
@@ -172,17 +172,19 @@ export default function VerificationCodesAdminPage() {
       <section className="ad-card p-4 flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-1 max-w-2xl">
           <div className="text-sm font-bold flex items-center gap-2">
-            Codes de démonstration sur la page publique
+            {t('demoTitle')}
             {showDemoCodes !== null && (
               <span className={`text-[11px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${showDemoCodes ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'}`}>
-                {showDemoCodes ? 'Affichés' : 'Masqués'}
+                {showDemoCodes ? t('shown') : t('hidden')}
               </span>
             )}
           </div>
           <div className="text-xs leading-relaxed" style={{ color: 'var(--ad-muted)' }}>
-            Contrôle la section d'exemples sous le formulaire <code>/{locale}/verification</code> de la vitrine. Même réglage que{' '}
-            <Link href={`/${locale}/admin/settings`} className="underline decoration-dotted font-semibold">Paramètres → Vérification des documents</Link>.
-            {showDemoCodes === false && ' — Les 6 codes d’exemple sont actuellement masqués côté public.'}
+            {t.rich('demoInfo', {
+              path: `/${locale}/verification`,
+              settings: (text) => <Link href={`/${locale}/admin/settings?tab=verification`} className="underline decoration-dotted font-semibold">{text}</Link>,
+            })}
+            {showDemoCodes === false && ` ${t('demoHiddenHint')}`}
           </div>
         </div>
         <button
@@ -195,13 +197,13 @@ export default function VerificationCodesAdminPage() {
         >
           {showDemoCodes ? (
             <>
-              <span className="ad-toggle-label">Affichés</span>
+              <span className="ad-toggle-label">{t('shown')}</span>
               <span className="ad-toggle-knob" />
             </>
           ) : (
             <>
               <span className="ad-toggle-knob" />
-              <span className="ad-toggle-label">Masqués</span>
+              <span className="ad-toggle-label">{t('hidden')}</span>
             </>
           )}
         </button>

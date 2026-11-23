@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Check, ChevronDown, Search } from 'lucide-react';
 
@@ -32,7 +34,7 @@ export default function SearchSelect({
   onChange,
   options,
   placeholder = '',
-  emptyLabel = 'Aucun résultat',
+  emptyLabel,
   allowFree = false,
   allowEmpty = true,
   error = false,
@@ -59,6 +61,7 @@ export default function SearchSelect({
   // il affiche la valeur brute, seule information dont on dispose.
   const affichage = selection ? selection.label : allowFree ? value : '';
   const [query, setQuery] = useState(affichage);
+  const t = useTranslations('admin.common');
   const [open, setOpen] = useState(false);
   const [surbrillance, setSurbrillance] = useState(0);
   // Sens d'ouverture : vers le bas par défaut, vers le haut s'il manque la
@@ -224,7 +227,7 @@ export default function SearchSelect({
           ))}
           {filtrees.length === 0 && (
             <div className="px-3 py-3 text-sm" style={{ color: 'var(--ad-muted)' }}>
-              {emptyLabel}
+              {emptyLabel ?? t('noResults')}
             </div>
           )}
         </div>

@@ -68,16 +68,6 @@ const nextConfig = {
         ],
       },
       {
-        source: '/api/:path*',
-        headers: [
-          { key: 'Access-Control-Allow-Origin', value: 'https://sarisysteme.com' },
-          { key: 'Access-Control-Allow-Methods', value: 'GET, POST, PUT, DELETE, PATCH, OPTIONS' },
-          { key: 'Access-Control-Allow-Headers', value: 'Content-Type, Authorization, X-CSRF-Token' },
-          { key: 'Access-Control-Allow-Credentials', value: 'true' },
-          { key: 'Access-Control-Max-Age', value: '86400' },
-        ],
-      },
-      {
         source: '/:path*',
         headers: [
           {
@@ -123,6 +113,43 @@ const nextConfig = {
               "base-uri 'none'",
               "form-action 'none'",
               "frame-ancestors 'none'",
+            ].join('; '),
+          },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+        ],
+      },
+      {
+        // Les images SVG générées à la volée par `/api/placeholder` sont des documents
+        // vectoriels purs : cette CSP stricte empêche toute exécution de script ou
+        // chargement externe si l'URL est ouverte directement dans un onglet.
+        source: '/api/placeholder/:path*',
+        headers: [
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'none'",
+              "style-src 'unsafe-inline'",
+              "base-uri 'none'",
+              "form-action 'none'",
+              "frame-ancestors 'none'",
+              'sandbox',
+            ].join('; '),
+          },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+        ],
+      },
+      {
+        source: '/api/placeholder',
+        headers: [
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'none'",
+              "style-src 'unsafe-inline'",
+              "base-uri 'none'",
+              "form-action 'none'",
+              "frame-ancestors 'none'",
+              'sandbox',
             ].join('; '),
           },
           { key: 'X-Content-Type-Options', value: 'nosniff' },

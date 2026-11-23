@@ -48,5 +48,17 @@
   "deactivateReasonPlaceholder": "مثال: دفع مسجّل مرتين، مبلغ خاطئ…",
   "deactivateConfirm": "تعطيل هذا الدفع",
   "deactivateCancel": "إلغاء",
-  "deactivateReasonRequired": "يرجى ذكر سبب التعطيل."
+  "deactivateReasonRequired": "يرجى ذكر سبب التعطيل.",
+  "exportCsvBtn": "تصدير CSV",
+  "typeIntlCard": "بطاقة دولية",
+  "typeCib": "بطاقة CIB / محلية",
+  "typeTransfer": "تحويل بنكي",
+  "typePaypal": "PayPal",
+  "typeCheck": "شيك",
+  "typeCod": "الدفع عند التسليم",
+  "typeOther": "أخرى",
+  "typePending": "قيد الانتظار",
+  "statusValidated": "مصادق عليه",
+  "statusPending": "قيد الانتظار",
+  "statusRejected": "مرفوض"
 }

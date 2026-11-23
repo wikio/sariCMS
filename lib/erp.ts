@@ -60,16 +60,16 @@ export async function fetchInvoiceFromErp(orderCode: string, orderId: number): P
 }
 
 /** Teste la connexion à l'ERP (ping d'un endpoint de santé). */
-export async function testErpConnection(): Promise<{ ok: boolean; message: string }> {
+export async function testErpConnection(): Promise<{ ok: boolean; messageKey: 'erpMissing' | 'erpConnected' | 'erpResponse' | 'erpNetwork'; status?: number }> {
   if (!erpConfigured()) {
-    return { ok: false, message: "ERP non configuré (activé + URL requises)." };
+    return { ok: false, messageKey: 'erpMissing' };
   }
   try {
     const res = await fetch(`${baseUrl()}/health`, { headers: headers(), signal: AbortSignal.timeout(10000) });
     return res.ok
-      ? { ok: true, message: `Connecté (${res.status}).` }
-      : { ok: false, message: `Réponse ${res.status}.` };
+      ? { ok: true, messageKey: 'erpConnected', status: res.status }
+      : { ok: false, messageKey: 'erpResponse', status: res.status };
   } catch {
-    return { ok: false, message: 'Connexion impossible (réseau / CORS).' };
+    return { ok: false, messageKey: 'erpNetwork' };
   }
 }

@@ -22,6 +22,8 @@ export class NewsService extends BaseCrudService<NewsEntity> {
       'shortDesc',
       'image',
       'category',
+      'classification',
+      'tags',
       'authorName',
       'date',
       'publicationDate',

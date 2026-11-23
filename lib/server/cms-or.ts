@@ -20,11 +20,25 @@ export async function cmsOr<T>(call: () => Promise<T | null | undefined>, fallba
   return { value: await fallback(), via: 'local' };
 }
 
-/** Le porteur du jeton d'administration, transmis par l'écran. */
+/** Le porteur du jeton d'administration, transmis par en-tête ou cookie httpOnly. */
 export function bearer(req: Request): string | null {
   const header = req.headers.get('authorization') || req.headers.get('Authorization');
-  if (!header) return null;
-  return header.replace(/^Bearer\s+/i, '').trim() || null;
+  if (header) {
+    const token = header.replace(/^Bearer\s+/i, '').trim();
+    if (token) return token;
+  }
+  const cookieHeader = req.headers.get('cookie') || '';
+  if (cookieHeader) {
+    const match = cookieHeader.match(/(?:^|;\s*)sari_admin_access=([^;]+)/);
+    if (match?.[1]) {
+      try {
+        return decodeURIComponent(match[1]).trim() || null;
+      } catch {
+        return match[1].trim() || null;
+      }
+    }
+  }
+  return null;
 }
 
 export function forwardedIp(req: Request): string {

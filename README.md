@@ -1,38 +1,12 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# sariCMS
 
-The CMS API lives in [`backend/`](./backend/README.md) (NestJS, JWT + 2FA, multi-driver MySQL/PostgreSQL/MongoDB/JSON, groups 1–3). Start it with `cd backend && npm install && npm run seed && npm run start:dev` then open `/api/v1/docs`. The Next.js storefront reads `/api/v1/public/*` first and falls back to `data/{locale}/*.json`. Admin login uses the seed account `admin@sarisysteme.com` / `ChangeMe_Sari2026!`.
+Vitrine, espace client et administration en français, anglais et arabe (Next.js), avec une API CMS NestJS dans [`backend/`](backend/). Il faut **deux processus Node.js** : publier seulement le dossier `public/` ne déploie pas le site.
 
-## Getting Started
+**[Installer sariCMS et le déployer en production →](docs/INSTALLATION-DEPLOIEMENT-PRODUCTION.md)**
 
-First, run the development server:
+Le guide détaille le démarrage local, l’installation neuve MySQL, les services systemd, le domaine et HTTPS, la recette, les mises à jour et la restauration. Il distingue ce qu’on peut vérifier en JSON de ce qu’il faut valider sur le serveur cible.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **En développement** : Node 22, `npm ci` dans les deux répertoires, API sur `3001`, vitrine sur `5000`. Voir [le démarrage local](docs/INSTALLATION-DEPLOIEMENT-PRODUCTION.md#1-essayer-le-site-en-local).
+- **En production** : les secrets sont propres à l’installation. Ne jamais rejouer le seed ou `schema.mysql.sql` sur une installation existante.
+- **Ouverture publique** : le vhost fourni publie la vitrine et l’administration. Le tunnel commandes/devis reste réservé à la recette privée ; une confirmation dans le navigateur ne vaut pas encaissement. Voir les [critères d’ouverture](docs/INSTALLATION-DEPLOIEMENT-PRODUCTION.md#8-recette-avant-douvrir-aux-visiteurs).
+- **Exploitation** : [données et sauvegardes](docs/DONNEES-ET-SAUVEGARDE.md), [reprise MySQL](docs/REPRISE-MYSQL.md), [centre de courrier](docs/EMAILS-CENTRE-DE-COURRIER.md).

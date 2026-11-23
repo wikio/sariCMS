@@ -130,11 +130,7 @@
     "loginSuccess": "Connexion réussie",
     "accountCreated": "Compte créé avec succès",
     "noAccount": "Pas encore de compte ?",
-    "hasAccount": "Déjà un compte ?",
-    "demoAccounts": "Comptes de démonstration",
-    "clientDemo": "Client Demo",
-    "partnerDemo": "Partenaire Demo",
-    "candidateDemo": "Candidat Demo"
+    "hasAccount": "Déjà un compte ?"
   },
   "dashboard": {
     "title": "Tableau de bord",

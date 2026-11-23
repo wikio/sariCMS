@@ -29,6 +29,7 @@ interface RoleRow extends Record<string, unknown> {
 export default function AdminPermissionsPage() {
   const { showToast } = useToast();
   const t = useTranslations('admin.permissions');
+  const tm = useTranslations('admin.menu');
   const [roles, setRoles] = useState<RoleRow[]>([]);
   const [perms, setPerms] = useState<Array<Record<string, unknown>>>([]);
   const [loading, setLoading] = useState(true);
@@ -65,6 +66,7 @@ export default function AdminPermissionsPage() {
     return Array.from(set).sort();
   }, [perms]);
 
+  const resourceLabel = (res: string) => t.has(`resource_${res}`) ? t(`resource_${res}`) : tm.has(res) ? tm(res) : res;
   const role = roles.find((r) => key(r.id) === active);
   const isSystem = Boolean(role?.isSystem);
   const granted = useMemo(
@@ -176,7 +178,7 @@ export default function AdminPermissionsPage() {
               className={`ad-btn ${active === key(r.id) ? 'ad-btn-primary' : 'ad-btn-ghost'}`}
             >
               {r.isSystem ? <Lock className="w-4 h-4" /> : <Shield className="w-4 h-4" />}
-              {String(r.name)}
+              {r.isSystem && t.has(`role_${r.slug}`) ? t(`role_${r.slug}`) : String(r.name)}
             </button>
             {!r.isSystem && (
               <button
@@ -271,7 +273,7 @@ export default function AdminPermissionsPage() {
               <thead>
                 <tr>
                   <th>{t('resource')}</th>
-                  {ACTIONS.map((a) => <th key={a} className="text-center">{a}</th>)}
+                  {ACTIONS.map((a) => <th key={a} className="text-center">{t(`action_${a}`)}</th>)}
                 </tr>
               </thead>
               <tbody>
@@ -283,7 +285,7 @@ export default function AdminPermissionsPage() {
                         onClick={() => toggleRow(res)}
                         disabled={isSystem || saving}
                       >
-                        {res}
+                        {resourceLabel(res)}
                       </button>
                     </td>
                     {ACTIONS.map((act) => {
@@ -295,8 +297,8 @@ export default function AdminPermissionsPage() {
                             disabled={!pid || isSystem || saving}
                             onClick={() => toggle(res, act)}
                             aria-pressed={on}
-                            aria-label={`${res}:${act}`}
-                            title={pid ? `${res}:${act}` : '—'}
+                            aria-label={`${resourceLabel(res)}: ${t(`action_${act}`)}`}
+                            title={pid ? `${resourceLabel(res)}: ${t(`action_${act}`)}` : '—'}
                             className={`w-8 h-8 rounded-lg inline-flex items-center justify-center ${
                               on ? 'ad-btn-primary' : 'ad-btn-ghost'
                             } ${!pid || isSystem ? 'opacity-40 cursor-not-allowed' : ''}`}

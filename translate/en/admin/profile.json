@@ -11,5 +11,17 @@
   "twoFactorDesc": "Enable 2FA to secure your account with an authenticator app.",
   "showProfile": "Show profile",
   "updateProfile": "Update profile",
-  "informations": "Information"
+  "informations": "Information",
+  "updated": "Profile updated",
+  "savedLocal": "Profile saved locally",
+  "setupError": "Could not generate the secret key",
+  "needCode": "Enter the six-digit code",
+  "enableSuccess": "Two-factor authentication enabled",
+  "invalidCode": "Invalid code",
+  "needTotp": "Enter your TOTP code",
+  "disableSuccess": "Two-factor authentication disabled",
+  "scan": "1. Scan this QR code with Google Authenticator, Authy or FreeOTP, or enter the key manually.",
+  "qrAlt": "Two-factor authentication QR code",
+  "enterCode": "2. Six-digit code",
+  "enable2FA": "Enable two-factor authentication"
 }
