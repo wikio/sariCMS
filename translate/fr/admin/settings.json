@@ -118,5 +118,5 @@
   "erpResponse": "Réponse HTTP {status}.",
   "erpNetwork": "Connexion impossible (réseau / CORS).",
   "contactTriage": "Tri et routage du contact",
-  "search_contactTriage": "Contact IA spam tri modération transfert email catégorie points"
+  "search_contactTriage": "Contact IA spam tri modération transfert email catégorie points connexion API LLM URL modèle clé tester"
 }

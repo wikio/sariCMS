@@ -4,6 +4,7 @@ import { ContactInfoService } from './contact-info.service';
 import { ContactMessagesController } from './contact-messages.controller';
 import { ContactMessagesService } from './contact-messages.service';
 
+import { ContactAiSettingsService } from './contact-ai-settings.service';
 import { ContactAiService } from './contact-ai.service';
 import { ContactDossierService } from './contact-dossier.service';
 import { ContactPolicyService } from './contact-policy.service';
@@ -21,6 +22,7 @@ import { ContactTriageController } from './contact-triage.controller';
     ContactInfoService,
     ContactMessagesService,
     ContactPolicyService,
+    ContactAiSettingsService,
     ContactAiService,
     ContactIntakeService,
     ContactDossierService,

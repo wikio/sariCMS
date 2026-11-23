@@ -53,6 +53,8 @@ for (const locale of ['fr', 'en', 'ar']) {
         t(`mailCenter.label_${id}`); t(`mailCenter.hint_${id}`);
       }
     }
+    for (const code of ['admin', 'env', 'none', 'unreadable']) t(`contactTriage.connectionSource_${code}`);
+    for (const code of ['ok', 'incomplete', 'auth', 'unavailable', 'invalidResponse']) t(`contactTriage.testResult_${code}`);
     for (const { key } of MAIL_VARS) t(`mailVariables.${key}`);
     for (const { id } of PLACEHOLDER_ICONS) t(`placeholderStudio.icon_${id}`);
     for (const { labelKey } of DATE_FORMAT_PRESETS) { t(`datePicker.${labelKey}`); t(`datePicker.${labelKey}Hint`); }

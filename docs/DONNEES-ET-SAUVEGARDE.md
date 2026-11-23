@@ -186,6 +186,7 @@ premier enregistrement. Ils ne sont donc dans aucune sauvegarde git et doivent
 | Chemin | Contenu | Suivi |
 | --- | --- | --- |
 | `storage/mail/smtp.json` | identifiants SMTP saisis dans l'écran | **ignoré** (`backend/.gitignore:14`) |
+| `storage/private/contact-ai.json` | connexion LLM du formulaire Contact saisie en administration ; peut contenir la clé API (fichier `0600`) | ignoré, à sauvegarder comme un secret |
 | `storage/json/*.json` | données du pilote JSON | ignoré |
 | `storage/cache/*` | cache L2 | ignoré, reconstructible |
 
@@ -604,7 +605,8 @@ Dans l'ordre d'importance :
    l'historique d'envoi.
 4. **`backend/storage/mail/smtp.json`** — sinon l'envoi repart en mode
    « fichier » sans avertissement autre qu'une ligne de log.
-5. **Les exports manuels de l'étage navigateur** — voir ci-dessous.
+5. **`backend/storage/private/contact-ai.json`**, si configuré : sauvegarde protégée et chiffrée, jamais dans un export public. Sans lui le [tri Contact](CONTACT-TRI-ET-ROUTAGE.md) utilise le `.env` du backend.
+6. **Les exports manuels de l'étage navigateur** — voir ci-dessous.
 
 ### Récupérer l'étage navigateur
 
@@ -664,8 +666,7 @@ de pendant en base.
 ## 6. Restauration
 
 1. Recréer la base et rejouer le `mysqldump`.
-2. Remettre `public/uploads/`, `data/mail/`, `backend/storage/mail/smtp.json`
-   aux mêmes chemins.
+2. Remettre `public/uploads/`, `data/mail/`, `backend/storage/mail/smtp.json` et, si présent, `backend/storage/private/contact-ai.json` aux mêmes chemins, avec les droits du compte de service.
 3. Vérifier la cohérence des migrations : `npx prisma migrate deploy` ne doit
    rien trouver à appliquer. En cas d'erreur `P3009` ou `P3018`, voir
    `docs/REPRISE-MYSQL.md` §2.1 ter.

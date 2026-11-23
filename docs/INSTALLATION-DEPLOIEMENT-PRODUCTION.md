@@ -153,6 +153,7 @@ SMTP_FROM="Votre site <noreply@example.org>"
 - Pas de secret JWT ni d’identifiant de secours à installer dans Next. Nest valide l’identité et le type `admin`. Une API arrêtée ne donne jamais accès au back-office. Le renouvellement Nest utilise un jeton opaque à rotation ; changer seulement `JWT_REFRESH_SECRET` ne révoque pas les sessions existantes. Garder les secrets stables entre redémarrages.
 - Adapter le domaine, l’adresse d’expédition et le mot de passe SQL. Encoder les caractères réservés du nom/mot de passe dans l’URL (`@`, `:`, `/`, `%`, `#`…), ou choisir un secret hexadécimal aléatoire. N’utiliser ni `root` ni un compte SQL global pour l’application. `CORS_ORIGINS` contient des **origines exactes**, sans `/` final, séparées par des virgules ; pas de `*`.
 - En MySQL, `JSON_STORE_PATH` reste important : le service mail lit `mail/smtp.json` et `mail/outbox.json` à côté de `json/`. Les réglages SMTP enregistrés en administration peuvent primer sur l’environnement. Port 587 = STARTTLS ; 465 = TLS implicite (`SMTP_SECURE=true`) selon le fournisseur. Renseigner SPF/DKIM/DMARC pour le domaine expéditeur. Ne pas utiliser le mode fichier comme preuve de livraison.
+- Pour le [LLM de tri du contact](CONTACT-TRI-ET-ROUTAGE.md), les champs de l’administration priment sur `CONTACT_AI_URL`, `CONTACT_AI_MODEL` et `CONTACT_AI_API_KEY` de Nest. Conserver aussi le dossier privé à côté de `JSON_STORE_PATH` : il peut contenir la clé.
 
 ## 4. Installer et construire les deux applications
 

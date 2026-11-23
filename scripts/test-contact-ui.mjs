@@ -42,7 +42,17 @@ const libs = {
   './Toast': { useToast: () => ({ showToast: (...args) => toasts.push(args) }) },
   '@/components/shared/DateText': { default: ({ value }) => value },
 };
-const Settings = load('components/admin/ContactTriageSettings.tsx', libs).default;
+const Connection = load('components/admin/ContactAiConnection.tsx', libs).default;
+const emptyAi = {
+  configured: false,
+  source: 'none',
+  model: '',
+  overrides: { url: '', model: '', hasKey: false },
+};
+const Settings = load('components/admin/ContactTriageSettings.tsx', {
+  ...libs,
+  './ContactAiConnection': { default: Connection },
+}).default;
 const Inbox = load('components/admin/ContactInbox.tsx', libs).default;
 const Score = load('components/admin/ContactScore.tsx', libs).default;
 const mount = (C, props = {}) => act(async () => root.render(createElement(C, props)));
@@ -52,7 +62,8 @@ const change = (el, value) =>
     el.dispatchEvent(new window.Event(el.tagName === 'SELECT' ? 'change' : 'input', { bubbles: true }));
   });
 const click = (el) => act(async () => el.click());
-const button = (text, parent = host) => [...parent.querySelectorAll('button')].find((b) => b.textContent === text);
+const button = (text, parent = host) =>
+  [...parent.querySelectorAll('button')].find((b) => b.textContent === text);
 const realFetch = globalThis.fetch;
 beforeEach(() => {
   root = createRoot(host);
@@ -79,7 +90,7 @@ test('règles : six destinations ; adresse externe modifiable et persistée apr�
       assert.equal(opts.method, 'PUT');
       policy = opts.json;
     }
-    return { policy: structuredClone(policy), ai: { configured: false, model: '' } };
+    return { policy: structuredClone(policy), ai: emptyAi };
   };
   await mount(Settings);
   assert.equal(host.querySelectorAll('select[id^="route-"]').length, 6);
@@ -91,6 +102,69 @@ test('règles : six destinations ; adresse externe modifiable et persistée apr�
   assert.equal(toasts[0][1], 'success');
   await mount(Settings, { key: 'fresh' });
   assert.equal(host.querySelector('input[type="email"]').value, 'rh@example.test');
+});
+test('connexion LLM : teste le brouillon puis l’enregistre séparément ; champ secret vide à la relecture ; retour au .env', async () => {
+  const env = { ...emptyAi, source: 'env', configured: true, model: 'modele-env' };
+  const fields = {
+    url: 'https://modele.example.test/v1/chat/completions',
+    model: 'modele-de-test',
+    apiKey: 'cle-fictive-de-test',
+  };
+  let baseline = env,
+    result = 'auth';
+  const calls = [];
+  handler = async (path, opts) => {
+    calls.push({ path, ...opts });
+    if (path.endsWith('/test')) return { code: result };
+    assert.equal(path, '/contact/triage/connection');
+    if (opts.method === 'DELETE') baseline = env;
+    else {
+      assert.equal(opts.method, 'PUT');
+      baseline = {
+        source: 'admin',
+        configured: true,
+        model: fields.model,
+        overrides: { url: fields.url, model: fields.model, hasKey: true },
+      };
+    }
+    return structuredClone(baseline);
+  };
+  const input = (name) => host.querySelector('#contact-ai-' + name);
+  await mount(Connection, { initial: env });
+  assert.match(host.textContent, /Configuration du serveur/);
+  assert.equal(input('key').type, 'password');
+  assert.equal(input('key').value, '');
+  await change(input('url'), fields.url);
+  await change(input('model'), fields.model);
+  await change(input('key'), fields.apiKey);
+  await click(button('Tester la connexion'));
+  assert.deepEqual(calls, [{ path: '/contact/triage/connection/test', method: 'POST', json: fields }]);
+  assert.match(host.textContent, /Authentification refusée/);
+  assert.deepEqual(baseline, env);
+  result = 'ok';
+  await click(button('Tester la connexion'));
+  assert.match(host.textContent, /Connexion réussie/);
+  await click(button('Enregistrer la connexion'));
+  assert.deepEqual(calls[2], { path: '/contact/triage/connection', method: 'PUT', json: fields });
+  assert.equal(input('key').value, '');
+  assert.equal(input('key').placeholder, 'Clé enregistrée, non affichée');
+  assert.ok(!host.innerHTML.includes(fields.apiKey));
+  await mount(Connection, { initial: baseline, key: 'reload' });
+  assert.equal(input('url').value, fields.url);
+  assert.equal(input('model').value, fields.model);
+  assert.equal(input('key').value, '');
+  await click(button('Tester la connexion'));
+  assert.deepEqual(calls[3].json, { url: fields.url, model: fields.model }); // aucune clé stockée renvoyée par le navigateur
+  window.confirm = () => false;
+  await click(button('Revenir au .env'));
+  assert.equal(calls.length, 4);
+  window.confirm = () => true;
+  await click(button('Revenir au .env'));
+  assert.deepEqual(calls[4], { path: '/contact/triage/connection', method: 'DELETE' });
+  assert.match(host.textContent, /Configuration du serveur/);
+  assert.equal(input('url').value, '');
+  assert.equal(input('key').value, '');
+  assert.equal(button('Revenir au .env'), undefined);
 });
 test('boîte Contact : lire une quarantaine, la reclasser, prendre en charge, conserver la note ; filtre appliqué au serveur', async () => {
   let row = {
@@ -150,7 +224,11 @@ test('dossier : consultation par id de compte et annulation explicite d’un ret
     assert.equal(path, '/contact/triage/accounts/42');
     return reversed
       ? { score: 0, total: 0, notes: [] }
-      : { score: -4, total: 1, notes: [{ id: 3, points: -4, reason: 'inappropriate', createdAt: '2026-01-01' }] };
+      : {
+          score: -4,
+          total: 1,
+          notes: [{ id: 3, points: -4, reason: 'inappropriate', createdAt: '2026-01-01' }],
+        };
   };
   await mount(Score, { account: '42' });
   assert.match(host.textContent, /-4 points/);

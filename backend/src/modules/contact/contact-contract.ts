@@ -35,9 +35,22 @@ export interface ContactMeta {
 export type IntakeResult =
   | { decision: 'discard' | 'review' }
   | { decision: 'accept'; id: number; subject: Subject; route: RoutingPlan };
+/** L’API accepte éventuellement une nouvelle clé, mais aucun état renvoyé ne la contient. */
+export interface ContactAiDraft {
+  url: string;
+  model: string;
+  apiKey?: string;
+}
+export interface ContactAiStatus {
+  configured: boolean;
+  model: string;
+  source: 'admin' | 'env' | 'none' | 'unreadable';
+  overrides: { url: string; model: string; hasKey: boolean };
+}
+export type ContactAiTestCode = 'ok' | 'incomplete' | 'auth' | 'unavailable' | 'invalidResponse';
 export interface ContactPolicyState {
   policy: ContactPolicy;
-  ai: { configured: boolean; model: string };
+  ai: ContactAiStatus;
 }
 export interface ContactDossier {
   score: number;

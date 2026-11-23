@@ -13,3 +13,5 @@ prisma/*.db
 *.sqlite
 storage/mail/*
 !storage/mail/.gitkeep
+# Profil IA privé du serveur (clé du fournisseur)
+storage/private/

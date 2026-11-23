@@ -118,5 +118,5 @@
   "erpResponse": "HTTP response {status}.",
   "erpNetwork": "Could not connect (network / CORS).",
   "contactTriage": "Contact screening and routing",
-  "search_contactTriage": "Contact AI spam moderation email forwarding category points"
+  "search_contactTriage": "Contact AI spam moderation email forwarding category points connection API LLM URL model key test"
 }
