@@ -3,7 +3,7 @@
 import CsrfPatch from '@/components/admin/CsrfPatch';
 import { ReactNode, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import {
   ShieldCheck,
@@ -13,7 +13,7 @@ import {
   Users, UserCog, FileCheck, Globe, Sliders, ExternalLink, LogOut,
   Shield, Search, ChevronDown, ChevronLeft, Palette, BarChart3, ScrollText,
   Tags, UserPlus, UserRound, Paintbrush, Banknote, MessageSquareText, Eye,
-  LayoutTemplate, MailPlus,
+  LayoutTemplate, MailPlus, Mail,
 } from 'lucide-react';
 
 import { useAdminBrand } from '@/components/admin/BrandContext';
@@ -38,6 +38,7 @@ interface Item {
 function Shell({ children, page }: { children: ReactNode; page?: string }) {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const locale = useLocale();
   const t = useTranslations('admin');
   const isRTL = locale === 'ar';
@@ -185,6 +186,7 @@ function Shell({ children, page }: { children: ReactNode; page?: string }) {
     { id: 'applications', icon: FileCheck, label: t('menu.applications'), href: `/${locale}/admin/applications` },
     { id: 'event-registrations', icon: CalendarCheck, label: t('menu.eventRegistrations'), href: `/${locale}/admin/events/registrations` },
     { id: 'newsletter', icon: MailPlus, label: t('menu.newsletter'), href: `/${locale}/admin/newsletter` },
+    { id: 'contact-messages', icon: Mail, label: t('menu.contactMessages'), href: `/${locale}/admin/messages?tab=contact` },
     { type: 'divider', label: t('menu.advancedSection') },
     { id: 'taxonomies', icon: Tags, label: t('menu.taxonomies'), href: `/${locale}/admin/taxonomies` },
     { id: 'visibility', icon: Eye, label: t('menu.visibility'), href: `/${locale}/admin/visibility` },
@@ -215,6 +217,8 @@ function Shell({ children, page }: { children: ReactNode; page?: string }) {
     : pathname.includes('/admin/products') ? 'products'
     : pathname.includes('/admin/shop-stats') ? 'shop-stats'
     : pathname.includes('/admin/events/registrations') ? 'event-registrations'
+    : pathname.includes('/admin/messages')
+      ? (searchParams.get('tab') === 'contact' ? 'contact-messages' : 'messages')
     : menu.find((m) => m.href && pathname.includes(m.href.replace(`/${locale}`, '')))?.id
       || menu.find((m) => m.children?.some((c) => pathname.includes(c.href.replace(`/${locale}`, ''))))?.id
       || null;
