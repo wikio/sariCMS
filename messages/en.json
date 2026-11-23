@@ -453,7 +453,9 @@
       "erpMissing": "Enable the ERP and supply its URL first.",
       "erpConnected": "Connected ({status}).",
       "erpResponse": "HTTP response {status}.",
-      "erpNetwork": "Could not connect (network / CORS)."
+      "erpNetwork": "Could not connect (network / CORS).",
+      "contactTriage": "Contact screening and routing",
+      "search_contactTriage": "Contact AI spam moderation email forwarding category points"
     },
     "users": {
       "title": "Users",
@@ -4179,8 +4181,8 @@
       "hint_contact": "Incoming messages from the public site.",
       "label_contact_received": "Visitor acknowledgement",
       "hint_contact_received": "One email acknowledging the visitor’s message.",
-      "label_contact_alert": "Internal alert",
-      "hint_contact_alert": "Notify the company. Prefer a digest to one email per message.",
+      "label_contact_alert": "Contact alert / forwarding",
+      "hint_contact_alert": "After acceptance: notify the published company address or the address configured for the final subject.",
       "label_applications": "Job applications",
       "hint_applications": "Applications submitted for job openings.",
       "label_application_received": "Applicant acknowledgement",
@@ -4202,7 +4204,8 @@
       "label_stock": "Stock and restocking",
       "hint_stock": "Out-of-stock items and new arrivals.",
       "label_stock_backorder": "Restocking scheduled",
-      "hint_stock_backorder": "One email per out-of-stock product for the affected order."
+      "hint_stock_backorder": "One email per out-of-stock product for the affected order.",
+      "reason_file_transport": "File transport: no email transmitted"
     },
     "mailVariables": {
       "nom_societe": "Company name",
@@ -4235,7 +4238,8 @@
       "date_expiration": "Expiration date",
       "lien_document": "Document link",
       "lien_espace_client": "Customer account link",
-      "lien_desinscription": "Unsubscribe link"
+      "lien_desinscription": "Unsubscribe link",
+      "sujet_contact": "Final contact subject"
     },
     "mailStudio": {
       "newTitle": "Your order is confirmed",
@@ -4294,6 +4298,47 @@
       "buttonText": "Button label",
       "buttonUrl": "Button link",
       "imageUrl": "Image source"
+    },
+    "contactTriage": {
+      "settings": "Contact screening and routing",
+      "settingsHelp": "AI checks the text before processing. You choose the actions and recipients.",
+      "provider": "Configured model: {model}",
+      "noProvider": "No AI API configured: requests are held for review.",
+      "providerHelp": "Set the URL, model and key on the API server. Errors and uncertain results go to human review with no email or penalty.",
+      "minConfidence": "Minimum AI-reported confidence (50–100)",
+      "penaltyPoints": "Points deducted for discarded abuse (signed-in accounts; 0 = none)",
+      "spam": "Spam",
+      "inappropriate": "Inappropriate language",
+      "mismatch": "Subject mismatch",
+      "review": "Needs review",
+      "reclassify": "Reclassify if another subject is identified",
+      "discard": "Delete permanently",
+      "routes": "Destination by final subject",
+      "routesHelp": "All accepted requests stay in Messages → Contact. To send a copy, configure SMTP and enable the contact alert in the mail centre. Sending limits still apply.",
+      "inbox": "Internal follow-up only",
+      "company": "Alert the company address",
+      "external": "Forward to a configured address",
+      "queue": "Contact form requests",
+      "queueHelp": "“Needs review” is a separate moderation queue. After review, choose “New” to accept a request for internal follow-up. Editing a record sends no emails.",
+      "new": "New",
+      "read": "In progress",
+      "archived": "Archived",
+      "previous": "Previous",
+      "next": "Next",
+      "decision": "Screening reason",
+      "selected": "Selected subject",
+      "suggested": "AI-suggested subject",
+      "plannedRoute": "Routing planned at intake",
+      "followUp": "Internal follow-up note",
+      "matched": "Subject confirmed",
+      "uncertain": "Low confidence",
+      "ai_unavailable": "AI unavailable or invalid response",
+      "policy_unavailable": "Screening policy unavailable",
+      "confirmPurge": "Permanently delete this request and its follow-up note from the CMS?",
+      "score": "Account score · Contact",
+      "balance": "{score} points · {total} active note(s). The latest 20 are shown.",
+      "retract": "Reverse deduction",
+      "confirmRetract": "Remove this note and restore its points?"
     }
   },
   "common": {
@@ -5194,8 +5239,8 @@
       "formTag": "Contact Form",
       "formTitle": "Send us a message",
       "formDesc": "Fill in the form below and we will get back to you within 24 hours",
-      "successTitle": "Message sent successfully!",
-      "successDesc": "Thank you for your message. Our team will contact you within 24 hours.",
+      "successTitle": "Form submitted",
+      "successDesc": "Thank you for contacting us.",
       "subjectLabel": "Subject of your request",
       "subjectQuote": "Quote Request",
       "subjectTechnical": "Technical Support",
@@ -5227,7 +5272,10 @@
       "loading": "Loading...",
       "quoteCtaText": "For a more detailed quote request (multiple products, custom specifications, etc.), please log in to your customer account.",
       "quoteCtaLogin": "Log in",
-      "quoteCtaRegister": "Create an account"
+      "quoteCtaRegister": "Create an account",
+      "triageNotice": "The text may be screened by AI for spam, inappropriate language and subject fit. Abusive requests may be deleted and signed-in accounts may lose points. Do not include medical information.",
+      "fieldsError": "Check the contact details, subject and message length (10–4,000 characters).",
+      "unavailable": "The service is temporarily unavailable. Your text is still in the form; you can try again."
     },
     "dashboard": {
       "overview": "Dashboard",

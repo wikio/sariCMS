@@ -10,6 +10,7 @@ import {
 import { userRecordHref } from '@/lib/user-links';
 import { findCountry } from '@/lib/countries';
 import { findWilaya, wilayaCode } from '@/lib/wilayas';
+import ContactScore from '@/components/admin/ContactScore';
 import DateText from '@/components/shared/DateText';
 import { listEventRegistrations, type EventRegistration } from '@/lib/event-registrations-admin';
 
@@ -199,6 +200,8 @@ export default function UserSheet({
           </Ligne>
           <Ligne icon={Globe} label={t('lastIp')}>{v('ip') || vide}</Ligne>
         </Bloc>
+
+        {v('id') && <ContactScore key={v('id')} account={v('id')} />}
 
         {email && (
           <Bloc titre={te('title')}>

@@ -1,5 +1,7 @@
 # SARI CMS — Centre de courrier (emails par module)
 
+**Formulaire de contact :** voir [Tri IA, destinations par sujet et suivi](CONTACT-TRI-ET-ROUTAGE.md). Les événements Contact ne partent qu’après acceptation. Une écriture en outbox sans SMTP est maintenant signalée `skipped / file_transport`, pas `sent`.
+
 > **Écran** : Paramètres → **Emails** → « Emails & notifications »
 > **Réglages** : `data/mail/*.json` — fichiers sur le serveur, **jamais en base**
 > **Transport** : `POST /api/v1/mail/send` (backend NestJS, `nodemailer`)
@@ -49,7 +51,7 @@ n'existent pas, le module tourne sur ses valeurs par défaut — **tous les
 | --- | --- | --- |
 | Commandes | `order_confirmed`, `order_shipped`, `order_delivered`, `order_cancelled`, `order_payment` | changement de statut dans Commandes |
 | Devis | `quote_sent`, `quote_accepted`, `quote_expired` | changement de statut dans Devis |
-| Formulaire de contact | `contact_received`, `contact_alert` (interne) | réception d'un message |
+| Formulaire de contact | `contact_received`, `contact_alert` (société ou destinataire configuré) | acceptation après tri |
 | Candidatures | `application_received`, `application_alert` (interne) | dépôt d'une candidature |
 | Newsletter | `newsletter_welcome`, `newsletter_campaign` | inscription / diffusion |
 | Comptes clients | `user_welcome`, `user_password_reset` | création de compte / demande |
@@ -266,7 +268,7 @@ interrupteur coupé → `master_off` ; heures silencieuses → `quiet_hours` ;
 plafond par destinataire → `recipient_cap` ; backend SMTP absent →
 `transport_error` avec objet fusionné et `missingVars` correctes.
 
-Chaîne publique testée de bout en bout (Next 5000 → Nest 3001 en `DB_DRIVER=json`,
+Recette historique **antérieure au tri Contact et à la distinction transport fichier/SMTP** (Next 5000 → Nest 3001 en `DB_DRIVER=json`,
 `SMTP_HOST` vide donc mode fichier) :
 
 - `POST /api/contact` → 200, message enregistré dans le CRM (`id: 1`), puis

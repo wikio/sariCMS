@@ -5,14 +5,13 @@ import { Logger } from '@nestjs/common';
 type CollectionMap = Record<string, Record<string, unknown>[]>;
 
 /**
- * Synchronous-enough JSON file store with per-collection write serialization.
+ * Single-process JSON store with atomic replacement on disk.
  * Suitable for cPanel single-process Node (Passenger) — not for multi-instance.
  */
 export class JsonStore {
   private readonly logger = new Logger(JsonStore.name);
   private readonly dir: string;
   private readonly cache = new Map<string, Record<string, unknown>[]>();
-  private readonly queues = new Map<string, Promise<void>>();
   /** Counter for temp file names — see the write path in `write`. */
   private tmpSeq = 0;
 
@@ -48,36 +47,18 @@ export class JsonStore {
   }
 
   async write(collection: string, items: Record<string, unknown>[]): Promise<void> {
-    const previous = this.queues.get(collection) ?? Promise.resolve();
-    let release: () => void = () => undefined;
-    const current = new Promise<void>((resolve) => {
-      release = resolve;
-    });
-    this.queues.set(
-      collection,
-      previous.then(() => current),
-    );
-    await previous.catch(() => undefined);
+    // The repository has just read this collection and allocated its next id. Do not
+    // yield before publication: a second create could read the same rows and id,
+    // then overwrite the first message (or score entry). Filesystem I/O is synchronous.
+    const file = this.fileOf(collection);
+    const tmp = `${file}.${process.pid}.${++this.tmpSeq}.tmp`;
     try {
+      fs.writeFileSync(tmp, JSON.stringify(items, null, 2), 'utf8');
+      fs.renameSync(tmp, file);
       this.cache.set(collection, items);
-      const file = this.fileOf(collection);
-      // Unique per write: a fixed `.tmp` name let a concurrent writer (another
-      // process — e.g. `npm run seed` while the server is up) rename the file
-      // first, leaving this one with ENOENT and the JSON truncated.
-      const tmp = `${file}.${process.pid}.${++this.tmpSeq}.tmp`;
-      try {
-        fs.writeFileSync(tmp, JSON.stringify(items, null, 2), 'utf8');
-        fs.renameSync(tmp, file);
-      } catch (err) {
-        try {
-          fs.rmSync(tmp, { force: true });
-        } catch {
-          /* best effort */
-        }
-        throw err;
-      }
-    } finally {
-      release();
+    } catch (err) {
+      try { fs.rmSync(tmp, { force: true }); } catch { /* best effort */ }
+      throw err;
     }
   }
 

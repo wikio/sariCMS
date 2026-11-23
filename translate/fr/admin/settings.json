@@ -116,5 +116,7 @@
   "erpMissing": "ERP non configuré (activation et URL requises).",
   "erpConnected": "Connecté ({status}).",
   "erpResponse": "Réponse HTTP {status}.",
-  "erpNetwork": "Connexion impossible (réseau / CORS)."
+  "erpNetwork": "Connexion impossible (réseau / CORS).",
+  "contactTriage": "Tri et routage du contact",
+  "search_contactTriage": "Contact IA spam tri modération transfert email catégorie points"
 }

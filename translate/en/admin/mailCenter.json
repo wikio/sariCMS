@@ -110,8 +110,8 @@
   "hint_contact": "Incoming messages from the public site.",
   "label_contact_received": "Visitor acknowledgement",
   "hint_contact_received": "One email acknowledging the visitor’s message.",
-  "label_contact_alert": "Internal alert",
-  "hint_contact_alert": "Notify the company. Prefer a digest to one email per message.",
+  "label_contact_alert": "Contact alert / forwarding",
+  "hint_contact_alert": "After acceptance: notify the published company address or the address configured for the final subject.",
   "label_applications": "Job applications",
   "hint_applications": "Applications submitted for job openings.",
   "label_application_received": "Applicant acknowledgement",
@@ -133,5 +133,6 @@
   "label_stock": "Stock and restocking",
   "hint_stock": "Out-of-stock items and new arrivals.",
   "label_stock_backorder": "Restocking scheduled",
-  "hint_stock_backorder": "One email per out-of-stock product for the affected order."
+  "hint_stock_backorder": "One email per out-of-stock product for the affected order.",
+  "reason_file_transport": "File transport: no email transmitted"
 }

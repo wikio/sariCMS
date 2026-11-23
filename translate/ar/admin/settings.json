@@ -116,5 +116,7 @@
   "erpMissing": "فعّل نظام ERP وأدخل رابطه أولًا.",
   "erpConnected": "تم الاتصال ({status}).",
   "erpResponse": "استجابة HTTP: {status}.",
-  "erpNetwork": "تعذّر الاتصال (الشبكة / CORS)."
+  "erpNetwork": "تعذّر الاتصال (الشبكة / CORS).",
+  "contactTriage": "فرز رسائل الاتصال وتوجيهها",
+  "search_contactTriage": "الاتصال ذكاء اصطناعي رسائل مزعجة فرز إشراف تحويل بريد فئة نقاط"
 }

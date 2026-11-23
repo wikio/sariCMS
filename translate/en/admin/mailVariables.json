@@ -29,5 +29,6 @@
   "date_expiration": "Expiration date",
   "lien_document": "Document link",
   "lien_espace_client": "Customer account link",
-  "lien_desinscription": "Unsubscribe link"
+  "lien_desinscription": "Unsubscribe link",
+  "sujet_contact": "Final contact subject"
 }

@@ -19,7 +19,7 @@
  * par `/api/admin/mail-center/send` ; un flux public appelle cette fonction
  * directement depuis sa route API, sans jamais exposer la clé interne.
  */
-import { cmsServerBase } from './cms';
+import { cmsServerBase, unwrap } from './cms';
 import { getConfig } from './data';
 import {
   MAIL_EVENTS,
@@ -53,7 +53,7 @@ export interface MailCenterSendInput {
   override?: { subject?: string; body?: string; layoutId?: string };
 }
 
-export type MailCenterSendReason = SendBlockReason | 'transport_error' | 'internal_key_missing';
+export type MailCenterSendReason = SendBlockReason | 'transport_error' | 'internal_key_missing' | 'file_transport';
 
 export interface MailCenterSendResult {
   sent: boolean;
@@ -154,7 +154,7 @@ export async function sendMailCenterEvent(input: MailCenterSendInput): Promise<M
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TRANSPORT_TIMEOUT_MS);
 
-  let status: 'sent' | 'failed' = 'failed';
+  let status: 'sent' | 'failed' | 'skipped' = 'failed';
   let messageId: string | undefined;
   let errorText = '';
 
@@ -169,14 +169,18 @@ export async function sendMailCenterEvent(input: MailCenterSendInput): Promise<M
       body: JSON.stringify({ to, toName: input.toName || undefined, subject, html }),
       signal: controller.signal,
     });
-    const json = (await res.json().catch(() => null)) as
-      | { messageId?: string; error?: string; message?: string }
-      | null;
+    const json = await res.json().catch(() => null);
+    const delivery = unwrap<{ provider?: string; messageId?: string } | null>(json);
     if (!res.ok) {
       errorText = json?.error || json?.message || `Transport SMTP : HTTP ${res.status}`;
-    } else {
+    } else if (delivery?.provider === 'file') {
+      status = 'skipped';
+      errorText = 'SMTP non configuré : consigné dans l’outbox, aucun courrier transmis.';
+    } else if (delivery?.provider === 'smtp') {
       status = 'sent';
-      messageId = json?.messageId;
+      messageId = delivery.messageId;
+    } else {
+      errorText = 'Transport SMTP : réponse non reconnue.';
     }
   } catch (err) {
     errorText = err instanceof Error ? err.message : String(err);
@@ -197,16 +201,16 @@ export async function sendMailCenterEvent(input: MailCenterSendInput): Promise<M
       subject,
       dedupeKey,
       status,
-      reason: input.test ? 'test' : undefined,
+      reason: status === 'skipped' ? 'file_transport' : input.test ? 'test' : undefined,
       messageId,
-      error: status === 'failed' ? errorText : undefined,
+      error: status !== 'sent' ? errorText : undefined,
     },
     policy.logRetentionDays,
   );
 
   return {
     sent: status === 'sent',
-    reason: status === 'sent' ? undefined : 'transport_error',
+    reason: status === 'sent' ? undefined : status === 'skipped' ? 'file_transport' : 'transport_error',
     detail: status === 'sent' ? undefined : errorText,
     messageId,
     subject,

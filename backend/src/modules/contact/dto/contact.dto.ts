@@ -1,3 +1,4 @@
+import { CONTACT_STATUSES, ContactStatus, SUBJECTS, Subject } from '../contact-contract';
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import {
   IsEmail,
@@ -96,8 +97,17 @@ export class CreateContactMessageDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  @MaxLength(180)
-  subject?: string;
+  @MaxLength(160)
+  company?: string;
+
+  @ApiPropertyOptional({ enum: ['fr', 'en', 'ar'] })
+  @IsOptional()
+  @IsIn(['fr', 'en', 'ar'])
+  locale?: string;
+
+  @ApiProperty({ enum: SUBJECTS })
+  @IsIn(SUBJECTS)
+  subject!: Subject;
 
   @ApiProperty()
   @IsString()
@@ -107,8 +117,19 @@ export class CreateContactMessageDto {
 }
 
 export class UpdateContactMessageDto {
-  @ApiPropertyOptional({ enum: ['new', 'read', 'archived'] })
+  @ApiPropertyOptional({ enum: CONTACT_STATUSES })
   @IsOptional()
-  @IsIn(['new', 'read', 'archived'])
-  status?: string;
+  @IsIn(CONTACT_STATUSES)
+  status?: ContactStatus;
+
+  @ApiPropertyOptional({ enum: SUBJECTS })
+  @IsOptional()
+  @IsIn(SUBJECTS)
+  subject?: Subject;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(1500)
+  followUp?: string;
 }

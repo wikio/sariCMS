@@ -7,7 +7,7 @@ Ce dossier contient le schéma MySQL et les données de démarrage du CMS
 
 | Fichier                    | Rôle                                                           |
 | -------------------------- | -------------------------------------------------------------- |
-| `schema.mysql.sql`         | Structure : base `sari_cms`, 32 tables, index, clés étrangères — **destructeur** (`DROP TABLE`), réservé à une installation neuve |
+| `schema.mysql.sql`         | Structure : base `sari_cms`, 33 tables, index, clés étrangères — **destructeur** (`DROP TABLE`), réservé à une installation neuve |
 | `generate-schema.mjs`      | **Génère** `schema.mysql.sql` depuis `prisma/schema.prisma`     |
 | `seed.mysql.sql`           | Données de démarrage (contexte algérien, FR / EN / AR)         |
 | `generate-seed.mjs`        | Générateur du seed (reproductible, IDs déterministes)          |
@@ -22,6 +22,7 @@ Ce dossier contient le schéma MySQL et les données de démarrage du CMS
 | `test-seed-legal-sql.mjs`  | Vérifie ce seed (rejeu sur SQLite, contenu préservé)             |
 | `migrate-commerce.mysql.sql` | **Migration additive** : tables `orders`, `quotes`, `job_applications` |
 | `migrate-authors.mysql.sql`  | **Migration additive** : table `authors` + `news_articles.authorId`    |
+| [`20261116_contact_penalties/migration.sql`](../prisma/migrations/20261116_contact_penalties/migration.sql) | **Migration additive** : débits de points et remarques Contact par compte |
 | `migrate-payment-records.mysql.sql` | **Migration additive** : table `payment_records` (relevé d'encaissements) |
 | `check-data-sources.mysql.sql` | **Contrôle en lecture seule** : tables présentes, documents de réglages, lignes du relevé, compteurs vus par l'accueil |
 | `migrate-coupons-taxes.mysql.sql` | **Migration additive** : tables `coupons`, `tax_rules` + les 5 champs d'expédition d'`orders` |

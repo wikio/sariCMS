@@ -10,6 +10,7 @@ export const FAQ_REPOSITORY = Symbol('FAQ_REPOSITORY');
 export const TESTIMONIAL_REPOSITORY = Symbol('TESTIMONIAL_REPOSITORY');
 export const MENU_REPOSITORY = Symbol('MENU_REPOSITORY');
 export const CONTACT_INFO_REPOSITORY = Symbol('CONTACT_INFO_REPOSITORY');
+export const CONTACT_PENALTY_REPOSITORY = Symbol('CONTACT_PENALTY_REPOSITORY');
 export const CONTACT_MESSAGE_REPOSITORY = Symbol('CONTACT_MESSAGE_REPOSITORY');
 export const TRANSLATION_REPOSITORY = Symbol('TRANSLATION_REPOSITORY');
 export const AUDIT_LOG_REPOSITORY = Symbol('AUDIT_LOG_REPOSITORY');
@@ -44,6 +45,7 @@ export const COLLECTIONS = {
   menus: 'menus',
   contactInfo: 'contact_info',
   contactMessages: 'contact_messages',
+  contactPenalties: 'contact_penalties',
   translations: 'translations',
   auditLogs: 'audit_logs',
   settings: 'settings',
@@ -80,6 +82,7 @@ export const PRISMA_MODEL_BY_COLLECTION: Record<string, string> = {
   menus: 'menu',
   contact_info: 'contactInfo',
   contact_messages: 'contactMessage',
+  contact_penalties: 'contactPenalty',
   translations: 'translation',
   audit_logs: 'auditLog',
   settings: 'setting',

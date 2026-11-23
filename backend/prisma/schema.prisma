@@ -51,6 +51,7 @@ model User {
   createdBy   Int?
   updatedBy   Int?
 
+  contactPenalties ContactPenalty[]
   refreshTokens RefreshToken[]
   passwordResetTokens PasswordResetToken[]
   auditLogs     AuditLog[]     @relation("ActorLogs")
@@ -289,7 +290,7 @@ model ContactMessage {
   phone     String?
   subject   String?
   message   String    @db.Text
-  status    String    @default("new") // new | read | archived
+  status    String    @default("new") // review | new | read | archived
   meta      Json?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -300,6 +301,21 @@ model ContactMessage {
   @@index([status])
   @@index([deletedAt])
   @@map("contact_messages")
+}
+
+// Une seule écriture pour le débit de points et la remarque associée. Pas de texte du message.
+model ContactPenalty {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reason    String
+  points    Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  @@index([userId, createdAt])
+  @@map("contact_penalties")
 }
 
 // ---------------------------------------------------------------------------

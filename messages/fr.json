@@ -453,7 +453,9 @@
       "erpMissing": "ERP non configuré (activation et URL requises).",
       "erpConnected": "Connecté ({status}).",
       "erpResponse": "Réponse HTTP {status}.",
-      "erpNetwork": "Connexion impossible (réseau / CORS)."
+      "erpNetwork": "Connexion impossible (réseau / CORS).",
+      "contactTriage": "Tri et routage du contact",
+      "search_contactTriage": "Contact IA spam tri modération transfert email catégorie points"
     },
     "users": {
       "title": "Utilisateurs",
@@ -4179,8 +4181,8 @@
       "hint_contact": "Messages reçus depuis la vitrine.",
       "label_contact_received": "Accusé de réception (visiteur)",
       "hint_contact_received": "Un seul email au visiteur, à la réception de son message.",
-      "label_contact_alert": "Alerte interne",
-      "hint_contact_alert": "Prévenir l’entreprise — regrouper dans un digest plutôt qu’un email par message.",
+      "label_contact_alert": "Alerte de contact / transfert",
+      "hint_contact_alert": "Après acceptation : notifier l’adresse société publiée ou l’adresse configurée pour le sujet retenu.",
       "label_applications": "Candidatures",
       "hint_applications": "Candidatures déposées sur les offres d’emploi.",
       "label_application_received": "Accusé de réception (candidat)",
@@ -4202,7 +4204,8 @@
       "label_stock": "Stock & réapprovisionnement",
       "hint_stock": "Rupture et nouvel arrivage.",
       "label_stock_backorder": "Réapprovisionnement prévu",
-      "hint_stock_backorder": "Un seul email par produit en rupture, à la commande concernée."
+      "hint_stock_backorder": "Un seul email par produit en rupture, à la commande concernée.",
+      "reason_file_transport": "Mode fichier : aucun courriel transmis"
     },
     "mailVariables": {
       "nom_societe": "Nom société",
@@ -4235,7 +4238,8 @@
       "date_expiration": "Date d’expiration",
       "lien_document": "Lien vers le document",
       "lien_espace_client": "Lien espace client",
-      "lien_desinscription": "Lien de désinscription"
+      "lien_desinscription": "Lien de désinscription",
+      "sujet_contact": "Sujet retenu du contact"
     },
     "mailStudio": {
       "newTitle": "Votre commande est confirmée",
@@ -4294,6 +4298,47 @@
       "buttonText": "Libellé du bouton",
       "buttonUrl": "Lien du bouton",
       "imageUrl": "Source de l’image"
+    },
+    "contactTriage": {
+      "settings": "Tri et routage du contact",
+      "settingsHelp": "L’IA évalue le texte avant son traitement. Vous décidez des suites et des destinataires.",
+      "provider": "Modèle configuré : {model}",
+      "noProvider": "Aucune API IA configurée : les demandes restent à vérifier.",
+      "providerHelp": "URL, modèle et clé se règlent sur le serveur API. En cas de panne ou de doute : vérification humaine, sans courriel ni pénalité.",
+      "minConfidence": "Confiance minimale déclarée par l’IA (50–100)",
+      "penaltyPoints": "Points à retirer par rejet pour abus (compte connecté ; 0 = aucun)",
+      "spam": "Spam",
+      "inappropriate": "Propos inappropriés",
+      "mismatch": "Sujet non correspondant",
+      "review": "À vérifier",
+      "reclassify": "Reclasser si un autre sujet est identifié",
+      "discard": "Supprimer définitivement",
+      "routes": "Destination par sujet retenu",
+      "routesHelp": "Toute demande acceptée reste dans Messages → Contact. Pour envoyer une copie, configurez le SMTP et activez l’alerte contact dans le centre de courrier. Ses quotas restent applicables.",
+      "inbox": "Suivi interne uniquement",
+      "company": "Alerte à l’adresse de la société",
+      "external": "Transfert à une adresse configurée",
+      "queue": "Demandes du formulaire de contact",
+      "queueHelp": "« À vérifier » est une file de modération distincte. Après lecture, choisissez « À traiter » pour accepter une demande en interne. Modifier sa fiche n’envoie aucun courriel.",
+      "new": "À traiter",
+      "read": "Pris en charge",
+      "archived": "Archivé",
+      "previous": "Précédent",
+      "next": "Suivant",
+      "decision": "Motif du tri",
+      "selected": "Sujet choisi",
+      "suggested": "Sujet proposé par l’IA",
+      "plannedRoute": "Routage prévu à la réception",
+      "followUp": "Note de suivi interne",
+      "matched": "Sujet confirmé",
+      "uncertain": "Confiance insuffisante",
+      "ai_unavailable": "IA indisponible ou réponse inexploitable",
+      "policy_unavailable": "Règles de tri indisponibles",
+      "confirmPurge": "Supprimer définitivement cette demande du CMS et sa note de suivi ?",
+      "score": "Score du compte · Contact",
+      "balance": "{score} points · {total} remarque(s) active(s). Les 20 plus récentes sont affichées.",
+      "retract": "Annuler le retrait",
+      "confirmRetract": "Annuler cette remarque et restituer ses points ?"
     }
   },
   "common": {
@@ -5194,8 +5239,8 @@
       "formTag": "Formulaire de contact",
       "formTitle": "Envoyez-nous un message",
       "formDesc": "Remplissez le formulaire ci-dessous et nous vous recontacterons sous 24h",
-      "successTitle": "Message envoyé avec succès !",
-      "successDesc": "Merci pour votre message. Notre équipe vous recontactera sous 24h.",
+      "successTitle": "Formulaire transmis",
+      "successDesc": "Merci de nous avoir écrit.",
       "subjectLabel": "Sujet de votre demande",
       "subjectQuote": "Demande de devis",
       "subjectTechnical": "Support technique",
@@ -5227,7 +5272,10 @@
       "loading": "Chargement...",
       "quoteCtaText": "Pour une demande de devis plus détaillée (plusieurs produits, spécifications personnalisées, etc.), connectez-vous à votre compte client.",
       "quoteCtaLogin": "Se connecter",
-      "quoteCtaRegister": "Créer un compte"
+      "quoteCtaRegister": "Créer un compte",
+      "triageNotice": "Le texte peut être analysé par une IA pour détecter le spam, les propos inappropriés et vérifier le sujet. Une demande abusive peut être supprimée et, si vous êtes connecté, entraîner un retrait de points. N’incluez pas de données médicales.",
+      "fieldsError": "Vérifiez les coordonnées, le sujet et la longueur du message (10 à 4 000 caractères).",
+      "unavailable": "Le service est momentanément indisponible. Votre texte est conservé dans le formulaire ; vous pouvez réessayer."
     },
     "dashboard": {
       "overview": "Tableau de bord",

@@ -19,8 +19,8 @@
   "formTag": "Formulaire de contact",
   "formTitle": "Envoyez-nous un message",
   "formDesc": "Remplissez le formulaire ci-dessous et nous vous recontacterons sous 24h",
-  "successTitle": "Message envoyé avec succès !",
-  "successDesc": "Merci pour votre message. Notre équipe vous recontactera sous 24h.",
+  "successTitle": "Formulaire transmis",
+  "successDesc": "Merci de nous avoir écrit.",
   "subjectLabel": "Sujet de votre demande",
   "subjectQuote": "Demande de devis",
   "subjectTechnical": "Support technique",
@@ -52,5 +52,8 @@
   "loading": "Chargement...",
   "quoteCtaText": "Pour une demande de devis plus détaillée (plusieurs produits, spécifications personnalisées, etc.), connectez-vous à votre compte client.",
   "quoteCtaLogin": "Se connecter",
-  "quoteCtaRegister": "Créer un compte"
+  "quoteCtaRegister": "Créer un compte",
+  "triageNotice": "Le texte peut être analysé par une IA pour détecter le spam, les propos inappropriés et vérifier le sujet. Une demande abusive peut être supprimée et, si vous êtes connecté, entraîner un retrait de points. N’incluez pas de données médicales.",
+  "fieldsError": "Vérifiez les coordonnées, le sujet et la longueur du message (10 à 4 000 caractères).",
+  "unavailable": "Le service est momentanément indisponible. Votre texte est conservé dans le formulaire ; vous pouvez réessayer."
 }

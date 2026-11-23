@@ -31,7 +31,8 @@
     "settings-doc:test": "node scripts/test-settings-doc.mjs",
     "payments:test": "node --experimental-strip-types scripts/test-payment-records.mjs",
     "storage:audit": "node scripts/test-storage-map.mjs",
-    "upload:test": "node scripts/test-upload-hardening.mjs"
+    "upload:test": "node scripts/test-upload-hardening.mjs",
+    "contact:test": "node --test scripts/test-contact-routing.mjs scripts/test-contact-ui.mjs && npm --prefix backend test -- --runInBand contact-triage"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

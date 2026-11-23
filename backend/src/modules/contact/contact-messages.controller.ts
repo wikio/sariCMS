@@ -1,6 +1,17 @@
-import { Body, Controller, Param, ParseIntPipe, Post, Patch } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Param,
+  ParseIntPipe,
+  Post,
+  Patch,
+  Headers,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { isInternalKey } from '../../common/security/internal-key';
+import { ContactIntakeService } from './contact-intake.service';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Throttle } from '@nestjs/throttler';
 import { Actor } from '../../common/decorators/actor.decorator';
 import { CrudResource } from '../../common/decorators/crud-resource.decorator';
 import { Public } from '../../common/decorators/public.decorator';
@@ -15,16 +26,25 @@ import { ContactMessagesService } from './contact-messages.service';
 @Controller('contact/messages')
 @CrudResource('contact')
 export class ContactMessagesController extends BaseCrudController<ContactMessageEntity> {
-  constructor(protected readonly service: ContactMessagesService) {
+  constructor(
+    protected readonly service: ContactMessagesService,
+    private readonly intake: ContactIntakeService,
+    private readonly config: ConfigService,
+  ) {
     super();
   }
 
   @Public()
   @Post()
-  @Throttle({ default: { limit: 5, ttl: 60_000 } })
-  @ApiOperation({ summary: 'Envoyer un message depuis le site vitrine' })
-  override create(@Body() dto: CreateContactMessageDto, @Actor() actor: ActorContext) {
-    return this.service.create(dto as unknown as Partial<ContactMessageEntity>, actor);
+  // Le quota par visiteur est sur Next. Ici l'IP est celle du relais ; le plafond Nest global reste actif.
+  @ApiOperation({ summary: 'Trier une demande du formulaire — relais Next.js uniquement' })
+  override create(
+    @Body() dto: CreateContactMessageDto,
+    @Actor() actor: ActorContext,
+    @Headers('x-mail-internal-key') key?: string,
+  ) {
+    if (!isInternalKey(key, this.config.get<string>('MAIL_INTERNAL_KEY') || '')) throw new UnauthorizedException();
+    return this.intake.submit(dto, actor);
   }
 
   @Patch(':id')
@@ -33,6 +53,6 @@ export class ContactMessagesController extends BaseCrudController<ContactMessage
     @Body() dto: UpdateContactMessageDto,
     @Actor() actor: ActorContext,
   ) {
-    return this.service.update(id, dto as unknown as Partial<ContactMessageEntity>, actor);
+    return this.service.followUp(id, dto, actor);
   }
 }

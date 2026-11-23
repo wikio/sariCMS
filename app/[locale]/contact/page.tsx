@@ -9,51 +9,40 @@ import {
   Send, Loader, Shield, Users
 } from 'lucide-react';
 import { getConfig, getMenu } from '@/lib/data';
-import { subscribeToNewsletter } from '@/lib/newsletter-admin';
+import { frontToken } from '@/contexts/AuthContext';
+import { subjectLabels } from '@/lib/contact-subjects';
+import { isSubject, SUBJECTS } from '@/backend/src/modules/contact/contact-contract';
 import type { Config, Menu } from '@/types';
 import SocialLinks from '@/components/shared/SocialLinks';
 import ServerCaptcha from '@/components/ServerCaptcha';
-import { loadAdminSettings } from '@/lib/admin-settings';
 import PageVisibilityGuard from '@/components/shared/PageVisibilityGuard';
 import { maskPhone } from '@/lib/masks';
-
-/** Motifs proposés par le formulaire — `?subject=` doit rester dans cette liste. */
-const SUBJECTS = ['devis', 'technique', 'commercial', 'rh', 'partenaire', 'client'] as const;
 
 export default function ContactPage() {
   const [config, setConfig] = useState<Config | null>(null);
   const [menu, setMenu] = useState<Menu | null>(null);
-  const [formData, setFormData] = useState({
-    subject: 'devis',
-    name: '',
-    email: '',
-    phone: '',
-    company: '',
-    message: '',
-    newsletter: false,
-    acceptTerms: false
+  const [formData, setFormData] = useState(() => {
+    // La page de connexion peut présélectionner « client ». Le formulaire ne s'affiche qu'après le chargement des coordonnées.
+    const wanted = typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('subject');
+    return {
+      subject: isSubject(wanted) ? wanted : 'devis',
+      name: '',
+      email: '',
+      phone: '',
+      company: '',
+      message: '',
+      newsletter: false,
+      acceptTerms: false
+    };
   });
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [captchaRound, setCaptchaRound] = useState(0);
   const [captchaOk, setCaptchaOk] = useState(false);
   // Le captcha est vérifié par /api/contact, pas par le navigateur : `autoVerify`
   // est désactivé pour que le code ne soit pas consommé avant l'envoi du formulaire.
   const [captcha, setCaptcha] = useState<{ id: string; value: string }>({ id: '', value: '' });
   const [formError, setFormError] = useState('');
-
-  // Un autre écran peut amener ici avec le motif déjà choisi — la page de
-  // connexion le fait pour un problème de compte. Toute valeur hors liste est
-  // ignorée : l'URL ne doit pas pouvoir inventer un motif.
-  //
-  // Lu dans `window.location` plutôt que via `useSearchParams()` : ce dernier
-  // exige une balise Suspense au prerender, pour un simple pré-remplissage au
-  // montage qui n'a pas besoin d'être réactif.
-  useEffect(() => {
-    const wanted = new URLSearchParams(window.location.search).get('subject');
-    if (wanted && (SUBJECTS as readonly string[]).includes(wanted)) {
-      setFormData((prev) => ({ ...prev, subject: wanted }));
-    }
-  }, []);
 
   const locale = useLocale();
   const t = useTranslations('pages.contact');
@@ -79,18 +68,15 @@ export default function ContactPage() {
       return;
     }
 
-    // La case « newsletter » est lue avant l'envoi : le formulaire sera
-    // réinitialisé juste après, et l'adresse doit partir dans la liste
-    // d'abonnement (même magasin que le bandeau de la page d'accueil).
-    const wantsNewsletter = Boolean(formData.newsletter) && String(formData.email || '').includes('@');
-
     setIsSubmitting(true);
-    // /api/contact enregistre le message côté serveur, vérifie le captcha, puis
-    // déclenche l'accusé de réception configuré dans Paramètres → Emails.
+    const token = frontToken();
+    const website = new FormData(e.currentTarget as HTMLFormElement).get('website');
     const res = await fetch('/api/contact', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(token && { Authorization: `Bearer ${token}` }) },
       body: JSON.stringify({
+        website,
+        newsletter: formData.newsletter,
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
@@ -102,27 +88,22 @@ export default function ContactPage() {
         captchaAnswer: captcha.value,
       }),
     }).catch(() => null);
-    const json = (await res?.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
+    const json = (await res?.json().catch(() => null)) as { ok?: boolean; code?: string } | null;
 
-    if (!res?.ok || json?.ok === false) {
+    if (!res?.ok || json?.ok !== true) {
       // Le formulaire est conservé : le visiteur ne retape pas son message.
       setIsSubmitting(false);
       setCaptcha({ id: '', value: '' });
-      setFormError(json?.error || t('captchaError'));
+      setCaptchaOk(false);
+      setCaptchaRound((n) => n + 1);
+      setFormError(t(json?.code === 'captcha' ? 'captchaError' : json?.code === 'fields' ? 'fieldsError' :
+        json?.code === 'rate' ? 'captchaBlocked' : 'unavailable'));
       return;
     }
 
-    if (wantsNewsletter) {
-      void subscribeToNewsletter({
-        email: String(formData.email).trim().toLowerCase(),
-        name: formData.name || undefined,
-        locale,
-        source: 'contact',
-        consent: true,
-      });
-    }
     setIsSubmitting(false);
     setSubmitted(true);
+    setCaptchaRound((n) => n + 1);
     setFormData({
       subject: 'devis',
       name: '',
@@ -358,25 +339,18 @@ export default function ContactPage() {
                     {t('subjectLabel')} <span className="text-red-500">*</span>
                   </label>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {[
-                      { value: 'devis', label: t('subjectQuote'), icon: 'file-text' },
-                      { value: 'technique', label: t('subjectTechnical'), icon: 'wrench' },
-                      { value: 'commercial', label: t('subjectCommercial'), icon: 'shopping-cart' },
-                      { value: 'rh', label: t('subjectHR'), icon: 'users' },
-                      { value: 'partenaire', label: t('subjectPartner'), icon: 'handshake' },
-                      { value: 'client', label: t('subjectClient'), icon: 'user' }
-                    ].map((option) => (
+                    {SUBJECTS.map((subject) => (
                       <button
-                        key={option.value}
+                        key={subject}
                         type="button"
-                        onClick={() => setFormData({...formData, subject: option.value})}
+                        onClick={() => setFormData({...formData, subject})}
                         className={`p-4 border-2 text-left transition-all ${
-                          formData.subject === option.value
+                          formData.subject === subject
                             ? 'border-sari-blue bg-sari-blue/5 text-sari-blue'
                             : 'border-gray-200 dark:border-gray-700 hover:border-sari-blue/50'
                         }`}
                       >
-                        <div className="text-sm font-semibold">{option.label}</div>
+                        <div className="text-sm font-semibold">{t(subjectLabels[subject])}</div>
                       </button>
                     ))}
                   </div>
@@ -408,6 +382,7 @@ export default function ContactPage() {
                     <input
                       type="text"
                       required
+                      minLength={2} maxLength={120}
                       value={formData.name}
                       onChange={(e) => setFormData({...formData, name: e.target.value})}
                       className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none"
@@ -449,6 +424,7 @@ export default function ContactPage() {
                     </label>
                     <input
                       type="text"
+                      maxLength={160}
                       value={formData.company}
                       onChange={(e) => setFormData({...formData, company: e.target.value})}
                       className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 dark:bg-[#111111] dark:text-white focus:border-sari-blue outline-none"
@@ -463,6 +439,7 @@ export default function ContactPage() {
                     {t('message')} <span className="text-red-500">*</span>
                   </label>
                   <textarea
+                    minLength={10} maxLength={4000}
                     required
                     rows={6}
                     value={formData.message}
@@ -471,6 +448,9 @@ export default function ContactPage() {
                     placeholder={t('messagePlaceholder')}
                   ></textarea>
                 </div>
+
+                <p className="text-sm text-gray-600 dark:text-gray-400">{t('triageNotice')}</p>
+                <input type="text" name="website" aria-hidden="true" tabIndex={-1} autoComplete="off" className="hidden" />
 
                 {/* Newsletter */}
                 <div className="flex items-start gap-3">
@@ -511,7 +491,7 @@ export default function ContactPage() {
                     <Shield className="w-4 h-4 text-sari-blue" />
                     {t('captchaLabel')} <span className="text-red-500">*</span>
                   </label>
-                  <ServerCaptcha onChange={setCaptchaOk} onCaptchaData={setCaptcha} autoVerify={false} locale={locale} />
+                  <ServerCaptcha key={captchaRound} onChange={setCaptchaOk} onCaptchaData={setCaptcha} autoVerify={false} locale={locale} />
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                     {t('captchaHelp')}
                   </p>

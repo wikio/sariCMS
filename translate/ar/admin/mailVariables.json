@@ -29,5 +29,6 @@
   "date_expiration": "تاريخ انتهاء الصلاحية",
   "lien_document": "رابط المستند",
   "lien_espace_client": "رابط حساب العميل",
-  "lien_desinscription": "رابط إلغاء الاشتراك"
+  "lien_desinscription": "رابط إلغاء الاشتراك",
+  "sujet_contact": "موضوع الاتصال النهائي"
 }

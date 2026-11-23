@@ -110,8 +110,8 @@
   "hint_contact": "Messages reçus depuis la vitrine.",
   "label_contact_received": "Accusé de réception (visiteur)",
   "hint_contact_received": "Un seul email au visiteur, à la réception de son message.",
-  "label_contact_alert": "Alerte interne",
-  "hint_contact_alert": "Prévenir l’entreprise — regrouper dans un digest plutôt qu’un email par message.",
+  "label_contact_alert": "Alerte de contact / transfert",
+  "hint_contact_alert": "Après acceptation : notifier l’adresse société publiée ou l’adresse configurée pour le sujet retenu.",
   "label_applications": "Candidatures",
   "hint_applications": "Candidatures déposées sur les offres d’emploi.",
   "label_application_received": "Accusé de réception (candidat)",
@@ -133,5 +133,6 @@
   "label_stock": "Stock & réapprovisionnement",
   "hint_stock": "Rupture et nouvel arrivage.",
   "label_stock_backorder": "Réapprovisionnement prévu",
-  "hint_stock_backorder": "Un seul email par produit en rupture, à la commande concernée."
+  "hint_stock_backorder": "Un seul email par produit en rupture, à la commande concernée.",
+  "reason_file_transport": "Mode fichier : aucun courriel transmis"
 }

@@ -27,7 +27,7 @@ export interface InternalCallResult<T> {
  * Ne lève jamais d'exception : un appelant public doit pouvoir répondre poliment
  * au visiteur même quand le backend est absent.
  */
-export async function internalPost<T>(path: string, body: unknown): Promise<InternalCallResult<T>> {
+export async function internalPost<T>(path: string, body: unknown, authorization?: string | null): Promise<InternalCallResult<T>> {
   const key = String(process.env.MAIL_INTERNAL_KEY || '');
   if (!key) {
     return {
@@ -43,7 +43,11 @@ export async function internalPost<T>(path: string, body: unknown): Promise<Inte
   try {
     const res = await fetch(target, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-mail-internal-key': key },
+      redirect: 'error',
+      headers: { 'Content-Type': 'application/json', 'x-mail-internal-key': key,
+        // Le relais contact ne lit jamais le cookie administrateur. Nest vérifie le JWT vitrine.
+        ...(authorization && /^Bearer [\w.-]+$/i.test(authorization) ? { Authorization: authorization } : {}),
+      },
       body: JSON.stringify(body),
       signal: controller.signal,
     });

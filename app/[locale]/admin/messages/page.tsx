@@ -10,6 +10,7 @@ import {
   type Thread,
 } from '@/lib/messages';
 import { useToast } from '@/components/admin/Toast';
+import ContactInbox from '@/components/admin/ContactInbox';
 import Drawer from '@/components/admin/Drawer';
 import Toggle from '@/components/admin/Toggle';
 import HtmlEditor from '@/components/admin/fields/HtmlEditor';
@@ -24,7 +25,7 @@ const empty = (): NotifyMessage => ({
 
 export default function MessagesPage() {
   const t = useTranslations('admin.messages');
-  const [tab, setTab] = useState<'inbox' | 'templates'>('inbox');
+  const [tab, setTab] = useState<'inbox' | 'contact' | 'templates'>('inbox');
   return (
     <div className="space-y-4">
       <header className="flex items-end justify-between">
@@ -33,12 +34,15 @@ export default function MessagesPage() {
           <h1 className="text-3xl font-black">{t("title")}</h1>
         </div>
       </header>
-      <div className="flex gap-2" style={{ borderBottom: '1px solid var(--ad-line)' }}>
+      <div className="flex flex-wrap gap-2" style={{ borderBottom: '1px solid var(--ad-line)' }}>
         <button
           className={`ad-btn ${tab === 'inbox' ? 'ad-btn-primary' : 'ad-btn-ghost'}`}
           onClick={() => setTab('inbox')}
         >
           <Inbox className="w-4 h-4" /> {t('conversations')}
+        </button>
+        <button className={`ad-btn ${tab === 'contact' ? 'ad-btn-primary' : 'ad-btn-ghost'}`} onClick={() => setTab('contact')}>
+          <Mail className="w-4 h-4" /> {t('contact')}
         </button>
         <button
           className={`ad-btn ${tab === 'templates' ? 'ad-btn-primary' : 'ad-btn-ghost'}`}
@@ -47,7 +51,7 @@ export default function MessagesPage() {
           <Mail className="w-4 h-4" /> {t('templates')}
         </button>
       </div>
-      {tab === 'inbox' ? <InboxTab /> : <TemplatesTab />}
+      {tab === 'contact' ? <ContactInbox /> : tab === 'inbox' ? <InboxTab /> : <TemplatesTab />}
     </div>
   );
 }

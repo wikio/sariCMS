@@ -19,18 +19,15 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { cmsFetch } from '@/lib/cms';
-import { companyVars, requestOrigin, sendMailCenterEvent } from '@/lib/mail-center-send';
-import { cmsOr, forwardedIp, userAgent } from '@/lib/server/cms-or';
+import { subscribeFromForm } from '@/lib/server/newsletter-subscribe';
+import { cmsOr, forwardedIp } from '@/lib/server/cms-or';
 import { issueCaptcha, rateLimited, verifyCaptcha } from '@/lib/newsletter-captcha';
-import { confirmSubscriber, subscribe, unsubscribe } from '@/lib/newsletter-store';
+import { confirmSubscriber, unsubscribe } from '@/lib/newsletter-store';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i;
-
-/** Formulaires qui ont déjà leur propre contrôle anti-spam côté page. */
-const EXEMPT_SOURCES = new Set(['contact']);
 
 /**
  * Corps de la requête, en JSON ou en formulaire.
@@ -124,106 +121,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, status: 'invalid-email', message: 'Adresse e-mail invalide' }, { status: 400 });
   }
 
-  // Captcha : vérifié ici, jamais dans le navigateur. Une réponse juste est
-  // consommée ; la suivante doit être redemandée.
-  //
-  // Quelques formulaires ont leur propre preuve d'humanité (la page contact
-  // calcule sa question et son quota de tentatives) : ils sont listés ici pour
-  // qu'on ne leur demande pas deux fois la même chose. Ils gardent le piège à
-  // miel et la limite de débit, et `consent` doit rester explicitement vrai.
-  // Le désabonnement n'exige pas de captcha : on y arrive par le lien du site ou
-  // du courriel, et demander une preuve d'humanité pour partir produirait
-  // l'effet inverse — des adresses coincées dans la liste, donc des plaintes.
-  const exemptSource = EXEMPT_SOURCES.has(String(payload.source || '')) || action === 'unsubscribe';
-  if (!exemptSource) {
-    const captchaId = String(body.captchaId || '').trim();
-    const captchaAnswer = String(body.captchaAnswer ?? '').trim();
-    if (!captchaId || !verifyCaptcha(captchaId, captchaAnswer)) {
-      return NextResponse.json(
-        { ok: false, status: 'captcha-failed', message: 'Vérification anti-spam manquante ou incorrecte.' },
-        { status: 400 },
-      );
-    }
-  } else if (body.consent !== true) {
-    // Le contournement de question n'est valable qu'avec un consentement
-    // explicitement posé par le visiteur, jamais supposé par le serveur.
-    return NextResponse.json(
-      { ok: false, status: 'consent-required', message: 'Consentez d’abord à recevoir ces courriels.' },
-      { status: 400 },
-    );
+  // La source est déclarative. Seul le relais contact appelle le service sans second captcha,
+  // après avoir vérifié son propre captcha ET accepté le message.
+  if (!verifyCaptcha(String(body.captchaId || ''), String(body.captchaAnswer ?? ''))) {
+    return NextResponse.json({ ok: false, status: 'captcha-failed', message: 'Vérification anti-spam manquante ou incorrecte.' }, { status: 400 });
   }
-
-  const result = await cmsOr(
-    () => cmsFetch('/public/newsletter', {
-      method: 'POST',
-      json: { ...payload, ip, userAgent: userAgent(req) },
-      timeoutMs: 8000,
-    }),
-    () => subscribe({ ...payload, ip, userAgent: userAgent(req) }),
-  );
-
-  // `cmsFetch` rend la réponse de l'API, `subscribe` la sienne : les deux sont
-  // réduites au même vocabulaire pour que le composant n'ait qu'un `status`.
-  const value = (result.value || {}) as {
-    created?: boolean;
-    duplicate?: boolean;
-    reactivated?: boolean;
-    row?: { status?: string };
-    subscriber?: { status?: string };
-  };
-  const rowStatus = String(value.subscriber?.status || value.row?.status || '');
-  const status = rowStatus === 'pending'
-    ? 'pending-confirmation'
-    : value.duplicate
-      ? 'already-subscribed'
-      : value.reactivated
-        ? 'reactivated'
-        : value.created === false
-          ? 'already-subscribed'
-          : 'created';
-
-  // — Accusé de réception : un seul email, à la première inscription —
-  //
-  // `created` uniquement : une réinscription ou une adresse déjà présente ne
-  // redéclenche rien, et la clé `newsletter-<adresse>-newsletter_welcome` rend
-  // l'envoi idempotent quoi qu'il arrive. Le consentement est vérifié ici, pas
-  // supposé : sans lui, aucun email ne part. L'envoi est décroché de la réponse
-  // (le visiteur n'attend pas le serveur SMTP) mais journalisé dans
-  // `data/mail/sent-log.json`, succès comme échec.
-  if (status === 'created' && payload.consent === true && EMAIL_RE.test(email)) {
-    const origin = requestOrigin(req);
-    const token = String((value.subscriber as { token?: string } | undefined)?.token || '');
-    const locale = String(payload.locale || 'fr');
-    const unsubscribe = token
-      ? `${origin}/${locale}/newsletter/unsubscribe?token=${encodeURIComponent(token)}`
-      : `${origin}/${locale}/newsletter`;
-    void (async () => {
-      const vars: Record<string, string> = {
-        ...(await companyVars(locale, origin)),
-        nom_client: payload.name || email,
-        email_client: email,
-        lien_desinscription: unsubscribe,
-      };
-      await sendMailCenterEvent({
-        event: 'newsletter_welcome',
-        to: email,
-        toName: payload.name || undefined,
-        dedupeKey: `newsletter-${email}-newsletter_welcome`,
-        vars,
-      });
-    })().catch(() => undefined);
-  }
-
-  return NextResponse.json({
-    ok: true,
-    stored: result.via,
-    status,
-    result: {
-      created: value.created === true,
-      duplicate: value.duplicate === true || status === 'already-subscribed',
-      reactivated: value.reactivated === true,
-    },
-  });
+  return NextResponse.json(await subscribeFromForm(payload, req));
 }
 
 /** Lien de confirmation (double opt-in) : `GET /api/newsletter?action=confirm&token=…` */

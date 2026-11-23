@@ -11,6 +11,7 @@ import { hydrateSiteLogo, saveSiteLogo } from '@/lib/site-contact';
 import { previewCode, DEFAULT_TEMPLATES, type CodeKind } from '@/lib/codes';
 import VerificationSettingsSection from '@/components/admin/VerificationSettingsSection';
 import SmtpSection from '@/components/admin/SmtpSection';
+import ContactTriageSettings from '@/components/admin/ContactTriageSettings';
 import MailCenterSection from '@/components/admin/MailCenterSection';
 import MaintenanceSection from '@/components/admin/MaintenanceSection';
 import DemoDataSection from '@/components/admin/DemoDataSection';
@@ -23,7 +24,7 @@ import DateFormatPicker from '@/components/admin/DateFormatPicker';
 import { notifyDateSettingsChanged } from '@/lib/use-date-format';
 
 type SectionId = 'general' | 'commerce' | 'security' | 'integrations' | 'emails' | 'seo';
-type TabId = 'general' | 'dates' | 'products' | 'codes' | 'quotes' | 'invoicing' | 'security' | 'smtp' | 'database' | 'maintenance' | 'verification' | 'mail' | 'seo' | 'brand' | 'demo' | 'placeholder';
+type TabId = 'general' | 'dates' | 'products' | 'codes' | 'quotes' | 'invoicing' | 'security' | 'smtp' | 'database' | 'maintenance' | 'verification' | 'mail' | 'contactTriage' | 'seo' | 'brand' | 'demo' | 'placeholder';
 
 interface TabDef { id: TabId; labelKey: string }
 interface SectionDef { id: SectionId; labelKey: string; tabs: TabDef[] }
@@ -53,6 +54,7 @@ const SECTIONS: SectionDef[] = [
   ] },
   { id: 'emails', labelKey: 'emails', tabs: [
     { id: 'mail', labelKey: 'mail' },
+    { id: 'contactTriage', labelKey: 'contactTriage' },
   ] },
   { id: 'seo', labelKey: 'seoSection', tabs: [
     { id: 'seo', labelKey: 'seo' },
@@ -367,6 +369,7 @@ export default function AdminSettingsPage() {
           {tab === 'verification' && <VerificationSettingsSection />}
 
           {tab === 'mail' && <MailCenterSection />}
+          {tab === 'contactTriage' && <ContactTriageSettings />}
 
           {tab === 'seo' && <SeoSection />}
 

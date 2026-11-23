@@ -1,4 +1,5 @@
 import { BaseEntity } from '../../../common/crud/interfaces/repository.interface';
+import { ContactMeta } from '../contact-contract';
 
 export interface ContactInfoEntity extends BaseEntity {
   locale: string;
@@ -21,5 +22,5 @@ export interface ContactMessageEntity extends BaseEntity {
   subject?: string | null;
   message: string;
   status: string;
-  meta?: Record<string, unknown> | unknown;
+  meta?: ContactMeta | null;
 }

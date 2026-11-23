@@ -110,8 +110,8 @@
   "hint_contact": "الرسائل الواردة من الموقع العام.",
   "label_contact_received": "إشعار استلام للزائر",
   "hint_contact_received": "رسالة واحدة للزائر لتأكيد استلام رسالته.",
-  "label_contact_alert": "تنبيه داخلي",
-  "hint_contact_alert": "إبلاغ الشركة. يُفضّل إرسال ملخص بدلًا من بريد لكل رسالة.",
+  "label_contact_alert": "تنبيه الاتصال / إعادة التوجيه",
+  "hint_contact_alert": "بعد القبول: إشعار عنوان الشركة المنشور أو العنوان المحدد للموضوع النهائي.",
   "label_applications": "طلبات التوظيف",
   "hint_applications": "الترشيحات المقدمة لعروض العمل.",
   "label_application_received": "إشعار استلام للمرشح",
@@ -133,5 +133,6 @@
   "label_stock": "المخزون وإعادة التزويد",
   "hint_stock": "المنتجات النافدة والشحنات الجديدة.",
   "label_stock_backorder": "إعادة التزويد المرتقبة",
-  "hint_stock_backorder": "رسالة واحدة لكل منتج نافد في الطلب المعني."
+  "hint_stock_backorder": "رسالة واحدة لكل منتج نافد في الطلب المعني.",
+  "reason_file_transport": "وضع الملف: لم يُرسل أي بريد"
 }

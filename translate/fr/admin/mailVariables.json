@@ -29,5 +29,6 @@
   "date_expiration": "Date d’expiration",
   "lien_document": "Lien vers le document",
   "lien_espace_client": "Lien espace client",
-  "lien_desinscription": "Lien de désinscription"
+  "lien_desinscription": "Lien de désinscription",
+  "sujet_contact": "Sujet retenu du contact"
 }

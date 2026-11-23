@@ -40,6 +40,9 @@ export const RELATION_SCALARS: Record<string, Record<string, RelationScalar>> = 
     roleId: { relation: 'role', references: 'id', nullable: false, optionalRelation: false },
     permissionId: { relation: 'permission', references: 'id', nullable: false, optionalRelation: false },
   },
+  contactpenalty: {
+    userId: { relation: 'user', references: 'id', nullable: false, optionalRelation: false },
+  },
   auditlog: {
     actorId: { relation: 'actor', references: 'id', nullable: true, optionalRelation: true },
   },

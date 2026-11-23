@@ -188,6 +188,7 @@ export const MAIL_VARS: MailVarDef[] = [
   { key: 'quantite', label: 'Quantité', sample: '2', group: 'document' },
   { key: 'transporteur', label: 'Transporteur', sample: 'Express Logistics', group: 'document' },
   { key: 'suivi_colis', label: 'N° de suivi', sample: 'DZ123456789', group: 'document' },
+  { key: 'sujet_contact', label: 'Sujet retenu du contact', sample: 'technique', group: 'document' },
   { key: 'message_client', label: 'Message du visiteur', sample: 'Bonjour, je souhaite un devis…', group: 'document' },
 
   { key: 'montant_ht', label: 'Montant HT', sample: '180 000,00 DA', group: 'montants' },
@@ -296,14 +297,14 @@ export const MAIL_CATALOG: MailModuleDef[] = [
         id: 'contact_received',
         label: 'Accusé de réception (visiteur)',
         description: 'Un seul email au visiteur, à la réception de son message.',
-        vars: varsOf(...COMMON, 'date_document', 'message_client'),
+        vars: varsOf(...COMMON, 'date_document', 'sujet_contact', 'message_client'),
       },
       {
         id: 'contact_alert',
         label: 'Alerte interne',
-        description: 'Prévenir l’entreprise — regrouper dans un digest plutôt qu’un email par message.',
+        description: 'Alerte après tri, vers la société ou l’adresse configurée pour le sujet retenu.',
         internal: true,
-        vars: varsOf('nom_societe', 'nom_client', 'email_client', 'telephone_client', 'societe_client', 'date_document', 'message_client'),
+        vars: varsOf('nom_societe', 'nom_client', 'email_client', 'telephone_client', 'societe_client', 'date_document', 'sujet_contact', 'message_client'),
       },
     ],
   },
@@ -501,7 +502,7 @@ const DEFAULT_BODIES: Record<string, { subject: string; body: string }> = {
   },
   contact_alert: {
     subject: '[{{nom_societe}}] Nouveau message de {{nom_client}}',
-    body: '<p>Message reçu le {{date_document}}.</p>'
+    body: '<p>Message reçu le {{date_document}} — {{sujet_contact}}.</p>'
       + '<p><strong>De :</strong> {{nom_client}} — {{email_client}} — {{telephone_client}}</p>'
       + '<p><strong>Société :</strong> {{societe_client}}</p>'
       + '<blockquote>{{message_client}}</blockquote>',
@@ -596,7 +597,8 @@ const esc = (value: unknown): string =>
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 
 /**
  * Échappe le HTML puis rend les liens et la mise en forme minimale : les
@@ -676,7 +678,9 @@ export function renderMailHtml(opts: {
   layout?: MailLayout | null;
   vars: Record<string, string | number | undefined>;
 }): string {
-  const content = toEmailHtml(mergeMailVars(opts.bodyHtml, opts.vars));
+  // Le gabarit est du HTML de l'administrateur ; les variables du visiteur sont du texte.
+  const htmlVars = Object.fromEntries(Object.entries(opts.vars).map(([k, value]) => [k, esc(value)]));
+  const content = toEmailHtml(mergeMailVars(opts.bodyHtml, htmlVars));
   const layout = opts.layout;
   if (!layout) {
     return `<!doctype html><html><body style="margin:0;background:#f4f6f8;">`
@@ -687,7 +691,7 @@ export function renderMailHtml(opts: {
   const rows = (layout.blocks || [])
     .map((block) => renderMailBlock(block, theme, opts.vars))
     .join('')
-    .replace('__CONTENT__', content);
+    .replace('__CONTENT__', () => content);
   return `<!doctype html><html><head><meta charset="utf-8">`
     + `<meta name="viewport" content="width=device-width,initial-scale=1">`
     + `<meta http-equiv="X-UA-Compatible" content="IE=edge"></head>`
