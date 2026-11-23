@@ -5,5 +5,13 @@
   "blogNews": "Blog & Actualités",
   "latestNews": "Dernières Nouvelles",
   "readArticle": "Lire l'article",
-  "allCategories": "Toutes les catégories"
+  "allCategories": "Toutes les catégories",
+  "filterCategory": "Catégorie",
+  "filterTag": "Tag",
+  "filterType": "Type d’article",
+  "allTags": "Tous les tags",
+  "allTypes": "Tous les types",
+  "clearFilter": "Voir toutes les actualités",
+  "noMatches": "Aucun article ne correspond à « {value} ».",
+  "loading": "Chargement des actualités…"
 }

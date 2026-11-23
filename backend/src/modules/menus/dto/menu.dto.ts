@@ -36,6 +36,12 @@ export class MenuAutoDto {
   @IsIn(['all', 'pick', 'groups'])
   mode!: 'all' | 'pick' | 'groups';
 
+  /** Regroupement des actualités ; absent = catégorie pour les règles existantes. */
+  @ApiPropertyOptional({ enum: ['category', 'tag', 'type'] })
+  @IsOptional()
+  @IsIn(['category', 'tag', 'type'])
+  groupBy?: 'category' | 'tag' | 'type';
+
   @ApiPropertyOptional({ type: [String] })
   @IsOptional()
   @IsArray()

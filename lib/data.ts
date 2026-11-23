@@ -17,7 +17,7 @@ import type {
   HeroSlide,
   SolutionCategory,
 } from '@/types';
-import { cmsPublicList, cmsPublicOne, cmsPublicTranslations, cmsFetch } from '@/lib/cms';
+import { CMS_BROWSE_LIMIT, cmsPagedList, cmsPublicList, cmsPublicOne, cmsPublicTranslations, cmsFetch } from '@/lib/cms';
 import { decodeBuilderDoc } from '@/lib/builder-doc';
 import { LEGAL_DOC_TYPES, isLegalDocRow, legalDocTypeOf, type LegalDocType } from '@/lib/legal-docs';
 import { loadFicheLocale } from '@/lib/fiche-i18n';
@@ -25,6 +25,7 @@ import { asPublicId, matchesEntity } from '@/lib/ids';
 import { findByRouteKey } from '@/lib/entity-url';
 import {
   applyAutoMenus,
+  isPublished,
   usedAutoSources,
   type AutoEntity,
   type AutoSource,
@@ -529,18 +530,21 @@ export async function getProducts(locale: string): Promise<Product[]> {
 }
 
 export async function getNews(locale: string): Promise<News[]> {
-  return fromCmsOrJson(locale, 'news', [], async () => {
-    const rows = await cmsPublicList<Record<string, unknown>>('news', locale);
-    
-    // Si pas de résultats et locale != 'fr', essayer avec le français (fallback)
-    if (rows.length === 0 && locale !== 'fr') {
+  const articles = await fromCmsOrJson<News[]>(locale, 'news', [], async () => {
+    // Une valeur choisie dans le studio peut n’apparaître qu’après les 100 premiers articles.
+    // `block` conserve aussi le corps de la fiche : getNews alimente le détail et la liste.
+    const read = (lang: string) => cmsPagedList<Record<string, unknown>>(
+      `/public/news?view=block&locale=${encodeURIComponent(lang)}`, CMS_BROWSE_LIMIT, {},
+    ).catch(() => []);
+    let rows = await read(locale);
+    if (!rows.length && locale !== 'fr') {
       console.warn(`[getNews] Aucun article trouvé pour locale=${locale}, fallback sur fr`);
-      const frRows = await cmsPublicList<Record<string, unknown>>('news', 'fr');
-      return frRows.length ? frRows.map(mapNews) : [];
+      rows = await read('fr');
     }
-    
-    return rows.length ? rows.map(mapNews) : [];
+    return rows.map(mapNews);
   });
+  // L’API publique filtre déjà les statuts, pas nécessairement le repli JSON.
+  return articles.filter(isPublished);
 }
 
 /**

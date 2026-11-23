@@ -28,6 +28,16 @@ getMenu(locale)
 Un cache de 30 secondes s'applique (`CMS_CACHE_TTL`). Après un enregistrement,
 attendez ce délai ou rechargez pour voir le changement.
 
+## Actualités : sous-menu par catégorie, tag ou type d’article
+
+1. Dans **Administration → Menus**, choisir la **langue du menu**, puis **Menu principal**. Sur l’entrée **Actualités** (lien `/news`), choisir la source **Actualités** sous **Sous-menu automatique**.
+2. Choisir **Catégories** (champ *Rubrique* de l’article), **Tags** ou **Types d’article** (champ *Classification*). Sans sélection, chaque valeur non vide du contenu publié apparaît une fois. Pour n’en retenir que certaines, les cocher dans l’ordre souhaité. **Limite** permet de plafonner le nombre de liens.
+3. Vérifier les libellés et les URL dans l’aperçu, puis **Enregistrer ce menu**. Le menu reste à jour à mesure que les articles sont publiés ou archivés. Une ancienne règle Actualités en mode *Catégories* n’a pas besoin d’être réenregistrée.
+
+Sur la vitrine, chaque lien ouvre la liste avec **un seul filtre actif**. Par exemple : `/fr/news?category=Produits`, `/fr/news?tag=Imagerie%20m%C3%A9dicale` ou `/fr/news?type=Innovation`. Les tags sur la fiche article, y compris les tags populaires, ouvrent la même liste. **Voir toutes les actualités** efface le filtre.
+
+Une règle automatique utilise un seul regroupement. Pour mélanger, par exemple, un tag **et** un type précis dans le même sous-menu, utiliser des sous-liens manuels avec ces URL **sans** le préfixe de langue. Après une copie de menu vers une autre langue, adapter les valeurs sélectionnées si leurs libellés sont traduits. Les filtres sans valeur publiée sont masqués. Le studio examine au plus 2 000 fiches de la langue éditée ; la liste publique charge les articles publiés par pages de 100, avec le même plafond.
+
 ## Les trois scripts, et ce qu'ils font vraiment
 
 ### `npm run menus:check` — contrôle du serveur
@@ -125,6 +135,8 @@ pour la tester isolément.
 Il est utile contre les régressions de code, mais **il ne peut pas** détecter
 un menu absent en base, une langue qui diverge, ni un défaut d'affichage. Pour
 cela, utilisez `menus:check`.
+
+Pour les **Actualités**, `npm run news:test` complète ces contrôles en montant la liste, la fiche et le sélecteur du studio sur des articles de test : sélection des valeurs, URL localisées, tags cliquables et pagination. Il ne modifie aucun menu en base.
 
 ## Le piège du sous-menu vide
 

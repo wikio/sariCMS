@@ -16,6 +16,7 @@
     "prod:smoke": "node scripts/smoke-production.mjs",
     "start": "next start",
     "lint": "eslint app components contexts i18n lib proxy.ts next.config.mjs",
+    "news:test": "node --test scripts/test-news-groups.mjs && node scripts/test-menu-auto.mjs",
     "menus:check": "node scripts/check-menus.mjs",
     "menus:sync": "node scripts/sync-menus.mjs",
     "visibility:test": "node scripts/test-visibility.mjs",

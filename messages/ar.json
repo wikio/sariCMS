@@ -2687,10 +2687,13 @@
       "iconUnsupported": "هذه الوحدة لا تحتوي على أيقونة.",
       "iconMissingNotice": "{count} عنصر بدون أيقونة: سيظهر العنوان فقط لهذه العناصر.",
       "modeGroups": "الفئات",
-      "groupsHint": "مدخل لكل فئة يؤدي إلى القائمة المصفاة. بدون تحديد = جميع الفئات.",
-      "groupsEmpty": "لا توجد فئات في المحتوى المنشور لهذه الوحدة.",
-      "groupsNoVisual": "الفئة ليس لها أيقونة ولا صورة.",
-      "showImage": "صورة مصغرة"
+      "groupsHint": "تؤدي كل قيمة محددة إلى القائمة المصفّاة. اترك التحديد فارغًا لعرض جميع القيم.",
+      "groupsEmpty": "لا توجد قيم لهذا التجميع في المحتوى المنشور.",
+      "groupsNoVisual": "لا تحتوي روابط المجموعات على أيقونات أو صور.",
+      "showImage": "صورة مصغرة",
+      "modeTags": "الوسوم",
+      "allGroupValues": "تضمين جميع القيم",
+      "modeNewsTypes": "أنواع المقالات"
     },
     "userForm": {
       "sectionIdentity": "الهوية",
@@ -5647,7 +5650,15 @@
       "blogNews": "المدونة والأخبار",
       "latestNews": "آخر الأخبار",
       "readArticle": "اقرأ المقال",
-      "allCategories": "جميع الفئات"
+      "allCategories": "جميع الفئات",
+      "filterCategory": "الفئة",
+      "filterTag": "الوسم",
+      "filterType": "نوع المقال",
+      "allTags": "جميع الوسوم",
+      "allTypes": "جميع الأنواع",
+      "clearFilter": "عرض جميع الأخبار",
+      "noMatches": "لا توجد مقالات تطابق «{value}».",
+      "loading": "جارٍ تحميل الأخبار…"
     },
     "newsDetail": {
       "articleNotFound": "المقال غير موجود",

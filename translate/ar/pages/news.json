@@ -5,5 +5,13 @@
   "blogNews": "المدونة والأخبار",
   "latestNews": "آخر الأخبار",
   "readArticle": "اقرأ المقال",
-  "allCategories": "جميع الفئات"
+  "allCategories": "جميع الفئات",
+  "filterCategory": "الفئة",
+  "filterTag": "الوسم",
+  "filterType": "نوع المقال",
+  "allTags": "جميع الوسوم",
+  "allTypes": "جميع الأنواع",
+  "clearFilter": "عرض جميع الأخبار",
+  "noMatches": "لا توجد مقالات تطابق «{value}».",
+  "loading": "جارٍ تحميل الأخبار…"
 }

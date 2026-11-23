@@ -7,6 +7,8 @@
  */
 
 export const CMS_PREFIX = '/api/v1';
+/** Même plafond côté catalogue public et sélecteur de contenu : vingt pages de cent fiches. */
+export const CMS_BROWSE_LIMIT = 2_000;
 
 export function cmsBrowserBase(): string {
   return process.env.NEXT_PUBLIC_CMS_API_URL || CMS_PREFIX;

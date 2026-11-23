@@ -2687,10 +2687,13 @@
       "iconUnsupported": "Ce module n’a pas d’icône.",
       "iconMissingNotice": "{count} fiche(s) sans icône : seul le titre s’affichera pour celles-ci.",
       "modeGroups": "Catégories",
-      "groupsHint": "Une entrée par catégorie, menant à la liste filtrée. Aucune coche = toutes.",
-      "groupsEmpty": "Aucune catégorie dans le contenu publié de ce module.",
-      "groupsNoVisual": "Une catégorie n’a ni icône ni image.",
-      "showImage": "Vignette"
+      "groupsHint": "Chaque valeur retenue crée un lien vers la liste filtrée. Sans sélection explicite, toutes les valeurs sont affichées.",
+      "groupsEmpty": "Aucune valeur pour ce regroupement dans les fiches publiées.",
+      "groupsNoVisual": "Les liens de regroupement n’ont ni icône ni image.",
+      "showImage": "Vignette",
+      "modeTags": "Tags",
+      "allGroupValues": "Inclure toutes les valeurs",
+      "modeNewsTypes": "Types d’article"
     },
     "userForm": {
       "sectionIdentity": "Identité",
@@ -5647,7 +5650,15 @@
       "blogNews": "Blog & Actualités",
       "latestNews": "Dernières Nouvelles",
       "readArticle": "Lire l'article",
-      "allCategories": "Toutes les catégories"
+      "allCategories": "Toutes les catégories",
+      "filterCategory": "Catégorie",
+      "filterTag": "Tag",
+      "filterType": "Type d’article",
+      "allTags": "Tous les tags",
+      "allTypes": "Tous les types",
+      "clearFilter": "Voir toutes les actualités",
+      "noMatches": "Aucun article ne correspond à « {value} ».",
+      "loading": "Chargement des actualités…"
     },
     "newsDetail": {
       "articleNotFound": "Article non trouvé",

@@ -5,5 +5,13 @@
   "blogNews": "Blog & News",
   "latestNews": "Latest News",
   "readArticle": "Read Article",
-  "allCategories": "All categories"
+  "allCategories": "All categories",
+  "filterCategory": "Category",
+  "filterTag": "Tag",
+  "filterType": "Article type",
+  "allTags": "All tags",
+  "allTypes": "All types",
+  "clearFilter": "View all news",
+  "noMatches": "No articles match “{value}”.",
+  "loading": "Loading news…"
 }

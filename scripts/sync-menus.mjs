@@ -123,7 +123,10 @@ function assainirAuto(auto) {
   const regle = { source: auto.source, mode };
   if (Array.isArray(auto.ids) && auto.ids.length) regle.ids = auto.ids;
   if (Number.isInteger(auto.limit) && auto.limit >= 0) regle.limit = auto.limit;
-  for (const cle of ['showDesc', 'showIcon', 'group']) {
+  if (auto.source === 'news' && mode === 'groups' && ['category', 'tag', 'type'].includes(auto.groupBy)) {
+    regle.groupBy = auto.groupBy;
+  }
+  for (const cle of ['showDesc', 'showIcon', 'showImage']) {
     if (auto[cle] !== undefined) regle[cle] = auto[cle];
   }
   return regle;

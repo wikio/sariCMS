@@ -374,6 +374,7 @@ function MenuStudioInner() {
 
                   {/* Sous-menu généré depuis le contenu */}
                   <AutoSubmenuPicker
+                    locale={locale}
                     value={item.auto}
                     onChange={(auto) => setItem(i, { auto })}
                   />

@@ -1,4 +1,5 @@
 // types/index.ts
+import type { NewsGroupBy } from '@/lib/news-groups';
 
 export interface Config {
   meta: {
@@ -32,7 +33,9 @@ export interface MenuAutoRule {
   source: 'solutions' | 'services' | 'products' | 'news' | 'events';
   /** `groups` : les catégories du module au lieu de ses fiches. */
   mode: 'all' | 'pick' | 'groups';
-  /** Ids de fiches en mode `pick`, noms de catégories en mode `groups`. */
+  /** Dans Actualités : par catégorie (défaut), tag ou type d’article. */
+  groupBy?: NewsGroupBy;
+  /** Ids de fiches en mode `pick`, libellés de groupes en mode `groups`. */
   ids?: Array<string | number>;
   limit?: number;
   /** Description courte sous le titre. Absent = affichée. */

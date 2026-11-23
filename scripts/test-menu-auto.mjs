@@ -347,7 +347,7 @@ console.log('\n— Sous-menus par catégories et vignettes —');
   );
   check(
     'sélection de catégories vide = toutes',
-    /wanted\.length\s*\n?\s*\? wanted\.filter/.test(autoSrc),
+    /let groups = wanted\.length[\s\S]{0,120}: available;/.test(autoSrc),
   );
   check(
     'la vignette est conditionnée à showImage',
@@ -414,8 +414,12 @@ console.log('\n— Sous-menus par catégories et vignettes —');
   check('une catégorie inconnue laisse la liste complète',
     /if \(!match\) return;/.test(hook));
 
+  // Actualités pilote filtre ET pagination par l’URL : les parcours entre
+  // catégories, tags et types sont exercés sur la page montée par news:test.
+  const newsPage = readFileSync(resolve(ROOT, 'app/[locale]/news/page.tsx'), 'utf8');
+  check('les actualités lisent le filtre à chaque navigation',
+    /useSearchParams\(\)/.test(newsPage) && /readNewsFilter\(params\)/.test(newsPage));
   for (const [page, param] of [
-    ['app/[locale]/news/page.tsx', 'category'],
     ['app/[locale]/events/page.tsx', 'type'],
     ['app/[locale]/products/page.tsx', 'category'],
   ]) {
@@ -438,7 +442,7 @@ console.log('\n— Sous-menus par catégories et vignettes —');
     const node = msgs?.admin?.menus ?? {};
     check(
       `libellés catégories/vignette présents en ${loc}`,
-      ['modeGroups', 'groupsHint', 'groupsEmpty', 'groupsNoVisual', 'showImage'].every(
+      ['modeGroups', 'modeTags', 'modeNewsTypes', 'groupsHint', 'groupsEmpty', 'groupsNoVisual', 'showImage'].every(
         (k) => typeof node[k] === 'string' && node[k].length > 0,
       ),
     );

@@ -2687,10 +2687,13 @@
       "iconUnsupported": "This module has no icon.",
       "iconMissingNotice": "{count} item(s) without an icon: only the title will show for those.",
       "modeGroups": "Categories",
-      "groupsHint": "One entry per category, linking to the filtered list. No tick = all of them.",
-      "groupsEmpty": "No category found in this module’s published content.",
-      "groupsNoVisual": "A category has neither icon nor image.",
-      "showImage": "Thumbnail"
+      "groupsHint": "Each selected value links to the filtered list. Leave the selection empty to include every value.",
+      "groupsEmpty": "No published items have a value for this grouping.",
+      "groupsNoVisual": "Group links have no icon or image.",
+      "showImage": "Thumbnail",
+      "modeTags": "Tags",
+      "allGroupValues": "Include all values",
+      "modeNewsTypes": "Article types"
     },
     "userForm": {
       "sectionIdentity": "Identity",
@@ -5647,7 +5650,15 @@
       "blogNews": "Blog & News",
       "latestNews": "Latest News",
       "readArticle": "Read Article",
-      "allCategories": "All categories"
+      "allCategories": "All categories",
+      "filterCategory": "Category",
+      "filterTag": "Tag",
+      "filterType": "Article type",
+      "allTags": "All tags",
+      "allTypes": "All types",
+      "clearFilter": "View all news",
+      "noMatches": "No articles match “{value}”.",
+      "loading": "Loading news…"
     },
     "newsDetail": {
       "articleNotFound": "Article Not Found",

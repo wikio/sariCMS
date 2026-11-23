@@ -15,6 +15,7 @@
 
 import { entityUrl } from '@/lib/entity-url';
 import { slugify } from '@/lib/slugify';
+import { collectNewsGroups, distinctGroups, groupKey, newsListHref, type NewsGroupBy } from '@/lib/news-groups';
 
 /** Modules pouvant alimenter un sous-menu. */
 export type AutoSource = 'solutions' | 'services' | 'products' | 'news' | 'events';
@@ -29,7 +30,9 @@ export type AutoRule = {
    * catégories retenues ; vide = toutes.
    */
   mode: 'all' | 'pick' | 'groups';
-  /** Identifiants retenus en mode `pick`, noms de catégories en mode `groups`. */
+  /** Actualités en mode `groups` : une règle historique sans ce champ reste par catégorie. */
+  groupBy?: NewsGroupBy;
+  /** Identifiants de fiches en mode `pick`, libellés retenus en mode `groups`. */
   ids?: Array<string | number>;
   /** Nombre maximal d'entrées affichées (0 ou absent = pas de limite). */
   limit?: number;
@@ -89,6 +92,8 @@ export type AutoEntity = {
   category?: string;
   /** Nature de la fiche (Événements, Carrières) — l'équivalent de `category`. */
   type?: string;
+  classification?: string;
+  tags?: string[];
   sortOrder?: number;
 };
 
@@ -137,7 +142,8 @@ export function entityGroup(entity: AutoEntity, source: AutoSource): string {
  * Seules les fiches publiées comptent : une catégorie dont tout le contenu est
  * archivé ne doit pas subsister dans le menu.
  */
-export function collectGroups(entities: AutoEntity[], source: AutoSource): string[] {
+export function collectGroups(entities: AutoEntity[], source: AutoSource, groupBy: NewsGroupBy = 'category'): string[] {
+  if (source === 'news') return collectNewsGroups(entities.filter(isPublished), groupBy);
   if (!AUTO_SOURCES[source].groupField) return [];
   const seen = new Set<string>();
   for (const entity of entities || []) {
@@ -176,7 +182,9 @@ export function groupUrl(
   basePath: string,
   source: AutoSource,
   group: string,
+  groupBy: NewsGroupBy = 'category',
 ): string {
+  if (source === 'news') return newsListHref(locale, { by: groupBy, value: group });
   const value = encodeURIComponent(String(group).trim());
   return `/${locale}/${basePath}?${groupParam(source)}=${value}`;
 }
@@ -217,31 +225,35 @@ export function resolveAutoSubmenu(
   if (!rule || !isAutoSource(rule.source) || !Array.isArray(entities)) return [];
 
   const { basePath } = AUTO_SOURCES[rule.source];
-  const visible = entities.filter(isPublished);
 
   // Mode « catégories » : les entrées ne sont pas des fiches mais les valeurs
   // de regroupement du module, chacune pointant vers la liste filtrée.
   if (rule.mode === 'groups') {
-    const available = collectGroups(entities, rule.source);
+    const available = collectGroups(entities, rule.source, rule.groupBy);
     if (!available.length) return [];
 
     const wanted = (rule.ids || []).map((id) => String(id).trim()).filter(Boolean);
     // Sélection vide = toutes les catégories. Sinon l'ordre de l'admin prime,
     // et une catégorie devenue vide (tout archivé) disparaît d'elle-même.
+    const labels = new Map(available.map((label) => [groupKey(label), label]));
     let groups = wanted.length
-      ? wanted.filter((g) => available.some((a) => a.toLowerCase() === g.toLowerCase()))
+      ? distinctGroups(wanted).flatMap((group) => labels.get(groupKey(group)) ?? [])
       : available;
 
     const groupLimit = Number(rule.limit) || 0;
     if (groupLimit > 0) groups = groups.slice(0, groupLimit);
 
     return groups.map((group) => ({
-      id: `auto-${rule.source}-group-${slugify(group)}`,
+      // Deux tags distincts (ex. « C++ » et « C# ») peuvent avoir le même slug.
+      id: rule.source === 'news'
+        ? `auto-news-${rule.groupBy ?? 'category'}-${encodeURIComponent(groupKey(group))}`
+        : `auto-${rule.source}-group-${slugify(group)}`,
       label: group,
-      href: groupUrl(locale, basePath, rule.source, group),
+      href: groupUrl(locale, basePath, rule.source, group, rule.groupBy),
     }));
   }
 
+  const visible = entities.filter(isPublished);
   let selected: AutoEntity[];
   if (rule.mode === 'pick') {
     const wanted = (rule.ids || []).map((id) => String(id));

@@ -23,8 +23,11 @@
   "iconUnsupported": "Ce module n’a pas d’icône.",
   "iconMissingNotice": "{count} fiche(s) sans icône : seul le titre s’affichera pour celles-ci.",
   "modeGroups": "Catégories",
-  "groupsHint": "Une entrée par catégorie, menant à la liste filtrée. Aucune coche = toutes.",
-  "groupsEmpty": "Aucune catégorie dans le contenu publié de ce module.",
-  "groupsNoVisual": "Une catégorie n’a ni icône ni image.",
-  "showImage": "Vignette"
+  "groupsHint": "Chaque valeur retenue crée un lien vers la liste filtrée. Sans sélection explicite, toutes les valeurs sont affichées.",
+  "groupsEmpty": "Aucune valeur pour ce regroupement dans les fiches publiées.",
+  "groupsNoVisual": "Les liens de regroupement n’ont ni icône ni image.",
+  "showImage": "Vignette",
+  "modeTags": "Tags",
+  "allGroupValues": "Inclure toutes les valeurs",
+  "modeNewsTypes": "Types d’article"
 }
