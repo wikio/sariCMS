@@ -105,6 +105,7 @@ function NewsDetail({ routeKey, locale }: { routeKey: string; locale: string }) 
 
   const articleType = item.classification?.trim();
   const badge = articleType || item.category?.trim();
+  const subject = item.sujet?.trim();
   const lead = item.shortDesc?.trim();
 
   return (
@@ -115,7 +116,7 @@ function NewsDetail({ routeKey, locale }: { routeKey: string; locale: string }) 
         <div className="h-full bg-sari-blue transition-all duration-150" style={{ width: `${scrollProgress}%` }}></div>
       </div>
 
-      {/* Le texte reste dans le flux : même un chapô long tient sur mobile. */}
+      {/* Le titre et le sujet restent dans le flux, même sur mobile. */}
       <div className="relative flex min-h-[500px] items-end overflow-hidden bg-sari-dark md:min-h-[600px]">
         <ImageWithFallback
           src={item.image}
@@ -137,8 +138,8 @@ function NewsDetail({ routeKey, locale }: { routeKey: string; locale: string }) 
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 leading-tight break-words">
               {item.title}
             </h1>
-            {lead && (
-              <p className="mb-6 max-w-prose whitespace-pre-line break-words text-lg leading-relaxed text-white md:text-xl">{lead}</p>
+            {subject && (
+              <p className="mb-6 max-w-prose break-words text-lg italic leading-relaxed text-gray-100 md:text-xl">{subject}</p>
             )}
             <div className="flex flex-wrap items-center gap-6 text-gray-300">
               {/* Sans auteur ni auteur par défaut, le bloc n'est pas affiché. */}
@@ -190,7 +191,12 @@ function NewsDetail({ routeKey, locale }: { routeKey: string; locale: string }) 
         
         <div className="grid lg:grid-cols-3 gap-12">
           <div className="lg:col-span-2">
-            <article className="bg-white dark:bg-[#1a1a1a] p-8 md:p-12 border border-gray-200 dark:border-gray-800 shadow-xl mb-8 rounded-xl">
+            <article className="bg-white dark:bg-[#1a1a1a] p-5 sm:p-8 md:p-12 border border-gray-200 dark:border-gray-800 shadow-xl mb-8 rounded-xl">
+              {lead && (
+                <p className="mb-8 whitespace-pre-line rounded-e-xl border-s-4 border-sari-blue bg-sari-blue/5 px-4 py-4 text-lg font-semibold leading-relaxed text-sari-dark [overflow-wrap:anywhere] dark:bg-sari-blue/10 dark:text-gray-100 sm:px-6 sm:py-5 sm:text-xl sm:leading-relaxed">
+                  {lead}
+                </p>
+              )}
               <div className="prose dark:prose-invert max-w-none text-gray-600 dark:text-gray-400 text-lg leading-relaxed mb-12" dangerouslySetInnerHTML={{ __html: item.fullContent || '' }}></div>
               
               <ArticleTags article={item} popular={popularTags} locale={locale} />

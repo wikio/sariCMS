@@ -6,7 +6,7 @@ La liste, les cartes et la navigation sur la fiche (dont **Derniers articles**) 
 
 `legacyId` relie les traductions ; il ne doit pas être ajouté devant le slug. La fiche utilise `findByRouteKey` sur les actualités publiées de la langue demandée. Elle accepte encore les favoris de la forme `news-2-dossier-ete` en recherchant le **legacyId stocké**, sans supposer que l’id de la traduction est `2`.
 
-Sous le titre, la fiche affiche **Texte → Chapô** (`shortDesc`). **Article → Sujet** (`sujet`) est un champ distinct et ne le remplace pas si le chapô est vide.
+Sous le titre, la fiche affiche **Article → Sujet** (`sujet`). Le champ **Texte → Chapô** (`shortDesc`) apparaît dans un paragraphe mis en valeur juste avant **Texte → Corps de l’article** (`fullContent`). Chaque champ vide est masqué sans être remplacé par l’autre.
 
 ## Proposition de repli sur le français
 

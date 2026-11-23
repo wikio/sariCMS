@@ -217,10 +217,20 @@ for (const [category, classification, expected] of [
 // L'ID public d'une traduction n'est pas le numéro à la fin de son legacyId.
 // Le slug éditorial peut également être tout autre que le titre de la carte.
 const stories = [
-  { id: 42, legacyId: 'news-1', slug: 'premier-dossier', title: 'Sur le terrain', shortDesc: 'Le chapô du reportage.' },
-  { id: 107, legacyId: 'news-10', slug: 'dossier-ete', title: 'Notre entretien', shortDesc: 'Les propos recueillis cet été.' },
-  { id: 'ref-centre', legacyId: 'news-m1-abc123', slug: 'news-du-centre', title: 'Le point au centre', shortDesc: '  ' },
-].map(article => ({ ...article, category: 'Reportages', sujet: 'Sujet interne, pas un chapô' }));
+  { id: 42, legacyId: 'news-1', slug: 'premier-dossier', title: 'Sur le terrain', sujet: '  ', shortDesc: 'Le chapô du reportage.' },
+  { id: 107, legacyId: 'news-10', slug: 'dossier-ete', title: 'Notre entretien', sujet: 'Regards croisés', shortDesc: 'Les propos recueillis cet été.' },
+  { id: 'ref-centre', legacyId: 'news-m1-abc123', slug: 'news-du-centre', title: 'Le point au centre', sujet: 'Vie du centre', shortDesc: '  ' },
+].map(article => ({ ...article, category: 'Reportages', fullContent: `<p>Corps de la fiche <strong>${article.id}</strong>.</p>` }));
+
+function checkEditorialFields(el, story) {
+  assert.equal(el.querySelector('h1').textContent, story.title);
+  assert.equal(el.querySelector('h1 + p')?.textContent, story.sujet?.trim() || undefined);
+  const body = el.querySelector('article .prose');
+  assert.equal(body.innerHTML, story.fullContent);
+  const lead = el.querySelector('article > p');
+  assert.equal(lead?.textContent, story.shortDesc?.trim() || undefined);
+  assert.equal(body.previousElementSibling, lead, 'le chapô précède immédiatement le corps ; sinon le corps ouvre l’article');
+}
 
 test('adresses de fiche : slug exact avant alias, clé historique entière, Unicode et replis sans slug', () => {
   const specific = { id: 10, legacyId: 'news-10-bis', slug: 'édition-spéciale' };
@@ -253,10 +263,10 @@ test('changement de fiche pendant le chargement : ni fausse erreur ni chapô de 
   assert.equal(el.querySelector('h1'), null);
   assert.ok(!el.textContent.includes('articleNotFound'));
   await act(async () => reads[1](stories));
-  assert.equal(el.querySelector('h1 + p').textContent, stories[1].shortDesc);
+  checkEditorialFields(el, stories[1]);
 });
 
-test('derniers articles, navigation, liste et cartes mènent à la même fiche et à son propre chapô', async t => {
+test('derniers articles, navigation, liste et cartes : sujet sous le titre et chapô avant le corps de la bonne fiche', async t => {
   t.mock.method(front['@/lib/data'], 'getNews', async () => stories);
   const urls = ['/fr/news/42-premier-dossier', '/fr/news/107-dossier-ete', '/fr/news/news-du-centre'];
   push('/fr/news');
@@ -266,23 +276,23 @@ test('derniers articles, navigation, liste et cartes mènent à la même fiche e
   assert.equal(card.querySelector('a').getAttribute('href'), urls[1]);
   await click(card.querySelector('a'));
   const el = await mount(t, Detail);
-  const title = () => el.querySelector('h1');
-  const lead = () => title().nextElementSibling;
-  assert.equal(title().textContent, stories[1].title);
-  assert.equal(lead().tagName, 'P');
-  assert.equal(lead().textContent, stories[1].shortDesc);
+  checkEditorialFields(el, stories[1]);
   const latest = [...el.querySelectorAll('h3')].find(n => n.textContent === 'latestArticles').parentElement;
   assert.deepEqual([...latest.querySelectorAll('a')].map(a => a.getAttribute('href')), [urls[0], urls[2]]);
   // Précédent/suivant et articles connexes ne doivent pas réintroduire l'URL fautive.
   const otherLinks = [...el.querySelectorAll('a[href^="/fr/news/"]')].filter(a => !latest.contains(a));
   assert.deepEqual(otherLinks.map(a => a.getAttribute('href')), [urls[0], urls[2], urls[0], urls[2]]);
   await click(latest.querySelector('a'));
-  assert.equal(title().textContent, stories[0].title);
-  assert.equal(lead().textContent, stories[0].shortDesc);
+  checkEditorialFields(el, stories[0]); // chapô seul, pas de sujet de substitution
   await click(el.querySelector(`a[href="${urls[2]}"]`));
-  assert.equal(title().textContent, stories[2].title);
-  assert.notEqual(lead().tagName, 'P', 'pas de paragraphe vide ni de sujet de substitution');
-  assert.ok(!el.textContent.includes(stories[2].sujet));
+  checkEditorialFields(el, stories[2]); // sujet seul, pas d’encadré vide
+});
+
+test('fiche sans sujet ni chapô : le corps reste affiché sans introduction de remplacement', async t => {
+  const story = { ...articles[0], fullContent: '<p>Le reportage commence ici.</p>' };
+  t.mock.method(front['@/lib/data'], 'getNews', async () => [story]);
+  push('/fr/news/1-article');
+  checkEditorialFields(await mount(t, Detail), story);
 });
 
 test('anciens favoris préfixés, slug nu et URL inconnue : résolution dans la langue demandée', async t => {
