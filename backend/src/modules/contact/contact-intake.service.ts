@@ -59,4 +59,47 @@ export class ContactIntakeService {
     await this.messages.create({ name, email, phone, subject, message, status: 'review', meta }, actor);
     return { decision: 'review' };
   }
+
+  /** Re-triage à la demande (admin) : classifie le message existant, met à jour meta/sujet/statut.
+   *  Aucun mail envoyé, aucune pénalité déduite - action administrative explicite. */
+  async retriage(id: number, actor: ActorContext) {
+    const row = await this.messages.findOne(id, 'block') as any;
+    if (!row) throw new Error('Message introuvable');
+    const subject = (row.subject && isSubject(row.subject) ? row.subject : 'devis') as any;
+    const message = String(row.message || '');
+    const locale = String(row.meta?.locale || 'fr');
+    const meta: ContactMeta = { ...(row.meta || {}), selectedSubject: subject, locale };
+
+    let decision: Decision = { action: 'review', reason: 'policy_unavailable' };
+    let policy: ContactPolicy | null = null;
+    try { policy = await this.policies.read(); } catch { /* keep unavailable */ }
+    let verdict = null;
+    if (policy) {
+      verdict = await this.ai.classify(subject, message, locale);
+      decision = decide(policy, subject, verdict);
+      if (verdict?.suggestedSubject) meta.suggestedSubject = verdict.suggestedSubject;
+      if (verdict) (meta as any).confidence = verdict.confidence;
+    }
+    meta.reason = decision.reason;
+
+    const patch: any = { meta };
+    if (decision.action === 'accept') {
+      patch.status = 'new';
+      patch.subject = decision.subject;
+      const rule = policy!.routes[decision.subject];
+      let route: RoutingPlan;
+      if (rule.mode === 'company') {
+        const email = (await this.info.findByLocale(locale).catch(() => null))?.email?.trim();
+        route = { mode: 'company', email: isSingleMailbox(email) && isEmail(email) ? email : null };
+      } else route = rule;
+      meta.route = route;
+    } else if (decision.action === 'discard') {
+      patch.status = 'archived';
+    } else {
+      patch.status = 'review';
+    }
+
+    const updated = await this.messages.update(id, patch, actor);
+    return { decision, verdict, message: updated };
+  }
 }

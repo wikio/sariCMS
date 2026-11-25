@@ -30,6 +30,7 @@ export interface ContactMeta {
   reason?: ReviewReason | 'matched';
   route?: RoutingPlan;
   followUp?: string;
+  confidence?: number;
 }
 /** Réponse serveur à serveur uniquement. Aucune décision détaillée dans la réponse publique. */
 export type IntakeResult =
@@ -40,12 +41,14 @@ export interface ContactAiDraft {
   url: string;
   model: string;
   apiKey?: string;
+  systemPrompt?: string;
+  userPromptTemplate?: string;
 }
 export interface ContactAiStatus {
   configured: boolean;
   model: string;
   source: 'admin' | 'env' | 'none' | 'unreadable';
-  overrides: { url: string; model: string; hasKey: boolean };
+  overrides: { url: string; model: string; hasKey: boolean; systemPrompt: string; userPromptTemplate: string };
 }
 export type ContactAiTestCode = 'ok' | 'incomplete' | 'auth' | 'unavailable' | 'invalidResponse';
 export interface ContactPolicyState {
