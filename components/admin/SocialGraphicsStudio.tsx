@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useLocale } from 'next-intl';
+import { defaultLocale } from '@/lib/i18n';
 import { useRouter } from 'next/navigation';
 import { Barcode, CalendarDays, Check, Copy, Download, ExternalLink, Image as ImageIcon, MapPin, QrCode, RefreshCw, Search, Share2, Wand2 } from 'lucide-react';
 import { uploadGedAsset } from '@/lib/ged/client';
@@ -10,8 +11,72 @@ import { DATE_FORMAT_PRESETS, formatDateRangeWith, previewFormat, type Supported
 import { SOCIAL_STYLE_PRESETS } from '@/config/socialTemplates.js';
 
 type SourceKind = 'articles' | 'events' | 'products' | 'services' | 'solutions' | 'pages' | 'announcements' | 'tips';
-type ContentItem = { id?: string | number; slug?: string; title?: string; name?: string; shortDesc?: string; chapo?: string; sujet?: string; category?: string; classification?: string; image?: unknown; coverImage?: unknown; thumbnail?: unknown; media?: unknown; icon?: string; color?: string; startDate?: string; endDate?: string; date?: string; location?: string; venue?: string };
+type ContentItem = { id?: string | number; slug?: string; locale?: string; legacyId?: string | number; title?: string; name?: string; shortDesc?: string; chapo?: string; sujet?: string; category?: string; classification?: string; image?: unknown; coverImage?: unknown; thumbnail?: unknown; media?: unknown; icon?: string; color?: string; startDate?: string; endDate?: string; date?: string; location?: string; venue?: string };
 type Brand = { title?: string; logo?: string };
+type ResolvedContent = { source: string; selected: string; requestedLocale: string; contentLocale: string; item: ContentItem };
+function unwrapPayload(payload: unknown): unknown {
+  if (payload && typeof payload === 'object' && 'success' in payload && 'data' in payload) {
+    return (payload as { data: unknown }).data;
+  }
+  if (payload && typeof payload === 'object' && 'data' in payload && !Array.isArray((payload as { data: unknown }).data)) {
+    return (payload as { data: unknown }).data;
+  }
+  return payload;
+}
+async function fetchPublicItem(resource: string, key: string, locale: string): Promise<ContentItem | null> {
+  if (!key) return null;
+  try {
+    const response = await fetch(`/api/v1/public/${encodeURIComponent(resource)}/${encodeURIComponent(key)}?locale=${encodeURIComponent(locale)}`, { cache: 'no-store' });
+    if (!response.ok) return null;
+    const row = unwrapPayload(await response.json());
+    return row && typeof row === 'object' && !Array.isArray(row) ? row as ContentItem : null;
+  } catch {
+    return null;
+  }
+}
+async function fetchPublicMatch(resource: string, locale: string, references: ContentItem[]): Promise<ContentItem | null> {
+  const keys = new Set(references.flatMap((row) => [row.id, row.slug, row.legacyId].filter((value) => value != null && String(value)).map(String)));
+  if (!keys.size) return null;
+  for (let page = 1; page <= 5; page += 1) {
+    try {
+      const params = new URLSearchParams({ view: 'block', limit: '100', page: String(page), locale });
+      const response = await fetch(`/api/v1/public/${encodeURIComponent(resource)}?${params}`, { cache: 'no-store' });
+      if (!response.ok) return null;
+      const rows = rowsFrom(unwrapPayload(await response.json()));
+      const match = rows.find((row) => [row.id, row.slug, row.legacyId].some((value) => value != null && keys.has(String(value))));
+      if (match) return match;
+      if (rows.length < 100) break;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+async function resolveLocalizedContent(resource: string, original: ContentItem, requestedLocale: string, defaultLocale: string): Promise<{ item: ContentItem; contentLocale: string }> {
+  const originalKey = itemKey(original);
+  const localesToTry = [...new Set([requestedLocale, defaultLocale])];
+  let translations: ContentItem[] = [];
+  try {
+    const response = await fetch(`/api/v1/public/${encodeURIComponent(resource)}/${encodeURIComponent(originalKey)}/translations`, { cache: 'no-store' });
+    if (response.ok) translations = rowsFrom(unwrapPayload(await response.json()));
+  } catch { /* Les requêtes directes ci-dessous servent de repli. */ }
+
+  for (const targetLocale of localesToTry) {
+    const reference = translations.find((row) => String(row.locale || '') === targetLocale);
+    if (reference) {
+      const translated = await fetchPublicItem(resource, itemKey(reference), targetLocale);
+      if (translated && (!translated.locale || translated.locale === targetLocale)) return { item: translated, contentLocale: targetLocale };
+      const listedTranslation = await fetchPublicMatch(resource, targetLocale, [reference, original]);
+      if (listedTranslation && (!listedTranslation.locale || listedTranslation.locale === targetLocale)) return { item: listedTranslation, contentLocale: targetLocale };
+      if (reference.title || reference.name) return { item: reference, contentLocale: targetLocale };
+    }
+    const direct = await fetchPublicItem(resource, originalKey, targetLocale);
+    if (direct && (!direct.locale || direct.locale === targetLocale)) return { item: direct, contentLocale: targetLocale };
+    const listed = await fetchPublicMatch(resource, targetLocale, [original]);
+    if (listed && (!listed.locale || listed.locale === targetLocale)) return { item: listed, contentLocale: targetLocale };
+  }
+  return { item: original, contentLocale: String(original.locale || defaultLocale) };
+}
 function mediaPath(value: unknown, depth = 0): string {
   if (depth > 4 || value == null) return '';
   if (typeof value === 'string') return value.startsWith('uploads/') ? `/${value}` : value;
@@ -117,6 +182,7 @@ export default function SocialGraphicsStudio() {
   const [layout, setLayout] = useState<string>('full');
   const [theme, setTheme] = useState('sari');
   const [renderLocale, setRenderLocale] = useState(locale);
+  const [resolvedContent, setResolvedContent] = useState<ResolvedContent | null>(null);
   const [dateFormat, setDateFormat] = useState('short');
   const [direction, setDirection] = useState(locale === 'ar' ? 'rtl' : 'ltr');
   const [font, setFont] = useState('Inter');
@@ -191,16 +257,31 @@ export default function SocialGraphicsStudio() {
     return itemOptions.filter(({ label, value, item }) => !needle || `${label} ${value} ${item.id ?? ''}`.toLocaleLowerCase().includes(needle)).slice(0, 10);
   }, [itemOptions, searchText]);
   const selectedItem = items.find((item) => itemKey(item) === selected);
-  const sourceImage = mediaPath(selectedItem?.image) || mediaPath(selectedItem?.coverImage) || mediaPath(selectedItem?.thumbnail) || mediaPath(selectedItem?.media);
+  useEffect(() => {
+    let active = true;
+    if (!selectedItem) return () => { active = false; };
+    const resolution = renderLocale === locale
+      ? Promise.resolve({ item: selectedItem, contentLocale: locale })
+      : resolveLocalizedContent(sourceConfig.endpoint, selectedItem, renderLocale, defaultLocale);
+    void resolution.then((result) => {
+      if (active) setResolvedContent({ source, selected, requestedLocale: renderLocale, ...result });
+    });
+    return () => { active = false; };
+  }, [source, selected, selectedItem, renderLocale, locale, sourceConfig.endpoint]);
+  const resolvedIsCurrent = resolvedContent?.source === source && resolvedContent.selected === selected && resolvedContent.requestedLocale === renderLocale;
+  const previewItem = resolvedIsCurrent ? resolvedContent.item : selectedItem;
+  const previewContentLocale = resolvedIsCurrent ? resolvedContent.contentLocale : renderLocale;
+  const isResolvingContent = Boolean(selectedItem && !resolvedIsCurrent);
+  const sourceImage = mediaPath(previewItem?.image) || mediaPath(previewItem?.coverImage) || mediaPath(previewItem?.thumbnail) || mediaPath(previewItem?.media);
   const effectiveDateFormat = dateFormat === 'site' ? dateSettings.format : dateFormat;
   const dateOptions = { format: effectiveDateFormat, dateOnly: !dateSettings.showTime };
-  const rawDate = selectedItem?.startDate || selectedItem?.date;
+  const rawDate = previewItem?.startDate || previewItem?.date;
   const formattedDate = rawDate
-    ? formatDateRangeWith(rawDate, selectedItem?.endDate, renderLocale as SupportedLocale, dateOptions)
+    ? formatDateRangeWith(rawDate, previewItem?.endDate, renderLocale as SupportedLocale, dateOptions)
     : '';
 
   const socialUrl = useMemo(() => {
-    if (!selected) return '';
+    if (!selected || isResolvingContent || !previewItem) return '';
     const composition = Object.hasOwn(SOCIAL_STYLE_PRESETS, theme)
       ? (SOCIAL_STYLE_PRESETS as Record<string, { image?: boolean }>)[theme]
       : undefined;
@@ -209,19 +290,19 @@ export default function SocialGraphicsStudio() {
       const params = new URLSearchParams({
         kind: source === 'events' ? 'event' : ['products', 'services', 'solutions'].includes(source) ? 'product' : source === 'announcements' ? 'announcement' : 'article',
         format, width: String(width), height: String(height), style: theme,
-        locale: renderLocale, direction, fontFamily: customFont.trim() || font, textScale: titleScale,
-        title: customTitle.trim() || String(selectedItem?.title || selectedItem?.name || ''),
-        summary: customSummary.trim() || String(selectedItem?.shortDesc || selectedItem?.chapo || ''),
-        topic: customSubject.trim() || String(selectedItem?.sujet || selectedItem?.category || selectedItem?.classification || ''),
+        locale: previewContentLocale, direction, fontFamily: customFont.trim() || font, textScale: titleScale,
+        title: customTitle.trim() || String(previewItem.title || previewItem.name || ''),
+        summary: customSummary.trim() || String(previewItem.shortDesc || previewItem.chapo || ''),
+        topic: customSubject.trim() || String(previewItem.sujet || previewItem.category || previewItem.classification || ''),
         brand: String(brand.title || ''), showLogo: showLogo ? 'true' : 'false', includeQr: includeQr ? 'true' : 'false',
         themeConfig: JSON.stringify({
           primary: colors.bg2, secondary: 'rgb(22, 158, 201)', accent: colors.accent,
           background: colors.bg, foreground: colors.textColor,
-          fontFamily: customFont.trim() || font, direction, locale: renderLocale,
+          fontFamily: customFont.trim() || font, direction, locale: previewContentLocale,
           transparent: false,
         }),
       });
-      const location = selectedItem?.location || selectedItem?.venue;
+      const location = previewItem.location || previewItem.venue;
       if (formattedDate) params.set('date', formattedDate);
       if (location) params.set('location', String(location));
       if (includeQr && linkUrl.trim()) params.set('url', linkUrl.trim());
@@ -230,7 +311,7 @@ export default function SocialGraphicsStudio() {
       if (showLogo && (customLogo.trim() || brand.logo)) params.set('logoUrl', customLogo.trim() || String(brand.logo));
       return `/api/social-card?${params.toString()}`;
     }
-    const params = new URLSearchParams({ platform, locale: renderLocale, direction, font: customFont.trim() || font, titleScale, logoScale, grid: gridBackground ? '1' : '0', theme, bg: colors.bg, bg2: colors.bg2, accent: colors.accent, textColor: colors.textColor, align, overlay, layout, effect, effectColor, effectOpacity, imageOpacity, borderWidth, borderColor, borderRadius, blockRadius });
+    const params = new URLSearchParams({ platform, locale: previewContentLocale, direction, font: customFont.trim() || font, titleScale, logoScale, grid: gridBackground ? '1' : '0', theme, bg: colors.bg, bg2: colors.bg2, accent: colors.accent, textColor: colors.textColor, align, overlay, layout, effect, effectColor, effectOpacity, imageOpacity, borderWidth, borderColor, borderRadius, blockRadius });
     if (includeQr) params.set('qr', '1');
     if (linkUrl.trim()) params.set('url', linkUrl.trim());
     if (customTitle.trim()) params.set('title', customTitle.trim());
@@ -246,8 +327,8 @@ export default function SocialGraphicsStudio() {
     params.set('qrPosition', qrPosition);
     if (!showLogo) params.set('logo', 'none');
     else if (customLogo.trim()) params.set('logo', customLogo.trim());
-    return `/api/v1/public/graphics/social/${encodeURIComponent(source)}/${encodeURIComponent(selected)}?${params.toString()}`;
-  }, [source, selected, selectedItem, platform, renderLocale, formattedDate, direction, font, customFont, titleScale, logoScale, gridBackground, theme, colors, align, titleX, titleY, overlay, effect, effectColor, effectOpacity, imageOpacity, borderWidth, borderColor, borderRadius, blockRadius, layout, includeQr, qrPosition, linkUrl, showLogo, logoPosition, customLogo, customTitle, customSubject, customIcon, customSummary, customImage, sourceImage, brand]);
+    return `/api/v1/public/graphics/social/${encodeURIComponent(source)}/${encodeURIComponent(itemKey(previewItem))}?${params.toString()}`;
+  }, [source, selected, previewItem, previewContentLocale, isResolvingContent, platform, formattedDate, direction, font, customFont, titleScale, logoScale, gridBackground, theme, colors, align, titleX, titleY, overlay, effect, effectColor, effectOpacity, imageOpacity, borderWidth, borderColor, borderRadius, blockRadius, layout, includeQr, qrPosition, linkUrl, showLogo, logoPosition, customLogo, customTitle, customSubject, customIcon, customSummary, customImage, sourceImage, brand]);
 
   const imageEndpoint = useMemo(() => {
     if (tab === 'qr') return `/api/v1/public/graphics/qr?${new URLSearchParams({ data: qrData, size: qrSize, color: codeColor, background: codeBg, margin: '2' })}`;
@@ -341,14 +422,16 @@ export default function SocialGraphicsStudio() {
                 {!loading && !loadError && !items.length && <span className="block text-xs opacity-70">Aucun contenu publié trouvé pour ce type.</span>}
               </div>
             </div>
-            {selectedItem && <div className="grid gap-3 rounded-xl border border-[var(--ad-line)] p-3 sm:grid-cols-[160px_1fr]">
+            {previewItem && <div className="grid gap-3 rounded-xl border border-[var(--ad-line)] p-3 sm:grid-cols-[160px_1fr]">
               <div className="aspect-video overflow-hidden rounded-lg bg-black/5 dark:bg-white/5">{sourceImage ? (
                 // eslint-disable-next-line @next/next/no-img-element -- The source image is selected from existing CMS records.
-                <img src={sourceImage} alt={`Image source : ${String(selectedItem.title || selectedItem.name || '')}`} className="h-full w-full object-cover" />
+                <img src={sourceImage} alt={`Image source : ${String(previewItem.title || previewItem.name || '')}`} className="h-full w-full object-cover" />
               ) : <div className="grid h-full place-items-center text-xs opacity-60"><ImageIcon className="mb-1 h-5 w-5" />Pas d’image sur la fiche</div>}</div>
-              <div className="min-w-0 self-center"><div className="text-xs font-bold uppercase tracking-wide opacity-60">Image et métadonnées du contenu sélectionné</div><div className="mt-1 truncate font-bold">{String(selectedItem.title || selectedItem.name || 'Sans titre')}</div><div className="mt-1 text-xs opacity-70">ID {String(selectedItem.id ?? '—')} · {String(selectedItem.slug ?? '')}</div>
-                {source === 'events' && <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">{formattedDate && <span className="inline-flex items-center gap-1"><CalendarDays className="h-3.5 w-3.5" />{formattedDate}</span>}{(selectedItem.location || selectedItem.venue) && <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{String(selectedItem.location || selectedItem.venue)}</span>}</div>}
-                {['services', 'solutions', 'products'].includes(source) && selectedItem.icon && <div className="mt-2 text-xs">Icône configurée : <code>{selectedItem.icon}</code></div>}
+              <div className="min-w-0 self-center"><div className="text-xs font-bold uppercase tracking-wide opacity-60">Image et métadonnées du contenu sélectionné</div><div className="mt-1 truncate font-bold">{String(previewItem.title || previewItem.name || 'Sans titre')}</div><div className="mt-1 text-xs opacity-70">ID {String(previewItem.id ?? '—')} · {String(previewItem.slug ?? '')}</div>
+                {resolvedIsCurrent && resolvedContent.contentLocale !== renderLocale && <div className="mt-2 text-xs text-amber-700">Aucune traduction « {renderLocale} » n’est associée à cette fiche. Aperçu de la version par défaut.</div>}
+                {isResolvingContent && <div className="mt-2 text-xs opacity-70">Chargement de la traduction…</div>}
+                {source === 'events' && <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">{formattedDate && <span className="inline-flex items-center gap-1"><CalendarDays className="h-3.5 w-3.5" />{formattedDate}</span>}{(previewItem.location || previewItem.venue) && <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{String(previewItem.location || previewItem.venue)}</span>}</div>}
+                {['services', 'solutions', 'products'].includes(source) && previewItem.icon && <div className="mt-2 text-xs">Icône configurée : <code>{previewItem.icon}</code></div>}
               </div>
             </div>}
             <div className="grid gap-3 sm:grid-cols-2">
@@ -405,9 +488,9 @@ export default function SocialGraphicsStudio() {
               <summary className="cursor-pointer text-sm font-bold">Sujet, chapô, image ou logo personnalisés</summary>
               <div className="mt-3 grid gap-3">
                 <label className="space-y-1 text-sm"><span>Titre de remplacement</span><input className="ad-input w-full" maxLength={180} value={customTitle} onChange={(e) => setCustomTitle(e.target.value)} /></label>
-                {['articles', 'announcements', 'tips'].includes(source) && <label className="space-y-1 text-sm"><span>Sujet / catégorie (badge)</span><input className="ad-input w-full" maxLength={72} placeholder={String(selectedItem?.sujet || selectedItem?.category || selectedItem?.classification || '')} value={customSubject} onChange={(e) => setCustomSubject(e.target.value)} /></label>}
+                {['articles', 'announcements', 'tips'].includes(source) && <label className="space-y-1 text-sm"><span>Sujet / catégorie (badge)</span><input className="ad-input w-full" maxLength={72} placeholder={String(previewItem?.sujet || previewItem?.category || previewItem?.classification || '')} value={customSubject} onChange={(e) => setCustomSubject(e.target.value)} /></label>}
                 <label className="space-y-1 text-sm"><span>Chapô / résumé</span><textarea className="ad-input w-full" rows={2} maxLength={500} value={customSummary} onChange={(e) => setCustomSummary(e.target.value)} /></label>
-                {['services', 'solutions', 'products'].includes(source) && <label className="space-y-1 text-sm"><span>Icône Lucide (nom de l’icône de la fiche)</span><input className="ad-input w-full" placeholder={selectedItem?.icon || 'stethoscope'} value={customIcon} onChange={(e) => setCustomIcon(e.target.value)} /></label>}
+                {['services', 'solutions', 'products'].includes(source) && <label className="space-y-1 text-sm"><span>Icône Lucide (nom de l’icône de la fiche)</span><input className="ad-input w-full" placeholder={previewItem?.icon || 'stethoscope'} value={customIcon} onChange={(e) => setCustomIcon(e.target.value)} /></label>}
                 <label className="space-y-1 text-sm"><span>Image GED de remplacement (/uploads/...)</span><input className="ad-input w-full" placeholder="/uploads/news/visuel.jpg" value={customImage} onChange={(e) => setCustomImage(e.target.value)} /></label>
                 <label className="space-y-1 text-sm"><span>Logo GED personnalisé (facultatif)</span><input className="ad-input w-full" placeholder={brand.logo || '/uploads/ged/logo.png'} value={customLogo} onChange={(e) => setCustomLogo(e.target.value)} /></label>
               </div>
@@ -435,7 +518,7 @@ export default function SocialGraphicsStudio() {
             {imageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element -- The URL is a dynamic binary API preview.
               <img key={imageUrl} src={imageUrl} alt="Aperçu du visuel généré" className="max-h-[560px] max-w-full object-contain shadow-xl" />
-            ) : <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>Choisissez un contenu et un format pour afficher l’aperçu.</p>}
+            ) : <p className="text-sm" style={{ color: 'var(--ad-muted)' }}>{isResolvingContent ? 'Chargement de la traduction et de l’aperçu…' : 'Choisissez un contenu et un format pour afficher l’aperçu.'}</p>}
           </div>
           {absolute && <div className="mt-3"><div className="mb-1 text-xs font-bold uppercase tracking-wide" style={{ color: 'var(--ad-muted)' }}>URL publique de l’API</div><code className="block break-all rounded-lg bg-black/5 p-2 text-xs dark:bg-white/5">{absolute}</code></div>}
           {tab === 'social' && <p className="mt-2 text-xs" style={{ color: 'var(--ad-muted)' }}>Paramètres API : source et identifiant dans le chemin, puis plateforme, couleurs, alignement, voile et QR dans la query string. Le contenu doit être publié.</p>}
