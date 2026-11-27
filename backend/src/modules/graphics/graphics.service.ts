@@ -317,13 +317,25 @@ export class GraphicsService {
     const defaultTitleX = layout === 'split-left' ? 53 : layout === 'split-right' ? 7 : align === 'center' ? 50 : align === 'right' ? 93 : 7;
     const titleX = clamp(numeric(query.titleX, defaultTitleX), 3, 97);
     const textX = Math.round(width * titleX / 100);
-    const anchor = align === 'center' ? 'middle' : align === 'right' ? 'end' : 'start';
+    // SVG text-anchor is relative to writing direction: in RTL, "start" is the
+    // physical right edge and "end" is the physical left edge. Invert the
+    // anchor mapping so a visual right alignment stays on the right in Arabic.
+    const anchor = align === 'center'
+      ? 'middle'
+      : (align === 'right') === (direction === 'rtl') ? 'start' : 'end';
     const story = platform.includes('story');
     const blockRadius = clamp(numeric(query.blockRadius, 0), 0, 100);
     const titleFont = clamp(numeric(query.titleSize, Math.round((split ? regionWidth : width - pad * 2) * (split ? 0.085 : 0.064))) * titleScale, 22, Math.round(width * 0.16));
     const defaultTitleY = story ? 61 : split ? 44 : resolved === 'events' ? 58 : 65;
     const titleY = Math.round(height * clamp(numeric(query.titleY, defaultTitleY) / 100, 0.15, 0.9));
-    const usable = Math.max(120, Math.min(regionWidth, width - Math.max(pad, textX % width - pad)));
+    const textLeft = Math.max(pad, regionStart);
+    const textRight = Math.min(width - pad, regionEnd);
+    const availableTextWidth = align === 'right'
+      ? textX - textLeft
+      : align === 'center'
+        ? 2 * Math.min(textX - textLeft, textRight - textX)
+        : textRight - textX;
+    const usable = Math.max(120, Math.min(regionWidth, availableTextWidth));
     const titleLines = wrap(title, Math.max(10, Math.floor(usable / (titleFont * 0.57))), story ? 4 : 3);
     const summaryLines = wrap(summary, Math.max(16, Math.floor(usable / (titleFont * 0.34))), story ? 4 : 3);
     const titleSvg = titleLines.map((line, index) => `<text x="${textX}" y="${titleY + index * Math.round(titleFont * 1.12)}" text-anchor="${anchor}" fill="${fg}" font-family="${esc(fontName)}, sans-serif" font-size="${titleFont}" font-weight="800">${esc(line)}</text>`).join('');

@@ -26,7 +26,7 @@ function unwrapPayload(payload: unknown): unknown {
 async function fetchPublicItem(resource: string, key: string, locale: string): Promise<ContentItem | null> {
   if (!key) return null;
   try {
-    const response = await fetch(`/api/v1/public/${encodeURIComponent(resource)}/${encodeURIComponent(key)}?locale=${encodeURIComponent(locale)}`, { cache: 'no-store' });
+    const response = await fetch(`/api/v1/public/${encodeURIComponent(resource)}/${encodeURIComponent(key)}?locale=${encodeURIComponent(locale)}`, { cache: 'no-store', signal: AbortSignal.timeout(8000) });
     if (!response.ok) return null;
     const row = unwrapPayload(await response.json());
     return row && typeof row === 'object' && !Array.isArray(row) ? row as ContentItem : null;
@@ -40,7 +40,7 @@ async function fetchPublicMatch(resource: string, locale: string, references: Co
   for (let page = 1; page <= 5; page += 1) {
     try {
       const params = new URLSearchParams({ view: 'block', limit: '100', page: String(page), locale });
-      const response = await fetch(`/api/v1/public/${encodeURIComponent(resource)}?${params}`, { cache: 'no-store' });
+      const response = await fetch(`/api/v1/public/${encodeURIComponent(resource)}?${params}`, { cache: 'no-store', signal: AbortSignal.timeout(8000) });
       if (!response.ok) return null;
       const rows = rowsFrom(unwrapPayload(await response.json()));
       const match = rows.find((row) => [row.id, row.slug, row.legacyId].some((value) => value != null && keys.has(String(value))));
@@ -57,7 +57,7 @@ async function resolveLocalizedContent(resource: string, original: ContentItem, 
   const localesToTry = [...new Set([requestedLocale, defaultLocale])];
   let translations: ContentItem[] = [];
   try {
-    const response = await fetch(`/api/v1/public/${encodeURIComponent(resource)}/${encodeURIComponent(originalKey)}/translations`, { cache: 'no-store' });
+    const response = await fetch(`/api/v1/public/${encodeURIComponent(resource)}/${encodeURIComponent(originalKey)}/translations`, { cache: 'no-store', signal: AbortSignal.timeout(8000) });
     if (response.ok) translations = rowsFrom(unwrapPayload(await response.json()));
   } catch { /* Les requêtes directes ci-dessous servent de repli. */ }
 
@@ -270,7 +270,7 @@ export default function SocialGraphicsStudio() {
   }, [source, selected, selectedItem, renderLocale, locale, sourceConfig.endpoint]);
   const resolvedIsCurrent = resolvedContent?.source === source && resolvedContent.selected === selected && resolvedContent.requestedLocale === renderLocale;
   const previewItem = resolvedIsCurrent ? resolvedContent.item : selectedItem;
-  const previewContentLocale = resolvedIsCurrent ? resolvedContent.contentLocale : renderLocale;
+  const previewContentLocale = resolvedIsCurrent ? resolvedContent.contentLocale : String(selectedItem?.locale || locale);
   const isResolvingContent = Boolean(selectedItem && !resolvedIsCurrent);
   const sourceImage = mediaPath(previewItem?.image) || mediaPath(previewItem?.coverImage) || mediaPath(previewItem?.thumbnail) || mediaPath(previewItem?.media);
   const effectiveDateFormat = dateFormat === 'site' ? dateSettings.format : dateFormat;
@@ -281,7 +281,7 @@ export default function SocialGraphicsStudio() {
     : '';
 
   const socialUrl = useMemo(() => {
-    if (!selected || isResolvingContent || !previewItem) return '';
+    if (!selected || !previewItem) return '';
     const composition = Object.hasOwn(SOCIAL_STYLE_PRESETS, theme)
       ? (SOCIAL_STYLE_PRESETS as Record<string, { image?: boolean }>)[theme]
       : undefined;
@@ -328,7 +328,7 @@ export default function SocialGraphicsStudio() {
     if (!showLogo) params.set('logo', 'none');
     else if (customLogo.trim()) params.set('logo', customLogo.trim());
     return `/api/v1/public/graphics/social/${encodeURIComponent(source)}/${encodeURIComponent(itemKey(previewItem))}?${params.toString()}`;
-  }, [source, selected, previewItem, previewContentLocale, isResolvingContent, platform, formattedDate, direction, font, customFont, titleScale, logoScale, gridBackground, theme, colors, align, titleX, titleY, overlay, effect, effectColor, effectOpacity, imageOpacity, borderWidth, borderColor, borderRadius, blockRadius, layout, includeQr, qrPosition, linkUrl, showLogo, logoPosition, customLogo, customTitle, customSubject, customIcon, customSummary, customImage, sourceImage, brand]);
+  }, [source, selected, previewItem, previewContentLocale, platform, formattedDate, direction, font, customFont, titleScale, logoScale, gridBackground, theme, colors, align, titleX, titleY, overlay, effect, effectColor, effectOpacity, imageOpacity, borderWidth, borderColor, borderRadius, blockRadius, layout, includeQr, qrPosition, linkUrl, showLogo, logoPosition, customLogo, customTitle, customSubject, customIcon, customSummary, customImage, sourceImage, brand]);
 
   const imageEndpoint = useMemo(() => {
     if (tab === 'qr') return `/api/v1/public/graphics/qr?${new URLSearchParams({ data: qrData, size: qrSize, color: codeColor, background: codeBg, margin: '2' })}`;
