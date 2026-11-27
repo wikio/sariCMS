@@ -7,12 +7,12 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import {
   ShieldCheck,
-  LayoutDashboard, FileText, Package, Wrench, Briefcase, Newspaper,
+  LayoutDashboard, FileText, Wrench, Briefcase, Newspaper,
   Calendar, CalendarCheck, Layers, MessageCircle, Handshake, Image as ImageIcon,
-  FileStack, Menu as MenuIcon, Compass, Scale, Settings, ShoppingCart,
-  Users, UserCog, FileCheck, Globe, Sliders, ExternalLink, LogOut,
+  Menu as MenuIcon, Compass, Scale, Settings, ShoppingCart,
+  Users, UserCog, FileCheck, Sliders, ExternalLink, LogOut,
   Shield, Search, ChevronDown, ChevronLeft, Palette, BarChart3, ScrollText,
-  Tags, UserPlus, UserRound, Paintbrush, Banknote, MessageSquareText, Eye,
+  Tags, UserPlus, UserRound, MessageSquareText, Eye,
   LayoutTemplate, MailPlus, Mail,
 } from 'lucide-react';
 
@@ -177,8 +177,14 @@ function Shell({ children, page }: { children: ReactNode; page?: string }) {
     { id: 'home', icon: LayoutTemplate, label: t('menu.home'), href: `/${locale}/admin/home` },
     { id: 'menu', icon: MenuIcon, label: t('menu.menuNav'), href: `/${locale}/admin/menus` },
     { id: 'hero', icon: ImageIcon, label: t('menu.hero'), href: `/${locale}/admin/hero` },
-    { id: 'galleries', icon: FileStack, label: t('menu.galleries'), href: `/${locale}/admin/galleries` },
-    { id: 'media', icon: Compass, label: t('menu.media'), href: `/${locale}/admin/media` },
+    {
+      id: 'media-tools', type: 'group', icon: Compass, label: t('menu.media'),
+      children: [
+        { id: 'media', label: t('menu.media'), href: `/${locale}/admin/media` },
+        { id: 'galleries', label: t('menu.galleries'), href: `/${locale}/admin/galleries` },
+        { id: 'media-studio', label: t('menu.mediaStudio'), href: `/${locale}/admin/media/studio` },
+      ],
+    },
     { id: 'legal', icon: Scale, label: t('menu.legal'), href: `/${locale}/admin/legal` },
     { type: 'divider', label: t('menu.crmSection') },
     { id: 'clients', icon: Users, label: t('menu.clients'), href: `/${locale}/admin/clients` },
@@ -192,12 +198,16 @@ function Shell({ children, page }: { children: ReactNode; page?: string }) {
     { id: 'visibility', icon: Eye, label: t('menu.visibility'), href: `/${locale}/admin/visibility` },
     { id: 'messages', icon: MessageSquareText, label: t('menu.messages'), href: `/${locale}/admin/messages` },
     { id: 'users', icon: UserCog, label: t('menu.users'), href: `/${locale}/admin/users` },
-    { id: 'permissions', icon: Shield, label: t('menu.permissions'), href: `/${locale}/admin/permissions` },
-    { id: 'translations', icon: Globe, label: t('menu.translations'), href: `/${locale}/admin/translations` },
-    { id: 'emails', icon: Settings, label: t('menu.emails'), href: `/${locale}/admin/emails` },
+
     { type: 'divider', label: t('menu.vitrineSection') },
-    { id: 'builder', icon: Paintbrush, label: t('menu.builder'), href: `/${locale}/admin/builder` },
-    { id: 'canvas', icon: Palette, label: t('menu.canvas'), href: `/${locale}/admin/canvas` },
+    {
+      id: 'creative-tools', type: 'group', icon: Palette, label: t('menu.canvas'),
+      children: [
+        { id: 'builder', label: t('menu.builder'), href: `/${locale}/admin/builder` },
+        { id: 'canvas', label: t('menu.canvas'), href: `/${locale}/admin/canvas` },
+        { id: 'social-graphics', label: t('menu.socialGraphics'), href: `/${locale}/admin/media/social` },
+      ],
+    },
     { id: 'verification-codes', icon: ShieldCheck, label: t('menu.verificationCodes'), href: `/${locale}/admin/verification-codes` },
     {
       id: 'commerce-settings', type: 'group', icon: Sliders, label: t('menu.commerceSettings'),
@@ -208,7 +218,16 @@ function Shell({ children, page }: { children: ReactNode; page?: string }) {
         { id: 'currencies', label: t('menu.currencies'), href: `/${locale}/admin/currencies` },
       ],
     },
-    { id: 'settings', icon: Settings, label: t('menu.settings'), href: `/${locale}/admin/settings` },
+    {
+      id: 'settings', type: 'group', icon: Settings, label: t('menu.settings'),
+      children: [
+        { id: 'settings-general', label: t('menu.settings'), href: `/${locale}/admin/settings` },
+        { id: 'settings-site-config', label: t('menu.config'), href: `/${locale}/admin/config` },
+        { id: 'settings-translations', label: t('menu.translations'), href: `/${locale}/admin/translations` },
+        { id: 'settings-permissions', label: t('menu.permissions'), href: `/${locale}/admin/permissions` },
+        { id: 'settings-emails', label: t('menu.emails'), href: `/${locale}/admin/emails` },
+      ],
+    },
     { id: 'profile', icon: UserRound, label: t('menu.profile'), href: `/${locale}/admin/profile` },
   ], [locale, t]);
 

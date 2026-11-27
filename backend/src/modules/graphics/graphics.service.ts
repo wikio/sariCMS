@@ -26,6 +26,15 @@ export const SOCIAL_FORMATS = {
   og: { width: 1200, height: 630, label: 'Open Graph' },
 } as const;
 
+export const SOCIAL_THEMES = {
+  sari: { bg: '#1B2A4A', bg2: '#169EC9', accent: '#C6DA34', textColor: '#FFFFFF' },
+  clinical: { bg: '#F1F5F9', bg2: '#DBEAFE', accent: '#169EC9', textColor: '#14233B' },
+  midnight: { bg: '#0B1020', bg2: '#25365C', accent: '#C6DA34', textColor: '#FFFFFF' },
+  editorial: { bg: '#111827', bg2: '#374151', accent: '#EAB616', textColor: '#FFFFFF' },
+  aurora: { bg: '#312E81', bg2: '#0E7490', accent: '#67E8F9', textColor: '#FFFFFF' },
+  lime: { bg: '#365314', bg2: '#84CC16', accent: '#ECFCCB', textColor: '#FFFFFF' },
+} as const;
+
 export type SocialPlatform = keyof typeof SOCIAL_FORMATS;
 type ContentSource = 'news' | 'events' | 'products' | 'services' | 'solutions' | 'pages';
 
@@ -186,7 +195,8 @@ export class GraphicsService {
     let allowedHosts: string[] = [];
     const publicSite = this.config.get<string>('PUBLIC_SITE_URL') || '';
     try { if (publicSite) allowedHosts.push(new URL(publicSite).hostname.toLowerCase()); } catch { /* invalid origin is ignored */ }
-    allowedHosts = [...allowedHosts, ...(this.config.get<string>('GRAPHICS_ALLOWED_IMAGE_HOSTS') || '').split(',').map((host) => host.trim().toLowerCase()).filter(Boolean)];
+    // Le catalogue livré avec le site utilise des images Unsplash; les autres domaines restent explicitement configurables.
+    allowedHosts = [...allowedHosts, 'images.unsplash.com', ...(this.config.get<string>('GRAPHICS_ALLOWED_IMAGE_HOSTS') || '').split(',').map((host) => host.trim().toLowerCase()).filter(Boolean)];
     if (!allowedHosts.includes(target.hostname.toLowerCase())) return null;
     try {
       const response = await fetch(target, { redirect: 'error', signal: AbortSignal.timeout(5000) });
@@ -198,6 +208,13 @@ export class GraphicsService {
     } catch { return null; }
   }
 
+  private async imagePngData(buffer: Buffer): Promise<string> {
+    try {
+      const png = await sharp(buffer, { limitInputPixels: 25_000_000 }).resize({ width: 2200, height: 2200, fit: 'inside', withoutEnlargement: true }).png().toBuffer();
+      return `data:image/png;base64,${png.toString('base64')}`;
+    } catch { return ''; }
+  }
+
   private async imageData(value: unknown): Promise<string> {
     const raw = cleanText(value);
     if (!raw || raw.length > 2048) return '';
@@ -207,7 +224,11 @@ export class GraphicsService {
       if (/^https?:\/\//i.test(raw)) { const parsed = new URL(raw); pathname = parsed.pathname; remoteUrl = raw; }
     } catch { return ''; }
     if (pathname.startsWith('uploads/')) pathname = `/${pathname}`;
-    if (!pathname.startsWith('/uploads/')) return '';
+    if (!pathname.startsWith('/uploads/')) {
+      if (!remoteUrl) return '';
+      const remote = await this.remoteImage(remoteUrl);
+      return remote ? this.imagePngData(remote) : '';
+    }
     let rel: string;
     try { rel = decodeURIComponent(pathname.slice('/uploads/'.length)); } catch { return ''; }
     if (!rel || rel.split(/[\\/]/).some((part) => part === '..' || part === '.')) return '';
@@ -226,8 +247,7 @@ export class GraphicsService {
         if (fallbackUrl) buffer = await this.remoteImage(fallbackUrl);
       }
       if (!buffer) return '';
-      const png = await sharp(buffer, { limitInputPixels: 25_000_000 }).resize({ width: 2200, height: 2200, fit: 'inside', withoutEnlargement: true }).png().toBuffer();
-      return `data:image/png;base64,${png.toString('base64')}`;
+      return this.imagePngData(buffer);
     } catch { return ''; }
   }
 
@@ -248,10 +268,12 @@ export class GraphicsService {
     const image = await this.imageData(imageValue);
     const logoValue = query.logo === 'none' ? '' : query.logo || brand.logo;
     const logo = await this.imageData(logoValue);
-    const bg = hexColor(query.bg, '#1B2A4A');
-    const bg2 = hexColor(query.bg2, '#169EC9');
-    const accent = hexColor(query.accent, '#C6DA34');
-    const fg = hexColor(query.textColor, '#FFFFFF');
+    const themeName = String(query.theme || 'sari') as keyof typeof SOCIAL_THEMES;
+    const theme = SOCIAL_THEMES[themeName] || SOCIAL_THEMES.sari;
+    const bg = hexColor(query.bg, theme.bg);
+    const bg2 = hexColor(query.bg2, theme.bg2);
+    const accent = hexColor(query.accent, theme.accent);
+    const fg = hexColor(query.textColor, theme.textColor);
     const layoutCandidates = ['full', 'split-left', 'split-right', 'diagonal'];
     const defaultLayout = ['products', 'services', 'solutions'].includes(resolved) ? 'split-left' : 'full';
     const layout = layoutCandidates.includes(String(query.layout)) ? String(query.layout) : defaultLayout;
@@ -261,7 +283,12 @@ export class GraphicsService {
     const effectOpacity = clamp(numeric(query.effectOpacity, 0.26), 0, 0.9);
     const imageOpacity = clamp(numeric(query.imageOpacity, 1), 0, 1);
     const overlay = clamp(numeric(query.overlay, 0.52), 0, 0.88);
-    const align = ['left', 'center', 'right'].includes(String(query.align)) ? String(query.align) : 'left';
+    const direction = String(query.direction || (locale === 'ar' ? 'rtl' : 'ltr')) === 'rtl' ? 'rtl' : 'ltr';
+    const align = ['left', 'center', 'right'].includes(String(query.align)) ? String(query.align) : direction === 'rtl' ? 'right' : 'left';
+    const fontName = String(query.font || 'Arial').trim().slice(0, 64).replace(/[&<>"']/g, '');
+    const titleScale = clamp(numeric(query.titleScale, 1), 0.6, 1.8);
+    const logoScale = clamp(numeric(query.logoScale, 1), 0.4, 2.5);
+    const grid = ['1', 'true', 'yes'].includes(String(query.grid || '').toLowerCase());
     const includeQr = ['1', 'true', 'yes'].includes(String(query.qr || '').toLowerCase());
     const url = cleanText(query.url || this.contentUrl(source, item, locale));
     const qrData = includeQr && url ? await this.qr(url, { size: 180, color: bg, background: '#FFFFFF', margin: 1 }) : null;
@@ -276,6 +303,7 @@ export class GraphicsService {
     const imageFilter = effect === 'negative'
       ? '<filter id="negative"><feComponentTransfer><feFuncR type="table" tableValues="1 0"/><feFuncG type="table" tableValues="1 0"/><feFuncB type="table" tableValues="1 0"/></feComponentTransfer></filter>'
       : '';
+    const gridMarkup = grid ? `<g opacity="0.16" stroke="${fg}" stroke-width="1"><path d="${Array.from({ length: Math.ceil(width / 80) + 1 }, (_, i) => `M${i * 80} 0V${height}`).join(' ')} ${Array.from({ length: Math.ceil(height / 80) + 1 }, (_, i) => `M0 ${i * 80}H${width}`).join(' ')}"/></g>` : '';
     const imageSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><defs><linearGradient id="base" x1="0" y1="0" x2="1" y2="1"><stop stop-color="${bg}"/><stop offset="1" stop-color="${bg2}"/></linearGradient>${photoClip}${imageFilter}</defs><rect width="100%" height="100%" fill="url(#base)"/>${image ? `<image href="${image}" x="${photoX}" y="0" width="${photoWidth}" height="${height}" opacity="${imageOpacity}" preserveAspectRatio="xMidYMid slice" clip-path="url(#photoClip)" ${effect === 'negative' ? 'filter="url(#negative)"' : ''}/>` : ''}</svg>`;
     let background = await sharp(Buffer.from(imageSvg)).png().toBuffer();
     if (image && ['tint', 'screen', 'multiply', 'soft-light', 'overlay'].includes(effect) && effectOpacity > 0) {
@@ -291,20 +319,25 @@ export class GraphicsService {
     const textX = Math.round(width * titleX / 100);
     const anchor = align === 'center' ? 'middle' : align === 'right' ? 'end' : 'start';
     const story = platform.includes('story');
-    const titleFont = clamp(numeric(query.titleSize, Math.round((split ? regionWidth : width - pad * 2) * (split ? 0.085 : 0.064))), 22, Math.round(width * 0.12));
+    const blockRadius = clamp(numeric(query.blockRadius, 0), 0, 100);
+    const titleFont = clamp(numeric(query.titleSize, Math.round((split ? regionWidth : width - pad * 2) * (split ? 0.085 : 0.064))) * titleScale, 22, Math.round(width * 0.16));
     const defaultTitleY = story ? 61 : split ? 44 : resolved === 'events' ? 58 : 65;
     const titleY = Math.round(height * clamp(numeric(query.titleY, defaultTitleY) / 100, 0.15, 0.9));
     const usable = Math.max(120, Math.min(regionWidth, width - Math.max(pad, textX % width - pad)));
     const titleLines = wrap(title, Math.max(10, Math.floor(usable / (titleFont * 0.57))), story ? 4 : 3);
     const summaryLines = wrap(summary, Math.max(16, Math.floor(usable / (titleFont * 0.34))), story ? 4 : 3);
-    const titleSvg = titleLines.map((line, index) => `<text x="${textX}" y="${titleY + index * Math.round(titleFont * 1.12)}" text-anchor="${anchor}" fill="${fg}" font-family="Arial, sans-serif" font-size="${titleFont}" font-weight="800">${esc(line)}</text>`).join('');
+    const titleSvg = titleLines.map((line, index) => `<text x="${textX}" y="${titleY + index * Math.round(titleFont * 1.12)}" text-anchor="${anchor}" fill="${fg}" font-family="${esc(fontName)}, sans-serif" font-size="${titleFont}" font-weight="800">${esc(line)}</text>`).join('');
     const summaryY = titleY + titleLines.length * Math.round(titleFont * 1.12) + Math.round(titleFont * 0.65);
-    const summarySvg = summaryLines.map((line, index) => `<text x="${textX}" y="${summaryY + index * Math.round(titleFont * 0.56)}" text-anchor="${anchor}" fill="${fg}" opacity="0.94" font-family="Arial, sans-serif" font-size="${Math.round(titleFont * 0.39)}">${esc(line)}</text>`).join('');
+    const summarySvg = summaryLines.map((line, index) => `<text x="${textX}" y="${summaryY + index * Math.round(titleFont * 0.56)}" text-anchor="${anchor}" fill="${fg}" opacity="0.94" font-family="${esc(fontName)}, sans-serif" font-size="${Math.round(titleFont * 0.39)}">${esc(line)}</text>`).join('');
     const eventDates = resolved === 'events' ? [formatEventDate(item.startDate || item.date, locale), formatEventDate(item.endDate, locale)].filter(Boolean).join(' – ') : '';
     const eventPlace = resolved === 'events' ? cleanText(item.location || item.venue || '') : '';
     const eventMeta = [eventDates, eventPlace].filter(Boolean).join('  ·  ').slice(0, 180);
     const eventY = summaryY + summaryLines.length * Math.round(titleFont * 0.56) + Math.round(titleFont * 0.8);
-    const eventSvg = eventMeta ? `<text x="${textX}" y="${eventY}" text-anchor="${anchor}" fill="${accent}" font-family="Arial,sans-serif" font-size="${Math.round(titleFont * 0.32)}" font-weight="700">${esc(eventMeta)}</text>` : '';
+    const blockX = align === 'right' ? textX - usable - 18 : align === 'center' ? textX - usable / 2 - 18 : textX - 18;
+    const blockY = titleY - titleFont * 1.35;
+    const blockHeight = titleLines.length * Math.round(titleFont * 1.12) + summaryLines.length * Math.round(titleFont * 0.56) + (eventMeta ? Math.round(titleFont * 0.8) : 0) + titleFont * 1.8;
+    const contentBlock = `<rect x="${blockX}" y="${blockY}" width="${usable + 36}" height="${blockHeight}" rx="${blockRadius}" fill="${bg}" opacity="0.22"/>`;
+    const eventSvg = eventMeta ? `<text x="${textX}" y="${eventY}" text-anchor="${anchor}" fill="${accent}" font-family="${esc(fontName)},sans-serif" font-size="${Math.round(titleFont * 0.32)}" font-weight="700">${esc(eventMeta)}</text>` : '';
     const itemColor = hexColor(query.iconColor || item.color, accent);
     const iconName = cleanText(query.icon || item.icon || '');
     const iconX = align === 'center' ? textX - 22 : align === 'right' ? textX - 46 : textX;
@@ -313,23 +346,26 @@ export class GraphicsService {
     const subjectWidth = clamp(subject.length * 9 + 30, 82, Math.min(300, regionWidth));
     const subjectX = align === 'center' ? textX - subjectWidth / 2 : align === 'right' ? textX - subjectWidth : textX;
     const subjectY = titleY - titleFont * 0.92;
-    const subjectSvg = subject ? `<g><rect x="${subjectX}" y="${subjectY - 24}" width="${subjectWidth}" height="30" rx="15" fill="${accent}"/><text x="${subjectX + subjectWidth / 2}" y="${subjectY - 4}" text-anchor="middle" fill="${bg}" font-family="Arial,sans-serif" font-size="14" font-weight="800">${esc(subject)}</text></g>` : '';
+    const badgeRadius = Math.min(blockRadius, 15);
+    const subjectSvg = subject ? `<g><rect x="${subjectX}" y="${subjectY - 24}" width="${subjectWidth}" height="30" rx="${badgeRadius}" fill="${accent}"/><text x="${subjectX + subjectWidth / 2}" y="${subjectY - 4}" text-anchor="middle" fill="${bg}" font-family="Arial,sans-serif" font-size="14" font-weight="800">${esc(subject)}</text></g>` : '';
     const badge = subjectSvg || (resolved === 'events' ? '<g><rect x="0" y="0" width="0" height="0"/></g>' : '');
     const logoPosition = ['top-left', 'top-right', 'bottom-left', 'bottom-right'].includes(String(query.logoPosition)) ? String(query.logoPosition) : 'top-left';
     const qrPosition = ['top-left', 'top-right', 'bottom-left', 'bottom-right'].includes(String(query.qrPosition)) ? String(query.qrPosition) : 'bottom-right';
     const qrX = qrPosition.endsWith('left') ? pad : width - pad - 148;
     const qrY = qrPosition.startsWith('top') ? pad : height - pad - 148;
-    const logoX = logoPosition.endsWith('right') ? width - pad - 180 : pad;
-    const logoY = logoPosition.startsWith('bottom') ? height - pad - 64 : pad;
+    const logoWidth = Math.round(180 * logoScale);
+    const logoHeight = Math.round(64 * logoScale);
+    const logoX = logoPosition.endsWith('right') ? width - pad - logoWidth : pad;
+    const logoY = logoPosition.startsWith('bottom') ? height - pad - logoHeight : pad;
     const frameWidth = clamp(numeric(query.borderWidth, 0), 0, 36);
     const frameColor = hexColor(query.borderColor, accent);
     const frameRadius = clamp(numeric(query.borderRadius, 0), 0, Math.floor(Math.min(width, height) / 4));
     const shade = overlay > 0 ? `<rect x="${split ? regionStart - pad : 0}" y="0" width="${split ? regionWidth + pad : width}" height="100%" fill="#000" opacity="${overlay}"/>` : '';
     const diagonalShape = layout === 'diagonal' ? `<path d="M${width * 0.82} 0 L${width * 0.60} ${height} L${width} ${height} L${width} 0Z" fill="${bg}" opacity="0.94"/>` : '';
     const panelAccent = split ? `<rect x="${layout === 'split-left' ? photoWidth : 0}" y="0" width="${Math.round(width * 0.012)}" height="100%" fill="${accent}"/>` : '';
-    const logoMarkup = logo ? `<image href="${logo}" x="${logoX}" y="${logoY}" width="180" height="64" preserveAspectRatio="xMinYMid meet"/>` : `<text x="${logoX}" y="${logoY + 34}" fill="${fg}" opacity="0.95" font-family="Arial,sans-serif" font-size="${Math.round(width * 0.026)}" font-weight="700">${esc(brand.title)}</text>`;
+    const logoMarkup = logo ? `<image href="${logo}" x="${logoX}" y="${logoY}" width="${logoWidth}" height="${logoHeight}" preserveAspectRatio="xMinYMid meet"/>` : `<text x="${logoX}" y="${logoY + 34}" fill="${fg}" opacity="0.95" font-family="Arial,sans-serif" font-size="${Math.round(width * 0.026)}" font-weight="700">${esc(brand.title)}</text>`;
     const frame = frameWidth > 0 ? `<rect x="${frameWidth / 2}" y="${frameWidth / 2}" width="${width - frameWidth}" height="${height - frameWidth}" rx="${frameRadius}" fill="none" stroke="${frameColor}" stroke-width="${frameWidth}"/>` : '';
-    const overlaySvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><defs>${photoClip}<linearGradient id="shade" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#000" stop-opacity="0.12"/><stop offset="1" stop-color="#000" stop-opacity="0.30"/></linearGradient></defs>${shade}${diagonalShape}${panelAccent}<path d="M0 ${height - Math.round(height * 0.10)} Q${width * 0.42} ${height - Math.round(height * 0.35)} ${width} ${height - Math.round(height * 0.18)} L${width} ${height} L0 ${height}Z" fill="${accent}" opacity="0.15"/>${logoMarkup}${icon}${badge}${titleSvg}${summarySvg}${eventSvg}${qrData ? `<rect x="${qrX - 9}" y="${qrY - 9}" width="166" height="166" rx="12" fill="#fff"/><image href="data:image/png;base64,${qrData.toString('base64')}" x="${qrX}" y="${qrY}" width="148" height="148"/>` : ''}${frame}<rect x="${pad}" y="${height - Math.round(height * 0.036)}" width="${Math.round(width * 0.15)}" height="5" rx="2.5" fill="${accent}"/></svg>`;
+    const overlaySvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" direction="${direction}"><defs>${photoClip}<linearGradient id="shade" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#000" stop-opacity="0.12"/><stop offset="1" stop-color="#000" stop-opacity="0.30"/></linearGradient></defs>${shade}${gridMarkup}${diagonalShape}${panelAccent}<path d="M0 ${height - Math.round(height * 0.10)} Q${width * 0.42} ${height - Math.round(height * 0.35)} ${width} ${height - Math.round(height * 0.18)} L${width} ${height} L0 ${height}Z" fill="${accent}" opacity="0.15"/>${logoMarkup}${icon}${contentBlock}${badge}${titleSvg}${summarySvg}${eventSvg}${qrData ? `<rect x="${qrX - 9}" y="${qrY - 9}" width="166" height="166" rx="${Math.min(blockRadius, 12)}" fill="#fff"/><image href="data:image/png;base64,${qrData.toString('base64')}" x="${qrX}" y="${qrY}" width="148" height="148"/>` : ''}${frame}<rect x="${pad}" y="${height - Math.round(height * 0.036)}" width="${Math.round(width * 0.15)}" height="5" rx="2.5" fill="${accent}"/></svg>`;
     const format = String(query.format || 'png').toLowerCase();
     if (!['png', 'jpeg', 'webp'].includes(format)) throw new BadRequestException('format doit être png, jpeg ou webp.');
     // SVG units are CSS px; sharp's default 72 DPI preserves the requested social dimensions.

@@ -60,7 +60,9 @@
       "verificationCodes": "Codes de vérification",
       "shopConfig": "Configuration boutique",
       "commerceSettings": "Commerce",
-      "eventRegistrations": "Participations événements"
+      "eventRegistrations": "Participations événements",
+      "mediaStudio": "Studio des médias",
+      "socialGraphics": "Visuels sociaux"
     },
     "header": {
       "seeSite": "Voir le site",

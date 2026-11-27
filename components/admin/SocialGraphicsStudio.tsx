@@ -45,6 +45,14 @@ const LAYOUTS = [
 const EFFECTS = [['none', 'Aucun'], ['tint', 'Teinte'], ['screen', 'Écran'], ['multiply', 'Produit / Multiply'], ['soft-light', 'Lumière douce'], ['overlay', 'Superposition'], ['negative', 'Négatif']] as const;
 const defaultLayout = (kind: SourceKind) => ['products', 'services', 'solutions'].includes(kind) ? 'split-left' : kind === 'events' ? 'diagonal' : 'full';
 const DEFAULT_COLORS = { bg: '#1B2A4A', bg2: '#169EC9', accent: '#C6DA34', textColor: '#FFFFFF' };
+const SOCIAL_THEMES: Record<string, typeof DEFAULT_COLORS> = {
+  sari: DEFAULT_COLORS,
+  clinical: { bg: '#F1F5F9', bg2: '#DBEAFE', accent: '#169EC9', textColor: '#14233B' },
+  midnight: { bg: '#0B1020', bg2: '#25365C', accent: '#C6DA34', textColor: '#FFFFFF' },
+  editorial: { bg: '#111827', bg2: '#374151', accent: '#EAB616', textColor: '#FFFFFF' },
+  aurora: { bg: '#312E81', bg2: '#0E7490', accent: '#67E8F9', textColor: '#FFFFFF' },
+  lime: { bg: '#365314', bg2: '#84CC16', accent: '#ECFCCB', textColor: '#FFFFFF' },
+};
 
 function itemKey(item: ContentItem) { return String(item.slug || item.id || ''); }
 function itemLabel(item: ContentItem) {
@@ -80,6 +88,14 @@ export default function SocialGraphicsStudio() {
   const [loading, setLoading] = useState(true);
   const [platform, setPlatform] = useState<string>('instagram');
   const [layout, setLayout] = useState<string>('full');
+  const [theme, setTheme] = useState('sari');
+  const [renderLocale, setRenderLocale] = useState(locale);
+  const [direction, setDirection] = useState(locale === 'ar' ? 'rtl' : 'ltr');
+  const [font, setFont] = useState('Inter');
+  const [customFont, setCustomFont] = useState('');
+  const [titleScale, setTitleScale] = useState('1');
+  const [logoScale, setLogoScale] = useState('1');
+  const [gridBackground, setGridBackground] = useState(true);
   const [colors, setColors] = useState(DEFAULT_COLORS);
   const [align, setAlign] = useState('left');
   const [titleX, setTitleX] = useState('7');
@@ -92,6 +108,7 @@ export default function SocialGraphicsStudio() {
   const [borderWidth, setBorderWidth] = useState('0');
   const [borderColor, setBorderColor] = useState('#C6DA34');
   const [borderRadius, setBorderRadius] = useState('0');
+  const [blockRadius, setBlockRadius] = useState('0');
   const [includeQr, setIncludeQr] = useState(false);
   const [qrPosition, setQrPosition] = useState('bottom-right');
   const [linkUrl, setLinkUrl] = useState('');
@@ -150,7 +167,7 @@ export default function SocialGraphicsStudio() {
 
   const socialUrl = useMemo(() => {
     if (!selected) return '';
-    const params = new URLSearchParams({ platform, locale, bg: colors.bg, bg2: colors.bg2, accent: colors.accent, textColor: colors.textColor, align, overlay, layout, effect, effectColor, effectOpacity, imageOpacity, borderWidth, borderColor, borderRadius });
+    const params = new URLSearchParams({ platform, locale: renderLocale, direction, font: customFont.trim() || font, titleScale, logoScale, grid: gridBackground ? '1' : '0', theme, bg: colors.bg, bg2: colors.bg2, accent: colors.accent, textColor: colors.textColor, align, overlay, layout, effect, effectColor, effectOpacity, imageOpacity, borderWidth, borderColor, borderRadius, blockRadius });
     if (includeQr) params.set('qr', '1');
     if (linkUrl.trim()) params.set('url', linkUrl.trim());
     if (customTitle.trim()) params.set('title', customTitle.trim());
@@ -166,7 +183,7 @@ export default function SocialGraphicsStudio() {
     if (!showLogo) params.set('logo', 'none');
     else if (customLogo.trim()) params.set('logo', customLogo.trim());
     return `/api/v1/public/graphics/social/${encodeURIComponent(source)}/${encodeURIComponent(selected)}?${params.toString()}`;
-  }, [source, selected, platform, locale, colors, align, titleX, titleY, overlay, effect, effectColor, effectOpacity, imageOpacity, borderWidth, borderColor, borderRadius, layout, includeQr, qrPosition, linkUrl, showLogo, logoPosition, customLogo, customTitle, customSubject, customIcon, customSummary, customImage, sourceImage]);
+  }, [source, selected, platform, renderLocale, direction, font, customFont, titleScale, logoScale, gridBackground, theme, colors, align, titleX, titleY, overlay, effect, effectColor, effectOpacity, imageOpacity, borderWidth, borderColor, borderRadius, blockRadius, layout, includeQr, qrPosition, linkUrl, showLogo, logoPosition, customLogo, customTitle, customSubject, customIcon, customSummary, customImage, sourceImage]);
 
   const imageEndpoint = useMemo(() => {
     if (tab === 'qr') return `/api/v1/public/graphics/qr?${new URLSearchParams({ data: qrData, size: qrSize, color: codeColor, background: codeBg, margin: '2' })}`;
@@ -200,6 +217,13 @@ export default function SocialGraphicsStudio() {
     }
   };
   const updateColor = (key: keyof typeof colors, value: string) => setColors((old) => ({ ...old, [key]: value }));
+  const applyDirection = (value: string) => {
+    const nextDirection = value === 'rtl' ? 'rtl' : 'ltr';
+    const nextAlign = nextDirection === 'rtl' ? 'right' : 'left';
+    setDirection(nextDirection);
+    setAlign(nextAlign);
+    setTitleX(nextAlign === 'right' ? (layout === 'split-left' ? '93' : layout === 'split-right' ? '47' : '93') : (layout === 'split-left' ? '53' : '7'));
+  };
   const colorField = (label: string, key: keyof typeof colors) => (
     <label className="flex items-center justify-between gap-2 rounded-lg border border-[var(--ad-line)] px-3 py-2 text-sm">
       <span>{label}</span><input aria-label={label} type="color" value={colors[key]} onChange={(e) => updateColor(key, e.target.value)} className="h-8 w-12 cursor-pointer rounded border-0 bg-transparent" />
@@ -233,8 +257,8 @@ export default function SocialGraphicsStudio() {
               <div className="relative space-y-1 text-sm">
                 <label htmlFor="social-content-search" className="font-semibold">Rechercher par titre ou ID</label>
                 <div className="relative">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: 'var(--ad-muted)' }} />
-                  <input id="social-content-search" className="ad-input w-full pl-9" role="combobox" aria-autocomplete="list" aria-controls="social-content-options" aria-expanded={searchOpen && filteredItems.length > 0} value={searchText} placeholder={loading ? 'Chargement des contenus…' : 'Titre, ID ou slug'} onFocus={() => setSearchOpen(true)} onBlur={() => window.setTimeout(() => setSearchOpen(false), 120)} onChange={(e) => { setSearchText(e.target.value); setSelected(''); setSearchOpen(true); }} />
+                  <Search className="ad-search-ico h-4 w-4" />
+                  <input id="social-content-search" className="ad-input ad-input-icon w-full" role="combobox" aria-autocomplete="list" aria-controls="social-content-options" aria-expanded={searchOpen && filteredItems.length > 0} value={searchText} placeholder={loading ? 'Chargement des contenus…' : 'Titre, ID ou slug'} onFocus={() => setSearchOpen(true)} onBlur={() => window.setTimeout(() => setSearchOpen(false), 120)} onChange={(e) => { setSearchText(e.target.value); setSelected(''); setSearchOpen(true); }} />
                   {searchOpen && filteredItems.length > 0 && <div id="social-content-options" role="listbox" className="absolute z-30 mt-1 max-h-72 w-full overflow-auto rounded-xl border border-[var(--ad-line)] bg-[var(--ad-bg)] p-1 shadow-2xl">
                     {filteredItems.map(({ item, value, label }) => {
                       const thumb = mediaPath(item.image) || mediaPath(item.coverImage) || mediaPath(item.thumbnail) || mediaPath(item.media);
@@ -267,6 +291,16 @@ export default function SocialGraphicsStudio() {
               <label className="space-y-1 text-sm"><span className="font-semibold">Format de réseau social</span><select className="ad-select w-full" value={platform} onChange={(e) => setPlatform(e.target.value)}>{FORMATS.map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select></label>
               <label className="space-y-1 text-sm"><span className="font-semibold">Habillage selon le contenu</span><select className="ad-select w-full" value={layout} onChange={(e) => { setLayout(e.target.value); setTitleX(e.target.value === 'split-left' ? '53' : e.target.value === 'split-right' ? '47' : align === 'center' ? '50' : align === 'right' ? '93' : '7'); }}>{LAYOUTS.map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select></label>
             </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="space-y-1 text-sm"><span className="font-semibold">Thème d’habillage</span><select className="ad-select w-full" value={theme} onChange={(e) => { const next = e.target.value; setTheme(next); setColors(SOCIAL_THEMES[next] || DEFAULT_COLORS); }}>{[['sari','SARI · marque'],['clinical','Clinique claire'],['midnight','Minuit'],['editorial','Éditorial'],['aurora','Aurore'],['lime','Citron vert']].map(([id,label]) => <option key={id} value={id}>{label}</option>)}</select></label>
+              <label className="space-y-1 text-sm"><span className="font-semibold">Langue du rendu</span><select className="ad-select w-full" value={renderLocale} onChange={(e) => { const next = e.target.value; setRenderLocale(next); applyDirection(next === 'ar' ? 'rtl' : 'ltr'); }}><option value="fr">Français</option><option value="en">English</option><option value="ar">العربية</option></select></label>
+              <label className="space-y-1 text-sm"><span className="font-semibold">Direction du texte</span><select className="ad-select w-full" value={direction} onChange={(e) => applyDirection(e.target.value)}><option value="ltr">Gauche à droite · LTR</option><option value="rtl">Droite à gauche · RTL</option></select></label>
+              <label className="space-y-1 text-sm"><span className="font-semibold">Police configurée ou Google Fonts</span><select className="ad-select w-full" value={font} onChange={(e) => { setFont(e.target.value); setCustomFont(''); }}>{['Inter','Cairo','Arial','Roboto','Open Sans','Montserrat','Lato','Poppins'].map((name) => <option key={name}>{name}</option>)}</select></label>
+              <label className="space-y-1 text-sm"><span className="font-semibold">Police personnalisée (nom de famille)</span><input className="ad-input w-full" value={customFont} maxLength={64} placeholder="Ex. Police configurée ou Google Fonts" onChange={(e) => setCustomFont(e.target.value)} /></label>
+              <label className="space-y-1 text-sm"><span className="flex justify-between font-semibold"><span>Taille des textes</span><span>{Math.round(Number(titleScale) * 100)}%</span></span><input className="w-full" type="range" min="0.65" max="1.6" step="0.05" value={titleScale} onChange={(e) => setTitleScale(e.target.value)} /></label>
+              <label className="space-y-1 text-sm"><span className="flex justify-between font-semibold"><span>Taille du logo</span><span>{Math.round(Number(logoScale) * 100)}%</span></span><input className="w-full" type="range" min="0.5" max="2" step="0.05" value={logoScale} onChange={(e) => setLogoScale(e.target.value)} /></label>
+              <label className="inline-flex items-center gap-2 text-sm"><input type="checkbox" checked={gridBackground} onChange={(e) => setGridBackground(e.target.checked)} /> Fond en grille, placement sur la grille</label>
+            </div>
             <div className="grid gap-2 sm:grid-cols-2">{colorField('Fond principal', 'bg')}{colorField('Dégradé', 'bg2')}{colorField('Accent du site', 'accent')}{colorField('Texte', 'textColor')}</div>
             <details className="rounded-lg border border-[var(--ad-line)] p-3">
               <summary className="cursor-pointer text-sm font-bold">Effets, transparence, cadres et bordures</summary>
@@ -278,13 +312,14 @@ export default function SocialGraphicsStudio() {
                 {simpleColorField('Couleur de bordure', borderColor, setBorderColor)}
                 <label className="space-y-1 text-sm"><span className="flex justify-between font-semibold"><span>Épaisseur de bordure</span><span>{borderWidth}px</span></span><input className="w-full" type="range" min="0" max="36" step="1" value={borderWidth} onChange={(e) => setBorderWidth(e.target.value)} /></label>
                 <label className="space-y-1 text-sm"><span className="flex justify-between font-semibold"><span>Arrondi du cadre</span><span>{borderRadius}px</span></span><input className="w-full" type="range" min="0" max="180" step="4" value={borderRadius} onChange={(e) => setBorderRadius(e.target.value)} /></label>
+                <label className="space-y-1 text-sm"><span className="flex justify-between font-semibold"><span>Arrondi des blocs carrés</span><span>{blockRadius}px</span></span><input className="w-full" type="range" min="0" max="100" step="4" value={blockRadius} onChange={(e) => setBlockRadius(e.target.value)} /></label>
               </div>
             </details>
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="space-y-1 text-sm"><span className="font-semibold">Alignement du texte</span><select className="ad-select w-full" value={align} onChange={(e) => { const value = e.target.value; setAlign(value); setTitleX(value === 'center' ? (layout === 'split-left' ? '70' : layout === 'split-right' ? '28' : '50') : value === 'right' ? (layout === 'split-left' ? '93' : layout === 'split-right' ? '47' : '93') : (layout === 'split-left' ? '53' : '7')); }}><option value="left">Gauche</option><option value="center">Centré</option><option value="right">Droite</option></select></label>
               <label className="space-y-1 text-sm"><span className="flex justify-between font-semibold"><span>Voile / contraste</span><span>{Math.round(Number(overlay) * 100)}%</span></span><input className="w-full" type="range" min="0" max="0.88" step="0.04" value={overlay} onChange={(e) => setOverlay(e.target.value)} /></label>
-              <label className="space-y-1 text-sm"><span className="flex justify-between font-semibold"><span>Position horizontale du titre</span><span>{titleX}%</span></span><input className="w-full" type="range" min="3" max="97" value={titleX} onChange={(e) => setTitleX(e.target.value)} /></label>
-              <label className="space-y-1 text-sm"><span className="flex justify-between font-semibold"><span>Position verticale du titre</span><span>{titleY}%</span></span><input className="w-full" type="range" min="15" max="90" value={titleY} onChange={(e) => setTitleY(e.target.value)} /></label>
+              <label className="space-y-1 text-sm"><span className="flex justify-between font-semibold"><span>Position horizontale du titre</span><span>{titleX}%</span></span><input className="w-full" type="range" min="5" max="95" step="5" value={titleX} onChange={(e) => setTitleX(e.target.value)} /></label>
+              <label className="space-y-1 text-sm"><span className="flex justify-between font-semibold"><span>Position verticale du titre</span><span>{titleY}%</span></span><input className="w-full" type="range" min="15" max="90" step="5" value={titleY} onChange={(e) => setTitleY(e.target.value)} /></label>
             </div>
             <label className="block space-y-1 text-sm"><span className="font-semibold">URL à encoder dans le QR (facultatif)</span><input className="ad-input w-full" type="url" placeholder="https://exemple.com/fr/actualites/mon-article" value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} /></label>
             <div className="grid gap-3 sm:grid-cols-2">

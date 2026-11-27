@@ -27,6 +27,20 @@ describe('GraphicsService', () => {
     expect(result.title).toBe('Démo');
   });
 
+  it('loads known remote article images from the explicitly trusted Unsplash host', async () => {
+    const image = await sharp({ create: { width: 32, height: 32, channels: 3, background: '#6688AA' } }).png().toBuffer();
+    const fetchSpy = jest.spyOn(global, 'fetch').mockResolvedValue(new Response(image, { headers: { 'content-type': 'image/png', 'content-length': String(image.length) } }));
+    try {
+      const withRemoteImage = { findPublished: jest.fn(async () => ({ title: 'Article', slug: 'article', image: 'https://images.unsplash.com/photo-test?w=800', status: 'published' })) };
+      const isolated = new GraphicsService(config, withRemoteImage as never, content as never, content as never, content as never, content as never, content as never, brand as never);
+      const result = await isolated.social('articles', 'article', { platform: 'og', theme: 'clinical', grid: '1', direction: 'rtl', font: 'Cairo', titleScale: 1.2, logoScale: 0.8, blockRadius: 0 });
+      isPng(result.buffer);
+      expect(fetchSpy).toHaveBeenCalledWith(expect.objectContaining({ hostname: 'images.unsplash.com' }), expect.objectContaining({ redirect: 'error' }));
+    } finally {
+      fetchSpy.mockRestore();
+    }
+  });
+
   it('creates colored QR and Code 128 images', async () => {
     const qr = await service.qr('https://example.test', { size: 256, color: '#123456', background: '#FFFFFF' });
     const barcode = await service.barcode('SARI-2026', 'code128', { color: '#123456', background: '#FFFFFF' });
