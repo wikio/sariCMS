@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import {
-  Copy, Download, FolderOpen, Image as ImageIcon, Palette, Pencil, Sparkles, Trash2, Upload,
+  Copy, Download, FolderOpen, Image as ImageIcon, Palette, Pencil, Share2, Sparkles, Trash2, Upload,
 } from 'lucide-react';
 import PixelGridLoader from '@/components/admin/PixelGridLoader';
 import SearchField from '@/components/admin/SearchField';
@@ -180,6 +180,9 @@ export default function MediaPage() {
         <div className="flex flex-wrap items-center gap-2">
           <Link href={`/${locale}/admin/media/studio`} className="ad-btn ad-btn-ghost">
             <Sparkles className="w-4 h-4" /> {t("logoStudioBtn")}
+          </Link>
+          <Link href={`/${locale}/admin/media/social`} className="ad-btn ad-btn-ghost">
+            <Share2 className="w-4 h-4" /> Visuels sociaux & codes
           </Link>
           <label className="ad-btn ad-btn-primary cursor-pointer">
             <Upload className="w-4 h-4" /> {busy ? t("importing") : t("importBtn")}
