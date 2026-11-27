@@ -39,7 +39,11 @@ function requestInput(requestUrl, body = {}) {
   if (typeof networks === 'string') networks = networks.split(',').map((name) => name.trim()).filter(Boolean);
   if (!Array.isArray(networks)) networks = [];
 
-  const theme = body.theme && typeof body.theme === 'object' ? body.theme : themeFromQuery;
+  const providedTheme = body.theme && typeof body.theme === 'object' ? body.theme : themeFromQuery;
+  const locale = String(read('locale') || '').slice(0, 12);
+  const style = String(read('style', 'themePreset') || providedTheme.style || '').slice(0, 48);
+  const direction = read('direction') || providedTheme.direction || (locale === 'ar' ? 'rtl' : 'ltr');
+  const theme = { ...providedTheme, ...(style ? { style } : {}), direction, locale };
   const transparentValue = body.transparent ?? theme.transparent ?? params.get('transparent');
   return {
     kind: String(read('kind') || 'article').slice(0, 48),

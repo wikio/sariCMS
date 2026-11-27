@@ -6,6 +6,15 @@ export const SOCIAL_FORMATS = Object.freeze({
   story: { width: 1080, height: 1920 },
 });
 
+export const SOCIAL_STYLE_PRESETS = Object.freeze({
+  'modular-grid': { grid: true, pixelAccents: true, fullBleed: false, gridOpacity: 0.065, gridColor: 'foreground' },
+  'editorial-grid': { grid: true, pixelAccents: false, fullBleed: false, gridOpacity: 0.045, gridColor: 'secondary' },
+  'blueprint-grid': { grid: true, pixelAccents: false, fullBleed: false, gridOpacity: 0.12, gridColor: 'secondary' },
+  press: { grid: false, pixelAccents: false, fullBleed: true, gradientOverlay: true },
+  'rassd-news': { grid: false, pixelAccents: false, fullBleed: true, gradientOverlay: true },
+  'press-grid': { grid: true, pixelAccents: false, fullBleed: true, gradientOverlay: true, gridOverlay: true, gridOpacity: 0.035, gridColor: 'foreground' },
+});
+
 export const DEFAULT_THEME = Object.freeze({
   primary: 'rgb(15, 159, 110)',
   secondary: 'rgb(22, 158, 201)',
@@ -13,6 +22,8 @@ export const DEFAULT_THEME = Object.freeze({
   background: '#0B0D10',
   foreground: '#FFFFFF',
   mode: 'dark',
+  style: 'modular-grid',
+  direction: 'ltr',
   fontFamily: 'sans-serif',
   transparent: false,
 });

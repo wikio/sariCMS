@@ -1,4 +1,4 @@
-import { DEFAULT_THEME, SOCIAL_FORMATS } from './socialTemplates.js';
+import { DEFAULT_THEME, SOCIAL_FORMATS, SOCIAL_STYLE_PRESETS } from './socialTemplates.js';
 
 const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
 
@@ -74,8 +74,21 @@ export function convertThemeConfig(siteTheme = {}, format = 'square', dimensions
     ? siteTheme.fontFamily
     : 'sans-serif';
 
+  const requestedStyle = String(siteTheme.style || siteTheme.preset || DEFAULT_THEME.style);
+  const style = Object.hasOwn(SOCIAL_STYLE_PRESETS, requestedStyle) ? requestedStyle : DEFAULT_THEME.style;
+  const styleConfig = SOCIAL_STYLE_PRESETS[style];
+  const direction = ['rtl', 'ltr'].includes(siteTheme.direction) ? siteTheme.direction : siteTheme.locale === 'ar' ? 'rtl' : 'ltr';
+  const strictPress = style === 'press' || style === 'rassd-news';
+  const grid = strictPress ? false : typeof siteTheme.grid === 'boolean' ? siteTheme.grid : styleConfig.grid;
+  const pixelAccents = strictPress ? false : typeof siteTheme.pixelAccents === 'boolean' ? siteTheme.pixelAccents : styleConfig.pixelAccents;
+  const gridColor = styleConfig.gridColor === 'secondary' ? secondary : styleConfig.gridColor === 'foreground' ? foreground : styleConfig.gridColor;
+
   return {
-    primary, secondary, accent, background, foreground, mode, fontFamily,
+    primary, secondary, accent, background, foreground, mode, fontFamily, style, direction,
+    grid, pixelAccents, gridColor, gridOpacity: styleConfig.gridOpacity || 0.065,
+    fullBleed: styleConfig.fullBleed === true,
+    gradientOverlay: styleConfig.gradientOverlay === true,
+    gridOverlay: styleConfig.gridOverlay === true && grid,
     transparent: siteTheme.transparent === true,
     ...resolveDimensions(format, dimensions),
   };

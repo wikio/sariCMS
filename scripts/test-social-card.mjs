@@ -10,6 +10,21 @@ assert.equal(parseColor('#abc', '#000'), 'rgba(170, 187, 204, 1)');
 const lightTheme = convertThemeConfig({ mode: 'light', background: '#FFFFFF', foreground: '#FFFFFF' });
 assert.equal(lightTheme.foreground, '#0B0D10', 'enforce contrast against a light background');
 assert.equal(convertThemeConfig({ transparent: true }).transparent, true);
+assert.equal(convertThemeConfig({ locale: 'ar' }).direction, 'rtl');
+assert.equal(convertThemeConfig({ locale: 'ar', direction: 'ltr' }).direction, 'ltr');
+const strictPress = convertThemeConfig({ style: 'rassd-news', grid: true, pixelAccents: true });
+assert.equal(strictPress.fullBleed, true);
+assert.equal(strictPress.grid, false, 'press style is strictly grid-free');
+assert.equal(strictPress.pixelAccents, false, 'press style is strictly pixel-free');
+for (const style of ['modular-grid', 'editorial-grid', 'blueprint-grid', 'press-grid']) {
+  assert.equal(convertThemeConfig({ style }).grid, true, `${style} enables a square grid`);
+}
+const arabicPressPng = await renderSocialCard({
+  kind: 'article', format: 'portrait', title: 'الانتقال الحضري نحو مدن مستدامة',
+  summary: 'حلول جديدة ومستدامة للمدن والمساحات العامة.',
+  theme: { style: 'rassd-news', locale: 'ar' },
+});
+assert.ok(arabicPressPng.subarray(0, 8).equals(pngSignature), 'Arabic RTL press card renders as PNG');
 
 const formats = ['square', 'portrait', 'landscape', 'widescreen', 'story'];
 const kinds = ['article', 'event', 'product', 'announcement', 'job'];
@@ -30,6 +45,11 @@ const sampleCtx = sampleCanvas.getContext('2d');
 sampleCtx.drawImage(await loadImage(transparentPng), 0, 0);
 assert.equal(sampleCtx.getImageData(20, 20, 1, 1).data[3], 0, 'untouched transparent corner retains alpha');
 assert.ok(sampleCtx.getImageData(400, 400, 1, 1).data[3] > 0, 'text backing remains opaque enough for legibility');
+const pressPng = await renderSocialCard({ kind: 'article', format: 'square', theme: { style: 'press', transparent: true } });
+const pressCanvas = createCanvas(1080, 1080);
+const pressCtx = pressCanvas.getContext('2d');
+pressCtx.drawImage(await loadImage(pressPng), 0, 0);
+assert.equal(pressCtx.getImageData(500, 20, 1, 1).data[3], 0, 'press theme leaves upper photo area free of grid and pixels');
 
 const utilityCanvas = createCanvas(320, 160);
 const ctx = utilityCanvas.getContext('2d');

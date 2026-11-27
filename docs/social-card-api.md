@@ -1,6 +1,6 @@
 # API des cartes sociales
 
-`GET` et `POST /api/social-card` retournent un PNG généré côté serveur par Canvas. Les tailles préréglées sont `square` (1080×1080), `portrait` (1080×1350), `landscape` (1200×630), `widescreen` (1600×900) et `story` (1080×1920). Une largeur/hauteur explicite peut remplacer le préréglage (320 à 2560 px).
+`GET` et `POST /api/social-card` retournent un PNG généré côté serveur par Canvas. Les tailles préréglées sont `square` (1080×1080), `portrait` (1080×1350), `landscape` (1200×630), `widescreen` (1600×900) et `story` (1080×1920). Une largeur/hauteur explicite peut remplacer le préréglage (320 à 2560 px). Les styles sont sélectionnables par `style` ou `theme.style` : `press` / `rassd-news` (photo plein cadre, dégradé bas, sans grille ni pixels), `modular-grid`, `editorial-grid`, `blueprint-grid` et `press-grid` (grilles orthogonales aux intensités distinctes).
 
 ## Exemple front-end
 
