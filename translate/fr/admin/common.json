@@ -116,5 +116,6 @@
   "validated": "Validé",
   "saveError": "Enregistrement impossible",
   "saving": "Enregistrement…",
-  "noResults": "Aucun résultat"
+  "noResults": "Aucun résultat",
+  "select": "Sélectionner"
 }

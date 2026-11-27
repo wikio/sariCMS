@@ -116,5 +116,6 @@
   "validated": "Validated",
   "saveError": "Could not save changes",
   "saving": "Saving…",
-  "noResults": "No results"
+  "noResults": "No results",
+  "select": "Select"
 }
