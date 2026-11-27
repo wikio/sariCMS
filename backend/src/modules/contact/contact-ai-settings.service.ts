@@ -64,8 +64,8 @@ function fields(raw: unknown): Profile {
     apiKey = r.apiKey?.trim();
   const hasSystemPrompt = typeof r.systemPrompt === 'string';
   const hasUserPromptTemplate = typeof r.userPromptTemplate === 'string';
-  const systemPrompt = hasSystemPrompt ? r.systemPrompt.trim() : undefined;
-  const userPromptTemplate = hasUserPromptTemplate ? r.userPromptTemplate.trim() : undefined;
+  const systemPrompt = typeof r.systemPrompt === 'string' ? r.systemPrompt.trim() : undefined;
+  const userPromptTemplate = typeof r.userPromptTemplate === 'string' ? r.userPromptTemplate.trim() : undefined;
   if ((r.url.trim() && !url) || (model && !validModel(model)) || (apiKey && !validKey(apiKey))) throw invalid();
   if ((systemPrompt && !validPrompt(systemPrompt)) || (userPromptTemplate && !validPrompt(userPromptTemplate))) throw invalid();
   return {

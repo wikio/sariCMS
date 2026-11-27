@@ -3,7 +3,7 @@ import { isEmail } from 'class-validator';
 import { ContactInfoService } from './contact-info.service';
 import { ActorContext } from '../../common/crud/base-crud.service';
 import { ContactAiService } from './contact-ai.service';
-import { ContactMeta, ContactPolicy, IntakeResult, isSingleMailbox, RoutingPlan } from './contact-contract';
+import { ContactMeta, ContactPolicy, IntakeResult, isSingleMailbox, isSubject, RoutingPlan } from './contact-contract';
 import { ContactDossierService } from './contact-dossier.service';
 import { ContactMessagesService } from './contact-messages.service';
 import { ContactPolicyService, decide, Decision } from './contact-policy.service';
