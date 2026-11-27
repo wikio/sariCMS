@@ -25,9 +25,9 @@ Formats et dimensions par défaut :
 | `pinterest` | 1000 × 1500 |
 | `og` | 1200 × 630 |
 
-La carte reprend le titre, le résumé et l’image du contenu; les paramètres `title`, `summary` et `image` peuvent les remplacer. `image` doit être un chemin GED `/uploads/...`. Le logo est lu depuis la marque configurée du site; `logo=none` le masque.
+La carte reprend le titre, le chapô/résumé et l’image du contenu; les paramètres `title`, `summary`, `subject` et `image` peuvent les remplacer. `image` doit être un chemin GED `/uploads/...`. Les fichiers locaux sont lus dans la GED; un média HTTPS distant n’est lu que si son hôte correspond à `PUBLIC_SITE_URL` ou à `GRAPHICS_ALLOWED_IMAGE_HOSTS`. Le logo est lu depuis la marque configurée du site; `logo=none` le masque.
 
-Paramètres graphiques : `bg`, `bg2`, `accent`, `textColor` en hexadécimal `#RRGGBB`; `align=left|center|right`; `titleX` (3–97 %) et `titleY` (15–90 %); `overlay` (0–0.88); `logoPosition=top-left|top-right|bottom-left|bottom-right`; `format=png|jpeg|webp`. Ajouter `qr=1` pour inclure un QR code; `url` définit l’adresse encodée et `qrPosition` règle son coin. Sans `url`, le lien est construit avec `PUBLIC_SITE_URL` (backend) et le slug du contenu.
+Paramètres graphiques : `bg`, `bg2`, `accent`, `textColor`, `effectColor`, `borderColor` en hexadécimal `#RRGGBB`; `layout=full|split-left|split-right|diagonal`; `effect=none|tint|negative|screen|multiply|soft-light|overlay` avec `effectOpacity` (0–0.9) et `imageOpacity` (0–1); `borderWidth` (0–36 px) et `borderRadius`; `align=left|center|right`; `titleX` (3–97 %) et `titleY` (15–90 %); `overlay` (0–0.88); `logoPosition=top-left|top-right|bottom-left|bottom-right`; `icon` permet de remplacer l’icône de la fiche service/solution/produit. Les cartes événementielles affichent automatiquement dates et lieu; les cartes d’articles reprennent le sujet/catégorie et le chapô. `format=png|jpeg|webp`. Ajouter `qr=1` pour inclure un QR code; `url` définit l’adresse encodée et `qrPosition` règle son coin. Sans `url`, le lien est construit avec `PUBLIC_SITE_URL` (backend) et le slug du contenu.
 
 Exemple pour une balise Open Graph :
 

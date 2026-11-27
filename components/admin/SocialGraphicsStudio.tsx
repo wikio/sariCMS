@@ -3,11 +3,24 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
-import { Barcode, Check, Copy, Download, ExternalLink, Image as ImageIcon, QrCode, RefreshCw, Share2, Wand2 } from 'lucide-react';
+import { Barcode, CalendarDays, Check, Copy, Download, ExternalLink, Image as ImageIcon, MapPin, QrCode, RefreshCw, Search, Share2, Wand2 } from 'lucide-react';
 import { uploadGedAsset } from '@/lib/ged/client';
 
 type SourceKind = 'articles' | 'events' | 'products' | 'services' | 'solutions' | 'pages' | 'announcements' | 'tips';
-type ContentItem = { id?: string | number; slug?: string; title?: string; name?: string; shortDesc?: string; image?: string };
+type ContentItem = { id?: string | number; slug?: string; title?: string; name?: string; shortDesc?: string; chapo?: string; sujet?: string; category?: string; classification?: string; image?: unknown; coverImage?: unknown; thumbnail?: unknown; media?: unknown; icon?: string; color?: string; startDate?: string; endDate?: string; date?: string; location?: string; venue?: string };
+type Brand = { title?: string; logo?: string };
+function mediaPath(value: unknown, depth = 0): string {
+  if (depth > 4 || value == null) return '';
+  if (typeof value === 'string') return value.startsWith('uploads/') ? `/${value}` : value;
+  if (Array.isArray(value)) return value.map((row) => mediaPath(row, depth + 1)).find(Boolean) || '';
+  if (typeof value !== 'object') return '';
+  const row = value as Record<string, unknown>;
+  for (const key of ['url', 'src', 'path', 'image', 'media', 'thumbnail', 'cover']) {
+    const found = mediaPath(row[key], depth + 1);
+    if (found) return found;
+  }
+  return '';
+}
 const SOURCES: Array<{ id: SourceKind; label: string; endpoint: string }> = [
   { id: 'articles', label: 'Articles / actualités', endpoint: 'news' },
   { id: 'announcements', label: 'Annonces', endpoint: 'news' },
@@ -26,8 +39,18 @@ const FORMATS = [
   ['pinterest', 'Pinterest · épingle (1000 × 1500)'], ['og', 'Open Graph · aperçu web (1200 × 630)'],
 ] as const;
 const BARCODE_TYPES = ['code128', 'ean13', 'ean8', 'upca', 'upce', 'itf14', 'isbn', 'code39', 'datamatrix'];
+const LAYOUTS = [
+  ['full', 'Image pleine page'], ['diagonal', 'Découpe diagonale'], ['split-left', 'Image à gauche · texte à droite'], ['split-right', 'Texte à gauche · image à droite'],
+] as const;
+const EFFECTS = [['none', 'Aucun'], ['tint', 'Teinte'], ['screen', 'Écran'], ['multiply', 'Produit / Multiply'], ['soft-light', 'Lumière douce'], ['overlay', 'Superposition'], ['negative', 'Négatif']] as const;
+const defaultLayout = (kind: SourceKind) => ['products', 'services', 'solutions'].includes(kind) ? 'split-left' : kind === 'events' ? 'diagonal' : 'full';
 const DEFAULT_COLORS = { bg: '#1B2A4A', bg2: '#169EC9', accent: '#C6DA34', textColor: '#FFFFFF' };
 
+function itemKey(item: ContentItem) { return String(item.slug || item.id || ''); }
+function itemLabel(item: ContentItem) {
+  const title = String(item.title || item.name || item.slug || 'Contenu sans titre');
+  return item.id != null ? `${title} · #${item.id}` : title;
+}
 function rowsFrom(payload: unknown): ContentItem[] {
   if (Array.isArray(payload)) return payload as ContentItem[];
   if (!payload || typeof payload !== 'object') return [];
@@ -50,19 +73,34 @@ export default function SocialGraphicsStudio() {
   const [source, setSource] = useState<SourceKind>('articles');
   const [items, setItems] = useState<ContentItem[]>([]);
   const [selected, setSelected] = useState('');
+  const [searchText, setSearchText] = useState('');
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [loadError, setLoadError] = useState('');
+  const [brand, setBrand] = useState<Brand>({});
   const [loading, setLoading] = useState(true);
   const [platform, setPlatform] = useState<string>('instagram');
+  const [layout, setLayout] = useState<string>('full');
   const [colors, setColors] = useState(DEFAULT_COLORS);
   const [align, setAlign] = useState('left');
   const [titleX, setTitleX] = useState('7');
   const [titleY, setTitleY] = useState('65');
   const [overlay, setOverlay] = useState('0.52');
+  const [effect, setEffect] = useState('none');
+  const [effectColor, setEffectColor] = useState('#C6DA34');
+  const [effectOpacity, setEffectOpacity] = useState('0.26');
+  const [imageOpacity, setImageOpacity] = useState('1');
+  const [borderWidth, setBorderWidth] = useState('0');
+  const [borderColor, setBorderColor] = useState('#C6DA34');
+  const [borderRadius, setBorderRadius] = useState('0');
   const [includeQr, setIncludeQr] = useState(false);
   const [qrPosition, setQrPosition] = useState('bottom-right');
   const [linkUrl, setLinkUrl] = useState('');
   const [showLogo, setShowLogo] = useState(true);
   const [logoPosition, setLogoPosition] = useState('top-left');
+  const [customLogo, setCustomLogo] = useState('');
   const [customTitle, setCustomTitle] = useState('');
+  const [customSubject, setCustomSubject] = useState('');
+  const [customIcon, setCustomIcon] = useState('');
   const [customSummary, setCustomSummary] = useState('');
   const [customImage, setCustomImage] = useState('');
   const [previewVersion, setPreviewVersion] = useState(0);
@@ -80,38 +118,55 @@ export default function SocialGraphicsStudio() {
   useEffect(() => {
     let active = true;
     fetch(`/api/v1/public/${sourceConfig.endpoint}?view=block&limit=100&locale=${encodeURIComponent(locale)}`, { cache: 'no-store' })
-      .then(async (res) => { if (!res.ok) throw new Error('Impossible de charger les contenus publiés.'); return rowsFrom(await res.json()); })
+      .then(async (res) => { if (!res.ok) throw new Error(`Chargement impossible (${res.status}). Vérifiez que l’API est démarrée et que le contenu est publié.`); return rowsFrom(await res.json()); })
       .then((rows) => {
         if (!active) return;
         setItems(rows);
         const first = rows[0];
-        if (first) setSelected(String(first.slug || first.id || ''));
+        if (first) { setSelected(itemKey(first)); setSearchText(itemLabel(first)); }
+        else { setSelected(''); setSearchText(''); }
       })
-      .catch(() => { if (active) setItems([]); })
+      .catch((error) => { if (active) { setItems([]); setLoadError(error instanceof Error ? error.message : 'Impossible de charger les contenus publiés.'); } })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [source, locale, sourceConfig.endpoint]);
 
-  const itemOptions = useMemo(() => items.map((item) => ({
-    value: String(item.slug || item.id || ''),
-    label: String(item.title || item.name || item.slug || item.id || 'Contenu sans titre'),
-  })).filter((item) => item.value), [items]);
+  useEffect(() => {
+    let active = true;
+    fetch('/api/v1/public/brand', { cache: 'no-store' })
+      .then((res) => res.ok ? res.json() : null)
+      .then((payload) => { if (active) setBrand((payload?.data || payload || {}) as Brand); })
+      .catch(() => undefined);
+    return () => { active = false; };
+  }, []);
+
+  const itemOptions = useMemo(() => items.map((item) => ({ value: itemKey(item), label: itemLabel(item), item })).filter((option) => option.value), [items]);
+  const filteredItems = useMemo(() => {
+    const needle = searchText.trim().toLocaleLowerCase();
+    return itemOptions.filter(({ label, value, item }) => !needle || `${label} ${value} ${item.id ?? ''}`.toLocaleLowerCase().includes(needle)).slice(0, 10);
+  }, [itemOptions, searchText]);
+  const selectedItem = items.find((item) => itemKey(item) === selected);
+  const sourceImage = mediaPath(selectedItem?.image) || mediaPath(selectedItem?.coverImage) || mediaPath(selectedItem?.thumbnail) || mediaPath(selectedItem?.media);
 
   const socialUrl = useMemo(() => {
     if (!selected) return '';
-    const params = new URLSearchParams({ platform, locale, bg: colors.bg, bg2: colors.bg2, accent: colors.accent, textColor: colors.textColor, align, overlay });
+    const params = new URLSearchParams({ platform, locale, bg: colors.bg, bg2: colors.bg2, accent: colors.accent, textColor: colors.textColor, align, overlay, layout, effect, effectColor, effectOpacity, imageOpacity, borderWidth, borderColor, borderRadius });
     if (includeQr) params.set('qr', '1');
     if (linkUrl.trim()) params.set('url', linkUrl.trim());
     if (customTitle.trim()) params.set('title', customTitle.trim());
+    if (customSubject.trim()) params.set('subject', customSubject.trim());
     if (customSummary.trim()) params.set('summary', customSummary.trim());
     if (customImage.trim()) params.set('image', customImage.trim());
+    else if (sourceImage) params.set('image', sourceImage);
+    if (customIcon.trim()) params.set('icon', customIcon.trim());
     params.set('logoPosition', logoPosition);
     params.set('titleX', titleX);
     params.set('titleY', titleY);
     params.set('qrPosition', qrPosition);
     if (!showLogo) params.set('logo', 'none');
+    else if (customLogo.trim()) params.set('logo', customLogo.trim());
     return `/api/v1/public/graphics/social/${encodeURIComponent(source)}/${encodeURIComponent(selected)}?${params.toString()}`;
-  }, [source, selected, platform, locale, colors, align, titleX, titleY, overlay, includeQr, qrPosition, linkUrl, showLogo, logoPosition, customTitle, customSummary, customImage]);
+  }, [source, selected, platform, locale, colors, align, titleX, titleY, overlay, effect, effectColor, effectOpacity, imageOpacity, borderWidth, borderColor, borderRadius, layout, includeQr, qrPosition, linkUrl, showLogo, logoPosition, customLogo, customTitle, customSubject, customIcon, customSummary, customImage, sourceImage]);
 
   const imageEndpoint = useMemo(() => {
     if (tab === 'qr') return `/api/v1/public/graphics/qr?${new URLSearchParams({ data: qrData, size: qrSize, color: codeColor, background: codeBg, margin: '2' })}`;
@@ -174,13 +229,59 @@ export default function SocialGraphicsStudio() {
         <section className="ad-card space-y-4 p-4">
           {tab === 'social' ? <>
             <div className="grid gap-3 sm:grid-cols-2">
-              <label className="space-y-1 text-sm"><span className="font-semibold">Contenu du site</span><select className="ad-select w-full" value={source} onChange={(e) => { setItems([]); setSelected(''); setLoading(true); setSource(e.target.value as SourceKind); }}>{SOURCES.map((x) => <option key={x.id} value={x.id}>{x.label}</option>)}</select></label>
-              <label className="space-y-1 text-sm"><span className="font-semibold">Article / page publié(e)</span><select className="ad-select w-full" value={selected} onChange={(e) => setSelected(e.target.value)} disabled={loading || !itemOptions.length}><option value="">{loading ? 'Chargement…' : itemOptions.length ? 'Choisir un contenu' : 'Aucun contenu publié'}</option>{itemOptions.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
+              <label className="space-y-1 text-sm"><span className="font-semibold">Type de contenu</span><select className="ad-select w-full" value={source} onChange={(e) => { const kind = e.target.value as SourceKind; setItems([]); setSelected(''); setSearchText(''); setLoadError(''); setLoading(true); setLayout(defaultLayout(kind)); setTitleX(['products', 'services', 'solutions'].includes(kind) ? '53' : '7'); setTitleY(kind === 'events' ? '58' : '65'); setSource(kind); }}>{SOURCES.map((x) => <option key={x.id} value={x.id}>{x.label}</option>)}</select></label>
+              <div className="relative space-y-1 text-sm">
+                <label htmlFor="social-content-search" className="font-semibold">Rechercher par titre ou ID</label>
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: 'var(--ad-muted)' }} />
+                  <input id="social-content-search" className="ad-input w-full pl-9" role="combobox" aria-autocomplete="list" aria-controls="social-content-options" aria-expanded={searchOpen && filteredItems.length > 0} value={searchText} placeholder={loading ? 'Chargement des contenus…' : 'Titre, ID ou slug'} onFocus={() => setSearchOpen(true)} onBlur={() => window.setTimeout(() => setSearchOpen(false), 120)} onChange={(e) => { setSearchText(e.target.value); setSelected(''); setSearchOpen(true); }} />
+                  {searchOpen && filteredItems.length > 0 && <div id="social-content-options" role="listbox" className="absolute z-30 mt-1 max-h-72 w-full overflow-auto rounded-xl border border-[var(--ad-line)] bg-[var(--ad-bg)] p-1 shadow-2xl">
+                    {filteredItems.map(({ item, value, label }) => {
+                      const thumb = mediaPath(item.image) || mediaPath(item.coverImage) || mediaPath(item.thumbnail) || mediaPath(item.media);
+                      return <button key={value} type="button" role="option" aria-selected={selected === value} className="flex w-full items-center gap-3 rounded-lg p-2 text-left hover:bg-black/5 dark:hover:bg-white/5" onMouseDown={(event) => event.preventDefault()} onClick={() => { setSelected(value); setSearchText(label); setSearchOpen(false); }}>
+                        {thumb ? (
+                          // eslint-disable-next-line @next/next/no-img-element -- Article thumbnails may use any configured media host.
+                          <img src={thumb} alt="" className="h-10 w-14 rounded object-cover" />
+                        ) : <span className="grid h-10 w-14 place-items-center rounded bg-black/5 dark:bg-white/5"><ImageIcon className="h-4 w-4" /></span>}
+                        <span className="min-w-0"><span className="block truncate font-semibold">{label}</span><span className="block truncate text-xs opacity-70">ID {String(item.id ?? '—')} · {String(item.slug ?? '')}</span></span>
+                      </button>;
+                    })}
+                  </div>}
+                </div>
+                {loading && <span className="block text-xs opacity-70">Chargement des contenus publiés…</span>}
+                {loadError && <span role="alert" className="block text-xs text-red-600">{loadError}</span>}
+                {!loading && !loadError && !items.length && <span className="block text-xs opacity-70">Aucun contenu publié trouvé pour ce type.</span>}
+              </div>
             </div>
-            <label className="block space-y-1 text-sm"><span className="font-semibold">Format de réseau social</span><select className="ad-select w-full" value={platform} onChange={(e) => setPlatform(e.target.value)}>{FORMATS.map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select></label>
-            <div className="grid gap-2 sm:grid-cols-2">{colorField('Fond principal', 'bg')}{colorField('Dégradé', 'bg2')}{colorField('Accent du site', 'accent')}{colorField('Texte', 'textColor')}</div>
+            {selectedItem && <div className="grid gap-3 rounded-xl border border-[var(--ad-line)] p-3 sm:grid-cols-[160px_1fr]">
+              <div className="aspect-video overflow-hidden rounded-lg bg-black/5 dark:bg-white/5">{sourceImage ? (
+                // eslint-disable-next-line @next/next/no-img-element -- The source image is selected from existing CMS records.
+                <img src={sourceImage} alt={`Image source : ${String(selectedItem.title || selectedItem.name || '')}`} className="h-full w-full object-cover" />
+              ) : <div className="grid h-full place-items-center text-xs opacity-60"><ImageIcon className="mb-1 h-5 w-5" />Pas d’image sur la fiche</div>}</div>
+              <div className="min-w-0 self-center"><div className="text-xs font-bold uppercase tracking-wide opacity-60">Image et métadonnées du contenu sélectionné</div><div className="mt-1 truncate font-bold">{String(selectedItem.title || selectedItem.name || 'Sans titre')}</div><div className="mt-1 text-xs opacity-70">ID {String(selectedItem.id ?? '—')} · {String(selectedItem.slug ?? '')}</div>
+                {source === 'events' && <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">{(selectedItem.startDate || selectedItem.date) && <span className="inline-flex items-center gap-1"><CalendarDays className="h-3.5 w-3.5" />{String(selectedItem.startDate || selectedItem.date)}{selectedItem.endDate ? ` – ${selectedItem.endDate}` : ''}</span>}{(selectedItem.location || selectedItem.venue) && <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{String(selectedItem.location || selectedItem.venue)}</span>}</div>}
+                {['services', 'solutions', 'products'].includes(source) && selectedItem.icon && <div className="mt-2 text-xs">Icône configurée : <code>{selectedItem.icon}</code></div>}
+              </div>
+            </div>}
             <div className="grid gap-3 sm:grid-cols-2">
-              <label className="space-y-1 text-sm"><span className="font-semibold">Alignement du texte</span><select className="ad-select w-full" value={align} onChange={(e) => { const value = e.target.value; setAlign(value); setTitleX(value === 'center' ? '50' : value === 'right' ? '93' : '7'); }}><option value="left">Gauche</option><option value="center">Centré</option><option value="right">Droite</option></select></label>
+              <label className="space-y-1 text-sm"><span className="font-semibold">Format de réseau social</span><select className="ad-select w-full" value={platform} onChange={(e) => setPlatform(e.target.value)}>{FORMATS.map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select></label>
+              <label className="space-y-1 text-sm"><span className="font-semibold">Habillage selon le contenu</span><select className="ad-select w-full" value={layout} onChange={(e) => { setLayout(e.target.value); setTitleX(e.target.value === 'split-left' ? '53' : e.target.value === 'split-right' ? '47' : align === 'center' ? '50' : align === 'right' ? '93' : '7'); }}>{LAYOUTS.map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select></label>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2">{colorField('Fond principal', 'bg')}{colorField('Dégradé', 'bg2')}{colorField('Accent du site', 'accent')}{colorField('Texte', 'textColor')}</div>
+            <details className="rounded-lg border border-[var(--ad-line)] p-3">
+              <summary className="cursor-pointer text-sm font-bold">Effets, transparence, cadres et bordures</summary>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <label className="space-y-1 text-sm"><span className="font-semibold">Calque de couleur</span><select className="ad-select w-full" value={effect} onChange={(e) => setEffect(e.target.value)}>{EFFECTS.map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select></label>
+                {simpleColorField('Couleur du calque', effectColor, setEffectColor)}
+                <label className="space-y-1 text-sm"><span className="flex justify-between font-semibold"><span>Opacité du calque</span><span>{Math.round(Number(effectOpacity) * 100)}%</span></span><input className="w-full" type="range" min="0" max="0.9" step="0.02" value={effectOpacity} onChange={(e) => setEffectOpacity(e.target.value)} /></label>
+                <label className="space-y-1 text-sm"><span className="flex justify-between font-semibold"><span>Transparence de l’image</span><span>{Math.round(Number(imageOpacity) * 100)}%</span></span><input className="w-full" type="range" min="0.1" max="1" step="0.05" value={imageOpacity} onChange={(e) => setImageOpacity(e.target.value)} /></label>
+                {simpleColorField('Couleur de bordure', borderColor, setBorderColor)}
+                <label className="space-y-1 text-sm"><span className="flex justify-between font-semibold"><span>Épaisseur de bordure</span><span>{borderWidth}px</span></span><input className="w-full" type="range" min="0" max="36" step="1" value={borderWidth} onChange={(e) => setBorderWidth(e.target.value)} /></label>
+                <label className="space-y-1 text-sm"><span className="flex justify-between font-semibold"><span>Arrondi du cadre</span><span>{borderRadius}px</span></span><input className="w-full" type="range" min="0" max="180" step="4" value={borderRadius} onChange={(e) => setBorderRadius(e.target.value)} /></label>
+              </div>
+            </details>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="space-y-1 text-sm"><span className="font-semibold">Alignement du texte</span><select className="ad-select w-full" value={align} onChange={(e) => { const value = e.target.value; setAlign(value); setTitleX(value === 'center' ? (layout === 'split-left' ? '70' : layout === 'split-right' ? '28' : '50') : value === 'right' ? (layout === 'split-left' ? '93' : layout === 'split-right' ? '47' : '93') : (layout === 'split-left' ? '53' : '7')); }}><option value="left">Gauche</option><option value="center">Centré</option><option value="right">Droite</option></select></label>
               <label className="space-y-1 text-sm"><span className="flex justify-between font-semibold"><span>Voile / contraste</span><span>{Math.round(Number(overlay) * 100)}%</span></span><input className="w-full" type="range" min="0" max="0.88" step="0.04" value={overlay} onChange={(e) => setOverlay(e.target.value)} /></label>
               <label className="space-y-1 text-sm"><span className="flex justify-between font-semibold"><span>Position horizontale du titre</span><span>{titleX}%</span></span><input className="w-full" type="range" min="3" max="97" value={titleX} onChange={(e) => setTitleX(e.target.value)} /></label>
               <label className="space-y-1 text-sm"><span className="flex justify-between font-semibold"><span>Position verticale du titre</span><span>{titleY}%</span></span><input className="w-full" type="range" min="15" max="90" value={titleY} onChange={(e) => setTitleY(e.target.value)} /></label>
@@ -192,12 +293,23 @@ export default function SocialGraphicsStudio() {
               <label className="space-y-1 text-sm"><span className="font-semibold">Position du logo</span><select className="ad-select w-full" value={logoPosition} onChange={(e) => setLogoPosition(e.target.value)}><option value="top-left">Haut gauche</option><option value="top-right">Haut droite</option><option value="bottom-left">Bas gauche</option><option value="bottom-right">Bas droite</option></select></label>
               {includeQr && <label className="space-y-1 text-sm"><span className="font-semibold">Position du QR code</span><select className="ad-select w-full" value={qrPosition} onChange={(e) => setQrPosition(e.target.value)}><option value="top-left">Haut gauche</option><option value="top-right">Haut droite</option><option value="bottom-left">Bas gauche</option><option value="bottom-right">Bas droite</option></select></label>}
             </div>
+            <div className="flex flex-wrap items-center gap-3 rounded-lg border border-[var(--ad-line)] p-3 text-sm">
+              <span className="font-semibold">Logo du site à ajouter :</span>
+              {customLogo || brand.logo ? <>
+                {/* eslint-disable-next-line @next/next/no-img-element -- Brand logo can be an uploaded GED file or configured URL. */}
+                <img src={mediaPath(customLogo) || customLogo || brand.logo} alt={`Logo ${brand.title || 'du site'}`} className="h-10 max-w-40 rounded bg-white p-1 object-contain" />
+                <span className="text-xs opacity-70">{customLogo ? 'Logo personnalisé' : brand.title || 'Logo configuré'}</span>
+              </> : <><span className="text-xs opacity-70">Aucun logo configuré — ajoutez-le dans Paramètres → Marque.</span><a className="underline" href={`/${locale}/admin/settings?tab=brand`}>Configurer le logo</a></>}
+            </div>
             <details className="rounded-lg border border-[var(--ad-line)] p-3">
-              <summary className="cursor-pointer text-sm font-bold">Personnaliser texte et image (facultatif)</summary>
+              <summary className="cursor-pointer text-sm font-bold">Sujet, chapô, image ou logo personnalisés</summary>
               <div className="mt-3 grid gap-3">
                 <label className="space-y-1 text-sm"><span>Titre de remplacement</span><input className="ad-input w-full" maxLength={180} value={customTitle} onChange={(e) => setCustomTitle(e.target.value)} /></label>
-                <label className="space-y-1 text-sm"><span>Résumé de remplacement</span><textarea className="ad-input w-full" rows={2} maxLength={500} value={customSummary} onChange={(e) => setCustomSummary(e.target.value)} /></label>
+                {['articles', 'announcements', 'tips'].includes(source) && <label className="space-y-1 text-sm"><span>Sujet / catégorie (badge)</span><input className="ad-input w-full" maxLength={72} placeholder={String(selectedItem?.sujet || selectedItem?.category || selectedItem?.classification || '')} value={customSubject} onChange={(e) => setCustomSubject(e.target.value)} /></label>}
+                <label className="space-y-1 text-sm"><span>Chapô / résumé</span><textarea className="ad-input w-full" rows={2} maxLength={500} value={customSummary} onChange={(e) => setCustomSummary(e.target.value)} /></label>
+                {['services', 'solutions', 'products'].includes(source) && <label className="space-y-1 text-sm"><span>Icône Lucide (nom de l’icône de la fiche)</span><input className="ad-input w-full" placeholder={selectedItem?.icon || 'stethoscope'} value={customIcon} onChange={(e) => setCustomIcon(e.target.value)} /></label>}
                 <label className="space-y-1 text-sm"><span>Image GED de remplacement (/uploads/...)</span><input className="ad-input w-full" placeholder="/uploads/news/visuel.jpg" value={customImage} onChange={(e) => setCustomImage(e.target.value)} /></label>
+                <label className="space-y-1 text-sm"><span>Logo GED personnalisé (facultatif)</span><input className="ad-input w-full" placeholder={brand.logo || '/uploads/ged/logo.png'} value={customLogo} onChange={(e) => setCustomLogo(e.target.value)} /></label>
               </div>
             </details>
           </> : <>

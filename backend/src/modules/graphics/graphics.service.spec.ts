@@ -1,6 +1,9 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import sharp from 'sharp';
+import { mkdtemp, rm } from 'node:fs/promises';
+import * as os from 'node:os';
+import * as path from 'node:path';
 import { GraphicsService, SOCIAL_FORMATS } from './graphics.service';
 
 const content = {
@@ -30,6 +33,21 @@ describe('GraphicsService', () => {
     isPng(qr);
     isPng(barcode);
     expect((await sharp(qr).metadata()).width).toBe(256);
+  });
+
+  it('loads an existing GED photo and renders split layouts, blend effects, frames, event dates and places', async () => {
+    const directory = await mkdtemp(path.join(os.tmpdir(), 'sari-graphics-'));
+    try {
+      await sharp({ create: { width: 64, height: 48, channels: 3, background: '#336699' } }).png().toFile(path.join(directory, 'photo.png'));
+      const withImage = { findPublished: jest.fn(async () => ({ title: 'Salon professionnel', shortDesc: 'Rencontrez notre équipe', slug: 'salon', image: '/uploads/photo.png', startDate: '2026-11-30T09:00:00Z', endDate: '2026-11-30T17:00:00Z', location: 'Montréal', status: 'published' })) };
+      const isolated = new GraphicsService({ get: (key: string) => key === 'GED_UPLOAD_DIR' ? directory : key === 'PUBLIC_SITE_URL' ? 'https://example.test' : undefined } as ConfigService, content as never, withImage as never, content as never, content as never, content as never, content as never, brand as never);
+      const result = await isolated.social('events', 'salon', { platform: 'facebook', layout: 'split-left', effect: 'screen', effectColor: '#00AAFF', effectOpacity: 0.25, borderWidth: 8, borderColor: '#C6DA34' });
+      const metadata = await sharp(result.buffer).metadata();
+      expect(metadata).toMatchObject({ width: 1200, height: 630 });
+      isPng(result.buffer);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
   });
 
   it('rejects unsupported source and barcode types', async () => {
