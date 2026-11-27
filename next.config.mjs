@@ -47,7 +47,7 @@ const legalRedirects = Object.entries(LEGAL_ALIASES).map(([from, to]) => ({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   transpilePackages: ['grapesjs'],
-  serverExternalPackages: ['@napi-rs/canvas'],
+  serverExternalPackages: ['@napi-rs/canvas', 'qrcode'],
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'images.unsplash.com' },
