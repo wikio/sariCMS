@@ -58,9 +58,10 @@ export async function POST(req: NextRequest) {
   );
   const result = outcome.data;
   if (!outcome.ok || !result) {
+    console.error('[contact] backend intake failed', { status: outcome.status, error: outcome.error });
     if (outcome.status === 400) return fail('fields', 400);
     if (outcome.status === 429) return fail('rate', 429);
-    return fail('unavailable', 502);
+    return fail('unavailable', outcome.status === 503 ? 503 : 502);
   }
   if (result.decision === 'review' || result.decision === 'discard') return received();
   if (

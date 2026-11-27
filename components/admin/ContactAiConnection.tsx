@@ -13,6 +13,8 @@ const path = '/contact/triage/connection';
 const draftFrom = (s: ContactAiStatus): ContactAiDraft => ({
   url: s.overrides.url,
   model: s.overrides.model,
+  systemPrompt: s.overrides.systemPrompt || '',
+  userPromptTemplate: s.overrides.userPromptTemplate || '',
 });
 
 /** Formulaire indépendant : tester un brouillon ne sauvegarde ni les identifiants ni les règles. */
@@ -124,6 +126,44 @@ export default function ContactAiConnection({ initial }: { initial: ContactAiSta
         <p id="contact-ai-key-help" className="text-sm">
           {t('keyHelp')}
         </p>
+        <details className="rounded border p-3" style={{ borderColor: 'var(--ad-line)' }}>
+          <summary className="font-semibold cursor-pointer">{t('promptSettings')}</summary>
+          <div className="mt-3 space-y-3">
+            <p className="text-sm">{t('promptSettingsHelp')}</p>
+            <label className="block">
+              {t('systemPrompt')}
+              <textarea
+                className="ad-input w-full min-h-[140px] font-mono text-xs"
+                maxLength={8000}
+                value={draft.systemPrompt || ''}
+                onChange={(e) => set({ systemPrompt: e.target.value })}
+                placeholder={t('systemPromptPlaceholder')}
+              />
+            </label>
+            <label className="block">
+              {t('userPromptTemplate')}
+              <textarea
+                className="ad-input w-full min-h-[90px] font-mono text-xs"
+                maxLength={8000}
+                value={draft.userPromptTemplate || ''}
+                onChange={(e) => set({ userPromptTemplate: e.target.value })}
+                placeholder="{{json}}"
+              />
+              <p className="text-xs mt-1" style={{ color: 'var(--ad-muted)' }}>{t('userPromptTemplateHelp')}</p>
+            </label>
+            <div className="rounded p-3 text-xs" style={{ background: 'var(--ad-surface-2)' }}>
+              <div className="font-semibold mb-1">{t('outputContract')}</div>
+              <pre className="whitespace-pre-wrap break-words" dir="ltr">{`{
+  "spam": boolean,
+  "inappropriate": boolean,
+  "matchesSubject": boolean,
+  "suggestedSubject": "devis"|"technique"|"commercial"|"rh"|"partenaire"|"client"|null,
+  "confidence": 0-100
+}`}</pre>
+              <p className="mt-2" style={{ color: 'var(--ad-muted)' }}>{t('outputContractHelp')}</p>
+            </div>
+          </div>
+        </details>
         <div className="flex flex-wrap gap-2">
           <button type="button" className="ad-btn ad-btn-ghost" onClick={() => void run('test')}>
             {busy === 'test' ? t('testingConnection') : t('testConnection')}

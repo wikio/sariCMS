@@ -30,9 +30,11 @@ node -v && npm -v
 umask 077   # les deux fichiers suivants contiendront des secrets
 cp -n .env.example .env.local
 cp -n backend/.env.example backend/.env
-npm ci
+npm ci                         # à la racine : installe aussi @napi-rs/canvas et qrcode pour les visuels sociaux
 (cd backend && npm ci)
 ```
+
+Après un `git pull` qui ajoute/modifie des dépendances, relancer `npm ci` à la racine avant `npm run dev` ou `npm run build`. Les scripts `predev` et `prebuild` contrôlent maintenant que les dépendances du renderer social sont présentes et affichent la commande à exécuter si elles manquent.
 
 Dans `backend/.env`, garder `NODE_ENV=development`, `DB_DRIVER=json`, `PORT=3001` et `CORS_ORIGINS=http://localhost:5000`. Choisir `SEED_ADMIN_EMAIL` et un `SEED_ADMIN_PASSWORD` personnel (au moins 16 caractères ; par exemple généré avec `openssl rand -hex 24`). Les valeurs d’exemple JWT sont uniquement pour le développement. Le seed lit `backend/.env`, ne crée **pas de catalogue**, n’affiche pas le mot de passe et refuse un magasin JSON déjà rempli.
 

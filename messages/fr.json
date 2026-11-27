@@ -55,11 +55,14 @@
       "media": "Médias",
       "home": "Page d'accueil",
       "newsletter": "Newsletter",
+      "contactMessages": "Messages de contact",
       "canvas": "Atelier graphique",
       "verificationCodes": "Codes de vérification",
       "shopConfig": "Configuration boutique",
       "commerceSettings": "Commerce",
-      "eventRegistrations": "Participations événements"
+      "eventRegistrations": "Participations événements",
+      "mediaStudio": "Studio des médias",
+      "socialGraphics": "Visuels sociaux"
     },
     "header": {
       "seeSite": "Voir le site",
@@ -821,7 +824,8 @@
       "validated": "Validé",
       "saveError": "Enregistrement impossible",
       "saving": "Enregistrement…",
-      "noResults": "Aucun résultat"
+      "noResults": "Aucun résultat",
+      "select": "Sélectionner"
     },
     "visibility": {
       "breadcrumb": "Configuration avancée / Visibilité vitrine",
@@ -4363,7 +4367,33 @@
       "testResult_auth": "Authentification refusée. Vérifiez la clé et ses droits sur le modèle.",
       "testResult_unavailable": "Fournisseur indisponible ou requête refusée. Vérifiez l’URL et le modèle, puis réessayez.",
       "testResult_invalidResponse": "Réponse incompatible : ce modèle doit renvoyer le verdict JSON attendu.",
-      "updateApi": "Mettez également à jour l’API du CMS pour afficher les champs de connexion IA."
+      "updateApi": "Mettez également à jour l’API du CMS pour afficher les champs de connexion IA.",
+      "contactLabel": "Contact",
+      "date": "Date",
+      "selectAll": "Tout sélectionner",
+      "selectedCount": "{count} sélectionné(s)",
+      "markNew": "Nouveau",
+      "markRead": "Marquer lu",
+      "markReview": "À vérifier",
+      "markArchived": "Archiver",
+      "verifyAi": "Vérifier IA",
+      "triaging": "Analyse IA…",
+      "sendMail": "Envoyer un email",
+      "viewDetails": "Voir le détail",
+      "triageDone": "Analyse IA terminée",
+      "bulkTriageDone": "IA : {updated} mis à jour, {failed} échec(s)",
+      "bulkDeleteDone": "{deleted} supprimé(s), {failed} échec(s)",
+      "bulkStatusDone": "{updated} mis à jour, {failed} échec(s)",
+      "confirmBulkDelete": "Supprimer {count} message(s) ?",
+      "confidence": "Confiance IA",
+      "promptSettings": "Prompts IA (entrée / sortie)",
+      "promptSettingsHelp": "Personnalisez les instructions envoyées au modèle. Le résultat doit respecter le contrat JSON de sortie pour que le tri automatique et la vérification manuelle fonctionnent.",
+      "systemPrompt": "Prompt système (entrée)",
+      "systemPromptPlaceholder": "Instructions pour le modèle…",
+      "userPromptTemplate": "Modèle de prompt utilisateur (entrée)",
+      "userPromptTemplateHelp": "Variables disponibles : {{subject}}, {{message}}, {{locale}}, {{json}}. {{json}} insère l’objet JSON {subject,message,locale}.",
+      "outputContract": "Contrat de sortie JSON (attendu)",
+      "outputContractHelp": "La réponse du modèle doit être un JSON valide respectant ce schéma. Le traitement automatique/on-demand s’appuie sur ces champs."
     }
   },
   "common": {
@@ -5300,6 +5330,7 @@
       "quoteCtaRegister": "Créer un compte",
       "triageNotice": "Le texte peut être analysé par une IA pour détecter le spam, les propos inappropriés et vérifier le sujet. Une demande abusive peut être supprimée et, si vous êtes connecté, entraîner un retrait de points. N’incluez pas de données médicales.",
       "fieldsError": "Vérifiez les coordonnées, le sujet et la longueur du message (10 à 4 000 caractères).",
+      "errorTitle": "Impossible d'envoyer le message",
       "unavailable": "Le service est momentanément indisponible. Votre texte est conservé dans le formulaire ; vous pouvez réessayer."
     },
     "dashboard": {

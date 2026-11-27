@@ -1,8 +1,10 @@
 import { CONTACT_STATUSES, ContactStatus, SUBJECTS, Subject } from '../contact-contract';
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import {
+  IsArray,
   IsEmail,
   IsIn,
+  IsInt,
   IsObject,
   IsOptional,
   IsString,
@@ -132,4 +134,16 @@ export class UpdateContactMessageDto {
   @IsString()
   @MaxLength(1500)
   followUp?: string;
+}
+
+export class BulkContactMessagesDto {
+  @ApiProperty({ type: [Number] })
+  @IsArray()
+  @IsInt({ each: true })
+  ids!: number[];
+
+  @ApiPropertyOptional({ enum: CONTACT_STATUSES })
+  @IsOptional()
+  @IsIn(CONTACT_STATUSES)
+  status?: ContactStatus;
 }

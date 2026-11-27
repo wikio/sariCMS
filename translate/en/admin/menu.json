@@ -53,9 +53,12 @@
   "media": "Media",
   "home": "Home page",
   "newsletter": "Newsletter",
+  "contactMessages": "Contact messages",
   "canvas": "Graphic studio",
   "verificationCodes": "Verification codes",
   "shopConfig": "Shop configuration",
   "commerceSettings": "Commerce",
-  "eventRegistrations": "Event Registrations"
+  "eventRegistrations": "Event Registrations",
+  "mediaStudio": "Media studio",
+  "socialGraphics": "Social graphics"
 }

@@ -42,7 +42,7 @@ export default function ContactPage() {
   // Le captcha est vérifié par /api/contact, pas par le navigateur : `autoVerify`
   // est désactivé pour que le code ne soit pas consommé avant l'envoi du formulaire.
   const [captcha, setCaptcha] = useState<{ id: string; value: string }>({ id: '', value: '' });
-  const [formError, setFormError] = useState('');
+  const [formError, setFormError] = useState<{ code: string; message: string } | null>(null);
 
   const locale = useLocale();
   const t = useTranslations('pages.contact');
@@ -62,9 +62,9 @@ export default function ContactPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    setFormError('');
+    setFormError(null);
     if (captcha.value.trim().length < 5) {
-      setFormError(t('captchaError'));
+      setFormError({ code: 'captcha', message: t('captchaError') });
       return;
     }
 
@@ -96,8 +96,9 @@ export default function ContactPage() {
       setCaptcha({ id: '', value: '' });
       setCaptchaOk(false);
       setCaptchaRound((n) => n + 1);
-      setFormError(t(json?.code === 'captcha' ? 'captchaError' : json?.code === 'fields' ? 'fieldsError' :
-        json?.code === 'rate' ? 'captchaBlocked' : 'unavailable'));
+      const code = json?.code === 'captcha' ? 'captcha' : json?.code === 'fields' ? 'fields' : json?.code === 'rate' ? 'rate' : 'unavailable';
+      const messageKey = code === 'captcha' ? 'captchaError' : code === 'fields' ? 'fieldsError' : code === 'rate' ? 'captchaBlocked' : 'unavailable';
+      setFormError({ code, message: t(messageKey) });
       return;
     }
 
@@ -325,9 +326,11 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <h3 className="font-bold text-red-700 dark:text-red-400 text-lg">
-                      {t('captchaBlocked')}
+                      {t(formError.code === 'rate' ? 'captchaBlocked' : 'errorTitle')}
                     </h3>
-                    <p className="text-gray-600 dark:text-gray-400 mt-1">{formError}</p>
+                    {formError.message !== t(formError.code === 'rate' ? 'captchaBlocked' : 'errorTitle') && (
+                      <p className="text-gray-600 dark:text-gray-400 mt-1">{formError.message}</p>
+                    )}
                   </div>
                 </div>
               )}

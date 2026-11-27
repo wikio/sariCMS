@@ -53,9 +53,12 @@
   "media": "الوسائط",
   "home": "الصفحة الرئيسية",
   "newsletter": "النشرة البريدية",
+  "contactMessages": "رسائل التواصل",
   "canvas": "استوديو الرسوميات",
   "verificationCodes": "أكواد التحقق",
   "shopConfig": "إعدادات المتجر",
   "commerceSettings": "التجارة",
-  "eventRegistrations": "مشاركات الفعاليات"
+  "eventRegistrations": "مشاركات الفعاليات",
+  "mediaStudio": "استوديو الوسائط",
+  "socialGraphics": "الرسوم الاجتماعية"
 }

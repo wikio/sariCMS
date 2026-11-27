@@ -20,6 +20,7 @@ import { PermissionsModule } from './modules/permissions/permissions.module';
 import { PagesModule } from './modules/pages/pages.module';
 import { FaqsModule } from './modules/faqs/faqs.module';
 import { GedModule } from './modules/ged/ged.module';
+import { GraphicsModule } from './modules/graphics/graphics.module';
 import { TestimonialsModule } from './modules/testimonials/testimonials.module';
 import { MenusModule } from './modules/menus/menus.module';
 import { ContactModule } from './modules/contact/contact.module';
@@ -87,6 +88,7 @@ import { MailModule } from './modules/mail/mail.module';
     PagesModule,
     FaqsModule,
     GedModule,
+    GraphicsModule,
     TestimonialsModule,
     MenusModule,
     ContactModule,

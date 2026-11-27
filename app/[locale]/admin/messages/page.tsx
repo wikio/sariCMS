@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Eye, Inbox, Mail, Pencil, Plus, Send, Trash2 } from 'lucide-react';
 import { loadMessages, saveMessages, TRIGGERS, type NotifyMessage } from '@/lib/notify-store';
 import { syncDoc } from '@/lib/settings-doc';
@@ -25,7 +26,15 @@ const empty = (): NotifyMessage => ({
 
 export default function MessagesPage() {
   const t = useTranslations('admin.messages');
-  const [tab, setTab] = useState<'inbox' | 'contact' | 'templates'>('inbox');
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const initialTab = tabParam === 'contact' || tabParam === 'templates' || tabParam === 'inbox' ? tabParam : 'inbox';
+  const [tab, setTab] = useState<'inbox' | 'contact' | 'templates'>(initialTab);
+
+  useEffect(() => {
+    if (tabParam === 'contact' || tabParam === 'templates' || tabParam === 'inbox') setTab(tabParam);
+    else setTab('inbox');
+  }, [tabParam]);
   return (
     <div className="space-y-4">
       <header className="flex items-end justify-between">

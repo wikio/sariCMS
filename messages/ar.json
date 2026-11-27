@@ -55,11 +55,14 @@
       "media": "الوسائط",
       "home": "الصفحة الرئيسية",
       "newsletter": "النشرة البريدية",
+      "contactMessages": "رسائل التواصل",
       "canvas": "استوديو الرسوميات",
       "verificationCodes": "أكواد التحقق",
       "shopConfig": "إعدادات المتجر",
       "commerceSettings": "التجارة",
-      "eventRegistrations": "مشاركات الفعاليات"
+      "eventRegistrations": "مشاركات الفعاليات",
+      "mediaStudio": "استوديو الوسائط",
+      "socialGraphics": "الرسوم الاجتماعية"
     },
     "header": {
       "seeSite": "عرض الموقع",
@@ -821,7 +824,8 @@
       "validated": "مُصادق",
       "saveError": "تعذّر حفظ التغييرات",
       "saving": "جارٍ الحفظ…",
-      "noResults": "لا توجد نتائج"
+      "noResults": "لا توجد نتائج",
+      "select": "تحديد"
     },
     "visibility": {
       "breadcrumb": "إعدادات متقدمة / ظهور الواجهة",
@@ -4363,7 +4367,33 @@
       "testResult_auth": "رُفضت المصادقة. تحقق من المفتاح وصلاحيات الوصول إلى النموذج.",
       "testResult_unavailable": "الخدمة غير متاحة أو رُفض الطلب. تحقق من العنوان والنموذج ثم أعد المحاولة.",
       "testResult_invalidResponse": "استجابة غير متوافقة: يجب أن يعيد النموذج نتيجة الفرز بصيغة JSON المتوقعة.",
-      "updateApi": "حدّث واجهة نظام إدارة المحتوى أيضًا لعرض حقول الاتصال بالذكاء الاصطناعي."
+      "updateApi": "حدّث واجهة نظام إدارة المحتوى أيضًا لعرض حقول الاتصال بالذكاء الاصطناعي.",
+      "contactLabel": "جهة الاتصال",
+      "date": "التاريخ",
+      "selectAll": "تحديد الكل",
+      "selectedCount": "{count} محدد",
+      "markNew": "جديد",
+      "markRead": "وضع علامة مقروء",
+      "markReview": "للمراجعة",
+      "markArchived": "أرشفة",
+      "verifyAi": "تحقق بالذكاء الاصطناعي",
+      "triaging": "جارٍ تحليل الذكاء الاصطناعي…",
+      "sendMail": "إرسال بريد",
+      "viewDetails": "عرض التفاصيل",
+      "triageDone": "اكتمل تحليل الذكاء الاصطناعي",
+      "bulkTriageDone": "الذكاء الاصطناعي: {updated} محدث، {failed} فشل",
+      "bulkDeleteDone": "{deleted} محذوف، {failed} فشل",
+      "bulkStatusDone": "{updated} محدث، {failed} فشل",
+      "confirmBulkDelete": "حذف {count} رسالة(رسائل)?",
+      "confidence": "ثقة الذكاء الاصطناعي",
+      "promptSettings": "مطالبات الذكاء الاصطناعي (إدخال / إخراج)",
+      "promptSettingsHelp": "خصّص التعليمات المرسلة إلى النموذج. يجب أن تلتزم النتيجة بعقد إخراج JSON حتى يعمل الفرز التلقائي والتحقق اليدوي.",
+      "systemPrompt": "موجه النظام (إدخال)",
+      "systemPromptPlaceholder": "تعليمات للنموذج…",
+      "userPromptTemplate": "قالب موجه المستخدم (إدخال)",
+      "userPromptTemplateHelp": "المتغيرات المتاحة: {{subject}}، {{message}}، {{locale}}، {{json}}. يُدرج {{json}} كائن JSON {subject,message,locale}.",
+      "outputContract": "عقد إخراج JSON المتوقع",
+      "outputContractHelp": "يجب أن تكون استجابة النموذج JSON صالحًا يطابق هذا المخطط. تعتمد المعالجة التلقائية/عند الطلب على هذه الحقول."
     }
   },
   "common": {
@@ -5300,6 +5330,7 @@
       "quoteCtaRegister": "إنشاء حساب",
       "triageNotice": "قد يحلّل الذكاء الاصطناعي النص لاكتشاف الرسائل المزعجة والعبارات غير اللائقة والتحقق من الموضوع. قد تُحذف الطلبات المسيئة وتُخصم نقاط من الحساب المسجّل دخوله. لا تُدرج بيانات طبية.",
       "fieldsError": "تحقّق من بيانات الاتصال والموضوع وطول الرسالة (من 10 إلى 4000 حرف).",
+      "errorTitle": "تعذر إرسال الرسالة",
       "unavailable": "الخدمة غير متاحة مؤقتًا. لا يزال النص في النموذج ويمكنك إعادة المحاولة."
     },
     "dashboard": {

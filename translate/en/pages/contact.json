@@ -55,5 +55,6 @@
   "quoteCtaRegister": "Create an account",
   "triageNotice": "The text may be screened by AI for spam, inappropriate language and subject fit. Abusive requests may be deleted and signed-in accounts may lose points. Do not include medical information.",
   "fieldsError": "Check the contact details, subject and message length (10–4,000 characters).",
+  "errorTitle": "Unable to send message",
   "unavailable": "The service is temporarily unavailable. Your text is still in the form; you can try again."
 }
