@@ -45,6 +45,8 @@ function requestInput(requestUrl, body = {}) {
   const direction = read('direction') || providedTheme.direction || (locale === 'ar' ? 'rtl' : 'ltr');
   const theme = { ...providedTheme, ...(style ? { style } : {}), direction, locale };
   const transparentValue = body.transparent ?? theme.transparent ?? params.get('transparent');
+  const showLogoValue = body.showLogo ?? params.get('showLogo');
+  const includeQrValue = body.includeQr ?? params.get('includeQr');
   return {
     kind: String(read('kind') || 'article').slice(0, 48),
     format: String(read('format') || 'square').slice(0, 32),
@@ -60,6 +62,8 @@ function requestInput(requestUrl, body = {}) {
     url: read('url'),
     networks: networks.slice(0, 8),
     brand: read('brand'),
+    showLogo: showLogoValue == null ? true : parseBoolean(showLogoValue),
+    includeQr: includeQrValue == null ? true : parseBoolean(includeQrValue),
     textScale: Number(read('textScale')) || 1,
     theme: { ...theme, transparent: parseBoolean(transparentValue) },
   };

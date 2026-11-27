@@ -12,17 +12,21 @@ assert.equal(lightTheme.foreground, '#0B0D10', 'enforce contrast against a light
 assert.equal(convertThemeConfig({ transparent: true }).transparent, true);
 assert.equal(convertThemeConfig({ locale: 'ar' }).direction, 'rtl');
 assert.equal(convertThemeConfig({ locale: 'ar', direction: 'ltr' }).direction, 'ltr');
-const strictPress = convertThemeConfig({ style: 'rassd-news', grid: true, pixelAccents: true });
+const strictPress = convertThemeConfig({ style: 'presse-immersive', grid: true, pixelAccents: true });
 assert.equal(strictPress.fullBleed, true);
 assert.equal(strictPress.grid, false, 'press style is strictly grid-free');
 assert.equal(strictPress.pixelAccents, false, 'press style is strictly pixel-free');
-for (const style of ['modular-grid', 'editorial-grid', 'blueprint-grid', 'press-grid']) {
+for (const style of ['modular-grid', 'editorial-grid', 'blueprint-grid', 'grille-plein-cadre']) {
   assert.equal(convertThemeConfig({ style }).grid, true, `${style} enables a square grid`);
 }
+assert.equal(convertThemeConfig({ style: 'sans-photo-blocs' }).imageEnabled, false);
+assert.equal(convertThemeConfig({ style: 'sans-photo-blocs' }).blockComposition, true);
+assert.equal(convertThemeConfig({ style: 'sans-photo-minimal' }).imageEnabled, false);
+assert.equal(convertThemeConfig({ style: 'sans-photo-minimal' }).minimalComposition, true);
 const arabicPressPng = await renderSocialCard({
   kind: 'article', format: 'portrait', title: 'الانتقال الحضري نحو مدن مستدامة',
   summary: 'حلول جديدة ومستدامة للمدن والمساحات العامة.',
-  theme: { style: 'rassd-news', locale: 'ar' },
+  theme: { style: 'presse-immersive', locale: 'ar' },
 });
 assert.ok(arabicPressPng.subarray(0, 8).equals(pngSignature), 'Arabic RTL press card renders as PNG');
 
@@ -45,11 +49,21 @@ const sampleCtx = sampleCanvas.getContext('2d');
 sampleCtx.drawImage(await loadImage(transparentPng), 0, 0);
 assert.equal(sampleCtx.getImageData(20, 20, 1, 1).data[3], 0, 'untouched transparent corner retains alpha');
 assert.ok(sampleCtx.getImageData(400, 400, 1, 1).data[3] > 0, 'text backing remains opaque enough for legibility');
-const pressPng = await renderSocialCard({ kind: 'article', format: 'square', theme: { style: 'press', transparent: true } });
+const pressPng = await renderSocialCard({ kind: 'article', format: 'square', theme: { style: 'presse-immersive', transparent: true } });
 const pressCanvas = createCanvas(1080, 1080);
 const pressCtx = pressCanvas.getContext('2d');
 pressCtx.drawImage(await loadImage(pressPng), 0, 0);
 assert.equal(pressCtx.getImageData(500, 20, 1, 1).data[3], 0, 'press theme leaves upper photo area free of grid and pixels');
+for (const style of ['sans-photo-blocs', 'sans-photo-minimal']) {
+  const input = {
+    kind: 'announcement', topic: 'Annonce', title: `Theme ${style}`, summary: 'A composition with no photo source.',
+    url: 'https://example.com', networks: ['facebook', 'linkedin'], includeQr: false, theme: { style },
+  };
+  const png = await renderSocialCard({ ...input, image: transparentPng });
+  const withoutImage = await renderSocialCard(input);
+  assert.ok(png.subarray(0, 8).equals(pngSignature), `${style} renders as PNG`);
+  assert.deepEqual(png, withoutImage, `${style} output ignores photo input entirely`);
+}
 
 const utilityCanvas = createCanvas(320, 160);
 const ctx = utilityCanvas.getContext('2d');
@@ -65,6 +79,15 @@ assert.equal(getResponse.headers.get('content-type'), 'image/png');
 assert.equal(getResponse.headers.get('access-control-allow-origin'), '*');
 assert.equal(getResponse.headers.get('x-image-width'), '1200');
 assert.ok(Buffer.from(await getResponse.arrayBuffer()).subarray(0, 8).equals(pngSignature));
+const compositionUrl = new URL('https://cms.example/api/social-card');
+compositionUrl.searchParams.set('style', 'sans-photo-blocs');
+compositionUrl.searchParams.set('kind', 'announcement');
+compositionUrl.searchParams.set('title', 'Annonce sans photo');
+compositionUrl.searchParams.set('includeQr', 'false');
+compositionUrl.searchParams.set('themeConfig', JSON.stringify({ primary: 'rgb(15, 159, 110)', background: '#0B0D10' }));
+const compositionResponse = await GET(new Request(compositionUrl));
+assert.equal(compositionResponse.status, 200, 'new composition presets are accepted through the public API');
+assert.ok(Buffer.from(await compositionResponse.arrayBuffer()).subarray(0, 8).equals(pngSignature));
 const originalFetch = globalThis.fetch;
 let mediaFetchCount = 0;
 globalThis.fetch = async () => {

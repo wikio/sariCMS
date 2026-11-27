@@ -10,9 +10,10 @@ export const SOCIAL_STYLE_PRESETS = Object.freeze({
   'modular-grid': { grid: true, pixelAccents: true, fullBleed: false, gridOpacity: 0.065, gridColor: 'foreground' },
   'editorial-grid': { grid: true, pixelAccents: false, fullBleed: false, gridOpacity: 0.045, gridColor: 'secondary' },
   'blueprint-grid': { grid: true, pixelAccents: false, fullBleed: false, gridOpacity: 0.12, gridColor: 'secondary' },
-  press: { grid: false, pixelAccents: false, fullBleed: true, gradientOverlay: true },
-  'rassd-news': { grid: false, pixelAccents: false, fullBleed: true, gradientOverlay: true },
-  'press-grid': { grid: true, pixelAccents: false, fullBleed: true, gradientOverlay: true, gridOverlay: true, gridOpacity: 0.035, gridColor: 'foreground' },
+  'presse-immersive': { grid: false, pixelAccents: false, fullBleed: true, gradientOverlay: true },
+  'grille-plein-cadre': { grid: true, pixelAccents: false, fullBleed: true, gradientOverlay: true, gridOverlay: true, gridOpacity: 0.035, gridColor: 'foreground' },
+  'sans-photo-blocs': { grid: false, pixelAccents: false, image: false, blockComposition: true },
+  'sans-photo-minimal': { grid: false, pixelAccents: false, image: false, minimalComposition: true },
 });
 
 export const DEFAULT_THEME = Object.freeze({

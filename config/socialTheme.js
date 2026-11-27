@@ -78,7 +78,7 @@ export function convertThemeConfig(siteTheme = {}, format = 'square', dimensions
   const style = Object.hasOwn(SOCIAL_STYLE_PRESETS, requestedStyle) ? requestedStyle : DEFAULT_THEME.style;
   const styleConfig = SOCIAL_STYLE_PRESETS[style];
   const direction = ['rtl', 'ltr'].includes(siteTheme.direction) ? siteTheme.direction : siteTheme.locale === 'ar' ? 'rtl' : 'ltr';
-  const strictPress = style === 'press' || style === 'rassd-news';
+  const strictPress = style === 'presse-immersive';
   const grid = strictPress ? false : typeof siteTheme.grid === 'boolean' ? siteTheme.grid : styleConfig.grid;
   const pixelAccents = strictPress ? false : typeof siteTheme.pixelAccents === 'boolean' ? siteTheme.pixelAccents : styleConfig.pixelAccents;
   const gridColor = styleConfig.gridColor === 'secondary' ? secondary : styleConfig.gridColor === 'foreground' ? foreground : styleConfig.gridColor;
@@ -89,6 +89,9 @@ export function convertThemeConfig(siteTheme = {}, format = 'square', dimensions
     fullBleed: styleConfig.fullBleed === true,
     gradientOverlay: styleConfig.gradientOverlay === true,
     gridOverlay: styleConfig.gridOverlay === true && grid,
+    imageEnabled: styleConfig.image !== false,
+    blockComposition: styleConfig.blockComposition === true,
+    minimalComposition: styleConfig.minimalComposition === true,
     transparent: siteTheme.transparent === true,
     ...resolveDimensions(format, dimensions),
   };

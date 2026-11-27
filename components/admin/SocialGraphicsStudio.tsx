@@ -5,6 +5,7 @@ import { useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { Barcode, CalendarDays, Check, Copy, Download, ExternalLink, Image as ImageIcon, MapPin, QrCode, RefreshCw, Search, Share2, Wand2 } from 'lucide-react';
 import { uploadGedAsset } from '@/lib/ged/client';
+import { SOCIAL_STYLE_PRESETS } from '@/config/socialTemplates.js';
 
 type SourceKind = 'articles' | 'events' | 'products' | 'services' | 'solutions' | 'pages' | 'announcements' | 'tips';
 type ContentItem = { id?: string | number; slug?: string; title?: string; name?: string; shortDesc?: string; chapo?: string; sujet?: string; category?: string; classification?: string; image?: unknown; coverImage?: unknown; thumbnail?: unknown; media?: unknown; icon?: string; color?: string; startDate?: string; endDate?: string; date?: string; location?: string; venue?: string };
@@ -52,6 +53,29 @@ const SOCIAL_THEMES: Record<string, typeof DEFAULT_COLORS> = {
   editorial: { bg: '#111827', bg2: '#374151', accent: '#EAB616', textColor: '#FFFFFF' },
   aurora: { bg: '#312E81', bg2: '#0E7490', accent: '#67E8F9', textColor: '#FFFFFF' },
   lime: { bg: '#365314', bg2: '#84CC16', accent: '#ECFCCB', textColor: '#FFFFFF' },
+  'modular-grid': { bg: '#0B0D10', bg2: 'rgb(15, 159, 110)', accent: 'rgb(234, 182, 22)', textColor: '#FFFFFF' },
+  'editorial-grid': { bg: '#FFFFFF', bg2: 'rgb(15, 159, 110)', accent: 'rgb(22, 158, 201)', textColor: '#0B0D10' },
+  'blueprint-grid': { bg: '#0B0D10', bg2: 'rgb(22, 158, 201)', accent: 'rgb(234, 182, 22)', textColor: '#FFFFFF' },
+  'presse-immersive': { bg: '#0B0D10', bg2: 'rgb(15, 159, 110)', accent: 'rgb(234, 182, 22)', textColor: '#FFFFFF' },
+  'grille-plein-cadre': { bg: '#0B0D10', bg2: 'rgb(15, 159, 110)', accent: 'rgb(22, 158, 201)', textColor: '#FFFFFF' },
+  'sans-photo-blocs': { bg: '#0B0D10', bg2: 'rgb(15, 159, 110)', accent: 'rgb(234, 182, 22)', textColor: '#FFFFFF' },
+  'sans-photo-minimal': { bg: '#0B0D10', bg2: 'rgb(15, 159, 110)', accent: 'rgb(234, 182, 22)', textColor: '#FFFFFF' },
+};
+const COMPOSITION_THEMES = [
+  ['modular-grid', 'Grille modulaire'],
+  ['editorial-grid', 'Grille éditoriale'],
+  ['blueprint-grid', 'Grille technique'],
+  ['presse-immersive', 'Presse immersive · photo plein cadre'],
+  ['grille-plein-cadre', 'Grille plein cadre · photo et grille'],
+  ['sans-photo-blocs', 'Sans photo · blocs graphiques'],
+  ['sans-photo-minimal', 'Sans photo · minimal'],
+] as const;
+const SOCIAL_DIMENSIONS: Record<string, [number, number, string]> = {
+  youtube: [1280, 720, 'landscape'], 'youtube-banner': [2560, 1440, 'widescreen'],
+  instagram: [1080, 1080, 'square'], 'instagram-story': [1080, 1920, 'story'],
+  facebook: [1200, 630, 'landscape'], 'facebook-cover': [1640, 624, 'landscape'],
+  linkedin: [1200, 627, 'landscape'], x: [1200, 675, 'widescreen'],
+  pinterest: [1000, 1500, 'portrait'], og: [1200, 630, 'landscape'],
 };
 
 function itemKey(item: ContentItem) { return String(item.slug || item.id || ''); }
@@ -167,6 +191,36 @@ export default function SocialGraphicsStudio() {
 
   const socialUrl = useMemo(() => {
     if (!selected) return '';
+    const composition = Object.hasOwn(SOCIAL_STYLE_PRESETS, theme)
+      ? (SOCIAL_STYLE_PRESETS as Record<string, { image?: boolean }>)[theme]
+      : undefined;
+    if (composition) {
+      const [width, height, format] = SOCIAL_DIMENSIONS[platform] || SOCIAL_DIMENSIONS.instagram;
+      const params = new URLSearchParams({
+        kind: source === 'events' ? 'event' : ['products', 'services', 'solutions'].includes(source) ? 'product' : source === 'announcements' ? 'announcement' : 'article',
+        format, width: String(width), height: String(height), style: theme,
+        locale: renderLocale, direction, fontFamily: customFont.trim() || font, textScale: titleScale,
+        title: customTitle.trim() || String(selectedItem?.title || selectedItem?.name || ''),
+        summary: customSummary.trim() || String(selectedItem?.shortDesc || selectedItem?.chapo || ''),
+        topic: customSubject.trim() || String(selectedItem?.sujet || selectedItem?.category || selectedItem?.classification || ''),
+        brand: String(brand.title || ''), showLogo: showLogo ? 'true' : 'false', includeQr: includeQr ? 'true' : 'false',
+        themeConfig: JSON.stringify({
+          primary: colors.bg2, secondary: 'rgb(22, 158, 201)', accent: colors.accent,
+          background: colors.bg, foreground: colors.textColor,
+          fontFamily: customFont.trim() || font, direction, locale: renderLocale,
+          transparent: false,
+        }),
+      });
+      const date = selectedItem?.startDate || selectedItem?.date;
+      const location = selectedItem?.location || selectedItem?.venue;
+      if (date) params.set('date', String(date));
+      if (location) params.set('location', String(location));
+      if (includeQr && linkUrl.trim()) params.set('url', linkUrl.trim());
+      const image = customImage.trim() || sourceImage;
+      if (image && composition.image !== false) params.set('imageUrl', image);
+      if (showLogo && (customLogo.trim() || brand.logo)) params.set('logoUrl', customLogo.trim() || String(brand.logo));
+      return `/api/social-card?${params.toString()}`;
+    }
     const params = new URLSearchParams({ platform, locale: renderLocale, direction, font: customFont.trim() || font, titleScale, logoScale, grid: gridBackground ? '1' : '0', theme, bg: colors.bg, bg2: colors.bg2, accent: colors.accent, textColor: colors.textColor, align, overlay, layout, effect, effectColor, effectOpacity, imageOpacity, borderWidth, borderColor, borderRadius, blockRadius });
     if (includeQr) params.set('qr', '1');
     if (linkUrl.trim()) params.set('url', linkUrl.trim());
@@ -183,7 +237,7 @@ export default function SocialGraphicsStudio() {
     if (!showLogo) params.set('logo', 'none');
     else if (customLogo.trim()) params.set('logo', customLogo.trim());
     return `/api/v1/public/graphics/social/${encodeURIComponent(source)}/${encodeURIComponent(selected)}?${params.toString()}`;
-  }, [source, selected, platform, renderLocale, direction, font, customFont, titleScale, logoScale, gridBackground, theme, colors, align, titleX, titleY, overlay, effect, effectColor, effectOpacity, imageOpacity, borderWidth, borderColor, borderRadius, blockRadius, layout, includeQr, qrPosition, linkUrl, showLogo, logoPosition, customLogo, customTitle, customSubject, customIcon, customSummary, customImage, sourceImage]);
+  }, [source, selected, selectedItem, platform, renderLocale, direction, font, customFont, titleScale, logoScale, gridBackground, theme, colors, align, titleX, titleY, overlay, effect, effectColor, effectOpacity, imageOpacity, borderWidth, borderColor, borderRadius, blockRadius, layout, includeQr, qrPosition, linkUrl, showLogo, logoPosition, customLogo, customTitle, customSubject, customIcon, customSummary, customImage, sourceImage, brand]);
 
   const imageEndpoint = useMemo(() => {
     if (tab === 'qr') return `/api/v1/public/graphics/qr?${new URLSearchParams({ data: qrData, size: qrSize, color: codeColor, background: codeBg, margin: '2' })}`;
@@ -292,7 +346,7 @@ export default function SocialGraphicsStudio() {
               <label className="space-y-1 text-sm"><span className="font-semibold">Habillage selon le contenu</span><select className="ad-select w-full" value={layout} onChange={(e) => { setLayout(e.target.value); setTitleX(e.target.value === 'split-left' ? '53' : e.target.value === 'split-right' ? '47' : align === 'center' ? '50' : align === 'right' ? '93' : '7'); }}>{LAYOUTS.map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select></label>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
-              <label className="space-y-1 text-sm"><span className="font-semibold">Thème d’habillage</span><select className="ad-select w-full" value={theme} onChange={(e) => { const next = e.target.value; setTheme(next); setColors(SOCIAL_THEMES[next] || DEFAULT_COLORS); }}>{[['sari','SARI · marque'],['clinical','Clinique claire'],['midnight','Minuit'],['editorial','Éditorial'],['aurora','Aurore'],['lime','Citron vert']].map(([id,label]) => <option key={id} value={id}>{label}</option>)}</select></label>
+              <label className="space-y-1 text-sm"><span className="font-semibold">Thème d’habillage</span><select className="ad-select w-full" value={theme} onChange={(e) => { const next = e.target.value; setTheme(next); setColors(SOCIAL_THEMES[next] || DEFAULT_COLORS); }}><optgroup label="Palettes de couleurs">{[['sari','SARI · marque'],['clinical','Clinique claire'],['midnight','Minuit'],['editorial','Éditorial'],['aurora','Aurore'],['lime','Citron vert']].map(([id,label]) => <option key={id} value={id}>{label}</option>)}</optgroup><optgroup label="Compositions graphiques">{COMPOSITION_THEMES.map(([id, label]) => <option key={id} value={id}>{label}</option>)}</optgroup></select></label>
               <label className="space-y-1 text-sm"><span className="font-semibold">Langue du rendu</span><select className="ad-select w-full" value={renderLocale} onChange={(e) => { const next = e.target.value; setRenderLocale(next); applyDirection(next === 'ar' ? 'rtl' : 'ltr'); }}><option value="fr">Français</option><option value="en">English</option><option value="ar">العربية</option></select></label>
               <label className="space-y-1 text-sm"><span className="font-semibold">Direction du texte</span><select className="ad-select w-full" value={direction} onChange={(e) => applyDirection(e.target.value)}><option value="ltr">Gauche à droite · LTR</option><option value="rtl">Droite à gauche · RTL</option></select></label>
               <label className="space-y-1 text-sm"><span className="font-semibold">Police configurée ou Google Fonts</span><select className="ad-select w-full" value={font} onChange={(e) => { setFont(e.target.value); setCustomFont(''); }}>{['Inter','Cairo','Arial','Roboto','Open Sans','Montserrat','Lato','Poppins'].map((name) => <option key={name}>{name}</option>)}</select></label>
