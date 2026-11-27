@@ -25,6 +25,7 @@ import {
   ArrowLeft,
   Brush,
   Check,
+  Code2,
   Download,
   Eraser,
   Grid3x3,
@@ -49,6 +50,7 @@ import { createEngine } from '@/lib/canvas/engine';
 import type { Engine } from '@/lib/canvas/engine';
 import { ensureFonts } from '@/lib/canvas/fonts';
 import { resolveSlots } from '@/lib/canvas/document';
+import { htmlBlockToSvg, sanitizeCanvasCss, sanitizeCanvasHtml } from '@/lib/canvas/html-block';
 import type { BackgroundSpec, CanvasReference, LayerInfo, ObjectProps, SelectionState, ToolId } from '@/lib/canvas/types';
 import { deleteGedAsset, exportCanvas, listGedTemplates, loadImageSize, readGedAsset, readGedAssetState, readGedTemplate, saveGedTemplate, uploadGedAsset, type GedAssetSummary, type GedTemplateSummary } from '@/lib/ged/client';
 import { Card, ColorField, Field, Icon, Menu, MenuItem, MenuLabel, NumberField, Row, Segmented, SelectField, SliderField, TextField } from './widgets';
@@ -72,6 +74,18 @@ const SHAPES: { id: ToolId; label: string }[] = [
   { id: 'polygon', label: 'Polygone' },
   { id: 'star', label: 'Étoile' },
   { id: 'arrow', label: 'Flèche' },
+];
+const DEFAULT_HTML_SOURCE = '<h2>Votre titre</h2><p>Ajoutez ici votre contenu HTML à déposer sur la planche.</p>';
+const DEFAULT_HTML_CSS = 'h2 { color: #0f9f6e; font-size: 30px; margin: 0 0 12px; } p { font-size: 18px; line-height: 1.4; }';
+const CANVAS_ICONS = [
+  { id: 'arrow', label: 'Flèche', svg: '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48"><path d="M8 24h30M26 11l13 13-13 13" fill="none" stroke="#0F9F6E" stroke-width="3" stroke-linecap="square" stroke-linejoin="miter"/></svg>' },
+  { id: 'check', label: 'Validation', svg: '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48"><path d="M8 25l10 10L40 12" fill="none" stroke="#0F9F6E" stroke-width="4" stroke-linecap="square" stroke-linejoin="miter"/></svg>' },
+  { id: 'calendar', label: 'Calendrier', svg: '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48"><path d="M8 13h32v27H8zM15 8v10M33 8v10M8 21h32M15 28h5M27 28h5M15 34h5" fill="none" stroke="#169EC9" stroke-width="2.5" stroke-linecap="square"/></svg>' },
+  { id: 'pin', label: 'Lieu', svg: '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48"><path d="M24 43S10 29 10 19a14 14 0 1 1 28 0c0 10-14 24-14 24z" fill="none" stroke="#EAB616" stroke-width="2.5"/><circle cx="24" cy="19" r="4" fill="none" stroke="#EAB616" stroke-width="2.5"/></svg>' },
+  { id: 'star', label: 'Étoile', svg: '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48"><path d="M24 5l5.8 12 13.2 1.9-9.5 9.3 2.2 13.1L24 35.1l-11.7 6.2 2.2-13.1L5 18.9 18.2 17z" fill="none" stroke="#EAB616" stroke-width="2.5" stroke-linejoin="miter"/></svg>' },
+  { id: 'chart', label: 'Graphique', svg: '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48"><path d="M8 40V8M8 40h33M15 34V24h7v10M27 34V16h7v18M38 34V10h4v24" fill="none" stroke="#169EC9" stroke-width="2.5" stroke-linecap="square"/></svg>' },
+  { id: 'plus', label: 'Ajouter', svg: '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48"><path d="M24 8v32M8 24h32" fill="none" stroke="#0F9F6E" stroke-width="3" stroke-linecap="square"/></svg>' },
+  { id: 'heart', label: 'Favori', svg: '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48"><path d="M24 41 7 24C-2 8 16 1 24 13 32 1 50 8 41 24z" fill="none" stroke="#EAB616" stroke-width="2.5" stroke-linejoin="miter"/></svg>' },
 ];
 
 type Tab = 'objet' | 'calques' | 'fond' | 'graphique' | 'ged';
@@ -105,7 +119,16 @@ export function CanvasStudio({
   const [engine, setEngine] = useState<Engine | null>(null);
   const [failed, setFailed] = useState('');
   const [tab, setTab] = useState<Tab>('objet');
-  const [sheet, setSheet] = useState<'' | 'gabarits' | 'ged' | 'stats' | 'calques'>('');
+  const [sheet, setSheet] = useState<'' | 'gabarits' | 'ged' | 'stats' | 'calques' | 'html' | 'icons'>('');
+  const [htmlMode, setHtmlMode] = useState<'block' | 'embed'>('block');
+  const [htmlSource, setHtmlSource] = useState(DEFAULT_HTML_SOURCE);
+  const [htmlCss, setHtmlCss] = useState(DEFAULT_HTML_CSS);
+  const [htmlWidth, setHtmlWidth] = useState(520);
+  const [htmlHeight, setHtmlHeight] = useState(280);
+  const [safeHtmlPreview, setSafeHtmlPreview] = useState(DEFAULT_HTML_SOURCE);
+  const [safeCssPreview, setSafeCssPreview] = useState(DEFAULT_HTML_CSS);
+  const [embedHtml, setEmbedHtml] = useState('');
+  const [embedCss, setEmbedCss] = useState('.sari-canvas { display: block; max-width: 100%; margin: 0 auto; }\n.sari-canvas img { display: block; width: 100%; height: auto; }');
   /** Un cadre de gabarit en attente d'un média : le prochain choix de la GED le remplit. */
   const [slotPick, setSlotPick] = useState<{ id: string; type: 'text' | 'image' | 'color' } | null>(null);
   const [name, setName] = useState('Planche sans titre');
@@ -147,6 +170,7 @@ export function CanvasStudio({
   const lastArtboard = useRef({ width: 1080, height: 1080 });
   const [slots, setSlots] = useState<ReturnType<typeof resolveSlots>>([]);
   const [templates, setTemplates] = useState<GedTemplateSummary[]>([]);
+
   const refresh = useCallback(() => {
     const instance = engineRef.current;
     if (!instance) return;
@@ -406,6 +430,59 @@ export function CanvasStudio({
       setNotice({ kind: 'info', text: 'Bloc HTML copié — collable dans un bloc code de l’éditeur de page.' });
     } catch {
       setNotice({ kind: 'warn', text: 'Le presse-papiers est refusé par le navigateur ; téléchargez le fichier à la place.' });
+    }
+  };
+
+  const openEmbedEditor = async () => {
+    const instance = engineRef.current;
+    if (!instance) return;
+    try {
+      const url = currentFile ? (await readGedAsset(currentFile)).asset.url : await instance.toPngDataUrl({ scale: 2, format: 'png' });
+      const alt = (name || 'Visuel').replace(/[<>"&]/g, '');
+      setEmbedHtml(`<figure class="sari-canvas"><img src="${url}" alt="${alt}" width="${instance.getArtboard().width}" height="${instance.getArtboard().height}" loading="lazy" decoding="async"></figure>`);
+      setHtmlMode('embed');
+      setSheet('html');
+    } catch (error) {
+      setNotice({ kind: 'warn', text: error instanceof Error ? error.message : 'Impossible de préparer le code d’intégration.' });
+    }
+  };
+
+  const copyEmbedCode = async () => {
+    try {
+      await navigator.clipboard.writeText(`<style>\n${embedCss}\n</style>\n${embedHtml}`);
+      setNotice({ kind: 'info', text: 'Code HTML et CSS copié dans le presse-papiers.' });
+    } catch {
+      setNotice({ kind: 'warn', text: 'Le presse-papiers est refusé par le navigateur.' });
+    }
+  };
+
+  const insertHtmlBlock = async () => {
+    const instance = engineRef.current;
+    if (!instance) return;
+    try {
+      const svg = htmlBlockToSvg(htmlSource, htmlCss, htmlWidth, htmlHeight);
+      const object = await instance.addSvg(svg, {
+        as: 'image', width: htmlWidth, height: htmlHeight, at: instance.pointer(),
+      });
+      if (!object) throw new Error('Le fragment HTML est vide ou invalide.');
+      setSheet('');
+      setNotice({ kind: 'info', text: 'Bloc HTML ajouté comme calque image déplaçable et redimensionnable. Le contenu est assaini; éditez le code et réinsérez-le pour le modifier.' });
+      refresh();
+    } catch (error) {
+      setNotice({ kind: 'warn', text: error instanceof Error ? error.message : 'Insertion HTML impossible.' });
+    }
+  };
+
+  const insertCanvasIcon = async (icon: (typeof CANVAS_ICONS)[number]) => {
+    const instance = engineRef.current;
+    if (!instance) return;
+    try {
+      await instance.addSvg(icon.svg, { as: 'objects', width: 120, height: 120, at: instance.pointer() });
+      setSheet('');
+      setNotice({ kind: 'info', text: `Icône « ${icon.label} » insérée en objets vectoriels modifiables.` });
+      refresh();
+    } catch (error) {
+      setNotice({ kind: 'warn', text: error instanceof Error ? error.message : `Insertion de l’icône « ${icon.label} » impossible.` });
     }
   };
 
@@ -753,6 +830,7 @@ export function CanvasStudio({
           <MenuItem onClick={() => void download('json')}>État de l’atelier (JSON)</MenuItem>
           <div className="sc-menu__sep" />
           <MenuItem onClick={() => void copyHtml()}>Copier le bloc HTML</MenuItem>
+          <MenuItem onClick={() => void openEmbedEditor()}><Code2 size={13} /> Éditer le code HTML/CSS</MenuItem>
           <MenuItem onClick={() => void publishTemplate()}>Publier comme gabarit</MenuItem>
         </Menu>
         <Menu label="Enregistrer" icon={<Save size={14} />} className="sc-menu">
@@ -837,6 +915,14 @@ export function CanvasStudio({
             <button type="button" className="sc-tool" title="Image de la GED" onClick={() => setSheet(sheet === 'ged' ? '' : 'ged')}>
               <ImageIcon size={16} />
               <span>GED</span>
+            </button>
+            <button type="button" className="sc-tool" title="Insérer un bloc HTML/CSS assaini" onClick={() => { setHtmlMode('block'); setSheet('html'); }}>
+              <Code2 size={16} />
+              <span>HTML</span>
+            </button>
+            <button type="button" className="sc-tool" title="Insérer une icône vectorielle" onClick={() => setSheet('icons')}>
+              <Shapes size={16} />
+              <span>Icône</span>
             </button>
             <button type="button" className="sc-tool" title="Gabarits" onClick={() => (sheet === 'gabarits' ? setSheet('') : void openTemplates())}>
               <LayoutTemplate size={16} />
@@ -1076,6 +1162,72 @@ export function CanvasStudio({
               allowImport
             />
           </Card>
+        </div>
+      ) : null}
+
+      {sheet === 'icons' ? (
+        <div className="sc-sheet">
+          <div style={{ width: 'min(720px, 96vw)', maxHeight: '88vh', overflow: 'auto' }}>
+            <Card title="Icônes vectorielles — sélectionnez pour insérer" icon={<Shapes size={12} />} actions={<Icon label="Fermer" onClick={() => setSheet('')}>✕</Icon>}>
+              <p style={{ margin: 0, color: '#93a1b8', fontSize: 12 }}>Chaque icône est ajoutée comme groupe SVG : déplacez-la, redimensionnez-la, puis modifiez ses formes ou ses couleurs dans le panneau Objet.</p>
+              <div className="sc-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(112px, 1fr))', maxHeight: '62vh' }}>
+                {CANVAS_ICONS.map((icon) => (
+                  <button key={icon.id} type="button" className="sc-tile" onClick={() => void insertCanvasIcon(icon)}>
+                    <span className="sc-tile__media" style={{ display: 'grid', placeItems: 'center', minHeight: 92 }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element -- Icon snippets are static, bundled SVGs from CANVAS_ICONS. */}
+                      <img src={`data:image/svg+xml,${encodeURIComponent(icon.svg)}`} alt="" width="44" height="44" />
+                    </span>
+                    <span className="sc-tile__caption">{icon.label}<small>SVG éditable</small></span>
+                  </button>
+                ))}
+              </div>
+            </Card>
+          </div>
+        </div>
+      ) : null}
+
+      {sheet === 'html' ? (
+        <div className="sc-sheet">
+          <div style={{ width: 'min(980px, 96vw)', maxHeight: '90vh', overflow: 'auto' }}>
+            <Card title={htmlMode === 'block' ? 'Bloc HTML/CSS pour le canvas' : 'Code HTML/CSS d’intégration'} icon={<Code2 size={12} />} actions={<Icon label="Fermer" onClick={() => setSheet('')}>✕</Icon>}>
+              <Segmented value={htmlMode} onChange={(value) => setHtmlMode(value as 'block' | 'embed')} options={[{ value: 'block', label: 'Insérer un bloc HTML' }, { value: 'embed', label: 'Code d’intégration HTML/CSS' }]} />
+              {htmlMode === 'block' ? (
+                <>
+                  <p style={{ margin: 0, color: '#93a1b8', fontSize: 12 }}>Le HTML est filtré (scripts, événements, iframes et ressources distantes refusés), rendu en un calque image, puis déplaçable et redimensionnable sur le plan.</p>
+                  <Row>
+                    <Field label="Largeur"><input className="sc-input" type="number" min={64} max={3000} value={htmlWidth} onChange={(event) => setHtmlWidth(Math.min(3000, Math.max(64, Number(event.target.value) || 64)))} /></Field>
+                    <Field label="Hauteur"><input className="sc-input" type="number" min={64} max={3000} value={htmlHeight} onChange={(event) => setHtmlHeight(Math.min(3000, Math.max(64, Number(event.target.value) || 64)))} /></Field>
+                  </Row>
+                  <div className="sc-grid" style={{ gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', maxHeight: 'none' }}>
+                    <Field label="Fragment HTML">
+                      <textarea className="sc-textarea" style={{ minHeight: 170, fontFamily: 'ui-monospace, monospace' }} value={htmlSource} onChange={(event) => { const next = event.target.value; setHtmlSource(next); try { setSafeHtmlPreview(sanitizeCanvasHtml(next)); } catch { setSafeHtmlPreview(''); } }} spellCheck={false} />
+                    </Field>
+                    <Field label="CSS du bloc">
+                      <textarea className="sc-textarea" style={{ minHeight: 170, fontFamily: 'ui-monospace, monospace' }} value={htmlCss} onChange={(event) => { const next = event.target.value; setHtmlCss(next); setSafeCssPreview(sanitizeCanvasCss(next)); }} spellCheck={false} />
+                    </Field>
+                  </div>
+                  <iframe title="Aperçu sécurisé du bloc HTML" sandbox="" srcDoc={`<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;padding:0;font-family:Arial,sans-serif}*{box-sizing:border-box}${safeCssPreview}</style></head><body>${safeHtmlPreview}</body></html>`} style={{ width: '100%', height: 210, border: '1px solid #26344d', background: '#fff' }} />
+                  <Row wrap>
+                    <button type="button" className="sc-btn sc-btn--primary" onClick={() => void insertHtmlBlock()}><Code2 size={13} /> Insérer le bloc sur le canvas</button>
+                    <button type="button" className="sc-btn" onClick={() => { setHtmlSource(DEFAULT_HTML_SOURCE); setHtmlCss(DEFAULT_HTML_CSS); setSafeHtmlPreview(DEFAULT_HTML_SOURCE); setSafeCssPreview(DEFAULT_HTML_CSS); }}>Réinitialiser l’exemple</button>
+                  </Row>
+                </>
+              ) : (
+                <>
+                  <p style={{ margin: 0, color: '#93a1b8', fontSize: 12 }}>Modifiez le code d’intégration. Le bac à sable de prévisualisation bloque les scripts ; les modifications sont copiées, elles ne changent pas les calques du canvas.</p>
+                  <div className="sc-grid" style={{ gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', maxHeight: 'none' }}>
+                    <Field label="HTML"><textarea className="sc-textarea" style={{ minHeight: 180, fontFamily: 'ui-monospace, monospace' }} value={embedHtml} onChange={(event) => setEmbedHtml(event.target.value)} spellCheck={false} /></Field>
+                    <Field label="CSS"><textarea className="sc-textarea" style={{ minHeight: 180, fontFamily: 'ui-monospace, monospace' }} value={embedCss} onChange={(event) => setEmbedCss(event.target.value)} spellCheck={false} /></Field>
+                  </div>
+                  <iframe title="Aperçu isolé du code d’intégration" sandbox="" srcDoc={`<!doctype html><html><head><meta charset="utf-8"><style>${embedCss}</style></head><body>${embedHtml}</body></html>`} style={{ width: '100%', height: 240, border: '1px solid #26344d', background: '#fff' }} />
+                  <Row wrap>
+                    <button type="button" className="sc-btn sc-btn--primary" onClick={() => void copyEmbedCode()}><Code2 size={13} /> Copier HTML + CSS</button>
+                    <button type="button" className="sc-btn" onClick={() => { setHtmlMode('block'); }}>Éditer le bloc canvas</button>
+                  </Row>
+                </>
+              )}
+            </Card>
+          </div>
         </div>
       ) : null}
 

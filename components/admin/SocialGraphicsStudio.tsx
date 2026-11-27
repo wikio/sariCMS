@@ -5,6 +5,8 @@ import { useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { Barcode, CalendarDays, Check, Copy, Download, ExternalLink, Image as ImageIcon, MapPin, QrCode, RefreshCw, Search, Share2, Wand2 } from 'lucide-react';
 import { uploadGedAsset } from '@/lib/ged/client';
+import { useDateFormat } from '@/lib/use-date-format';
+import { DATE_FORMAT_PRESETS, formatDateRangeWith, previewFormat, type SupportedLocale } from '@/lib/date-format';
 import { SOCIAL_STYLE_PRESETS } from '@/config/socialTemplates.js';
 
 type SourceKind = 'articles' | 'events' | 'products' | 'services' | 'solutions' | 'pages' | 'announcements' | 'tips';
@@ -53,13 +55,13 @@ const SOCIAL_THEMES: Record<string, typeof DEFAULT_COLORS> = {
   editorial: { bg: '#111827', bg2: '#374151', accent: '#EAB616', textColor: '#FFFFFF' },
   aurora: { bg: '#312E81', bg2: '#0E7490', accent: '#67E8F9', textColor: '#FFFFFF' },
   lime: { bg: '#365314', bg2: '#84CC16', accent: '#ECFCCB', textColor: '#FFFFFF' },
-  'modular-grid': { bg: '#0B0D10', bg2: 'rgb(15, 159, 110)', accent: 'rgb(234, 182, 22)', textColor: '#FFFFFF' },
-  'editorial-grid': { bg: '#FFFFFF', bg2: 'rgb(15, 159, 110)', accent: 'rgb(22, 158, 201)', textColor: '#0B0D10' },
-  'blueprint-grid': { bg: '#0B0D10', bg2: 'rgb(22, 158, 201)', accent: 'rgb(234, 182, 22)', textColor: '#FFFFFF' },
-  'presse-immersive': { bg: '#0B0D10', bg2: 'rgb(15, 159, 110)', accent: 'rgb(234, 182, 22)', textColor: '#FFFFFF' },
-  'grille-plein-cadre': { bg: '#0B0D10', bg2: 'rgb(15, 159, 110)', accent: 'rgb(22, 158, 201)', textColor: '#FFFFFF' },
-  'sans-photo-blocs': { bg: '#0B0D10', bg2: 'rgb(15, 159, 110)', accent: 'rgb(234, 182, 22)', textColor: '#FFFFFF' },
-  'sans-photo-minimal': { bg: '#0B0D10', bg2: 'rgb(15, 159, 110)', accent: 'rgb(234, 182, 22)', textColor: '#FFFFFF' },
+  'modular-grid': { bg: '#0B0D10', bg2: '#0F9F6E', accent: '#EAB616', textColor: '#FFFFFF' },
+  'editorial-grid': { bg: '#FFFFFF', bg2: '#0F9F6E', accent: '#169EC9', textColor: '#0B0D10' },
+  'blueprint-grid': { bg: '#0B0D10', bg2: '#169EC9', accent: '#EAB616', textColor: '#FFFFFF' },
+  'presse-immersive': { bg: '#0B0D10', bg2: '#0F9F6E', accent: '#EAB616', textColor: '#FFFFFF' },
+  'grille-plein-cadre': { bg: '#0B0D10', bg2: '#0F9F6E', accent: '#169EC9', textColor: '#FFFFFF' },
+  'sans-photo-blocs': { bg: '#0B0D10', bg2: '#0F9F6E', accent: '#EAB616', textColor: '#FFFFFF' },
+  'sans-photo-minimal': { bg: '#0B0D10', bg2: '#0F9F6E', accent: '#EAB616', textColor: '#FFFFFF' },
 };
 const COMPOSITION_THEMES = [
   ['modular-grid', 'Grille modulaire'],
@@ -101,6 +103,7 @@ function rowsFrom(payload: unknown): ContentItem[] {
 export default function SocialGraphicsStudio() {
   const locale = useLocale();
   const router = useRouter();
+  const { settings: dateSettings } = useDateFormat();
   const [tab, setTab] = useState<'social' | 'qr' | 'barcode'>('social');
   const [source, setSource] = useState<SourceKind>('articles');
   const [items, setItems] = useState<ContentItem[]>([]);
@@ -114,6 +117,7 @@ export default function SocialGraphicsStudio() {
   const [layout, setLayout] = useState<string>('full');
   const [theme, setTheme] = useState('sari');
   const [renderLocale, setRenderLocale] = useState(locale);
+  const [dateFormat, setDateFormat] = useState('short');
   const [direction, setDirection] = useState(locale === 'ar' ? 'rtl' : 'ltr');
   const [font, setFont] = useState('Inter');
   const [customFont, setCustomFont] = useState('');
@@ -188,6 +192,12 @@ export default function SocialGraphicsStudio() {
   }, [itemOptions, searchText]);
   const selectedItem = items.find((item) => itemKey(item) === selected);
   const sourceImage = mediaPath(selectedItem?.image) || mediaPath(selectedItem?.coverImage) || mediaPath(selectedItem?.thumbnail) || mediaPath(selectedItem?.media);
+  const effectiveDateFormat = dateFormat === 'site' ? dateSettings.format : dateFormat;
+  const dateOptions = { format: effectiveDateFormat, dateOnly: !dateSettings.showTime };
+  const rawDate = selectedItem?.startDate || selectedItem?.date;
+  const formattedDate = rawDate
+    ? formatDateRangeWith(rawDate, selectedItem?.endDate, renderLocale as SupportedLocale, dateOptions)
+    : '';
 
   const socialUrl = useMemo(() => {
     if (!selected) return '';
@@ -211,9 +221,8 @@ export default function SocialGraphicsStudio() {
           transparent: false,
         }),
       });
-      const date = selectedItem?.startDate || selectedItem?.date;
       const location = selectedItem?.location || selectedItem?.venue;
-      if (date) params.set('date', String(date));
+      if (formattedDate) params.set('date', formattedDate);
       if (location) params.set('location', String(location));
       if (includeQr && linkUrl.trim()) params.set('url', linkUrl.trim());
       const image = customImage.trim() || sourceImage;
@@ -227,6 +236,7 @@ export default function SocialGraphicsStudio() {
     if (customTitle.trim()) params.set('title', customTitle.trim());
     if (customSubject.trim()) params.set('subject', customSubject.trim());
     if (customSummary.trim()) params.set('summary', customSummary.trim());
+    if (formattedDate) params.set('date', formattedDate);
     if (customImage.trim()) params.set('image', customImage.trim());
     else if (sourceImage) params.set('image', sourceImage);
     if (customIcon.trim()) params.set('icon', customIcon.trim());
@@ -237,7 +247,7 @@ export default function SocialGraphicsStudio() {
     if (!showLogo) params.set('logo', 'none');
     else if (customLogo.trim()) params.set('logo', customLogo.trim());
     return `/api/v1/public/graphics/social/${encodeURIComponent(source)}/${encodeURIComponent(selected)}?${params.toString()}`;
-  }, [source, selected, selectedItem, platform, renderLocale, direction, font, customFont, titleScale, logoScale, gridBackground, theme, colors, align, titleX, titleY, overlay, effect, effectColor, effectOpacity, imageOpacity, borderWidth, borderColor, borderRadius, blockRadius, layout, includeQr, qrPosition, linkUrl, showLogo, logoPosition, customLogo, customTitle, customSubject, customIcon, customSummary, customImage, sourceImage, brand]);
+  }, [source, selected, selectedItem, platform, renderLocale, formattedDate, direction, font, customFont, titleScale, logoScale, gridBackground, theme, colors, align, titleX, titleY, overlay, effect, effectColor, effectOpacity, imageOpacity, borderWidth, borderColor, borderRadius, blockRadius, layout, includeQr, qrPosition, linkUrl, showLogo, logoPosition, customLogo, customTitle, customSubject, customIcon, customSummary, customImage, sourceImage, brand]);
 
   const imageEndpoint = useMemo(() => {
     if (tab === 'qr') return `/api/v1/public/graphics/qr?${new URLSearchParams({ data: qrData, size: qrSize, color: codeColor, background: codeBg, margin: '2' })}`;
@@ -337,7 +347,7 @@ export default function SocialGraphicsStudio() {
                 <img src={sourceImage} alt={`Image source : ${String(selectedItem.title || selectedItem.name || '')}`} className="h-full w-full object-cover" />
               ) : <div className="grid h-full place-items-center text-xs opacity-60"><ImageIcon className="mb-1 h-5 w-5" />Pas d’image sur la fiche</div>}</div>
               <div className="min-w-0 self-center"><div className="text-xs font-bold uppercase tracking-wide opacity-60">Image et métadonnées du contenu sélectionné</div><div className="mt-1 truncate font-bold">{String(selectedItem.title || selectedItem.name || 'Sans titre')}</div><div className="mt-1 text-xs opacity-70">ID {String(selectedItem.id ?? '—')} · {String(selectedItem.slug ?? '')}</div>
-                {source === 'events' && <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">{(selectedItem.startDate || selectedItem.date) && <span className="inline-flex items-center gap-1"><CalendarDays className="h-3.5 w-3.5" />{String(selectedItem.startDate || selectedItem.date)}{selectedItem.endDate ? ` – ${selectedItem.endDate}` : ''}</span>}{(selectedItem.location || selectedItem.venue) && <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{String(selectedItem.location || selectedItem.venue)}</span>}</div>}
+                {source === 'events' && <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">{formattedDate && <span className="inline-flex items-center gap-1"><CalendarDays className="h-3.5 w-3.5" />{formattedDate}</span>}{(selectedItem.location || selectedItem.venue) && <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{String(selectedItem.location || selectedItem.venue)}</span>}</div>}
                 {['services', 'solutions', 'products'].includes(source) && selectedItem.icon && <div className="mt-2 text-xs">Icône configurée : <code>{selectedItem.icon}</code></div>}
               </div>
             </div>}
@@ -347,6 +357,7 @@ export default function SocialGraphicsStudio() {
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="space-y-1 text-sm"><span className="font-semibold">Thème d’habillage</span><select className="ad-select w-full" value={theme} onChange={(e) => { const next = e.target.value; setTheme(next); setColors(SOCIAL_THEMES[next] || DEFAULT_COLORS); }}><optgroup label="Palettes de couleurs">{[['sari','SARI · marque'],['clinical','Clinique claire'],['midnight','Minuit'],['editorial','Éditorial'],['aurora','Aurore'],['lime','Citron vert']].map(([id,label]) => <option key={id} value={id}>{label}</option>)}</optgroup><optgroup label="Compositions graphiques">{COMPOSITION_THEMES.map(([id, label]) => <option key={id} value={id}>{label}</option>)}</optgroup></select></label>
+              <label className="space-y-1 text-sm"><span className="font-semibold">Format de date</span><select className="ad-select w-full" value={dateFormat} onChange={(e) => setDateFormat(e.target.value)}><option value="short">Court · {previewFormat('short', renderLocale as SupportedLocale)}</option><option value="site">Comme les paramètres du site · {dateSettings.format}</option>{DATE_FORMAT_PRESETS.filter((preset) => preset.value !== 'short').map((preset) => <option key={preset.value} value={preset.value}>{preset.value} · {previewFormat(preset.value, renderLocale as SupportedLocale)}</option>)}</select><a className="text-xs underline" href={`/${locale}/admin/settings?tab=dates`}>Configurer le format général des dates</a></label>
               <label className="space-y-1 text-sm"><span className="font-semibold">Langue du rendu</span><select className="ad-select w-full" value={renderLocale} onChange={(e) => { const next = e.target.value; setRenderLocale(next); applyDirection(next === 'ar' ? 'rtl' : 'ltr'); }}><option value="fr">Français</option><option value="en">English</option><option value="ar">العربية</option></select></label>
               <label className="space-y-1 text-sm"><span className="font-semibold">Direction du texte</span><select className="ad-select w-full" value={direction} onChange={(e) => applyDirection(e.target.value)}><option value="ltr">Gauche à droite · LTR</option><option value="rtl">Droite à gauche · RTL</option></select></label>
               <label className="space-y-1 text-sm"><span className="font-semibold">Police configurée ou Google Fonts</span><select className="ad-select w-full" value={font} onChange={(e) => { setFont(e.target.value); setCustomFont(''); }}>{['Inter','Cairo','Arial','Roboto','Open Sans','Montserrat','Lato','Poppins'].map((name) => <option key={name}>{name}</option>)}</select></label>
@@ -413,7 +424,7 @@ export default function SocialGraphicsStudio() {
             <button className="ad-btn ad-btn-ghost" onClick={() => void copyUrl()} disabled={!absolute}>{copyDone ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />} {copyDone ? 'URL copiée' : 'Copier l’URL API'}</button>
             {absolute && <a className="ad-btn ad-btn-ghost" href={absolute} target="_blank" rel="noreferrer"><ExternalLink className="h-4 w-4" /> Ouvrir l’image</a>}
             {absolute && <a className="ad-btn ad-btn-ghost" href={absolute} download><Download className="h-4 w-4" /> Télécharger</a>}
-            {tab === 'social' && <button className="ad-btn ad-btn-ghost" onClick={() => void openInCanvas()} disabled={sendingToCanvas || !selected}><Wand2 className="h-4 w-4" /> {sendingToCanvas ? 'Préparation…' : 'Ouvrir dans l’atelier graphique'}</button>}
+            {tab === 'social' && <button className="ad-btn ad-btn-ghost" title="Le rendu s’ouvre comme un calque image déplaçable/redimensionnable; ajoutez ensuite texte, HTML/CSS, SVG/icônes, formes, graphiques et filtres." onClick={() => void openInCanvas()} disabled={sendingToCanvas || !selected}><Wand2 className="h-4 w-4" /> {sendingToCanvas ? 'Préparation…' : 'Ouvrir dans l’atelier graphique'}</button>}
           </div>
           {studioError && <p role="alert" className="mt-2 text-sm text-red-600">{studioError}</p>}
         </section>
