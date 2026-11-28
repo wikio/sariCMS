@@ -29,6 +29,16 @@ const arabicPressPng = await renderSocialCard({
   theme: { style: 'presse-immersive', locale: 'ar' },
 });
 assert.ok(arabicPressPng.subarray(0, 8).equals(pngSignature), 'Arabic RTL press card renders as PNG');
+const testLogoCanvas = createCanvas(96, 48);
+const testLogoCtx = testLogoCanvas.getContext('2d');
+testLogoCtx.fillStyle = '#169EC9';
+testLogoCtx.fillRect(0, 0, 96, 48);
+const testLogo = testLogoCanvas.toBuffer('image/png');
+const brandedCard = await renderSocialCard({
+  kind: 'article', format: 'square', title: 'Visuel de marque', brand: 'SARI Atelier', logo: testLogo,
+  logoScale: 1.8, brandScale: 1.5, theme: { style: 'editorial-grid', locale: 'fr' },
+});
+assert.ok(brandedCard.subarray(0, 8).equals(pngSignature), 'custom brand name and independent logo/name scales render');
 
 const formats = ['square', 'portrait', 'landscape', 'widescreen', 'story'];
 const kinds = ['article', 'event', 'product', 'announcement', 'job'];
@@ -73,7 +83,7 @@ renderSocialIcons(ctx, ['facebook', 'x'], { x: 0, y: 125, width: 80, height: 30 
 ctx.font = '16px sans-serif';
 assert.ok(wrapText(ctx, 'A long line that must wrap across multiple rows', 100, 2).at(-1).endsWith('…'));
 
-const getResponse = await GET(new Request('https://cms.example/api/social-card?kind=article&format=landscape&title=Example&url=https%3A%2F%2Fexample.com'));
+const getResponse = await GET(new Request('https://cms.example/api/social-card?kind=article&format=landscape&title=Example&brand=SARI%20Atelier&logoScale=1.5&brandScale=1.25&url=https%3A%2F%2Fexample.com'));
 assert.equal(getResponse.status, 200);
 assert.equal(getResponse.headers.get('content-type'), 'image/png');
 assert.equal(getResponse.headers.get('access-control-allow-origin'), '*');
@@ -109,4 +119,4 @@ const postResponse = await POST(new Request('https://cms.example/api/social-card
 assert.equal(postResponse.status, 200);
 const optionsResponse = await OPTIONS(new Request('https://cms.example/api/social-card', { method: 'OPTIONS', headers: { origin: 'https://third-party.example' } }));
 assert.equal(optionsResponse.status, 204);
-console.log('Social card tests passed: 25 type/format combinations, transparent PNG, themes, QR, logo, icons, wrapping, and API GET/POST/CORS.');
+console.log('Social card tests passed: 25 type/format combinations, transparent PNG, themes, logo and brand sizing, QR, icons, wrapping, and API GET/POST/CORS.');

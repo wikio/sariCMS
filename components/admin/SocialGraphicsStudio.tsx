@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { defaultLocale } from '@/lib/i18n';
 import { useRouter } from 'next/navigation';
-import { Barcode, CalendarDays, Check, Copy, Download, ExternalLink, Image as ImageIcon, MapPin, QrCode, RefreshCw, Search, Share2, Wand2 } from 'lucide-react';
+import { Barcode, CalendarDays, Check, Copy, Download, ExternalLink, FolderOpen, Image as ImageIcon, MapPin, QrCode, RefreshCw, Search, Share2, Upload, Wand2 } from 'lucide-react';
+import GedPicker from '@/components/admin/GedPicker';
 import { uploadGedAsset } from '@/lib/ged/client';
 import { useDateFormat } from '@/lib/use-date-format';
 import { DATE_FORMAT_PRESETS, formatDateRangeWith, previewFormat, type SupportedLocale } from '@/lib/date-format';
@@ -189,6 +190,7 @@ export default function SocialGraphicsStudio() {
   const [customFont, setCustomFont] = useState('');
   const [titleScale, setTitleScale] = useState('1');
   const [logoScale, setLogoScale] = useState('1');
+  const [brandScale, setBrandScale] = useState('1');
   const [gridBackground, setGridBackground] = useState(true);
   const [colors, setColors] = useState(DEFAULT_COLORS);
   const [align, setAlign] = useState('left');
@@ -209,6 +211,9 @@ export default function SocialGraphicsStudio() {
   const [showLogo, setShowLogo] = useState(true);
   const [logoPosition, setLogoPosition] = useState('top-left');
   const [customLogo, setCustomLogo] = useState('');
+  const [customBrandTitle, setCustomBrandTitle] = useState('');
+  const [logoPickerOpen, setLogoPickerOpen] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
   const [customTitle, setCustomTitle] = useState('');
   const [customSubject, setCustomSubject] = useState('');
   const [customIcon, setCustomIcon] = useState('');
@@ -273,6 +278,7 @@ export default function SocialGraphicsStudio() {
   const previewContentLocale = resolvedIsCurrent ? resolvedContent.contentLocale : String(selectedItem?.locale || locale);
   const isResolvingContent = Boolean(selectedItem && !resolvedIsCurrent);
   const sourceImage = mediaPath(previewItem?.image) || mediaPath(previewItem?.coverImage) || mediaPath(previewItem?.thumbnail) || mediaPath(previewItem?.media);
+  const effectiveBrandTitle = customBrandTitle.trim() || String(brand.title || '');
   const effectiveDateFormat = dateFormat === 'site' ? dateSettings.format : dateFormat;
   const dateOptions = { format: effectiveDateFormat, dateOnly: !dateSettings.showTime };
   const rawDate = previewItem?.startDate || previewItem?.date;
@@ -294,7 +300,7 @@ export default function SocialGraphicsStudio() {
         title: customTitle.trim() || String(previewItem.title || previewItem.name || ''),
         summary: customSummary.trim() || String(previewItem.shortDesc || previewItem.chapo || ''),
         topic: customSubject.trim() || String(previewItem.sujet || previewItem.category || previewItem.classification || ''),
-        brand: String(brand.title || ''), showLogo: showLogo ? 'true' : 'false', includeQr: includeQr ? 'true' : 'false',
+        brand: effectiveBrandTitle, logoScale, brandScale, showLogo: showLogo ? 'true' : 'false', includeQr: includeQr ? 'true' : 'false',
         themeConfig: JSON.stringify({
           primary: colors.bg2, secondary: 'rgb(22, 158, 201)', accent: colors.accent,
           background: colors.bg, foreground: colors.textColor,
@@ -311,7 +317,7 @@ export default function SocialGraphicsStudio() {
       if (showLogo && (customLogo.trim() || brand.logo)) params.set('logoUrl', customLogo.trim() || String(brand.logo));
       return `/api/social-card?${params.toString()}`;
     }
-    const params = new URLSearchParams({ platform, locale: previewContentLocale, direction, font: customFont.trim() || font, titleScale, logoScale, grid: gridBackground ? '1' : '0', theme, bg: colors.bg, bg2: colors.bg2, accent: colors.accent, textColor: colors.textColor, align, overlay, layout, effect, effectColor, effectOpacity, imageOpacity, borderWidth, borderColor, borderRadius, blockRadius });
+    const params = new URLSearchParams({ platform, locale: previewContentLocale, direction, font: customFont.trim() || font, titleScale, logoScale, brandScale, brand: effectiveBrandTitle, grid: gridBackground ? '1' : '0', theme, bg: colors.bg, bg2: colors.bg2, accent: colors.accent, textColor: colors.textColor, align, overlay, layout, effect, effectColor, effectOpacity, imageOpacity, borderWidth, borderColor, borderRadius, blockRadius });
     if (includeQr) params.set('qr', '1');
     if (linkUrl.trim()) params.set('url', linkUrl.trim());
     if (customTitle.trim()) params.set('title', customTitle.trim());
@@ -328,7 +334,7 @@ export default function SocialGraphicsStudio() {
     if (!showLogo) params.set('logo', 'none');
     else if (customLogo.trim()) params.set('logo', customLogo.trim());
     return `/api/v1/public/graphics/social/${encodeURIComponent(source)}/${encodeURIComponent(itemKey(previewItem))}?${params.toString()}`;
-  }, [source, selected, previewItem, previewContentLocale, platform, formattedDate, direction, font, customFont, titleScale, logoScale, gridBackground, theme, colors, align, titleX, titleY, overlay, effect, effectColor, effectOpacity, imageOpacity, borderWidth, borderColor, borderRadius, blockRadius, layout, includeQr, qrPosition, linkUrl, showLogo, logoPosition, customLogo, customTitle, customSubject, customIcon, customSummary, customImage, sourceImage, brand]);
+  }, [source, selected, previewItem, previewContentLocale, platform, formattedDate, direction, font, customFont, titleScale, logoScale, brandScale, effectiveBrandTitle, gridBackground, theme, colors, align, titleX, titleY, overlay, effect, effectColor, effectOpacity, imageOpacity, borderWidth, borderColor, borderRadius, blockRadius, layout, includeQr, qrPosition, linkUrl, showLogo, logoPosition, customLogo, customTitle, customSubject, customIcon, customSummary, customImage, sourceImage, brand]);
 
   const imageEndpoint = useMemo(() => {
     if (tab === 'qr') return `/api/v1/public/graphics/qr?${new URLSearchParams({ data: qrData, size: qrSize, color: codeColor, background: codeBg, margin: '2' })}`;
@@ -337,6 +343,20 @@ export default function SocialGraphicsStudio() {
   }, [tab, qrData, qrSize, codeColor, codeBg, codeData, codeType, socialUrl]);
   const absolute = imageEndpoint && typeof window !== 'undefined' ? new URL(imageEndpoint, window.location.origin).toString() : imageEndpoint;
   const imageUrl = imageEndpoint ? `${imageEndpoint}${imageEndpoint.includes('?') ? '&' : '?'}_preview=${previewVersion}` : '';
+
+  const uploadLogo = async (file?: File) => {
+    if (!file) return;
+    setUploadingLogo(true);
+    setStudioError('');
+    try {
+      const asset = await uploadGedAsset({ file, kind: 'image', module: 'social', title: `Logo social · ${file.name}`, alt: customBrandTitle.trim() || String(brand.title || file.name), tags: ['social', 'logo'] });
+      setCustomLogo(asset.url);
+    } catch (error) {
+      setStudioError(error instanceof Error ? error.message : 'Impossible d’importer le logo dans la GED.');
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
 
   const copyUrl = async () => {
     if (!absolute) return;
@@ -446,7 +466,6 @@ export default function SocialGraphicsStudio() {
               <label className="space-y-1 text-sm"><span className="font-semibold">Police configurée ou Google Fonts</span><select className="ad-select w-full" value={font} onChange={(e) => { setFont(e.target.value); setCustomFont(''); }}>{['Inter','Cairo','Arial','Roboto','Open Sans','Montserrat','Lato','Poppins'].map((name) => <option key={name}>{name}</option>)}</select></label>
               <label className="space-y-1 text-sm"><span className="font-semibold">Police personnalisée (nom de famille)</span><input className="ad-input w-full" value={customFont} maxLength={64} placeholder="Ex. Police configurée ou Google Fonts" onChange={(e) => setCustomFont(e.target.value)} /></label>
               <label className="space-y-1 text-sm"><span className="flex justify-between font-semibold"><span>Taille des textes</span><span>{Math.round(Number(titleScale) * 100)}%</span></span><input className="w-full" type="range" min="0.65" max="1.6" step="0.05" value={titleScale} onChange={(e) => setTitleScale(e.target.value)} /></label>
-              <label className="space-y-1 text-sm"><span className="flex justify-between font-semibold"><span>Taille du logo</span><span>{Math.round(Number(logoScale) * 100)}%</span></span><input className="w-full" type="range" min="0.5" max="2" step="0.05" value={logoScale} onChange={(e) => setLogoScale(e.target.value)} /></label>
               <label className="inline-flex items-center gap-2 text-sm"><input type="checkbox" checked={gridBackground} onChange={(e) => setGridBackground(e.target.checked)} /> Fond en grille, placement sur la grille</label>
             </div>
             <div className="grid gap-2 sm:grid-cols-2">{colorField('Fond principal', 'bg')}{colorField('Dégradé', 'bg2')}{colorField('Accent du site', 'accent')}{colorField('Texte', 'textColor')}</div>
@@ -471,18 +490,32 @@ export default function SocialGraphicsStudio() {
             </div>
             <label className="block space-y-1 text-sm"><span className="font-semibold">URL à encoder dans le QR (facultatif)</span><input className="ad-input w-full" type="url" placeholder="https://exemple.com/fr/actualites/mon-article" value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} /></label>
             <div className="grid gap-3 sm:grid-cols-2">
-              <label className="inline-flex items-center gap-2 text-sm"><input type="checkbox" checked={showLogo} onChange={(e) => setShowLogo(e.target.checked)} /> Logo configuré du site</label>
+              <label className="inline-flex items-center gap-2 text-sm"><input type="checkbox" checked={showLogo} onChange={(e) => setShowLogo(e.target.checked)} /> Afficher le logo et le nom de marque</label>
               <label className="inline-flex items-center gap-2 text-sm"><input type="checkbox" checked={includeQr} onChange={(e) => setIncludeQr(e.target.checked)} /> QR code vers la page</label>
               <label className="space-y-1 text-sm"><span className="font-semibold">Position du logo</span><select className="ad-select w-full" value={logoPosition} onChange={(e) => setLogoPosition(e.target.value)}><option value="top-left">Haut gauche</option><option value="top-right">Haut droite</option><option value="bottom-left">Bas gauche</option><option value="bottom-right">Bas droite</option></select></label>
               {includeQr && <label className="space-y-1 text-sm"><span className="font-semibold">Position du QR code</span><select className="ad-select w-full" value={qrPosition} onChange={(e) => setQrPosition(e.target.value)}><option value="top-left">Haut gauche</option><option value="top-right">Haut droite</option><option value="bottom-left">Bas gauche</option><option value="bottom-right">Bas droite</option></select></label>}
             </div>
-            <div className="flex flex-wrap items-center gap-3 rounded-lg border border-[var(--ad-line)] p-3 text-sm">
-              <span className="font-semibold">Logo du site à ajouter :</span>
-              {customLogo || brand.logo ? <>
-                {/* eslint-disable-next-line @next/next/no-img-element -- Brand logo can be an uploaded GED file or configured URL. */}
-                <img src={mediaPath(customLogo) || customLogo || brand.logo} alt={`Logo ${brand.title || 'du site'}`} className="h-10 max-w-40 rounded bg-white p-1 object-contain" />
-                <span className="text-xs opacity-70">{customLogo ? 'Logo personnalisé' : brand.title || 'Logo configuré'}</span>
-              </> : <><span className="text-xs opacity-70">Aucun logo configuré — ajoutez-le dans Paramètres → Marque.</span><a className="underline" href={`/${locale}/admin/settings?tab=brand`}>Configurer le logo</a></>}
+            <div className="space-y-3 rounded-lg border border-[var(--ad-line)] p-3 text-sm">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="font-semibold">Logo du visuel</span>
+                {(customLogo || brand.logo) && <>
+                  {/* eslint-disable-next-line @next/next/no-img-element -- Logo can be a GED asset or a configured URL. */}
+                  <img src={mediaPath(customLogo) || customLogo || String(brand.logo)} alt={`Logo ${effectiveBrandTitle || 'du site'}`} className="h-12 max-w-40 rounded bg-white p-1 object-contain" />
+                  <span className="text-xs opacity-70">{customLogo ? 'Logo personnalisé' : 'Logo du site'}</span>
+                </>}
+                {!customLogo && !brand.logo && <span className="text-xs opacity-70">Aucun logo défini; sélectionnez-en un ou importez un fichier.</span>}
+                <button type="button" className="ad-btn ad-btn-ghost" onClick={() => setLogoPickerOpen(true)}><FolderOpen className="h-4 w-4" /> Choisir dans la GED</button>
+                <label className="ad-btn ad-btn-ghost cursor-pointer">
+                  <Upload className="h-4 w-4" /> {uploadingLogo ? 'Importation…' : 'Importer un fichier'}
+                  <input type="file" accept="image/*" className="hidden" disabled={uploadingLogo} onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ''; void uploadLogo(file); }} />
+                </label>
+                {customLogo && <button type="button" className="text-xs underline" onClick={() => setCustomLogo('')}>Revenir au logo du site</button>}
+              </div>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <label className="space-y-1 text-sm"><span className="font-semibold">Nom affiché avec le logo</span><input className="ad-input w-full" value={customBrandTitle} maxLength={48} placeholder={String(brand.title || 'Nom de la marque')} onChange={(event) => setCustomBrandTitle(event.target.value)} /></label>
+                <label className="space-y-1 text-sm"><span className="flex justify-between font-semibold"><span>Taille du logo</span><span>{Math.round(Number(logoScale) * 100)}%</span></span><input className="w-full" type="range" min="0.5" max="2.5" step="0.05" value={logoScale} onChange={(event) => setLogoScale(event.target.value)} /></label>
+                <label className="space-y-1 text-sm"><span className="flex justify-between font-semibold"><span>Taille du nom</span><span>{Math.round(Number(brandScale) * 100)}%</span></span><input className="w-full" type="range" min="0.5" max="2" step="0.05" value={brandScale} onChange={(event) => setBrandScale(event.target.value)} /></label>
+              </div>
             </div>
             <details className="rounded-lg border border-[var(--ad-line)] p-3">
               <summary className="cursor-pointer text-sm font-bold">Sujet, chapô, image ou logo personnalisés</summary>
@@ -492,7 +525,6 @@ export default function SocialGraphicsStudio() {
                 <label className="space-y-1 text-sm"><span>Chapô / résumé</span><textarea className="ad-input w-full" rows={2} maxLength={500} value={customSummary} onChange={(e) => setCustomSummary(e.target.value)} /></label>
                 {['services', 'solutions', 'products'].includes(source) && <label className="space-y-1 text-sm"><span>Icône Lucide (nom de l’icône de la fiche)</span><input className="ad-input w-full" placeholder={previewItem?.icon || 'stethoscope'} value={customIcon} onChange={(e) => setCustomIcon(e.target.value)} /></label>}
                 <label className="space-y-1 text-sm"><span>Image GED de remplacement (/uploads/...)</span><input className="ad-input w-full" placeholder="/uploads/news/visuel.jpg" value={customImage} onChange={(e) => setCustomImage(e.target.value)} /></label>
-                <label className="space-y-1 text-sm"><span>Logo GED personnalisé (facultatif)</span><input className="ad-input w-full" placeholder={brand.logo || '/uploads/ged/logo.png'} value={customLogo} onChange={(e) => setCustomLogo(e.target.value)} /></label>
               </div>
             </details>
           </> : <>
@@ -524,6 +556,7 @@ export default function SocialGraphicsStudio() {
           {tab === 'social' && <p className="mt-2 text-xs" style={{ color: 'var(--ad-muted)' }}>Paramètres API : source et identifiant dans le chemin, puis plateforme, couleurs, alignement, voile et QR dans la query string. Le contenu doit être publié.</p>}
         </section>
       </div>
+      {logoPickerOpen && <GedPicker accept="image/*" onClose={() => setLogoPickerOpen(false)} onPick={(url) => { setCustomLogo(url); setLogoPickerOpen(false); }} />}
     </div>
   );
 }

@@ -62,6 +62,8 @@ function requestInput(requestUrl, body = {}) {
     url: read('url'),
     networks: networks.slice(0, 8),
     brand: read('brand'),
+    logoScale: Number(read('logoScale')) || 1,
+    brandScale: Number(read('brandScale')) || 1,
     showLogo: showLogoValue == null ? true : parseBoolean(showLogoValue),
     includeQr: includeQrValue == null ? true : parseBoolean(includeQrValue),
     textScale: Number(read('textScale')) || 1,

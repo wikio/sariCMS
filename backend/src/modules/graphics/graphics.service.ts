@@ -268,6 +268,8 @@ export class GraphicsService {
     const image = await this.imageData(imageValue);
     const logoValue = query.logo === 'none' ? '' : query.logo || brand.logo;
     const logo = await this.imageData(logoValue);
+    const brandTitle = cleanText(query.brand || brand.title || '').slice(0, 80);
+    const brandScale = clamp(numeric(query.brandScale, 1), 0.5, 2);
     const themeName = String(query.theme || 'sari') as keyof typeof SOCIAL_THEMES;
     const theme = SOCIAL_THEMES[themeName] || SOCIAL_THEMES.sari;
     const bg = hexColor(query.bg, theme.bg);
@@ -375,9 +377,17 @@ export class GraphicsService {
     const shade = overlay > 0 ? `<rect x="${split ? regionStart - pad : 0}" y="0" width="${split ? regionWidth + pad : width}" height="100%" fill="#000" opacity="${overlay}"/>` : '';
     const diagonalShape = layout === 'diagonal' ? `<path d="M${width * 0.82} 0 L${width * 0.60} ${height} L${width} ${height} L${width} 0Z" fill="${bg}" opacity="0.94"/>` : '';
     const panelAccent = split ? `<rect x="${layout === 'split-left' ? photoWidth : 0}" y="0" width="${Math.round(width * 0.012)}" height="100%" fill="${accent}"/>` : '';
-    const logoMarkup = logo ? `<image href="${logo}" x="${logoX}" y="${logoY}" width="${logoWidth}" height="${logoHeight}" preserveAspectRatio="xMinYMid meet"/>` : `<text x="${logoX}" y="${logoY + 34}" fill="${fg}" opacity="0.95" font-family="Arial,sans-serif" font-size="${Math.round(width * 0.026)}" font-weight="700">${esc(brand.title)}</text>`;
+    const logoOnRight = logoPosition.endsWith('right');
+    const logoMarkup = logo ? `<image href="${logo}" x="${logoX}" y="${logoY}" width="${logoWidth}" height="${logoHeight}" preserveAspectRatio="xMinYMid meet"/>` : '';
+    const brandTextX = logo
+      ? (logoOnRight ? logoX - 12 : logoX + logoWidth + 12)
+      : (logoOnRight ? logoX + logoWidth : logoX);
+    const brandTextAnchor = logoOnRight
+      ? (direction === 'rtl' ? 'start' : 'end')
+      : (direction === 'rtl' ? 'end' : 'start');
+    const brandMarkup = brandTitle && query.logo !== 'none' ? `<text x="${brandTextX}" y="${logoY + logoHeight / 2}" text-anchor="${brandTextAnchor}" dominant-baseline="middle" fill="${fg}" opacity="0.95" font-family="${esc(fontName)},sans-serif" font-size="${Math.round(width * 0.026 * brandScale)}" font-weight="700">${esc(brandTitle)}</text>` : '';
     const frame = frameWidth > 0 ? `<rect x="${frameWidth / 2}" y="${frameWidth / 2}" width="${width - frameWidth}" height="${height - frameWidth}" rx="${frameRadius}" fill="none" stroke="${frameColor}" stroke-width="${frameWidth}"/>` : '';
-    const overlaySvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" direction="${direction}"><defs>${photoClip}<linearGradient id="shade" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#000" stop-opacity="0.12"/><stop offset="1" stop-color="#000" stop-opacity="0.30"/></linearGradient></defs>${shade}${gridMarkup}${diagonalShape}${panelAccent}<path d="M0 ${height - Math.round(height * 0.10)} Q${width * 0.42} ${height - Math.round(height * 0.35)} ${width} ${height - Math.round(height * 0.18)} L${width} ${height} L0 ${height}Z" fill="${accent}" opacity="0.15"/>${logoMarkup}${icon}${contentBlock}${badge}${titleSvg}${summarySvg}${eventSvg}${qrData ? `<rect x="${qrX - 9}" y="${qrY - 9}" width="166" height="166" rx="${Math.min(blockRadius, 12)}" fill="#fff"/><image href="data:image/png;base64,${qrData.toString('base64')}" x="${qrX}" y="${qrY}" width="148" height="148"/>` : ''}${frame}<rect x="${pad}" y="${height - Math.round(height * 0.036)}" width="${Math.round(width * 0.15)}" height="5" rx="2.5" fill="${accent}"/></svg>`;
+    const overlaySvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" direction="${direction}"><defs>${photoClip}<linearGradient id="shade" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#000" stop-opacity="0.12"/><stop offset="1" stop-color="#000" stop-opacity="0.30"/></linearGradient></defs>${shade}${gridMarkup}${diagonalShape}${panelAccent}<path d="M0 ${height - Math.round(height * 0.10)} Q${width * 0.42} ${height - Math.round(height * 0.35)} ${width} ${height - Math.round(height * 0.18)} L${width} ${height} L0 ${height}Z" fill="${accent}" opacity="0.15"/>${logoMarkup}${brandMarkup}${icon}${contentBlock}${badge}${titleSvg}${summarySvg}${eventSvg}${qrData ? `<rect x="${qrX - 9}" y="${qrY - 9}" width="166" height="166" rx="${Math.min(blockRadius, 12)}" fill="#fff"/><image href="data:image/png;base64,${qrData.toString('base64')}" x="${qrX}" y="${qrY}" width="148" height="148"/>` : ''}${frame}<rect x="${pad}" y="${height - Math.round(height * 0.036)}" width="${Math.round(width * 0.15)}" height="5" rx="2.5" fill="${accent}"/></svg>`;
     const format = String(query.format || 'png').toLowerCase();
     if (!['png', 'jpeg', 'webp'].includes(format)) throw new BadRequestException('format doit être png, jpeg ou webp.');
     // SVG units are CSS px; sharp's default 72 DPI preserves the requested social dimensions.
